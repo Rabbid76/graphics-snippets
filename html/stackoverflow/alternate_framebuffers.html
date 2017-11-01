@@ -1,0 +1,328 @@
+<script id="draw-shader-vs" type="x-shader/x-vertex">
+precision mediump float;
+attribute vec2 inPos;
+varying vec2 vertPos;
+void main()
+{
+    vertPos.xy  = inPos.xy;
+    gl_Position = vec4( inPos, 0.0, 1.0 );
+}
+</script>
+
+<script id="draw-shader-fs" type="x-shader/x-fragment">
+precision mediump float;
+varying vec2 vertPos;
+uniform sampler2D u_colorAttachment0;
+uniform ivec2 u_textureSize;
+uniform int u_signal;
+
+vec3 Merge( in vec2 texC, in vec2 dir )
+{
+  vec2 testC = texC + dir;
+  vec2 rangeTest = step( vec2(0.0), testC ) * step( testC, vec2(1.0) );  
+  vec3 texCol = texture2D( u_colorAttachment0, testC ).rgb;
+  vec2 tempDir = texCol.xy * 2.0 - 1.0;
+  vec2 pDir = tempDir;
+  pDir.x *= step( abs(tempDir.y * 0.7), abs( tempDir.x ) );
+  pDir.y *= step( abs(tempDir.x * 0.7), abs( tempDir.y ) );
+  pDir = sign( pDir );
+  vec2 tDir = sign( dir );
+  //vec2 dirTestTemp = step( vec2(0.5), -tDir * pDir );
+  //float dirTest = dirTestTemp.x * dirTestTemp.y;
+  vec2 dirTestTemp = tDir + pDir;
+  float dirTest = 1.0 - step( 0.5, abs( dirTestTemp.x ) + abs( dirTestTemp.y ) );
+  return rangeTest.x * rangeTest.y * dirTest * texCol;
+}
+
+void main()
+{
+    ivec2 texSize = u_textureSize;
+    vec2  texStep = vec2( 1.0 / float( texSize.x ), 1.0 / float( texSize.y ) );
+    vec2  texC    = vertPos.st * 0.5 + 0.5;
+    
+    vec3 texCol = vec3(0.0);
+    if ( u_signal == 0 )
+    {
+        texCol = texture2D( u_colorAttachment0, texC ).rgb;
+    }
+    else
+    {
+        texCol += Merge( texC, -texStep );
+        texCol += Merge( texC, vec2( -texStep.x, 0.0 ) );
+        texCol += Merge( texC, vec2( -texStep.x, texStep.y ) );
+        texCol += Merge( texC, vec2( 0.0, -texStep.y ) );
+        texCol += Merge( texC, vec2( 0.0, texStep.y ) );
+        texCol += Merge( texC, vec2( texStep.x, -texStep.y ) );
+        texCol += Merge( texC, vec2( texStep.x, 0.0 ) );
+        texCol += Merge( texC, texStep );
+    }
+
+    if ( texCol.b > 0.0 )
+    {
+        vec2 colDir = texCol.rg * 2.0 - 1.0;
+        vec2 pDir = sign( colDir );
+        vec2 nextTexC = texC + pDir * texStep;
+        if ( nextTexC.x <= texStep.x/2.0 || nextTexC.x >= 1.0-texStep.x/2.0 )
+            colDir.x = -colDir.x;
+        if ( nextTexC.y <= texStep.y/2.0 || nextTexC.y >= 1.0-texStep.y/2.0 )
+            colDir.y *= -1.0;
+        texCol.rg = colDir * 0.5 + 0.5;
+    }
+
+    vec3 col = texCol.rgb;
+    gl_FragColor = vec4( col, 1.0 );
+}
+</script>
+
+<script id="screen-shader-vs" type="x-shader/x-vertex">
+precision mediump float;
+attribute vec2 inPos;
+varying vec2 vertPos;
+void main()
+{
+    vertPos.xy  = inPos.xy;
+    gl_Position = vec4( inPos, 0.0, 1.0 );
+}
+</script>
+
+<script id="screen-shader-fs" type="x-shader/x-fragment">
+precision mediump float;
+varying vec2 vertPos;
+uniform sampler2D u_colorAttachment0;
+void main()
+{
+    vec4 texCol = texture2D( u_colorAttachment0, vertPos.st * 0.5 + 0.5 );
+    gl_FragColor = vec4( texCol.rgb, 1.0 );
+}
+</script>
+
+<script type="text/javascript">
+
+// shader program object
+var ShaderProgram = {};
+ShaderProgram.Create = function( shaderList, uniformNames ) {
+    var shaderObjs = [];
+    for ( var i_sh = 0; i_sh < shaderList.length; ++ i_sh ) {
+        var shderObj = this.CompileShader( shaderList[i_sh].source, shaderList[i_sh].stage );
+        if ( shderObj == 0 )
+            return 0;
+        shaderObjs.push( shderObj );
+    }
+    var progObj = this.LinkProgram( shaderObjs )
+    if ( progObj != 0 ) {
+        progObj.unifomLocation = {};
+        for ( var i_n = 0; i_n < uniformNames.length; ++ i_n ) {
+            var name = uniformNames[i_n];
+            progObj.unifomLocation[name] = gl.getUniformLocation( progObj, name );
+        }
+    }
+    return progObj;
+}
+ShaderProgram.Use = function( progObj ) { gl.useProgram( progObj ); } 
+ShaderProgram.SetUniformInt = function( progObj, name, val ) { gl.uniform1i( progObj.unifomLocation[name], val ); }
+ShaderProgram.SetUniform2i = function( progObj, name, arr ) { gl.uniform2iv( progObj.unifomLocation[name], arr ); }
+ShaderProgram.SetUniformFloat = function( progObj, name, val ) { gl.uniform1f( progObj.unifomLocation[name], val ); }
+ShaderProgram.SetUniform2f = function( progObj, name, arr ) { gl.uniform2fv( progObj.unifomLocation[name], arr ); }
+ShaderProgram.SetUniform3f = function( progObj, name, arr ) { gl.uniform3fv( progObj.unifomLocation[name], arr ); }
+ShaderProgram.SetUniformMat44 = function( progObj, name, mat ) { gl.uniformMatrix4fv( progObj.unifomLocation[name], false, mat ); }
+ShaderProgram.CompileShader = function( source, shaderStage ) {
+    var shaderScript = document.getElementById(source);
+    if (shaderScript) {
+      source = "";
+      var node = shaderScript.firstChild;
+      while (node) {
+        if (node.nodeType == 3) source += node.textContent;
+        node = node.nextSibling;
+      }
+    }
+    var shaderObj = gl.createShader( shaderStage );
+    gl.shaderSource( shaderObj, source );
+    gl.compileShader( shaderObj );
+    var status = gl.getShaderParameter( shaderObj, gl.COMPILE_STATUS );
+    if ( !status ) alert(gl.getShaderInfoLog(shaderObj));
+    return status ? shaderObj : 0;
+} 
+ShaderProgram.LinkProgram = function( shaderObjs ) {
+    var prog = gl.createProgram();
+    for ( var i_sh = 0; i_sh < shaderObjs.length; ++ i_sh )
+        gl.attachShader( prog, shaderObjs[i_sh] );
+    gl.linkProgram( prog );
+    status = gl.getProgramParameter( prog, gl.LINK_STATUS );
+    if ( !status ) alert("Could not initialise shaders");
+    gl.useProgram( null );
+    return status ? prog : 0;
+}
+
+var FrameBuffer = {};
+FrameBuffer.Create = function( vp, texturePlan ) {
+    var texPlan = texturePlan ? new Uint8Array( texturePlan ) : null;
+    var fb = gl.createFramebuffer();
+    fb.width = vp[0];
+    fb.height = vp[1];
+    gl.bindFramebuffer( gl.FRAMEBUFFER, fb );
+    fb.color0_texture = gl.createTexture();
+    gl.bindTexture( gl.TEXTURE_2D, fb.color0_texture );
+    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST );
+    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST );
+    gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, fb.width, fb.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, texPlan );
+    fb.renderbuffer = gl.createRenderbuffer();
+    gl.bindRenderbuffer( gl.RENDERBUFFER, fb.renderbuffer );
+    gl.renderbufferStorage( gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, fb.width, fb.height );
+    gl.framebufferTexture2D( gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, fb.color0_texture, 0 );
+    gl.framebufferRenderbuffer( gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, fb.renderbuffer );
+    gl.bindTexture( gl.TEXTURE_2D, null );
+    gl.bindRenderbuffer( gl.RENDERBUFFER, null );
+    gl.bindFramebuffer( gl.FRAMEBUFFER, null );
+
+    fb.Bind = function( clear ) {
+        gl.bindFramebuffer( gl.FRAMEBUFFER, this );
+        if ( clear ) {
+            gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
+            //gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+            gl.clear( gl.DEPTH_BUFFER_BIT );
+        }
+    };
+
+    fb.Release = function( clear ) {
+        gl.bindFramebuffer( gl.FRAMEBUFFER, null );
+        if ( clear ) {
+            gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
+            //gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+            gl.clear( gl.DEPTH_BUFFER_BIT );
+        }
+    };
+
+    fb.BindTexture = function( textureUnit ) {
+        gl.activeTexture( gl.TEXTURE0 + textureUnit );
+        gl.bindTexture( gl.TEXTURE_2D, this.color0_texture );
+    };
+
+    return fb;
+}
+
+var curBufInx = 0;  
+var tick = 0;     
+var signal = 0; 
+function drawScene(){
+
+    var canvas = document.getElementById( "glow-canvas" );
+    var vp = [canvas.width, canvas.height];
+
+    var currentTime = Date.now();   
+    var deltaMS = currentTime - startTime
+    testTick = Tick( currentTime, 0.05 )
+    signal = testTick > tick ? 1 : 0;
+    tick = testTick
+    
+    var srcBufInx = curBufInx == 0 ? 1 : 0;
+        
+    gl.viewport( 0, 0, drawFB[curBufInx].width, drawFB[curBufInx].height );
+    gl.enable( gl.DEPTH_TEST );
+    drawFB[curBufInx].Bind( true );
+    
+    // set up draw shader
+    ShaderProgram.Use( progDraw );
+    var texUnitSource = 2;
+    drawFB[srcBufInx].BindTexture( texUnitSource );
+    ShaderProgram.SetUniformInt( progDraw, "u_colorAttachment0", texUnitSource );
+    ShaderProgram.SetUniform2i( progDraw, "u_textureSize", [drawFB[curBufInx].width, drawFB[curBufInx].height] );
+    ShaderProgram.SetUniformInt( progDraw, "u_signal", signal );
+    
+    gl.enableVertexAttribArray( progDraw.inPos );
+    gl.bindBuffer( gl.ARRAY_BUFFER, bufQuad.pos );
+    gl.vertexAttribPointer( progDraw.inPos, 2, gl.FLOAT, false, 0, 0 );
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufQuad.inx );
+    gl.drawElements( gl.TRIANGLES, bufQuad.inxLen, gl.UNSIGNED_SHORT, 0 );
+    gl.disableVertexAttribArray( progDraw.inPos );
+
+    drawFB[curBufInx].Release( true );
+    gl.viewport( 0, 0, canvas.width, canvas.height );
+    var texUnitDraw = 2;
+    drawFB[curBufInx].BindTexture( texUnitDraw );
+    ShaderProgram.Use( progScreenSpace );
+    ShaderProgram.SetUniformInt( progScreenSpace, "u_colorAttachment0", texUnitDraw );
+
+    gl.enableVertexAttribArray( progScreenSpace.inPos );
+    gl.bindBuffer( gl.ARRAY_BUFFER, bufQuad.pos );
+    gl.vertexAttribPointer( progScreenSpace.inPos, 2, gl.FLOAT, false, 0, 0 );
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufQuad.inx );
+    gl.drawElements( gl.TRIANGLES, bufQuad.inxLen, gl.UNSIGNED_SHORT, 0 );
+    gl.disableVertexAttribArray( progScreenSpace.inPos );
+
+    curBufInx = curBufInx == 0 ? 1 : 0;
+}
+
+function Tick( currentTime, intervall ) {
+    return Math.trunc( (currentTime - startTime) / intervall );
+}
+
+var plot_download_request = false;
+var drawFB;
+var sliderScale = 100.0
+var gl;
+var progDraw;
+var progScreenSpace;
+var bufCube = {};
+var bufQuad = {};
+function sceneStart() {
+
+    var canvas = document.getElementById( "glow-canvas");
+    var vp = [canvas.width, canvas.height];
+    gl = canvas.getContext( "experimental-webgl" );
+    if ( !gl )
+      return;
+
+    progDraw = ShaderProgram.Create( 
+      [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },
+        { source : "draw-shader-fs", stage : gl.FRAGMENT_SHADER }
+      ],
+      [ "u_colorAttachment0", "u_textureSize", "u_signal" ] );
+    progDraw.inPos = gl.getAttribLocation( progDraw, "inPos" );
+    if ( progDraw == 0 )
+        return;
+
+    progScreenSpace = ShaderProgram.Create( 
+      [ { source : "screen-shader-vs", stage : gl.VERTEX_SHADER },
+        { source : "screen-shader-fs", stage : gl.FRAGMENT_SHADER }
+      ],
+      [ "u_colorAttachment0" ] );
+    progScreenSpace.inPos = gl.getAttribLocation( progDraw, "inPos" );
+    if ( progDraw == 0 )
+        return;
+
+    // create frame buffers
+    var texCX = Math.floor(vp[0] / 4);
+    var texCY = Math.floor(vp[1] / 4);
+    var texPlan = [];
+    for (ix = 0; ix < texCX; ++ix) {
+        for (iy = 0; iy < texCY; ++iy) {
+            texPlan.push( 0, 0, 0, 0 );
+        }
+    }
+    for (ip = 0; ip < texCX * texCY / 20; ++ip) {
+        var inx_tex = Math.floor( Math.random() * texCY ) * texCX + Math.floor( Math.random() * texCX );
+        texPlan[inx_tex * 4 + 0] = 255 * Math.random();
+        texPlan[inx_tex * 4 + 1] = 255 * Math.random();
+        texPlan[inx_tex * 4 + 2] = 127;
+        texPlan[inx_tex * 4 + 3] = 255;
+    }
+    drawFB = [ FrameBuffer.Create( [texCX, texCY], texPlan ), FrameBuffer.Create( [texCX, texCY], texPlan ) ];
+
+    bufQuad.pos = gl.createBuffer();
+    gl.bindBuffer( gl.ARRAY_BUFFER, bufQuad.pos );
+    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( [ -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0 ] ), gl.STATIC_DRAW );
+    bufQuad.inx = gl.createBuffer();
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufQuad.inx );
+    gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( [ 0, 1, 2, 0, 2, 3 ] ), gl.STATIC_DRAW );
+    bufQuad.inxLen = 6;
+
+    startTime = Date.now();
+    setInterval(drawScene, 50);
+}
+
+
+</script>
+
+<body onload="sceneStart();">
+    <canvas id="glow-canvas" style="border: none;" width="512" height="512"></canvas>
+</body>

@@ -1,0 +1,420 @@
+<script type="text/javascript" src="web_gl_utils.js"></script>
+<script type="text/javascript" src="download_file.js"></script>
+
+<script type="text/javascript">
+
+var plot_shader_code = {}
+
+plot_shader_code.var_decl =
+"uniform vec2 u_scale; \n" +
+"uniform vec2 u_offset; \n" +
+"uniform vec2 u_grid; \n" +
+"const float c_pi = 3.14159265359; \n" +
+"const vec4 frame_color  = vec4( 0.5, 0.5, 0.5, 1.0 ); \n" +
+"const vec4 grid_color   = vec4( 0.5, 0.5, 0.5, 1.0 ); \n" +
+"const vec4 axis_color   = vec4( 0.0, 0.0, 0.0, 1.0 ); \n";
+
+plot_shader_code.FunctionUniform = function ( postfix ) {
+  var code = "  uniform vec4 f" + postfix.toString() + "_color; \n";
+  return code;
+}
+
+plot_shader_code.start =
+"void main() \n" +
+"{ \n" +
+"  vec4  pixel_info = PixelSizeInfo( u_view_port_size ); \n" +
+"  float ratio      = pixel_info.z; \n" +
+"  vec2  originRel  = -u_offset / u_scale; \n" +
+"  vec4  fragCol    = vec4( 1.0 ); \n" +
+"  fragCol = AddGrid( u_view_port_size, vTexCoord, u_scale, u_offset, u_grid, pixel_info, fragCol, grid_color ); \n" +
+"  fragCol = AddLine( vTexCoord, vec2( 0.0, 0.0 ), vec2( 1.0, 0.0 ), pixel_info, fragCol, frame_color ); \n" +
+"  fragCol = AddLine( vTexCoord, vec2( 0.0, 1.0 ), vec2( 1.0, 1.0 ), pixel_info, fragCol, frame_color ); \n" +
+"  fragCol = AddLine( vTexCoord, vec2( 0.0, 0.0 ), vec2( 0.0, 1.0 ), pixel_info, fragCol, frame_color ); \n" +
+"  fragCol = AddLine( vTexCoord, vec2( 1.0, 0.0 ), vec2( 1.0, 1.0 ), pixel_info, fragCol, frame_color ); \n" +
+"  fragCol = AddLine( vTexCoord, vec2( originRel.x, 0.0 ), vec2( originRel.x, 1.0 ), pixel_info, fragCol, axis_color ); \n" +
+"  fragCol = AddLine( vTexCoord, vec2( 0.0, originRel.y ), vec2( 1.0, originRel.y ), pixel_info, fragCol, axis_color ); \n";
+
+plot_shader_code.PlotFunctionCall = function ( postfix ) {
+  var code = "  fragCol = AddFunc" + postfix.toString() + "( u_view_port_size, vTexCoord, u_scale, u_offset, fragCol, f" + postfix.toString() + "_color ); \n";
+  return code;
+}
+
+plot_shader_code.end =
+"  gl_FragColor = vec4( fragCol.rgb, 1.0 ); \n" +
+"} \n";
+
+var plotShaderProgram;
+function UpdatePlotShader( func_expr ) {
+
+  var multi_func = Array.isArray && Array.isArray( func_expr ) ? true : false;
+  var noOfFunc = multi_func ? func_expr.length : 1;
+
+  var plot_shader_frag = {};
+  plot_shader_frag.type = "frag";
+  plot_shader_frag.code = [];
+  plot_shader_frag.code.push( glsl.fragment_shader.std_head, glsl.fragment_shader.common_uniforms, glsl.fragment_shader.draw2D_functions );
+  if ( multi_func ) {
+    for ( var i_func = 0; i_func < noOfFunc; ++ i_func )
+      plot_shader_frag.code.push( glsl.fragment_shader.PlotFunction( i_func.toString(), func_expr[i_func].toString() ) );
+  } else {
+    plot_shader_frag.code.push( glsl.fragment_shader.PlotFunction( "0", func_expr.toString() ) );
+  }
+  for ( var i_func = 0; i_func < noOfFunc; ++ i_func )
+    plot_shader_frag.code.push( plot_shader_code.FunctionUniform( i_func.toString() ) );
+  plot_shader_frag.code.push( plot_shader_code.var_decl, plot_shader_code.start );
+  for ( var i_func = 0; i_func < noOfFunc; ++ i_func )
+    plot_shader_frag.code.push( plot_shader_code.PlotFunctionCall( i_func.toString() ) );
+  plot_shader_frag.code.push( plot_shader_code.end );
+
+  var newPlotShaderProgram = gl_util.use_new_vs_fs( glsl.vertex_shader.screenspace, plot_shader_frag, true );
+  if ( newPlotShaderProgram ) {
+    gl_util.deleteProgram( plotShaderProgram );
+    plotShaderProgram = newPlotShaderProgram;
+    glsl.vertex_shader.link_uniforms( plotShaderProgram );
+    plotShaderProgram.u_scale  = gl.getUniformLocation( plotShaderProgram, "u_scale" );
+    plotShaderProgram.u_offset = gl.getUniformLocation( plotShaderProgram, "u_offset" );
+    plotShaderProgram.u_grid   = gl.getUniformLocation( plotShaderProgram, "u_grid" );
+    plotShaderProgram.u_fX_color = []; 
+    for ( var i_func = 0; i_func < noOfFunc; ++ i_func )
+      plotShaderProgram.u_fX_color.push( gl.getUniformLocation( plotShaderProgram, "f" + i_func.toString() + "_color" ) );
+    return true;
+  }
+
+  return false;
+}
+
+var plotInput = {};
+plotInput.last_valid_func_val = [];
+
+plotInput.init = function() {
+  this.resetFuncTable();
+  this.resetData();
+}
+
+plotInput.FunctionBk = function() {
+  if ( !this.func_bk )
+    this.func_bk = [];
+  
+  var f_count = this.func_val ? this.func_val.length : 0;
+  for (var i = 0; i < f_count; ++ i) {
+    if ( i < this.func_bk.length )
+      this.func_bk[i] = this.func_val[i];
+    else
+      this.func_bk.push(this.func_val[i]); 
+  }
+  
+  var f_last_count = this.last_valid_func_val ? this.last_valid_func_val.length : 0;
+  for (var i = f_count; i < f_last_count; ++ i) {
+    if ( i < this.func_bk.length )
+      this.func_bk[i] = this.last_valid_func_val[i];
+    else
+      this.func_bk.push(this.last_valid_func_val[i]); 
+  }
+}
+
+plotInput.incFunction = function() {
+  this.noOfFunc ++;
+  this.FunctionBk(); 
+  this.func_val = this.func_bk;
+  this.resetFuncTable();
+  this.syncToDocument();
+}
+
+plotInput.decFunction = function() {
+  this.noOfFunc --;
+  this.FunctionBk(); 
+  this.resetFuncTable();
+  this.syncToDocument();
+}
+
+plotInput.resetFuncTable = function() {
+  
+  var funcTable = document.getElementById( "func_table" );
+  if ( !func_table )
+    return;
+  if ( !this.noOfFunc || this.noOfFunc < 1 )
+    this.noOfFunc = 1;
+
+  // clear table
+  while (funcTable.firstChild) {
+    funcTable.removeChild(funcTable.firstChild);
+  }
+
+  // add lines of table
+  this.inputElemFunc = []
+  this.inputElemCol = []
+  for ( var i_func = 0; i_func < this.noOfFunc; ++ i_func ) {
+    var tr = document.createElement("tr");
+    func_table.appendChild(tr);
+    
+    // add button column
+    var tdBtn = document.createElement("td");
+    if ( i_func > 0 && i_func == this.noOfFunc - 1 ) {
+      var decBtn = document.createElement("input");
+      decBtn.setAttribute("type", "button");
+      decBtn.setAttribute("value", "-");
+      decBtn.setAttribute("onClick", "plotInput.decFunction();");
+      tdBtn.appendChild(decBtn);
+    }
+    tr.appendChild(tdBtn);
+   
+    // add text column
+    var tdTxt = document.createElement("td");
+    var txt = document.createTextNode("f" + i_func.toString() + "(x)");
+    tdTxt.appendChild(txt);
+    tr.appendChild(tdTxt);
+
+    // add input column
+    var tdInp = document.createElement("td");
+    var inp = document.createElement("input");
+    this.inputElemFunc.push( inp );
+    inp.setAttribute("type", "text");
+    inp.setAttribute("id", "func" + i_func.toString());
+    inp.setAttribute("style", "width:100%" );
+    inp.setAttribute("onchange", "plotInput.syncFromDocument();");
+    tdInp.appendChild(inp);
+    tdInp.setAttribute("style", "width:350px" );
+    tr.appendChild(tdInp);
+
+    // add col column
+    var tdCol = document.createElement("td");
+    var col = document.createElement("input");
+    this.inputElemCol.push( col );
+    col.setAttribute("type", "color");
+    inp.setAttribute("id", "col" + i_func.toString());
+    col.setAttribute("onchange", "plotInput.syncFromDocument();");
+    tdCol.appendChild(col);
+    tr.appendChild(tdCol);
+  }
+
+  // add colume with add button
+  var tr = document.createElement("tr");
+  func_table.appendChild(tr);
+  var tdBtn = document.createElement("td");
+  var incBtn = document.createElement("input");
+  incBtn.setAttribute("type", "button");
+  incBtn.setAttribute("value", "+");
+  incBtn.setAttribute("onClick", "plotInput.incFunction();");
+  tdBtn.appendChild(incBtn);
+  tr.appendChild(tdBtn);
+}
+
+plotInput.resetData = function() {
+  timing.init();
+  this.scale_val  = [2.0, 2.0];
+  this.offset_val = [-1.0, -1.0];
+  this.grid_val   = [0.2, 0.2];
+  this.func_val   = [ "pow(x, 1.5) + sin(x * 20.0) * 0.2 - 0.5" ];
+  this.col_val    = [ "#FF0000" ];
+  this.syncToDocument();
+}
+
+plotInput.syncToDocument = function() {
+  document.getElementById( "rangeX0" ).value = this.offset_val[0];
+  document.getElementById( "rangeX1" ).value = this.scale_val[0] + this.offset_val[0];
+  document.getElementById( "rangeY0" ).value = this.offset_val[1];
+  document.getElementById( "rangeY1" ).value = this.scale_val[1] + this.offset_val[1];
+
+  for ( var i_func = 0; i_func < this.noOfFunc; ++ i_func ) {
+    this.inputElemFunc[i_func].value = this.func_val.length > i_func ? this.func_val[i_func] : "";
+    this.inputElemCol[i_func].value = this.col_val.length > i_func ? this.col_val[i_func] : 0;
+  }
+  this.progValid = UpdatePlotShader( this.func_val );
+  
+  this.syncDocumentVals();
+}
+
+function FunctionCmpEQ( func_a, func_b ) {
+  if ( func_a.length != func_b.length )
+    return false;
+  for ( var i_func = 0; i_func < func_a.length; i_func ++ ) {
+    if ( func_a[i_func] != func_b[i_func] )
+      return false;
+  }
+  return true;
+}
+
+function CalcGridDist( range ) {
+  var cval = 1.0;
+  if ( range <= 1.0 ) {
+    while ( range * cval <= 1.0 ) {
+      cval *= 10.0;
+    }
+  } else {
+    var cval = 1.0;
+    while ( range * cval > 10.0 ) {
+      cval /= 10.0;
+    }
+  }
+  var dist = 1.0 / cval;
+  if ( range * cval <= 1.0 ) {
+    dist /= 10.0;
+  } else if ( range * cval <= 2.0 ) {
+    dist /= 5.0; 
+  } else if ( range * cval <= 5.0 ) {
+    dist /= 2.0;
+  }
+  return dist;
+}
+
+plotInput.syncFromDocument = function() {
+  var rangeX0 = document.getElementById( "rangeX0" ).value;
+  var rangeX1 = document.getElementById( "rangeX1" ).value;
+  var rangeY0 = document.getElementById( "rangeY0" ).value;
+  var rangeY1 = document.getElementById( "rangeY1" ).value;
+   
+  if ( !isNaN(rangeX0) && !isNaN(rangeX1) &&
+       !isNaN(rangeY0) && !isNaN(rangeY1) ) {
+    var x0 = parseFloat(rangeX0);
+    var x1 = parseFloat(rangeX1);
+    var y0 = parseFloat(rangeY0);
+    var y1 = parseFloat(rangeY1);
+    if ( x1 > x0 && y1 > y0 ) {
+      var dX = x1 - x0;
+      var dY = y1 - y0;
+      this.offset_val = [ x0, y0 ];
+      this.scale_val = [ dX, dY ];
+      this.grid_val = [ CalcGridDist(dX), CalcGridDist(dY) ];
+    }      
+  }
+
+  var func_input_val = [];
+  for ( var i_func = 0; i_func < this.noOfFunc; ++ i_func ) {
+    var inputFunc = this.inputElemFunc[i_func].value;
+    func_input_val.push( inputFunc != "" ? inputFunc : "0.0" );
+    var inputCol = this.inputElemCol[i_func].value;
+    if ( i_func < this.col_val.length )
+      this.col_val[i_func] = inputCol != "" ? inputCol : 0 ;
+    else  
+      this.col_val.push( inputCol != "" ? inputCol : "#000000" );
+  }
+  if ( func_input_val.length > 0 && !FunctionCmpEQ( func_input_val, this.last_valid_func_val ) ) {
+    this.last_valid_func_val = func_input_val;
+    this.progValid = UpdatePlotShader( func_input_val );  
+  }
+  this.syncDocumentVals();
+}
+
+plotInput.syncDocumentVals = function() {
+}
+
+var plot_download_request = false;
+var plotFB;
+function drawScene() {
+
+  plotInput.syncFromDocument();
+  timing.calcDeltaTimes();
+  var deltaTms = timing.deltaTimeAbsMs;
+
+  if ( plotShaderProgram.u_fX_color ) {
+    for ( var i_func = 0; i_func < plotShaderProgram.u_fX_color.length; ++ i_func ) {
+      var col_val = (plotInput.col_val && plotInput.col_val.length > i_func) ? plotInput.col_val[i_func] : "#000000";
+      var col = convertUtil.hexToRgb( col_val );
+      gl.uniform4fv( plotShaderProgram.u_fX_color[i_func], [col.r/255.0, col.g/255.0, col.b/255.0, 1.0] );
+    }
+  }
+  gl.uniform2fv( plotShaderProgram.u_scale,   plotInput.scale_val );
+  gl.uniform2fv( plotShaderProgram.u_offset,  plotInput.offset_val );
+  gl.uniform2fv( plotShaderProgram.u_grid,    plotInput.grid_val );
+  gl.uniform1f(  plotShaderProgram.u_time_ms, deltaTms );
+  
+  if ( plot_download_request ) {
+    if ( plotFB == undefined ) {
+      plotFB = gl_util.createTextureFB( false, gl.viewportWidth, gl.viewportHeight );
+    }
+    gl.bindFramebuffer( gl.FRAMEBUFFER, plotFB );
+    gl.activeTexture( gl.TEXTURE0 );
+    gl.bindTexture( gl.TEXTURE_2D, plotFB.color0_texture );
+    gl.framebufferTexture2D( gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, plotFB.color0_texture, 0 );
+  }
+  
+  draw2D.screenspace( gl, plotShaderProgram, true );
+
+  if ( plot_download_request ) {
+    plot_download_request = false;
+    
+    var w = plotFB.width;
+    var h = plotFB.height;
+    var readPixels = new Uint8Array( w * h * 4);
+    gl.readPixels( 0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, readPixels );
+    
+    gl.framebufferTexture2D( gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, null, 0 );
+    gl.bindFramebuffer( gl.FRAMEBUFFER, null );
+    gl.bindTexture( gl.TEXTURE_2D, null );
+
+    // flip Y
+    var pixels = new Uint8Array( w * h * 4);
+    for ( var i_x = 0; i_x < 4 * w; ++ i_x ) {
+      for ( var i_y = 0; i_y < h; ++ i_y ) {
+        var i_src = i_y * w * 4 + i_x;
+        var i_dest = (h - (i_y+1)) * w * 4 + i_x;
+        pixels[i_dest] = readPixels[i_src];
+      }
+    }
+
+    // download height map
+    
+    // create off-screen canvas element
+    var canvas = document.createElement( 'canvas' );
+    var ctx = canvas.getContext('2d');
+    canvas.width = w;
+    canvas.height = h;
+    
+    // create imageData object
+    var idata = ctx.createImageData( w, h );
+    // set our buffer as source
+    idata.data.set( pixels );
+
+    // update canvas with new data
+    ctx.putImageData( idata, 0, 0 );
+    var dataUri = canvas.toDataURL(); // produces a PNG file
+
+    // download height map png
+    // (download_file.js) http://danml.com/download.html
+    download_file( dataUri, 'plot.png' );
+
+    // cleanup
+    canvas.remove();
+  }
+}
+
+function downloadPlot(e) {
+  plot_download_request = true;
+}
+
+function webGLStart() {
+  var canvas = document.getElementById( "fire-shader-canvas" );
+  gl_util.init( canvas );
+  gl.clearColor(1.0, 1.0, 1.0, 1.0);
+  plotInput.init();
+  setInterval(drawScene, 50);
+}
+</script>
+
+<body onload="webGLStart();">
+
+    <div style="margin-left: 520px;">
+        <div style="float: right; width: 100%; background-color: #CCF;">
+            <form name="inputs">
+
+                <table>
+                    <tr> <td> <input type="button" value="download plot" id="download" onClick="downloadPlot()" /> </td> </tr> 
+                </table>
+
+                <table>
+                    <tr> <td> range X [ </td> 
+                         <td> <input type="type" id="rangeX0" onchange="plotInput.syncFromDocument();" /> ,
+                              <input type="type" id="rangeX1" onchange="plotInput.syncFromDocument();" /> ] </td> </tr>
+                    <tr> <td> range Y [ </td> 
+                         <td> <input type="type" id="rangeY0" onchange="plotInput.syncFromDocument();" /> ,
+                              <input type="type" id="rangeY1" onchange="plotInput.syncFromDocument();" /> ] </td> </tr>
+                </table>
+                <table id="func_table"></table>
+            </form>
+        </div>
+        <div style="float: right; width: 520px; margin-left: -520px; background-color: #FFA;">
+            <canvas id="fire-shader-canvas" style="border: none;" width="512" height="512"></canvas>
+        </div>
+        <div style="clear: both;"></div>
+    </div>
+</body>

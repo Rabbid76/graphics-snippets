@@ -1,0 +1,1043 @@
+<script type="text/javascript" src="web_gl_utils.js"></script>
+<script type="text/javascript" src="download_file.js"></script>
+
+<script type="text/javascript">
+
+var shader_frag = {
+type : "frag",
+code : [
+glsl.fragment_shader.std_head,
+glsl.ADS_enhanced,
+glsl.tangent_space,
+glsl.steep_parallax,
+
+"uniform float u_time_ms; \n" +
+"uniform int   u_texture_mode; \n" +
+"uniform vec4  u_draw_color; \n" +
+"uniform sampler2D u_textureSampler; \n" +
+
+"void main() \n" +
+"{ \n" +
+"  vec3 esPt = vec3( vPosEs ); \n" +
+"  vec3 esPtNV = normalize( vNvEs ); \n" +
+"  vec2 texC = vTexCoord.xy; \n" +
+  
+"  mat3  tbnMat    = TBN( esPt, esPtNV, texC ); \n" +
+"  mat3  tbnMatInv = mat3_inverse( tbnMat ); \n" +
+"  //mat3  tbnMatInv = inverseTBN( esPt, esPtNV, texC );  // does not work propper \n" +
+"  vec3  fragNV    = esPtNV * ( esPtNV.z > 0.0 ? 1.0 : -1.0 ); \n" +
+"  vec4  drawCol   = u_draw_color; \n" +
+
+"  if ( u_texture_mode == 1 ) \n" +
+"  { \n" +
+"    vec3  texDir3D  = normalize( tbnMatInv * esPt ); \n" +
+"    vec2  texC_pa   = SteepParallax( texDir3D, texC ); \n" +
+"    fragNV          = tbnMat * CalculateNormal( texC_pa ); \n" +
+"    drawCol         = texture2D( u_textureSampler, texC_pa ); \n" +
+"  } \n" +
+
+"  vec3 tangent = cross( tbnMat[1], esPtNV ); \n" +
+"  vec3 fragCol = ADS( esPt, fragNV, tangent, drawCol, drawCol, vec4( drawCol.rgb * u_specularMaterial.rgb, 1.0 ) ); \n" +
+  
+"  gl_FragColor = vec4( fragCol, 1.0 ); \n" +
+"} \n"
+] };
+
+
+var heightmap_shader_frag = {
+type : "frag",
+code : [
+glsl.fragment_shader.std_head,
+
+"uniform sampler2D u_textureSampler; \n" +
+"uniform int u_invert; \n" +
+"uniform float u_minimum; \n" +
+"uniform float u_maximum; \n" +
+"uniform float u_exponent; \n" +
+"uniform float u_edge; \n" +
+"uniform vec3 u_color_weight; \n" +
+"\n" +
+"void main( void ) \n" +
+"{ \n" +
+"  vec2 texC    = vTexCoord.xy; \n" +
+"  vec4 fragCol = texture2D( u_textureSampler, texC ); \n" +
+"\n" +
+"  // map RGB to height (use RED-, GREEN- and BLUE-WEIGHT) \n" +
+"  float colorSum = abs( u_color_weight.r ) + abs( u_color_weight.g ) + abs( u_color_weight.b ); \n" +
+"  float r = (u_color_weight.r < 0.0) ? abs( u_color_weight.r ) * (1.0- fragCol.r) : u_color_weight.r * fragCol.r; \n" +
+"  float g = (u_color_weight.g < 0.0) ? abs( u_color_weight.g ) * (1.0- fragCol.g) : u_color_weight.g * fragCol.g; \n" +
+"  float b = (u_color_weight.b < 0.0) ? abs( u_color_weight.b ) * (1.0- fragCol.b) : u_color_weight.b * fragCol.b; \n" +
+"  float height = colorSum <= 0.0 ? 0.0 : ( r + g + b ) / colorSum; \n" +
+"\n" +
+"	 // 1. clamp height by MIN and MAX \n" +
+"	 // 2. map [MIN, MAX] to [-1.0, 1.0] \n" +
+"	 // 3. height ^ EXPONENT \n" +
+"	 // 4. map [-1.0, 1.0] to [0.0, 1.0] \n" +
+"\n" +
+"  height = clamp( ( height - u_minimum ) / ( u_maximum - u_minimum ), 0.0, 1.0 ); \n" +
+"  height = height * 2.0 - 1.0; \n" +
+"  height = pow( abs( height ), u_exponent ) * sign( height ); \n" +
+"  height = height * 0.5 + 0.5; \n" +
+"\n" +
+"  // toon edge \n " +
+"  float toonFac = 255.0 / ( 1.0 + 254.0 * u_edge ); \n" +
+"  height = floor( height * toonFac + 0.5 ) / toonFac; \n" +
+"\n" +
+"  gl_FragColor = vec4( vec3( clamp( (u_invert == 1) ? (1.0 - height) : height, 0.0, 1.0 ) ), 1.0 ); \n" +
+"} \n"
+] };
+
+
+var gaussMin = gl_util.isIE() ? "-7" : "-15";
+var gaussMax = gl_util.isIE() ? "8" : "16";
+var blur_shader_frag = {
+type : "frag",
+code : [
+glsl.fragment_shader.std_head,
+
+"uniform sampler2D u_textureSampler; \n" +
+"uniform vec2 u_map_tex_size; \n" +
+"uniform float u_sigma; \n" +
+"\n" +
+"float gaussf( float x, float sigma2 ) \n" +
+"{ \n" +
+"  float coeff = 1.0 / (2.0 * 3.14157 * sigma2); \n" +
+"  float exponent = -(x*x) / (2.0 * sigma2); \n" +
+"  return coeff * exp(exponent); \n" +
+"} \n" +
+"\n" +
+"void main( void ) \n" +
+"{ \n" +
+"  vec2 texC    = vTexCoord.xy; \n" +
+"  float height = texture2D( u_textureSampler, texC ).x; \n" +
+"\n" +
+"  if ( u_sigma > 0.01 ) \n" +
+"  { \n" +
+"    vec2 p_size = 1.0 / u_map_tex_size; \n" +
+"    float sigma2 = u_sigma * u_sigma; \n" +
+"    float sum = gaussf( 0.0, sigma2 ); \n" +
+"    height *= sum; \n" +
+"    for( int i_x = " + gaussMin + "; i_x < " + gaussMax + "; ++ i_x ) \n" +
+"    { \n" +
+"      for ( int i_y = " + gaussMin + "; i_y < " + gaussMax + "; ++ i_y ) \n" +
+"      { \n" +
+"        vec2 sample_v = vec2( float(i_x), float(i_y) ); \n" +
+"        float w_x = length( sample_v ); \n" +
+"        if ( w_x > 15.0 ) \n" +
+"          continue; \n" +
+"        vec2 texC_blur = texC + p_size * sample_v; \n" +
+"        vec2 rangeTest = step( vec2( 0.0, 0.0 ), texC_blur.xy ) * step( texC_blur.xy, vec2( 1.0, 1.0 ) ); \n" +
+"        if ( rangeTest.x * rangeTest.y < 0.5 ) \n" +
+"          continue; \n " +
+"        float weight = gaussf( w_x, sigma2 ); \n" +
+"        float weight2 = weight * weight; \n" +
+"        height += weight * texture2D( u_textureSampler, texC_blur ).x; \n" +
+"        sum += weight; \n" +
+"      } \n" +
+"    } \n" +
+"    height /= sum; \n" +
+"  } \n" +
+"\n" +
+"  gl_FragColor = vec4( vec3( clamp( height, 0.0, 1.0 ) ), 1.0 ); \n" +
+"} \n"
+] };
+
+
+var screenspace_shader_frag = {
+type : "frag",
+code : [
+glsl.fragment_shader.std_head,
+
+"uniform sampler2D u_textureSampler; \n" +
+
+"void main( void ) \n" +
+"{ \n" +
+"  vec2 texC    = vTexCoord.xy; \n" +
+"  vec4 fragCol = texture2D( u_textureSampler, texC ); \n" +
+"  gl_FragColor = vec4( fragCol.xyz, 1.0 ); \n" +
+"} \n"
+] };
+
+  function initVertexAttributesAndDefaultUniforms( prog, texCoords, skinAttribs ) {
+    
+    prog.aVertPos = gl_util.linkBufferLocation( prog, "aVertPos" );
+    prog.aNormalVec = gl_util.linkBufferLocation( prog, "aNormalVec" );
+    if ( texCoords && texCoords != 0 )
+      prog.aTexCoord = gl_util.linkBufferLocation( prog, "aTexCoord" );
+    if ( skinAttribs && skinAttribs != 0 ) {
+      prog.aSkinIndex = gl_util.linkBufferLocation( prog, "aSkinIndex" );
+      prog.aSkinWeight = gl_util.linkBufferLocation( prog, "aSkinWeight" );
+    }
+
+    prog.u_matModelView   = gl.getUniformLocation( prog, "u_matModelView" );
+    prog.u_matNormal      = gl.getUniformLocation( prog, "u_matNormal" );
+    prog.u_matProjection  = gl.getUniformLocation( prog, "u_matProjection" );
+  }
+
+  function initHeightmapFragmentUniforms( prog ) {
+    prog.u_textureSampler = gl.getUniformLocation( prog, "u_textureSampler" );
+    prog.u_invert         = gl.getUniformLocation( prog, "u_invert" );
+    prog.u_minimum        = gl.getUniformLocation( prog, "u_minimum" );
+    prog.u_maximum        = gl.getUniformLocation( prog, "u_maximum" );
+    prog.u_exponent       = gl.getUniformLocation( prog, "u_exponent" );
+    prog.u_edge           = gl.getUniformLocation( prog, "u_edge" );
+    prog.u_color_weight   = gl.getUniformLocation( prog, "u_color_weight" );
+  }
+
+  function initBlurFragmentUniforms( prog ) {
+    prog.u_textureSampler = gl.getUniformLocation( prog, "u_textureSampler" );
+    prog.u_map_tex_size   = gl.getUniformLocation( prog, "u_map_tex_size" );
+    prog.u_sigma          = gl.getUniformLocation( prog, "u_sigma" );
+  }
+
+  function initScreenspaceFragmentUniforms( prog ) {
+    prog.u_textureSampler = gl.getUniformLocation( prog, "u_textureSampler" );
+  }
+
+  function initFragmentUniforms( prog ) {
+
+    prog.u_textureSampler = gl.getUniformLocation( prog, "u_textureSampler" );
+    prog.u_heightSampler  = gl.getUniformLocation( prog, "u_heightSampler" );
+    prog.u_normalSampler  = gl.getUniformLocation( prog, "u_normalSampler" );
+    
+    prog.u_time_ms        = gl.getUniformLocation( prog, "u_time_ms" );
+    prog.u_mask_mode      = gl.getUniformLocation( prog, "u_mask_mode" );
+    prog.u_hm_to_nm_mode  = gl.getUniformLocation( prog, "u_hm_to_nm_mode" );
+    prog.u_texture_mode   = gl.getUniformLocation( prog, "u_texture_mode" );
+    prog.u_map_tex_size   = gl.getUniformLocation( prog, "u_map_tex_size" );
+    prog.u_draw_color     = gl.getUniformLocation( prog, "u_draw_color" );
+    prog.u_bump_scale     = gl.getUniformLocation( prog, "u_bump_scale" );
+    prog.u_quality        = gl.getUniformLocation( prog, "u_quality" );
+
+    prog.u_rim_lighting   = gl.getUniformLocation( prog, "u_rim_lighting" );
+    prog.u_positionLight0 =  gl.getUniformLocation( prog, "u_positionLight0" ); 
+  
+    prog.u_material_shininess       = gl.getUniformLocation( prog, "u_material_shininess" );
+    prog.u_material_roughness       = gl.getUniformLocation( prog, "u_material_roughness" );
+    prog.u_material_specular        = gl.getUniformLocation( prog, "u_material_specular" );
+    prog.u_material_specular_tint   = gl.getUniformLocation( prog, "u_material_specular_tint" );
+    prog.u_material_fresnel_0       = gl.getUniformLocation( prog, "u_material_fresnel_0" );
+    prog.u_material_metallic        = gl.getUniformLocation( prog, "u_material_metallic" );
+    prog.u_material_sheen           = gl.getUniformLocation( prog, "u_material_sheen" );
+    prog.u_material_sheen_tint      = gl.getUniformLocation( prog, "u_material_sheen_tint" );
+    prog.u_material_anisotropic     = gl.getUniformLocation( prog, "u_material_anisotropic" );
+    prog.u_material_subsurface      = gl.getUniformLocation( prog, "u_material_subsurface" );
+    prog.u_material_clearcoat       = gl.getUniformLocation( prog, "u_material_clearcoat" );
+    prog.u_material_clearcoat_gloss = gl.getUniformLocation( prog, "u_material_clearcoat_gloss" );
+  }  
+
+  var heightmapShaderProgram;
+  var blurShaderProgram;
+  var screenspaceShaderProgram;
+  var shaderProgram;
+  var iGlobalTimeLocation;
+  var startTime;
+
+  function initShaders() {
+
+    // heightmap shader
+
+    heightmapShaderProgram = gl_util.use_new_vs_fs( glsl.vertex_shader.screenspace, heightmap_shader_frag );
+    glsl.vertex_shader.link_uniforms( heightmapShaderProgram );
+    initHeightmapFragmentUniforms( heightmapShaderProgram );
+
+    // blur shader
+
+    blurShaderProgram = gl_util.use_new_vs_fs( glsl.vertex_shader.screenspace, blur_shader_frag );
+    glsl.vertex_shader.link_uniforms( blurShaderProgram );
+    initBlurFragmentUniforms( blurShaderProgram ); 
+
+    // screenspace shader
+
+    screenspaceShaderProgram = gl_util.use_new_vs_fs( glsl.vertex_shader.std_2D, screenspace_shader_frag );
+    glsl.vertex_shader.link_uniforms( screenspaceShaderProgram );
+    initScreenspaceFragmentUniforms( screenspaceShaderProgram ); 
+
+    // default shader
+
+    shaderProgram = gl_util.use_new_vs_fs( glsl.vertex_shader.std, shader_frag );
+    glsl.vertex_shader.link_uniforms( shaderProgram );
+    initFragmentUniforms( shaderProgram ); 
+  }
+  
+  var arrowLen = 1.5;
+  var arrowRad = 0.05;
+  var peakLen = 0.5;
+  var peakRad = 0.1;
+  var res = 16;
+  
+  var meshQuad;
+  var meshSphere;
+  var meshTorus;
+  var meshTrefoilKnot;
+  var meshTorusKnot;
+  var meshArrow;
+  function initBuffers() {
+    
+    meshQuad = mesh.createQuad();
+    mesh.createBuffer( meshQuad );
+    meshSphere = mesh.createSphere( 90, 45, mesh.SOLID );
+    mesh.createBuffer( meshSphere );
+    meshTorus = mesh.createTorus( 32, 64, 0.7, 0.3, mesh.SOLID );
+    mesh.createBuffer( meshTorus );
+    meshTrefoilKnot = mesh.createTrefoilKnot( 256, 32, mesh.SOLID );
+    mesh.createBuffer( meshTrefoilKnot );
+    meshTorusKnot = mesh.createTorusKnot( 512, 32, mesh.SOLID, 3, 7 );
+    mesh.createBuffer( meshTorusKnot );
+
+    meshArrow = mesh.createArrowVolume( arrowLen, arrowRad, peakLen, peakRad, res );
+    mesh.createBuffer( meshArrow );
+  }
+
+  function pauseMotion() {
+    timing.togglePause();
+  }
+
+  var mesh_gemoetry = {};
+  mesh_gemoetry.NON = 0;
+  mesh_gemoetry.plane = 1;
+  mesh_gemoetry.sphere = 2;
+  mesh_gemoetry.torus = 3;
+  mesh_gemoetry.trefoil_knot = 4;
+  mesh_gemoetry.torus_knot = 5;
+  
+  var height_invert;
+  var height_minimum;
+  var height_maximum;
+  var height_exponent;
+  var height_edge;
+  var height_blur;
+  var height_red;
+  var height_green;
+  var height_blue;
+  var zoom_factor;
+  var light_direction;
+  var position_light0 = [ 1.0, 1.0, 2.0, 0.0 ];
+  var geometry_shape;
+  var parallax_scale;
+  var parallax_quality;
+  var rim_lighting;
+  var material_fresnel_0 = { val : 0.0 };
+  var material_specular;
+  var material_specular_tint;
+  var material_roughness;
+  var material_metallic;
+  var material_sheen;
+  var material_sheen_tint;
+  var material_anisotropic;
+  var material_subsurface;
+  var material_clearcoat;
+  var material_clearcoat_gloss;
+  var image_file_name;
+  var new_texture_loaded = false;
+  var heightmap_download_request = false;
+  var texture_mode_val = 0;
+  
+  var data_exchange = [];
+  var sliderScale = 100.0;
+  var bumpSliderScale = 1000.0;
+
+  function roughness_to_shininess( m ) {
+    return ( 2.0 / ( m * m ) ) - 2.0;
+  }
+
+  function shininess_to_roughness( sh ) {
+    return Math.sqrt( 2.0 / ( sh + 2.0 ) ); // m^2 = 2.0 / ( shininess + 2.0 )
+  } 
+
+  function init_doc_data_exchange() {
+
+    // heightmap
+    height_invert = doc_data_exchange.create_check( document, "height_invert", 0 );
+    data_exchange.push( height_invert );
+    height_minimum = doc_data_exchange.create_val( document, "height_minimum", 0.0, sliderScale, "height_minimum_val" );
+    data_exchange.push( height_minimum );
+    height_maximum = doc_data_exchange.create_val( document, "height_maximum", 1.0, sliderScale, "height_maximum_val" );
+    data_exchange.push( height_maximum );
+    height_exponent = doc_data_exchange.create_val( document, "height_exponent", 1.0, 100.0, "height_exponent_val" );
+    height_exponent.mapFrom = function( val ) {
+      return Math.pow( val, 2.0 ) * 10.0;
+    }
+    height_exponent.mapTo = function( val ) {
+      return Math.sqrt( val / 10.0 );
+    }
+    height_exponent.fix = 2;
+    data_exchange.push( height_exponent );
+    height_edge = doc_data_exchange.create_val( document, "height_edge", 0.0, sliderScale, "height_edge_val" );
+    data_exchange.push( height_edge );
+    height_blur = doc_data_exchange.create_val( document, "height_blur", 0.0, 10.0, "height_blur_val" );
+    data_exchange.push( height_blur );
+    height_red = doc_data_exchange.create_val( document, "height_red", 0.2126, sliderScale, "height_red_val" );
+    height_red.mapFrom = function( val ) {
+      return val * 2.0 - 1.0;
+    }
+    height_red.mapTo = function( val ) {
+      return val * 0.5 + 0.5;
+    }
+    height_red.fix = 2;
+    data_exchange.push( height_red );
+    height_green = doc_data_exchange.create_val( document, "height_green", 0.7152, sliderScale, "height_green_val" );
+    height_green.mapFrom = function( val ) {
+      return val * 2.0 - 1.0;
+    }
+    height_green.mapTo = function( val ) {
+      return val * 0.5 + 0.5;
+    }
+    height_green.fix = 2;
+    data_exchange.push( height_green );
+    height_blue = doc_data_exchange.create_val( document, "height_blue",  0.0722, sliderScale, "height_blue_val" );
+    height_blue.mapFrom = function( val ) {
+      return val * 2.0 - 1.0;
+    }
+    height_blue.mapTo = function( val ) {
+      return val * 0.5 + 0.5;
+    }
+    height_blue.fix = 2;
+    data_exchange.push( height_blue );
+    
+    // navigation
+    zoom_factor = doc_data_exchange.create_val( document, "zoom", 0.5, sliderScale );
+    data_exchange.push( zoom_factor );
+    light_direction = doc_data_exchange.create_check( document, "light_direction", 0 );
+    data_exchange.push( light_direction );
+    
+    // geometry settings
+    geometry_shape = doc_data_exchange.create_val( document, "geometry", mesh_gemoetry.sphere );
+    data_exchange.push( geometry_shape );
+    parallax_scale = doc_data_exchange.create_val( document, "bumpscale", 0.02, bumpSliderScale, "bumpscale_val" );
+    data_exchange.push( parallax_scale );
+    parallax_quality = doc_data_exchange.create_val( document, "quality", 50.0, 1.0, "quality_val" );
+    data_exchange.push( parallax_quality );
+
+    // light settings
+    rim_lighting = doc_data_exchange.create_check( document, "rim_lighting", 1 );
+    data_exchange.push( rim_lighting );
+    material_specular = doc_data_exchange.create_val( document, "specular", 0.5, sliderScale, "specular_val" );
+    data_exchange.push( material_specular );
+    material_specular_tint = doc_data_exchange.create_val( document, "specular_tint", 0.5, sliderScale, "specular_tint_val" );
+    data_exchange.push( material_specular_tint );
+    material_roughness = doc_data_exchange.create_val( document, "roughness", 0.5, sliderScale, "roughness_val" );
+    material_roughness.fix = 2;
+    material_roughness.onView = function() {
+      this.shininess = roughness_to_shininess( this.val );
+      document.getElementById( "shininess_val" ).innerHTML = this.shininess.toFixed(2);
+    }
+    data_exchange.push( material_roughness );
+    material_metallic = doc_data_exchange.create_val( document, "metallic", 0.0, sliderScale, "metallic_val" );
+    data_exchange.push( material_metallic );
+    material_sheen = doc_data_exchange.create_val( document, "sheen", 0.5, sliderScale, "sheen_val" );
+    data_exchange.push( material_sheen );
+    material_sheen_tint = doc_data_exchange.create_val( document, "sheen_tint", 0.5, sliderScale, "sheen_tint_val" );
+    data_exchange.push( material_sheen_tint );
+    material_anisotropic = doc_data_exchange.create_val( document, "anisotropic", 0.0, sliderScale, "anisotropic_val" );
+    data_exchange.push( material_anisotropic );
+    material_subsurface = doc_data_exchange.create_val( document, "subsurface", 0.0, sliderScale, "subsurface_val" );
+    data_exchange.push( material_subsurface );
+    material_clearcoat = doc_data_exchange.create_val( document, "clearcoat", 0.5, sliderScale, "clearcoat_val" );
+    data_exchange.push( material_clearcoat );
+    material_clearcoat_gloss = doc_data_exchange.create_val( document, "clearcoat_gloss", 0.5, sliderScale, "clearcoat_gloss_val" );
+    data_exchange.push( material_clearcoat_gloss );
+   } 
+
+  function resetHeightData() {
+    height_invert.val = height_invert.init_val;
+    height_minimum.val = height_minimum.init_val;
+    height_maximum.val = height_maximum.init_val;
+    height_exponent.val = height_exponent.init_val;
+    height_edge.val = height_edge.init_val;
+    height_blur.val = height_blur.init_val;
+    resetHeightRGBData();
+  }
+
+  function resetHeightRGBData() { 
+    height_red.val = height_red.init_val;
+    height_green.val = height_green.init_val;
+    height_blue.val = height_blue.init_val;
+    syncToDocument();
+    syncFromDocument();
+    updateHeightMap = true;
+  }
+
+  function resetData() {
+
+    parallax_scale.val = parallax_scale.init_val;
+    parallax_quality.val = parallax_quality.init_val;
+
+    material_specular.val = material_specular.init_val;
+    material_specular_tint.val = material_specular_tint.init_val;
+    material_roughness.val = material_roughness.init_val;
+    material_roughness.shininess = roughness_to_shininess( material_roughness.val );
+    material_metallic.val = material_metallic.init_val;
+    material_sheen.val = material_sheen.init_val;
+    material_sheen_tint.val = material_sheen_tint.init_val;
+    material_anisotropic.val = material_anisotropic.init_val;
+    material_subsurface.val = material_subsurface.init_val;
+    material_clearcoat.val = material_clearcoat.init_val;
+    material_clearcoat_gloss.val = material_clearcoat_gloss.init_val;
+    
+    syncToDocument();
+  }
+
+  function syncToDocument() {
+    for ( var i_d = 0; i_d < data_exchange.length; ++ i_d ) {
+      data_exchange[i_d].set();
+    }
+  }
+
+  function syncFromDocument() {
+    for ( var i_d = 0; i_d < data_exchange.length; ++ i_d ) {
+      data_exchange[i_d].get();
+    } 
+  }
+
+  var updateHeightMap = false;
+  function syncHeightFromDocument() {
+    syncFromDocument();
+    updateHeightMap = true;
+  }
+
+  var baseTexture;
+  var heightTexture;
+  var normalTexture;
+  function initTextures() {
+    //baseTexture   = gl_util.loadTexture2D( 'TexturesCom_Polished_Bronze_albedo_S.bmp' );
+    //heightTexture = gl_util.loadTexture2D( 'TexturesCom_Polished_Bronze_normalmap_S.bmp' );
+    //normalTexture = gl_util.loadTexture2D( 'TexturesCom_Polished_Bronze_normalmap_S.bmp' );
+  }  
+
+  
+  var heightmapFB_0;
+  var heightmapFB;
+  function setUniforms( prog ) {
+
+    if ( texture_mode_val ) {
+      gl_util.useTexture2D( 1, baseTexture, prog.u_textureSampler );
+      gl_util.useTexture2D( 2, heightTexture, prog.u_heightSampler );
+      //gl_util.useTexture2D( 3, normalTexture, prog.u_normalSampler );
+    }
+    
+    gl.uniform1f( prog.u_time_ms, timing.pastTms() );
+    gl.uniform1i( prog.u_rim_lighting, rim_lighting.val );
+    gl.uniform1i( prog.u_mask_mode, 0 );
+    gl.uniform1i( prog.u_hm_to_nm_mode, 1 );
+    gl.uniform2fv( prog.u_map_tex_size, ( heightmapFB == undefined ) ? [ 0, 0 ] : [ heightmapFB.width, heightmapFB.height ] );
+    gl.uniform1i( prog.u_texture_mode, texture_mode_val );
+    gl.uniform4fv( prog.u_draw_color, [ 0.9, 0.25, 0.35, 1.0 ] );
+    gl.uniform1f( prog.u_bump_scale, parallax_scale.val);
+    gl.uniform1f( prog.u_quality, parallax_quality.val );
+    gl.uniform1f( prog.u_material_shininess, material_roughness.shininess );
+    gl.uniform1f( prog.u_material_roughness, material_roughness.val );
+    gl.uniform1f( prog.u_material_specular, material_specular.val );
+    gl.uniform1f( prog.u_material_specular_tint, material_specular_tint.val );
+    gl.uniform4fv( prog.u_positionLight0, position_light0 );
+    gl.uniform1f( prog.u_material_fresnel_0, material_fresnel_0.val );
+    gl.uniform1f( prog.u_material_metallic, material_metallic.val );
+    gl.uniform1f( prog.u_material_sheen, material_sheen.val );
+    gl.uniform1f( prog.u_material_sheen_tint, material_sheen_tint.val );
+    gl.uniform1f( prog.u_material_anisotropic, material_anisotropic.val );
+    gl.uniform1f( prog.u_material_subsurface, material_subsurface.val );
+    gl.uniform1f( prog.u_material_clearcoat, material_clearcoat.val );
+    gl.uniform1f( prog.u_material_clearcoat_gloss, material_clearcoat.val );
+ }
+
+ function UpdateHeightmapTexture() {
+
+   if ( new_texture_loaded == true ) {
+     new_texture_loaded = false;
+     
+     // delete old framebuffer
+     if ( heightTexture != undefined ) {
+       gl.deleteTexture( heightTexture );
+       delete heightTexture;
+     }
+     if ( heightmapFB_0 != undefined ) {
+       gl_util.deleteFB( heightmapFB_0 );
+       delete heightmapFB_0;
+     }
+     if ( heightmapFB != undefined ) {
+       gl_util.deleteFB( heightmapFB );
+       delete heightmapFB;
+     }
+
+     // create new frambuffer with size of new texture
+     heightmapFB_0 = gl_util.createTextureFB( false, baseTexture.image.width, baseTexture.image.height );
+     heightmapFB = gl_util.createTextureFB( false, baseTexture.image.width, baseTexture.image.height );
+     heightTexture = heightmapFB.color0_texture;
+     heightmapFB.color0_texture = null;
+   }
+   
+   // creat new heightmap texture
+   updateHeightMap = false;
+   
+   // setup viewport
+   gl.viewport( 0, 0, heightmapFB.height, heightmapFB.width );
+   // disable depth test
+   gl.disable( gl.DEPTH_TEST );
+   // setup heightmap framebuffer
+   gl.bindFramebuffer( gl.FRAMEBUFFER, heightmapFB_0 );
+   // clear heightmap frambuffer color plane
+   gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
+   gl.clear( gl.COLOR_BUFFER_BIT );
+   // setup heightmap construction shader
+   gl_util.useProgram( heightmapShaderProgram );
+   gl.uniformMatrix4fv( heightmapShaderProgram.u_matTexture, false, heightmapShaderProgram.mat4_std_tex );
+   gl_util.useTexture2D( 1, baseTexture, heightmapShaderProgram.u_textureSampler );
+   gl.uniform1i( heightmapShaderProgram.u_invert, height_invert.val );
+   gl.uniform1f( heightmapShaderProgram.u_minimum, height_minimum.val );
+   gl.uniform1f( heightmapShaderProgram.u_maximum, height_maximum.val );
+   gl.uniform1f( heightmapShaderProgram.u_exponent, height_exponent.val );
+   gl.uniform1f( heightmapShaderProgram.u_edge, height_edge.val );
+   gl.uniform3fv( heightmapShaderProgram.u_color_weight, [ height_red.val, height_green.val, height_blue.val ] );
+   // draw screen space
+   mesh.draw( meshQuad, heightmapShaderProgram.aVertPos, heightmapShaderProgram.aNormalVec, heightmapShaderProgram.aTexCoord );
+   // setup blur framebuffer
+   gl.bindFramebuffer( gl.FRAMEBUFFER, heightmapFB );
+   gl.activeTexture( gl.TEXTURE0 );
+   gl.bindTexture( gl.TEXTURE_2D, heightTexture );
+   gl.framebufferTexture2D( gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, heightTexture, 0 );
+   // clear blur frambuffer color plane (clear the heightmap texture)
+   gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
+   gl.clear( gl.COLOR_BUFFER_BIT );
+   // disable depth test
+   gl.disable( gl.DEPTH_TEST );
+   // setup blur shader
+   gl_util.useProgram( blurShaderProgram );
+   gl.uniformMatrix4fv( blurShaderProgram.u_matTexture, false, blurShaderProgram.mat4_std_tex );
+   gl_util.useTexture2D( 1, heightmapFB_0.color0_texture, blurShaderProgram.u_textureSampler );
+   gl.uniform2fv( blurShaderProgram.u_map_tex_size, [ heightmapFB.width, heightmapFB.height ] );
+   gl.uniform1f( blurShaderProgram.u_sigma, height_blur.val );
+   // draw screen space
+   mesh.draw( meshQuad, blurShaderProgram.aVertPos, blurShaderProgram.aNormalVec, blurShaderProgram.aTexCoord );
+   // unbinde framebuffer
+   gl.framebufferTexture2D( gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, null, 0 );
+   gl.bindFramebuffer( gl.FRAMEBUFFER, null );
+   gl.bindTexture( gl.TEXTURE_2D, null );
+ }
+
+ function load_new_image( new_image_name ) {
+
+    texture_mode_val = 0;
+
+    // delete old image
+    if ( baseTexture != undefined ) {
+      gl.deleteTexture( baseTexture );
+      delete baseTexture;
+    }
+
+    // create new texture object
+    baseTexture = gl.createTexture();
+
+    // create image
+    baseTexture.image = new Image();
+    baseTexture.image.setAttribute('crossorigin', 'anonymous');
+    //texture.image = document.createElement('img');
+    baseTexture.image.onload = function () {
+        gl_util.handleLoadedTexture2D( baseTexture.image, baseTexture )
+        //alert("image is loaded");
+        texture_mode_val = ( baseTexture == undefined ) ? 0 : 1; 
+        new_texture_loaded = texture_mode_val == 1;
+        var image_view = document.getElementById( "bitmap_image" );
+        if ( image_view != undefined )
+          image_view.src = baseTexture.image.src;
+    }
+    baseTexture.image.src = URL.createObjectURL( new_image_name );
+  }
+
+  function DownloadHeightmapTexture() {
+    heightmap_download_request = false;
+    if ( heightmapFB == undefined )
+      return;
+
+    var w = heightmapFB.width;
+    var h = heightmapFB.height;
+    //var pixels = new Uint8ClampedArray( w * h * 4);
+    var pixels = new Uint8Array( w * h * 4);
+    
+    // setup heightmap framebuffer
+    gl.bindFramebuffer( gl.FRAMEBUFFER, heightmapFB );
+    gl.activeTexture( gl.TEXTURE0 );
+    gl.bindTexture( gl.TEXTURE_2D, heightTexture );
+    gl.framebufferTexture2D( gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, heightTexture, 0 );
+    // load heightmap pixels from frambuffer
+    // https://www.khronos.org/registry/webgl/specs/latest/1.0/#5.14.12
+    gl.readPixels( 0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, pixels );
+    // unbinde framebuffer
+    gl.framebufferTexture2D( gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, null, 0 );
+    gl.bindFramebuffer( gl.FRAMEBUFFER, null );
+    gl.bindTexture( gl.TEXTURE_2D, null );
+
+    // download height map
+    
+    // create off-screen canvas element
+    var canvas = document.createElement( 'canvas' );
+    var ctx = canvas.getContext('2d');
+    canvas.width = w;
+    canvas.height = h;
+    
+    // create imageData object
+    var idata = ctx.createImageData( w, h );
+    // set our buffer as source
+    idata.data.set( pixels );
+
+    // update canvas with new data
+    ctx.putImageData( idata, 0, 0 );
+    var dataUri = canvas.toDataURL(); // produces a PNG file
+
+    var hm_image_view = document.getElementById( "height_map_image" );
+    if ( hm_image_view != undefined )
+      hm_image_view.src = dataUri;
+ 
+    // download height map png
+    // (download_file.js) http://danml.com/download.html
+    download_file( dataUri, 'heightmap.png' );
+
+    // cleanup
+    canvas.remove();
+  }
+
+  function drawScene() {
+
+    // load new image
+    if ( texture_mode_val == 1 && 
+         ( new_texture_loaded == true || updateHeightMap == true ) ) {
+      UpdateHeightmapTexture();
+    }
+
+    // downlad heightmap
+    if (  texture_mode_val == 1 && heightmap_download_request == true ) {
+      DownloadHeightmapTexture();
+    }
+
+    // setup mesh
+    var me;
+    if ( geometry_shape.val == mesh_gemoetry.plane )
+      me = meshQuad;
+    else if ( geometry_shape.val == mesh_gemoetry.sphere )
+      me = meshSphere;
+    else if ( geometry_shape.val == mesh_gemoetry.torus )
+      me = meshTorus;
+    else if ( geometry_shape.val == mesh_gemoetry.trefoil_knot )
+      me = meshTrefoilKnot;
+    else if ( geometry_shape.val == mesh_gemoetry.torus_knot )
+      me = meshTorusKnot;
+    
+    syncFromDocument();
+    timing.calcDeltaTimes();
+
+    motion.alternative = light_direction.val;
+    motion.angle.per_s( motion.V, 20.0 ); 
+
+    var mat4_light0 = mat4.identity( prjMat );
+    mat4.rotateY( mat4_light0, ( motion.angle2[motion.V] + motion.angle2.addon[motion.V] ) % ( 2.0 * Math.PI ), mat4_light0 );
+    mat4.rotateX( mat4_light0, ( motion.angle2[motion.U] + motion.angle2.addon[motion.U] ) % ( 2.0 * Math.PI ), mat4_light0 );
+    position_light0 = [ -mat4_light0[8], -mat4_light0[9], -mat4_light0[10], 0.0 ];
+
+    gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+    gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    // draw texture
+    if ( texture_mode_val == 1 ) {
+      gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+      gl.disable(gl.DEPTH_TEST);
+      gl_util.useProgram( screenspaceShaderProgram );
+      gl.uniformMatrix4fv( screenspaceShaderProgram.u_matTexture, false, screenspaceShaderProgram.mat4_std_tex_flip_y );
+      gl_util.useTexture2D( 1, baseTexture, screenspaceShaderProgram.u_textureSampler );
+      var mat4_bitmap = mat4.identity();
+      mat4.translate( mat4_bitmap, [-0.5, 0.0, 0.0], mat4_bitmap );
+      mat4.scale( mat4_bitmap, [0.5, 1.0, 1.0], mat4_bitmap );
+      var mat3_bitmap = mat4.toMat3( mat4_bitmap );
+      gl.uniformMatrix4fv( screenspaceShaderProgram.u_matModelView, false, mat4_bitmap );
+      gl.uniformMatrix3fv( screenspaceShaderProgram.u_matNormal, false, mat3_bitmap );
+      mesh.draw( meshQuad, screenspaceShaderProgram.aVertPos, screenspaceShaderProgram.aNormalVec, screenspaceShaderProgram.aTexCoord );
+    }
+
+    // draw heightmap
+    if ( texture_mode_val == 1 ) {  
+      gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+      gl.disable(gl.DEPTH_TEST);
+      gl_util.useProgram( screenspaceShaderProgram );
+      gl.uniformMatrix4fv( screenspaceShaderProgram.u_matTexture, false, screenspaceShaderProgram.mat4_std_tex_flip_y );
+      gl_util.useTexture2D( 2, heightTexture, screenspaceShaderProgram.u_textureSampler );
+      var mat4_bitmap = mat4.identity();
+      mat4.translate( mat4_bitmap, [0.5, 0.0, 0.0], mat4_bitmap );
+      mat4.scale( mat4_bitmap, [0.5, 1.0, 1.0], mat4_bitmap );
+      var mat3_bitmap = mat4.toMat3( mat4_bitmap );
+      gl.uniformMatrix4fv( screenspaceShaderProgram.u_matModelView, false, mat4_bitmap );
+      gl.uniformMatrix3fv( screenspaceShaderProgram.u_matNormal, false, mat3_bitmap );
+      mesh.draw( meshQuad, screenspaceShaderProgram.aVertPos, screenspaceShaderProgram.aNormalVec, screenspaceShaderProgram.aTexCoord );
+    }
+
+    // Test if any 3D geometry has to be drawn
+    if ( geometry_shape.val == mesh_gemoetry.NON )
+      return 
+   
+    // Draw 3D
+
+    gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LESS);
+
+    var prog = shaderProgram;
+    gl_util.useProgram( prog );
+    gl.uniformMatrix4fv( prog.u_matTexture, false, prog.mat4_std_tex_flip_y );
+      
+    var near = 0.5;
+    var far = 100.0;
+    var prjMat = mat4.create();
+    mat4.identity( prjMat );
+    mat4.my_ortho( Math.PI * 0.5, gl.viewportWidth / gl.viewportHeight, near, far, prjMat );
+    gl.uniformMatrix4fv( prog.u_matProjection, false, prjMat ); 
+
+    var transZ = -(9.0 - 4.0 * zoom_factor.val);
+    var scale = 4.0;
+
+    var mat4_sp = mat4.identity();
+    mat4.translate( mat4_sp, [0, 0, transZ], mat4_sp );
+    mat4.scale( mat4_sp, [scale, scale, scale], mat4_sp );
+    motion.do( mat4_sp );
+    mat4.rotateX( mat4_sp, Math.PI * 0.15, mat4_sp );
+    var mat3_sp = mat4.toMat3( mat4_sp );
+    gl.uniformMatrix4fv( prog.u_matModelView, false, mat4_sp );
+    gl.uniformMatrix3fv( prog.u_matNormal, false, mat3_sp );
+
+    setUniforms( prog );
+    
+    mesh.draw( me, prog.aVertPos, prog.aNormalVec, prog.aTexCoord );
+
+    // light arrow
+
+    if ( light_direction.val == 0 )
+      return;
+
+    gl_util.useProgram( shaderProgram );
+    gl.uniformMatrix4fv( shaderProgram.u_matTexture, false, shaderProgram.mat4_std_tex_flip_y );
+    gl.uniformMatrix4fv( shaderProgram.u_matProjection, false, prjMat ); 
+    setUniforms( shaderProgram );
+    gl.uniform1i( shaderProgram.u_texture_mode, 0 ); 
+    gl.uniform1i( shaderProgram.u_mask_mode, 0 );
+    gl.uniform1i( prog.u_hm_to_nm_mode, 1 );
+    
+    var mat4_trans1 = mat4.identity();
+    mat4.translate( mat4_trans1, [0, 0, transZ], mat4_trans1 );
+    mat4.scale( mat4_trans1, [1.0, 1.0, 1.0], mat4_trans1 );
+    var mat4_arr1 = mat4.identity();
+    mat4.multiply( mat4_trans1, mat4_light0, mat4_arr1 );
+    mat4.translate( mat4_arr1, [0, 0, -4.5 ], mat4_arr1 );
+     
+    var mat3_arr1 = mat4.toMat3( mat4_arr1 ); 
+    gl.uniform4fv( shaderProgram.u_draw_color, [ 0.2, 0.9, 0.2, 1.0 ] );
+    gl.uniformMatrix4fv( shaderProgram.u_matModelView, false, mat4_arr1 );
+    gl.uniformMatrix3fv( shaderProgram.u_matNormal, false, mat3_arr1 );
+    mesh.draw( meshArrow, shaderProgram.aVertPos, shaderProgram.aNormalVec, shaderProgram.aTexCoord );
+
+    var mat4_trans2 = mat4.identity();
+    mat4.translate( mat4_trans2, [0, 0, transZ], mat4_trans2 );
+    mat4.scale( mat4_trans2, [1.0, 1.0, 1.0], mat4_trans2 );
+    var mat4_arr2 = mat4.identity();
+    mat4.multiply( mat4_trans2, mat4_light0, mat4_arr2 );
+    mat4.translate( mat4_arr2, [0, 0, 4.5 + arrowLen ], mat4_arr2 );
+
+    var mat3_arr2 = mat4.toMat3( mat4_arr2 ); 
+    gl.uniform4fv( shaderProgram.u_draw_color, [ 0.2, 0.9, 0.2, 1.0 ] );
+    gl.uniformMatrix4fv( shaderProgram.u_matModelView, false, mat4_arr2 );
+    gl.uniformMatrix3fv( shaderProgram.u_matNormal, false, mat3_arr2 );
+    mesh.draw( meshArrow, shaderProgram.aVertPos, shaderProgram.aNormalVec, shaderProgram.aTexCoord );
+  }
+
+  function webGLStart() {
+
+    var bitmap_in = document.getElementById('bitmap-input');
+    bitmap_in = addEventListener('change', readBitmap, false);
+    
+    var canvas = document.getElementById( "ADS-canvas");
+    gl_util.init( canvas );
+    
+    init_doc_data_exchange();
+    initShaders()
+    initBuffers();
+    initTextures();
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    timing.init();
+    resetData();
+    resetHeightData();
+    setInterval(drawScene, 50);
+    motion.init_rotation2( Math.PI * 0.8125, Math.PI * 0.25, 0 );
+    hid_events.init_mouse();
+  }
+
+  function readBitmap(e) {
+    image_file_name = e.target.files[0];
+    if ( image_file_name != undefined) {
+      load_new_image( image_file_name );
+      var dl_btn = document.getElementById( "download" );
+      dl_btn.disabled = false;
+    }
+  }
+
+  function downloadHeightmap(e) {
+    if ( image_file_name == undefined ) {
+      return;
+    }
+    heightmap_download_request = true;
+  }
+</script>
+
+<body onload="webGLStart();">
+
+    <!--canvas id="ADS-canvas" style="border: none;" width="1024" height="512"></canvas-->
+    <canvas id="ADS-canvas" style="border: none;" width="1536" height="768"></canvas>
+    
+    <!--div style="margin-left: 520px;"-->
+    <div style="margin-left: 768px;">  
+        <div style="float: right; width: 100%; background-color: #CCF;">
+            <form name="inputs">
+
+                <input type="button" value="pause" onClick="pauseMotion()" />
+                <input type="button" value="reset" onClick="resetData()" />
+                <hr/>
+                <table>
+                    <tr> <td> zoom </td> 
+                         <td> <input type="range" min="0" max="100" id="zoom" value="1" onchange="syncFromDocument();" /> 
+                         </td> </tr>
+                </table>
+                <hr/>
+                <table>
+                    <tr> <td> geometry </td> <td>
+                        <select id="geometry"  onchange="syncFromDocument();" >
+                            <option value="0">NON</option>
+                            <option value="1">Plane</option>
+                            <option value="2">Spehere</option>
+                            <option value="3">Torus</option>
+                            <option value="4">Trefoil Knot</option>
+                            <option value="5">Torus Knot</option>
+                       </select>
+                    </td> </tr>
+                    <tr> <td> u_bump_scale </td> 
+                         <td> <input type="range" min="1" max="100" id="bumpscale" value="20" onchange="syncFromDocument();" /> 
+                              <span id="bumpscale_val">0</span>
+                         </td> </tr>
+                    <tr> <td> u_quality </td> 
+                         <td> <input type="range" min="1" max="100" id="quality" value="20" onchange="syncFromDocument();" /> 
+                              <span id="quality_val">0</span>
+                         </td> </tr>
+                    
+                </table>
+                <hr/>
+                <table>
+                    <tr> <td> light direction </td>
+                         <td> <input type="checkbox" id="light_direction" value="1" onchange="syncFromDocument();" /> 
+                    </td> </tr>
+                    <tr> <td> rim lighting </td>
+                         <td> <input type="checkbox" id="rim_lighting" value="1" onchange="syncFromDocument();" /> 
+                    </td> </tr>
+                    <tr> <td> u_material_specular </td> 
+                         <td> <input type="range" id="specular" min="0" max="100" value="0"  onchange="syncFromDocument();" />
+                              <span id="specular_val">0</span>
+                         </td> </tr>
+                    <tr> <td> u_material_specular_tint </td> 
+                         <td> <input type="range" id="specular_tint" min="0" max="100" value="0"  onchange="syncFromDocument();" />
+                              <span id="specular_tint_val">0</span>
+                         </td> </tr>
+                    <tr> <td> u_material_roughness </td> 
+                         <td> <input type="range" min="0" max="100" id="roughness" value="1" onchange="syncFromDocument();" /> 
+                              <span id="roughness_val">0</span>
+                         </td> </tr>
+                         <td> u_material_shininess </td> 
+                         <td> = 2/(roughness^2) - 2 =  
+                              <span id="shininess_val">0</span>
+                         </td> </tr>
+                    <!-- tr> <td> u_material_fresnel_0 </td> 
+                         <td> <input type="range" id="fresnel0" min="0" max="100" value="0"  onchange="syncFromDocument();" />
+                              <span id="fresnel0_val">0</span>
+                         </td> </tr -->
+                    <tr> <td> u_material_metallic </td> 
+                         <td> <input type="range" id="metallic" min="0" max="100" value="0"  onchange="syncFromDocument();" />
+                              <span id="metallic_val">0</span>
+                         </td> </tr>
+                    <tr> <td> u_material_sheen </td> 
+                         <td> <input type="range" id="sheen" min="0" max="100" value="0"  onchange="syncFromDocument();" />
+                              <span id="sheen_val">0</span>
+                         </td> </tr>
+                    <tr> <td> u_material_sheen_tint </td> 
+                         <td> <input type="range" id="sheen_tint" min="0" max="100" value="0"  onchange="syncFromDocument();" />
+                              <span id="sheen_tint_val">0</span>
+                         </td> </tr>
+                    <tr> <td> u_material_anisotropic </td> 
+                         <td> <input type="range" id="anisotropic" min="0" max="100" value="0"  onchange="syncFromDocument();" />
+                              <span id="anisotropic_val">0</span>
+                         </td> </tr>
+                    <tr> <td> u_material_subsurface </td> 
+                         <td> <input type="range" id="subsurface" min="0" max="100" value="0"  onchange="syncFromDocument();" />
+                              <span id="subsurface_val">0</span>
+                         </td> </tr>
+                    <tr> <td> u_material_clearcoat </td> 
+                         <td> <input type="range" id="clearcoat" min="0" max="100" value="0"  onchange="syncFromDocument();" />
+                              <span id="clearcoat_val">0</span>
+                         </td> </tr>
+                    <tr> <td> u_material_clearcoat_gloss </td> 
+                         <td> <input type="range" id="clearcoat_gloss" min="0" max="100" value="0"  onchange="syncFromDocument();" />
+                              <span id="clearcoat_gloss_val">0</span>
+                         </td> </tr>
+                </table>
+          </form>
+        </div>
+        
+        <!--div style="float: right; width: 520px; margin-left: -520px; background-color: #DAD;"-->
+        <div style="float: right; width: 768px; margin-left: -768px; background-color: #DAD;">  
+                <table>
+                    <tr> <td> <b>Texture (square, 2^N) </b> </td> 
+                         <td> <input type="file" id="bitmap-input" /> 
+                         </td> 
+                         <td> <input type="button" value="download heightmap" id="download" disabled="disabled" onClick="downloadHeightmap()" /> 
+                         </td></tr>
+                    <tr> <td> </td>
+                         <td> <img id="bitmap_image" src="" style="width:128px;height:128px;">
+                         </td>
+                         <td> <img id="height_map_image" src="" style="width:128px;height:128px;">
+                         </td></tr>
+                </table> 
+                <hr/>
+                <input type="button" value="reset" onClick="resetHeightData()" />
+                <input type="button" value="reset RGB" onClick="resetHeightRGBData()" />
+                <table>
+                    <tr> <td> invert </td>
+                         <td> <input type="checkbox" id="height_invert" value="0" onchange="syncHeightFromDocument();" /> 
+                    </td> </tr>
+                    <tr> <td> clamp minimum </td> 
+                         <td> <input type="range" id="height_minimum" min="0" max="100" value="0"  onchange="syncHeightFromDocument();" />
+                              <span id="height_minimum_val">0</span>
+                         </td> </tr>
+                    <tr> <td> clamp maximum </td> 
+                         <td> <input type="range" id="height_maximum" min="0" max="100" value="0"  onchange="syncHeightFromDocument();" />
+                              <span id="height_maximum_val">0</span>
+                         </td> </tr>
+                    <tr> <td> exponent </td> 
+                         <td> <input type="range" id="height_exponent" min="0" max="100" value="0"  onchange="syncHeightFromDocument();" />
+                              <span id="height_exponent_val">0</span>
+                         </td> </tr>
+                    <tr> <td> edge </td> 
+                         <td> <input type="range" id="height_edge" min="0" max="100" value="0"  onchange="syncHeightFromDocument();" />
+                              <span id="height_edge_val">0</span>
+                         </td> </tr>
+                    <tr> <td> blur (gauss-sigma)</td> 
+                         <td> <input type="range" id="height_blur" min="0" max="100" value="0"  onchange="syncHeightFromDocument();" />
+                              <span id="height_blur_val">0</span>
+                         </td> </tr>
+                    <tr> <td> red </td> 
+                         <td> <input type="range" id="height_red" min="0" max="100" value="0"  onchange="syncHeightFromDocument();" />
+                              <span id="height_red_val">0</span>
+                         </td> </tr>
+                    <tr> <td> green </td> 
+                         <td> <input type="range" id="height_green" min="0" max="100" value="0"  onchange="syncHeightFromDocument();" />
+                              <span id="height_green_val">0</span>
+                         </td> </tr>
+                    <tr> <td> blue </td> 
+                         <td> <input type="range" id="height_blue" min="0" max="100" value="0"  onchange="syncHeightFromDocument();" />
+                              <span id="height_blue_val">0</span>
+                         </td> </tr>
+                </table>  
+        </div>
+        <div style="clear: both;"></div>
+    </div>
+</body>

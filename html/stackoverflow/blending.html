@@ -1,0 +1,281 @@
+<script type="text/javascript">
+
+back_vert =
+"precision mediump float; \n" +
+"attribute vec2 inPos; \n" +
+"varying vec2 pos; \n" +
+"uniform   mat4 u_projectionMat44;" +
+"uniform   mat4 u_modelViewMat44;" +
+"void main()" +
+"{" +
+"    pos           = inPos.xy;" +
+"    vec4 viewPos  = u_modelViewMat44 * vec4( inPos.xy, 0.0, 1.0 );" +
+"    gl_Position   = u_projectionMat44 * viewPos;" +
+"}";
+
+back_frag =
+"precision mediump float; \n" +
+"varying vec2 pos; \n" +
+"void main() \n" +
+"{ \n" +
+"    vec2 coord = pos * 0.5 + 0.5; \n" +
+"    gl_FragColor = vec4( coord.x, coord.y, (1.0-coord.x) * (1.0-coord.y), 1.0 ); \n" +
+"}";
+
+draw_vert =
+"precision mediump float; \n" +
+"attribute vec2 inPos; \n" +
+"varying vec2 pos; \n" +
+"uniform   mat4 u_projectionMat44;" +
+"uniform   mat4 u_modelViewMat44;" +
+"void main()" +
+"{" +
+"    pos           = inPos.xy;" +
+"    vec4 viewPos  = u_modelViewMat44 * vec4( inPos.xy, 0.0, 1.0 );" +
+"    gl_Position   = u_projectionMat44 * viewPos;" +
+"}";
+
+draw_frag =
+"precision mediump float; \n" +
+"varying vec2 pos; \n" +
+"uniform vec4 u_color;" +
+"uniform vec2 u_vp;" +
+"void main()" +
+"{" +
+"    float r = length( pos );" +
+"    float d = 4.0 * length( 1.0 / u_vp ); \n" +
+"    float a = 1.0 - smoothstep( 1.0 - d, 1.0 + d, r ); \n" +
+"    gl_FragColor = vec4( u_color.rgb, u_color.a * a );" +
+"}";
+
+glArrayType = typeof Float32Array !="undefined" ? Float32Array : ( typeof WebGLFloatArray != "undefined" ? WebGLFloatArray : Array );
+
+function IdentityMat44() {
+    var m = new glArrayType(16);
+    m[0]  = 1; m[1]  = 0; m[2]  = 0; m[3]  = 0;
+    m[4]  = 0; m[5]  = 1; m[6]  = 0; m[7]  = 0;
+    m[8]  = 0; m[9]  = 0; m[10] = 1; m[11] = 0;
+    m[12] = 0; m[13] = 0; m[14] = 0; m[15] = 1;
+    return m;
+};
+
+function RotateAxis(matA, angRad, axis) {
+    var aMap = [ [1, 2], [2, 0], [0, 1] ];
+    var a0 = aMap[axis][0], a1 = aMap[axis][1]; 
+    var sinAng = Math.sin(angRad), cosAng = Math.cos(angRad);
+    var matB = new glArrayType(16);
+    for ( var i = 0; i < 16; ++ i ) matB[i] = matA[i];
+    for ( var i = 0; i < 3; ++ i ) {
+        matB[a0*4+i] = matA[a0*4+i] * cosAng + matA[a1*4+i] * sinAng;
+        matB[a1*4+i] = matA[a0*4+i] * -sinAng + matA[a1*4+i] * cosAng;
+    }
+    return matB;
+}
+
+function Translate( matA, trans ) {
+    var matB = new glArrayType(16);
+    for ( var i = 0; i < 16; ++ i ) matB[i] = matA[i];
+    for ( var i = 0; i < 3; ++ i )
+        matB[12+i] = matA[i] * trans[0] + matA[4+i] * trans[1] + matA[8+i] * trans[2] + matA[12+i];
+    return matB;
+}
+
+function Scale( matA, scale ) {
+    var matB = new glArrayType(16);
+    for ( var i = 0; i < 16; ++ i ) matB[i] = matA[i];
+    for ( var a = 0; a < 4; ++ a )
+        for ( var i = 0; i < 3; ++ i )
+            matB[a*4+i] = matA[a*4+i] * scale[0];
+    return matB;
+}
+
+Ortho = function( l, r, t, b, n, f ) {
+    var fn  = f + n;
+    var f_n = f - n;
+    var m = IdentityMat44();
+    m[0]  = 2/(r-l); m[1]  = 0;       m[2]  =  0;       m[3]  = 0;
+    m[4]  = 0;       m[5]  = 2/(t-b); m[6]  =  0;       m[7]  = 0;
+    m[8]  = 0;       m[9]  = 0;       m[10] = -2 / f_n; m[11] = -fn / f_n;
+    m[12] = 0;       m[13] = 0;       m[14] = 0;        m[15] = 1;
+    return m;
+}
+
+vec4_add = function( a, b ) { return [ a[0]+b[0], a[1]+b[1], a[2]+b[2], a[3]+b[3] ]; }
+vec4_sub = function( a, b ) { return [ a[0]-b[0], a[1]-b[1], a[2]-b[2], a[3]-b[3] ]; }
+vec4_mul = function( a, b ) { return [ a[0]*b[0], a[1]*b[1], a[2]*b[2], a[3]*b[3] ]; }
+vec4_scale = function( a, s ) { return [ a[0]*s, a[1]*s, a[2]*s, a[3]*s ]; }
+
+// shader program object
+var ShaderProgram = {};
+ShaderProgram.Create = function( shaderList, uniformNames ) {
+    var shaderObjs = [];
+    for ( var i_sh = 0; i_sh < shaderList.length; ++ i_sh ) {
+        var shderObj = this.CompileShader( shaderList[i_sh].source, shaderList[i_sh].stage );
+        if ( shderObj == 0 )
+          return 0;
+        shaderObjs.push( shderObj );
+    }
+    var progObj = this.LinkProgram( shaderObjs )
+    if ( progObj != 0 ) {
+        progObj.unifomLocation = {};
+        for ( var i_n = 0; i_n < uniformNames.length; ++ i_n ) {
+            var name = uniformNames[i_n];
+            progObj.unifomLocation[name] = gl.getUniformLocation( progObj, name );
+        }
+    }
+    return progObj;
+}
+ShaderProgram.Use = function( progObj ) { gl.useProgram( progObj ); } 
+ShaderProgram.SetUniformInt = function( progObj, name, val ) { gl.uniform1i( progObj.unifomLocation[name], val ); }
+ShaderProgram.SetUniform2f = function( progObj, name, arr ) { gl.uniform2fv( progObj.unifomLocation[name], arr ); }
+ShaderProgram.SetUniform3f = function( progObj, name, arr ) { gl.uniform3fv( progObj.unifomLocation[name], arr ); }
+ShaderProgram.SetUniform4f = function( progObj, name, arr ) { gl.uniform4fv( progObj.unifomLocation[name], arr ); }
+ShaderProgram.SetUniformMat44 = function( progObj, name, mat ) { gl.uniformMatrix4fv( progObj.unifomLocation[name], false, mat ); }
+ShaderProgram.CompileShader = function( source, shaderStage ) {
+    var shaderObj = gl.createShader( shaderStage );
+    gl.shaderSource( shaderObj, source );
+    gl.compileShader( shaderObj );
+    var status = gl.getShaderParameter( shaderObj, gl.COMPILE_STATUS );
+    if ( !status ) alert(gl.getShaderInfoLog(shaderObj));
+    return status ? shaderObj : 0;
+} 
+ShaderProgram.LinkProgram = function( shaderObjs ) {
+    var prog = gl.createProgram();
+    for ( var i_sh = 0; i_sh < shaderObjs.length; ++ i_sh )
+        gl.attachShader( prog, shaderObjs[i_sh] );
+    gl.linkProgram( prog );
+    status = gl.getProgramParameter( prog, gl.LINK_STATUS );
+    if ( !status ) alert("Could not initialise shaders");
+    gl.useProgram( null );
+    return status ? prog : 0;
+}
+        
+
+function drawScene(){
+
+    var canvas = document.getElementById( "camera-canvas" );
+    var vp = [canvas.width, canvas.height];
+    var currentTime = Date.now();   
+    var deltaMS = currentTime - startTime;
+    var aspect =  canvas.width / canvas.height;
+    var matOrtho = Ortho( -aspect, aspect, 1, -1, -1, 1 );
+    var alpha = document.getElementById( "alpha" ).value / 100;
+        
+    gl.viewport( 0, 0, canvas.width, canvas.height );
+    gl.disable( gl.DEPTH_TEST );
+    gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
+    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+    gl.disable( gl.BLEND );
+    ShaderProgram.Use( progBack );
+    ShaderProgram.SetUniformMat44( progBack, "u_projectionMat44",  matOrtho );
+    ShaderProgram.SetUniformMat44( progBack, "u_modelViewMat44", IdentityMat44() );
+    gl.enableVertexAttribArray( progBack.inPos );
+    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.pos );
+    gl.vertexAttribPointer( progBack.inPos, 2, gl.FLOAT, false, 0, 0 ); 
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufObj.inx );
+    gl.drawElements( gl.TRIANGLES, bufObj.inx.len, gl.UNSIGNED_SHORT, 0 );
+    gl.disableVertexAttribArray( progBack.pos ); 
+
+    gl.enable( gl.BLEND );
+    gl.blendFunc( gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA );
+    ShaderProgram.Use( progDraw );
+    gl.enableVertexAttribArray( progDraw.inPos );
+    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.pos );
+    gl.vertexAttribPointer( progDraw.inPos, 2, gl.FLOAT, false, 0, 0 ); 
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufObj.inx );
+    ShaderProgram.SetUniformMat44( progDraw, "u_projectionMat44",  matOrtho );
+    ShaderProgram.SetUniform2f( progDraw, "u_vp",  vp );
+        
+    var col = [ [1.0,0.0,0.0], [1.0,1.0,0.0], [0.0,0.0,1.0] ];
+    var time = [ 7.0, 11.0, 13.0 ];
+    for ( var i = 0; i < 3; ++ i ) {    
+        var modelMat = Scale( IdentityMat44(), [ 0.3, 0.3, 0.3] );
+        var angRad = CalcAng( currentTime, time[i] ) + i * Math.PI * 2 / 3;
+        var sinAng = Math.sin(angRad), cosAng = Math.cos(angRad);
+        modelMat[12] = cosAng * 0.3 + i * 0.2;
+        modelMat[13] = sinAng * 0.3 + i * 0.2;
+        
+        ShaderProgram.SetUniformMat44( progDraw, "u_modelViewMat44", modelMat );
+        var color = col[i];
+        color.push( alpha );
+        ShaderProgram.SetUniform4f( progDraw, "u_color", color );
+        gl.drawElements( gl.TRIANGLES, bufObj.inx.len, gl.UNSIGNED_SHORT, 0 );
+    }
+    gl.disableVertexAttribArray( progDraw.pos ); 
+}
+
+var startTime;
+function Fract( val ) { 
+    return val - Math.trunc( val );
+}
+function CalcAng( currentTime, intervall ) {
+    return Fract( (currentTime - startTime) / (1000*intervall) ) * 2.0 * Math.PI;
+}
+function CalcMove( currentTime, intervall, range ) {
+    var pos = self.Fract( (currentTime - startTime) / (1000*intervall) ) * 2.0
+    var pos = pos < 1.0 ? pos : (2.0-pos)
+    return range[0] + (range[1] - range[0]) * pos;
+}    
+
+var mousePos = [-1, -1];
+var gl;
+var prog;
+var bufObj = {};
+function cameraStart() {
+
+    var canvas = document.getElementById( "camera-canvas");
+    gl = canvas.getContext( "experimental-webgl" );
+    if ( !gl )
+      return;
+    var vp = [canvas.width, canvas.height];
+
+    progBack = ShaderProgram.Create( 
+      [ { source : back_vert, stage : gl.VERTEX_SHADER },
+        { source : back_frag, stage : gl.FRAGMENT_SHADER }
+      ],
+      [ "u_projectionMat44", "u_modelViewMat44"] );
+    progBack.inPos = gl.getAttribLocation( progBack, "inPos" );
+    if ( progBack == 0 )
+        return;
+
+    progDraw = ShaderProgram.Create( 
+      [ { source : draw_vert, stage : gl.VERTEX_SHADER },
+        { source : draw_frag, stage : gl.FRAGMENT_SHADER }
+      ],
+      [ "u_projectionMat44", "u_modelViewMat44", "u_color", "u_alpha", "u_vp"] );
+    progDraw.inPos = gl.getAttribLocation( progDraw, "inPos" );
+    if ( progDraw == 0 )
+        return;
+
+    var pos = [ -1, -1, 1, -1, 1, 1, -1, 1 ];
+    var inx = [ 0, 1, 2, 0, 2, 3 ];
+    bufObj.pos = gl.createBuffer();
+    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.pos );
+    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( pos ), gl.STATIC_DRAW );
+    bufObj.inx = gl.createBuffer();
+    bufObj.inx.len = inx.length;
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufObj.inx );
+    gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( inx ), gl.STATIC_DRAW );
+
+    startTime = Date.now();
+    setInterval(drawScene, 50);
+}
+
+</script>
+
+<body onload="cameraStart();">
+    <div style="margin-left: 520px;">
+        <div style="float: right; width: 100%; background-color: #CCF;">
+            <form name="inputs">
+                <table>
+                    <tr> <td> alpha </td> 
+                         <td> <input type="range" id="alpha" min="0" max="100" value="50"/></td> </tr>
+                </table>
+            </form>
+        </div>
+        <div style="float: right; width:520px; margin-left: -520px;">
+            <canvas id="camera-canvas" style="border: none;" width="512" height="512"></canvas>
+        </div>
+        <div style="clear: both;"></div>
+    </div>
+</body>

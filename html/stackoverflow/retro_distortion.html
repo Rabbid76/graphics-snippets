@@ -1,0 +1,256 @@
+<script id="draw-shader-vs" type="x-shader/x-vertex">
+    precision mediump float;
+
+    attribute vec2 inPos;
+    varying   vec2 vertPos;
+
+    void main()
+    {
+        vertPos     = inPos;
+        gl_Position = vec4( inPos, 0.0, 1.0 );
+    }
+</script>
+
+<script id="draw-shader-fs" type="x-shader/x-fragment">
+    precision mediump float;
+
+    varying vec2      vertPos;
+    uniform sampler2D u_texture;
+    uniform float     u_distortion;
+    uniform float     u_stripe;
+    uniform float     u_rgbshift;
+    
+    void main()
+    {
+        // distortion
+        vec2 ndc_pos = vertPos;
+        vec2 testVec = ndc_pos.xy / max(abs(ndc_pos.x), abs(ndc_pos.y));
+        float len = max(1.0,length( testVec ));
+        ndc_pos *= mix(1.0, mix(1.0,len,max(abs(ndc_pos.x), abs(ndc_pos.y))), u_distortion);
+        vec2 texCoord = vec2(ndc_pos.s, -ndc_pos.t) * 0.5 + 0.5;
+
+        // stripes
+        float stripTile = texCoord.t * mix(10.0, 100.0, u_stripe);
+        float stripFac = 1.0 + 0.25 * u_stripe * (step(0.5, stripTile-float(int(stripTile))) - 0.5);
+        
+        // rgb shift
+        float texR = texture2D( u_texture, texCoord.st-vec2(u_rgbshift) ).r;
+        float texG = texture2D( u_texture, texCoord.st ).g;
+        float texB = texture2D( u_texture, texCoord.st+vec2(u_rgbshift) ).b;
+        
+        float clip = step(0.0, texCoord.s) * step(texCoord.s, 1.0) * step(0.0, texCoord.t) * step(texCoord.t, 1.0); 
+        gl_FragColor  = vec4( vec3(texR, texG, texB) * stripFac * clip, 1.0 );
+    }
+</script>
+
+<script type="text/javascript">
+var ShaderProgram = {};
+ShaderProgram.Create = function( shaderList ) {
+    var shaderObjs = [];
+    for ( var i_sh = 0; i_sh < shaderList.length; ++ i_sh ) {
+        var shderObj = this.CompileShader( shaderList[i_sh].source, shaderList[i_sh].stage );
+        if ( shderObj == 0 )
+            return 0;
+        shaderObjs.push( shderObj );
+    }
+    var progObj = this.LinkProgram( shaderObjs )
+    if ( progObj != 0 ) {
+        progObj.attribIndex = {};
+        var noOfAttributes = gl.getProgramParameter( progObj, gl.ACTIVE_ATTRIBUTES );
+        for ( var i_n = 0; i_n < noOfAttributes; ++ i_n ) {
+            var name = gl.getActiveAttrib( progObj, i_n ).name;
+            progObj.attribIndex[name] = gl.getAttribLocation( progObj, name );
+        }
+        progObj.unifomLocation = {};
+        var noOfUniforms = gl.getProgramParameter( progObj, gl.ACTIVE_UNIFORMS );
+        for ( var i_n = 0; i_n < noOfUniforms; ++ i_n ) {
+            var name = gl.getActiveUniform( progObj, i_n ).name;
+            progObj.unifomLocation[name] = gl.getUniformLocation( progObj, name );
+        }
+    }
+    return progObj;
+}
+ShaderProgram.AttributeIndex = function( progObj, name ) { return progObj.attribIndex[name]; } 
+ShaderProgram.UniformLocation = function( progObj, name ) { return progObj.unifomLocation[name]; } 
+ShaderProgram.Use = function( progObj ) { gl.useProgram( progObj ); } 
+ShaderProgram.SetUniformI1  = function( progObj, name, val ) { if(progObj.unifomLocation[name]) gl.uniform1i( progObj.unifomLocation[name], val ); }
+ShaderProgram.SetUniformF1  = function( progObj, name, val ) { if(progObj.unifomLocation[name]) gl.uniform1f( progObj.unifomLocation[name], val ); }
+ShaderProgram.SetUniformF2  = function( progObj, name, arr ) { if(progObj.unifomLocation[name]) gl.uniform2fv( progObj.unifomLocation[name], arr ); }
+ShaderProgram.SetUniformF3  = function( progObj, name, arr ) { if(progObj.unifomLocation[name]) gl.uniform3fv( progObj.unifomLocation[name], arr ); }
+ShaderProgram.SetUniformF4  = function( progObj, name, arr ) { if(progObj.unifomLocation[name]) gl.uniform4fv( progObj.unifomLocation[name], arr ); }
+ShaderProgram.SetUniformM33 = function( progObj, name, mat ) { if(progObj.unifomLocation[name]) gl.uniformMatrix3fv( progObj.unifomLocation[name], false, mat ); }
+ShaderProgram.SetUniformM44 = function( progObj, name, mat ) { if(progObj.unifomLocation[name]) gl.uniformMatrix4fv( progObj.unifomLocation[name], false, mat ); }
+ShaderProgram.CompileShader = function( source, shaderStage ) {
+    var shaderScript = document.getElementById(source);
+    if (shaderScript) {
+      source = "";
+      var node = shaderScript.firstChild;
+      while (node) {
+        if (node.nodeType == 3) source += node.textContent;
+        node = node.nextSibling;
+      }
+    }
+    var shaderObj = gl.createShader( shaderStage );
+    gl.shaderSource( shaderObj, source );
+    gl.compileShader( shaderObj );
+    var status = gl.getShaderParameter( shaderObj, gl.COMPILE_STATUS );
+    if ( !status ) alert(gl.getShaderInfoLog(shaderObj));
+    return status ? shaderObj : 0;
+} 
+ShaderProgram.LinkProgram = function( shaderObjs ) {
+    var prog = gl.createProgram();
+    for ( var i_sh = 0; i_sh < shaderObjs.length; ++ i_sh )
+        gl.attachShader( prog, shaderObjs[i_sh] );
+    gl.linkProgram( prog );
+    status = gl.getProgramParameter( prog, gl.LINK_STATUS );
+    if ( !status ) alert("Could not initialise shaders");
+    gl.useProgram( null );
+    return status ? prog : 0;
+}
+
+var VertexBuffer = {};
+VertexBuffer.Create = function( attributes, indices ) {
+    var buffer = {};
+    buffer.buf = [];
+    buffer.attr = []
+    for ( var i = 0; i < attributes.length; ++ i ) {
+        buffer.buf.push( gl.createBuffer() );
+        buffer.attr.push( { size : attributes[i].attrSize, loc : attributes[i].attrLoc } );
+        gl.bindBuffer( gl.ARRAY_BUFFER, buffer.buf[i] );
+        gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( attributes[i].data ), gl.STATIC_DRAW );
+    }
+    buffer.inx = gl.createBuffer();
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, buffer.inx );
+    gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( indices ), gl.STATIC_DRAW );
+    buffer.inxLen = indices.length;
+    gl.bindBuffer( gl.ARRAY_BUFFER, null );
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, null );
+    return buffer;
+}
+VertexBuffer.Draw = function( bufObj ) {
+  for ( var i = 0; i < bufObj.buf.length; ++ i ) {
+        gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.buf[i] );
+        gl.vertexAttribPointer( bufObj.attr[i].loc, bufObj.attr[i].size, gl.FLOAT, false, 0, 0 );
+        gl.enableVertexAttribArray( bufObj.attr[i].loc );
+    }
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufObj.inx );
+    gl.drawElements( gl.TRIANGLES, bufObj.inxLen, gl.UNSIGNED_SHORT, 0 );
+    for ( var i = 0; i < bufObj.buf.length; ++ i )
+       gl.disableVertexAttribArray( bufObj.attr[i].loc );
+    gl.bindBuffer( gl.ARRAY_BUFFER, null );
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, null );
+}
+
+var Texture = {};
+Texture.HandleLoadedTexture2D = function( image, texture, flipY ) {
+    gl.activeTexture( gl.TEXTURE0 );
+    gl.bindTexture( gl.TEXTURE_2D, texture );
+    gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image );
+    if ( flipY != undefined && flipY == true )
+      gl.pixelStorei( gl.UNPACK_FLIP_Y_WEBGL, true );
+    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST );
+    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST );
+    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE );
+  	gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE );
+    gl.bindTexture( gl.TEXTURE_2D, null );
+    return texture;
+}
+Texture.LoadTexture2D = function( name ) {
+    var texture = gl.createTexture();
+    texture.image = new Image();
+    texture.image.setAttribute('crossorigin', 'anonymous');
+    texture.image.onload = function () {
+        Texture.HandleLoadedTexture2D( texture.image, texture, true )
+    }
+    texture.image.src = name;
+    return texture;
+}
+       
+function drawScene(){
+
+    var canvas = document.getElementById( "camera-canvas" );
+    var vp = [canvas.width, canvas.height];
+    var distortion = document.getElementById( "distortion" ).value / 100.0;
+    var rgbShift = document.getElementById( "rgbshift" ).value / 1000.0;
+    var stripes = document.getElementById( "stripes" ).value / 100.0;
+    
+    gl.viewport( 0, 0, canvas.width, canvas.height );
+    gl.enable( gl.DEPTH_TEST );
+    gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
+    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+    var texUnit = 0;
+    gl.activeTexture( gl.TEXTURE0 + texUnit );
+    gl.bindTexture( gl.TEXTURE_2D, textureObj );
+    ShaderProgram.Use( progDraw );
+    ShaderProgram.SetUniformI1( progDraw, "u_texture", texUnit );
+    ShaderProgram.SetUniformF1( progDraw, "u_distortion", distortion );
+    ShaderProgram.SetUniformF1( progDraw, "u_stripe", stripes );
+    ShaderProgram.SetUniformF1( progDraw, "u_rgbshift", rgbShift );
+    VertexBuffer.Draw( bufRect );
+}  
+
+var gl;
+var prog;
+var bufObj = {};
+var textureObj;
+var maskTextureObj;
+function sceneStart() {
+
+    var canvas = document.getElementById( "camera-canvas");
+    gl = canvas.getContext( "experimental-webgl" );
+    //gl = canvas.getContext( "webgl2" );
+    if ( !gl )
+      return;
+
+    var texCX = 128;
+    var texCY = 128;
+    var texPlan = [];
+    for (ix = 0; ix < texCX; ++ix) {
+        for (iy = 0; iy < texCY; ++iy) {
+            var val_x = Math.sin( Math.PI * 6.0 * ix / texCX )
+            var val_y = Math.sin( Math.PI * 6.0 * iy / texCY )
+            texPlan.push( 128 + 127 * val_x, 63, 128 + 127 * val_y, 255 );
+        }
+    }
+    
+    textureObj = Texture.LoadTexture2D( "https://raw.githubusercontent.com/Rabbid76/graphics-snippets/master/resource/texture/supermario.jpg" );
+      
+    progDraw = ShaderProgram.Create( 
+      [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },
+        { source : "draw-shader-fs", stage : gl.FRAGMENT_SHADER }
+      ] );
+    progDraw.inPos = gl.getAttribLocation( progDraw, "inPos" );
+    if ( prog == 0 )
+        return;
+
+    bufRect = VertexBuffer.Create(
+    [ { data :  [ -1, -1, 1, -1, 1, 1, -1, 1 ], attrSize : 2, attrLoc : progDraw.inPos } ],
+      [ 0, 1, 2, 0, 2, 3 ] );
+
+    setInterval(drawScene, 50);
+}
+</script>
+
+<body onload="sceneStart();">
+    <div style="margin-left: 520px;">
+        <div style="float: right; width: 100%; background-color: #CCF;">
+            <form name="inputs">
+                <table>
+                    <tr> <td> distortion </td>
+                        <td> <input type="range" id="distortion" min="0" max="100" value="10"/> 
+                    </td> </tr>
+                    <tr> <td> stripes </td>
+                        <td> <input type="range" id="stripes"  min="0" max="100" value="70"/> 
+                    </td> </tr>
+                    <tr> <td> RGB shift </td>
+                        <td> <input type="range" id="rgbshift" min="0" max="100" value="10"/> 
+                    </td> </tr>
+                </table>
+            </form>
+        </div>
+        <div style="float: right; width: 520px; margin-left: -520px;">
+            <canvas id="camera-canvas" style="border: none;" width="512" height="512"></canvas>
+        </div>
+        <div style="clear: both;"></div>
+    </div>
+</body>

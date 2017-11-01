@@ -1,0 +1,255 @@
+<script id="draw-shader-vs" type="x-shader/x-vertex">
+    precision mediump float;
+
+    attribute vec2 inPos;
+    varying   vec2 vertPos;
+
+    void main()
+    {
+        vertPos     = inPos;
+        gl_Position = vec4( inPos, 0.0, 1.0 );
+    }
+</script>
+
+<script id="draw-shader-fs" type="x-shader/x-fragment">
+    precision mediump float;
+
+    varying vec2      vertPos;
+    uniform sampler2D u_texture;
+    uniform sampler2D u_maskTexture;
+    uniform vec2      u_mouse;
+    uniform float     u_maxDistance;
+    uniform float     u_exponent;
+    uniform float     u_lightup;
+    
+    void main()
+    {
+        float distance    = length( vertPos - u_mouse);
+        float mixK        = pow( distance / u_maxDistance, 2.0 ); 
+        vec2 texCoord     = vertPos * 0.5 + 0.5;
+        vec3 texColor     = texture2D( u_texture, texCoord.st ).rgb;
+        vec3 grayColor    = vec3( 0.2126 * texColor.r + 0.7152 * texColor.g + 0.0722 * texColor.b );
+        vec2 maskTexCoord = 0.5 + 0.5 * (vertPos - u_mouse) / u_maxDistance; 
+        float mask        = texture2D( u_maskTexture, maskTexCoord ).x;
+        vec3 finalColor   = mix( grayColor, texColor * u_lightup, ( 1.0 - clamp( mixK, 0.0, 1.0 ) ) * mask );
+        gl_FragColor      = vec4( finalColor.rgb, 1.0 );
+    }
+</script>
+
+<script type="text/javascript">
+
+// shader program object
+var ShaderProgram = {};
+ShaderProgram.Create = function( shaderList, uniformNames ) {
+    var shaderObjs = [];
+    for ( var i_sh = 0; i_sh < shaderList.length; ++ i_sh ) {
+        var shderObj = this.CompileShader( shaderList[i_sh].source, shaderList[i_sh].stage );
+        if ( shderObj == 0 )
+            return 0;
+        shaderObjs.push( shderObj );
+    }
+    var progObj = this.LinkProgram( shaderObjs )
+    if ( progObj != 0 ) {
+        progObj.unifomLocation = {};
+        for ( var i_n = 0; i_n < uniformNames.length; ++ i_n ) {
+            var name = uniformNames[i_n];
+            progObj.unifomLocation[name] = gl.getUniformLocation( progObj, name );
+        }
+    }
+    return progObj;
+}
+ShaderProgram.Use = function( progObj ) { gl.useProgram( progObj ); } 
+ShaderProgram.SetUniformInt = function( progObj, name, val ) { gl.uniform1i( progObj.unifomLocation[name], val ); }
+ShaderProgram.SetUniformFloat = function( progObj, name, val ) { gl.uniform1f( progObj.unifomLocation[name], val ); }
+ShaderProgram.SetUniform2f = function( progObj, name, arr ) { gl.uniform2fv( progObj.unifomLocation[name], arr ); }
+ShaderProgram.SetUniform3f = function( progObj, name, arr ) { gl.uniform3fv( progObj.unifomLocation[name], arr ); }
+ShaderProgram.SetUniformMat44 = function( progObj, name, mat ) { gl.uniformMatrix4fv( progObj.unifomLocation[name], false, mat ); }
+ShaderProgram.CompileShader = function( source, shaderStage ) {
+    var shaderScript = document.getElementById(source);
+    if (shaderScript) {
+      source = "";
+      var node = shaderScript.firstChild;
+      while (node) {
+        if (node.nodeType == 3) source += node.textContent;
+        node = node.nextSibling;
+      }
+    }
+    var shaderObj = gl.createShader( shaderStage );
+    gl.shaderSource( shaderObj, source );
+    gl.compileShader( shaderObj );
+    var status = gl.getShaderParameter( shaderObj, gl.COMPILE_STATUS );
+    if ( !status ) alert(gl.getShaderInfoLog(shaderObj));
+    return status ? shaderObj : 0;
+} 
+ShaderProgram.LinkProgram = function( shaderObjs ) {
+    var prog = gl.createProgram();
+    for ( var i_sh = 0; i_sh < shaderObjs.length; ++ i_sh )
+        gl.attachShader( prog, shaderObjs[i_sh] );
+    gl.linkProgram( prog );
+    status = gl.getProgramParameter( prog, gl.LINK_STATUS );
+    if ( !status ) alert("Could not initialise shaders");
+    gl.useProgram( null );
+    return status ? prog : 0;
+}
+       
+function drawScene(){
+
+    var canvas = document.getElementById( "camera-canvas" );
+    var vp = [canvas.width, canvas.height];
+    var maxDist = document.getElementById( "maxDist" ).value / 100;
+    var exponent = document.getElementById( "exponent" ).value / 100;
+    var lightup = document.getElementById( "lightup" ).value / 100;
+
+    gl.viewport( 0, 0, canvas.width, canvas.height );
+    gl.enable( gl.DEPTH_TEST );
+    gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
+    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+    var texUnit = 0;
+    gl.activeTexture( gl.TEXTURE0 + texUnit );
+    gl.bindTexture( gl.TEXTURE_2D, textureObj );
+    var maskTexUnit = 1;
+    gl.activeTexture( gl.TEXTURE0 + maskTexUnit );
+    gl.bindTexture( gl.TEXTURE_2D, maskTextureObj );
+    ShaderProgram.Use( progDraw );
+    var pos = [ 2.0, 2.0 ];
+    if (mousePos[0] > 0 && mousePos[1] > 0 )
+        pos = [2.0 * mousePos[0] / canvas.width - 1.0, 1.0 - 2.0 * mousePos[1] / canvas.height];
+    ShaderProgram.SetUniform2f( progDraw, "u_mouse", pos );
+    ShaderProgram.SetUniformFloat( progDraw, "u_maxDistance", maxDist );
+    ShaderProgram.SetUniformFloat( progDraw, "u_exponent", exponent );
+    ShaderProgram.SetUniformFloat( progDraw, "u_lightup", lightup );
+    ShaderProgram.SetUniformInt( progDraw, "u_texture", texUnit );
+    ShaderProgram.SetUniformInt( progDraw, "u_maskTexture", maskTexUnit );
+    gl.enableVertexAttribArray( progDraw.inPos );
+    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.pos );
+    gl.vertexAttribPointer( progDraw.inPos, 2, gl.FLOAT, false, 0, 0 ); 
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufObj.inx );
+    gl.drawElements( gl.TRIANGLES, bufObj.inx.len, gl.UNSIGNED_SHORT, 0 );
+    gl.disableVertexAttribArray( progDraw.pos );
+}  
+
+var gl;
+var prog;
+var bufObj = {};
+var textureObj;
+var maskTextureObj;
+function sceneStart() {
+
+    var canvas = document.getElementById( "camera-canvas");
+    gl = canvas.getContext( "experimental-webgl" );
+    if ( !gl )
+      return;
+
+    var texCX = 128;
+    var texCY = 128;
+    var texPlan = [];
+    for (ix = 0; ix < texCX; ++ix) {
+        for (iy = 0; iy < texCY; ++iy) {
+            var val_x = Math.sin( Math.PI * 6.0 * ix / texCX )
+            var val_y = Math.sin( Math.PI * 6.0 * iy / texCY )
+            texPlan.push( 128 + 127 * val_x, 63, 128 + 127 * val_y, 255 );
+        }
+    }
+    textureObj = gl.createTexture();
+    gl.activeTexture( gl.TEXTURE0 );
+    gl.bindTexture( gl.TEXTURE_2D, textureObj );
+    gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, texCX, texCY, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array( texPlan ) );
+    gl.pixelStorei( gl.UNPACK_FLIP_Y_WEBGL, true );
+    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR );
+    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR );
+    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT );
+    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT );
+      
+    var maskTexPlan = [];
+    for (ix = 0; ix < texCX; ++ix) {
+        for (iy = 0; iy < texCY; ++iy) {
+            var val_x = Math.sin( Math.PI * 6.0 * ix / texCX )
+            var val_y = Math.sin( Math.PI * 6.0 * iy / texCY )
+            maskTexPlan.push( (val_x * val_y < 0.0) ? 255 : 0, 255, 255, 255 );
+        }
+    }
+    maskTextureObj = gl.createTexture();
+    gl.activeTexture( gl.TEXTURE0 );
+    gl.bindTexture( gl.TEXTURE_2D, maskTextureObj );
+    gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, texCX, texCY, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array( maskTexPlan ) );
+    gl.pixelStorei( gl.UNPACK_FLIP_Y_WEBGL, true );
+    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR );
+    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR );
+    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_BORDER );
+  	gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_BORDER );
+    
+    progDraw = ShaderProgram.Create( 
+      [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },
+        { source : "draw-shader-fs", stage : gl.FRAGMENT_SHADER }
+      ],
+      [ "u_mouse", "u_maxDistance", "u_texture", "u_lightup", "u_exponent", "u_maskTexture"] );
+    progDraw.inPos = gl.getAttribLocation( progDraw, "inPos" );
+    if ( prog == 0 )
+        return;
+
+    var pos = [ -1, -1, 1, -1, 1, 1, -1, 1 ];
+    var inx = [ 0, 1, 2, 0, 2, 3 ];
+    bufObj.pos = gl.createBuffer();
+    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.pos );
+    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( pos ), gl.STATIC_DRAW );
+    bufObj.inx = gl.createBuffer();
+    bufObj.inx.len = inx.length;
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufObj.inx );
+    gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( inx ), gl.STATIC_DRAW );
+
+    setInterval(drawScene, 50);
+}
+
+var mousePos = [-1, -1];
+(function() {
+    document.onmousemove = handleMouseMove;
+    function handleMouseMove(event) {
+        var dot, eventDoc, doc, body, pageX, pageY;
+
+        event = event || window.event; // IE-ism
+
+        if (event.pageX == null && event.clientX != null) {
+            eventDoc = (event.target && event.target.ownerDocument) || document;
+            doc = eventDoc.documentElement;
+            body = eventDoc.body;
+
+            event.pageX = event.clientX +
+              (doc && doc.scrollLeft || body && body.scrollLeft || 0) -
+              (doc && doc.clientLeft || body && body.clientLeft || 0);
+            event.pageY = event.clientY +
+              (doc && doc.scrollTop  || body && body.scrollTop  || 0) -
+              (doc && doc.clientTop  || body && body.clientTop  || 0 );
+        }
+
+        var canvas = document.getElementById( "camera-canvas");
+        var x = event.pageX - canvas.offsetLeft;
+        var y = event.pageY - canvas.offsetTop;
+        mousePos = [-1, -1];
+        if ( x >= 0 && x < canvas.width && y >= 0 && y < canvas.height ) {
+            mousePos = [x, y]; 
+        }
+    }
+})();
+
+</script>
+
+<body onload="sceneStart();">
+    <div style="margin-left: 520px;">
+        <div style="float: right; width: 100%; background-color: #CCF;">
+            <form name="inputs">
+                <table>
+                    <tr> <td> max. distance </td> 
+                         <td> <input type="range" id="maxDist" min="20" max="100" value="50"/></td> </tr>
+                    <tr> <td> exponent </td> 
+                         <td> <input type="range" id="exponent" min="50" max="250" value="200"/></td> </tr>
+                    <tr> <td> light up </td> 
+                         <td> <input type="range" id="lightup" min="50" max="200" value="120"/></td> </tr>
+                </table>
+            </form>
+        </div>
+        <div style="float: right; width: 520px; margin-left: -520px;">
+            <canvas id="camera-canvas" style="border: none;" width="512" height="512"></canvas>
+        </div>
+        <div style="clear: both;"></div>
+    </div>
+</body>

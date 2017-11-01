@@ -1,0 +1,627 @@
+<script type="text/javascript" src="web_gl_utils.js"></script>
+
+<script type="text/javascript">
+
+var shader_frag = {
+type : "frag",
+code : [
+glsl.fragment_shader.std_head,
+glsl.ADS_enhanced,
+glsl.tangent_space,
+glsl.steep_parallax,
+
+"uniform float u_time_ms; \n" +
+"uniform int   u_texture_mode; \n" +
+"uniform vec4  u_draw_color; \n" +
+"uniform sampler2D u_textureSampler; \n" +
+
+"void main() \n" +
+"{ \n" +
+"  vec3 esPt = vec3( vPosEs ); \n" +
+"  vec3 esPtNV = normalize( vNvEs ); \n" +
+"  vec2 texC = vTexCoord.xy; \n" +
+  
+"  mat3  tbnMat    = TBN( esPt, esPtNV, texC ); \n" +
+"  mat3  tbnMatInv = inverseTBN( esPt, esPtNV, texC ); \n" +
+"  vec3  faceNV    = esPtNV * ( esPtNV.z > 0.0 ? 1.0 : -1.0 ); \n" +
+"  //vec3  texDir3D  = normalize( tbnMatInv * esPt ); \n" +
+"  //vec2  texC_pa   = SteepParallax( texDir3D, texC ); \n" +
+"  vec2  texC_pa   = texC; \n" +
+"  vec3  fragNV_pa = tbnMat * CalculateNormal( texC_pa ); \n" +
+  
+"  vec4 drawCol = u_texture_mode == 1 ? texture2D( u_textureSampler, texC_pa ) : u_draw_color; \n" +
+"  //vec3 tangent = tbnMat[0]; \n" +
+"  vec3 tangent = cross( tbnMat[1], esPtNV ); \n" +
+"  vec3 fragCol = ADS( esPt, esPtNV, tangent, drawCol, drawCol, vec4( drawCol.rgb * u_specularMaterial.rgb, 1.0 ) ); \n" +
+  
+"  gl_FragColor = vec4( fragCol, 1.0 ); \n" +
+"} \n"
+] };
+
+    
+  function initFragmentUniforms( prog ) {
+
+    prog.u_textureSampler = gl.getUniformLocation( prog, "u_textureSampler" );
+    prog.u_heightSampler  = gl.getUniformLocation( prog, "u_heightSampler" );
+    prog.u_normalSampler  = gl.getUniformLocation( prog, "u_normalSampler" );
+    
+    prog.u_time_ms        = gl.getUniformLocation( prog, "u_time_ms" );
+    prog.u_mask_mode      = gl.getUniformLocation( prog, "u_mask_mode" );
+    prog.u_hm_to_nm_mode  = gl.getUniformLocation( prog, "u_hm_to_nm_mode" );
+    prog.u_texture_mode   = gl.getUniformLocation( prog, "u_texture_mode" );
+    prog.u_map_tex_size   = gl.getUniformLocation( prog, "u_map_tex_size" );
+    prog.u_draw_color     = gl.getUniformLocation( prog, "u_draw_color" );
+    prog.u_bump_scale     = gl.getUniformLocation( prog, "u_bump_scale" );
+    prog.u_quality        = gl.getUniformLocation( prog, "u_quality" );
+
+    prog.u_rim_lighting   = gl.getUniformLocation( prog, "u_rim_lighting" );
+    prog.u_positionLight0 =  gl.getUniformLocation( prog, "u_positionLight0" ); 
+  
+    prog.u_material_shininess       = gl.getUniformLocation( prog, "u_material_shininess" );
+    prog.u_material_roughness       = gl.getUniformLocation( prog, "u_material_roughness" );
+    prog.u_material_specular        = gl.getUniformLocation( prog, "u_material_specular" );
+    prog.u_material_specular_tint   = gl.getUniformLocation( prog, "u_material_specular_tint" );
+    prog.u_material_fresnel_0       = gl.getUniformLocation( prog, "u_material_fresnel_0" );
+    prog.u_material_metallic        = gl.getUniformLocation( prog, "u_material_metallic" );
+    prog.u_material_sheen           = gl.getUniformLocation( prog, "u_material_sheen" );
+    prog.u_material_sheen_tint      = gl.getUniformLocation( prog, "u_material_sheen_tint" );
+    prog.u_material_anisotropic     = gl.getUniformLocation( prog, "u_material_anisotropic" );
+    prog.u_material_subsurface      = gl.getUniformLocation( prog, "u_material_subsurface" );
+    prog.u_material_clearcoat       = gl.getUniformLocation( prog, "u_material_clearcoat" );
+    prog.u_material_clearcoat_gloss = gl.getUniformLocation( prog, "u_material_clearcoat_gloss" );
+  }  
+
+  var shaderProgram;
+  var skinShaderProgram;
+  var iGlobalTimeLocation;
+  var startTime;
+
+  function initShaders() {
+
+    // default shader
+
+    shaderProgram = gl_util.use_new_vs_fs( glsl.vertex_shader.std, shader_frag );
+    glsl.vertex_shader.link_uniforms( shaderProgram );
+    initFragmentUniforms( shaderProgram ); 
+
+    // skin shader
+
+    skinShaderProgram = gl_util.use_new_vs_fs( glsl.vertex_shader.skinning, shader_frag );
+    glsl.vertex_shader.link_uniforms( skinShaderProgram );
+    initFragmentUniforms( skinShaderProgram );
+
+    skinShaderProgram.u_matBind            = gl.getUniformLocation( skinShaderProgram, "u_matBind" );
+    skinShaderProgram.u_matBindInverse     = gl.getUniformLocation( skinShaderProgram, "u_matBindInverse" );
+    skinShaderProgram.u_boneGlobalMatrices = gl.getUniformLocation( skinShaderProgram, "u_boneGlobalMatrices" );
+  }
+  
+  var arrowLen = 1.5;
+  var arrowRad = 0.05;
+  var peakLen = 0.5;
+  var peakRad = 0.1;
+  var res = 16;
+  
+  var meshSphere;
+  var meshTorus;
+  var meshTrefoilKnot;
+  var meshTorusKnot;
+  var meshArrow;
+  function initBuffers() {
+    
+    meshSphere = mesh.createSphere( 90, 45, mesh.SOLID );
+    mesh.createBuffer( meshSphere );
+    meshTorus = mesh.createTorus( 32, 64, 0.7, 0.3, mesh.SOLID );
+    mesh.createBuffer( meshTorus );
+    meshTrefoilKnot = mesh.createTrefoilKnot( 256, 32, mesh.SOLID );
+    mesh.createBuffer( meshTrefoilKnot );
+    meshTorusKnot = mesh.createTorusKnot( 512, 32, mesh.SOLID, 3, 7 );
+    mesh.createBuffer( meshTorusKnot );
+
+    meshArrow = mesh.createArrowVolume( arrowLen, arrowRad, peakLen, peakRad, res );
+    mesh.createBuffer( meshArrow );
+  }
+
+  function pauseMotion() {
+    timing.togglePause();
+  }
+
+  var zoom_val = 0.5;
+  var geometry_val = 2;
+  var texture_mode_val = 0;
+  var light_direction_val = 0;
+  var bumpScale_val = 0;
+  var quality_val = 10.0;
+  var rim_lighting_val = 0;
+  var material_shininess_val = 0.0;
+  var material_roughness_val = 1.0;
+  var material_specular_val;
+  var material_specular_tint_val;
+  var material_fresnel_0_val;
+  var material_metallic_val = 0.2;
+  var material_sheen_val = 0.5;
+  var material_sheen_tint_val = 0.5;
+  var material_anisotropic_val = 0.0;
+  var material_subsurface_val = 0.0;
+  var material_clearcoat_val = 0.5;
+  var material_clearcoat_gloss_val = 0.5;
+  var position_light0 = [ 1.0, 1.0, 2.0, 0.0 ];
+
+  function resetData() {
+    material_specular_val = 0.5;
+    material_specular_tint_val = 0.5;
+    material_roughness_val = 0.5;
+    material_shininess_val = roughness_to_shininess( material_roughness_val );
+    material_metallic_val = 0.2;
+    material_sheen_val = 0.5;
+    material_sheen_tint_val = 0.5;
+    material_anisotropic_val = 0.0;
+    material_subsurface_val = 0.1;
+    material_clearcoat_val = 0.5;
+    material_clearcoat_gloss_val = 0.5;
+    syncToDocument();
+  }
+
+  function anisotropicData() {
+    material_specular_val = 1.0;
+    material_specular_tint_val = 0.5;
+    material_roughness_val = 0.5;
+    material_shininess_val = roughness_to_shininess( material_roughness_val );
+    material_metallic_val = 1.0;
+    material_sheen_val = 0.0;
+    material_sheen_tint_val = 0.0;
+    material_anisotropic_val = 0.0;
+    material_subsurface_val = 0.0;
+    material_clearcoat_val = 0.0;
+    material_clearcoat_gloss_val = 0.0;
+    syncToDocument();
+  }
+
+  var sliderScale = 100.0;
+  function syncToDocument() {
+    document.getElementById( "zoom" ).value              = zoom_val * sliderScale;
+    //document.getElementById( "fresnel0" ).value          = material_fresnel_0_val * sliderScale;
+    document.getElementById( "roughness" ).value         = material_roughness_val * sliderScale;
+    document.getElementById( "specular" ).value          = material_specular_val * sliderScale;
+    document.getElementById( "specular_tint" ).value     = material_specular_tint_val * sliderScale;
+    document.getElementById( "metallic" ).value          = material_metallic_val * sliderScale;
+    document.getElementById( "sheen" ).value             = material_sheen_val * sliderScale;
+    document.getElementById( "sheen_tint" ).value        = material_sheen_tint_val * sliderScale;
+    document.getElementById( "anisotropic" ).value       = material_anisotropic_val * sliderScale;
+    document.getElementById( "subsurface" ).value        = material_subsurface_val * sliderScale;
+    document.getElementById( "clearcoat" ).value         = material_clearcoat_val * sliderScale;
+    document.getElementById( "clearcoat_gloss" ).value   = material_clearcoat_gloss_val * sliderScale;
+    document.getElementById( "rim_lighting" ).checked    = rim_lighting_val != 0;
+    document.getElementById( "geometry" ).value          = geometry_val;
+    document.getElementById( "light_direction" ).checked = light_direction_val;
+    syncDocumentVals();
+  }
+
+  function roughness_to_shininess( m ) {
+    return ( 2.0 / ( m * m ) ) - 2.0;
+  }
+
+  function shininess_to_roughness( sh ) {
+    return Math.sqrt( 2.0 / ( sh + 2.0 ) ); // m^2 = 2.0 / ( shininess + 2.0 )
+  } 
+
+  function syncRoughnessFromDocument() {
+    material_roughness_val = document.getElementById( "roughness" ).value / sliderScale;
+    material_shininess_val = roughness_to_shininess( material_roughness_val );
+    //document.getElementById( "shininess" ).value = material_shininess_val;
+    //syncDocumentVals();
+  }
+
+  function syncShininessFromDocument() {
+    //material_shininess_val = document.getElementById( "shininess" ).value;
+    //material_roughness_val = shininess_to_roughness( material_shininess_val );
+    //document.getElementById( "roughness" ).value = material_roughness_val * sliderScale;
+    //syncDocumentVals();
+  }
+
+  function syncFromDocument() {
+    zoom_val                     = document.getElementById( "zoom" ).value / sliderScale;
+    //material_fresnel_0_val       = document.getElementById( "fresnel0" ).value / sliderScale;
+    material_specular_val        = document.getElementById( "specular" ).value / sliderScale;
+    material_specular_tint_val   = document.getElementById( "specular_tint" ).value / sliderScale;
+    material_metallic_val        = document.getElementById( "metallic" ).value / sliderScale;
+    material_sheen_val           = document.getElementById( "sheen" ).value / sliderScale;
+    material_sheen_tint_val      = document.getElementById( "sheen_tint" ).value / sliderScale;
+    material_anisotropic_val     = document.getElementById( "anisotropic" ).value / sliderScale;
+    material_subsurface_val      = document.getElementById( "subsurface" ).value / sliderScale;
+    material_clearcoat_val       = document.getElementById( "clearcoat" ).value / sliderScale;
+    material_clearcoat_gloss_val = document.getElementById( "clearcoat_gloss" ).value / sliderScale;
+    rim_lighting_val             = document.getElementById( "rim_lighting" ).checked;
+    geometry_val                 = document.getElementById( "geometry" ).value;
+    light_direction_val          = document.getElementById( "light_direction" ).checked; 
+    syncRoughnessFromDocument();
+    syncDocumentVals();
+  }
+
+  function syncDocumentVals() {
+    //document.getElementById( "fresnel0_val" ).innerHTML        = material_fresnel_0_val;
+    document.getElementById( "specular_val" ).innerHTML        = material_specular_val;
+    document.getElementById( "specular_tint_val" ).innerHTML   = material_specular_tint_val;
+    document.getElementById( "shininess_val" ).innerHTML       = material_shininess_val.toFixed(2);
+    document.getElementById( "roughness_val" ).innerHTML       = material_roughness_val.toFixed(2);
+    document.getElementById( "metallic_val" ).innerHTML        = material_metallic_val;
+    document.getElementById( "sheen_val" ).innerHTML           = material_sheen_val;
+    document.getElementById( "sheen_tint_val" ).innerHTML      = material_sheen_tint_val;
+    document.getElementById( "anisotropic_val" ).innerHTML     = material_anisotropic_val;
+    document.getElementById( "subsurface_val" ).innerHTML      = material_subsurface_val;
+    document.getElementById( "clearcoat_val" ).innerHTML       = material_clearcoat_val;
+    document.getElementById( "clearcoat_gloss_val" ).innerHTML = material_clearcoat_gloss_val;
+  }
+
+  var baseTexture;
+  var heightTexture;
+  var normalTexture;
+  function initTextures() {
+  }  
+
+  function updateSkinUniforms( me, prog ) {
+
+    var mat4_bind = mat4.create();
+    mat4.identity( mat4_bind );
+    //mat4.rotateZ( mat4_bind, Math.PI * 0.5, mat4_bind );
+
+    var mat4_bind_inv = mat4.create();
+    mat4.inverse( mat4_bind, mat4_bind_inv );
+    gl.uniformMatrix4fv( prog.u_matBind, false, mat4_bind );
+    gl.uniformMatrix4fv( prog.u_matBindInverse, false, mat4_bind_inv );
+
+    
+    var mat4_bones_arr = []
+    for ( var i = 0; i < me.numOfBones; ++ i ) {
+      var mat4_bone = mat4.create();
+      mat4.identity( mat4_bone );
+      mat4_bones_arr.push( mat4_bone );
+    }
+
+    var bone_matrices = new Float32Array( 16 * 30 );
+    for ( var m_i = 0; m_i < 30; ++ m_i ) {
+      for ( var i = 0; i < 16; ++ i) {
+        if ( m_i < me.numOfBones )
+          bone_matrices[m_i*16+i] = mat4_bones_arr[m_i][i];
+        else
+          bone_matrices[m_i*16+i] = 0;
+      }
+    }
+	  gl.uniformMatrix4fv( prog.u_boneGlobalMatrices, false, bone_matrices );
+  }
+
+  function setupHand( me, left )
+  {
+    var finger0 = []; // thumb
+    finger0.push( { pos : [ 0.055, 0.0, 0.0 ] } );
+    finger0.push( { pos : [ 0.105, 0.126, 0 ], size : [ 0.043, 0.043, 0.043 ] } );
+    finger0.push( { pos : [ 0.238, 0.276, 0 ], size : [ 0.043, 0.043, 0.043 ] } );
+    finger0.push( { pos : [ 0.357, 0.380, 0 ], size : [ 0.043, 0.043, 0.043 ] } );
+    finger0.push( { pos : [ 0.452, 0.476, 0 ], size : [ 0.020, 0.040, 0.040 ] } );
+
+    var finger1 = [];
+    finger1.push( { pos : [ 0.035, 0.0, 0.0 ] } );
+    finger1.push( { pos : [ 0.120, 0.477, 0 ], size : [ 0.043, 0.043, 0.043 ] } );
+    finger1.push( { pos : [ 0.166, 0.676, 0 ], size : [ 0.043, 0.043, 0.043 ] } );
+    finger1.push( { pos : [ 0.204, 0.815, 0 ], size : [ 0.038, 0.038, 0.038 ] } );
+    finger1.push( { pos : [ 0.228, 0.905, 0 ], size : [ 0.036, 0.036, 0.018 ] } );
+
+    var finger2 = [];
+    finger2.push( { pos : [ 0.000, 0.0, 0.0 ] } );
+    finger2.push( { pos : [ 0.000, 0.476, 0 ], size : [ 0.043, 0.043, 0.043 ] } );
+    finger2.push( { pos : [ 0.000, 0.705, 0 ], size : [ 0.043, 0.043, 0.043 ] } );
+    finger2.push( { pos : [ 0.000, 0.880, 0 ], size : [ 0.039, 0.039, 0.039 ] } );
+    finger2.push( { pos : [ 0.000, 0.976, 0 ], size : [ 0.036, 0.036, 0.018 ] } );
+  
+    var finger3 = [];
+    finger3.push( { pos : [-0.038, 0.0, 0.0 ] } );
+    finger3.push( { pos : [-0.124, 0.452, 0 ], size : [ 0.043, 0.043, 0.043 ] } );
+    finger3.push( { pos : [-0.166, 0.666, 0 ], size : [ 0.043, 0.043, 0.043 ] } );
+    finger3.push( { pos : [-0.190, 0.810, 0 ], size : [ 0.038, 0.038, 0.038 ] } );
+    finger3.push( { pos : [-0.205, 0.900, 0 ], size : [ 0.036, 0.036, 0.018 ] } );
+  
+    var finger4 = [];
+    finger4.push( { pos : [-0.076, 0.0, 0.0 ] } );
+    finger4.push( { pos : [-0.247, 0.405, 0 ], size : [ 0.043, 0.043, 0.043 ] } ) ;
+    finger4.push( { pos : [-0.310, 0.548, 0 ], size : [ 0.036, 0.036, 0.036 ] } ) ;
+    finger4.push( { pos : [-0.357, 0.652, 0 ], size : [ 0.034, 0.034, 0.034 ] } ) ;
+    finger4.push( { pos : [-0.381, 0.738, 0 ], size : [ 0.030, 0.030, 0.015 ] } ) ;
+
+    var handDef = [];
+    if ( left && left != 0) {
+      handDef.push( finger4 );
+      handDef.push( finger3 );
+      handDef.push( finger2 );
+      handDef.push( finger1 );
+      handDef.push( finger0 );
+    } else {
+      handDef.push( finger0 );
+      handDef.push( finger1 );
+      handDef.push( finger2 );
+      handDef.push( finger3 );
+      handDef.push( finger4 );
+    }
+
+    var b_i = 0;
+    me.bones[b_i ++].pos = [ 0.0, -0.0, 0.0 ];
+    for ( var f_inx = 0; f_inx < handDef.length; ++ f_inx ) {
+      var f_len = handDef[f_inx].length;
+      for ( var p_inx = 0; p_inx < f_len - 1; ++ p_inx ) {
+        var x = ( handDef[f_inx][p_inx].pos[0] + handDef[f_inx][p_inx+1].pos[0] ) / 2;
+        var y = ( handDef[f_inx][p_inx].pos[1] + handDef[f_inx][p_inx+1].pos[1] ) / 2;
+        var z = ( handDef[f_inx][p_inx].pos[2] + handDef[f_inx][p_inx+1].pos[2] ) / 2;
+        me.bones[b_i ++].pos = [ x, y, z ];
+      }
+    }
+
+    return handDef;
+  }
+
+  function setUniforms( prog ) {
+
+    if ( texture_mode_val ) {
+      gl_util.useTexture2D( 1, baseTexture, prog.u_textureSampler );
+      //gl_util.useTexture2D( 2, heightTexture, prog.u_heightSampler );
+      //gl_util.useTexture2D( 3, normalTexture, prog.u_normalSampler );
+    }
+    
+    gl.uniform1f( prog.u_time_ms, timing.pastTms() );
+    gl.uniform1i( prog.u_rim_lighting, rim_lighting_val );
+    gl.uniform1i( prog.u_mask_mode, 0 );
+    gl.uniform1i( prog.u_hm_to_nm_mode, 0 );
+    gl.uniform2fv( prog.u_map_tex_size, [ 0, 0 ] );
+    gl.uniform1i( prog.u_texture_mode, texture_mode_val );
+    gl.uniform4fv( prog.u_draw_color, [ 0.9, 0.25, 0.35, 1.0 ] );
+    gl.uniform1f( prog.u_bump_scale, bumpScale_val );
+    gl.uniform1f( prog.u_quality, quality_val );
+    gl.uniform1f( prog.u_material_shininess, material_shininess_val );
+    gl.uniform1f( prog.u_material_roughness, material_roughness_val );
+    gl.uniform1f( prog.u_material_specular, material_specular_val );
+    gl.uniform1f( prog.u_material_specular_tint, material_specular_tint_val );
+    gl.uniform4fv( prog.u_positionLight0, position_light0 );
+    gl.uniform1f( prog.u_material_fresnel_0, material_fresnel_0_val );
+    gl.uniform1f( prog.u_material_metallic, material_metallic_val );
+    gl.uniform1f( prog.u_material_sheen, material_sheen_val );
+    gl.uniform1f( prog.u_material_sheen_tint, material_sheen_tint_val );
+    gl.uniform1f( prog.u_material_anisotropic, material_anisotropic_val );
+    gl.uniform1f( prog.u_material_subsurface, material_subsurface_val );
+    gl.uniform1f( prog.u_material_clearcoat, material_clearcoat_val );
+    gl.uniform1f( prog.u_material_clearcoat_gloss, material_clearcoat_gloss_val );
+ }
+
+  function drawScene() {
+
+    var sphere = 0;
+    var torus = 1;
+    var trefoil_knot = 2;
+    var torus_knot = 3;
+    
+    var me;
+    if ( geometry_val == sphere )
+      me = meshSphere;
+    else if ( geometry_val == torus )
+      me = meshTorus;
+    else if ( geometry_val == trefoil_knot )
+      me = meshTrefoilKnot;
+    else if ( geometry_val == torus_knot )
+      me = meshTorusKnot;
+    
+    syncFromDocument();
+    timing.calcDeltaTimes();
+
+    motion.alternative = light_direction_val;
+    motion.angle.per_s( motion.V, 20.0 ); 
+
+    var mat4_light0 = mat4.identity( prjMat );
+    mat4.rotateY( mat4_light0, ( motion.angle2[motion.V] + motion.angle2.addon[motion.V] ) % ( 2.0 * Math.PI ), mat4_light0 );
+    mat4.rotateX( mat4_light0, ( motion.angle2[motion.U] + motion.angle2.addon[motion.U] ) % ( 2.0 * Math.PI ), mat4_light0 );
+    position_light0 = [ -mat4_light0[8], -mat4_light0[9], -mat4_light0[10], 0.0 ];
+
+    var prog = me.skin == 1 ? skinShaderProgram : shaderProgram;
+    gl_util.useProgram( prog );
+    gl.uniformMatrix4fv( prog.u_matTexture, false, prog.mat4_std_tex_flip_y );
+    
+    var near = 0.5;
+    var far = 100.0;
+    var prjMat = mat4.create();
+    mat4.identity( prjMat );
+    mat4.my_ortho( Math.PI * 0.5, 1, near, far, prjMat );
+    gl.uniformMatrix4fv( prog.u_matProjection, false, prjMat ); 
+
+    var transZ = me.skin == 1 ? -(11.0 - 5.0 * zoom_val) : -(9.0 - 4.0 * zoom_val);
+    var scale = me.skin == 1 ? 1.0 : 4.0;
+
+    var mat4_sp = mat4.identity();
+    mat4.translate( mat4_sp, [0, 0, transZ], mat4_sp );
+    mat4.scale( mat4_sp, [scale, scale, scale], mat4_sp );
+    motion.do( mat4_sp );
+    if ( me.skin == 1 ) {
+      mat4.rotateX( mat4_sp, Math.PI * -0.5, mat4_sp );
+    } else {
+      mat4.rotateX( mat4_sp, Math.PI * 0.15, mat4_sp );
+    }
+    var mat3_sp = mat4.toMat3( mat4_sp );
+    gl.uniformMatrix4fv( prog.u_matModelView, false, mat4_sp );
+    gl.uniformMatrix3fv( prog.u_matNormal, false, mat3_sp );
+
+    setUniforms( prog );
+    if ( me.skin == 1 )
+      updateSkinUniforms( me, prog );
+    
+    gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LESS);
+    
+    if ( me.skin == 1 )
+      mesh.draw( me, prog.aVertPos, prog.aNormalVec, prog.aTexCoord, prog.aSkinIndex, prog.aSkinWeight );
+    else
+      mesh.draw( me, prog.aVertPos, prog.aNormalVec, prog.aTexCoord );
+
+    // light arrow
+
+    if ( light_direction_val == 0 )
+      return;
+
+    gl_util.useProgram( shaderProgram );
+    gl.uniformMatrix4fv( shaderProgram.u_matTexture, false, shaderProgram.mat4_std_tex_flip_y );
+    gl.uniformMatrix4fv( shaderProgram.u_matProjection, false, prjMat ); 
+    setUniforms( shaderProgram );
+    gl.uniform1i( shaderProgram.u_texture_mode, 0 ); 
+
+    var mat4_trans1 = mat4.identity();
+    mat4.translate( mat4_trans1, [0, 0, transZ], mat4_trans1 );
+    mat4.scale( mat4_trans1, [1.0, 1.0, 1.0], mat4_trans1 );
+    var mat4_arr1 = mat4.identity();
+    mat4.multiply( mat4_trans1, mat4_light0, mat4_arr1 );
+    mat4.translate( mat4_arr1, [0, 0, -4.5 ], mat4_arr1 );
+     
+    var mat3_arr1 = mat4.toMat3( mat4_arr1 ); 
+    gl.uniform4fv( shaderProgram.u_draw_color, [ 0.2, 0.9, 0.2, 1.0 ] );
+    gl.uniformMatrix4fv( shaderProgram.u_matModelView, false, mat4_arr1 );
+    gl.uniformMatrix3fv( shaderProgram.u_matNormal, false, mat3_arr1 );
+    mesh.draw( meshArrow, shaderProgram.aVertPos, shaderProgram.aNormalVec, shaderProgram.aTexCoord );
+
+    var mat4_trans2 = mat4.identity();
+    mat4.translate( mat4_trans2, [0, 0, transZ], mat4_trans2 );
+    mat4.scale( mat4_trans2, [1.0, 1.0, 1.0], mat4_trans2 );
+    var mat4_arr2 = mat4.identity();
+    mat4.multiply( mat4_trans2, mat4_light0, mat4_arr2 );
+    mat4.translate( mat4_arr2, [0, 0, 4.5 + arrowLen ], mat4_arr2 );
+
+    var mat3_arr2 = mat4.toMat3( mat4_arr2 ); 
+    gl.uniform4fv( shaderProgram.u_draw_color, [ 0.2, 0.9, 0.2, 1.0 ] );
+    gl.uniformMatrix4fv( shaderProgram.u_matModelView, false, mat4_arr2 );
+    gl.uniformMatrix3fv( shaderProgram.u_matNormal, false, mat3_arr2 );
+    mesh.draw( meshArrow, shaderProgram.aVertPos, shaderProgram.aNormalVec, shaderProgram.aTexCoord );
+  }
+
+  function webGLStart() {
+    
+    var bitmap_in = document.getElementById('bitmap-input');
+    bitmap_in = addEventListener('change', readBitmap, false);
+    
+    var canvas = document.getElementById( "ADS-canvas");
+    gl_util.init( canvas );
+    initShaders()
+    initBuffers();
+    initTextures();
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    timing.init();
+    resetData();
+    setInterval(drawScene, 50);
+    motion.init_rotation2( Math.PI * 0.8125, Math.PI * 0.25, 0 );
+    hid_events.init_mouse();
+
+    //var frag_content = document.getElementById('frag-content');
+    //var codeStr = "";
+    //for ( var i_c = 0; i_c < shader_frag.code.length; ++ i_c ) {
+    //  codeStr += shader_frag.code[i_c];
+    //  codeStr += "\n";
+    //} 
+    //frag_content.innerHTML = codeStr;
+  }
+
+  function readBitmap(e) {
+    var file = e.target.files[0];
+    if (!file) {
+      return;
+    }
+    file_url = URL.createObjectURL(file);
+    baseTexture = gl_util.loadTexture2D( file_url );
+    texture_mode_val = ( baseTexture == undefined ) ? 0 : 1; 
+  }
+</script>
+
+<body onload="webGLStart();">
+    <div style="margin-left: 780px;">
+        <div style="float: right; width: 100%; background-color: #CCF;">
+            <form name="inputs">
+                
+                <b>Texture (square, 2^N) </b><input type="file" id="bitmap-input" />
+                <br/>
+
+                <input type="button" value="pause" onClick="pauseMotion()" />
+                <input type="button" value="reset" onClick="resetData()" />
+                
+                <table>
+                    <tr> <td> zoom </td> 
+                         <td> <input type="range" min="0" max="100" id="zoom" value="1" onchange="syncFromDocument();" /> 
+                         </td> </tr>
+                    <tr> <td> geometry </td> <td>
+                        <select id="geometry"  onchange="syncFromDocument();" >
+                            <option value="0">Spehere</option>
+                            <option value="1">Torus</option>
+                            <option value="2">Trefoil Knot</option>
+                            <option value="3">Torus Knot</option>
+                        </select>
+                    </td> </tr>
+                    <tr> <td> light direction </td>
+                         <td> <input type="checkbox" id="light_direction" value="1" onchange="syncFromDocument();" /> 
+                    </td> </tr>
+                    <tr> <td> rim lighting </td>
+                         <td> <input type="checkbox" id="rim_lighting" value="1" onchange="syncFromDocument();" /> 
+                    </td> </tr>
+                    <tr> <td> u_material_specular </td> 
+                         <td> <input type="range" id="specular" min="0" max="100" value="0"  onchange="syncFromDocument();" />
+                              <span id="specular_val">0</span>
+                         </td> </tr>
+                    <tr> <td> u_material_specular_tint </td> 
+                         <td> <input type="range" id="specular_tint" min="0" max="100" value="0"  onchange="syncFromDocument();" />
+                              <span id="specular_tint_val">0</span>
+                         </td> </tr>
+                    <tr> <td> u_material_roughness </td> 
+                         <td> <input type="range" min="0" max="100" id="roughness" value="1" onchange="syncFromDocument();" /> 
+                              <span id="roughness_val">0</span>
+                         </td> </tr>
+                         <td> u_material_shininess </td> 
+                         <td> = 2/(roughness^2) - 2 =  
+                              <span id="shininess_val">0</span>
+                         </td> </tr>
+                    <!-- tr> <td> u_material_fresnel_0 </td> 
+                         <td> <input type="range" id="fresnel0" min="0" max="100" value="0"  onchange="syncFromDocument();" />
+                              <span id="fresnel0_val">0</span>
+                         </td> </tr -->
+                    <tr> <td> u_material_metallic </td> 
+                         <td> <input type="range" id="metallic" min="0" max="100" value="0"  onchange="syncFromDocument();" />
+                              <span id="metallic_val">0</span>
+                         </td> </tr>
+                    <tr> <td> u_material_sheen </td> 
+                         <td> <input type="range" id="sheen" min="0" max="100" value="0"  onchange="syncFromDocument();" />
+                              <span id="sheen_val">0</span>
+                         </td> </tr>
+                    <tr> <td> u_material_sheen_tint </td> 
+                         <td> <input type="range" id="sheen_tint" min="0" max="100" value="0"  onchange="syncFromDocument();" />
+                              <span id="sheen_tint_val">0</span>
+                         </td> </tr>
+                    <tr> <td> u_material_anisotropic </td> 
+                         <td> <input type="range" id="anisotropic" min="0" max="100" value="0"  onchange="syncFromDocument();" />
+                              <span id="anisotropic_val">0</span>
+                         </td> </tr>
+                    <tr> <td> u_material_subsurface </td> 
+                         <td> <input type="range" id="subsurface" min="0" max="100" value="0"  onchange="syncFromDocument();" />
+                              <span id="subsurface_val">0</span>
+                         </td> </tr>
+                    <tr> <td> u_material_clearcoat </td> 
+                         <td> <input type="range" id="clearcoat" min="0" max="100" value="0"  onchange="syncFromDocument();" />
+                              <span id="clearcoat_val">0</span>
+                         </td> </tr>
+                    <tr> <td> u_material_clearcoat_gloss </td> 
+                         <td> <input type="range" id="clearcoat_gloss" min="0" max="100" value="0"  onchange="syncFromDocument();" />
+                              <span id="clearcoat_gloss_val">0</span>
+                         </td> </tr>
+                </table>
+
+          </form>
+        </div>
+        <div style="float: right; width: 780px; margin-left: -780px;">
+        <!--div style="float: right; width: 520px; margin-left: -520px; background-color: #FFA;"-->
+            <canvas id="ADS-canvas" style="border: none;" width="768" height="768"></canvas>
+        </div>
+        <div style="clear: both;"></div>
+    </div>
+    <!--br/>
+    <b>Fragment Shader</b>
+    <br/>
+    <pre id="frag-content"></pre-->
+</body>

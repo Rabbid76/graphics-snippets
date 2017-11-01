@@ -1,0 +1,589 @@
+<script id="shadow-shader-vs" type="x-shader/x-vertex">
+  precision mediump float;
+  
+  attribute vec3 inPos;
+  attribute vec3 inNV;
+  attribute vec3 inCol;
+  
+  varying vec3 vertPos;
+  varying vec3 vertNV;
+  varying vec3 vertCol;
+  varying vec4 vPosPrj;
+  
+  uniform mat4 u_projectionMat44;
+  uniform mat4 u_viewMat44;
+  uniform mat4 u_modelMat44;
+  
+  void main()
+  {
+      vec3 modelNV  = mat3( u_modelMat44 ) * normalize( inNV );
+      vertNV        = mat3( u_viewMat44 ) * modelNV;
+      vertCol       = inCol;
+      vec4 modelPos = u_modelMat44 * vec4( inPos, 1.0 );
+      vec4 viewPos  = u_viewMat44 * modelPos;
+      vertPos       = viewPos.xyz / viewPos.w;
+      vPosPrj       = u_projectionMat44 * viewPos;
+      gl_Position   = vPosPrj;
+  }
+</script>
+
+<script id="shadow-shader-fs" type="x-shader/x-fragment">
+    precision mediump float;
+    
+    varying vec3 vertPos;
+    varying vec3 vertNV;
+    varying vec3 vertCol;
+    varying vec4 vPosPrj;
+
+    uniform vec2 u_depthRange;
+
+    vec3 PackDepth( in float depth )
+    {
+        float depthVal = depth * (256.0*256.0*256.0 - 1.0) / (256.0*256.0*256.0);
+        vec4 encode = fract( depthVal * vec4(1.0, 256.0, 256.0*256.0, 256.0*256.0*256.0) );
+        return encode.xyz - encode.yzw / 256.0 + 1.0/512.0;
+    }
+    
+    void main()
+    {
+        float ndc_depth = vPosPrj.z / vPosPrj.w;
+        float nearZ     = u_depthRange.x;
+        float farZ      = u_depthRange.y;
+        float depth     = ndc_depth * 0.5 + 0.5;
+        gl_FragColor    = vec4( PackDepth( depth ).xyz, 1.0 );
+    }
+</script>
+
+<script id="draw-shader-vs" type="x-shader/x-vertex">
+precision mediump float;
+
+attribute vec3 inPos;
+attribute vec3 inNV;
+attribute vec3 inCol;
+
+varying vec3 vertPos;
+varying vec3 vertNV;
+varying vec3 vertCol;
+varying vec4 lightPrj;
+varying vec4 vPosPrj;
+
+uniform mat4 u_projectionMat44;
+uniform mat4 u_viewMat44;
+uniform mat4 u_modelMat44;
+uniform mat4 u_lightProjectionMat44;
+uniform mat4 u_lightViewMat44;
+
+void main()
+{
+    vec3 modelNV  = mat3( u_modelMat44 ) * normalize( inNV );
+    vertNV        = mat3( u_viewMat44 ) * modelNV;
+    vertCol       = inCol;
+    vec4 modelPos = u_modelMat44 * vec4( inPos, 1.0 );
+    vec4 lightPos = u_lightViewMat44 * modelPos;
+    vec4 viewPos  = u_viewMat44 * modelPos;
+    lightPrj      = u_lightProjectionMat44 * lightPos;
+    vertPos       = viewPos.xyz / viewPos.w;
+    vPosPrj       = u_projectionMat44 * viewPos;
+    gl_Position   = vPosPrj;
+}
+</script>
+  
+<script id="draw-shader-fs" type="x-shader/x-fragment">
+precision mediump float;
+
+varying vec3 vertPos;
+varying vec3 vertNV;
+varying vec3 vertCol;
+varying vec4 lightPrj;
+varying vec4 vPosPrj;
+
+uniform sampler2D u_depthSampler;
+uniform vec3      u_lightDir;
+uniform float     u_ambient;
+uniform float     u_diffuse;
+uniform float     u_specular;
+uniform float     u_shininess;
+
+float UnpackDepth( in vec3 pack )
+{
+  float depth = dot( pack, 1.0 / vec3(1.0, 256.0, 256.0*256.0) );
+  return depth * (256.0*256.0*256.0) / (256.0*256.0*256.0 - 1.0);
+}
+
+float Depth( in sampler2D depthSampler, in vec2 texC )
+{
+  vec3 depthVal = texture2D( depthSampler, texC.st ).xyz;  
+  return UnpackDepth( depthVal.rgb );
+}
+
+void main()
+{
+    vec3  ndc_light  = lightPrj.xyz / lightPrj.w;
+    vec2  lightTexC  = ndc_light.xy * 0.5 + 0.5;
+    float lightDepth = ndc_light.z * 0.5 + 0.5;
+    float testDepth  = Depth( u_depthSampler, lightTexC );
+    float shadow     = step( lightDepth-0.01, testDepth ) + step( testDepth, 0.0 );
+    vec3  color      = vertCol;
+    vec3  lightCol   = u_ambient * color;
+    vec3  normalV    = normalize( vertNV );
+    vec3  lightV     = normalize( -u_lightDir );
+    float NdotL      = max( 0.0, dot( normalV, lightV ) );
+    lightCol        += shadow * NdotL * u_diffuse * color;
+    vec3  eyeV       = normalize( -vertPos );
+    vec3  halfV      = normalize( eyeV + lightV );
+    float NdotH      = max( 0.0, dot( normalV, halfV ) );
+    float kSpecular  = ( u_shininess + 2.0 ) * pow( NdotH, u_shininess ) / ( 2.0 * 3.14159265 );
+    lightCol        += shadow * kSpecular * u_specular * color;
+    gl_FragColor     = vec4( lightCol.rgb, 1.0 );
+}
+</script>
+
+<script type="text/javascript">
+
+glArrayType = typeof Float32Array !="undefined" ? Float32Array : ( typeof WebGLFloatArray != "undefined" ? WebGLFloatArray : Array );
+
+function IdentityMat44() {
+  var m = new glArrayType(16);
+  m[0]  = 1; m[1]  = 0; m[2]  = 0; m[3]  = 0;
+  m[4]  = 0; m[5]  = 1; m[6]  = 0; m[7]  = 0;
+  m[8]  = 0; m[9]  = 0; m[10] = 1; m[11] = 0;
+  m[12] = 0; m[13] = 0; m[14] = 0; m[15] = 1;
+  return m;
+};
+
+function RotateAxis(matA, angRad, axis) {
+    var aMap = [ [1, 2], [2, 0], [0, 1] ];
+    var a0 = aMap[axis][0], a1 = aMap[axis][1]; 
+    var sinAng = Math.sin(angRad), cosAng = Math.cos(angRad);
+    var matB = new glArrayType(16);
+    for ( var i = 0; i < 16; ++ i ) matB[i] = matA[i];
+    for ( var i = 0; i < 3; ++ i ) {
+        matB[a0*4+i] = matA[a0*4+i] * cosAng + matA[a1*4+i] * sinAng;
+        matB[a1*4+i] = matA[a0*4+i] * -sinAng + matA[a1*4+i] * cosAng;
+    }
+    return matB;
+}
+
+function Cross( a, b ) { return [ a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0], 0.0 ]; }
+function Dot( a, b ) { return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; }
+function Normalize( v ) {
+    var len = Math.sqrt( v[0] * v[0] + v[1] * v[1] + v[2] * v[2] );
+    return [ v[0] / len, v[1] / len, v[2] / len ];
+}
+
+Transform = function(vec, mat) {
+    return [
+        vec[0] * mat[0*4+0] + vec[1] * mat[1*4+0] + vec[2] * mat[2*4+0] + mat[3*4+0],
+        vec[0] * mat[0*4+1] + vec[1] * mat[1*4+1] + vec[2] * mat[2*4+1] + mat[3*4+1],
+        vec[0] * mat[0*4+2] + vec[1] * mat[1*4+2] + vec[2] * mat[2*4+2] + mat[3*4+2],
+        vec[0] * mat[0*4+3] + vec[1] * mat[1*4+3] + vec[2] * mat[2*4+3] + mat[3*4+3] ]
+    if ( h[3] == 0.0 )
+        return [0, 0, 0]
+    return [ h[0]/h[3], h[1]/h[3], h[2]/h[3] ];
+}
+
+TransformVec = function(vec, mat) {
+   return [
+        vec[0] * mat[0*4+0] + vec[1] * mat[1*4+0] + vec[2] * mat[2*4+0],
+        vec[0] * mat[0*4+1] + vec[1] * mat[1*4+1] + vec[2] * mat[2*4+1],
+        vec[0] * mat[0*4+2] + vec[1] * mat[1*4+2] + vec[2] * mat[2*4+2] ]
+}
+
+var Camera = {};
+Camera.Create = function( pos, target, up, fov_y, vp, near, far ) {
+    var camera = {};
+    camera.pos    = pos;
+    camera.target = target;
+    camera.up     = up;
+    camera.fov_y  = fov_y;
+    camera.vp     = vp;
+    camera.near   = near;
+    camera.far    = far;
+    return camera;
+}
+Camera.Ortho = function( camera ) {
+    var fn = camera.far + camera.near;
+    var f_n = camera.far - camera.near;
+    var w = camera.vp[0];
+    var h = camera.vp[1];
+    var m = IdentityMat44();
+    m[0]  = 2 / w; m[1]  = 0;     m[2]  =  0;        m[3]  = 0;
+    m[4]  = 0;     m[5]  = 2 / h; m[6]  =  0;        m[7]  = 0;
+    m[8]  = 0;     m[9]  = 0;     m[10] = -2 / f_n;  m[11] = 0;
+    m[12] = 0;     m[13] = 0;     m[14] = -fn / f_n; m[15] = 1;
+    return m;
+}
+Camera.Perspective = function( camera ) {
+    var fn = camera.far + camera.near;
+    var f_n = camera.far - camera.near;
+    var r = camera.vp[0] / camera.vp[1];
+    var t = 1 / Math.tan( Math.PI * camera.fov_y / 360 );
+    var m = IdentityMat44();
+    m[0]  = t/r; m[1]  = 0; m[2]  =  0;                              m[3]  = 0;
+    m[4]  = 0;   m[5]  = t; m[6]  =  0;                              m[7]  = 0;
+    m[8]  = 0;   m[9]  = 0; m[10] = -fn / f_n;                       m[11] = -1;
+    m[12] = 0;   m[13] = 0; m[14] = -2 * camera.far * camera.near / f_n; m[15] =  0;
+    return m;
+}
+Camera.LookAt = function( camera ) {
+    var mz = Normalize( [ camera.pos[0]-camera.target[0], camera.pos[1]-camera.target[1], camera.pos[2]-camera.target[2] ] );
+    var mx = Normalize( Cross( camera.up, mz ) );
+    var my = Normalize( Cross( mz, mx ) );
+    var tx = Dot( mx, camera.pos );
+    var ty = Dot( my, camera.pos );
+    var tz = Dot( [-mz[0], -mz[1], -mz[2]], camera.pos ); 
+    var m = IdentityMat44();
+    m[0]  = mx[0]; m[1]  = my[0]; m[2]  = mz[0]; m[3]  = 0;
+    m[4]  = mx[1]; m[5]  = my[1]; m[6]  = mz[1]; m[7]  = 0;
+    m[8]  = mx[2]; m[9]  = my[2]; m[10] = mz[2]; m[11] = 0;
+    m[12] = tx;    m[13] = ty;    m[14] = tz;    m[15] = 1; 
+    return m;
+} 
+
+var ShaderProgram = {};
+ShaderProgram.Create = function( shaderList ) {
+    var shaderObjs = [];
+    for ( var i_sh = 0; i_sh < shaderList.length; ++ i_sh ) {
+        var shderObj = this.CompileShader( shaderList[i_sh].source, shaderList[i_sh].stage );
+        if ( shderObj == 0 )
+            return 0;
+        shaderObjs.push( shderObj );
+    }
+    var progObj = this.LinkProgram( shaderObjs )
+    if ( progObj != 0 ) {
+        progObj.attribIndex = {};
+        var noOfAttributes = gl.getProgramParameter( progObj, gl.ACTIVE_ATTRIBUTES );
+        for ( var i_n = 0; i_n < noOfAttributes; ++ i_n ) {
+            var name = gl.getActiveAttrib( progObj, i_n ).name;
+            progObj.attribIndex[name] = gl.getAttribLocation( progObj, name );
+        }
+        progObj.unifomLocation = {};
+        var noOfUniforms = gl.getProgramParameter( progObj, gl.ACTIVE_UNIFORMS );
+        for ( var i_n = 0; i_n < noOfUniforms; ++ i_n ) {
+            var name = gl.getActiveUniform( progObj, i_n ).name;
+            progObj.unifomLocation[name] = gl.getUniformLocation( progObj, name );
+        }
+    }
+    return progObj;
+}
+ShaderProgram.AttributeIndex = function( progObj, name ) { return progObj.attribIndex[name]; } 
+ShaderProgram.UniformLocation = function( progObj, name ) { return progObj.unifomLocation[name]; } 
+ShaderProgram.Use = function( progObj ) { gl.useProgram( progObj ); } 
+ShaderProgram.SetUniformI1  = function( progObj, name, val ) { if(progObj.unifomLocation[name]) gl.uniform1i( progObj.unifomLocation[name], val ); }
+ShaderProgram.SetUniformF1  = function( progObj, name, val ) { if(progObj.unifomLocation[name]) gl.uniform1f( progObj.unifomLocation[name], val ); }
+ShaderProgram.SetUniformF2  = function( progObj, name, arr ) { if(progObj.unifomLocation[name]) gl.uniform2fv( progObj.unifomLocation[name], arr ); }
+ShaderProgram.SetUniformF3  = function( progObj, name, arr ) { if(progObj.unifomLocation[name]) gl.uniform3fv( progObj.unifomLocation[name], arr ); }
+ShaderProgram.SetUniformF4  = function( progObj, name, arr ) { if(progObj.unifomLocation[name]) gl.uniform4fv( progObj.unifomLocation[name], arr ); }
+ShaderProgram.SetUniformM33 = function( progObj, name, mat ) { if(progObj.unifomLocation[name]) gl.uniformMatrix3fv( progObj.unifomLocation[name], false, mat ); }
+ShaderProgram.SetUniformM44 = function( progObj, name, mat ) { if(progObj.unifomLocation[name]) gl.uniformMatrix4fv( progObj.unifomLocation[name], false, mat ); }
+ShaderProgram.CompileShader = function( source, shaderStage ) {
+    var shaderScript = document.getElementById(source);
+    if (shaderScript) {
+      source = "";
+      var node = shaderScript.firstChild;
+      while (node) {
+        if (node.nodeType == 3) source += node.textContent;
+        node = node.nextSibling;
+      }
+    }
+    var shaderObj = gl.createShader( shaderStage );
+    gl.shaderSource( shaderObj, source );
+    gl.compileShader( shaderObj );
+    var status = gl.getShaderParameter( shaderObj, gl.COMPILE_STATUS );
+    if ( !status ) alert(gl.getShaderInfoLog(shaderObj));
+    return status ? shaderObj : 0;
+} 
+ShaderProgram.LinkProgram = function( shaderObjs ) {
+    var prog = gl.createProgram();
+    for ( var i_sh = 0; i_sh < shaderObjs.length; ++ i_sh )
+        gl.attachShader( prog, shaderObjs[i_sh] );
+    gl.linkProgram( prog );
+    status = gl.getProgramParameter( prog, gl.LINK_STATUS );
+    if ( !status ) alert("Could not initialise shaders");
+    gl.useProgram( null );
+    return status ? prog : 0;
+}
+
+var VertexBuffer = {};
+VertexBuffer.Create = function( attributes, indices ) {
+    var buffer = {};
+    buffer.buf = [];
+    buffer.attr = []
+    for ( var i = 0; i < attributes.length; ++ i ) {
+        buffer.buf.push( gl.createBuffer() );
+        buffer.attr.push( { size : attributes[i].attrSize, loc : attributes[i].attrLoc } );
+        gl.bindBuffer( gl.ARRAY_BUFFER, buffer.buf[i] );
+        gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( attributes[i].data ), gl.STATIC_DRAW );
+    }
+    buffer.inx = gl.createBuffer();
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, buffer.inx );
+    gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( indices ), gl.STATIC_DRAW );
+    buffer.inxLen = indices.length;
+    gl.bindBuffer( gl.ARRAY_BUFFER, null );
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, null );
+    return buffer;
+}
+VertexBuffer.Draw = function( bufObj ) {
+  for ( var i = 0; i < bufObj.buf.length; ++ i ) {
+        gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.buf[i] );
+        gl.vertexAttribPointer( bufObj.attr[i].loc, bufObj.attr[i].size, gl.FLOAT, false, 0, 0 );
+        gl.enableVertexAttribArray( bufObj.attr[i].loc );
+    }
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufObj.inx );
+    gl.drawElements( gl.TRIANGLES, bufObj.inxLen, gl.UNSIGNED_SHORT, 0 );
+    for ( var i = 0; i < bufObj.buf.length; ++ i )
+       gl.disableVertexAttribArray( bufObj.attr[i].loc );
+    gl.bindBuffer( gl.ARRAY_BUFFER, null );
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, null );
+}
+
+var FrameBuffer = {};
+FrameBuffer.Create = function( vp, texturePlan ) {
+    var texPlan = texturePlan ? new Uint8Array( texturePlan ) : null;
+    var fb = gl.createFramebuffer();
+    fb.width = vp[0];
+    fb.height = vp[1];
+    gl.bindFramebuffer( gl.FRAMEBUFFER, fb );
+    fb.color0_texture = gl.createTexture();
+    gl.bindTexture( gl.TEXTURE_2D, fb.color0_texture );
+    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST );
+    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST );
+    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE );
+    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE );
+    gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, fb.width, fb.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, texturePlan );
+    fb.renderbuffer = gl.createRenderbuffer();
+    gl.bindRenderbuffer( gl.RENDERBUFFER, fb.renderbuffer );
+    gl.renderbufferStorage( gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, fb.width, fb.height );
+    gl.framebufferTexture2D( gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, fb.color0_texture, 0 );
+    gl.framebufferRenderbuffer( gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, fb.renderbuffer );
+    gl.bindTexture( gl.TEXTURE_2D, null );
+    gl.bindRenderbuffer( gl.RENDERBUFFER, null );
+    gl.bindFramebuffer( gl.FRAMEBUFFER, null );
+
+    fb.Bind = function( clear ) {
+        gl.bindFramebuffer( gl.FRAMEBUFFER, this );
+        if ( clear ) {
+            gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
+            gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+        }
+    };
+
+    fb.Release = function( clear ) {
+        gl.bindFramebuffer( gl.FRAMEBUFFER, null );
+        if ( clear ) {
+            gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
+            gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+        }
+    };
+
+    fb.BindTexture = function( textureUnit ) {
+        gl.activeTexture( gl.TEXTURE0 + textureUnit );
+        gl.bindTexture( gl.TEXTURE_2D, this.color0_texture );
+    };
+
+    return fb;
+}
+
+        
+function drawScene(){
+
+    var ambient = document.getElementById( "ambient" ).value / sliderScale;
+    var diffuse = document.getElementById( "diffuse" ).value / sliderScale;
+    var specular = document.getElementById( "specular" ).value / sliderScale;
+    var shininess = document.getElementById( "shininess" ).value;
+    
+    var canvas = document.getElementById( "scene-canvas" );
+
+    var currentTime = Date.now();   
+    var deltaMS = currentTime - startTime;
+
+    var lightPos = [-3.0, 0.0, 2.0];
+    var lightAnimationMat = RotateAxis( IdentityMat44(), CalcAng( currentTime, 20.0 ), 2 );
+    lightPos = Transform( lightPos, lightAnimationMat );
+    var lightDir = [ -lightPos[0], -lightPos[1], -lightPos[2] ];
+    var light  = Camera.Create( lightPos, [0, 0, 0], [0, 0, 1], 110, [ 5.0, 5.0 ], -20.0, 20.0 );
+    var camera = Camera.Create( [0, 2.5, 2], [0, 0, 0], [0, 0, 1], 110, [canvas.width, canvas.height], 0.5, 100.0 );
+    
+    var lightPrjMat = Camera.Ortho( light );
+    var lightViewMat = Camera.LookAt( light );
+    var prjMat = Camera.Perspective( camera );
+    var viewMat = Camera.LookAt( camera );
+    var modelMat = IdentityMat44();
+    modelMat = RotateAxis( modelMat, CalcAng( currentTime, 13.0 ), 0 );
+    modelMat = RotateAxis( modelMat, CalcAng( currentTime, 17.0 ), 1 );
+    groundModelMat = IdentityMat44();
+    var viewLightDir = TransformVec( lightDir, viewMat );
+        
+    gl.viewport( 0, 0, canvas.width, canvas.height );
+    gl.enable( gl.DEPTH_TEST );
+
+    shadowFB.Bind( true );
+    ShaderProgram.Use( progShadow );
+    ShaderProgram.SetUniformM44( progShadow, "u_projectionMat44", lightPrjMat );
+    ShaderProgram.SetUniformM44( progShadow, "u_viewMat44", lightViewMat );
+    ShaderProgram.SetUniformM44( progShadow, "u_modelMat44", modelMat );
+    ShaderProgram.SetUniformF2( progShadow, "u_depthRange", [light.near, light.far] );
+
+    VertexBuffer.Draw( bufTorus );
+    
+    shadowFB.Release( true );
+    shadowFB.BindTexture( 1 );
+    ShaderProgram.Use( progDraw );
+    ShaderProgram.SetUniformM44( progDraw, "u_projectionMat44", prjMat );
+    ShaderProgram.SetUniformM44( progDraw, "u_viewMat44", viewMat );
+    ShaderProgram.SetUniformM44( progDraw, "u_lightProjectionMat44", lightPrjMat );
+    ShaderProgram.SetUniformM44( progDraw, "u_lightViewMat44", lightViewMat );
+    ShaderProgram.SetUniformM44( progDraw, "u_modelMat44", modelMat );
+    ShaderProgram.SetUniformI1( progDraw, "u_depthSampler", 1 );
+    ShaderProgram.SetUniformF3( progDraw, "u_lightDir", viewLightDir )
+    ShaderProgram.SetUniformF1( progDraw, "u_ambient", ambient )
+    ShaderProgram.SetUniformF1( progDraw, "u_diffuse", diffuse )
+    ShaderProgram.SetUniformF1( progDraw, "u_specular", specular )
+    ShaderProgram.SetUniformF1( progDraw, "u_shininess", shininess )
+    
+    VertexBuffer.Draw( bufTorus );
+    ShaderProgram.SetUniformM44( progDraw, "u_modelMat44", groundModelMat );
+    VertexBuffer.Draw( bufGround );
+}
+
+var startTime;
+function Fract( val ) { 
+    return val - Math.trunc( val );
+}
+function CalcAng( currentTime, intervall ) {
+    return Fract( (currentTime - startTime) / (1000*intervall) ) * 2.0 * Math.PI;
+}
+function CalcMove( currentTime, intervall, range ) {
+    var pos = self.Fract( (currentTime - startTime) / (1000*intervall) ) * 2.0
+    var pos = pos < 1.0 ? pos : (2.0-pos)
+    return range[0] + (range[1] - range[0]) * pos;
+}    
+function EllipticalPosition( a, b, angRag ) {
+    var a_b = a * a - b * b
+    var ea = (a_b <= 0) ? 0 : Math.sqrt( a_b );
+    var eb = (a_b >= 0) ? 0 : Math.sqrt( -a_b );
+    return [ a * Math.sin( angRag ) - ea, b * Math.cos( angRag ) - eb, 0 ];
+}
+
+var sliderScale = 100.0
+var gl;
+var progShadow;
+var progDraw;
+var shadowFB;
+var bufTorus;
+var bufGround;
+function sceneStart() {
+
+    document.getElementById( "ambient" ).value = 0.2 * sliderScale;
+    document.getElementById( "diffuse" ).value = 0.7 * sliderScale;
+    document.getElementById( "specular" ).value = 0.5 * sliderScale;
+    document.getElementById( "shininess" ).value = 8.0;
+    
+    var canvas = document.getElementById( "scene-canvas");
+    var vp = [canvas.width, canvas.height];
+    gl = canvas.getContext( "experimental-webgl" );
+    if ( !gl )
+      return;
+
+      progShadow = ShaderProgram.Create( 
+      [ { source : "shadow-shader-vs", stage : gl.VERTEX_SHADER },
+        { source : "shadow-shader-fs", stage : gl.FRAGMENT_SHADER }
+      ],
+      [ "u_projectionMat44", "u_viewMat44", "u_modelMat44", 
+        "u_lightDir", "u_ambient", "u_diffuse", "u_specular", "u_shininess", ] );
+    progShadow.inPos = ShaderProgram.AttributeIndex( progShadow, "inPos" );
+    progShadow.inNV  = ShaderProgram.AttributeIndex( progShadow, "inNV" );
+    progShadow.inCol = ShaderProgram.AttributeIndex( progShadow, "inCol" );
+    if ( progShadow == 0 )
+        return;
+
+    progDraw = ShaderProgram.Create( 
+      [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },
+        { source : "draw-shader-fs", stage : gl.FRAGMENT_SHADER }
+      ],
+      [ "u_projectionMat44", "u_viewMat44", "u_modelMat44", 
+        "u_lightDir", "u_ambient", "u_diffuse", "u_specular", "u_shininess", ] );
+    progDraw.inPos = ShaderProgram.AttributeIndex( progDraw, "inPos" );
+    progDraw.inNV  = ShaderProgram.AttributeIndex( progDraw, "inNV" );
+    progDraw.inCol = ShaderProgram.AttributeIndex( progDraw, "inCol" );
+    if ( progDraw == 0 )
+        return;
+
+    shadowFB = FrameBuffer.Create( vp );    
+
+    // create torus
+    var circum_size = 32, tube_size = 32;
+    var rad_circum = 1.0;
+    var rad_tube = 0.5;
+    var torus_pts = [];
+    var torus_nv = [];
+    var torus_col = [];
+    var torus_inx = [];
+    var col = [1, 0.5, 0.0];
+    for ( var i_c = 0; i_c < circum_size; ++ i_c ) {
+        var center = [
+            Math.cos(2 * Math.PI * i_c / circum_size),
+            Math.sin(2 * Math.PI * i_c / circum_size) ]
+        for ( var i_t = 0; i_t < tube_size; ++ i_t ) {
+            var tubeX = Math.cos(2 * Math.PI * i_t / tube_size)
+            var tubeY = Math.sin(2 * Math.PI * i_t / tube_size)
+            var pt = [
+                center[0] * ( rad_circum + tubeX * rad_tube ),
+                center[1] * ( rad_circum + tubeX * rad_tube ),
+                tubeY * rad_tube ]
+            var nv = [ pt[0] - center[0] * rad_tube, pt[1] - center[1] * rad_tube, tubeY * rad_tube ]
+            torus_pts.push( pt[0], pt[1], pt[2] );
+            torus_nv.push( nv[0], nv[1], nv[2] );
+            torus_col.push( col[0], col[1], col[2] );
+            var i_cn = (i_c+1) % circum_size
+            var i_tn = (i_t+1) % tube_size
+            var i_c0 = i_c * tube_size; 
+            var i_c1 = i_cn * tube_size; 
+            torus_inx.push( i_c0+i_t, i_c0+i_tn, i_c1+i_t, i_c0+i_tn, i_c1+i_t, i_c1+i_tn )
+        }
+    }
+    bufTorus = VertexBuffer.Create(
+      [ { data : torus_pts, attrSize : 3, attrLoc : progDraw.inPos },
+        { data : torus_nv,  attrSize : 3, attrLoc : progDraw.inNV },
+        { data : torus_col, attrSize : 3, attrLoc : progDraw.inCol } ],
+        torus_inx
+    );
+
+    var g_l = 8.0;
+    var g_h = -2.5;
+    var g_c = [ 0.8, 0.6, 0.8 ];
+    bufGround = VertexBuffer.Create( 
+        [ { data : [ -g_l, -g_l, g_h, g_l, -g_l, g_h, g_l, g_l, g_h, -g_l, g_l, g_h ], attrSize : 3, attrLoc : progDraw.inPos },
+          { data : [ 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0 ], attrSize : 3, attrLoc : progDraw.inNV },
+          { data : [ g_c[0], g_c[1], g_c[2], g_c[0], g_c[1], g_c[2], g_c[0], g_c[1], g_c[2], g_c[0], g_c[1], g_c[2] ], attrSize : 3, attrLoc : progDraw.inCol } ],
+        [ 0, 1, 2, 0, 2, 3 ]
+    );
+
+    startTime = Date.now();
+    setInterval(drawScene, 50);
+}
+
+</script>
+
+<body onload="sceneStart();">
+    <div style="margin-left: 520px;">
+        <div style="float: right; width: 100%; background-color: #CCF;">
+            <form name="inputs">
+                <table>
+                    <tr> <td> ambient </td> 
+                         <td> <input type="range" id="ambient" min="0" max="100" value="0"/></td> </tr>
+                    <tr> <td> diffuse </td> 
+                         <td> <input type="range" id="diffuse" min="0" max="100" value="0"/></td> </tr>
+                    <tr> <td> specular </td> 
+                         <td> <input type="range" id="specular" min="0" max="100" value="0"/></td> </tr>
+                    <tr> <td> shininess </td> 
+                         <td> <input type="range" id="shininess" min="0" max="100" value="0"/></td> </tr>
+                </table>
+            </form>
+        </div>
+        <div style="float: right; width: 520px; margin-left: -520px;">
+            <canvas id="scene-canvas" style="border: none;" width="512" height="512"></canvas>
+        </div>
+        <div style="clear: both;"></div>
+    </div>
+</body>

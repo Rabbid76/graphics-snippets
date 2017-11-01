@@ -1,0 +1,313 @@
+<script id="draw-shader-vs" type="x-shader/x-vertex">
+precision mediump float;
+attribute vec3 inPos;
+attribute vec2 inTex;
+attribute vec3 inCol;
+varying vec2 vertTex;
+varying vec3 vertCol;
+uniform mat4 u_projectionMat44;
+uniform mat4 u_viewMat44;
+uniform mat4 u_modelMat44;
+void main()
+{
+    vertTex       = inTex;
+    vertCol       = inCol;
+    vec4 modelPos = u_modelMat44 * vec4( inPos, 1.0 );
+    vec4 viewPos  = u_viewMat44 * modelPos;
+    gl_Position   = u_projectionMat44 * viewPos;
+}
+</script>
+
+<script id="draw-shader-fs" type="x-shader/x-fragment">
+precision mediump float;
+varying vec2 vertTex;
+varying vec3 vertCol;
+uniform sampler2D u_texture;
+void main()
+{
+    vec3 texColor = texture2D( u_texture, vertTex ).rgb;
+    gl_FragColor  = vec4( texColor.rgb, 1.0 );
+}
+</script>
+
+<script type="text/javascript">
+
+glArrayType = typeof Float32Array !="undefined" ? Float32Array : ( typeof WebGLFloatArray != "undefined" ? WebGLFloatArray : Array );
+
+function IdentityMat44() {
+  var m = new glArrayType(16);
+  m[0]  = 1; m[1]  = 0; m[2]  = 0; m[3]  = 0;
+  m[4]  = 0; m[5]  = 1; m[6]  = 0; m[7]  = 0;
+  m[8]  = 0; m[9]  = 0; m[10] = 1; m[11] = 0;
+  m[12] = 0; m[13] = 0; m[14] = 0; m[15] = 1;
+  return m;
+};
+
+function RotateAxis(matA, angRad, axis) {
+    var aMap = [ [1, 2], [2, 0], [0, 1] ];
+    var a0 = aMap[axis][0], a1 = aMap[axis][1]; 
+    var sinAng = Math.sin(angRad), cosAng = Math.cos(angRad);
+    var matB = new glArrayType(16);
+    for ( var i = 0; i < 16; ++ i ) matB[i] = matA[i];
+    for ( var i = 0; i < 3; ++ i ) {
+        matB[a0*4+i] = matA[a0*4+i] * cosAng + matA[a1*4+i] * sinAng;
+        matB[a1*4+i] = matA[a0*4+i] * -sinAng + matA[a1*4+i] * cosAng;
+    }
+    return matB;
+}
+
+function Cross( a, b ) { return [ a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0], 0.0 ]; }
+function Dot( a, b ) { return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; }
+function Normalize( v ) {
+    var len = Math.sqrt( v[0] * v[0] + v[1] * v[1] + v[2] * v[2] );
+    return [ v[0] / len, v[1] / len, v[2] / len ];
+}
+
+var Camera = {};
+Camera.create = function() {
+    this.pos    = [0, 3, 0.0];
+    this.target = [0, 0, 0];
+    this.up     = [0, 0, 1];
+    this.fov_y  = 90;
+    this.vp     = [800, 600];
+    this.near   = 0.5;
+    this.far    = 100.0;
+}
+Camera.Perspective = function() {
+    var fn = this.far + this.near;
+    var f_n = this.far - this.near;
+    var r = this.vp[0] / this.vp[1];
+    var t = 1 / Math.tan( Math.PI * this.fov_y / 360 );
+    var m = IdentityMat44();
+    m[0]  = t/r; m[1]  = 0; m[2]  =  0;                              m[3]  = 0;
+    m[4]  = 0;   m[5]  = t; m[6]  =  0;                              m[7]  = 0;
+    m[8]  = 0;   m[9]  = 0; m[10] = -fn / f_n;                       m[11] = -1;
+    m[12] = 0;   m[13] = 0; m[14] = -2 * this.far * this.near / f_n; m[15] =  0;
+    return m;
+}
+Camera.LookAt = function() {
+    var mz = Normalize( [ this.pos[0]-this.target[0], this.pos[1]-this.target[1], this.pos[2]-this.target[2] ] );
+    var mx = Normalize( Cross( this.up, mz ) );
+    var my = Normalize( Cross( mz, mx ) );
+    var tx = Dot( mx, this.pos );
+    var ty = Dot( my, this.pos );
+    var tz = Dot( [-mz[0], -mz[1], -mz[2]], this.pos ); 
+    var m = IdentityMat44();
+    m[0]  = mx[0]; m[1]  = my[0]; m[2]  = mz[0]; m[3]  = 0;
+    m[4]  = mx[1]; m[5]  = my[1]; m[6]  = mz[1]; m[7]  = 0;
+    m[8]  = mx[2]; m[9]  = my[2]; m[10] = mz[2]; m[11] = 0;
+    m[12] = tx;    m[13] = ty;    m[14] = tz;    m[15] = 1; 
+    return m;
+} 
+
+// shader program object
+var ShaderProgram = {};
+ShaderProgram.Create = function( shaderList, uniformNames ) {
+    var shaderObjs = [];
+    for ( var i_sh = 0; i_sh < shaderList.length; ++ i_sh ) {
+        var shderObj = this.CompileShader( shaderList[i_sh].source, shaderList[i_sh].stage );
+        if ( shderObj == 0 )
+            return 0;
+        shaderObjs.push( shderObj );
+    }
+    var progObj = this.LinkProgram( shaderObjs )
+    if ( progObj != 0 ) {
+        progObj.unifomLocation = {};
+        for ( var i_n = 0; i_n < uniformNames.length; ++ i_n ) {
+            var name = uniformNames[i_n];
+            progObj.unifomLocation[name] = gl.getUniformLocation( progObj, name );
+        }
+    }
+    return progObj;
+}
+ShaderProgram.Use = function( progObj ) { gl.useProgram( progObj ); } 
+ShaderProgram.SetUniformInt = function( progObj, name, val ) { gl.uniform1i( progObj.unifomLocation[name], val ); }
+ShaderProgram.SetUniform2i = function( progObj, name, arr ) { gl.uniform2iv( progObj.unifomLocation[name], arr ); }
+ShaderProgram.SetUniformFloat = function( progObj, name, val ) { gl.uniform1f( progObj.unifomLocation[name], val ); }
+ShaderProgram.SetUniform2f = function( progObj, name, arr ) { gl.uniform2fv( progObj.unifomLocation[name], arr ); }
+ShaderProgram.SetUniform3f = function( progObj, name, arr ) { gl.uniform3fv( progObj.unifomLocation[name], arr ); }
+ShaderProgram.SetUniformMat44 = function( progObj, name, mat ) { gl.uniformMatrix4fv( progObj.unifomLocation[name], false, mat ); }
+ShaderProgram.CompileShader = function( source, shaderStage ) {
+    var shaderScript = document.getElementById(source);
+    if (shaderScript) {
+      source = "";
+      var node = shaderScript.firstChild;
+      while (node) {
+        if (node.nodeType == 3) source += node.textContent;
+        node = node.nextSibling;
+      }
+    }
+    var shaderObj = gl.createShader( shaderStage );
+    gl.shaderSource( shaderObj, source );
+    gl.compileShader( shaderObj );
+    var status = gl.getShaderParameter( shaderObj, gl.COMPILE_STATUS );
+    if ( !status ) alert(gl.getShaderInfoLog(shaderObj));
+    return status ? shaderObj : 0;
+} 
+ShaderProgram.LinkProgram = function( shaderObjs ) {
+    var prog = gl.createProgram();
+    for ( var i_sh = 0; i_sh < shaderObjs.length; ++ i_sh )
+        gl.attachShader( prog, shaderObjs[i_sh] );
+    gl.linkProgram( prog );
+    status = gl.getProgramParameter( prog, gl.LINK_STATUS );
+    if ( !status ) alert("Could not initialise shaders");
+    gl.useProgram( null );
+    return status ? prog : 0;
+}
+        
+function drawScene(){
+
+    var canvas = document.getElementById( "glow-canvas" );
+    Camera.create();
+    Camera.vp = [canvas.width, canvas.height];
+    var currentTime = Date.now();   
+    var deltaMS = currentTime - startTime;
+        
+    gl.viewport( 0, 0, canvas.width, canvas.height );
+    gl.enable( gl.DEPTH_TEST );
+    gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
+    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+
+    var texUnit = 0;
+    gl.activeTexture( gl.TEXTURE0 + texUnit );
+    gl.bindTexture( gl.TEXTURE_2D, textureObj );
+    
+    // set up draw shader
+    ShaderProgram.Use( progDraw );
+    ShaderProgram.SetUniformMat44( progDraw, "u_projectionMat44", Camera.Perspective() );
+    ShaderProgram.SetUniformMat44( progDraw, "u_viewMat44", Camera.LookAt() );
+    var modelMat = IdentityMat44()
+    modelMat = RotateAxis( modelMat, CalcAng( currentTime, 13.0 ), 0 );
+    modelMat = RotateAxis( modelMat, CalcAng( currentTime, 17.0 ), 1 );
+    ShaderProgram.SetUniformMat44( progDraw, "u_modelMat44", modelMat );
+    ShaderProgram.SetUniformInt( progDraw, "u_texture", texUnit );
+    
+    // draw scene
+    bufObj = bufCube;
+    gl.enableVertexAttribArray( progDraw.inPos );
+    gl.enableVertexAttribArray( progDraw.inTex );
+    gl.enableVertexAttribArray( progDraw.inCol );
+    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.pos );
+    gl.vertexAttribPointer( progDraw.inPos, 3, gl.FLOAT, false, 0, 0 );
+    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.tex );
+    gl.vertexAttribPointer( progDraw.inTex, 2, gl.FLOAT, false, 0, 0 );
+    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.col );
+    gl.vertexAttribPointer( progDraw.inCol, 3, gl.FLOAT, false, 0, 0 );
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufObj.inx );
+    gl.drawElements( gl.TRIANGLES, bufObj.inxLen, gl.UNSIGNED_SHORT, 0 );
+    gl.disableVertexAttribArray( progDraw.inPos );
+    gl.disableVertexAttribArray( progDraw.inTex );
+    gl.disableVertexAttribArray( progDraw.inCol );
+}
+
+var startTime;
+function Fract( val ) { 
+    return val - Math.trunc( val );
+}
+function CalcAng( currentTime, intervall ) {
+    return Fract( (currentTime - startTime) / (1000*intervall) ) * 2.0 * Math.PI;
+}
+function CalcMove( currentTime, intervall, range ) {
+    var pos = self.Fract( (currentTime - startTime) / (1000*intervall) ) * 2.0
+    var pos = pos < 1.0 ? pos : (2.0-pos)
+    return range[0] + (range[1] - range[0]) * pos;
+}    
+function EllipticalPosition( a, b, angRag ) {
+    var a_b = a * a - b * b
+    var ea = (a_b <= 0) ? 0 : Math.sqrt( a_b );
+    var eb = (a_b >= 0) ? 0 : Math.sqrt( -a_b );
+    return [ a * Math.sin( angRag ) - ea, b * Math.cos( angRag ) - eb, 0 ];
+}
+
+var sliderScale = 100.0
+var gl;
+var progDraw;
+var bufCube = {};
+var bufTorus = {};
+var textureObj;
+function sceneStart() {
+
+    var canvas = document.getElementById( "glow-canvas");
+    var vp = [canvas.width, canvas.height];
+    gl = canvas.getContext( "experimental-webgl" );
+    if ( !gl )
+      return;
+
+    progDraw = ShaderProgram.Create( 
+      [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },
+        { source : "draw-shader-fs", stage : gl.FRAGMENT_SHADER }
+      ],
+      [ "u_projectionMat44", "u_viewMat44", "u_modelMat44", "u_texture" ] );
+    progDraw.inPos = gl.getAttribLocation( progDraw, "inPos" );
+    progDraw.inTex = gl.getAttribLocation( progDraw, "inTex" );
+    progDraw.inCol = gl.getAttribLocation( progDraw, "inCol" );
+    if ( progDraw == 0 )
+        return;
+
+    // create cube
+    var cubePos = [
+        -1.0, -1.0,  1.0,  1.0, -1.0,  1.0,  1.0,  1.0,  1.0, -1.0,  1.0,  1.0,
+        -1.0, -1.0, -1.0,  1.0, -1.0, -1.0,  1.0,  1.0, -1.0, -1.0,  1.0, -1.0 ];
+    var cubeCol = [ 1.0, 0.0, 0.0, 1.0, 0.5, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 ];
+    var cubeHlpInx = [ 0, 1, 2, 3, 1, 5, 6, 2, 5, 4, 7, 6, 4, 0, 3, 7, 3, 2, 6, 7, 1, 0, 4, 5 ]; 
+    var cubePosData = [];
+    for ( var i = 0; i < cubeHlpInx.length; ++ i ) {
+        cubePosData.push( cubePos[cubeHlpInx[i]*3], cubePos[cubeHlpInx[i]*3+1], cubePos[cubeHlpInx[i]*3+2] );
+    }
+    var cubeTexData = []
+    for ( var i = 0; i < 6; ++ i ) {
+        cubeTexData.push( 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0 );
+    }
+    var cubeColData = [];
+    for ( var is = 0; is < 6; ++ is ) {
+        for ( var ip = 0; ip < 4; ++ ip ) {
+           cubeColData.push( cubeCol[is*3], cubeCol[is*3+1], cubeCol[is*3+2] ); 
+        }
+    }
+    var cubeInxData = [];
+    for ( var i = 0; i < cubeHlpInx.length; i += 4 ) {
+        cubeInxData.push( i, i+1, i+2, i, i+2, i+3 );
+    }
+    bufCube.pos = gl.createBuffer();
+    gl.bindBuffer( gl.ARRAY_BUFFER, bufCube.pos );
+    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( cubePosData ), gl.STATIC_DRAW );
+    bufCube.tex = gl.createBuffer();
+    gl.bindBuffer( gl.ARRAY_BUFFER, bufCube.tex );
+    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( cubeTexData ), gl.STATIC_DRAW );
+    bufCube.col = gl.createBuffer();
+    gl.bindBuffer( gl.ARRAY_BUFFER, bufCube.col );
+    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( cubeColData ), gl.STATIC_DRAW );
+    bufCube.inx = gl.createBuffer();
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufCube.inx );
+    gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( cubeInxData ), gl.STATIC_DRAW );
+    bufCube.inxLen = cubeInxData.length;
+
+    var texCX = 128;
+    var texCY = 128;
+    var texPlan = [];
+    for (ix = 0; ix < texCX; ++ix) {
+        for (iy = 0; iy < texCY; ++iy) {
+            var val_x = Math.sin( Math.PI * 6.0 * ix / texCX )
+            var val_y = Math.sin( Math.PI * 6.0 * iy / texCY )
+            texPlan.push( 128 + 127 * val_x, 63, 128 + 127 * val_y, 255 );
+        }
+    }
+    textureObj = gl.createTexture();
+    gl.activeTexture( gl.TEXTURE0 );
+    gl.bindTexture( gl.TEXTURE_2D, textureObj );
+    gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, texCX, texCY, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array( texPlan ) );
+    gl.pixelStorei( gl.UNPACK_FLIP_Y_WEBGL, true );
+    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR );
+    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR );
+    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT );
+    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT );
+
+    startTime = Date.now();
+    setInterval(drawScene, 50);
+}
+
+</script>
+
+<body onload="sceneStart();">
+    <canvas id="glow-canvas" style="border: none;" width="512" height="512"></canvas>
+</body>
