@@ -71,4 +71,4 @@
 
 [Silhouette](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/silhouette.html)
 
-[Normal map 1](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/normalmap_1.html)
+[Normal map 1](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/normalmap1.html)
