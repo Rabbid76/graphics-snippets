@@ -29,6 +29,7 @@ from MyLibOGL.ogl import vertex
 from MyLibOGL.ogl import uniform
 from MyLibOGL.glut import window
 
+
 class MyWindow(window.CameraWindow):
     def __init__( self, cx, cy, multisample=True ):
         super().__init__(cx, cy, multisample)
@@ -73,7 +74,7 @@ class MyWindow(window.CameraWindow):
 
 # create window
 rotateCamera = False
-wnd = MyWindow( 400, 400, True )
+wnd = MyWindow( 800, 600, True )
 
 # define location vertex array opject
 pointVAObj = vertex.VAObject( [ (3, [ (0.0, 0.0, 0.0) ] ), (3, [ (0.0, 0.0, -1.0) ]), (3, [ (1.0, 0.0, 0.0) ]) ], [], GL_POINTS )

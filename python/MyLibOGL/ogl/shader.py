@@ -87,6 +87,8 @@ class ShaderProgram:
             self.SetUniformM44( name, val )
         elif typeData == GL_SAMPLER_2D:
             self.SetUniformI1( name, val )
+    def SetUniforms( self, uniforms ):
+        for name in uniforms: self.SetUniform( name, uniforms[name] )
         
     # read shader program and compile shader
     def CompileShader(self, sourceFileName, shaderStage):
