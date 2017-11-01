@@ -38,7 +38,7 @@ In this example, the entire geometry (a cylinder) is generated in the geometry s
     
     layout( invocations = 3 ) in;
     layout( points ) in;
-    layout( triangle_strip, max_vertices = 160 ) out;
+    layout( triangle_strip, max_vertices = 72 ) out;
     
     in TVertexData
     {
@@ -64,7 +64,7 @@ In this example, the entire geometry (a cylinder) is generated in the geometry s
         EmitVertex();
     }
     
-    const int circumferenceTile = 36;
+    const int circumferenceTile = 16;
     
     void main()
     {
@@ -82,42 +82,40 @@ In this example, the entire geometry (a cylinder) is generated in the geometry s
         if ( gl_InvocationID == 0 ) // top of the cylinder
         {
             outData.nv  = normalMat * vec3(0.0, 0.0, 1.0);
-            vec2 prevPt = vec2( 0.0, 1.0 );
-            for ( int inx = 1; inx <= circumferenceTile; inx += 2 )
+            for ( int inx = 0; inx < circumferenceTile; inx += 2 )
             {
                 float ang1 = 2.0 * 3.14159 * float(inx) / float(circumferenceTile);
                 float ang2 = 2.0 * 3.14159 * float(inx+1) / float(circumferenceTile);
                 vec2 actPt1 = vec2( sin(ang1), cos(ang1) );
                 vec2 actPt2 = vec2( sin(ang2), cos(ang2) );
-          
-                NewVertex( vec3(prevPt.xy, 1.0), modelViewMat );
+           
                 NewVertex( vec3(actPt1.xy, 1.0), modelViewMat );
                 NewVertex( vec3(0.0, 0.0, 1.0), modelViewMat );
                 NewVertex( vec3(actPt2.xy, 1.0), modelViewMat );
-                
-                EndPrimitive();
-                prevPt = actPt2;
             }
+            NewVertex( vec3(0.0, 0.0, 1.0), modelViewMat );
+            NewVertex( vec3(0.0, 1.0, 1.0), modelViewMat );
+            EndPrimitive();
         }
     
         if ( gl_InvocationID == 1 ) // bottom of the cylinder  
         {
             outData.nv  = normalMat * vec3(0.0, 0.0, -1.0);    
             vec2 prevPt = vec2( 0.0, 1.0 );
-            for ( int inx = circumferenceTile-1; inx >= 0; inx -= 2 )
+            for ( int inx = circumferenceTile; inx >= 0; inx -= 2 )
             {
                 float ang1 = 2.0 * 3.14159 * float(inx) / float(circumferenceTile);
                 float ang2 = 2.0 * 3.14159 * float(inx-1) / float(circumferenceTile);
                 vec2 actPt1 = vec2( sin(ang1), cos(ang1) );
                 vec2 actPt2 = vec2( sin(ang2), cos(ang2) );    
-                NewVertex( vec3(prevPt.xy, -1.0), modelViewMat );
+                
                 NewVertex( vec3(actPt1.xy, -1.0), modelViewMat );
                 NewVertex( vec3(0.0, 0.0, -1.0), modelViewMat );
                 NewVertex( vec3(actPt2.xy, -1.0), modelViewMat );
-                
-                EndPrimitive();
-                prevPt = actPt2;
             }
+            NewVertex( vec3(0.0, 0.0, -1.0), modelViewMat );
+            NewVertex( vec3(0.0, 1.0, -1.0), modelViewMat );
+            EndPrimitive();
         }
     
         if ( gl_InvocationID == 2 ) // hull of the cylinder
