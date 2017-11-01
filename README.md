@@ -2,11 +2,11 @@
 
 ## Documentation
 
-[Model View Projection and Depth](https://rabbid76.github.io/graphics-snippets/documentation/projection_and_depth.md)
+[Model View Projection and Depth](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/projection_and_depth.md)
 
-[MAtrix operations](https://rabbid76.github.io/graphics-snippets/documentation/matrix_operations.mdl)
+[Matrix operations](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/matrix_operations.md)
 
-[Tessellation](https://rabbid76.github.io/graphics-snippets/documentation/tessellation.md)
+[Tessellation](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/tessellation.md)
 
 ## HTML
 
