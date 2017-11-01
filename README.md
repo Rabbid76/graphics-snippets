@@ -6,10 +6,12 @@
 
 [Matrix operations](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/matrix_operations.md)
 
+[Geometry](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/geometry.md)
+
 [Tessellation](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/tessellation.md)
 
 
------
+<br/>
 ## HTML
 
 ### WebGL tools

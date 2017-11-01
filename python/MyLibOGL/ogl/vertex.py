@@ -42,7 +42,7 @@ class VAObject:
         glBindVertexArray( self.__obj )
         if self.__type == GL_PATCHES:
             glPatchParameteri( GL_PATCH_VERTICES, self.__patch_vertices )
-        glDrawArrays( GL_PATCHES, 0, self.__dataLength[0] )
+        glDrawArrays( self.__type, 0, self.__dataLength[0] )
         glBindVertexArray( 0 )
     def Draw(self):
         if self.__noOfIndices == 0:
