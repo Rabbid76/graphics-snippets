@@ -8,6 +8,8 @@
 
 [Tessellation](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/tessellation.md)
 
+
+-----
 ## HTML
 
 ### WebGL tools
@@ -68,3 +70,5 @@
 [Texture light up](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/texture_light_up.html)
 
 [Silhouette](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/silhouette.html)
+
+[Normal map 1](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/normalmap_1.html)
