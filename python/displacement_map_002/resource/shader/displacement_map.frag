@@ -1,13 +1,19 @@
-#version 400
+#version 450
 
-#define USE_NORMAL_MAP
+#define NORMAL_MAP_TEXTURE
+//#define TBN_BY_DERIVATIONS
 
-in vec3 vertPos;
-in vec3 vertNV;
-in vec3 vertCol;
-in vec2 vertUV;
+in TGeometryData
+{
+    vec3  vsPos;
+    vec3  vsNV;
+    vec3  vsTV;
+    float tDet;
+    vec3  col;
+    vec2  uv;
+} inData;
 
-out vec4 fragColor;
+layout (location = 0) out vec4 fragColor;
 
 uniform vec3  u_lightDir;
 uniform float u_ambient;
@@ -20,7 +26,7 @@ uniform sampler2D u_displacement_map;
 uniform float     u_displacement_scale;
 uniform vec2      u_parallax_quality;
 
-#ifdef USE_NORMAL_MAP
+#ifdef NORMAL_MAP_TEXTURE
 uniform sampler2D u_normal_map;
 #endif
 
@@ -32,7 +38,7 @@ float CalculateHeight( in vec2 texCoords )
 
 vec4 CalculateNormal( in vec2 texCoords )
 {
-#ifdef USE_NORMAL_MAP
+#ifdef NORMAL_MAP_TEXTURE
     float height = CalculateHeight( texCoords );
     vec3  tempNV = texture( u_normal_map, texCoords ).xyz;
     return vec4( normalize( tempNV ), height );
@@ -85,27 +91,33 @@ vec3 SteepParallax( in vec3 texDir3D, in vec2 texCoord )
 
 void main()
 {
-    vec3  objPosEs     = vertPos;
-    vec3  objNormalEs  = vertNV;
-    vec2  texCoords    = vertUV.st;
+    vec3  objPosEs     = inData.vsPos;
+    vec3  objNormalEs  = inData.vsNV;
+    vec2  texCoords    = inData.uv;
     vec3  normalEs     = ( gl_FrontFacing ? 1.0 : -1.0 ) * normalize( objNormalEs );
-    
+
+#ifdef TBN_BY_DERIVATIONS     
     vec3  p_dx         = dFdx( objPosEs );
     vec3  p_dy         = dFdy( objPosEs );
     vec2  tc_dx        = dFdx( texCoords );
     vec2  tc_dy        = dFdy( texCoords );
     float texDet       = determinant( mat2( tc_dx, tc_dy ) );
-    vec3  tangentVec   = ( tc_dy.y * p_dx - tc_dx.y * p_dy ) / abs( texDet );
+    vec3  tangentVec   = ( tc_dy.y * p_dx - tc_dx.y * p_dy );
+#else
+    float texDet       = inData.tDet;
+    vec3  tangentVec   = inData.vsTV;
+#endif    
     vec3  tangentEs    = normalize( tangentVec - normalEs * dot(tangentVec, normalEs ) );
     mat3  tbnMat       = mat3( sign( texDet ) * tangentEs, cross( normalEs, tangentEs ), normalEs );
    
-    vec3  texDir3D     = normalize( inverse( tbnMat ) * objPosEs );
+    //vec3  texDir3D     = normalize( inverse( tbnMat ) * objPosEs );
+    vec3  texDir3D     = normalize( transpose( tbnMat ) * objPosEs ); // `transpose` can be used instead of `inverse` for orthogonal 3*3 matrices 
     vec3  newTexCoords = SteepParallax( texDir3D, texCoords.st );
     texCoords.st       = newTexCoords.xy;
     vec4  normalVec    = CalculateNormal( texCoords ); 
     vec3  nvMappedEs   = normalize( tbnMat * normalVec.xyz );
 
-    //vec3 color = vertCol;
+    //vec3 color = inData.col;
     vec3 color = texture( u_texture, texCoords.st ).rgb;
 
     // ambient part
@@ -118,7 +130,7 @@ void main()
     lightCol     += NdotL * u_diffuse * color;
     
     // specular part
-    vec3  eyeV      = normalize( -vertPos );
+    vec3  eyeV      = normalize( -objPosEs );
     vec3  halfV     = normalize( eyeV + lightV );
     float NdotH     = max( 0.0, dot( normalV, halfV ) );
     float kSpecular = ( u_shininess + 2.0 ) * pow( NdotH, u_shininess ) / ( 2.0 * 3.14159265 );
