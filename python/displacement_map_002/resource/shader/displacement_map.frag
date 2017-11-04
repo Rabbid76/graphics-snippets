@@ -10,7 +10,7 @@ in TGeometryData
     vec3  vsPos;
     vec3  vsNV;
     vec3  vsTV;
-    float tDet;
+    float vsBVsign;
     vec3  col;
     vec2  uv;
 } inData;
@@ -128,13 +128,15 @@ void main()
     vec2  tc_dx        = dFdx( texCoords );
     vec2  tc_dy        = dFdy( texCoords );
     float texDet       = determinant( mat2( tc_dx, tc_dy ) );
-    vec3  tangentVec   = ( tc_dy.y * p_dx - tc_dx.y * p_dy );
+    vec3  tangentVec   = ( tc_dy.y * p_dx - tc_dx.y * p_dy ) / texDet;
+    float binormalSign = sign(texDet);
 #else
-    float texDet       = inData.tDet;
     vec3  tangentVec   = inData.vsTV;
+    float binormalSign = inData.vsBVsign;
 #endif    
     vec3  tangentEs    = normalize( tangentVec - normalEs * dot(tangentVec, normalEs ) );
-    mat3  tbnMat       = mat3( sign( texDet ) * tangentEs, cross( normalEs, tangentEs ), normalEs );
+    mat3  tbnMat       = mat3( tangentEs, binormalSign * cross( normalEs, tangentEs ), normalEs );
+    //mat3  tbnMat       = mat3( -tangentEs, -binormalSign * cross( normalEs, tangentEs ), normalEs ); // inverse steep parallax
    
     //vec3  texDir3D     = normalize( inverse( tbnMat ) * objPosEs );
     vec3  texDir3D     = normalize( transpose( tbnMat ) * objPosEs ); // `transpose` can be used instead of `inverse` for orthogonal 3*3 matrices 
