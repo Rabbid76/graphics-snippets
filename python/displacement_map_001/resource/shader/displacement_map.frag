@@ -1,6 +1,7 @@
 #version 400
 
-#define USE_NORMAL_MAP
+//#define NORMAL_MAP_TEXTURE
+#define NORMAL_MAP_QUALITY 1
 
 in vec3 vertPos;
 in vec3 vertNV;
@@ -20,7 +21,7 @@ uniform sampler2D u_displacement_map;
 uniform float     u_displacement_scale;
 uniform vec2      u_parallax_quality;
 
-#ifdef USE_NORMAL_MAP
+#if defined(NORMAL_MAP_TEXTURE)
 uniform sampler2D u_normal_map;
 #endif
 
@@ -32,16 +33,40 @@ float CalculateHeight( in vec2 texCoords )
 
 vec4 CalculateNormal( in vec2 texCoords )
 {
-#ifdef USE_NORMAL_MAP
+#if defined(NORMAL_MAP_TEXTURE)
     float height = CalculateHeight( texCoords );
-    vec3  tempNV = texture( u_normal_map, texCoords ).xyz;
+    vec3  tempNV = texture( u_normal_map, texCoords ).xyz * 2.0 / 1.0;
     return vec4( normalize( tempNV ), height );
 #else
+    vec2 texOffs = 1.0 / textureSize( u_displacement_map, 0 ).xy;
+    vec2 scale   = u_displacement_scale / texOffs;
+#if NORMAL_MAP_QUALITY > 1
+    float hx[9];
+    hx[0] = texture( u_displacement_map, texCoords.st + texOffs * vec2(-1.0, -1.0) ).r;
+    hx[1] = texture( u_displacement_map, texCoords.st + texOffs * vec2( 0.0, -1.0) ).r;
+    hx[2] = texture( u_displacement_map, texCoords.st + texOffs * vec2( 1.0, -1.0) ).r;
+    hx[3] = texture( u_displacement_map, texCoords.st + texOffs * vec2(-1.0,  0.0) ).r;
+    hx[4] = texture( u_displacement_map, texCoords.st ).r;
+    hx[5] = texture( u_displacement_map, texCoords.st + texOffs * vec2( 1.0, 0.0) ).r;
+    hx[6] = texture( u_displacement_map, texCoords.st + texOffs * vec2(-1.0, 1.0) ).r;
+    hx[7] = texture( u_displacement_map, texCoords.st + texOffs * vec2( 0.0, 1.0) ).r;
+    hx[8] = texture( u_displacement_map, texCoords.st + texOffs * vec2( 1.0, 1.0) ).r;
+    vec2  deltaH = vec2(hx[0]-hx[2] + 2.0*(hx[3]-hx[5]) + hx[6]-hx[8], hx[0]-hx[6] + 2.0*(hx[1]-hx[7]) + hx[2]-hx[8]); 
+    float h_mid  = hx[4];
+#elif NORMAL_MAP_QUALITY > 0
+    float h_mid  = texture( u_displacement_map, texCoords.st ).r;
+    float h_xa   = texture( u_displacement_map, texCoords.st + texOffs * vec2(-1.0,  0.0) ).r;
+    float h_xb   = texture( u_displacement_map, texCoords.st + texOffs * vec2( 1.0,  0.0) ).r;
+    float h_ya   = texture( u_displacement_map, texCoords.st + texOffs * vec2( 0.0, -1.0) ).r;
+    float h_yb   = texture( u_displacement_map, texCoords.st + texOffs * vec2( 0.0,  1.0) ).r;
+    vec2  deltaH = vec2(h_xa-h_xb, h_ya-h_yb); 
+#else
     vec4  heights = textureGather( u_displacement_map, texCoords, 0 );
-    //float scale   = u_displacement_scale;
-    vec3  tempNV  = vec3( dot(heights, vec4(1.0, -1.0, -1.0, 1.0)), dot(heights, vec4(-1.0, -1.0, 1.0, 1.0)), 0.1 );
-    return vec4( normalize( tempNV ), heights.w );
-#endif  
+    vec2  deltaH  = vec2(dot(heights, vec4(1.0, -1.0, -1.0, 1.0)), dot(heights, vec4(-1.0, -1.0, 1.0, 1.0)));
+    float h_mid   = heights.w; 
+#endif
+    return vec4( normalize( vec3( deltaH * scale, 1.0 ) ), h_mid );
+#endif 
 }
 
 vec3 SteepParallax( in vec3 texDir3D, in vec2 texCoord )

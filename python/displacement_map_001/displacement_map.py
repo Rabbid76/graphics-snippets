@@ -70,7 +70,7 @@ class MyWindow(window.CameraWindow):
     def _InitCamera_(self):
         camera = super()._InitCamera_()
         #camera.fov_y = 120 
-        camera.pos = (0, -3, 0)
+        camera.pos = (0, -2.5, 0)
         return camera    
 
     # draw event
@@ -87,6 +87,8 @@ class MyWindow(window.CameraWindow):
         modelMat = mat.IdentityMat44()
         modelMat = mat.RotateX( modelMat, self.CalcAng( 13.0 ) )
         modelMat = mat.RotateY( modelMat, self.CalcAng( 17.0 ) )
+        #modelMat = mat.RotateX( modelMat, 60.0*math.pi/180.0 )
+        #modelMat = mat.RotateY( modelMat, -10.0*math.pi/180.0 )
 
         progDraw.SetUniforms( {
             b"u_projectionMat44"    : self.Perspective(),
