@@ -263,6 +263,7 @@ Thus, multiplying a vector from the left to a matrix corresponds to multiplying 
     vec2 w = v * m; // = vec2(1. * 10. + 2. * 20., 3. * 10. + 4. * 20.)
 
 <br/>
+
 **This means**:
 
 If a matrix is defined like this:
