@@ -103,6 +103,11 @@ Python:
         for i in range(0, 4): matB[3,i] = matA[0,i] * trans[0] + matA[1,i] * trans[1] + matA[2,i] * trans[2] + matA[3,i] 
         return matB
 
+Note, this would be what [`glm::translate`][6] does.
+
+    glm::mat4 translation = glm::translate(glm::mat4(), glm::vec3(0.5, 0.0, 0.0));
+
+
 ### Matrix rotation
 
 C++:
@@ -240,11 +245,138 @@ Note, the result of `rotate * translate` would be:
 
 
 <br/><hr/>
+## Transpose? It's just a matter of definition
+
+Further see [GLSL Programming/Vector and Matrix Operations][1]:
+>Furthermore, the *-operator can be used for matrix-vector products of the corresponding dimension, e.g.:
+>
+    vec2 v = vec2(10., 20.);
+    mat2 m = mat2(1., 2.,  3., 4.);
+    vec2 w = m * v; // = vec2(1. * 10. + 3. * 20., 2. * 10. + 4. * 20.)
+>**Note that the vector has to be multiplied to the matrix from the right**.
+><br/><br/>
+>If a vector is multiplied to a matrix from the left, the result corresponds to to multiplying a column vector to the transposed matrix from the right. This corresponds to multiplying a column vector to the transposed matrix from the right:<br/><br/>
+Thus, multiplying a vector from the left to a matrix corresponds to multiplying it from the right to the transposed matrix:
+>
+    vec2 v = vec2(10., 20.);
+    mat2 m = mat2(1., 2.,  3., 4.);
+    vec2 w = v * m; // = vec2(1. * 10. + 2. * 20., 3. * 10. + 4. * 20.)
+
+<br/>
+**This means**:
+
+If a matrix is defined like this:
+
+    mat4 m44 = mat4(
+        vec4( Xx, Xy, Xz, 0.0),
+        vec4( Yx, Xy, Yz, 0.0),
+        vec4( Zx  Zy  Zz, 0.0),
+        vec4( Tx, Ty, Tz, 1.0) );
+
+And the matrix uniform `mat4 transformation` is set like this (see [`glUniformMatrix4fv`][18]):
+
+    glUniformMatrix4fv( .... , 1, GL_FALSE, &(m44[0][0] ); 
+
+Then that the vector has to be multiplied to the matrix from the **right**:
+ 
+    gl_Position = transformation * vertexPosition;
+
+<br/>
+But of course, the matrix can be set up *transposed*: 
+
+    mat4 m44 = mat4(
+        vec4(  Xx,  Yx,  Zx,  Tx),
+        vec4(  Xy,  Yy,  Zy,  Ty),
+        vec4(  Xz   Yz   Zz,  Tz),
+        vec4( 0.0, 0.0, 0.0, 1.0) );
+
+**Or** can be transposet when set to the uniform variable:
+
+    glUniformMatrix4fv( .... , 1, GL_TRUE, &(m44[0][0] );
+
+Then that the vector has to be multiplied to the matrix from the **left**:
+
+    gl_Position = vertexPosition * transformation;
+
+
+<br/><hr/>
+## Combined transformations
+
+Let's assume we have an object that is moved, rotated and scaled, and we define a transformation matrix as follows:
+
+    glm::mat4 objTrans ...; // translation 
+    glm::mat4 objRot ...;   // roation 
+    glm::mat4 objScale ...; // scaling
+
+    glm::mat4 objMat = objTrans * objRot * objScale;
+
+And we have rotation matrix that we want to run on the object. In this case we have rotation around the Z-axis:
+
+    foat angle ...; // rotation angle
+
+    glm::mat4 rotMat = glm::rotate( angle, glm::vec3( 0.0, 0.0, 1.0 ) ); 
+
+We have several rotations we can do with this information.
+First we want to rotate the object on its local axis:
+
+![rotate local axis](image/rotate_local_axis.svg)
+
+    glm::mat4 modelMat = objMat * rotMat;
+
+A Rotation around the worlds origin can be performed like this:
+
+![rotate world origin](image/rotate_world_origin.svg)
+
+    glm::mat4 modelMat = rotMat * objMat;
+
+In order to rotate around the origin of the object in the world coordinate system, we must eliminate the rotation of the objct:
+
+![rotate object origin](image/rotate_object_origin.svg)
+
+    glm::mat4 modelMat = objMat * (glm::inverse(objRot) * rotMat * objRot);
+
+A Rotation around the worlds origin in relation to the object you have to do the opposite:
+
+![rotate object world](image/rotate_object_world.svg)
+
+    glm::mat4 modelMat = (objRot * rotMat * glm::inverse(objRot)) * objMat;
+
+If you have a complete transformations matrix for an object and you do not know the rotation part, then it can be easily determined.
+
+Note that a transformation matrix usually looks like this:
+
+    ( X-axis.x, X-axis.y, X-axis.z, 0 )
+    ( Y-axis.x, Y-axis.y, Y-axis.z, 0 )
+    ( Z-axis.x, Z-axis.y, Z-axis.z, 0 )
+    ( trans.x,  trans.y,  trans.z,  1 )
+
+To generate a rotation only matrix you have to extract the normalized axis vectors:
+
+    glm::mat4 a ...; // any matrix
+    glm::vec3 x = glm::normalize( a[0][0], a[0][1], a[0][2] );
+    glm::vec3 y = glm::normalize( a[1][0], a[1][1], a[1][2] );
+    glm::vec3 z = glm::normalize( a[2][0], a[2][1], a[2][2] );
+
+    glm::mat4 r;
+    r[0][0] = x[0]; r[0][1] = x[1]; r[0][2] = x[2]; r[0][3] = 0.0f;
+    r[1][0] = y[0]; r[1][1] = y[1]; r[1][2] = y[2]; r[0][3] = 0.0f;
+    r[2][0] = z[0]; r[2][1] = z[1]; r[2][2] = z[2]; r[0][3] = 0.0f;
+    r[3][0] = 0.0f; r[3][1] = 0.0f; r[3][2] = 0.0f; r[0][3] = 1.0f;
+
+
+<br/><hr/>
+## First Person Camera Transformation
+
+First Person movment, the cmaera matrix has to be incrementally changed. This means you have to calculate the current movement and current rotation matrix. Apply the movement and rotation to the camera and keep the camera for the next cycle of the loop. At the next cycle of the loop you have to use the manipulated camera from the previous cycle and you have to apply the new movement and rotation. This causes that the camera incremental changes, always based on its current position and orientation.
+
+![movement and rotation](image/movement_and_rotation.svg)
+
+<br/><hr/>
 ## Resources
 
 - [GLSL Programming/Vector and Matrix Operations][1]
 - [Data Type (GLSL)][2]    
-- [GLSL 4×4 Matrix Fields][3]
+- [GLSL 4x4 Matrix Fields][3]
 - [Matrix Translation in GLSL is infinitely stretched][9]
 - [What is wrong with my matrix stack implementation (OpenGL ES 2.0)?][10]
 - [three.js object translate and rotate based on object self coordinate system or world coordinate system][11]
@@ -253,7 +385,12 @@ Note, the result of `rotate * translate` would be:
 - [Issues with Z-axis rotation matrix in glsl shader][14]
 - [three.js object translate and rotate based on object self coordinate system or world coordinate system][15]
 - [movement of rendered objects in opengl][16]
-
+- [Drawing cubes with stacked matrix][19]
+- [OpenGL transforming objects with multiple rotations of Different axis][20]
+- [What is the difference between the order in which a mat4x4 is multiplied with a vec4?][21]
+- [Translation on square made of triangles in opengl][22]
+- [opengl atan2f doesn't work][23]
+- [OpenGL, First Person Camera Translation][24]
 
 
   [1]: https://en.wikibooks.org/wiki/GLSL_Programming/Vector_and_Matrix_Operations
@@ -272,14 +409,22 @@ Note, the result of `rotate * translate` would be:
   [14]: https://stackoverflow.com/questions/6458051/issues-with-z-axis-rotation-matrix-in-glsl-shader/44986176#44986176
   [15]: https://stackoverflow.com/questions/46700593/three-js-object-translate-and-rotate-based-on-object-self-coordinate-system-or-w/46701675#46701675
   [16]: https://stackoverflow.com/questions/46634046/movement-of-rendered-objects-in-opengl/46634442#46634442
+  [17]: https://glm.g-truc.net/0.9.8/api/a00169.html#gaee134ab77c6c5548a6ebf4e8e476c6ed
+  [18]: https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glUniform.xhtml
+  [19]: https://stackoverflow.com/questions/46238282/drawing-cubes-with-stacked-matrix
+  [20]: https://stackoverflow.com/questions/45091505/opengl-transforming-objects-with-multiple-rotations-of-different-axis/45095288#45095288
+  [21]: https://stackoverflow.com/questions/46888117/what-is-the-difference-between-the-order-in-which-a-mat4x4-is-multiplied-with-a/46888465#46888465
+  [22]: https://stackoverflow.com/questions/47004946/translation-on-square-made-of-triangles-in-opengl/47005569#47005569
+  [23]: https://stackoverflow.com/questions/45234650/atan2f-doesnt-work/45239229#45239229
+  [24]: https://stackoverflow.com/questions/46508872/opengl-first-person-camera-translation/46509967#46509967
 
 
 -----
 - [Particles not oriented to the camera](https://stackoverflow.com/questions/45779313/particles-not-oriented-to-the-camera/45779696#45779696)
 - [OpenGL screen coordinates to world coordinates](https://stackoverflow.com/questions/44965202/opengl-screen-coordinates-to-world-coordinates/45000237#45000237)
 - [Is 4th row in model view projection the viewing position?](https://stackoverflow.com/questions/46637247/is-4th-row-in-model-view-projection-the-viewing-position/46639494#46639494)
-- [OpenGL transforming objects with multiple rotations of Different axis](https://stackoverflow.com/questions/45091505/opengl-transforming-objects-with-multiple-rotations-of-different-axis/45095288#45095288)
-- [Drawing cubes with stacked matrix](https://stackoverflow.com/questions/46238282/drawing-cubes-with-stacked-matrix)
-- [Translation on square made of triangles in opengl](https://stackoverflow.com/questions/47004946/translation-on-square-made-of-triangles-in-opengl/47005569#47005569)
-- [What is the difference between the order in which a mat4x4 is multiplied with a vec4?](https://stackoverflow.com/questions/46888117/what-is-the-difference-between-the-order-in-which-a-mat4x4-is-multiplied-with-a/46888465#46888465)
+
+# TODO
+
+- inverse matrix versus transposed matrix
 
