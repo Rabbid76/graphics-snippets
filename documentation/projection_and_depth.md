@@ -22,7 +22,7 @@ The model matrix looks like this:
     ( trans.x,  trans.y,  trans.z,  1 ) 
 
 
-<br/>
+<br/><hr/>
 ## View
 
 While in the world the X-axis is pointing to the right, the Y-axis to the front, and the Z-axis to the top,on the viewport the X-axis points to the left, the Y-axis up and the Z-axis out of the view (Note in a right hand system the Z-Axis is the cross product of the X-Axis and the Y-Axis).
@@ -77,7 +77,7 @@ The following code does the same as `gluLookAt` or `glm::lookAt` does:
     }
 
 
-<br/>
+<br/><hr/>
 ## Projection
 
 The projection matrix describes the mapping from 3D points of a scene, to 2D points of the viewport. It transforms from eye space to the clip space, and the coordinates in the clip space are transformed to the normalized device coordinates (NDC) by dividing with the `w` component of the clip coordinates. The NDC are in range (-1,-1,-1) to (1,1,1).<br/> Every geometry which is out of the NDC is clipped.<br/>
@@ -92,7 +92,7 @@ The projection matrix describes the mapping from 3D points of a scene, to 2D poi
 The objects between the near plane and the far plane of the camera frustum are mappend to the range (-1, 1) of the NDC.<br/>
 
 
-<br/>
+<br/><hr/>
 ## Depth
 
 Whether the depth (`gl_FragCoord.z` and `gl_FragDepth`) is linear mapped or not depends on, the projection matrix.
@@ -104,7 +104,7 @@ In general, the depth (`gl_FragCoord.z` and `gl_FragDepth`) is calculated as fol
     float depth = (((farZ-nearZ) * ndc_depth) + nearZ + farZ) / 2.0;
 
 
-<br/>
+<br/><hr/>
 ## Orthographic Projection
 
 At Orthographic Projection the coordinates in the eye space are linearly mapped to normalized device coordinates.
@@ -127,7 +127,7 @@ At Orthographic Projection, the Z component is calcualted by the **linear functi
 ![Orthographic Z function](image/Orthographic_Z.png)
 
 
-<br/>
+<br/><hr/>
 ## Perspective Projection
 
 At Perspective Projection the projection matrix describes the mapping from 3D points in the world as they are seen from of a pinhole camera, to 2D points of the viewport. <br/> The eye space coordinates in the camera frustum (a truncated pyramid) are mapped to a cube (the normalized device coordinates). 
@@ -192,7 +192,7 @@ At Perspective Projection, the Z component is calcualted by the **rational funct
 ![Perspective Z function](image/Perspective_Z.png)
 
 
-<br/>
+<br/><hr/>
 ## Depth buffer
 
 Since the normalized device coordinates are in range (-1,-1,-1) to (1,1,1) the Z-coordinate has to be mapped to the depth buffern the range [0,1]:
@@ -200,7 +200,7 @@ Since the normalized device coordinates are in range (-1,-1,-1) to (1,1,1) the Z
     depth = (z_ndc + 1) / 2 
 
 
-<br/>
+<br/><hr/>
 ## Unproject
 
 To convert form the depth of the depth buffer to the original Z-coordinate, the projection (Orthographic or Perspective), and the near plane and far plane has to be known.
@@ -243,7 +243,7 @@ If the perspective projection matrix is known and the projection is symmetricall
     size_y = ndx_size_y * / (prj_mat[1][1] * z_eye);
 
 
-<br/>
+<br/><hr/>
 ## 3 Solutions to recover view space position in perspective projection
 
 ### 1. With field of view and aspect
@@ -265,6 +265,7 @@ Recover the view space position by the XY normalized device coordinates:
 
 
 <br/>
+
 ### 2. With the projection matrix
 
 The projection paramters, defind by the field of view and the aspect ratio are stored in the projection matrix. Therefore the viewport position can be recovered by the values from the projection matrix, from a symmetrical perspective projection.
@@ -295,6 +296,7 @@ Recover the view space position by the XY normalized device coordinates:
 <br/>
 ### 3. With the inverse projection matrix
 
+
 Of course the viewport position can be rcovered by the inverse projection matrix.
 
     mat4 inversePrjMat = inverse( prjMat );
@@ -311,7 +313,7 @@ This means the unprojected rectangle with a specific depth, can be calculated li
     vec3 viewUpperRight  = viewUpperRightH.xyz / viewUpperRightH.w;
 
 
-<br/>
+<br/><hr/>
 ## Resources
 
 - [OpenGL - Mouse coordinates to Space coordinates](https://stackoverflow.com/questions/46749675/opengl-mouse-coordinates-to-space-coordinates/46752492#46752492)
