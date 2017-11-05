@@ -28,12 +28,12 @@ This follows, that the *dot* product of 2 unit vectors is equal the *cosine* of 
 
 ![dot A, B](image/dotAB.svg)    
 
-If we take a look at the *cos(x)* function between the angles -90° and 90° then we can see that it has a maximum of 1 at an angle of 0° and It goes down to 0 at the angles of 90° and -90°.
+If we take a look at the *cos(x)* function between the angles -90 degrees and 90 degrees then we can see that it has a maximum of 1 at an angle of 0 degrees and It goes down to 0 at the angles of 90 degrees and -90 degrees.
 
 ![cos(x) in [-90, 90]](image/cos_-90_90.png)
 
-This behavior is exactly that what we want for the reflection model. When the nromal vetor of the surface and the diretion to the light source are in the same direction (the angle between is 0°) then we want a maximium of reflection.
-In contrast, if the vectors a orthonormalized (the angle in between is 90°) then we want a minimum of reflection and we want a smooth and continuous functional running between the two borders of 0° and 90°.
+This behavior is exactly that what we want for the reflection model. When the nromal vetor of the surface and the diretion to the light source are in the same direction (the angle between is 0 degrees) then we want a maximium of reflection.
+In contrast, if the vectors a orthonormalized (the angle in between is 90 degrees) then we want a minimum of reflection and we want a smooth and continuous functional running between the two borders of 0 degrees and 90 degrees.
 
 ![N dot L](image/NdotL.png)
 
