@@ -294,6 +294,7 @@ Recover the view space position by the XY normalized device coordinates:
 
 
 <br/>
+
 ### 3. With the inverse projection matrix
 
 
