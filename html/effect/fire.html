@@ -1,0 +1,441 @@
+<script id="draw-shader-vs" type="x-shader/x-vertex">
+precision mediump float;
+
+attribute vec2 inPos;
+varying vec2 vPosition;
+
+void main(void)
+{
+   gl_Position = vec4(inPos, 0.0, 1.0);
+   vPosition = inPos;
+}
+</script>
+
+<script id="draw-shader-fs" type="x-shader/x-fragment">
+precision mediump float; 
+
+varying vec2 vPosition; 
+
+uniform float u_time_ms; 
+uniform float u_saturation; 
+uniform float u_brightness; 
+uniform vec3 u_noise; 
+uniform float u_speed; 
+uniform float u_scaleX; 
+uniform float u_scaleY; 
+uniform float u_startY; 
+uniform float u_hotExpX; 
+uniform float u_hotFacY; 
+uniform vec4 u_colHot; 
+uniform vec4 u_colCold; 
+
+const int iterations = 64;
+
+float FireNoise( vec3 p ) 
+{ 
+	vec3 i = floor( p ); 
+	vec4 a = dot( i, vec3( 1.0, 57.0, 21.0 ) ) + vec4( 0.0, 57.0, 21.0, 78.0 ); 
+	vec3 f = cos( ( p - i ) * acos( -1.0 ) ) * -0.5 + 0.5; 
+	a = mix( sin( cos( a ) * a ), sin( cos( 1.0 + a ) * ( 1.0 + a ) ), f.x ); 
+	a.xy = mix( a.xz, a.yw, f.y ); 
+	return mix( a.x, a.y, f.z ); 
+} 
+
+float FireFlame( vec3 p, float elapsedTimeS ) 
+{ 
+  float d = length( vec3( p.x / u_scaleX, 1.0 + p.y / u_scaleY, p.z ) ) - 1.0; 
+  return d + ( FireNoise( p + vec3( 0.0, elapsedTimeS * u_speed, 0.0 ) ) + FireNoise( p * u_noise.z ) * u_noise.y ) * u_noise.x * p.y; 
+} 
+
+vec4 FireRaymarch(vec3 org, vec3 dir) 
+{ 
+  float elapsedTimeS = ( u_time_ms / 100.0 - floor( u_time_ms / 100.0 ) ) * 100.0; 
+  float glow = 0.0; 
+  float eps = 1.0 / u_brightness; 
+  vec3  p = org; 
+  bool glowed = false; 
+  for( int i = 0; i < iterations; i++ ) 
+  { 
+    float d = u_saturation - length( p ); 
+    if ( d < 0.0 ) 
+      break;	 
+	  float flame = FireFlame( p, elapsedTimeS ); 
+    d = min( d, abs( flame ) ) + eps; 
+    if ( d > eps ) 
+	   {
+  	   if ( flame < 0.0 )
+	     glowed = true;
+	     if ( glowed )
+        	glow = float( i ) / float( iterations );
+	   }
+    p += d * dir;
+  }
+  return vec4( p, glow );
+}
+
+void main()
+{
+	vec2 v = vPosition.xy;
+
+	vec3 org = vec3( 0.0, -2.5 + u_startY, 4.0 );
+	vec3 dir = normalize( vec3( v.x * 1.6, -v.y, -1.5 ) );
+
+	vec4 p = FireRaymarch( org, dir );
+	float glow = p.w;
+
+  float colMix = ( p.y * u_hotFacY + 0.4 ) * ( 1.0 - pow( abs( v.x ), u_hotExpX ) );
+	vec4 col = mix( u_colCold, u_colHot, colMix );
+
+	gl_FragColor = vec4( mix( vec3( 0.0 ), col.rgb, pow( glow * 2.0, 4.0 ) ), 1.0 );
+	//gl_FragColor = vec4( mix( vec3( 1.0 ), col.rgb, pow( glow * 2.0, 4.0 ) ), 1.0 );
+}
+</script>
+
+<script type="text/javascript">
+
+// shader program object
+var ShaderProgram = {};
+ShaderProgram.Create = function( shaderList ) {
+    var shaderObjs = [];
+    for ( var i_sh = 0; i_sh < shaderList.length; ++ i_sh ) {
+        var shderObj = this.CompileShader( shaderList[i_sh].source, shaderList[i_sh].stage );
+        if ( shderObj == 0 )
+            return 0;
+        shaderObjs.push( shderObj );
+    }
+    var progObj = this.LinkProgram( shaderObjs )
+    if ( progObj != 0 ) {
+        progObj.attribIndex = {};
+        var noOfAttributes = gl.getProgramParameter( progObj, gl.ACTIVE_ATTRIBUTES );
+        for ( var i_n = 0; i_n < noOfAttributes; ++ i_n ) {
+            var name = gl.getActiveAttrib( progObj, i_n ).name;
+            progObj.attribIndex[name] = gl.getAttribLocation( progObj, name );
+        }
+        progObj.unifomLocation = {};
+        var noOfUniforms = gl.getProgramParameter( progObj, gl.ACTIVE_UNIFORMS );
+        for ( var i_n = 0; i_n < noOfUniforms; ++ i_n ) {
+            var name = gl.getActiveUniform( progObj, i_n ).name;
+            progObj.unifomLocation[name] = gl.getUniformLocation( progObj, name );
+        }
+    }
+    return progObj;
+}
+ShaderProgram.AttributeIndex = function( progObj, name ) { return progObj.attribIndex[name]; } 
+ShaderProgram.UniformLocation = function( progObj, name ) { return progObj.unifomLocation[name]; } 
+ShaderProgram.Use = function( progObj ) { gl.useProgram( progObj ); } 
+ShaderProgram.SetUniformI1  = function( progObj, name, val ) { if(progObj.unifomLocation[name]) gl.uniform1i( progObj.unifomLocation[name], val ); }
+ShaderProgram.SetUniformF1  = function( progObj, name, val ) { if(progObj.unifomLocation[name]) gl.uniform1f( progObj.unifomLocation[name], val ); }
+ShaderProgram.SetUniformF2  = function( progObj, name, arr ) { if(progObj.unifomLocation[name]) gl.uniform2fv( progObj.unifomLocation[name], arr ); }
+ShaderProgram.SetUniformF3  = function( progObj, name, arr ) { if(progObj.unifomLocation[name]) gl.uniform3fv( progObj.unifomLocation[name], arr ); }
+ShaderProgram.SetUniformF4  = function( progObj, name, arr ) { if(progObj.unifomLocation[name]) gl.uniform4fv( progObj.unifomLocation[name], arr ); }
+ShaderProgram.SetUniformM33 = function( progObj, name, mat ) { if(progObj.unifomLocation[name]) gl.uniformMatrix3fv( progObj.unifomLocation[name], false, mat ); }
+ShaderProgram.SetUniformM44 = function( progObj, name, mat ) { if(progObj.unifomLocation[name]) gl.uniformMatrix4fv( progObj.unifomLocation[name], false, mat ); }
+ShaderProgram.CompileShader = function( source, shaderStage ) {
+    var shaderScript = document.getElementById(source);
+    if (shaderScript) {
+      source = "";
+      var node = shaderScript.firstChild;
+      while (node) {
+        if (node.nodeType == 3) source += node.textContent;
+        node = node.nextSibling;
+      }
+    }
+    var shaderObj = gl.createShader( shaderStage );
+    gl.shaderSource( shaderObj, source );
+    gl.compileShader( shaderObj );
+    var status = gl.getShaderParameter( shaderObj, gl.COMPILE_STATUS );
+    if ( !status ) alert(gl.getShaderInfoLog(shaderObj));
+    return status ? shaderObj : 0;
+} 
+ShaderProgram.LinkProgram = function( shaderObjs ) {
+    var prog = gl.createProgram();
+    for ( var i_sh = 0; i_sh < shaderObjs.length; ++ i_sh )
+        gl.attachShader( prog, shaderObjs[i_sh] );
+    gl.linkProgram( prog );
+    status = gl.getProgramParameter( prog, gl.LINK_STATUS );
+    if ( !status ) alert("Could not initialise shaders");
+    gl.useProgram( null );
+    return status ? prog : 0;
+}
+        
+function drawScene(){
+
+    syncFromDocument();
+
+    var canvas = document.getElementById( "ogl-canvas" );
+    var vp = [canvas.width, canvas.height];
+    timing.calcDeltaTimes();
+    var deltaTms = timing.deltaTimeAbsMs;
+    
+    gl.viewport( 0, 0, canvas.width, canvas.height );
+    gl.enable( gl.DEPTH_TEST );
+    gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
+    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+    
+    ShaderProgram.Use( progDraw );
+    ShaderProgram.SetUniformF1( progDraw, "u_time_ms",    deltaTms / 1000.0 );
+    ShaderProgram.SetUniformF1( progDraw, "u_saturation", saturation_val );
+    ShaderProgram.SetUniformF1( progDraw, "u_brightness", brightness_val );
+    ShaderProgram.SetUniformF3( progDraw, "u_noise",      noise_val );
+    ShaderProgram.SetUniformF1( progDraw, "u_speed",      speed_val );
+    ShaderProgram.SetUniformF1( progDraw, "u_scaleX",     scaleX_val );
+    ShaderProgram.SetUniformF1( progDraw, "u_scaleY",     scaleY_val );
+    ShaderProgram.SetUniformF1( progDraw, "u_startY",     startY_val );
+    ShaderProgram.SetUniformF1( progDraw, "u_hotExpX",    hotExpX_val );
+    ShaderProgram.SetUniformF1( progDraw, "u_hotFacY",    hotFacY_val );
+    ShaderProgram.SetUniformF4( progDraw, "u_colHot",     colHot_val );
+    ShaderProgram.SetUniformF4( progDraw, "u_colCold",    colCold_val );
+
+    gl.enableVertexAttribArray( progDraw.inPos );
+    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.pos );
+    gl.vertexAttribPointer( progDraw.inPos, 2, gl.FLOAT, false, 0, 0 ); 
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufObj.inx );
+    gl.drawElements( gl.TRIANGLES, bufObj.inx.len, gl.UNSIGNED_SHORT, 0 );
+    gl.disableVertexAttribArray( progDraw.pos );
+}  
+
+var timing = {};
+
+timing.prevTimeAbs = 0;
+timing.pause = 0;
+timing.deltaTimeLastMs = 0;
+timing.deltaTimeAbsMs = 0;
+
+timing.pastTms = function() { return this.deltaTimeAbsMs; }
+
+timing.init =  function() {
+  this.prevTimeAbs = Date.now();
+  this.pause = 0;
+  this.deltaTimeLastMs = 0;
+  this.deltaTimeAbsMs = 0;
+};
+
+timing.calcDeltaTimes = function() {
+  var currentTimeAbs = Date.now();
+  var delta = currentTimeAbs - this.prevTimeAbs;
+  this.prevTimeAbs = currentTimeAbs;
+  this.deltaTimeLastMs = this.pause == 0 ? delta : 0;
+  this.deltaTimeAbsMs += this.deltaTimeLastMs;
+};
+
+timing.togglePause = function() {
+  this.pause = this.pause != 0 ? 0 : 1;
+}
+
+var saturation_val;
+  var brightness_val;
+  var noise_val;
+  var speed_val;
+  var scaleX_val;
+  var scaleY_val;
+  var startY_val;
+  var hotExpX_val;
+  var hotFacY_val;
+  var colHot_val;
+  var colCold_val;
+  
+  function resetData1() {
+    timing.init();
+    
+    saturation_val = 100.0;
+    brightness_val = 80.0;
+    noise_val      = [ 0.25, 0.45, 3.2 ];
+    speed_val      = 3.0;
+    scaleX_val     = 2.0;
+    scaleY_val     = 1.8;
+    startY_val     = 0.0;
+    hotExpX_val    = 0.4;
+    hotFacY_val    = 0.01;
+    colHot_val     = [ 0.4, 0.5, 1.0, 1.0 ];
+    colCold_val    = [ 1.0, 0.5, 0.1, 1.0 ];
+
+    syncToDocument();
+  }
+
+  function resetData2() {
+    timing.init();
+
+    saturation_val = 100.0;
+    brightness_val = 50.0;
+    noise_val      = [ 0.25, 0.5, 3.0 ];
+    speed_val      = 2.0;
+    scaleX_val     = 1.0;
+    scaleY_val     = 2.0;
+    startY_val     = 0.5;
+    hotExpX_val    = 1000.0;
+    hotFacY_val    = 0.02;
+    colHot_val     = [ 0.1, 0.5, 1.0, 1.0 ];
+    colCold_val    = [ 1.0, 0.5, 0.1, 1.0 ];
+
+    syncToDocument();
+  }
+
+  function syncToDocument() {
+    document.getElementById("saturation").value = Math.sqrt( saturation_val );
+    document.getElementById("brightness").value = Math.sqrt( brightness_val );
+    document.getElementById("speed").value      = speed_val * 10;
+    document.getElementById("noise0").value     = noise_val[0] * 50;
+    document.getElementById("noise1").value     = noise_val[1] * 50;
+    document.getElementById("noise2").value     = Math.sqrt( noise_val[2] ) * 10;
+    document.getElementById("scaleX").value     = scaleX_val * 10;
+    document.getElementById("scaleY").value     = scaleY_val * 10;  
+    document.getElementById("startY").value     = startY_val * 50;   
+    document.getElementById("hotExpX").value    = Math.sqrt( hotExpX_val ) * 10;
+    document.getElementById("hotFacY").value    = hotFacY_val * 400;
+    document.getElementById("colHotR").value    = colHot_val[0] * 255;
+    document.getElementById("colHotG").value    = colHot_val[1] * 255;
+    document.getElementById("colHotB").value    = colHot_val[2] * 255;
+    document.getElementById("colColdR").value   = colCold_val[0] * 255;
+    document.getElementById("colColdG").value   = colCold_val[1] * 255;
+    document.getElementById("colColdB").value   = colCold_val[2] * 255;
+    syncDocumentVals();
+  }
+
+  function syncFromDocument() {
+    saturation_val = document.getElementById("saturation").value;
+    saturation_val = saturation_val * saturation_val;
+    brightness_val = document.getElementById("brightness").value;
+    brightness_val = brightness_val * brightness_val;
+    speed_val      = document.getElementById("speed").value / 10;
+    noise_val[0]   = document.getElementById("noise0").value / 50;
+    noise_val[1]   = document.getElementById("noise1").value / 50;
+    noise_val[2]   = document.getElementById("noise2").value;
+    noise_val[2]   = noise_val[2] * noise_val[2] / 100;    
+    scaleX_val     = document.getElementById("scaleX").value / 10;
+    scaleY_val     = document.getElementById("scaleY").value / 10;
+    startY_val     = document.getElementById("startY").value / 50;   
+    hotExpX_val    = document.getElementById("hotExpX").value;
+    hotExpX_val    = hotExpX_val * hotExpX_val / 100;  
+    hotFacY_val    = document.getElementById("hotFacY").value / 400;
+    colHot_val[0]  = document.getElementById("colHotR").value / 255;
+    colHot_val[1]  = document.getElementById("colHotG").value / 255;
+    colHot_val[2]  = document.getElementById("colHotB").value / 255;
+    colHot_val[3]  = 1.0;
+    colCold_val[0] = document.getElementById("colColdR").value / 255;
+    colCold_val[1] = document.getElementById("colColdG").value / 255;
+    colCold_val[2] = document.getElementById("colColdB").value / 255;
+    colCold_val[3] = 1.0;
+    syncDocumentVals();
+  }
+
+  function syncDocumentVals() {
+    document.getElementById( "saturation_val" ).innerHTML = saturation_val;
+    document.getElementById( "brightness_val" ).innerHTML = brightness_val;
+    document.getElementById( "speed_val" ).innerHTML = speed_val;
+    document.getElementById( "noise0_val" ).innerHTML = noise_val[0];
+    document.getElementById( "noise1_val" ).innerHTML = noise_val[1];
+    document.getElementById( "noise2_val" ).innerHTML = noise_val[2];
+    document.getElementById( "scaleX_val" ).innerHTML = scaleX_val;
+    document.getElementById( "scaleY_val" ).innerHTML = scaleY_val;
+    document.getElementById( "startY_val" ).innerHTML = startY_val;
+    document.getElementById( "hotExpX_val" ).innerHTML = hotExpX_val;
+    document.getElementById( "hotFacY_val" ).innerHTML = hotFacY_val;
+  }
+
+var gl;
+var prog;
+var bufObj = {};
+function sceneStart() {
+
+    var canvas = document.getElementById( "ogl-canvas");
+    gl = canvas.getContext( "experimental-webgl" );
+    if ( !gl )
+      return;
+
+    progDraw = ShaderProgram.Create( 
+      [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },
+        { source : "draw-shader-fs", stage : gl.FRAGMENT_SHADER }
+      ] );
+    progDraw.inPos = gl.getAttribLocation( progDraw, "inPos" );
+    if ( prog == 0 )
+        return;
+
+    var pos = [ -1, -1, 1, -1, 1, 1, -1, 1 ];
+    var inx = [ 0, 1, 2, 0, 2, 3 ];
+    bufObj.pos = gl.createBuffer();
+    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.pos );
+    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( pos ), gl.STATIC_DRAW );
+    bufObj.inx = gl.createBuffer();
+    bufObj.inx.len = inx.length;
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufObj.inx );
+    gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( inx ), gl.STATIC_DRAW );
+
+    resetData1();
+    setInterval(drawScene, 50);
+}
+</script>
+
+<body onload="sceneStart();">
+    <div style="margin-left: 520px;">
+        <div style="float: right; width: 100%; background-color: #CCF;">
+            <form name="inputs">
+
+                <input type="button" value="reset #1" onClick="resetData1()" />
+                <input type="button" value="reset #2" onClick="resetData2()" />
+
+                <table>
+                    <tr> <td> u_saturation </td> 
+                            <td> <input type="range" min="2" max="100" id="saturation" value="10" onchange="syncFromDocument();" /> 
+                                <span id="saturation_val">0</span>
+                            </td> </tr>
+                    <tr> <td> u_brightness </td> 
+                            <td> <input type="range" min="2" max="100" id="brightness" value="10" onchange="syncFromDocument();" /> 
+                                <span id="brightness_val">0</span>
+                            </td> </tr>
+                    <tr> <td> u_speed </td> 
+                            <td> <input type="range" min="0" max="100" id="speed" value="10" onchange="syncFromDocument();" /> 
+                                <span id="speed_val">0</span>
+                            </td> </tr>
+                    <tr> <td> u_noise[0] </td> 
+                            <td> <input type="range" min="0" max="100" id="noise0" value="10" onchange="syncFromDocument();" /> 
+                                <span id="noise0_val">0</span>
+                            </td> </tr>
+                    <tr> <td> u_noise[1] </td> 
+                            <td> <input type="range" min="0" max="100" id="noise1" value="10" onchange="syncFromDocument();" /> 
+                                <span id="noise1_val">0</span>
+                            </td> </tr>
+                    <tr> <td> u_noise[2] </td> 
+                            <td> <input type="range" min="0" max="100" id="noise2" value="10" onchange="syncFromDocument();" /> 
+                                <span id="noise2_val">0</span>
+                            </td> </tr>
+                    <tr> <td> u_scaleX </td> 
+                            <td> <input type="range" min="1" max="100" id="scaleX" value="10" onchange="syncFromDocument();" /> 
+                                <span id="scaleX_val">0</span>
+                            </td> </tr>
+                    <tr> <td> u_scaleY </td> 
+                            <td> <input type="range" min="1" max="100" id="scaleY" value="10" onchange="syncFromDocument();" /> 
+                                <span id="scaleY_val">0</span>
+                            </td> </tr>
+                    <tr> <td> u_startY </td> 
+                            <td> <input type="range" min="0" max="100" id="startY" value="10" onchange="syncFromDocument();" /> 
+                                <span id="startY_val">0</span>
+                            </td> </tr>
+                    <tr> <td> u_hotExpX </td> 
+                            <td> <input type="range" min="0" max="100" id="hotExpX" value="10" onchange="syncFromDocument();" /> 
+                                <span id="hotExpX_val">0</span>
+                            </td> </tr>
+                    <tr> <td> u_hotFacY </td> 
+                            <td> <input type="range" min="0" max="255" value="127" id="hotFacY" onchange="syncFromDocument();" /> 
+                                <span id="hotFacY_val">0</span>
+                            </td> </tr>
+                        <tr> <td> u_colHot </td> 
+                            <td> <input type="range" min="0" max="255" value="127" id="colHotR" onchange="syncFromDocument();" />
+                                <input type="range" min="0" max="255" value="127" id="colHotG" onchange="syncFromDocument();" />
+                                <input type="range" min="0" max="255" value="127" id="colHotB" onchange="syncFromDocument();" />
+                            </td> </tr>
+                    <tr> <td> u_colCold </td>
+                            <td> <input type="range" min="0" max="255" value="127" id="colColdR" onchange="syncFromDocument();" />
+                                <input type="range" min="0" max="255" value="127" id="colColdG" onchange="syncFromDocument();" />
+                                <input type="range" min="0" max="255" value="127" id="colColdB" onchange="syncFromDocument();" />
+                            </td> </tr>
+                </table>
+
+            </form>
+        </div>
+        <div style="float: right; width: 520px; margin-left: -520px;">
+        <!--div style="float: right; width: 520px; margin-left: -520px; background-color: #FFA;"-->
+            <canvas id="ogl-canvas" style="border: none;" width="512" height="512"></canvas>
+        </div>
+        <div style="clear: both;"></div>
+    </div>
+</body>

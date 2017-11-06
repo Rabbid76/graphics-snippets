@@ -26,6 +26,11 @@
 [Function Plotter](https://rabbid76.github.io/graphics-snippets/html/tools/function_plotter.html)
 
 
+### Special
+
+[Fire](https://rabbid76.github.io/graphics-snippets/html/effect/fire.html)
+
+
 ### Stackoverflow examples
 
 [Shadow map](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/shadow_map.html)
