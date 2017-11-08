@@ -368,7 +368,7 @@ To generate a rotation only matrix you have to extract the normalized axis vecto
 <br/><hr/>
 ## First Person Camera Transformation
 
-First Person movment, the cmaera matrix has to be incrementally changed. This means you have to calculate the current movement and current rotation matrix. Apply the movement and rotation to the camera and keep the camera for the next cycle of the loop. At the next cycle of the loop you have to use the manipulated camera from the previous cycle and you have to apply the new movement and rotation. This causes that the camera incremental changes, always based on its current position and orientation.
+First Person movment, the camera matrix has to be incrementally changed. This means you have to calculate the current movement and current rotation matrix. Apply the movement and rotation to the camera and keep the camera for the next cycle of the loop. At the next cycle of the loop you have to use the manipulated camera from the previous cycle and you have to apply the new movement and rotation. This causes that the camera incremental changes, always based on its current position and orientation.
 
 ![movement and rotation](image/movement_and_rotation.svg)
 
@@ -392,6 +392,7 @@ First Person movment, the cmaera matrix has to be incrementally changed. This me
 - [Translation on square made of triangles in opengl][22]
 - [opengl atan2f doesn't work][23]
 - [OpenGL, First Person Camera Translation][24]
+- [how to modify the view of the camera with pygame and openGL][25]
 
 
   [1]: https://en.wikibooks.org/wiki/GLSL_Programming/Vector_and_Matrix_Operations
@@ -418,6 +419,7 @@ First Person movment, the cmaera matrix has to be incrementally changed. This me
   [22]: https://stackoverflow.com/questions/47004946/translation-on-square-made-of-triangles-in-opengl/47005569#47005569
   [23]: https://stackoverflow.com/questions/45234650/atan2f-doesnt-work/45239229#45239229
   [24]: https://stackoverflow.com/questions/46508872/opengl-first-person-camera-translation/46509967#46509967
+  [25]: https://stackoverflow.com/questions/47169618/how-to-modify-the-view-of-the-camera-with-pygame-and-opengl/47173089#47173089
 
 
 -----
