@@ -6,6 +6,8 @@
 
 [Matrix operations](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/matrix_operations.md)
 
+[Tangent space](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/tangent_space.md)
+
 [Geometry](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/geometry.md)
 
 [Tessellation](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/tessellation.md)
