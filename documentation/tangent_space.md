@@ -156,6 +156,7 @@ For the calculation of the orthonormalized tangent space matrix, the binormal ve
   - Derivatives I: Discontinuities and Gradients [http://hacksoflife.blogspot.co.at/2011/01/derivatives-i-discontinuities-and.html]
   - Normal Mapping without Precomputed Tangent Space Vectors [http://www.geeks3d.com/20130122/normal-mapping-without-precomputed-tangent-space-vectors/]
   - Followup: Normal Mapping Without Precomputed Tangents [http://www.thetenthplanet.de/archives/1180]
+  - In a TBN Matrix are the normal, tangent, and bitangent vectors always perpendicular? [https://stackoverflow.com/questions/15433917/in-a-tbn-matrix-are-the-normal-tangent-and-bitangent-vectors-always-perpendicu]
 
 - Inverse Tangent-Binormal-Normal Matrix
 
