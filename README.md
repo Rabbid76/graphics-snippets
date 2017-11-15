@@ -86,6 +86,6 @@
 [Normal map 1](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/normalmap1.html)
 
 
-### Stackoverflow examples hree.js
+### Stackoverflow examples - three.js
 
 [Background scene](https://rabbid76.github.io/graphics-snippets/html/stackoverrflow_threejs/background_scene.html)
