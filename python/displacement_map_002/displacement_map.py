@@ -105,9 +105,8 @@ class MyWindow(window.CameraWindow):
         } )
         
         # draw object
-        cubeVAO.Draw()
-        #torusVAO.Draw()
-    
+        cubeVAO.DrawAllElements( GL_TRIANGLES )
+
   
 def AddToBuffer( buffer, data, count=1 ): 
     for inx_c in range(0, count):
@@ -142,7 +141,9 @@ for inx in range(0, 6):
 cubeIndices = []
 for inx in range(0, 6):
     for inx_s in [0, 1, 2, 0, 2, 3]: cubeIndices.append( inx * 4 + inx_s )
-cubeVAO = vertex.VAObject( [ (3, cubePosData), (3, cubeNVData), (3, cubeColData), (2, cubeUVData) ], cubeIndices )
+
+cubeVAO = vertex.DrawBuffer()
+cubeVAO.DefineVAO( [0, 4, 0, 1, 0, 3, 0, 0, 1, 1, 3, 0, 0, 1, 2, 3, 0, 0, 1, 3, 2, 0], [cubePosData, cubeNVData, cubeColData, cubeUVData], cubeIndices )
 
 # load, compile and link shader
 progDraw = shader.ShaderProgram( 
@@ -157,3 +158,6 @@ normalmapObj       = ReadTexture('../../resource/texture/test1_normalmap.bmp', 2
 
 # start main loop
 wnd.Run()
+
+# clean up
+del cubeVAO
