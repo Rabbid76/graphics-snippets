@@ -26,28 +26,28 @@ For tessellation ther is the specila primitive type `GL_PATCH`.
 
 ### Triangle primitives
 
-**Triangle fan**
+<b>Triangle fan</b>
 
 See [Wikipedia, Triangle fan](https://en.wikipedia.org/wiki/Triangle_fan).
 
-**Trinagle stripe**
+<b>Trinagle stripe</b>
 
 See [Wikipedia, Triangle strip](https://en.wikipedia.org/wiki/Triangle_strip).
 
 ![quad to triangle](image/quad_to_triangles.svg)
 
-**Triangle adjacency**
+<b>Triangle adjacency</b>
 
 ![triangle adjacency](image/trianglesAdjacency.svg)
 
-**Triangle stripe adjacency**
+<b>Triangle stripe adjacency</b>
 
 
 <br/><hr/>
 
 ## Vertex array
 
-**Separated tightly packed buffers for different attributes**
+<b>Separated tightly packed buffers for different attributes</b>
 
 e.g. Buffers for vertices (x, y, z), normals (x, y, z) and texture oordinates (u, v):
 
@@ -84,7 +84,7 @@ See:
 
 See the Khronos group reference page for [`glVertexAttribPointer`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glVertexAttribPointer.xhtml):
 
->For `glVertexAttribPointer`, if normalized is set to `GL_TRUE`, it indicates that values stored in an integer format are to be mapped to the range [-1,1] (for signed values) or [0,1] (for unsigned values) when they are accessed and **converted to floating point**. Otherwise, values **will be converted to floats directly** without normalization.
+> For `glVertexAttribPointer`, if normalized is set to `GL_TRUE`, it indicates that values stored in an integer format are to be mapped to the range [-1,1] (for signed values) or [0,1] (for unsigned values) when they are accessed and **converted to floating point**. Otherwise, values **will be converted to floats directly** without normalization.
   
 
 <br/>
@@ -125,7 +125,8 @@ See:
 It is sufficient to call [`glVertexAttribPointer`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glVertexAttribPointer.xhtml) once per vetrex attribute. The [Vertex Specification](https://www.khronos.org/opengl/wiki/Vertex_Specification) is keept until it is not redefined. Of course, the buffer object, where [`glVertexAttribPointer`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glVertexAttribPointer.xhtml) refers to must not be deleted. Also the state, whether the vertex attribute is enabled ([`glEnableVertexAttribArray`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glEnableVertexAttribArray.xhtml)) or not is kept until the vertex attribute is disabled again ([`glDisableVertexAttribArray`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glEnableVertexAttribArray.xhtml)).
 
 The Khronos OpenGL wiki about [Vertex Specification](https://www.khronos.org/opengl/wiki/Vertex_Specification) clearly says:
->The [`glVertexAttribPointer`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glVertexAttribPointer.xhtml) functions **state** where an attribute index gets its array data from. 
+
+> The [`glVertexAttribPointer`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glVertexAttribPointer.xhtml) functions **state** where an attribute index gets its array data from. 
 
 This state can be retrieved with [`glGetVertexAttrib`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGetVertexAttrib.xhtml).
 
@@ -133,7 +134,7 @@ More information about vertex attrbutes can be found in the [OpenGL 4.6. core sp
 
 <br/>
 
-**Separated tightly packed buffers for different attributes**
+<b>Separated tightly packed buffers for different attributes</b>
 
 e.g. Buffers for vertices (x, y, z), normals (x, y, z) and texture oordinates (u, v):
 
@@ -214,7 +215,7 @@ Draw the array in compatibility mode (**deprecated**):
 
 <br/>    
 
-**Vertex attribute records set - Stride packed**
+<b>Vertex attribute records set - Stride packed</b>
 
 e.g. Vertex, Normal vector and Texture coordiante
      
@@ -395,15 +396,14 @@ Draw the array in compatibility mode (**deprecated**):
 To handle different vertex attribute pointers and not to specify and enable or disable them alternately, a vertex array object can be generated ([`glGenVertexArrays`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGenVertexArrays.xhtml), which stores all the information about buffer location, data format, state and attribute index:
 
 See [OpenGL 4.6 core Specification - 10.3.1 Vertex Array Objects](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf):
->The buffer objects that are to be used by the vertex stage of the GL are collected
-together to form a vertex array object. All state related to the definition of data
-used by the vertex processor is encapsulated in a vertex array object.
+
+> The buffer objects that are to be used by the vertex stage of the GL are collected together to form a vertex array object.
+> All state related to the definition of data used by the vertex processor is encapsulated in a vertex array object.
 >
->....
+> ....
 >
->The currently bound vertex array object is used for all commands which modify
-vertex array state, such as VertexAttribPointer and EnableVertexAttribArray;
-all commands which draw from vertex arrays, such as DrawArrays and DrawElements;
+> The currently bound vertex array object is used for all commands which modify vertex array state, such as VertexAttribPointer and EnableVertexAttribArray;
+> all commands which draw from vertex arrays, such as DrawArrays and DrawElements;
 
 <br/>
 
@@ -411,22 +411,23 @@ The `GL_ELEMENT_ARRAY_BUFFER` has to be bound **after** the vertex array object 
 If the vertex array object has been unbound and is bound again, then the `GL_ELEMENT_ARRAY_BUFFER` is known and bound again, too. But if the element array buffer explicitly gets unbound while the vertex array object is bound, it is removed form the state vector.
 
 See the [OpenGL 4.6 core specification - 10.3. VERTEX ARRAYS](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf):
->A vertex array object is created by binding a name returned by `GenVertexArray` with the command<br/>
+
+> A vertex array object is created by binding a name returned by `GenVertexArray` with the command<br/>
 >
 >    void BindVertexArray( uint array );
 >
->`array` is the vertex array object name.<br/>
-**The resulting vertex array object is a new state vector**, comprising all the state and with the same initial values listed in tables 23.3 and 23.4.<br/>
-`BindVertexArray` may also be used to bind an existing vertex array object. If the bind is successful no change is made to the state of the bound vertex array object, and **any previous binding is broken**.
+> `array` is the vertex array object name.<br/>
+> **The resulting vertex array object is a new state vector**, comprising all the state and with the same initial values listed in tables 23.3 and 23.4.<br/>
+> `BindVertexArray` may also be used to bind an existing vertex array object. If the bind is successful no change is made to the state of the bound vertex array object, and **any previous binding is broken**.
 >
->Tables 23.3, Vertex Array Object State<br/>
->*VERTEX_ATTRIB_ARRAY_ENABLED*, *VERTEX_ATTRIB_ARRAY_SIZE*, *VERTEX_ATTRIB_ARRAY_STRIDE*, *VERTEX_ATTRIB_ARRAY_TYPE*, *VERTEX_ATTRIB_ARRAY_NORMALIZED*, *VERTEX_ATTRIB_ARRAY_INTEGER*, *VERTEX_ATTRIB_ARRAY_LONG*, *VERTEX_ATTRIB_ARRAY_DIVISOR*, *VERTEX_ATTRIB_ARRAY_POINTER*
+> Tables 23.3, Vertex Array Object State<br/>
+> *VERTEX_ATTRIB_ARRAY_ENABLED*, *VERTEX_ATTRIB_ARRAY_SIZE*, *VERTEX_ATTRIB_ARRAY_STRIDE*, *VERTEX_ATTRIB_ARRAY_TYPE*, *VERTEX_ATTRIB_ARRAY_NORMALIZED*, *VERTEX_ATTRIB_ARRAY_INTEGER*, *VERTEX_ATTRIB_ARRAY_LONG*, *VERTEX_ATTRIB_ARRAY_DIVISOR*, *VERTEX_ATTRIB_ARRAY_POINTER*
 >
->Table 23.4, Vertex Array Object State<br/>
->*ELEMENT_ARRAY_BUFFER_BINDING*, *VERTEX_ATTRIB_ARRAY_BUFFER_BINDING*, *VERTEX_ATTRIB_BINDING*, *VERTEX_ATTRIB_RELATIVE_OFFSET*, *VERTEX_BINDING_OFFSET*, *VERTEX_BINDING_STRIDE*, *VERTEX_BINDING_DIVISOR*, *VERTEX_BINDING_BUFFER*.
+> Table 23.4, Vertex Array Object State<br/>
+> *ELEMENT_ARRAY_BUFFER_BINDING*, *VERTEX_ATTRIB_ARRAY_BUFFER_BINDING*, *VERTEX_ATTRIB_BINDING*, *VERTEX_ATTRIB_RELATIVE_OFFSET*, *VERTEX_BINDING_OFFSET*, *VERTEX_BINDING_STRIDE*, *VERTEX_BINDING_DIVISOR*, *VERTEX_BINDING_BUFFER*.
 >
->Table 23.5, Vertex Array Data (**not in Vertex Array objects**)<br/>
->*ARRAY_BUFFER_BINDING*, *DRAW_INDIRECT_BUFFER_BINDING*, *VERTEX_ARRAY_BINDING*, *PARAMETER_BUFFER_BINDING*, *PRIMITIVE_RESTART*, *PRIMITIVE_RESTART_FIXED_INDEX*, *PRIMITIVE_RESTART_INDEX*
+> Table 23.5, Vertex Array Data (**not in Vertex Array objects**)<br/>
+> *ARRAY_BUFFER_BINDING*, *DRAW_INDIRECT_BUFFER_BINDING*, *VERTEX_ARRAY_BINDING*, *PARAMETER_BUFFER_BINDING*, *PRIMITIVE_RESTART*, *PRIMITIVE_RESTART_FIXED_INDEX*, *PRIMITIVE_RESTART_INDEX*
 
 
 <br/>
@@ -487,15 +488,11 @@ Create the vertex array object in core mode:
     glEnableVertexAttribArray( normalAttribIndex );
     glEnableVertexAttribArray( texCorAttribIndex );
 
-    // Associate the element array buffer (index buffer) to the vertex array object
-    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, ibo );
+    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, ibo ); // Associate the element array buffer (index buffer) to the vertex array object
 
-    // Unbind the vertex array object
-    glBindVertexArray( 0 );
+    glBindVertexArray( 0 ); // Unbind the vertex array object
     
-    // Unbinde the element array buffer
-    // This has to be done after the vertex array object is unbound, otherwise the association to the vertex array object would be lost.
-    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 ); 
+    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 ); // Unbinde the element array buffer. This has to be done after the vertex array object is unbound, otherwise the association to the vertex array object would be lost.
 
 See:
 
@@ -528,15 +525,11 @@ Create the vertex array object compatibility mode (**deprecated**):
     glEnableClientState( GL_NORMAL_ARRAY );
     glEnableClientState( GL_TEXTURE_COORD_ARRAY );
 
-    // Associate the element array buffer (index buffer) to the vertex array object
-    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, ibo );
+    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, ibo ); // Associate the element array buffer (index buffer) to the vertex array object
 
-    // Unbind the vertex array object
-    glBindVertexArray( 0 );
+    glBindVertexArray( 0 ); // Unbind the vertex array object
     
-    // Unbinde the element array buffer
-    // This has to be done after the vertex array object is unbound, otherwise the association to the vertex array object would be lost.
-    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 ); 
+    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 ); // Unbinde the element array buffer. This has to be done after the vertex array object is unbound, otherwise the association to the vertex array object would be lost.
 
 <br/>
 
@@ -557,11 +550,11 @@ See [OpenGL Vertex Array/Buffer Objects](https://stackoverflow.com/questions/133
 See [OpenGL ES 4.6 core Specification 3.2 - 5.1.2 Automatic Unbinding of Deleted Objects](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf):<br/>
 See [OpenGL ES 3.2 Specification - 5.1.2 Automatic Unbinding of Deleted Objects](https://www.khronos.org/registry/OpenGL/specs/es/3.2/es_spec_3.2.pdf):
 
->When a buffer, texture, transform feedback or renderbuffer object is successfully deleted, it is unbound from any bind points it is bound to in the current context, and detached from any attachments of container objects that are bound to the current context ....
+> When a buffer, texture, transform feedback or renderbuffer object is successfully deleted, it is unbound from any bind points it is bound to in the current context, and detached from any attachments of container objects that are bound to the current context ....
 >
->Attachments to unbound container objects, such as deletion of a buffer attached to a vertex array object which is not bound to the context, are not affected and continue to act as references on the deleted object ....
+> Attachments to unbound container objects, such as deletion of a buffer attached to a vertex array object which is not bound to the context, are not affected and continue to act as references on the deleted object ....
 >
->When a buffer, query, renderbuffer, sampler, sync, or texture object is deleted, its name immediately becomes invalid (e.g. is marked unused), but the underlying object will not be deleted until it is no longer in use.
+> When a buffer, query, renderbuffer, sampler, sync, or texture object is deleted, its name immediately becomes invalid (e.g. is marked unused), but the underlying object will not be deleted until it is no longer in use.
 
 
 <br/><hr/>
@@ -571,26 +564,29 @@ See [OpenGL ES 3.2 Specification - 5.1.2 Automatic Unbinding of Deleted Objects]
 This technique of drawing is only listed here, as unfortunately it is still often seen. This technology is only supported (partially) because it is so widespread. The support is limited to windows and linux and it requires a compatibility context, to be used. Further this is not supported by OpenGL ES or WebGL.<br/>
 
 See [Khronos wiki - OpenGL Context](https://www.khronos.org/opengl/wiki/OpenGL_Context):
+
 > OpenGL version 3.0 introduced the idea of deprecating functionality. Many OpenGL functions were declared deprecated, which means that users should avoid using them because they may be removed from later API versions. OpenGL 3.1 removed almost all of the functionality deprecated in OpenGL 3.0. This includes the [Fixed Function Pipeline](https://www.khronos.org/opengl/wiki/Fixed_Function_Pipeline).
 >
->....
+> ....
 >
->A new extension, [ARB_compatibility](https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_compatibility.txt), was introduced when OpenGL 3.1 was revealed. The presence of this extension is a signal to the user that deprecated or removed features are still available through the original entrypoints and enumerations. The behavior of such implementations is defined with a separate, much larger, [OpenGL Specification](https://www.khronos.org/opengl/wiki/OpenGL_Specification). Thus, there was a backwards-compatible specification and a non-backwards compatible specification.<br/>
-However, since many implementations support the deprecated and removed features anyway, some implementations want to be able to provide a way for users of higher GL versions to gain access to the old APIs. Several techniques were tried, and it has settled down into a division between Core and Compatibility contexts.
+> A new extension, [ARB_compatibility](https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_compatibility.txt), was introduced when OpenGL 3.1 was revealed. The presence of this extension is a signal to the user that deprecated or removed features are still available through the original entrypoints and enumerations. The behavior of such implementations is defined with a separate, much larger, [OpenGL Specification](https://www.khronos.org/opengl/wiki/OpenGL_Specification). Thus, there was a backwards-compatible specification and a non-backwards compatible specification.<br/>
+> However, since many implementations support the deprecated and removed features anyway, some implementations want to be able to provide a way for users of higher GL versions to gain access to the old APIs. Several techniques were tried, and it has settled down into a division between Core and Compatibility contexts.
 
 See [Khronos wiki - Fixed Function Pipeline](https://www.khronos.org/opengl/wiki/Fixed_Function_Pipeline):
->OpenGL 3.0 was the last revision of the specification which fully supported both fixed and programmable functionality. Even so, most hardware since the OpenGL 2.0 generation lacked the actual fixed-function hardware. Instead, fixed-function processes are emulated with shaders built by the system.
-In OpenGL 3.2, the [Core Profile](https://www.khronos.org/opengl/wiki/OpenGL_Context#Context_types) lacks these fixed-function concepts. The compatibility profile keeps them around. However, most newer features of OpenGL cannot work with fixed function, even when it might seem theoretically possible for them to interact.
+
+> OpenGL 3.0 was the last revision of the specification which fully supported both fixed and programmable functionality. Even so, most hardware since the OpenGL 2.0 generation lacked the actual fixed-function hardware. Instead, fixed-function processes are emulated with shaders built by the system.
+> In OpenGL 3.2, the [Core Profile](https://www.khronos.org/opengl/wiki/OpenGL_Context#Context_types) lacks these fixed-function concepts. The compatibility profile keeps them around. However, most newer features of OpenGL cannot work with fixed function, even when it might seem theoretically possible for them to interact.
 
 See [Khronos wiki - Legacy OpenGL](https://www.khronos.org/opengl/wiki/Legacy_OpenGL):
->In 2008, version 3.0 of the OpenGL specification was released. With this revision, the [Fixed Function Pipeline](https://www.khronos.org/opengl/wiki/Fixed_Function_Pipeline) as well as most of the related OpenGL functions and constants were declared deprecated. These deprecated elements and concepts are now commonly referred to as legacy OpenGL.<br/>
-Legacy OpenGL is still supported by certain implementations that support core OpenGL 3.1 or higher and the [GL_ARB_compatibility](https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_compatibility.txt) extension. Implementations that do not expose this extension do only offer features defined in the core OpenGL specification the implementation is based upon.
+
+> In 2008, version 3.0 of the OpenGL specification was released. With this revision, the [Fixed Function Pipeline](https://www.khronos.org/opengl/wiki/Fixed_Function_Pipeline) as well as most of the related OpenGL functions and constants were declared deprecated. These deprecated elements and concepts are now commonly referred to as legacy OpenGL.<br/>
+> Legacy OpenGL is still supported by certain implementations that support core OpenGL 3.1 or higher and the [GL_ARB_compatibility](https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_compatibility.txt) extension. Implementations that do not expose this extension do only offer features defined in the core OpenGL specification the implementation is based upon.
 >
->.....
+> .....
 >
->**Implementations of compatibility contexts**<br/>
+> **Implementations of compatibility contexts**<br/>
 >
->Both AMD and NVIDIA provide backwards-compatible implementations at least on Windows and Linux. Apple does only provide an implementation of the core profile and supports core OpenGL 3.2 on Mac OSX. Intel provides an implementation for Windows up to OpenGL 3.1 with Sandy Bridge CPUs and OpenGL 4.0 with Ivy Bridge CPUs. However, Intel's Linux open-source driver developers have recently stated that they will not provide backward-compatibility on Linux.
+> Both AMD and NVIDIA provide backwards-compatible implementations at least on Windows and Linux. Apple does only provide an implementation of the core profile and supports core OpenGL 3.2 on Mac OSX. Intel provides an implementation for Windows up to OpenGL 3.1 with Sandy Bridge CPUs and OpenGL 4.0 with Ivy Bridge CPUs. However, Intel's Linux open-source driver developers have recently stated that they will not provide backward-compatibility on Linux.
 
 See also [Khronos forums - Forward compatible vs Core profile](https://www.opengl.org/discussion_boards/showthread.php/175052-Forward-compatible-vs-Core-profile)<br/>
 
@@ -612,25 +608,26 @@ e.g.
 For vertex attributes with an integral data it has to be used [**`glVertexAttribIPointer`**](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glVertexAttribPointer.xhtml) (focus on the **`I`**), to define an array of generic vertex attribute data.
 
 See the [OpenGL ES specification - Chapter 10.3 Vertex Arrays](https://www.khronos.org/registry/OpenGL/specs/es/3.2/es_spec_3.2.pdf) which clearly says:
->When values for a vertex shader attribute variable are sourced from an enabled
-generic vertex attribute array, the array must be specified by a command compatible with the data type of the variable. The values loaded into a shader attribute variable bound to generic attribute index are undefined if the array for index was not specified by:
 
->- VertexAttribFormat, for floating-point base type attributes;
->- VertexAttribIFormat with type BYTE, SHORT, or INT for signed integer
-base type attributes; or
->- VertexAttribIFormat with type UNSIGNED_BYTE, UNSIGNED_SHORT, or
-UNSIGNED_INT for unsigned integer base type attributes.
+> When values for a vertex shader attribute variable are sourced from an enabled generic vertex attribute array,
+> the array must be specified by a command compatible with the data type of the variable. 
+> The values loaded into a shader attribute variable bound to generic attribute index are undefined if the array for index was not specified by:
+>
+> - VertexAttribFormat, for floating-point base type attributes;
+> - VertexAttribIFormat with type BYTE, SHORT, or INT for signed integer base type attributes; or
+> - VertexAttribIFormat with type UNSIGNED_BYTE, UNSIGNED_SHORT, or UNSIGNED_INT for unsigned integer base type attributes.
 
 See the Khronos group reference page for [`glVertexAttribPointer`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glVertexAttribPointer.xhtml):
 
->For `glVertexAttribPointer`, if normalized is set to `GL_TRUE`, it indicates that values stored in an integer format are to be mapped to the range [-1,1] (for signed values) or [0,1] (for unsigned values) when they are accessed and **converted to floating point**. Otherwise, values **will be converted to floats directly** without normalization.
-
->For `glVertexAttribIPointer`, only the integer types `GL_BYTE`, `GL_UNSIGNED_BYTE`, `GL_SHORT`, `GL_UNSIGNED_SHORT`, `GL_INT`, `GL_UNSIGNED_INT` are accepted. **Values are always left as integer values**.
+> For `glVertexAttribPointer`, if normalized is set to `GL_TRUE`, it indicates that values stored in an integer format are to be mapped to the range [-1,1] (for signed values) or [0,1] (for unsigned values) when they are accessed and **converted to floating point**. Otherwise, values **will be converted to floats directly** without normalization.
+>
+> For `glVertexAttribIPointer`, only the integer types `GL_BYTE`, `GL_UNSIGNED_BYTE`, `GL_SHORT`, `GL_UNSIGNED_SHORT`, `GL_INT`, `GL_UNSIGNED_INT` are accepted. **Values are always left as integer values**.
 
 ## WebGL
 
 See the [WebGL documentation for `WebGL2RenderingContext.vertexAttribIPointer()`](https://developer.mozilla.org/en-US/docs/Web/API/WebGL2RenderingContext/vertexAttribIPointer)  which says:
->The `WebGL2RenderingContext.vertexAttribIPointer()` method of the WebGL 2 API specifies integer data formats and locations of vertex attributes in a vertex attributes array.
+
+> The `WebGL2RenderingContext.vertexAttribIPointer()` method of the WebGL 2 API specifies integer data formats and locations of vertex attributes in a vertex attributes array.
 
 
 ----
