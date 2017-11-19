@@ -96,9 +96,9 @@ Draw the array in compatibility mode (**deprecated**):
     std::vector<GLfloat> normal;       // linearized array (no_of_points * 3): [ Nx0, Ny0, Nz0, Nx1, Ny1, Nz1, .... ] 
     std::vector<GLfloat> color;        // linearized array (no_of_points * 5): [ R0, G0, B0, A0, R1, G1, B1, A1, .... ] 
     
-    glVertexPointer( 3, GL_FLOAT, 0, vertex.data() );  // 3: Vx, Vy, Vz 
+    glVertexPointer( 3, GL_FLOAT, 0, vertex.data() ); // 3: Vx, Vy, Vz 
     glNormalPointer(    GL_FLOAT, 0, normal.data() );
-    glColorPointer(  4, GL_FLOAT, 0, texture.data() ); // 4: R, G, B, A  
+    glColorPointer(  4, GL_FLOAT, 0, color.data() );  // 4: R, G, B, A  
 
     glEnableClientState( GL_VERTEX_ARRAY );
     glEnableClientState( GL_NORMAL_ARRAY );
