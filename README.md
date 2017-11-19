@@ -2,6 +2,8 @@
 
 ## Documentation
 
+[Draw geometry](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/draw_mesh.md)
+
 [Model View Projection and Depth](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/projection_and_depth.md)
 
 [Matrix operations](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/matrix_operations.md)
