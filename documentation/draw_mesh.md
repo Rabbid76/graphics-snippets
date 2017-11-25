@@ -637,4 +637,6 @@ See the [WebGL documentation for `WebGL2RenderingContext.vertexAttribIPointer()`
 
 - WebgGL draw colored triangle, without shader
 - OpenGL darw colored trinagle with vertex buffer object/certex array object, without shader
+- [How to include model matrix to a VBO?](https://stackoverflow.com/questions/24627445/how-to-include-model-matrix-to-a-vbo)
+- [Primitive Restart](https://www.khronos.org/opengl/wiki/Vertex_Rendering#Primitive_Restart)
 
