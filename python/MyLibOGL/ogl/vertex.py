@@ -186,12 +186,12 @@ class DrawBuffer:
 
     # ctor
     def __init__(self, usage = GL_STREAM_DRAW):
-        self.__usage = usage  # usage tpye of buffer objects GL_STATIC_DRAW, GL_DYNAMIC_DRAW, GL_STREAM_DRAW
-        self.__currVAO     = 0 # current selected vertex array object <GPU name>
-        self.__currNoElems = 0 # number of elements in the curently selected vertex array object
-        self.__vaos = {}       # map destcription -> (vertex array object <GPU name>, description)
-        self.__ibos = {}       # map index -> ( element array buffer <GPU name>, size <count> of element array buffer )
-        self.__vbos = []       # list of array buffers ( array buffer <GPU name>, size <count> of array buffer )
+        self.__usage       = usage # usage type of buffer objects GL_STATIC_DRAW, GL_DYNAMIC_DRAW, GL_STREAM_DRAW
+        self.__currVAO     = 0     # current selected vertex array object <GPU name>
+        self.__currNoElems = 0     # number of elements in the curently selected vertex array object
+        self.__vaos = {}           # map destcription -> (vertex array object <GPU name>, description)
+        self.__ibos = {}           # map index -> ( element array buffer <GPU name>, size <count> of element array buffer )
+        self.__vbos = []           # list of array buffers ( array buffer <GPU name>, size <count> of array buffer )
 
 
     # dtor
@@ -311,7 +311,6 @@ class DrawBuffer:
         # Check if a proper vertex array object already exists
         if hashcode in self.__vaos:
             self.__currVAO = self.__vaos[hashcode][0]
-            self.BindVAO()  
             return hashcode  
 
         # Check if the required buffers are exists and create them if they are not created yet.
