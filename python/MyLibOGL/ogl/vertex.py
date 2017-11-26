@@ -144,14 +144,14 @@ class MeshBuffer:
         glBindVertexArray( 0 )
 
 
-CLINET_VERTEX    = -1 # GL_VERTEX_ARRAY
-CLINET_NORMAL    = -2 # GL_NORMAL_ARRAY
-CLINET_TEXTURE   = -3 # GL_TEXTURE_COORD_ARRAY
-CLIETN_COLOR     = -4 # GL_COLOR_ARRAY
-CLIETN_COLOR_2   = -5 # GL_SECONDARY_COLOR_ARRAY
+CLIENT_VERTEX    = -1 # GL_VERTEX_ARRAY
+CLIENT_NORMAL    = -2 # GL_NORMAL_ARRAY
+CLIENT_TEXTURE   = -3 # GL_TEXTURE_COORD_ARRAY
+CLIENT_COLOR     = -4 # GL_COLOR_ARRAY
+CLIENT_COLOR_2   = -5 # GL_SECONDARY_COLOR_ARRAY
 CLIENT_INDEX     = -6 # GL_INDEX_ARRAY
-CLINET_EDGE_FLAG = -7 # GL_EDGE_FLAG_ARRAY
-CLINET_FOG_COORD = -8 # GL_FOG_COORD_ARRAY   
+CLIENT_EDGE_FLAG = -7 # GL_EDGE_FLAG_ARRAY
+CLIENT_FOG_COORD = -8 # GL_FOG_COORD_ARRAY   
 
 
 # class which creates and manages vertex array objects with the following description
@@ -236,27 +236,27 @@ class DrawBuffer:
             glEnableVertexAttribArray( attr_id )
         
         # define an array of generic vertex attribute data
-        elif attr_id == CLINET_VERTEX:
+        elif attr_id == CLIENT_VERTEX:
             glVertexPointer( attr_size, GL_FLOAT, stride, None if stride == 0 else attr_offs ) 
             glEnableClientState( GL_VERTEX_ARRAY )
 
         # define an array of normals
-        elif attr_id == CLINET_GL_NORMAL_ARRAYVERTEX:
+        elif attr_id == CLIENT_GL_NORMAL_ARRAYVERTEX:
             glNormalPointer( GL_FLOAT, stride, None if stride == 0 else attr_offs ) 
             glEnableClientState( GL_NORMAL_ARRAY ) 
 
         # define an array of texture coordinates
-        elif attr_id == CLINET_VERTEX:
+        elif attr_id == CLIENT_VERTEX:
             glTexCoordPointer( attr_size, GL_FLOAT, stride, None if stride == 0 else attr_offs ) 
             glEnableClientState( GL_TEXTURE_COORD_ARRAY ) 
 
         # define an array of colors
-        elif attr_id == CLIETN_COLOR:
+        elif attr_id == CLIENT_COLOR:
             glColorPointer( attr_size, GL_FLOAT, stride, None if stride == 0 else attr_offs ) 
             glEnableClientState( GL_COLOR_ARRAY )
 
         # define an array of secondary colors
-        elif attr_id == CLIETN_COLOR_2:
+        elif attr_id == CLIENT_COLOR_2:
             glSecondaryColorPointer( attr_size, GL_FLOAT, stride, None if stride == 0 else attr_offs ) 
             glEnableClientState( GL_SECONDARY_COLOR_ARRAY ) 
 
@@ -266,14 +266,14 @@ class DrawBuffer:
             glEnableClientState( GL_INDEX_ARRAY ) 
 
         # define an array of edge flags
-        elif attr_id == CLINET_EDGE_FLAG:
+        elif attr_id == CLIENT_EDGE_FLAG:
             glEdgeFlagPointer ( stride, None if stride == 0 else attr_offs ) 
             glEnableClientState( GL_EDGE_FLAG_ARRAY )
 
         # define an array of fog coordinates
-        elif attr_id == CLINET_FOG_COORD:
+        elif attr_id == CLIENT_FOG_COORD:
             glFogCoordPointer ( attr_size, stride, None if stride == 0 else attr_offs ) 
-            glEnableClientState( CLINET_FOG_COORD ) 
+            glEnableClientState( GL_FOG_COORD_ARRAY ) 
 
         else:
             print( "Illegal vertex array index or client state" )
