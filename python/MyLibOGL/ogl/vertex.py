@@ -153,6 +153,12 @@ CLIENT_INDEX     = -6 # GL_INDEX_ARRAY
 CLIENT_EDGE_FLAG = -7 # GL_EDGE_FLAG_ARRAY
 CLIENT_FOG_COORD = -8 # GL_FOG_COORD_ARRAY   
 
+TYPE_float32 = 0 # GL_FLOAT
+TYPE_float64 = 1 # GL_DOUBLE
+TYPE_unit8   = 2 # GL_UNSIGNED_BYTE
+TYPE_uint16  = 3 # GL_UNSIGNED_SHORT
+TYPE_uint32  = 4 # GL_UNSIGNED_INT
+
 
 # class which creates and manages vertex array objects with the following description
 #
@@ -163,7 +169,8 @@ CLIENT_FOG_COORD = -8 # GL_FOG_COORD_ARRAY
 #     <no of attributes>      : number of the generic vertex attributes in the buffer - followed by the list of attribute specifications
 #     {
 #         <attribute index>   : vertex attribute index or client state
-#         <attribute size>    : number of elemts of the vertex attribute  
+#         <attribute size>    : number of elemts of the vertex attribute 
+#         <attribute type>    : type of an attribute 
 #         <attribute offset>  : offset of the vertex attributes from the begin of the attributes set
 #     }
 # }
@@ -172,7 +179,7 @@ CLIENT_FOG_COORD = -8 # GL_FOG_COORD_ARRAY
 # e.g. Strided record sets:  
 #      Vx0, Vy0, Vz0, Nx0, Ny0, Nz0, Tu0, Tv0, Vx1, Vy1, Vz1, Nx1, Ny1, Nz1, Tu1, Tv1, ....
 #      
-#      [0, 1, 8, 3, -1, 3, 0, -2, 3, 3, -3, 2, 6]
+#      [0, 1, 8, 3, -1, 3, 0, 0, -2, 3, 0, 3, -3, 2, 0, 6]
 #
 #
 # e.g. Tightly packed vertex attributes:
@@ -180,7 +187,7 @@ CLIENT_FOG_COORD = -8 # GL_FOG_COORD_ARRAY
 #      Nx0, Ny0, Nz0, Nx1, Ny1, Nz1, ....
 #      Tu0, Tv0, Tu1, Tv1 ....
 #
-#      [0, 3, 0, 1, -1, 3, 0, 1, 0, -2, 3, 0, 1, 0, -3, 2, 0]
+#      [0, 3, 0, 1, -1, 3, 0, 0, 1, 0, -2, 3, 0, 0, 1, 0, -3, 2, 0, 0]
 #
 class DrawBuffer:
 
@@ -228,8 +235,20 @@ class DrawBuffer:
 
     # define and enable an array of generic vertex attribute
     # or define and enable a clinet array
-    def DefineAndEnableAttribute(self, attr_id, attr_size, attr_offs, stride):
+    def DefineAndEnableAttribute(self, attr_id, attr_size, attr_type, attr_offs, stride):
     
+        opengl_type = 0
+        if opengl_type == TYPE_float32:
+          opengl_type = GL_FLOAT
+        elif opengl_type == TYPE_float64:
+          opengl_type = GL_DOUBLE 
+        elif opengl_type == TYPE_unit8:
+          opengl_type = GL_UNSIGNED_BYTE 
+        elif opengl_type == TYPE_uint16:
+          opengl_type = GL_UNSIGNED_SHORT 
+        elif opengl_type == TYPE_uint32:
+          opengl_type = GL_UNSIGNED_INT    
+
         # define and enable an array of generic vertex attribute
         if attr_id >= 0:
             glVertexAttribPointer( attr_id, attr_size, GL_FLOAT, GL_FALSE, stride, None if stride == 0 else attr_offs )
@@ -332,9 +351,9 @@ class DrawBuffer:
             i_key = i_key + 2
             glBindBuffer( GL_ARRAY_BUFFER, self.__vbos[i_vbo][0] )
             for i_attr in range(no_of_attr):
-                attr_id, attr_size, attr_offs = key[i_key], key[i_key+1],  key[i_key+2]
-                i_key = i_key + 3
-                self.DefineAndEnableAttribute( attr_id, attr_size, attr_offs, stride )
+                attr_id, attr_size, attr_type, attr_offs = key[i_key], key[i_key+1], key[i_key+3], key[i_key+2]
+                i_key = i_key + 4
+                self.DefineAndEnableAttribute( attr_id, attr_size, attr_type, attr_offs, stride )
         glBindBuffer( GL_ARRAY_BUFFER, 0 )
 
         # Associate the element array buffer (index buffer) to the vertex array object

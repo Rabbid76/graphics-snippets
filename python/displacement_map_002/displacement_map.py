@@ -143,7 +143,13 @@ for inx in range(0, 6):
     for inx_s in [0, 1, 2, 0, 2, 3]: cubeIndices.append( inx * 4 + inx_s )
 
 cubeVAO = vertex.DrawBuffer()
-cubeVAO.DefineVAO( [0, 4, 0, 1, 0, 3, 0, 0, 1, 1, 3, 0, 0, 1, 2, 3, 0, 0, 1, 3, 2, 0], [cubePosData, cubeNVData, cubeColData, cubeUVData], cubeIndices )
+cubeVAO.DefineVAO( [
+    0, 4, 
+    0, 1,     0, 3, vertex.TYPE_float32, 0, 
+    0, 1,     1, 3, vertex.TYPE_float32, 0, 
+    0, 1,     2, 3, vertex.TYPE_float32, 0,
+    0, 1,     3, 2, vertex.TYPE_float32, 0],
+    [cubePosData, cubeNVData, cubeColData, cubeUVData], cubeIndices )
 
 # load, compile and link shader
 progDraw = shader.ShaderProgram( 
