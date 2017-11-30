@@ -430,6 +430,12 @@ See the [OpenGL 4.6 core specification - 10.3. VERTEX ARRAYS](https://www.khrono
 > *ARRAY_BUFFER_BINDING*, *DRAW_INDIRECT_BUFFER_BINDING*, *VERTEX_ARRAY_BINDING*, *PARAMETER_BUFFER_BINDING*, *PRIMITIVE_RESTART*, *PRIMITIVE_RESTART_FIXED_INDEX*, *PRIMITIVE_RESTART_INDEX*
 
 
+See the [OpenGL 4.6 core specification - 10.3.9 Vertex Arrays in Buffer Objects](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf):
+
+> A buffer object binding point is added to the client state associated with each vertex array index. The commands that specify the locations and organizations of vertex arrays copy the buffer object name that is bound to *ARRAY_BUFFER* to the binding point corresponding to the vertex array index being specified. For example, the '`VertexAttribPointer` command copies the value of *ARRAY_BUFFER_BINDING* (the queriable name of the buffer binding corresponding to the target *ARRAY_BUFFER*) to the client state variable *VERTEX_ATTRIB_ARRAY_BUFFER_BINDING* for the specified index-
+
+
+
 <br/>
 
 e.g. Vertex, Normal vector and Texture coordiante

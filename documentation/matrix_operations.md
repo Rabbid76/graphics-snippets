@@ -57,6 +57,16 @@ Addressing the columns of a `mat4 m44;` in GLSL:
     vec4 c1 = m44[1].xyzw;
     vec4 c2 = m44[2].xyzw;
     vec4 c3 = m44[3].xyzw;
+
+
+<br/>
+See further:  
+
+- [GLSL Programming/Vector and Matrix Operations][1]
+- [Data Type (GLSL)][2]    
+- [GLSL 4x4 Matrix Fields][3]
+- [Matrix Translation in GLSL is infinitely stretched][9] 
+- [What is wrong with my matrix stack implementation (OpenGL ES 2.0)?][10]
    
 
 <br/><hr/>
@@ -243,9 +253,36 @@ Note, the result of `rotate * translate` would be:
 
 ![rotate * translate](image/rotate-translate.svg)
 
+<br/>
+See further:
+
+- [three.js object translate and rotate based on object self coordinate system or world coordinate system][11]
+- [Rotating a multipart object][12]
+- [OpenGL move object and keep transformation][13]
+- [Issues with Z-axis rotation matrix in glsl shader][14]
+- [three.js object translate and rotate based on object self coordinate system or world coordinate system][15]
+- [movement of rendered objects in opengl][16]
+
 
 <br/><hr/>
-## Transpose? It's just a matter of definition
+## Transposed matrix
+
+The transposed matrix `m_t` of a matrix `m`, is the flipped matrix over its diagonal.
+
+e.g.
+
+        [ 1 2 3 ]           [ 1 4 7 ]
+    m = [ 4 5 6 ]     m_t = [ 2 5 8 ]
+        [ 7 8 9 ]           [ 3 6 9 ]
+
+e.g.
+
+         [ 1 2 ]            [ 1 3 5 ]
+    m =  [ 3 4 ]      m_t = [ 2 4 6 ]
+         [ 5 6 ]
+
+
+### Transpose? It's just a matter of definition
 
 Further see [GLSL Programming/Vector and Matrix Operations][1]:
 >Furthermore, the *-operator can be used for matrix-vector products of the corresponding dimension, e.g.:
@@ -298,6 +335,80 @@ But of course, the matrix can be set up *transposed*:
 Then that the vector has to be multiplied to the matrix from the **left**:
 
     gl_Position = vertexPosition * transformation;
+
+<br/>
+See further:
+
+- [What is the difference between the order in which a mat4x4 is multiplied with a vec4?][21]
+- [Translation on square made of triangles in opengl][22]
+- [Wikipedia transposed][26]
+
+
+<br/><hr/>
+## Inverse matrix
+
+### Inverse 4*4 matrix
+
+    bool InverseMat44( const GLfloat m[16], GLfloat invOut[16] )
+    {
+        float inv[16], det;
+        int i;
+
+        inv[0]  =  m[5] * m[10] * m[15] - m[5] * m[11] * m[14] - m[9] * m[6] * m[15] + m[9] * m[7] * m[14] + m[13] * m[6] * m[11] - m[13] * m[7] * m[10];
+        inv[4]  = -m[4] * m[10] * m[15] + m[4] * m[11] * m[14] + m[8] * m[6] * m[15] - m[8] * m[7] * m[14] - m[12] * m[6] * m[11] + m[12] * m[7] * m[10];
+        inv[8]  =  m[4] * m[9]  * m[15] - m[4] * m[11] * m[13] - m[8] * m[5] * m[15] + m[8] * m[7] * m[13] + m[12] * m[5] * m[11] - m[12] * m[7] * m[9];
+        inv[12] = -m[4] * m[9]  * m[14] + m[4] * m[10] * m[13] + m[8] * m[5] * m[14] - m[8] * m[6] * m[13] - m[12] * m[5] * m[10] + m[12] * m[6] * m[9];
+        inv[1]  = -m[1] * m[10] * m[15] + m[1] * m[11] * m[14] + m[9] * m[2] * m[15] - m[9] * m[3] * m[14] - m[13] * m[2] * m[11] + m[13] * m[3] * m[10];
+        inv[5]  =  m[0] * m[10] * m[15] - m[0] * m[11] * m[14] - m[8] * m[2] * m[15] + m[8] * m[3] * m[14] + m[12] * m[2] * m[11] - m[12] * m[3] * m[10];
+        inv[9]  = -m[0] * m[9]  * m[15] + m[0] * m[11] * m[13] + m[8] * m[1] * m[15] - m[8] * m[3] * m[13] - m[12] * m[1] * m[11] + m[12] * m[3] * m[9];
+        inv[13] =  m[0] * m[9]  * m[14] - m[0] * m[10] * m[13] - m[8] * m[1] * m[14] + m[8] * m[2] * m[13] + m[12] * m[1] * m[10] - m[12] * m[2] * m[9];
+        inv[2]  =  m[1] * m[6]  * m[15] - m[1] * m[7]  * m[14] - m[5] * m[2] * m[15] + m[5] * m[3] * m[14] + m[13] * m[2] * m[7]  - m[13] * m[3] * m[6];
+        inv[6]  = -m[0] * m[6]  * m[15] + m[0] * m[7]  * m[14] + m[4] * m[2] * m[15] - m[4] * m[3] * m[14] - m[12] * m[2] * m[7]  + m[12] * m[3] * m[6];
+        inv[10] =  m[0] * m[5]  * m[15] - m[0] * m[7]  * m[13] - m[4] * m[1] * m[15] + m[4] * m[3] * m[13] + m[12] * m[1] * m[7]  - m[12] * m[3] * m[5];
+        inv[14] = -m[0] * m[5]  * m[14] + m[0] * m[6]  * m[13] + m[4] * m[1] * m[14] - m[4] * m[2] * m[13] - m[12] * m[1] * m[6]  + m[12] * m[2] * m[5];
+        inv[3]  = -m[1] * m[6]  * m[11] + m[1] * m[7]  * m[10] + m[5] * m[2] * m[11] - m[5] * m[3] * m[10] - m[9]  * m[2] * m[7]  + m[9]  * m[3] * m[6];
+        inv[7]  =  m[0] * m[6]  * m[11] - m[0] * m[7]  * m[10] - m[4] * m[2] * m[11] + m[4] * m[3] * m[10] + m[8]  * m[2] * m[7]  - m[8]  * m[3] * m[6];
+        inv[11] = -m[0] * m[5]  * m[11] + m[0] * m[7]  * m[9]  + m[4] * m[1] * m[11] - m[4] * m[3] * m[9]  - m[8]  * m[1] * m[7]  + m[8]  * m[3] * m[5];
+        inv[15] =  m[0] * m[5]  * m[10] - m[0] * m[6]  * m[9]  - m[4] * m[1] * m[10] + m[4] * m[2] * m[9]  + m[8]  * m[1] * m[6]  - m[8]  * m[2] * m[5];
+
+        det = m[0] * inv[0] + m[1] * inv[4] + m[2] * inv[8] + m[3] * inv[12];
+        if (det == 0) return false;
+        det = 1.0 / det;
+
+        for (i = 0; i < 16; i++)
+            invOut[i] = inv[i] * det;
+
+        return true;
+    }
+
+
+<br/>
+See further:
+
+- [Particles not oriented to the camera][31]
+- [OpenGL screen coordinates to world coordinates][32]
+- [Wikipedia, Invertible matrix][30]
+
+
+<br/><hr/>
+## Inverse matrix and transposed matrix
+
+If the transposed matrix of a matrix `m` is equal to the inverse matrix of the matrix `m`, it is called an orthogonal matrix.
+
+This means, if each column of a amtrix (e.g. each axis of a 3*3 matrix), has unit length and is perpendicular to every other column then the transposed matrix is equal the inverse matrix.
+
+e.g.
+        [  0.707, 0.707, 0 ]                 [ 0.707, -0.707, 0 ]
+    m = [ -0.707, 0.707, 0 ]     m_i = m_t = [ 0.707,  0.707, 0 ]
+        [      0,     0, 1 ]                 [     0,      0, 1 ]
+
+
+<br/>
+See further:
+
+- [Transpose and Inverse][27]
+- [In which cases is the inverse matrix equal to the transpose?][29]
+- [Difference Between Transpose and Inverse Matrix][28]
 
 
 <br/><hr/>
@@ -365,6 +476,13 @@ To generate a rotation only matrix you have to extract the normalized axis vecto
     r[3][0] = 0.0f; r[3][1] = 0.0f; r[3][2] = 0.0f; r[0][3] = 1.0f;
 
 
+<br/>
+See further:
+
+- [Drawing cubes with stacked matrix][19]
+- [OpenGL transforming objects with multiple rotations of Different axis][20]
+
+
 <br/><hr/>
 ## First Person Camera Transformation
 
@@ -372,27 +490,13 @@ First Person movment, the camera matrix has to be incrementally changed. This me
 
 ![movement and rotation](image/movement_and_rotation.svg)
 
-<br/><hr/>
-## Resources
+<br/>
+See further:
 
-- [GLSL Programming/Vector and Matrix Operations][1]
-- [Data Type (GLSL)][2]    
-- [GLSL 4x4 Matrix Fields][3]
-- [Matrix Translation in GLSL is infinitely stretched][9]
-- [What is wrong with my matrix stack implementation (OpenGL ES 2.0)?][10]
-- [three.js object translate and rotate based on object self coordinate system or world coordinate system][11]
-- [Rotating a multipart object][12]
-- [OpenGL move object and keep transformation][13]
-- [Issues with Z-axis rotation matrix in glsl shader][14]
-- [three.js object translate and rotate based on object self coordinate system or world coordinate system][15]
-- [movement of rendered objects in opengl][16]
-- [Drawing cubes with stacked matrix][19]
-- [OpenGL transforming objects with multiple rotations of Different axis][20]
-- [What is the difference between the order in which a mat4x4 is multiplied with a vec4?][21]
-- [Translation on square made of triangles in opengl][22]
 - [opengl atan2f doesn't work][23]
 - [OpenGL, First Person Camera Translation][24]
 - [how to modify the view of the camera with pygame and openGL][25]
+
 
 
   [1]: https://en.wikibooks.org/wiki/GLSL_Programming/Vector_and_Matrix_Operations
@@ -420,14 +524,13 @@ First Person movment, the camera matrix has to be incrementally changed. This me
   [23]: https://stackoverflow.com/questions/45234650/atan2f-doesnt-work/45239229#45239229
   [24]: https://stackoverflow.com/questions/46508872/opengl-first-person-camera-translation/46509967#46509967
   [25]: https://stackoverflow.com/questions/47169618/how-to-modify-the-view-of-the-camera-with-pygame-and-opengl/47173089#47173089
+  [26]: https://en.wikipedia.org/wiki/Transpose
+  [27]: http://www.katjaas.nl/transpose/transpose.html
+  [28]: http://www.differencebetween.com/difference-between-transpose-and-vs-inverse-matrix/
+  [29]: https://math.stackexchange.com/questions/156735/in-which-cases-is-the-inverse-matrix-equal-to-the-transpose
+  [30]: https://en.wikipedia.org/wiki/Invertible_matrix
+  [31]: https://stackoverflow.com/questions/45779313/particles-not-oriented-to-the-camera/45779696#45779696
+  [32]: https://stackoverflow.com/questions/44965202/opengl-screen-coordinates-to-world-coordinates/45000237#45000237
 
 
------
-- [Particles not oriented to the camera](https://stackoverflow.com/questions/45779313/particles-not-oriented-to-the-camera/45779696#45779696)
-- [OpenGL screen coordinates to world coordinates](https://stackoverflow.com/questions/44965202/opengl-screen-coordinates-to-world-coordinates/45000237#45000237)
-- [Is 4th row in model view projection the viewing position?](https://stackoverflow.com/questions/46637247/is-4th-row-in-model-view-projection-the-viewing-position/46639494#46639494)
-
-# TODO
-
-- inverse matrix versus transposed matrix
 
