@@ -75,16 +75,20 @@ See further:
 In OpenGL there is one matrix stack for each matrix mode (See [**`glMatrixMode`**][4]). The matrix modes are `GL_MODELVIEW`, `GL_PROJECTION`, and `GL_TEXTURE`.
 
 Multiplication: See the documentation of [**`glMultMatrix`**][5]:
->`glMultMatrix` multiplies the current matrix with the one specified using `m`, and replaces the current matrix with the product.
+
+> `glMultMatrix` multiplies the current matrix with the one specified using `m`, and replaces the current matrix with the product.
 
 Translation: See the documentation of [**`glTranslate`**][6]:
->`glTranslate` produces a translation by `x y z` . The current matrix (see `glMatrixMode`) is multiplied by this translation matrix, with the product replacing the current matrix.
+
+> `glTranslate` produces a translation by `x y z` . The current matrix (see `glMatrixMode`) is multiplied by this translation matrix, with the product replacing the current matrix.
 
 Rotation: See the documentation of [**`glRotate`**][7]:
->`glRotate` produces a rotation of angle degrees around the vector `x y z` . The current matrix (see `glMatrixMode`) is multiplied by a rotation matrix with the product replacing the current matrix.
+
+> `glRotate` produces a rotation of angle degrees around the vector `x y z` . The current matrix (see `glMatrixMode`) is multiplied by a rotation matrix with the product replacing the current matrix.
 
 Scaling: See the documentation of [**`glScale`**][8]:
->`glScale`produces a nonuniform scaling along the `x`, `y`, and `z` axes. The three parameters indicate the desired scale factor along each of the three axes.
+
+> `glScale`produces a nonuniform scaling along the `x`, `y`, and `z` axes. The three parameters indicate the desired scale factor along each of the three axes.
 The current matrix (see `glMatrixMode`) is multiplied by this scale matrix.
 
 
@@ -481,6 +485,7 @@ See further:
 
 - [Drawing cubes with stacked matrix][19]
 - [OpenGL transforming objects with multiple rotations of Different axis][20]
+- [OpenGL: Moving around 3D Scene][33]
 
 
 <br/><hr/>
@@ -531,6 +536,7 @@ See further:
   [30]: https://en.wikipedia.org/wiki/Invertible_matrix
   [31]: https://stackoverflow.com/questions/45779313/particles-not-oriented-to-the-camera/45779696#45779696
   [32]: https://stackoverflow.com/questions/44965202/opengl-screen-coordinates-to-world-coordinates/45000237#45000237
+  [33]: https://stackoverflow.com/questions/47614202/opengl-moving-around-3d-scene/47617063#47617063
 
 
 
