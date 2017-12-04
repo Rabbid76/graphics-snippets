@@ -71,8 +71,7 @@ void main()
     
     attribute vec2 inPos;
     varying   vec2 vPos;
-    varying   vec3 vCornerPos;
-
+    
     uniform vec2  u_depthRange;
     uniform float u_tanFOV_2;
     uniform vec2  u_viewportsize;
@@ -82,7 +81,6 @@ void main()
         float aspect = u_viewportsize.x / u_viewportsize.y;
         float farLen = u_tanFOV_2 * u_depthRange.y;
         vPos         = inPos;
-        vCornerPos   = vec3( inPos.x * aspect * farLen, inPos.y * farLen, -u_depthRange.y );
         gl_Position  = vec4( inPos, 0.0, 1.0 );
     }
 </script>
@@ -91,7 +89,6 @@ void main()
     precision mediump float;
     
     varying vec2 vPos;
-    varying vec3 vCornerPos;
     
     uniform sampler2D u_depthSampler;
     uniform sampler2D u_normalSampler;
