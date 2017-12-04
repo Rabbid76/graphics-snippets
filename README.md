@@ -35,6 +35,11 @@
 [Fire](https://rabbid76.github.io/graphics-snippets/html/effect/fire.html)
 
 
+### Technique
+
+[SSAO](https://rabbid76.github.io/graphics-snippets/html/technique/ssao.html)
+
+
 ### Stackoverflow examples
 
 [Shadow map](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/shadow_map.html)
