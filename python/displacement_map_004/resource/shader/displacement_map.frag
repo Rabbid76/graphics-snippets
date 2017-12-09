@@ -8,7 +8,7 @@
 in TGeometryData
 {
     vec3  vsPos;
-    vec3  vsPos_end;
+    float bottom_rel;
     vec3  vsNV;
     vec3  vsTV;
     float vsBVsign;
@@ -121,7 +121,7 @@ vec3 SteepParallax( in vec3 texDir3D, in vec2 texC0, in vec2 texC1 )
 void main()
 {
     vec3  objPosEs     = inData.vsPos;
-    vec3  objPosEndEs  = inData.vsPos_end;
+    vec3  objPosEndEs  = objPosEs * inData.bottom_rel;
     vec3  objNormalEs  = inData.vsNV;
     vec2  texCoords    = inData.uv;
     vec2  texCoordsEnd = inData.uv_end;
