@@ -80,7 +80,7 @@ vec4 CalculateNormal( in vec2 texCoords )
 #endif 
 }
 
-vec3 SteepParallax( in vec3 texDir3D, in vec2 texC0, in vec2 texC1 )
+vec3 SteepParallax( in float bottom_rel, in vec3 texDir3D, in vec2 texC0, in vec2 texC1 )
 {
   float mapHeight;
   float maxBumpHeight = u_displacement_scale;
@@ -91,27 +91,43 @@ vec3 SteepParallax( in vec3 texDir3D, in vec2 texC0, in vec2 texC1 )
     float quality         = mix( quality_range.x, quality_range.y , gl_FragCoord.z * gl_FragCoord.z );
     float numSteps        = clamp( quality * mix( 5.0, 10.0 * clamp( 1.0 + 30.0 * maxBumpHeight, 1.0, 4.0 ), 1.0 - abs(texDir3D.z) ), 1.0, 50.0 );
     int   numBinarySteps  = int( clamp( quality * 5.1, 1.0, 7.0 ) );
-    vec2  texStep         = texC1 - texC0;
+    vec2  texStep         = texC0 - texC1;
     float bumpHeightStep  = 1.0 / numSteps;
-    mapHeight             = 1.0;
     float bestBumpHeight  = 1.0;
-    for ( int i = 0; i < int( numSteps ); ++ i )
+    if ( bottom_rel >= 1.0 )
     {
-      mapHeight = CalculateHeight( texCoord.xy - bestBumpHeight * texStep.xy );
-      if ( mapHeight >= bestBumpHeight )
-        break;
-      bestBumpHeight -= bumpHeightStep;
+        bestBumpHeight = 1.0;
+        mapHeight      = 1.0;
+        for ( int i = 0; i < int( numSteps ); ++ i )
+        {
+            mapHeight = CalculateHeight( texCoord.xy + bestBumpHeight * texStep.xy );
+            if ( mapHeight >= bestBumpHeight )
+                break;
+            bestBumpHeight -= bumpHeightStep;
+        }
+        bestBumpHeight += bumpHeightStep;
     }
-    bestBumpHeight += bumpHeightStep;
+    else
+    {
+        bestBumpHeight = 0.0;
+        mapHeight      = 0.0;
+        for ( int i = 0; i < int( numSteps ); ++ i )
+        {
+            mapHeight = CalculateHeight( texCoord.xy + bestBumpHeight * texStep.xy );
+            if ( mapHeight > bestBumpHeight + bumpHeightStep )
+                break;
+            bestBumpHeight += bumpHeightStep;
+        }
+    }
     for ( int i = 0; i < numBinarySteps; ++ i )
     {
-      bumpHeightStep *= 0.5;
-      bestBumpHeight -= bumpHeightStep;
-      mapHeight       = CalculateHeight( texCoord.xy - bestBumpHeight * texStep.xy );
-      bestBumpHeight += ( bestBumpHeight < mapHeight ) ? bumpHeightStep : 0.0;
+        bumpHeightStep *= 0.5;
+        bestBumpHeight -= bumpHeightStep;
+        mapHeight       = CalculateHeight( texCoord.xy + bestBumpHeight * texStep.xy );
+        bestBumpHeight += ( bestBumpHeight < mapHeight ) ? bumpHeightStep : 0.0;
     }
     bestBumpHeight -= bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / bumpHeightStep, 0.0, 1.0 );
-    texCoord       -= bestBumpHeight * texStep;
+    texCoord       += bestBumpHeight * texStep;
   }
   else 
     mapHeight = CalculateHeight( texCoord.xy );
@@ -121,7 +137,8 @@ vec3 SteepParallax( in vec3 texDir3D, in vec2 texC0, in vec2 texC1 )
 void main()
 {
     vec3  objPosEs     = inData.vsPos;
-    vec3  objPosEndEs  = objPosEs * inData.bottom_rel;
+    //vec3  objPosEndEs  = objPosEs * inData.bottom_rel;
+    vec3  objPosEndEs  = objPosEs * max(1.0, inData.bottom_rel);
     vec3  objNormalEs  = inData.vsNV;
     vec2  texCoords    = inData.uv;
     vec2  texCoordsEnd = inData.uv_end;
@@ -145,7 +162,7 @@ void main()
    
     //vec3  texDir3D     = normalize( inverse( tbnMat ) * objPosEs );
     vec3  texDir3D     = normalize( transpose( tbnMat ) * objPosEs ); // `transpose` can be used instead of `inverse` for orthogonal 3*3 matrices 
-    vec3  newTexCoords = SteepParallax( texDir3D, texCoords.st, texCoordsEnd.st );
+    vec3  newTexCoords = SteepParallax( inData.bottom_rel, texDir3D, texCoords.st, texCoordsEnd.st );
     texCoords.st       = newTexCoords.xy;
     vec4  normalVec    = CalculateNormal( texCoords ); 
     vec3  nvMappedEs   = normalize( tbnMat * normalVec.xyz );
@@ -172,5 +189,5 @@ void main()
     lightCol       += kSpecular * u_specular * color;
 
     gl_FragDepth = (posMappedPrj.z/posMappedPrj.w) * 0.5 + 0.5;
-    fragColor    = vec4( lightCol.rgb, 1.0 );
+    fragColor    = vec4(lightCol.rgb, 1.0 );
 }

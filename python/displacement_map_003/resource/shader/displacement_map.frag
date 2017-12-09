@@ -88,13 +88,13 @@ vec3 SteepParallax( in vec3 texDir3D, in vec2 texC0, in vec2 texC1 )
     float quality         = mix( quality_range.x, quality_range.y , gl_FragCoord.z * gl_FragCoord.z );
     float numSteps        = clamp( quality * mix( 5.0, 10.0 * clamp( 1.0 + 30.0 * maxBumpHeight, 1.0, 4.0 ), 1.0 - abs(texDir3D.z) ), 1.0, 50.0 );
     int   numBinarySteps  = int( clamp( quality * 5.1, 1.0, 7.0 ) );
-    vec2  texStep         = texC1 - texC0;
+    vec2  texStep         = texC0 - texC1;
     float bumpHeightStep  = 1.0 / numSteps;
     mapHeight             = 1.0;
     float bestBumpHeight  = 1.0;
     for ( int i = 0; i < int( numSteps ); ++ i )
     {
-      mapHeight = CalculateHeight( texCoord.xy - bestBumpHeight * texStep.xy );
+      mapHeight = CalculateHeight( texCoord.xy + bestBumpHeight * texStep.xy );
       if ( mapHeight >= bestBumpHeight )
         break;
       bestBumpHeight -= bumpHeightStep;
@@ -104,11 +104,11 @@ vec3 SteepParallax( in vec3 texDir3D, in vec2 texC0, in vec2 texC1 )
     {
       bumpHeightStep *= 0.5;
       bestBumpHeight -= bumpHeightStep;
-      mapHeight       = CalculateHeight( texCoord.xy - bestBumpHeight * texStep.xy );
+      mapHeight       = CalculateHeight( texCoord.xy + bestBumpHeight * texStep.xy );
       bestBumpHeight += ( bestBumpHeight < mapHeight ) ? bumpHeightStep : 0.0;
     }
     bestBumpHeight -= bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / bumpHeightStep, 0.0, 1.0 );
-    texCoord       -= bestBumpHeight * texStep;
+    texCoord       += bestBumpHeight * texStep;
   }
   else 
     mapHeight = CalculateHeight( texCoord.xy );
