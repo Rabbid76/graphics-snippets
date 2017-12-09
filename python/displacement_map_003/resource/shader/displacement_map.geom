@@ -103,7 +103,10 @@ void main()
             // Calculate the barycentric coordinates
             vec3 v_AB = vsPosMax[1].xyz - vsPosMax[0].xyz; 
             vec3 v_AC = vsPosMax[2].xyz - vsPosMax[0].xyz;
-            vec3 v_AX = pt_X - vsPosMax[0].xyz; 
+            vec3 v_AX = pt_X - vsPosMax[0].xyz;
+            //vec3 v_AB = vsPosMin[1].xyz - vsPosMin[0].xyz; 
+            //vec3 v_AC = vsPosMin[2].xyz - vsPosMin[0].xyz;
+            //vec3 v_AX = pt_X - vsPosMin[0].xyz; 
             vec3 b_coord = Barycentric(v_AB, v_AC, v_AX);
 
             // Calcualte the texture coordinates

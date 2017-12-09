@@ -154,9 +154,9 @@ cubeVAO.DefineVAO( [
 
 # load, compile and link shader
 progDraw = shader.ShaderProgram( 
-    [ ('resource/shader/relief_map.vert', GL_VERTEX_SHADER),
-      ('resource/shader/relief_map.geom', GL_GEOMETRY_SHADER),
-      ('resource/shader/relief_map.frag', GL_FRAGMENT_SHADER) ] ) 
+    [ ('resource/shader/displacement_map.vert', GL_VERTEX_SHADER),
+      ('resource/shader/displacement_map.geom', GL_GEOMETRY_SHADER),
+      ('resource/shader/displacement_map.frag', GL_FRAGMENT_SHADER) ] ) 
 
 #texture objects
 textureObj         = ReadTexture('../../resource/texture/test1_texture.bmp', 0)
