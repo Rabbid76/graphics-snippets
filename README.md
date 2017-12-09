@@ -14,7 +14,11 @@
 
 [Tessellation](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/tessellation.md)
 
-[Lambertian (diffuse) reflectance model](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/lambertian_diffuse.md)
+[Lambertian (diffuse) reflectance model](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/light_lambertian_diffuse.md)
+
+[Phong reflection model](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/light_phong.md)
+
+[Lambertian (diffuse) reflectance model](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/light_blinn_phong.md)
 
 
 <br/>
