@@ -85,45 +85,31 @@ vec3 SteepParallax( in float bottom_rel, in vec3 texDir3D, in vec2 texC0, in vec
   float mapHeight;
   float maxBumpHeight = u_displacement_scale;
   vec2  quality_range = u_parallax_quality;
-  vec2  texCoord      = texC1;
+  float frontface     = step(1.0, bottom_rel);
+  float facesign      = frontface * 2.0 - 1.0;
+  vec2  texCoord      = mix(texC0, texC1, frontface);
   if ( maxBumpHeight > 0.0 && texDir3D.z < 0.9994 )
   {
     float quality         = mix( quality_range.x, quality_range.y , gl_FragCoord.z * gl_FragCoord.z );
     float numSteps        = clamp( quality * mix( 5.0, 10.0 * clamp( 1.0 + 30.0 * maxBumpHeight, 1.0, 4.0 ), 1.0 - abs(texDir3D.z) ), 1.0, 50.0 );
     int   numBinarySteps  = int( clamp( quality * 5.1, 1.0, 7.0 ) );
-    vec2  texStep         = texC0 - texC1;
+    vec2  texStep         = (texC0 - texC1) * facesign;
     float bumpHeightStep  = 1.0 / numSteps;
     float bestBumpHeight  = 1.0;
-    if ( bottom_rel >= 1.0 )
+    mapHeight             = 1.0;
+    for ( int i = 0; i < int( numSteps ); ++ i )
     {
-        bestBumpHeight = 1.0;
-        mapHeight      = 1.0;
-        for ( int i = 0; i < int( numSteps ); ++ i )
-        {
-            mapHeight = CalculateHeight( texCoord.xy + bestBumpHeight * texStep.xy );
-            if ( mapHeight >= bestBumpHeight )
-                break;
-            bestBumpHeight -= bumpHeightStep;
-        }
-        bestBumpHeight += bumpHeightStep;
+        mapHeight = (1.0-frontface) + facesign * CalculateHeight( texCoord.xy + bestBumpHeight * texStep.xy );
+        if ( mapHeight >= bestBumpHeight )
+            break;
+        bestBumpHeight -= bumpHeightStep;
     }
-    else
-    {
-        bestBumpHeight = 0.0;
-        mapHeight      = 0.0;
-        for ( int i = 0; i < int( numSteps ); ++ i )
-        {
-            mapHeight = CalculateHeight( texCoord.xy + bestBumpHeight * texStep.xy );
-            if ( mapHeight > bestBumpHeight + bumpHeightStep )
-                break;
-            bestBumpHeight += bumpHeightStep;
-        }
-    }
+    bestBumpHeight += bumpHeightStep;
     for ( int i = 0; i < numBinarySteps; ++ i )
     {
         bumpHeightStep *= 0.5;
         bestBumpHeight -= bumpHeightStep;
-        mapHeight       = CalculateHeight( texCoord.xy + bestBumpHeight * texStep.xy );
+        mapHeight       = (1.0-frontface) + facesign * CalculateHeight( texCoord.xy + bestBumpHeight * texStep.xy );
         bestBumpHeight += ( bestBumpHeight < mapHeight ) ? bumpHeightStep : 0.0;
     }
     bestBumpHeight -= bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / bumpHeightStep, 0.0, 1.0 );
@@ -137,8 +123,7 @@ vec3 SteepParallax( in float bottom_rel, in vec3 texDir3D, in vec2 texC0, in vec
 void main()
 {
     vec3  objPosEs     = inData.vsPos;
-    //vec3  objPosEndEs  = objPosEs * inData.bottom_rel;
-    vec3  objPosEndEs  = objPosEs * max(1.0, inData.bottom_rel);
+    vec3  objPosEndEs  = objPosEs * inData.bottom_rel;
     vec3  objNormalEs  = inData.vsNV;
     vec2  texCoords    = inData.uv;
     vec2  texCoordsEnd = inData.uv_end;
