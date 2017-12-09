@@ -122,42 +122,5 @@ void main()
             EmitVertex();
         }
         EndPrimitive();
-
-        /*
-        for (int i=0; i<3; ++i)
-        {
-            int i2 = (i+1) % 3; 
-
-            outData.vsPos = vsPosMin[i].xyz;
-            outData.vsNV  = normalMat * normalize(inData[i].nv);
-            outData.col   = inData[i].col;
-            outData.uv    = inData[i].uv;
-            gl_Position   = u_projectionMat44 * vsPosMin[i];
-            EmitVertex();
-
-            outData.vsPos = vsPosMin[i2].xyz;
-            outData.vsNV  = normalMat * normalize(inData[i2].nv);
-            outData.col   = inData[i2].col;
-            outData.uv    = inData[i2].uv;
-            gl_Position   = u_projectionMat44 * vsPosMin[i2];
-            EmitVertex();
-
-            outData.vsPos = vsPosMax[i2].xyz;
-            outData.vsNV  = normalMat * normalize(inData[i2].nv);
-            outData.col   = inData[i2].col;
-            outData.uv    = inData[i2].uv;
-            gl_Position   = u_projectionMat44 * vsPosMax[i2];
-            EmitVertex();
-
-            outData.vsPos = vsPosMax[i].xyz;
-            outData.vsNV  = normalMat * normalize(inData[i].nv);
-            outData.col   = inData[i].col;
-            outData.uv    = inData[i].uv;
-            gl_Position   = u_projectionMat44 * vsPosMax[i];
-            EmitVertex();
-
-            EndPrimitive();
-        }
-        */
     }
 }
