@@ -159,10 +159,10 @@ void main()
             uv1[i_top + i] = b_coord[i_top + i].x * inData[0].uv + b_coord[i_top + i].y * inData[1].uv + b_coord[i_top + i].z * inData[2].uv;
             
             // inner points and coordiantes
-            //float topIsOuter = 
-            //  step(0.0, b_coord[i_top+i].x) * step(0.0, b_coord[i_top+i].y) * step(0.0, b_coord[i_top+i].z) *
-            //  step(b_coord[i_top+i].x, 1.0) * step(b_coord[i_top+i].y, 1.0) * step(b_coord[i_top+i].z, 1.0);
-            topIsOuter[i] = 1.0;
+            topIsOuter[i] = 
+              step(0.0, b_coord[i_top+i].x) * step(0.0, b_coord[i_top+i].y) * step(0.0, b_coord[i_top+i].z) *
+              step(b_coord[i_top+i].x, 1.0) * step(b_coord[i_top+i].y, 1.0) * step(b_coord[i_top+i].z, 1.0);
+            //topIsOuter[i] = 1.0;
             i_in[i]       = ( topIsOuter[i] > 0.5 ) ? 3 : 0;
             i_out[i]      = ( topIsOuter[i] > 0.5 ) ? 0 : 3;
             pos_in[i]     = ( topIsOuter[i] > 0.5 ) ? pos_X[i_top + i] : vsPosMax[i].xyz;
@@ -173,10 +173,9 @@ void main()
 
         // main primitive
         //if ( dist_rel[0] > 1.0)
-        if ( dist_rel[0] < 1.0)
+        //if ( dist_rel[0] < 1.0)
         {
 
-        /*
         for (int i=0; i<3; ++i)
         {
             outData.vsPos1      = pos_in[i].xyz;
@@ -188,14 +187,13 @@ void main()
             gl_Position         = u_projectionMat44 * vec4(pos_in[i].xyz, 1.0);
             EmitVertex();
         }
-        EndPrimitive();
-        */        
+        EndPrimitive();       
         
         for (int i_edge=0; i_edge<3; ++i_edge)
         {
             for (int i_pt=0; i_pt<2; ++i_pt )
             {
-                int i = (i_edge+i_pt) % 3;
+                int i = (i_edge+1-i_pt) % 3;
                 
                 //outData.vsPos1      = pos_out[i].xyz;
                 outData.vsPos1      = vsPosMax[i].xyz;
@@ -211,7 +209,7 @@ void main()
 
             for (int i_pt=0; i_pt<2; ++i_pt )
             {
-                int i = (i_edge+i_pt) % 3;
+                int i = (i_edge+1-i_pt) % 3;
                 
                 outData.vsPos1      = pos_in[i].xyz;
                 outData.vsPos_rel01 = dist_rel[i_in[i] + i];
