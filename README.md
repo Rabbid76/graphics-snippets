@@ -18,7 +18,7 @@
 
 [Phong reflection model](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/light_phong.md)
 
-[Lambertian (diffuse) reflectance model](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/light_blinn_phong.md)
+[Blinn-Phong reflection model](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/light_blinn_phong.md)
 
 
 <br/>
