@@ -14,14 +14,14 @@ in TVertexData
 
 out TGeometryData
 {
-    vec3  vsPos;
-    float bottom_rel;
+    vec3  vsPos1;
+    float vsPos_rel01;
     vec3  vsNV;
     vec3  vsTV;
     float vsBVsign;
     vec3  col;
-    vec2  uv;
-    vec2  uv_end;
+    vec2  uv0;
+    vec2  uv1;
 } outData;
 
 uniform mat4 u_projectionMat44;
@@ -86,31 +86,37 @@ void main()
         // primitive face normal vector
         vec3 face_nv = normalize(cross(p_dA, p_dB));
 
-        // Calculate the the texture coordinate range on the view rays:
-        //   1. Define a ray by the origin of the view and the corner point of the primitve on the top plane.
-        //   2. Get teh intersection point of the ray and the bottom plane.
-        //   3. Calculate the barycentric coordinates of the intersection points.
-        //   4. Calculate the texture coordinates according to the barycentric coordinates.
+        // Calculate intersection points and intersection texture coordinates and
+        // calculate the the texture coordinate range on the view rays:
+        //   1. Bottom plane
+        //     1.1 Define a ray by the origin of the view and the corner point of the primitve on the top plane.
+        //     1.2. Get the intersection point of the ray and the bottom plane.
+        //     1.3. Calculate the depth relation between the top corner point and the bootom intersection point.
+        //     1.4. Calculate the texture coordinates according to the barycentric coordinates. 
+        vec3  bottom_X[3];
         float bottom_rel[3];
-        vec2  uv_end[3];
+        vec3  b_coord0[3];
+        vec2  uv0[3];
         for (int i=0; i<3; ++i)
         {
             // Define the ray. The origin of the ray is (0,0,0) in view space
             vec3 ray_dir = normalize(vsPosMax[i].xyz);
 
             // Intersect the ray and the bottom plane
-            float dist    = dot(vsPosMin[i].xyz, face_nv) / dot(ray_dir, face_nv);
-            vec3  pt_X    = ray_dir * dist;
-            bottom_rel[i] = length(pt_X) / length(vsPosMin[i].xyz); 
+            float dist  = dot(vsPosMin[i].xyz, face_nv) / dot(ray_dir, face_nv);
+            bottom_X[i] = ray_dir * dist;
+
+            // Depth relation between the top corner point and the bootom intersection point
+            bottom_rel[i] = length(bottom_X[i]) / length(vsPosMax[i].xyz); 
 
             // Calculate the barycentric coordinates
-            vec3 v_AB = vsPosMin[1].xyz - vsPosMin[0].xyz; 
-            vec3 v_AC = vsPosMin[2].xyz - vsPosMin[0].xyz;
-            vec3 v_AX = pt_X - vsPosMin[0].xyz; 
-            vec3 b_coord = Barycentric(v_AB, v_AC, v_AX);
+            vec3 v_AB    = vsPosMin[1].xyz - vsPosMin[0].xyz; 
+            vec3 v_AC    = vsPosMin[2].xyz - vsPosMin[0].xyz;
+            vec3 v_AX    = bottom_X[i] - vsPosMin[0].xyz; 
+            b_coord0[i] = Barycentric(v_AB, v_AC, v_AX);
 
             // Calcualte the texture coordinates
-            uv_end[i] = b_coord.x * inData[0].uv + b_coord.y * inData[1].uv + b_coord.z * inData[2].uv;
+            uv0[i] = b_coord0[i].x * inData[0].uv + b_coord0[i].y * inData[1].uv + b_coord0[i].z * inData[2].uv;
         }
 
         // TODO $$$ handle backface 
@@ -118,52 +124,15 @@ void main()
         // main primitive
         for (int i=0; i<3; ++i)
         {
-            outData.vsPos      = vsPosMax[i].xyz;
-            outData.bottom_rel = bottom_rel[i];
-            outData.vsNV       = normalMat * normalize(inData[i].nv);
-            outData.col        = inData[i].col;
-            outData.uv         = inData[i].uv;
-            outData.uv_end     = uv_end[i];
-            gl_Position        = u_projectionMat44 * vsPosMax[i];
+            outData.vsPos1      = vsPosMax[i].xyz;
+            outData.vsPos_rel01 = bottom_rel[i];
+            outData.vsNV        = normalMat * normalize(inData[i].nv);
+            outData.col         = inData[i].col;
+            outData.uv0         = uv0[i];
+            outData.uv1         = inData[i].uv;
+            gl_Position         = u_projectionMat44 * vsPosMax[i];
             EmitVertex();
         }
         EndPrimitive();
-
-        /*
-        for (int i=0; i<3; ++i)
-        {
-            int i2 = (i+1) % 3; 
-
-            outData.vsPos = vsPosMin[i].xyz;
-            outData.vsNV  = normalMat * normalize(inData[i].nv);
-            outData.col   = inData[i].col;
-            outData.uv    = inData[i].uv;
-            gl_Position   = u_projectionMat44 * vsPosMin[i];
-            EmitVertex();
-
-            outData.vsPos = vsPosMin[i2].xyz;
-            outData.vsNV  = normalMat * normalize(inData[i2].nv);
-            outData.col   = inData[i2].col;
-            outData.uv    = inData[i2].uv;
-            gl_Position   = u_projectionMat44 * vsPosMin[i2];
-            EmitVertex();
-
-            outData.vsPos = vsPosMax[i2].xyz;
-            outData.vsNV  = normalMat * normalize(inData[i2].nv);
-            outData.col   = inData[i2].col;
-            outData.uv    = inData[i2].uv;
-            gl_Position   = u_projectionMat44 * vsPosMax[i2];
-            EmitVertex();
-
-            outData.vsPos = vsPosMax[i].xyz;
-            outData.vsNV  = normalMat * normalize(inData[i].nv);
-            outData.col   = inData[i].col;
-            outData.uv    = inData[i].uv;
-            gl_Position   = u_projectionMat44 * vsPosMax[i];
-            EmitVertex();
-
-            EndPrimitive();
-        }
-        */
     }
 }

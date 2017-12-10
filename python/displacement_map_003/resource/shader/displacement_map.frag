@@ -82,13 +82,13 @@ vec3 SteepParallax( in vec3 texDir3D, in vec2 texC0, in vec2 texC1 )
   float mapHeight;
   float maxBumpHeight = u_displacement_scale;
   vec2  quality_range = u_parallax_quality;
-  vec2  texCoord      = texC1;
+  vec2  texCoord      = texC0;
   if ( maxBumpHeight > 0.0 && texDir3D.z < 0.9994 )
   {
     float quality         = mix( quality_range.x, quality_range.y , gl_FragCoord.z * gl_FragCoord.z );
     float numSteps        = clamp( quality * mix( 5.0, 10.0 * clamp( 1.0 + 30.0 * maxBumpHeight, 1.0, 4.0 ), 1.0 - abs(texDir3D.z) ), 1.0, 50.0 );
     int   numBinarySteps  = int( clamp( quality * 5.1, 1.0, 7.0 ) );
-    vec2  texStep         = texC0 - texC1;
+    vec2  texStep         = texC1 - texC0;
     float bumpHeightStep  = 1.0 / numSteps;
     mapHeight             = 1.0;
     float bestBumpHeight  = 1.0;
@@ -141,7 +141,7 @@ void main()
    
     //vec3  texDir3D     = normalize( inverse( tbnMat ) * objPosEs );
     vec3  texDir3D     = normalize( transpose( tbnMat ) * objPosEs ); // `transpose` can be used instead of `inverse` for orthogonal 3*3 matrices 
-    vec3  newTexCoords = SteepParallax( texDir3D, texCoords.st, texCoordsEnd.st );
+    vec3  newTexCoords = SteepParallax( texDir3D, texCoordsEnd.st, texCoords.st );
     texCoords.st       = newTexCoords.xy;
     vec4  normalVec    = CalculateNormal( texCoords ); 
     vec3  nvMappedEs   = normalize( tbnMat * normalVec.xyz );
