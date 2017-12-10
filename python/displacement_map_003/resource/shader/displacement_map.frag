@@ -108,7 +108,8 @@ vec3 SteepParallax( in vec3 texDir3D, in vec2 texC0, in vec2 texC1 )
       bestBumpHeight += ( bestBumpHeight < mapHeight ) ? bumpHeightStep : 0.0;
     }
     bestBumpHeight -= bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / bumpHeightStep, 0.0, 1.0 );
-    texCoord       += bestBumpHeight * texStep;
+    mapHeight       = bestBumpHeight;
+    texCoord       += mapHeight * texStep;
   }
   else 
     mapHeight = CalculateHeight( texCoord.xy );
