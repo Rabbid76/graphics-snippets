@@ -84,7 +84,7 @@ void main()
         outData.vsBVsign = sign(texDet);
 
         // primitive face normal vector
-        vec3 face_nv = normalize(cross(p_dA, p_dB));
+        vec3 face0_nv = normalize(cross(vsPosMin[1].xyz - vsPosMin[0].xyz, vsPosMin[2].xyz - vsPosMin[0].xyz));
 
         // Calculate intersection points and intersection texture coordinates and
         // calculate the the texture coordinate range on the view rays:
@@ -93,7 +93,7 @@ void main()
         //     1.2. Get the intersection point of the ray and the bottom plane.
         //     1.3. Calculate the depth relation between the top corner point and the bootom intersection point.
         //     1.4. Calculate the texture coordinates according to the barycentric coordinates. 
-        vec3  bottom_X[3];
+        vec3  bottom_X0[3];
         float bottom_rel[3];
         vec3  b_coord0[3];
         vec2  uv0[3];
@@ -103,23 +103,21 @@ void main()
             vec3 ray_dir = normalize(vsPosMax[i].xyz);
 
             // Intersect the ray and the bottom plane
-            float dist  = dot(vsPosMin[i].xyz, face_nv) / dot(ray_dir, face_nv);
-            bottom_X[i] = ray_dir * dist;
+            float dist  = dot(vsPosMin[i].xyz, face0_nv) / dot(ray_dir, face0_nv);
+            bottom_X0[i] = ray_dir * dist;
 
             // Depth relation between the top corner point and the bootom intersection point
-            bottom_rel[i] = length(bottom_X[i]) / length(vsPosMax[i].xyz); 
+            bottom_rel[i] = length(bottom_X0[i]) / length(vsPosMax[i].xyz); 
 
             // Calculate the barycentric coordinates
-            vec3 v_AB    = vsPosMin[1].xyz - vsPosMin[0].xyz; 
-            vec3 v_AC    = vsPosMin[2].xyz - vsPosMin[0].xyz;
-            vec3 v_AX    = bottom_X[i] - vsPosMin[0].xyz; 
+            vec3 v_AB   = vsPosMin[1].xyz - vsPosMin[0].xyz; 
+            vec3 v_AC   = vsPosMin[2].xyz - vsPosMin[0].xyz;
+            vec3 v_AX   = bottom_X0[i] - vsPosMin[0].xyz; 
             b_coord0[i] = Barycentric(v_AB, v_AC, v_AX);
 
             // Calcualte the texture coordinates
             uv0[i] = b_coord0[i].x * inData[0].uv + b_coord0[i].y * inData[1].uv + b_coord0[i].z * inData[2].uv;
         }
-
-        // TODO $$$ handle backface 
 
         // main primitive
         for (int i=0; i<3; ++i)
