@@ -49,6 +49,7 @@ Furthermore, the performance of this model could be improved by an optimization 
 
 **Phong Clipping**
 
+
 If the light is close to the surface, the specular area tends to have very sharp edges. This is part of the nature of specular reflections. If the light is almost perpendicular to the surface, the specular reflection will shine brightest when the light is almost eclipsed by the surface. This creates a strong discontinuity at the point where the light is no longer in view.<br/>
 You generally see this most with rough surfaces (small exponents). With smoother surfaces, this is rarely seen.
 
@@ -67,7 +68,7 @@ See also:
 - [wikipedia, Phong reflection model][1]
 - [wikibooks, GLSL Programming/Unity/Smooth Specular Highlights](https://en.wikibooks.org/wiki/GLSL_Programming/Unity/Smooth_Specular_Highlights)
 - [Bui Tuong Phong, University of Utah, Illumination for computer generated pictures, 1975](http://www.cs.northwestern.edu/~ago820/cs395/Papers/Phong_1975.pdf)
-- [Sébastien Lagarde, Relationship between Phong and Blinn lighting model](https://seblagarde.wordpress.com/2012/03/29/relationship-between-phong-and-blinn-lighting-model/)
+- [Sï¿½bastien Lagarde, Relationship between Phong and Blinn lighting model](https://seblagarde.wordpress.com/2012/03/29/relationship-between-phong-and-blinn-lighting-model/)
 - [Learning Modern 3D Graphics Programming - Phong Model](https://alfonse.bitbucket.io/oldtut/Illumination/Tut11%20Phong%20Model.html)
 
 
