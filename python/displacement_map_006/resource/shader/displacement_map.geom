@@ -105,16 +105,11 @@ void main()
         //     1.4. Calculate the texture coordinates according to the barycentric coordinates. 
         //   3. Find the inner primitive points and texturcoordinates
         const int i_top = 3;
-        int i_in[3];
-        int i_out[3];
         vec3  pos_X[6];
         float dist_rel[6];
         vec3  b_coord[6];
         vec2  uv0[6];
         vec2  uv1[6];
-        vec3  pos_in[3];
-        vec3  pos_out[3];
-        float topIsOuter[3];
         for (int i=0; i<3; ++i)
         {
             // bottom plane intersection
@@ -157,23 +152,36 @@ void main()
             // Calcualte the texture coordinates
             uv1[i]         = inData[i].uv;
             uv1[i_top + i] = b_coord[i_top + i].x * inData[0].uv + b_coord[i_top + i].y * inData[1].uv + b_coord[i_top + i].z * inData[2].uv;
-            
+        }
+
+        float dist_w = (dist_rel[0]+dist_rel[1]+dist_rel[2])/3.0;
+
+        int i_in[3];
+        int i_out[3];
+        vec3  pos_in[3];
+        vec3  pos_out[3];
+        float topIsOuter[3];
+        for (int i=0; i<3; ++i)
+        {
             // inner points and coordiantes
-            topIsOuter[i] = 
-              step(0.0, b_coord[i_top+i].x) * step(0.0, b_coord[i_top+i].y) * step(0.0, b_coord[i_top+i].z) *
-              step(b_coord[i_top+i].x, 1.0) * step(b_coord[i_top+i].y, 1.0) * step(b_coord[i_top+i].z, 1.0);
-            //topIsOuter[i] = 1.0;
+            //topIsOuter[i] = 
+            //  step(0.0, b_coord[i_top+i].x) * step(0.0, b_coord[i_top+i].y) * step(0.0, b_coord[i_top+i].z) *
+            //  step(b_coord[i_top+i].x, 1.0) * step(b_coord[i_top+i].y, 1.0) * step(b_coord[i_top+i].z, 1.0);
+            //topIsOuter[i] = step(b_coord[i_top+i][i], 1.0);
+            topIsOuter[i] = 1.0;
+            //topIsOuter[i] = dist_w >= 1.0 ? 1.0 : 0.0;
             i_in[i]       = ( topIsOuter[i] > 0.5 ) ? 3 : 0;
             i_out[i]      = ( topIsOuter[i] > 0.5 ) ? 0 : 3;
             pos_in[i]     = ( topIsOuter[i] > 0.5 ) ? pos_X[i_top + i] : vsPosMax[i].xyz;
-            pos_out[i]    = ( topIsOuter[i] > 0.5 ) ? vsPosMax[i].xyz : pos_X[i];
+            //pos_out[i]    = ( topIsOuter[i] > 0.5 ) ? vsPosMax[i].xyz : pos_X[i];
+            pos_out[i]    = ( topIsOuter[i] > 0.5 ) ? vsPosMax[i].xyz : pos_X[i_top + i];
         }
 
         // TODO $$$ normal vector by barycentric coordinates
 
         // main primitive
-        //if ( dist_rel[0] > 1.0)
-        //if ( dist_rel[0] < 1.0)
+        //if ( dist_w > 1.0)
+        //if ( dist_w < 1.0)
         {
 
         for (int i=0; i<3; ++i)
@@ -193,23 +201,30 @@ void main()
         {
             for (int i_pt=0; i_pt<2; ++i_pt )
             {
-                int i = (i_edge+1-i_pt) % 3;
+                //int i = (i_edge+1-i_pt) % 3;
+                int i = (i_edge+i_pt) % 3;
+                //int i = (dist_w >= 1.0) ? ((i_edge+i_pt) % 3) : ((i_edge+1-i_pt) % 3);
                 
-                //outData.vsPos1      = pos_out[i].xyz;
-                outData.vsPos1      = vsPosMax[i].xyz;
-                outData.vsPos_rel01 = 1.0;
-                outData.uv0         = vec3(inData[i].uv, topIsOuter[i]);
-                outData.uv1         = vec3(inData[i].uv, topIsOuter[i]);
+                outData.vsPos1      = pos_out[i].xyz;
+                //outData.vsPos1      = vsPosMax[i].xyz;
+                //outData.vsPos_rel01 = 1.0;
+                //outData.uv0         = vec3(inData[i].uv, topIsOuter[i]);
+                //outData.uv1         = vec3(inData[i].uv, topIsOuter[i]);
+                outData.vsPos_rel01 = dist_rel[i_out[i] + i];
+                outData.uv0         = vec3(uv0[i_out[i] + i], topIsOuter[i]);
+                outData.uv1         = vec3(uv1[i_out[i] + i], topIsOuter[i]);
                 outData.vsNV        = normalMat * normalize(inData[i].nv);
                 outData.col         = inData[i].col;
                 gl_Position         = u_projectionMat44 * vec4(pos_out[i].xyz, 1.0);
-                gl_Position         = u_projectionMat44 * vec4(vsPosMax[i].xyz, 1.0);
+                //gl_Position         = u_projectionMat44 * vec4(vsPosMax[i].xyz, 1.0);
                 EmitVertex();
             }
 
             for (int i_pt=0; i_pt<2; ++i_pt )
             {
-                int i = (i_edge+1-i_pt) % 3;
+                //int i = (i_edge+1-i_pt) % 3;
+                int i = (i_edge+i_pt) % 3;
+                //int i = (dist_w >= 1.0) ? ((i_edge+i_pt) % 3) : ((i_edge+1-i_pt) % 3);
                 
                 outData.vsPos1      = pos_in[i].xyz;
                 outData.vsPos_rel01 = dist_rel[i_in[i] + i];
@@ -222,7 +237,7 @@ void main()
             }
         }
         EndPrimitive();
-        
+    
         }
     }
 }
