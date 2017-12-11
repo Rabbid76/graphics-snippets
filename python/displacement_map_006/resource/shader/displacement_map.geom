@@ -148,6 +148,7 @@ void main()
         }
 
         float dist_w = (dist_rel[0]+dist_rel[1]+dist_rel[2])/3.0;
+        float fornt_face = step(1.0, dist_w);
 
         int i_in[3];
         int i_out[3];
@@ -165,6 +166,7 @@ void main()
             i_out[i]      = ( topEdgeIsOuter[i] > 0.5 ) ? 0 : 3;
             pos_in[i]     = ( topEdgeIsOuter[i] > 0.5 ) ? pos_X[i_top + i] : vsPosMax[i].xyz;
             //pos_out[i]    = ( topEdgeIsOuter[i] > 0.5 ) ? vsPosMax[i].xyz : pos_X[i];
+            //pos_out[i]    = ( topEdgeIsOuter[i] > 0.5 ) ? pos_X[i] : vsPosMin[i].xyz;
             pos_out[i]    = ( topEdgeIsOuter[i] > 0.5 ) ? vsPosMax[i].xyz : pos_X[i_top + i];
         }
 
@@ -194,6 +196,9 @@ void main()
 
         for (int i_edge=0; i_edge<3; ++i_edge)
         {
+            //if ( topEdgeIsOuter[i_edge] < 0.5 )
+            //    break;
+
             int i1 = i_edge % 3;
             int i2 = (i_edge+1) % 3;
             //if ( dist_w >= 1.0 && b_c1[i_in[i1]+i1][i1] <= 1.0 && b_c1[i_in[i2]+i2][i2] <= 1.0 )
@@ -209,8 +214,8 @@ void main()
 
                 outData.vsPos1      = pos_out[i].xyz;
                 outData.vsPos_rel01 = dist_rel[k];
-                outData.uv0         = vec3(b_c0[k].x * inData[0].uv + b_c0[k].y * inData[1].uv + b_c0[k].z * inData[2].uv, 1.0 /*topEdgeIsOuter[i]*/);
-                outData.uv1         = vec3(b_c1[k].x * inData[0].uv + b_c1[k].y * inData[1].uv + b_c1[k].z * inData[2].uv, 1.0 /*topEdgeIsOuter[i]*/);
+                outData.uv0         = vec3(b_c0[k].x * inData[0].uv + b_c0[k].y * inData[1].uv + b_c0[k].z * inData[2].uv, topEdgeIsOuter[i_edge] );
+                outData.uv1         = vec3(b_c1[k].x * inData[0].uv + b_c1[k].y * inData[1].uv + b_c1[k].z * inData[2].uv, topEdgeIsOuter[i_edge] );
                 outData.vsNV        = normalMat * normalize(b_c1[k].x * inData[0].nv + b_c1[k].y * inData[1].nv + b_c1[k].z * inData[2].nv);
                 outData.col         = inData[i].col;
                 gl_Position         = u_projectionMat44 * vec4(pos_out[i].xyz, 1.0);

@@ -86,6 +86,7 @@ vec3 SteepParallax( in float bottom_rel, in vec3 texDir3D, in vec3 texC0, in vec
   float maxBumpHeight = u_displacement_scale;
   vec2  quality_range = u_parallax_quality;
   float frontface     = step(1.0, bottom_rel);
+  //float frontface     = 1.0;
   float facesign      = frontface * 2.0 - 1.0;
   vec2  texCoord      = mix(texC1.xy, texC0.xy, frontface);
   if ( maxBumpHeight > 0.0 && texDir3D.z < 0.9994 )
@@ -94,9 +95,10 @@ vec3 SteepParallax( in float bottom_rel, in vec3 texDir3D, in vec3 texC0, in vec
     float numSteps        = clamp( quality * mix( 5.0, 10.0 * clamp( 1.0 + 30.0 * maxBumpHeight, 1.0, 4.0 ), 1.0 - abs(texDir3D.z) ), 1.0, 50.0 );
     int   numBinarySteps  = int( clamp( quality * 5.1, 1.0, 7.0 ) );
     vec2  texStep         = (texC1.xy - texC0.xy) * facesign;
-    float bumpHeightStep  = 1.0 / numSteps;
+    //float bestBumpHeight  = mix(1.0-texC0.z, texC1.z, frontface);
     float bestBumpHeight  = 1.0;
-    mapHeight             = 1.0;
+    float bumpHeightStep  = bestBumpHeight/ numSteps;
+    mapHeight             = bestBumpHeight;
     for ( int i = 0; i < int( numSteps ); ++ i )
     {
         mapHeight = (1.0-frontface) + facesign * CalculateHeight( texCoord.xy + bestBumpHeight * texStep.xy );
