@@ -117,17 +117,23 @@ vec3 SteepParallax( in float bottom_rel, in vec3 texDir3D, in vec3 texC0, in vec
     //mapHeight       = 2.0*(1.0-frontface) + facesign * bestBumpHeight;
     mapHeight       = (1.0-frontface) + facesign * bestBumpHeight; 
     
+    // culls grinding angle distoritions and out of range drawings (near depth)
     if ( frontface > 0.5 && mapHeight < texC0.z )
-      //if ( mapHeight < texC0.z-0.1 )
+    //if ( frontface > 0.5 && mapHeight < texC0.z-0.1 )
         discard;
     
     // culls grinding angle distoritions and out of range drawings (near depth)
     if ( frontface < 0.5 && mapHeight < texC0.z )
         discard;
     
-    if ( frontface < 0.5 && mapHeight > texC1.z )  
-    //if ( mapHeight > texC1.z+0.1 )
-        discard;
+    // ???
+    //if ( frontface < 0.5 && mapHeight > texC1.z )  
+        //if ( mapHeight > texC1.z+0.1 )
+    //    discard;
+
+    // couses flickering (Z fighting)
+    //if ( frontface > 0.5 && mapHeight > texC1.z )  
+    //    discard;
 
     mapHeight = clamp(mapHeight, texC0.z, texC1.z);
   }

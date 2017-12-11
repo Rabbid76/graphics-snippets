@@ -156,9 +156,6 @@ void main()
             uv1[i_top + i] = b_coord[i_top + i].x * inData[0].uv + b_coord[i_top + i].y * inData[1].uv + b_coord[i_top + i].z * inData[2].uv;
             
             // inner points and coordiantes
-            //float topIsOuter = 
-            //  step(0.0, b_coord[i_top+i].x) * step(0.0, b_coord[i_top+i].y) * step(0.0, b_coord[i_top+i].z) *
-            //  step(b_coord[i_top+i].x, 1.0) * step(b_coord[i_top+i].y, 1.0) * step(b_coord[i_top+i].z, 1.0);
             float topIsOuter = 0.0;
             //float topIsOuter = 1.0;
             i_in[i]   = ( topIsOuter > 0.5 ) ? 3 : 0;

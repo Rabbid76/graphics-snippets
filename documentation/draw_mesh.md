@@ -541,7 +541,7 @@ Create the vertex array object compatibility mode (**deprecated**):
 
 Draw the array in core mode:
 
-    glBindBuffer( GL_ARRAY_BUFFER, vbo );
+    glBindVertexArray( vao );
     glDrawElements( GL_TRIANGLES, (GLsizei)indices.size(), GL_UNSIGNED_INT, nullptr );
     glBindVertexArray( 0 );
 

@@ -82,6 +82,7 @@ class MyWindow(window.CameraWindow):
         
         # set up attributes and shader program
         glEnable( GL_DEPTH_TEST )
+        #glDisable( GL_CULL_FACE  )
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT )
         progDraw.Use()
         modelMat = mat.IdentityMat44()
@@ -102,6 +103,7 @@ class MyWindow(window.CameraWindow):
             b"u_displacement_map"   : 1,
             b"u_normal_map"         : 2,
             b"u_displacement_scale" : 0.1,
+            #b"u_displacement_range" : [0.0, 0.5],
             b"u_displacement_range" : [-0.4, 0.1], 
             b"u_parallax_quality"   : [2.0, 1.0]
         } )
@@ -151,6 +153,7 @@ cubeVAO.DefineVAO( [
     0, 1,     1, 3, vertex.TYPE_float32, 0, 
     0, 1,     2, 3, vertex.TYPE_float32, 0,
     0, 1,     3, 2, vertex.TYPE_float32, 0],
+    #[cubePosData, cubeNVData, cubeColData, cubeUVData], cubeIndices )
     [cubePosData, cubePosData, cubeColData, cubeUVData], cubeIndices )
 
 # load, compile and link shader
