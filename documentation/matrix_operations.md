@@ -402,6 +402,7 @@ If the transposed matrix of a matrix `m` is equal to the inverse matrix of the m
 This means, if each column of a amtrix (e.g. each axis of a 3*3 matrix), has unit length and is perpendicular to every other column then the transposed matrix is equal the inverse matrix.
 
 e.g.
+
         [  0.707, 0.707, 0 ]                 [ 0.707, -0.707, 0 ]
     m = [ -0.707, 0.707, 0 ]     m_i = m_t = [ 0.707,  0.707, 0 ]
         [      0,     0, 1 ]                 [     0,      0, 1 ]
