@@ -43,9 +43,9 @@ void main()
     vec3  objPosEs1   = inData.vsPos1;
     vec3  objPosEs0   = objPosEs1 * inData.vsPos_rel01;
     vec3  objNormalEs = inData.vsNV;
-    vec3  texCoords1  = inData.uv1.xyz;
     vec3  texCoords0  = inData.uv0.xyz;
-    vec3  normalEs    = ( gl_FrontFacing ? 1.0 : -1.0 ) * normalize( objNormalEs );
+    vec3  texCoords1  = inData.uv1.xyz;
+    vec3  normalEs    = ( gl_FrontFacing ? 1.0 : -1.0 ) * normalize( objNormalEs ); // TODO $$$
 
 #ifdef TBN_BY_DERIVATIONS     
     vec3  p_dx         = dFdx( objPosEs1 );
@@ -62,7 +62,7 @@ void main()
     vec3  tangentEs    = normalize( tangentVec - normalEs * dot(tangentVec, normalEs ) );
     mat3  tbnMat       = mat3( tangentEs, binormalSign * cross( normalEs, tangentEs ), normalEs );
     
-    vec3  texCoordsMap = mix(texCoords0, texCoords1, texCoords0.z);
+    vec3  texCoordsMap = mix(texCoords0, texCoords1, 0.0/*texCoords0.z*/);
     vec3  nvMappedEs   = normalize( normalEs );
     vec3  posMappedEs  = objPosEs1;
     
