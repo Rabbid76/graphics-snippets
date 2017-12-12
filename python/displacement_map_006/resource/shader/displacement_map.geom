@@ -161,6 +161,8 @@ void main()
             int i2 = (i+1)%3;
             int i3 = (i+2)%3;
             //topEdgeIsOuter[i] = step(b_c0[i][i], 1.0) * step(0.0, b_c0[i][i3]) * step(b_c0[i2][i2], 1.0) * step(0.0, b_c0[i2][i3]); 
+
+            // TODO $$$ topEdgeIsOuter by normal vector !!!
             
             i_in[i]       = ( topEdgeIsOuter[i] > 0.5 ) ? 3 : 0;
             i_out[i]      = ( topEdgeIsOuter[i] > 0.5 ) ? 0 : 3;
@@ -186,9 +188,10 @@ void main()
             outData.vsPos_rel01 = dist_rel[k];
             outData.uv0         = vec3(b_c0[k].x * inData[0].uv + b_c0[k].y * inData[1].uv + b_c0[k].z * inData[2].uv, 0.0);
             outData.uv1         = vec3(b_c1[k].x * inData[0].uv + b_c1[k].y * inData[1].uv + b_c1[k].z * inData[2].uv, 1.0);
-            outData.vsNV        = normalMat * normalize(b_c1[k].x * inData[0].nv + b_c1[k].y * inData[1].nv + b_c1[k].z * inData[2].nv);
+            outData.vsNV        = normalMat * normalize(b_c0[k].x * inData[0].nv + b_c0[k].y * inData[1].nv + b_c0[k].z * inData[2].nv);
+            //outData.vsNV        = normalMat * normalize(b_c1[k].x * inData[0].nv + b_c1[k].y * inData[1].nv + b_c1[k].z * inData[2].nv);
             outData.col         = inData[i].col;
-            gl_Position         = u_projectionMat44 * vec4(pos_in[i].xyz, 1.0);
+            gl_Position         = u_projectionMat44 * vec4(i_in[i] > 0 ? vsPosMin[i].xyz : vsPosMax[i].xyz, 1.0);
             EmitVertex();
         }
         EndPrimitive();       
@@ -206,10 +209,7 @@ void main()
 
             for (int i_pt=0; i_pt<2; ++i_pt )
             {
-                //int i = (i_edge+1-i_pt) % 3;
                 int i = (i_edge+i_pt) % 3;
-                //int i = (dist_w >= 1.0) ? ((i_edge+i_pt) % 3) : ((i_edge+1-i_pt) % 3);
-                
                 int k = i_out[i] + i;
 
                 outData.vsPos1      = pos_out[i].xyz;
@@ -218,25 +218,22 @@ void main()
                 outData.uv1         = vec3(b_c1[k].x * inData[0].uv + b_c1[k].y * inData[1].uv + b_c1[k].z * inData[2].uv, topEdgeIsOuter[i_edge] );
                 outData.vsNV        = normalMat * normalize(b_c1[k].x * inData[0].nv + b_c1[k].y * inData[1].nv + b_c1[k].z * inData[2].nv);
                 outData.col         = inData[i].col;
-                gl_Position         = u_projectionMat44 * vec4(pos_out[i].xyz, 1.0);
+                gl_Position         = u_projectionMat44 * vec4(i_in[i] > 0 ? vsPosMax[i].xyz : vsPosMin[i].xyz, 1.0);
                 EmitVertex();
             }
 
             for (int i_pt=0; i_pt<2; ++i_pt )
             {
-                //int i = (i_edge+1-i_pt) % 3;
                 int i = (i_edge+i_pt) % 3;
-                //int i = (dist_w >= 1.0) ? ((i_edge+i_pt) % 3) : ((i_edge+1-i_pt) % 3);
-
                 int k = i_in[i] + i;
                 
                 outData.vsPos1      = pos_in[i].xyz;
                 outData.vsPos_rel01 = dist_rel[k];
                 outData.uv0         = vec3(b_c0[k].x * inData[0].uv + b_c0[k].y * inData[1].uv + b_c0[k].z * inData[2].uv, 0.0);
                 outData.uv1         = vec3(b_c1[k].x * inData[0].uv + b_c1[k].y * inData[1].uv + b_c1[k].z * inData[2].uv, 1.0);
-                outData.vsNV        = normalMat * normalize(b_c1[k].x * inData[0].nv + b_c1[k].y * inData[1].nv + b_c1[k].z * inData[2].nv);
+                outData.vsNV        = normalMat * normalize(b_c0[k].x * inData[0].nv + b_c0[k].y * inData[1].nv + b_c0[k].z * inData[2].nv);
                 outData.col         = inData[i].col;
-                gl_Position         = u_projectionMat44 * vec4(pos_in[i].xyz, 1.0);
+                gl_Position         = u_projectionMat44 * vec4(i_in[i] > 0 ? vsPosMin[i].xyz : vsPosMax[i].xyz, 1.0);
                 EmitVertex();
             }
         }

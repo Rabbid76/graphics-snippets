@@ -187,7 +187,7 @@ void main()
     lightCol     += NdotL * u_diffuse * color;
     
     // specular part
-    vec3  eyeV      = normalize( -objPosEs1 );
+    vec3  eyeV      = normalize( -posMappedEs );
     vec3  halfV     = normalize( eyeV + lightV );
     float NdotH     = max( 0.0, dot( normalV, halfV ) );
     float kSpecular = ( u_shininess + 2.0 ) * pow( NdotH, u_shininess ) / ( 2.0 * 3.14159265 );
