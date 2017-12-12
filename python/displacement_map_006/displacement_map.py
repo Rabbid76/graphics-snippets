@@ -86,7 +86,7 @@ class MyWindow(window.CameraWindow):
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT )
         progDraw.Use()
         modelMat = mat.IdentityMat44()
-        speed_scale = 5.0
+        speed_scale = 50.0
         modelMat = mat.RotateX( modelMat, self.CalcAng( 13.0 * speed_scale ) )
         modelMat = mat.RotateY( modelMat, self.CalcAng( 17.0 * speed_scale ) )
 

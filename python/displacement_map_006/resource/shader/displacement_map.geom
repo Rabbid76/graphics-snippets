@@ -127,7 +127,7 @@ void main()
        
             // Calculate the barycentric coordinates
             vec3 v_AX0  = pos_X[i] - vsPosMin[0].xyz; 
-            b_c0[i] = Barycentric(v_AB0, v_AC0, v_AX0);
+            b_c0[i] = Barycentric(vec3(v_AB0.xy,0.0), vec3(v_AC0.xy,0.0), vec3(v_AX0.xy,0.0));
             
 
             // top plane intersection
@@ -144,7 +144,7 @@ void main()
 
             // Calculate the barycentric coordinates
             vec3 v_AX1      = pos_X[i_top + i] - vsPosMax[0].xyz; 
-            b_c1[i_top + i] = Barycentric(v_AB1, v_AC1, v_AX1);
+            b_c1[i_top + i] = Barycentric(vec3(v_AB1.xy,0.0), vec3(v_AC1.xy,0.0), vec3(v_AX1.xy,0.0));
         }
 
         float dist_w = (dist_rel[0]+dist_rel[1]+dist_rel[2])/3.0;
