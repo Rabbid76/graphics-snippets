@@ -179,7 +179,6 @@ void main()
         //if ( dist_w < 1.0)
         {
 
-        
         for (int i=0; i<3; ++i)
         {
             int k = i_in[i] + i;
@@ -188,15 +187,15 @@ void main()
             outData.vsPos_rel01 = dist_rel[k];
             outData.uv0         = vec3(b_c0[k].x * inData[0].uv + b_c0[k].y * inData[1].uv + b_c0[k].z * inData[2].uv, 0.0);
             outData.uv1         = vec3(b_c1[k].x * inData[0].uv + b_c1[k].y * inData[1].uv + b_c1[k].z * inData[2].uv, 1.0);
-            outData.vsNV        = normalMat * normalize(b_c0[k].x * inData[0].nv + b_c0[k].y * inData[1].nv + b_c0[k].z * inData[2].nv);
+            outData.vsNV        = normalize(b_c0[k].x * vsNV[0] + b_c0[k].y * vsNV[1] + b_c0[k].z * vsNV[2]);
             //outData.vsNV        = normalMat * normalize(b_c1[k].x * inData[0].nv + b_c1[k].y * inData[1].nv + b_c1[k].z * inData[2].nv);
             outData.col         = inData[i].col;
             gl_Position         = u_projectionMat44 * vec4(i_in[i] > 0 ? vsPosMin[i].xyz : vsPosMax[i].xyz, 1.0);
             EmitVertex();
         }
-        EndPrimitive();       
+        EndPrimitive();      
         
-
+        
         for (int i_edge=0; i_edge<3; ++i_edge)
         {
             //if ( topEdgeIsOuter[i_edge] < 0.5 )
@@ -205,7 +204,7 @@ void main()
             int i1 = i_edge % 3;
             int i2 = (i_edge+1) % 3;
             //if ( dist_w >= 1.0 && b_c1[i_in[i1]+i1][i1] <= 1.0 && b_c1[i_in[i2]+i2][i2] <= 1.0 )
-            //    break;
+            //    break; 
 
             for (int i_pt=0; i_pt<2; ++i_pt )
             {
@@ -216,7 +215,7 @@ void main()
                 outData.vsPos_rel01 = dist_rel[k];
                 outData.uv0         = vec3(b_c0[k].x * inData[0].uv + b_c0[k].y * inData[1].uv + b_c0[k].z * inData[2].uv, topEdgeIsOuter[i_edge] );
                 outData.uv1         = vec3(b_c1[k].x * inData[0].uv + b_c1[k].y * inData[1].uv + b_c1[k].z * inData[2].uv, topEdgeIsOuter[i_edge] );
-                outData.vsNV        = normalMat * normalize(b_c1[k].x * inData[0].nv + b_c1[k].y * inData[1].nv + b_c1[k].z * inData[2].nv);
+                outData.vsNV        = normalize(b_c1[k].x * vsNV[0] + b_c1[k].y * vsNV[1] + b_c1[k].z * vsNV[2]);
                 outData.col         = inData[i].col;
                 gl_Position         = u_projectionMat44 * vec4(i_in[i] > 0 ? vsPosMax[i].xyz : vsPosMin[i].xyz, 1.0);
                 EmitVertex();
@@ -231,14 +230,15 @@ void main()
                 outData.vsPos_rel01 = dist_rel[k];
                 outData.uv0         = vec3(b_c0[k].x * inData[0].uv + b_c0[k].y * inData[1].uv + b_c0[k].z * inData[2].uv, 0.0);
                 outData.uv1         = vec3(b_c1[k].x * inData[0].uv + b_c1[k].y * inData[1].uv + b_c1[k].z * inData[2].uv, 1.0);
-                outData.vsNV        = normalMat * normalize(b_c0[k].x * inData[0].nv + b_c0[k].y * inData[1].nv + b_c0[k].z * inData[2].nv);
+                outData.vsNV        = normalize(b_c0[k].x * vsNV[0] + b_c0[k].y * vsNV[1] + b_c0[k].z * vsNV[2]);
                 outData.col         = inData[i].col;
                 gl_Position         = u_projectionMat44 * vec4(i_in[i] > 0 ? vsPosMin[i].xyz : vsPosMax[i].xyz, 1.0);
                 EmitVertex();
             }
+
+            EndPrimitive();
         }
-        EndPrimitive();
-    
+        
         }
     }
 }

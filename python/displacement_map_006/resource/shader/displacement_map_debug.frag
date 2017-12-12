@@ -50,8 +50,8 @@ void main()
 #ifdef TBN_BY_DERIVATIONS     
     vec3  p_dx         = dFdx( objPosEs1 );
     vec3  p_dy         = dFdy( objPosEs1 );
-    vec2  tc_dx        = dFdx( texCoords1.xy );
-    vec2  tc_dy        = dFdy( texCoords1.xy );
+    vec2  tc_dx        = dFdx( texCoords0.xy );
+    vec2  tc_dy        = dFdy( texCoords0.xy );
     float texDet       = determinant( mat2( tc_dx, tc_dy ) );
     vec3  tangentVec   = ( tc_dy.y * p_dx - tc_dx.y * p_dy ) / texDet;
     float binormalSign = sign(texDet);
