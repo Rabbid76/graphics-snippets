@@ -505,9 +505,9 @@ FrameBuffer.Create = function( vp, texturePlan ) {
     gl.bindFramebuffer( gl.FRAMEBUFFER, fb );
     fb.color0_texture = gl.createTexture();
     gl.bindTexture( gl.TEXTURE_2D, fb.color0_texture );
+    gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, fb.width, fb.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, texPlan );
     gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST );
     gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST );
-    gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, fb.width, fb.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, texturePlan );
     fb.renderbuffer = gl.createRenderbuffer();
     gl.bindRenderbuffer( gl.RENDERBUFFER, fb.renderbuffer );
     gl.renderbufferStorage( gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, fb.width, fb.height );
