@@ -188,7 +188,6 @@ void main()
             outData.uv0         = vec3(b_c0[k].x * inData[0].uv + b_c0[k].y * inData[1].uv + b_c0[k].z * inData[2].uv, 0.0);
             outData.uv1         = vec3(b_c1[k].x * inData[0].uv + b_c1[k].y * inData[1].uv + b_c1[k].z * inData[2].uv, 1.0);
             outData.vsNV        = normalize(b_c0[k].x * vsNV[0] + b_c0[k].y * vsNV[1] + b_c0[k].z * vsNV[2]);
-            //outData.vsNV        = normalMat * normalize(b_c1[k].x * inData[0].nv + b_c1[k].y * inData[1].nv + b_c1[k].z * inData[2].nv);
             outData.col         = inData[i].col;
             //gl_Position         = u_projectionMat44 * vec4(i_in[i] > 0 ? vsPosMin[i].xyz : vsPosMax[i].xyz, 1.0);
             gl_Position         = u_projectionMat44 * vec4(i_in[i] > 0 ? vsPosMin[i].xyz : pos_X[i].xyz, 1.0);
