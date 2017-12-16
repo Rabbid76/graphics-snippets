@@ -190,14 +190,16 @@ void main()
             outData.vsNV        = normalize(b_c0[k].x * vsNV[0] + b_c0[k].y * vsNV[1] + b_c0[k].z * vsNV[2]);
             //outData.vsNV        = normalMat * normalize(b_c1[k].x * inData[0].nv + b_c1[k].y * inData[1].nv + b_c1[k].z * inData[2].nv);
             outData.col         = inData[i].col;
-            gl_Position         = u_projectionMat44 * vec4(i_in[i] > 0 ? vsPosMin[i].xyz : vsPosMax[i].xyz, 1.0);
+            //gl_Position         = u_projectionMat44 * vec4(i_in[i] > 0 ? vsPosMin[i].xyz : vsPosMax[i].xyz, 1.0);
+            gl_Position         = u_projectionMat44 * vec4(i_in[i] > 0 ? vsPosMin[i].xyz : pos_X[i].xyz, 1.0);
             EmitVertex();
         }
         EndPrimitive();      
         
-        
+        int minmax = 0;
         for (int i_edge=0; i_edge<3; ++i_edge)
         {
+            //break;
             //if ( topEdgeIsOuter[i_edge] < 0.5 )
             //    break;
 
@@ -217,7 +219,10 @@ void main()
                 outData.uv1         = vec3(b_c1[k].x * inData[0].uv + b_c1[k].y * inData[1].uv + b_c1[k].z * inData[2].uv, topEdgeIsOuter[i_edge] );
                 outData.vsNV        = normalize(b_c1[k].x * vsNV[0] + b_c1[k].y * vsNV[1] + b_c1[k].z * vsNV[2]);
                 outData.col         = inData[i].col;
-                gl_Position         = u_projectionMat44 * vec4(i_in[i] > 0 ? vsPosMax[i].xyz : vsPosMin[i].xyz, 1.0);
+                if ( minmax == 0 )
+                  gl_Position       = u_projectionMat44 * vec4(i_in[i] > 0 ? pos_X[i].xyz : vsPosMin[i].xyz, 1.0);
+                else
+                  gl_Position       = u_projectionMat44 * vec4(i_in[i] > 0 ? vsPosMax[i].xyz : pos_X[i+3].xyz, 1.0);
                 EmitVertex();
             }
 
@@ -232,7 +237,10 @@ void main()
                 outData.uv1         = vec3(b_c1[k].x * inData[0].uv + b_c1[k].y * inData[1].uv + b_c1[k].z * inData[2].uv, 1.0);
                 outData.vsNV        = normalize(b_c0[k].x * vsNV[0] + b_c0[k].y * vsNV[1] + b_c0[k].z * vsNV[2]);
                 outData.col         = inData[i].col;
-                gl_Position         = u_projectionMat44 * vec4(i_in[i] > 0 ? vsPosMin[i].xyz : vsPosMax[i].xyz, 1.0);
+                if ( minmax == 0 )
+                  gl_Position       = u_projectionMat44 * vec4(i_in[i] > 0 ? vsPosMin[i].xyz : pos_X[i].xyz, 1.0);
+                else
+                  gl_Position       = u_projectionMat44 * vec4(i_in[i] > 0 ? pos_X[i+3].xyz : vsPosMax[i].xyz, 1.0);
                 EmitVertex();
             }
 

@@ -194,5 +194,6 @@ void main()
     lightCol       += kSpecular * u_specular * color;
 
     gl_FragDepth = (posMappedPrj.z/posMappedPrj.w) * 0.5 + 0.5;
+    //gl_FragDepth = clamp((posMappedPrj.z/posMappedPrj.w) * 0.5 + 0.5, 0.0, 1.0);
     fragColor    = vec4(lightCol.rgb, 1.0 );
 }

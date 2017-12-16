@@ -86,7 +86,7 @@ class MyWindow(window.CameraWindow):
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT )
         progDraw.Use()
         modelMat = mat.IdentityMat44()
-        speed_scale = 50.0
+        speed_scale = 5.0
         modelMat = mat.RotateX( modelMat, self.CalcAng( 13.0 * speed_scale ) )
         modelMat = mat.RotateY( modelMat, self.CalcAng( 17.0 * speed_scale ) )
 
@@ -160,8 +160,8 @@ cubeVAO.DefineVAO( [
 progDraw = shader.ShaderProgram( 
     [ ('resource/shader/displacement_map.vert', GL_VERTEX_SHADER),
       ('resource/shader/displacement_map.geom', GL_GEOMETRY_SHADER),
-      #('resource/shader/displacement_map.frag', GL_FRAGMENT_SHADER) ] ) 
-      ('resource/shader/displacement_map_debug.frag', GL_FRAGMENT_SHADER) ] ) 
+      ('resource/shader/displacement_map.frag', GL_FRAGMENT_SHADER) ] ) 
+      #('resource/shader/displacement_map_debug.frag', GL_FRAGMENT_SHADER) ] ) 
 
 #texture objects
 textureObj         = ReadTexture('../../resource/texture/test1_texture.bmp', 0)
