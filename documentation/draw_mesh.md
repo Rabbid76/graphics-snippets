@@ -82,6 +82,10 @@ See:
 - [`glEnableVertexAttribArray` / `glDisableVertexAttribArray`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glEnableVertexAttribArray.xhtml)
 - [`glDrawArrays`](https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glDrawArrays.xml)    
 
+See [OpenGL 4.6 core profile specification - 10.3.9 Vertex Arrays in Buffer Objects](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf):
+
+> A buffer object binding point is added to the client state associated with each vertex array index. The commands that specify the locations and organizations of vertex arrays **copy the buffer object name that is bound to `ARRAY_BUFFER` to the binding point** corresponding to the vertex array index being specified. For example, the VertexAttribPointer command copies the value of `ARRAY_BUFFER_BINDING`.
+
 See the Khronos group reference page for [`glVertexAttribPointer`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glVertexAttribPointer.xhtml):
 
 > For `glVertexAttribPointer`, if normalized is set to `GL_TRUE`, it indicates that values stored in an integer format are to be mapped to the range [-1,1] (for signed values) or [0,1] (for unsigned values) when they are accessed and **converted to floating point**. Otherwise, values **will be converted to floats directly** without normalization.
