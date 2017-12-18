@@ -71,6 +71,7 @@ class MyWindow(window.CameraWindow):
         camera = super()._InitCamera_()
         #camera.fov_y = 120 
         camera.pos = (0, -3, 0)
+        #camera.far = 10000
         return camera    
 
     # draw event

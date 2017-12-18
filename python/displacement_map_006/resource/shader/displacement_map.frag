@@ -89,7 +89,7 @@ vec3 SteepParallax( in float bottom_rel, in vec3 texDir3D, in vec3 texC0, in vec
   //float frontface     = 1.0;
   float facesign      = frontface * 2.0 - 1.0;
   vec2  texCoord      = mix(texC1.xy, texC0.xy, frontface);
-  if ( maxBumpHeight > 0.0 && texDir3D.z < 0.9994 )
+  if ( maxBumpHeight > 0.0 /*&& texDir3D.z < 0.9994*/ )
   {
     float quality         = mix( quality_range.x, quality_range.y , gl_FragCoord.z * gl_FragCoord.z );
     float numSteps        = clamp( quality * mix( 5.0, 10.0 * clamp( 1.0 + 30.0 * maxBumpHeight, 1.0, 4.0 ), 1.0 - abs(texDir3D.z) ), 1.0, 50.0 );
@@ -122,18 +122,20 @@ vec3 SteepParallax( in float bottom_rel, in vec3 texDir3D, in vec3 texC0, in vec
         discard;
     
     // culls grinding angle distoritions and out of range drawings (near depth)
-    if ( frontface < 0.5 && mapHeight < texC0.z )
-        discard;
+    //if ( frontface < 0.5 && mapHeight < texC0.z-0.01 )
+    //    discard;
     
     // ???
-    //if ( frontface < 0.5 && mapHeight > texC1.z )  
-    //    discard;
+    if ( frontface < 0.5 && mapHeight > texC1.z )  
+        discard;
 
     // couses flickering (Z fighting)
-    //if ( frontface > 0.5 && mapHeight > texC1.z )  
-    //    discard;
+    if ( frontface > 0.5 && mapHeight > texC1.z+0.01 )  
+        discard;
 
-    mapHeight  = clamp(mapHeight, texC0.z, texC1.z);
+    mapHeight = clamp(mapHeight, texC0.z, texC1.z);
+    //mapHeight = clamp(mapHeight, texC0.z*0.5, texC1.z);
+    //mapHeight = clamp(mapHeight, 0.0, texC1.z);
     texCoord = texC0.xy + facesign * texStep * mapHeight;
   }
   else 
@@ -195,5 +197,8 @@ void main()
 
     gl_FragDepth = (posMappedPrj.z/posMappedPrj.w) * 0.5 + 0.5;
     //gl_FragDepth = clamp((posMappedPrj.z/posMappedPrj.w) * 0.5 + 0.5, 0.0, 1.0);
+    float frontface  = step(1.0, inData.vsPos_rel01);
+    //if ( frontface > 0.5 )
+    //  discard;
     fragColor    = vec4(lightCol.rgb, 1.0 );
 }

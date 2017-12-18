@@ -211,7 +211,7 @@ void main()
             {
                 int i = (i_edge+i_pt) % 3;
                 int k = i_out[i] + i;
-
+                
                 outData.vsPos1      = pos_out[i].xyz;
                 outData.vsPos_rel01 = dist_rel[k];
                 outData.uv0         = vec3(b_c0[k].x * inData[0].uv + b_c0[k].y * inData[1].uv + b_c0[k].z * inData[2].uv, topEdgeIsOuter[i_edge] );
