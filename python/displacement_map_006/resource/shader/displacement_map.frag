@@ -95,8 +95,8 @@ vec3 SteepParallax( in float bottom_rel, in vec3 texDir3D, in vec3 texC0, in vec
     float numSteps        = clamp( quality * mix( 5.0, 10.0 * clamp( 1.0 + 30.0 * maxBumpHeight, 1.0, 4.0 ), 1.0 - abs(texDir3D.z) ), 1.0, 50.0 );
     int   numBinarySteps  = int( clamp( quality * 5.1, 1.0, 7.0 ) );
     vec2  texStep         = (texC1.xy - texC0.xy) * facesign;
-    //float bestBumpHeight  = mix(1.0-texC0.z, texC1.z, frontface);
-    float bestBumpHeight  = 1.0;
+    float bestBumpHeight  = mix(1.0-texC0.z, texC1.z, frontface);
+    //float bestBumpHeight  = 1.0;
     float bumpHeightStep  = bestBumpHeight/ numSteps;
     mapHeight             = bestBumpHeight;
     for ( int i = 0; i < int( numSteps ); ++ i )
@@ -130,8 +130,8 @@ vec3 SteepParallax( in float bottom_rel, in vec3 texDir3D, in vec3 texC0, in vec
         discard;
 
     // couses flickering (Z fighting)
-    if ( frontface > 0.5 && mapHeight > texC1.z+0.01 )  
-        discard;
+    //if ( frontface > 0.5 && mapHeight > texC1.z+0.01 )  
+    //    discard;
 
     mapHeight = clamp(mapHeight, texC0.z, texC1.z);
     //mapHeight = clamp(mapHeight, texC0.z*0.5, texC1.z);
