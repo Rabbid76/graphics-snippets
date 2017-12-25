@@ -20,8 +20,8 @@ out TGeometryData
     vec3  vsTV;
     float vsBVsign;
     vec3  col;
-    vec3  uv0;
-    vec3  uv1;
+    noperspective vec3  uv0;
+    noperspective vec3  uv1;
 } outData;
 
 uniform mat4 u_projectionMat44;
