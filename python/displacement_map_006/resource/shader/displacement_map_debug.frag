@@ -13,8 +13,10 @@ in TGeometryData
     vec3  vsTV;
     float vsBVsign;
     vec3  col;
-    vec3  uv0;
-    vec3  uv1;
+    //vec3  uv0;
+    //vec3  uv1;
+    noperspective vec3  uv0;
+    noperspective vec3  uv1;
 } inData;
 
 layout (location = 0) out vec4 fragColor;

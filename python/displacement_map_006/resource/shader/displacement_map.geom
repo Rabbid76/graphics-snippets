@@ -20,6 +20,8 @@ out TGeometryData
     vec3  vsTV;
     float vsBVsign;
     vec3  col;
+    //vec3  uv0;
+    //vec3  uv1;
     noperspective vec3  uv0;
     noperspective vec3  uv1;
 } outData;
@@ -197,7 +199,7 @@ void main()
         }
         EndPrimitive();      
         
-        int minmax = 0;
+        int minmax = 1;
         for (int i_edge=0; i_edge<3; ++i_edge)
         {
             //break;
@@ -223,6 +225,7 @@ void main()
                 vec3 map_pt;
                 if ( minmax == 0 )
                   map_pt = i_in[i] > 0 ? pos_X[i].xyz : vsPosMin[i].xyz;
+                  //map_pt = i_in[i] > 0 ? vsPosMax[i].xyz : pos_X[i+3].xyz;
                 else
                   map_pt = i_in[i] > 0 ? vsPosMax[i].xyz : pos_X[i+3].xyz;
                 //if ( map_pt.z > -0.5 ) map_pt.xyz *= 0.5 / abs(map_pt.z); 
