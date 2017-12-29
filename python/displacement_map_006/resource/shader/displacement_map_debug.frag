@@ -13,10 +13,8 @@ in TGeometryData
     vec3  vsTV;
     float vsBVsign;
     vec3  col;
-    //vec3  uv0;
-    //vec3  uv1;
-    noperspective vec3  uv0;
-    noperspective vec3  uv1;
+    vec3  uvz;
+    vec4  uvz_d;
 } inData;
 
 layout (location = 0) out vec4 fragColor;
@@ -45,8 +43,10 @@ void main()
     vec3  objPosEs1   = inData.vsPos1;
     vec3  objPosEs0   = objPosEs1 * inData.vsPos_rel01;
     vec3  objNormalEs = inData.vsNV;
-    vec3  texCoords0  = inData.uv0.xyz;
-    vec3  texCoords1  = inData.uv1.xyz;
+    vec3  texCoords1  = inData.uvz.xyz;
+    //vec3  texCoords0  = vec3(inData.uvz.xy + inData.uvz_d.xy * abs((inData.uvz.z - inData.uvz_d.w) / inData.uvz_d.z), inData.uvz_d.w);
+    vec3  texCoords0  = vec3(inData.uvz.xy + inData.uvz_d.xy * abs(inData.uvz.z / inData.uvz_d.z), inData.uvz_d.w);
+    //vec3  texCoords0  = vec3(inData.uvz.xy + inData.uvz_d.xy * abs(inData.uvz_d.z), inData.uvz_d.w);
     vec3  normalEs    = ( gl_FrontFacing ? 1.0 : -1.0 ) * normalize( objNormalEs ); // TODO $$$
 
 #ifdef TBN_BY_DERIVATIONS     
@@ -64,7 +64,7 @@ void main()
     vec3  tangentEs    = normalize( tangentVec - normalEs * dot(tangentVec, normalEs ) );
     mat3  tbnMat       = mat3( tangentEs, binormalSign * cross( normalEs, tangentEs ), normalEs );
     
-    vec3  texCoordsMap = mix(texCoords0, texCoords1, 0.0/*texCoords0.z*/);
+    vec3  texCoordsMap = mix(texCoords0, texCoords1, 1.0/*texCoords0.z*/);
     vec3  nvMappedEs   = normalize( normalEs );
     vec3  posMappedEs  = objPosEs1;
     

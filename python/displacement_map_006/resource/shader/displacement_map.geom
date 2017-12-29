@@ -20,10 +20,8 @@ out TGeometryData
     vec3  vsTV;
     float vsBVsign;
     vec3  col;
-    //vec3  uv0;
-    //vec3  uv1;
-    noperspective vec3  uv0;
-    noperspective vec3  uv1;
+    vec3  uvz;
+    vec4  uvz_d;
 } outData;
 
 uniform mat4 u_projectionMat44;
@@ -185,21 +183,22 @@ void main()
         {
             int k = i_in[i] + i;
 
-            outData.vsPos1      = pos_in[i].xyz;
-            outData.vsPos_rel01 = dist_rel[k];
-            outData.uv0         = vec3(b_c0[k].x * inData[0].uv + b_c0[k].y * inData[1].uv + b_c0[k].z * inData[2].uv, 0.0);
-            outData.uv1         = vec3(b_c1[k].x * inData[0].uv + b_c1[k].y * inData[1].uv + b_c1[k].z * inData[2].uv, 1.0);
-            outData.vsNV        = normalize(b_c0[k].x * vsNV[0] + b_c0[k].y * vsNV[1] + b_c0[k].z * vsNV[2]);
-            outData.col         = inData[i].col;
-            //gl_Position         = u_projectionMat44 * vec4(i_in[i] > 0 ? vsPosMin[i].xyz : vsPosMax[i].xyz, 1.0);
             vec3 map_pt = i_in[i] > 0 ? vsPosMin[i].xyz : pos_X[i].xyz;
-            //if ( map_pt.z > -0.5 ) map_pt.xyz *= 0.5 / abs(map_pt.z);  
-            gl_Position = u_projectionMat44 * vec4(map_pt.xyz, 1.0);
+            vec3 uv0    = vec3(b_c0[k].x * inData[0].uv + b_c0[k].y * inData[1].uv + b_c0[k].z * inData[2].uv, 0.0);
+            vec3 uv1    = vec3(b_c1[k].x * inData[0].uv + b_c1[k].y * inData[1].uv + b_c1[k].z * inData[2].uv, 1.0);
+
+            outData.vsPos1      = pos_in[i].xyz;
+            outData.vsNV        = normalize(b_c0[k].x * vsNV[0] + b_c0[k].y * vsNV[1] + b_c0[k].z * vsNV[2]);
+            outData.vsPos_rel01 = dist_rel[k];
+            outData.uvz         = uv1;
+            outData.uvz_d       = vec4(uv0 - uv1, uv0.z);
+            outData.col         = inData[i].col;
+            gl_Position         = u_projectionMat44 * vec4(map_pt.xyz, 1.0);
             EmitVertex();
         }
         EndPrimitive();      
         
-        int minmax = 1;
+        int minmax = 0;
         for (int i_edge=0; i_edge<3; ++i_edge)
         {
             //break;
@@ -216,20 +215,23 @@ void main()
                 int i = (i_edge+i_pt) % 3;
                 int k = i_out[i] + i;
                 
-                outData.vsPos1      = pos_out[i].xyz;
-                outData.vsPos_rel01 = dist_rel[k];
-                outData.uv0         = vec3(b_c0[k].x * inData[0].uv + b_c0[k].y * inData[1].uv + b_c0[k].z * inData[2].uv, topEdgeIsOuter[i_edge] );
-                outData.uv1         = vec3(b_c1[k].x * inData[0].uv + b_c1[k].y * inData[1].uv + b_c1[k].z * inData[2].uv, topEdgeIsOuter[i_edge] );
-                outData.vsNV        = normalize(b_c1[k].x * vsNV[0] + b_c1[k].y * vsNV[1] + b_c1[k].z * vsNV[2]);
-                outData.col         = inData[i].col;
                 vec3 map_pt;
                 if ( minmax == 0 )
-                  map_pt = i_in[i] > 0 ? pos_X[i].xyz : vsPosMin[i].xyz;
-                  //map_pt = i_in[i] > 0 ? vsPosMax[i].xyz : pos_X[i+3].xyz;
-                else
+                  //map_pt = i_in[i] > 0 ? pos_X[i].xyz : vsPosMin[i].xyz;
                   map_pt = i_in[i] > 0 ? vsPosMax[i].xyz : pos_X[i+3].xyz;
-                //if ( map_pt.z > -0.5 ) map_pt.xyz *= 0.5 / abs(map_pt.z); 
-                gl_Position = u_projectionMat44 * vec4(map_pt.xyz, 1.0);
+                else
+                  //map_pt = i_in[i] > 0 ? vsPosMax[i].xyz : pos_X[i+3].xyz;
+                  map_pt = i_in[i] > 0 ? pos_X[i].xyz : vsPosMin[i].xyz;
+                vec3 uv0 = vec3(b_c0[k].x * inData[0].uv + b_c0[k].y * inData[1].uv + b_c0[k].z * inData[2].uv, 0.0);
+                vec3 uv1 = vec3(b_c1[k].x * inData[0].uv + b_c1[k].y * inData[1].uv + b_c1[k].z * inData[2].uv, 1.0);
+
+                outData.vsPos1      = pos_out[i].xyz;
+                outData.vsNV        = normalize(b_c1[k].x * vsNV[0] + b_c1[k].y * vsNV[1] + b_c1[k].z * vsNV[2]);
+                outData.vsPos_rel01 = dist_rel[k];
+                outData.uvz         = vec3(uv1.st, topEdgeIsOuter[i_edge]);
+                outData.uvz_d       = vec4(uv0 - uv1, topEdgeIsOuter[i_edge]);
+                outData.col         = inData[i].col;
+                gl_Position         = u_projectionMat44 * vec4(map_pt.xyz, 1.0);
                 EmitVertex();
             }
 
@@ -238,19 +240,21 @@ void main()
                 int i = (i_edge+i_pt) % 3;
                 int k = i_in[i] + i;
                 
-                outData.vsPos1      = pos_in[i].xyz;
-                outData.vsPos_rel01 = dist_rel[k];
-                outData.uv0         = vec3(b_c0[k].x * inData[0].uv + b_c0[k].y * inData[1].uv + b_c0[k].z * inData[2].uv, 0.0);
-                outData.uv1         = vec3(b_c1[k].x * inData[0].uv + b_c1[k].y * inData[1].uv + b_c1[k].z * inData[2].uv, 1.0);
-                outData.vsNV        = normalize(b_c0[k].x * vsNV[0] + b_c0[k].y * vsNV[1] + b_c0[k].z * vsNV[2]);
-                outData.col         = inData[i].col;
                 vec3 map_pt;
                 if ( minmax == 0 )
                   map_pt = i_in[i] > 0 ? vsPosMin[i].xyz : pos_X[i].xyz;
                 else
                   map_pt = i_in[i] > 0 ? pos_X[i+3].xyz : vsPosMax[i].xyz;
-                //if ( map_pt.z > -0.5 ) map_pt.xyz *= 0.5 / abs(map_pt.z); 
-                gl_Position = u_projectionMat44 * vec4(map_pt.xyz, 1.0);
+                vec3 uv0 = vec3(b_c0[k].x * inData[0].uv + b_c0[k].y * inData[1].uv + b_c0[k].z * inData[2].uv, 0.0);
+                vec3 uv1 = vec3(b_c1[k].x * inData[0].uv + b_c1[k].y * inData[1].uv + b_c1[k].z * inData[2].uv, 1.0);
+
+                outData.vsPos1      = pos_in[i].xyz;
+                outData.vsNV        = normalize(b_c0[k].x * vsNV[0] + b_c0[k].y * vsNV[1] + b_c0[k].z * vsNV[2]);
+                outData.vsPos_rel01 = dist_rel[k];
+                outData.uvz         = uv1;
+                outData.uvz_d       = vec4(uv0 - uv1, uv0.z);
+                outData.col         = inData[i].col;
+                gl_Position         = u_projectionMat44 * vec4(map_pt.xyz, 1.0);
                 EmitVertex();
             }
 
