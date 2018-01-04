@@ -27,8 +27,8 @@ uniform float u_diffuse;
 uniform float u_specular;
 uniform float u_shininess;
 
-uniform sampler2D u_texture;
-uniform sampler2D u_displacement_map;
+layout (binding = 0) uniform sampler2D u_texture;
+layout (binding = 1) uniform sampler2D u_displacement_map;
 uniform float     u_displacement_scale;
 uniform vec2      u_parallax_quality;
 
