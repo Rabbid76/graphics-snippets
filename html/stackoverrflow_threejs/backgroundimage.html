@@ -1,0 +1,117 @@
+<html>
+
+<head>
+<title>three.js set background image</title>
+<style>
+
+#ref-link {
+    position : absolute;
+    bottom : 0;
+    left : 0;
+}
+
+</style>
+
+</head>
+
+<body>
+<script src="https://threejs.org/build/three.js"></script>
+<!--script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/89/three.min.js"></script-->
+<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+
+<div id="container"></div>
+
+<a id="ref-link" href="https://stackoverflow.com/questions/19865537/three-js-set-background-image/48126806#48126806">
+three.js set background image 
+</a>
+
+<script>
+(function onLoad() {
+  var container, loader, camera, scene, renderer, controls, bgTexture, bgWidth, bgHeight;
+  
+  init();
+  animate();
+
+  function init() {
+    container = document.getElementById('container');
+    
+    renderer = new THREE.WebGLRenderer({
+      antialias: true
+    });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    container.appendChild(renderer.domElement);
+
+    camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 100);
+    camera.position.set(0, -4, -1.5);
+
+    loader = new THREE.TextureLoader();
+    loader.setCrossOrigin("");
+
+    scene = new THREE.Scene();
+    bgTexture = loader.load("https://raw.githubusercontent.com/Rabbid76/graphics-snippets/master/resource/texture/background.jpg",
+        function ( texture ) {
+            var img = texture.image;
+            bgWidth= img.width;
+            bgHeight = img.height;
+            resize();
+        }
+    );
+    scene.background = bgTexture;
+    bgTexture.wrapS = THREE.MirroredRepeatWrapping;
+    bgTexture.wrapT = THREE.MirroredRepeatWrapping;
+  
+    scene.add(camera);
+    window.onresize = resize;
+    
+    var ambientLight = new THREE.AmbientLight(0x404040);
+    scene.add(ambientLight);
+
+    var directionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
+    directionalLight.position.x = -0.75;
+    directionalLight.position.y = -0.5;
+    directionalLight.position.z = -1;
+    scene.add( directionalLight );
+
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+		
+    createModel();
+  }
+
+  function createModel() {
+
+    var material = new THREE.MeshPhongMaterial({color:'#b090b0'});
+    var geometry = new THREE.BoxGeometry( 1, 1, 1 );
+    var mesh = new THREE.Mesh(geometry, material);
+
+    scene.add(mesh);
+  }
+
+  function resize() {
+    
+    var aspect = window.innerWidth / window.innerHeight;
+    var texAspect = bgWidth / bgHeight;
+    var relAspect = aspect / texAspect;
+
+    bgTexture.repeat = new THREE.Vector2( Math.max(relAspect, 1), Math.max(1/relAspect,1) ); 
+    bgTexture.offset = new THREE.Vector2( -Math.max(relAspect-1, 0)/2, -Math.max(1/relAspect-1, 0)/2 ); 
+
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = aspect;
+    camera.updateProjectionMatrix();
+  }
+
+  function animate() {
+    requestAnimationFrame(animate);
+    render();
+  }
+
+  function render() {
+    renderer.render(scene, camera);
+  }
+})();
+</script>
+
+</body>
+</html>

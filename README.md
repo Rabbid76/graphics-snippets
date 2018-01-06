@@ -96,6 +96,8 @@
 
 [Normal map 1](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/normalmap1.html)
 
+[Background](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/background_cube_poor_webgl.html)
+
 
 ### Stackoverflow examples - three.js
 
