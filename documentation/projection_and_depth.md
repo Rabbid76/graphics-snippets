@@ -4,12 +4,12 @@
 In a rendering, each mesh of the scene usually is transformed by the model matrix, the view matrix and the projection matrix.
 
 - Projection matrix:<br/> 
-  The projection matrix describes the mapping from 3D points of a scene, to 2D points of the viewport. The projection matrix transforms from view space to the clip space, and the coordinates in the clip space are transformed to the normalized device coordinates (NDC) in the range (-1, -1, -1) to (1, 1, 1) by dividing with the w component of the clip coordinates.
+  The projection matrix describes the mapping from 3D points of a scene, to 2D points of the viewport. The projection matrix transforms from view space to the clip space. Clip space coordinates are [Homogeneous coordinates](https://en.wikipedia.org/wiki/Homogeneous_coordinates). The coordinates in the clip space are transformed to the normalized device coordinates (NDC) in the range (-1, -1, -1) to (1, 1, 1) by dividing with the `w` component of the clip coordinates.
 
  ![NDC](image/NDC.png) 
 
 - View matrix:<br/>
-  The view matrix describes the direction and position from which the scene is looked at. The view matrix transforms from the wolrd space to the view (eye) space. In the coordinat system on the viewport, the X-axis points to the left, the Y-axis up and the Z-axis out of the view (Note in a right hand system the Z-Axis is the cross product of the X-Axis and the Y-Axis).
+  The view matrix describes the direction and position from which the scene is looked at. The view matrix transforms from the wolrd space to the view (eye) space. In the coordinat system on the viewport, the X-axis points to the left, the Y-axis up and the Z-axis out of the view (Note in a right hand system the Z-Axis is the cross product of the X-Axis and the Y-Axis). In general world coordinates and view coordinates are [Cartesian coordinates](https://en.wikipedia.org/wiki/Cartesian_coordinate_system)
 
 - Model matrix:<br/>
   The model matrix defines the location, oriantation and the relative size of a mesh in the scene. The model matrix transforms the vertex positions from of the mesh to the world space.
