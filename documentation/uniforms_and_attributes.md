@@ -69,7 +69,7 @@ See [OpenGL ES 2 Specifications - 2.10.4 Shader Variables - p. 32](https://www.k
 >
 > To determine the set of **active** vertex attributes used by a program, and to determine their types, use the command:
 >
-> `void GetActiveAttrib( uint program, uint index, sizei bufSize, sizei *length, int *size, enum *type, char *name );
+> `void GetActiveAttrib( uint program, uint index, sizei bufSize, sizei *length, int *size, enum *type, char *name );`
 >
 > .....
 >

@@ -45,6 +45,6 @@ See the resulting reflections on a spherical surface:
 
 See also:
 
-  - Question: [Issue Understanding Lighting in OpenGL](https://stackoverflow.com/questions/8088907/issue-understanding-lighting-in-opengl/45066742#45066742)
-  - Question: [GLSL fixed function fragment program replacement](https://stackoverflow.com/questions/8421778/glsl-fixed-function-fragment-program-replacement/45716107#45716107)
-  - OGL documentation: [Phong Lighting Model](https://stackoverflow.com/documentation/opengl/4209/basic-lighting/14741/phong-lighting-model#t=201707181626390284374)
+- [How does this faking the light work on aerotwist?](https://stackoverflow.com/questions/7061745/how-does-this-faking-the-light-work-on-aerotwist/45121641#45121641)
+- [GLSL fixed function fragment program replacement](https://stackoverflow.com/questions/8421778/glsl-fixed-function-fragment-program-replacement/45716107#45716107)
+  
