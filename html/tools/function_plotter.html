@@ -104,7 +104,7 @@ plotInput.FunctionBk = function() {
   }
   
   var f_last_count = this.last_valid_func_val ? this.last_valid_func_val.length : 0;
-  for (var i = f_count; i < f_last_count; ++ i) {
+  for (var i = 0; i < f_last_count; ++ i) {
     if ( i < this.func_bk.length )
       this.func_bk[i] = this.last_valid_func_val[i];
     else
