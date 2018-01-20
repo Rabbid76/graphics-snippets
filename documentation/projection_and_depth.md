@@ -11,6 +11,8 @@ In a rendering, each mesh of the scene usually is transformed by the model matri
 - View matrix:<br/>
   The view matrix describes the direction and position from which the scene is looked at. The view matrix transforms from the wolrd space to the view (eye) space. In the coordinat system on the viewport, the X-axis points to the left, the Y-axis up and the Z-axis out of the view (Note in a right hand system the Z-Axis is the cross product of the X-Axis and the Y-Axis). In general world coordinates and view coordinates are [Cartesian coordinates](https://en.wikipedia.org/wiki/Cartesian_coordinate_system)
 
+![view](image/view_coordinates.png)
+
 - Model matrix:<br/>
   The model matrix defines the location, oriantation and the relative size of a mesh in the scene. The model matrix transforms the vertex positions from of the mesh to the world space.
 

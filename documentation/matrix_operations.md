@@ -539,5 +539,3 @@ See further:
   [32]: https://stackoverflow.com/questions/44965202/opengl-screen-coordinates-to-world-coordinates/45000237#45000237
   [33]: https://stackoverflow.com/questions/47614202/opengl-moving-around-3d-scene/47617063#47617063
 
-
-
