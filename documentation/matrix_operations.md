@@ -67,6 +67,7 @@ See further:
 - [GLSL 4x4 Matrix Fields][3]
 - [Matrix Translation in GLSL is infinitely stretched][9] 
 - [What is wrong with my matrix stack implementation (OpenGL ES 2.0)?][10]
+- [Does WebGL matrix (mat4) notation correspondes to mathematical matrix notation](https://stackoverflow.com/questions/48367593/does-webgl-matrix-mat4-notation-correspondes-to-mathematical-matrix-notation/48367941#48367941)
    
 
 <br/><hr/>
