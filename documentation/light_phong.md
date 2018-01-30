@@ -4,7 +4,7 @@
 **About the nomenclature**
 
 The [Phong reflection model][1] must not be confused with [Phong shading][2]. While [Phong shading][2] in common means the technique, which does the light calculations per fragment, is the [Phong reflection model][1] a light model, which was presented by Bui Tuong Phong in 1975.<br/>
-Note, in compare to [Phong shading][2], at [Gouraud Shading][3], the light calculations ar done per vertex. The calculated light is interpolated according to the [Barycentric coordinate] of the fragment on the primitive. This increases the performance, but gives a big loss of quality, especially on large primitives.<br/>
+Note, in compare to [Phong shading][2], at [Gouraud Shading][3], the light calculations ar done per vertex. The calculated light is interpolated according to the [Barycentric coordinate][4] of the fragment on the primitive. This increases the performance, but gives a big loss of quality, especially on large primitives.<br/>
 In common the [Phong reflection model][1] and the [Phong shading][2] technique are used together. 
 
 The Phong model is easy to compute with a small number of operations, but it is an empirical model which obeys neither energy conservation nor [reciprocity][5]. It is an approximation model, based on an statistic distribution of microfacettes. It depends on an `alpha` angle, which is calculated after reflecting the incident direction. \n
