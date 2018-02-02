@@ -150,10 +150,10 @@ for inx in range(0, 6):
 cubeVAO = vertex.DrawBuffer()
 cubeVAO.DefineVAO( [
     0, 4, 
-    0, 1,     0, 3, vertex.TYPE_float32, 0, 
-    0, 1,     1, 3, vertex.TYPE_float32, 0, 
-    0, 1,     2, 3, vertex.TYPE_float32, 0,
-    0, 1,     3, 2, vertex.TYPE_float32, 0],
+    0, 0, 1,     0, 3, vertex.TYPE_float32, 0, 
+    1, 0, 1,     1, 3, vertex.TYPE_float32, 0, 
+    2, 0, 1,     2, 3, vertex.TYPE_float32, 0,
+    3, 0, 1,     3, 2, vertex.TYPE_float32, 0],
     [cubePosData, cubeNVData, cubeColData, cubeUVData], cubeIndices )
     #[cubePosData, cubePosData, cubeColData, cubeUVData], cubeIndices )
 

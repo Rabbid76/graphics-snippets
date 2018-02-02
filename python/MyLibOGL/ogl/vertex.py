@@ -165,6 +165,7 @@ TYPE_uint32  = 4 # GL_UNSIGNED_INT
 # <index buffer>              : index of the index buffer; 0 is default; < -1 no index buffer is reqired
 # <no of buffers>             : the number of the require vertex buffer objects - followed by the list of vbo specifications
 # {
+#     <array buffer index>    : index of the array buffer
 #     <stride>                : stride from one vertex attribute set to the next, in float (4 byte) units) 
 #     <no of attributes>      : number of the generic vertex attributes in the buffer - followed by the list of attribute specifications
 #     {
@@ -179,7 +180,7 @@ TYPE_uint32  = 4 # GL_UNSIGNED_INT
 # e.g. Strided record sets:  
 #      Vx0, Vy0, Vz0, Nx0, Ny0, Nz0, Tu0, Tv0, Vx1, Vy1, Vz1, Nx1, Ny1, Nz1, Tu1, Tv1, ....
 #      
-#      [0, 1, 8, 3, -1, 3, 0, 0, -2, 3, 0, 3, -3, 2, 0, 6]
+#      [0, 1, 0, 8, 3, -1, 3, 0, 0, -2, 3, 0, 3, -3, 2, 0, 6]
 #
 #
 # e.g. Tightly packed vertex attributes:
@@ -187,7 +188,7 @@ TYPE_uint32  = 4 # GL_UNSIGNED_INT
 #      Nx0, Ny0, Nz0, Nx1, Ny1, Nz1, ....
 #      Tu0, Tv0, Tu1, Tv1 ....
 #
-#      [0, 3, 0, 1, -1, 3, 0, 0, 1, 0, -2, 3, 0, 0, 1, 0, -3, 2, 0, 0]
+#      [0, 3, 0, 0, 1, -1, 3, 0, 0, 0, 1, 0, -2, 3, 0, 0, 0, 1, 0, -3, 2, 0, 0]
 #
 class DrawBuffer:
 
@@ -198,7 +199,7 @@ class DrawBuffer:
         self.__currNoElems = 0     # number of elements in the curently selected vertex array object
         self.__vaos = {}           # map destcription -> (vertex array object <GPU name>, description)
         self.__ibos = {}           # map index -> ( element array buffer <GPU name>, size <count> of element array buffer )
-        self.__vbos = []           # list of array buffers ( array buffer <GPU name>, size <count> of array buffer )
+        self.__vbos = {}           # list of array buffers ( array buffer <GPU name>, size <count> of array buffer )
 
 
     # dtor
@@ -336,9 +337,7 @@ class DrawBuffer:
         i_ibo = key[0]
         no_of_vbo = key[1]
         if i_ibo >= 0 and (i_ibo not in self.__ibos): self.__ibos[i_ibo] = (glGenBuffers( 1 ), 0)
-        if no_of_vbo > len(self.__vbos):              vbos = glGenBuffers( no_of_vbo )
-        for vbo in vbos:                              self.__vbos.append((vbo, 0) )
-
+        
         # Create vertex array object
         self.__vaos[hashcode] = (glGenVertexArrays( 1 ), key) 
         self.__currVAO = self.__vaos[hashcode][0]
@@ -346,9 +345,10 @@ class DrawBuffer:
           
         # Create a new vertex array opject according to the description
         i_key = 2
-        for i_vbo in range(no_of_vbo):
-            stride, no_of_attr = key[i_key], key[i_key+1]
-            i_key = i_key + 2
+        for i_b in range(no_of_vbo):
+            i_vbo, stride, no_of_attr = key[i_key], key[i_key+1], key[i_key+2]
+            i_key = i_key + 3
+            if i_vbo >= 0 and (i_vbo not in self.__vbos): self.__vbos[i_vbo] = (glGenBuffers( 1 ), 0)
             glBindBuffer( GL_ARRAY_BUFFER, self.__vbos[i_vbo][0] )
             for i_attr in range(no_of_attr):
                 attr_id, attr_size, attr_type, attr_offs = key[i_key], key[i_key+1], key[i_key+3], key[i_key+2]

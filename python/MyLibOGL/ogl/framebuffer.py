@@ -26,7 +26,8 @@ class FrameBuffer:
             if depthAttachment and stencilAttachment:
                 #internal formats: GL_DEPTH24_STENCIL8, GL_DEPTH32F_STENCIL8
                 #glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH32F_STENCIL8, cx, cy, 0, GL_DEPTH_STENCIL, GL_FLOAT_32_UNSIGNED_INT_24_8_REV, None )
-                glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, cx, cy, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, None )
+                #glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, cx, cy, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, None )
+                glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, cx, cy, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT, None )
                 #glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, cx, cy, 0, GL_DEPTH_STENCIL, 34042, None )
             elif depthAttachment:
                 glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, cx, cy, 0, GL_DEPTH_COMPONENT, GL_FLOAT, None )
@@ -95,7 +96,12 @@ class FrameBuffer:
     def UnBind( self ):
         glBindFramebuffer( GL_FRAMEBUFFER, 0 )
     def BindTextures( self, textureUnits ):
-        for i_tex in range(0, min( len(textureUnits), len(self.__textures) )):
-            glActiveTexture( GL_TEXTURE0 + textureUnits[i_tex] )
+        firstTex = 0
+        if self.__depthStencilTexture > 0:
+            firstTex = 1
+            glActiveTexture( GL_TEXTURE0 + textureUnits[0] )
+            glBindTexture( GL_TEXTURE_2D, self.__depthStencilTexture ) 
+        for i_tex in range(0, min( len(textureUnits)-firstTex, len(self.__textures) )):
+            glActiveTexture( GL_TEXTURE0 + textureUnits[i_tex+firstTex] )
             glBindTexture( GL_TEXTURE_2D, self.__textures[i_tex] )  
         glActiveTexture( GL_TEXTURE0 )  
