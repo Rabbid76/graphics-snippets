@@ -31,5 +31,5 @@ void main()
     vec4  texCol = texture2D( u_samplerColor, texC );
     float ssao   = SSAO44( u_samplerSSAO, texC );
     vec3  color  = mix(vec3(1.0), texCol.rgb, u_color_mix);
-    fragColor   = vec4( mix( vec3(0.9, 0.7, 0.9), color * ssao, texCol.a ), 1.0 );
+    fragColor    = vec4( mix( vec3(0.75, 0.7, 0.8), color * ssao, texCol.a ), 1.0 );
 }

@@ -39,7 +39,7 @@ class MyWindow(window.CameraWindow):
     def _InitCamera_(self):
         camera = super()._InitCamera_()
         #camera.fov_y = 120 
-        camera.pos = (0, -4, 0)
+        camera.pos = (0, -3.5, 0)
         return camera    
 
     # draw event
@@ -91,10 +91,11 @@ class MyWindow(window.CameraWindow):
             b"u_samplerDepth"     : texUnitDepth,
             b"u_samplerSSAONoise" : texUnitSSAONoise,
             b"u_viewportsize"     : vp,
-            b"u_radius"           : 0.3  } )
+            b"u_radius"           : 0.3 } )
                
         # draw screen sapce
-        quadVAO.Draw()
+        quadVAO.DrawArray( GL_TRIANGLE_STRIP, 0, 4 )
+        #quadVAO.Draw()
 
 
         ##########
@@ -113,10 +114,11 @@ class MyWindow(window.CameraWindow):
             b"u_samplerColor" : texUnitAttach0,
             b"u_samplerSSAO"  : texUnitSSAO,
             b"u_viewportsize" : vp,
-            b"u_color_mix"    : 0.5  } )
+            b"u_color_mix"    : 0.2  } )
                
         # draw screen sapce
-        quadVAO.Draw()
+        quadVAO.DrawArray( GL_TRIANGLE_STRIP, 0, 4 )
+        #quadVAO.Draw()
        
 
 def AddToBuffer( buffer, data, count=1 ): 
@@ -125,7 +127,7 @@ def AddToBuffer( buffer, data, count=1 ):
 
 
 # create window
-vp = [800, 600]
+vp = (800, 600)
 wnd = MyWindow( vp[0], vp[1], True )
 
 # SSAO noise
@@ -155,8 +157,32 @@ glActiveTexture( GL_TEXTURE0 )
 fbSSAO = framebuffer.FrameBuffer( vp[0], vp[1], [ (GL_RGBA8, GL_RGBA) ], True, False, True )
 fbBlur = framebuffer.FrameBuffer( vp[0], vp[1], [ (GL_RGBA8, GL_RGBA) ], False )
 
+# create stages
+renderProcess = framebuffer.RenderProcess()
+
+depth_id = 0
+color_id = 1
+ssao_id  = 2
+
+renderProcess.SpecifyBuffers( {
+    depth_id : ( framebuffer.BufferType.DEPTH,  framebuffer.BufferDataType.DEPTH32, [1],          1 ),
+    color_id : ( framebuffer.BufferType.COLOR4, framebuffer.BufferDataType.UINT8,   [0, 0, 0, 0], 1 ),
+    ssao_id  : ( framebuffer.BufferType.COLOR1, framebuffer.BufferDataType.UINT8,   [0],          1 )
+} )
+
+renderProcess.SpecifyStages( {
+    "geometry" : ( [],                  [depth_id, color_id], [depth_id, color_id], framebuffer.DepthTest.LESS, framebuffer.Blending.OVERWRITE ),
+    "ssao"     : ( [depth_id],          [ssao_id],            [ssao_id],            framebuffer.DepthTest.OFF,  framebuffer.Blending.OVERWRITE ),
+    "blur"     : ( [color_id, ssao_id], [],                   [],                   framebuffer.DepthTest.OFF,  framebuffer.Blending.OVERWRITE ),
+} )
+
+renderProcess.Create( vp )
+
 # define screenspace quad vertex array opject
-quadVAO = vertex.VAObject( [ (2, [ -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0 ]) ], [ 0, 1, 2, 0, 2, 3 ] )
+quadVAO = vertex.DrawBuffer()
+quadVAO.DefineVAO(
+    [ -1, 1,    0, 0, 1,    0, 2, vertex.TYPE_float32, 0 ],
+    [ [ -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0, 1.0 ] ], [] )
 
 # define cube vertex array object
 cubePts = [

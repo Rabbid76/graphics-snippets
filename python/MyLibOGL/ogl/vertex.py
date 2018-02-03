@@ -406,4 +406,10 @@ class DrawBuffer:
         glDrawElements( type, self.__currNoElems , GL_UNSIGNED_INT, None )
         self.UnbindVAO()
 
+    # draw all elements of the current vertex array object
+    def DrawArray(self, type, start, count):
+        self.BindVAO()
+        glDrawArrays( type, start, count )
+        self.UnbindVAO()
+
 
