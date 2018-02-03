@@ -7,10 +7,10 @@ in TVertexData
     vec2 pos;
 } inData;
 
-uniform sampler2D u_samplerDepth;
-uniform sampler2D u_samplerSSAONoise;
-uniform vec2      u_viewportsize;
-uniform float     u_radius;
+layout (binding = 1) uniform sampler2D u_samplerSSAONoise;
+layout (binding = 2) uniform sampler2D u_samplerDepth;
+uniform vec2  u_viewportsize;
+uniform float u_radius;
 
 float Depth( in sampler2D depthSampler, in vec2 texC )
 {

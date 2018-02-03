@@ -84,14 +84,11 @@ class MyWindow(window.CameraWindow):
         fbSSAO.UnBind()
         fbBlur.Bind()
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT )
-        texUnitDepth   = texUnitSSAONoise+1
-        fbSSAO.BindTextures( [texUnitDepth] )
+        fbSSAO.BindTextures( [texUnitSSAONoise+1] )
         progSSAO.Use()
         progSSAO.SetUniforms( {
-            b"u_samplerDepth"     : texUnitDepth,
-            b"u_samplerSSAONoise" : texUnitSSAONoise,
-            b"u_viewportsize"     : vp,
-            b"u_radius"           : 0.3 } )
+            b"u_viewportsize" : vp,
+            b"u_radius"       : 0.3 } )
                
         # draw screen sapce
         quadVAO.DrawArray( GL_TRIANGLE_STRIP, 0, 4 )
@@ -104,15 +101,10 @@ class MyWindow(window.CameraWindow):
 
         fbBlur.UnBind()
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT )
-        texUnitDepth = texUnitSSAONoise+1
-        texUnitAttach0 = texUnitSSAONoise+2
-        texUnitSSAO   = texUnitSSAONoise+3
-        fbSSAO.BindTextures( [texUnitDepth, texUnitAttach0] )
-        fbBlur.BindTextures( [texUnitSSAO] )
+        fbSSAO.BindTextures( [texUnitSSAONoise+1, texUnitSSAONoise+2] )
+        fbBlur.BindTextures( [texUnitSSAONoise+3] )
         progBlur.Use()
         progBlur.SetUniforms( {
-            b"u_samplerColor" : texUnitAttach0,
-            b"u_samplerSSAO"  : texUnitSSAO,
             b"u_viewportsize" : vp,
             b"u_color_mix"    : 0.2  } )
                
@@ -171,9 +163,9 @@ renderProcess.SpecifyBuffers( {
 } )
 
 renderProcess.SpecifyStages( {
-    "geometry" : ( [],                  [depth_id, color_id], [depth_id, color_id], framebuffer.DepthTest.LESS, framebuffer.Blending.OVERWRITE ),
-    "ssao"     : ( [depth_id],          [ssao_id],            [ssao_id],            framebuffer.DepthTest.OFF,  framebuffer.Blending.OVERWRITE ),
-    "blur"     : ( [color_id, ssao_id], [],                   [],                   framebuffer.DepthTest.OFF,  framebuffer.Blending.OVERWRITE ),
+    "geometry" : ( [],                  { depth_id : -1, color_id : 0}, [depth_id, color_id], framebuffer.DepthTest.LESS, framebuffer.Blending.OVERWRITE ),
+    "ssao"     : ( [depth_id],          { ssao_id : 0 },                [ssao_id],            framebuffer.DepthTest.OFF,  framebuffer.Blending.OVERWRITE ),
+    "blur"     : ( [color_id, ssao_id], {},                             [],                   framebuffer.DepthTest.OFF,  framebuffer.Blending.OVERWRITE ),
 } )
 
 renderProcess.Create( vp )

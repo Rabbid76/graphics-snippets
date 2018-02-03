@@ -8,8 +8,8 @@ in TVertexData
 } inData;
 
 
-uniform sampler2D u_samplerColor;
-uniform sampler2D u_samplerSSAO;
+layout (binding = 3) uniform sampler2D u_samplerColor;
+layout (binding = 4) uniform sampler2D u_samplerSSAO;
 uniform vec2      u_viewportsize;
 uniform float     u_color_mix;
 
