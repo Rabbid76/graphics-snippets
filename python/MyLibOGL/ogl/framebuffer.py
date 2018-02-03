@@ -182,7 +182,12 @@ class RenderProcess:
         self.__buffers = {}
         self.__stages = {}
         self.__buffer_scale = {}
+        self.__buffer_tex = {}
         self.__stage_scale = {}
+        self.__stage_size = {}
+        self.__stage_fb = {}
+        self.__stage_depth_id = {}
+        self.__stage_color_ids = {}
 
     # specify rendering process buffers
     def SpecifyBuffers(self, buffers):
@@ -287,8 +292,8 @@ class RenderProcess:
         elif buffer_type == BufferType.DEPTH: 
 
             if   data_type == BufferDataType.DEFAULT: return GL_DEPTH_COMPONENT
-            elif data_type == BufferDataType.DEPTH24: return GL_DEPTH_COMPONENT 
-            elif data_type == BufferDataType.DEPTH32: return GL_DEPTH_COMPONENT
+            elif data_type == BufferDataType.DEPTH24: return GL_DEPTH_COMPONENT24 
+            elif data_type == BufferDataType.DEPTH32: return GL_DEPTH_COMPONENT32
 
         warnings.warn( "not yet implemented", UserWarning )
         return 0
@@ -327,9 +332,10 @@ class RenderProcess:
         if self.__complete and size == self.__size:
             return True
 
-        # set stage viewport size
+        # set viewport size
         self.__size = size
 
+        # create buffer textures
         for buffer_id in self.__buffers: 
             type, format, clear_color, scale = self.__buffers[buffer_id]
 
@@ -347,6 +353,53 @@ class RenderProcess:
             glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST )
             glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE )
             glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE )
+            self.__buffer_tex[buffer_id] = texObj 
+
+        # create stage frambuffers
+        for stage_id in self.__stages:
+            stage = self.__stages[stage_id]
+            sources, targets, clear_targets, depth_test, blending = stage
+
+            # set size
+            cx = self.__size[0] * self.__stage_scale[stage_id]
+            cy = self.__size[1] * self.__stage_scale[stage_id]
+            self.__stage_size[stage_id] = (cx, cy)
+
+            # get depth buffer id
+            self.__stage_depth_id[stage_id] = -1
+            for buffer_id in targets:
+                buffer = self.__buffers[buffer_id]
+                type, format, clear_color, scale = buffer
+                if type == BufferType.DEPTH:
+                    self.__stage_depth_id[stage_id] = buffer_id
+
+            # create frame buffer
+            self.__stage_fb[stage_id] = glGenFramebuffers(1)
+            glBindFramebuffer( GL_FRAMEBUFFER, self.__stage_fb[stage_id] )
+
+            # add depth buffer attachment
+            depth_id = self.__stage_depth_id[stage_id]
+            if depth_test == DepthTest.OFF:
+                self.__stage_depth_id[stage_id] = -1
+            else:
+                if depth_id != -1:
+                    glFramebufferTexture2D( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, self.__buffer_tex[depth_id], 0 )
+                else:
+                    renderbuffer = glGenRenderbuffers(1)
+                    glBindRenderbuffer( GL_RENDERBUFFER, renderbuffer )
+                    glRenderbufferStorage( GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, cx, cy )
+                    glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderbuffer )
+
+            # add color attachments
+            self.__stage_color_ids[stage_id] = []
+            for i in range(len(targets)):
+                buffer_id = targets[i]
+                buffer = self.__buffers[buffer_id]
+                type, format, clear_color, scale = buffer
+
+                if buffer_id in self.__buffer_tex:
+                    glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, self.__buffer_tex[buffer_id], 0 )
+                    self.__buffer_tex[buffer_id]
         
         # $$$ TODO
         return self.__complete 
