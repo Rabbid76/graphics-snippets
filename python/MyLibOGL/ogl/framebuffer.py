@@ -235,11 +235,11 @@ class RenderProcess:
                 if ( format == BufferDataType.DEPTH24 or
                      format == BufferDataType.DEPTH32 or
                      format == BufferDataType.DEPTH_STENCIL_24_8 ):
-                    warnings.warn( "illegal internal format", RuntimeWarning )
+                    warnings.warn( "illegal internal format", UserWarning )
                     format = BufferDataType.DEFAULT
             elif type == BufferType.DEPTH:
                 if (format != BufferDataType.DEPTH24 and format != BufferDataType.DEPTH32 and format != BufferDataType.DEFAULT ):
-                    warnings.warn( "illegal internal format", RuntimeWarning )
+                    warnings.warn( "illegal internal format", UserWarning )
                     format = BufferDataType.DEFAULT 
             else:
                 warnings.warn( "not yet implemented", UserWarning )
@@ -334,6 +334,7 @@ class RenderProcess:
         self.__size = size
 
         # create buffer textures
+        glActiveTexture( GL_TEXTURE0 )
         for buffer_id in self.__buffers: 
             type, format, clear_color, scale = self.__buffers[buffer_id]
 
@@ -344,7 +345,6 @@ class RenderProcess:
             bufferType     = self.Type( type, format ) 
 
             texObj = glGenTextures( 1 )
-            glActiveTexture( GL_TEXTURE0 )
             glBindTexture( GL_TEXTURE_2D, texObj )
             glTexImage2D( GL_TEXTURE_2D, 0, internalFormat, cx, cy, 0, bufferFormat, bufferType, None )
             glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST )
@@ -352,8 +352,10 @@ class RenderProcess:
             glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE )
             glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE )
             self.__buffer_tex[buffer_id] = texObj 
+        glBindTexture( GL_TEXTURE_2D, 0 )
 
         # create stage frambuffers
+        self.__complete = True
         for stage_id in self.__stages:
             stage = self.__stages[stage_id]
             sources, targets, clear_targets, depth_test, blending = stage
@@ -364,8 +366,9 @@ class RenderProcess:
             self.__stage_size[stage_id] = (cx, cy)
 
             # create frame buffer
-            self.__stage_fb[stage_id] = glGenFramebuffers(1)
-            glBindFramebuffer( GL_FRAMEBUFFER, self.__stage_fb[stage_id] )
+            if len(targets) > 0:
+                self.__stage_fb[stage_id] = glGenFramebuffers(1)
+                glBindFramebuffer( GL_FRAMEBUFFER, self.__stage_fb[stage_id] )
 
             # add color attachments
             for buffer_id in targets:
@@ -387,8 +390,74 @@ class RenderProcess:
                     glBindRenderbuffer( GL_RENDERBUFFER, renderbuffer )
                     glRenderbufferStorage( GL_RENDERBUFFER, internalFormat, cx, cy )
                     glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + targets[buffer_id], GL_RENDERBUFFER, renderbuffer )
+
+            glBindRenderbuffer( GL_RENDERBUFFER, 0 )            
+            frameBufferStatus = glCheckFramebufferStatus( GL_FRAMEBUFFER )
+            if frameBufferStatus != GL_FRAMEBUFFER_COMPLETE:
+                warnings.warn( "frame buffer incomplete", RuntimeWarning )
+                self.__complete = False
+        glBindFramebuffer( GL_FRAMEBUFFER, 0 ) 
              
-        
-        # $$$ TODO
         return self.__complete 
+
+    def PrepareStage(self, stage_id):
+
+        stage = self.__stages[stage_id]
+        sources, targets, clear_targets, depth_test, blending = stage
+
+        # viewport
+        size = self.__stage_size[stage_id]
+        glViewport(0, 0, size(0), size(1))
+
+        # depth test
+        if depth_test == DepthTest.OFF:
+            glDisable( GL_DEPTH_TEST )
+        elif depth_test == DepthTest.LESS:
+            glEnable( GL_DEPTH_TEST )
+            glDepthFunc( GL_LESS )
+        elif depth_test == DepthTest.LESS_OR_EQUAL:
+            glEnable( GL_DEPTH_TEST )
+            glDepthFunc( GL_LEQUAL )
+
+        # blendig
+        # TODO $$$
+
+        if len(targets) > 0:
+            glBindFramebuffer( GL_FRAMEBUFFER, 0 )
+            glClear( GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT )
+            return
+
+        # bind frambuffer
+        glBindFramebuffer( GL_FRAMEBUFFER, self.__stage_fb[stage_id] )
+
+        # clear framebuffer
+        # $$$ TODO individual color clear 
+        clearDepth = False
+        clearColor = False
+        for buffer_id in targets:
+            if targets[buffer_id] == - 1:
+                if depth_test != DepthTest.OFF:
+                    clearDepth = True
+            else:
+                clearColor = True
+        if clearDepth and clearColor:
+            glClear( GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT )
+        elif clearColor:
+            glClear( GL_COLOR_BUFFER_BIT )
+        elif clearDepth:
+            glClear( GL_DEPTH_BUFFER_BIT )
+
+        # bind source textures
+        for buffer_id in sources:
+            if buffer_id in self.__buffer_tex[buffer_id]:
+                glActiveTexture( GL_TEXTURE0 + sources[buffer_id] )
+                glBindTexture( GL_TEXTURE_2D, self.__buffer_tex[buffer_id] )
+        glActiveTexture( GL_TEXTURE0 )
+
+
+    def EndStage(self, stage_id):
+
+        # restore viewport
+        if self.__stage_size[stage_id] != self.__size: 
+            glViewport(0, 0, self.__size(0), self.__size(1))
 

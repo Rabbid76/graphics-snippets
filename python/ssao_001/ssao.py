@@ -159,13 +159,13 @@ ssao_id  = 2
 renderProcess.SpecifyBuffers( {
     depth_id : ( framebuffer.BufferType.DEPTH,  framebuffer.BufferDataType.DEPTH32, [1],          1 ),
     color_id : ( framebuffer.BufferType.COLOR4, framebuffer.BufferDataType.UINT8,   [0, 0, 0, 0], 1 ),
-    ssao_id  : ( framebuffer.BufferType.COLOR1, framebuffer.BufferDataType.UINT8,   [0],          1 )
+    ssao_id  : ( framebuffer.BufferType.COLOR1, framebuffer.BufferDataType.UINT8,   [0, 0, 0, 0], 1 )
 } )
 
 renderProcess.SpecifyStages( {
-    "geometry" : ( [],                  { depth_id : -1, color_id : 0}, [depth_id, color_id], framebuffer.DepthTest.LESS, framebuffer.Blending.OVERWRITE ),
-    "ssao"     : ( [depth_id],          { ssao_id : 0 },                [ssao_id],            framebuffer.DepthTest.OFF,  framebuffer.Blending.OVERWRITE ),
-    "blur"     : ( [color_id, ssao_id], {},                             [],                   framebuffer.DepthTest.OFF,  framebuffer.Blending.OVERWRITE ),
+    "geometry" : ( {},                            { depth_id : -1, color_id : 0}, [depth_id, color_id], framebuffer.DepthTest.LESS, framebuffer.Blending.OVERWRITE ),
+    "ssao"     : ( { depth_id : 2 },              { ssao_id : 0 },                [ssao_id],            framebuffer.DepthTest.OFF,  framebuffer.Blending.OVERWRITE ),
+    "blur"     : ( { color_id : 3, ssao_id : 4 }, {},                             [],                   framebuffer.DepthTest.OFF,  framebuffer.Blending.OVERWRITE ),
 } )
 
 renderProcess.Create( vp )
