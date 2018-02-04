@@ -218,7 +218,7 @@ class RenderProcess:
             for buffer_id in targets:
                 buffer = self.__buffers[buffer_id]
                 type, format, clear_color, scale = buffer
-                min_scale = max([min_scale, scale])
+                min_scale = min([min_scale, scale])
                 max_scale = max([max_scale, scale])
             self.__stage_scale[stage_id] = min_scale if min_scale == max_scale else 1
             for buffer_id in targets: 
@@ -336,22 +336,23 @@ class RenderProcess:
         # create buffer textures
         glActiveTexture( GL_TEXTURE0 )
         for buffer_id in self.__buffers: 
-            type, format, clear_color, scale = self.__buffers[buffer_id]
+            if buffer_id in self.__buffer_scale:
+                type, format, clear_color, scale = self.__buffers[buffer_id]
 
-            cx             = self.__size[0] * self.__buffer_scale[buffer_id]
-            cy             = self.__size[1] * self.__buffer_scale[buffer_id]
-            internalFormat = self.InternalFormat( type, format ) 
-            bufferFormat   = self.Format( type, format ) 
-            bufferType     = self.Type( type, format ) 
+                cx             = self.__size[0] * self.__buffer_scale[buffer_id]
+                cy             = self.__size[1] * self.__buffer_scale[buffer_id]
+                internalFormat = self.InternalFormat( type, format ) 
+                bufferFormat   = self.Format( type, format ) 
+                bufferType     = self.Type( type, format ) 
 
-            texObj = glGenTextures( 1 )
-            glBindTexture( GL_TEXTURE_2D, texObj )
-            glTexImage2D( GL_TEXTURE_2D, 0, internalFormat, cx, cy, 0, bufferFormat, bufferType, None )
-            glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST )
-            glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST )
-            glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE )
-            glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE )
-            self.__buffer_tex[buffer_id] = texObj 
+                texObj = glGenTextures( 1 )
+                glBindTexture( GL_TEXTURE_2D, texObj )
+                glTexImage2D( GL_TEXTURE_2D, 0, internalFormat, cx, cy, 0, bufferFormat, bufferType, None )
+                glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST )
+                glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST )
+                glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE )
+                glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE )
+                self.__buffer_tex[buffer_id] = texObj 
         glBindTexture( GL_TEXTURE_2D, 0 )
 
         # create stage frambuffers
@@ -409,7 +410,7 @@ class RenderProcess:
 
         # viewport
         size = self.__stage_size[stage_id]
-        glViewport(0, 0, size[0], size[1])
+        glViewport(0, 0, int(math.floor(size[0])), int(math.floor(size[1])))
 
         # depth test
         if depth_test == DepthTest.OFF:
@@ -437,8 +438,24 @@ class RenderProcess:
             glClear( GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT )
             return
 
+        # evaluate framebuffers
+        clearDepth = False
+        clearColor = False
+        attachments = []
+        for buffer_id in targets:
+            if targets[buffer_id] == - 1:
+                if depth_test != DepthTest.OFF:
+                    clearDepth = True
+            else:
+                clearColor = True 
+                attachments.append( GL_COLOR_ATTACHMENT0 + targets[buffer_id] )   
+
         # bind frambuffer
         glBindFramebuffer( GL_FRAMEBUFFER, self.__stage_fb[stage_id] )
+        if not attachments:
+            glDrawBuffer( GL_NONE )
+        else:
+            glDrawBuffers( len(attachments), attachments )
 
         # clear framebuffer
         # $$$ TODO individual color clear 

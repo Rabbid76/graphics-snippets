@@ -82,8 +82,12 @@ class MyWindow(window.CameraWindow):
         renderProcess.PrepareStage( "ssao" )
         progSSAO.Use()
         progSSAO.SetUniforms( {
-            b"u_viewportsize" : vp,
-            b"u_radius"       : 0.3 } )
+            b"u_viewportsize"    : vp,
+            b"u_ssao_scale"      : ssao_scale,
+            b"u_depthrange"      : [self._camera.near, self._camera.far],
+            b"u_projectionMat44" : self.Perspective(),
+            b"u_kernel_size"     : kernelSize,
+            b"u_radius"          : 1.0 } )
                
         # draw screen sapce
         quadVAO.DrawArray( GL_TRIANGLE_STRIP, 0, 4 )
@@ -98,7 +102,9 @@ class MyWindow(window.CameraWindow):
         progBlur.Use()
         progBlur.SetUniforms( {
             b"u_viewportsize" : vp,
-            b"u_color_mix"    : 0.2  } )
+            b"u_ssao_scale"   : ssao_scale,
+            b"u_color_mix"    : 0.5,
+            b"u_blur_mix"     : 1.0  } )
                
         # draw screen sapce
         quadVAO.DrawArray( GL_TRIANGLE_STRIP, 0, 4 )
@@ -115,7 +121,30 @@ vp = (800, 600)
 wnd = MyWindow( vp[0], vp[1], True )
 
 # SSAO noise
-texUnitSSAONoise = 4
+texUnitSSAOKernel = 5
+kernelSize = 48
+kernel = []
+for i in range(kernelSize):
+    x, y, z = random.uniform(-1, 1), random.uniform(-1, 1), random.uniform(-1, 1)
+    l = math.sqrt(x*x + y*y + z*z) 
+    w = i / kernelSize
+    w = 0.1 + 0.9 * w * w
+    kernel.append( 255 * (x/l+1)/2 )
+    kernel.append( 255 * (y/l+1)/2 )
+    kernel.append( 255 * (z/l+1)/2 )
+    kernel.append( 255 * w )
+kerneldata = numpy.matrix(kernel, dtype='uint8')
+
+glActiveTexture( GL_TEXTURE0+texUnitSSAOKernel )
+noiseTexture = glGenTextures( 1  )
+glBindTexture( GL_TEXTURE_2D, noiseTexture )
+glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, kernelSize, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, kerneldata )
+glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST )
+glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST )
+glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT )
+glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT )
+
+texUnitSSAONoise = 6
 noiseSize = 4
 noise = []
 for i in range(noiseSize*noiseSize):
@@ -135,6 +164,7 @@ glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST )
 glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST )
 glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT )
 glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT )
+
 glActiveTexture( GL_TEXTURE0 )
 
 # create stages
@@ -142,18 +172,21 @@ renderProcess = framebuffer.RenderProcess()
 
 depth_id = 0
 color_id = 1
-ssao_id  = 2
+nv_id    = 2
+ssao_id  = 3
+ssao_scale = 1.0
 
 renderProcess.SpecifyBuffers( {
     depth_id : ( framebuffer.BufferType.DEPTH,  framebuffer.BufferDataType.DEPTH32, [1],          1 ),
     color_id : ( framebuffer.BufferType.COLOR4, framebuffer.BufferDataType.UINT8,   [0, 0, 0, 0], 1 ),
-    ssao_id  : ( framebuffer.BufferType.COLOR1, framebuffer.BufferDataType.UINT8,   [0, 0, 0, 0], 1 )
+    nv_id    : ( framebuffer.BufferType.COLOR3, framebuffer.BufferDataType.SNORM16, [0, 0, 0, 0], 1 ),
+    ssao_id  : ( framebuffer.BufferType.COLOR1, framebuffer.BufferDataType.UINT8,   [0, 0, 0, 0], ssao_scale )
 } )
 
 renderProcess.SpecifyStages( {
-    "geometry" : ( {},                            { depth_id : -1, color_id : 0}, [depth_id, color_id], framebuffer.DepthTest.LESS, framebuffer.Blending.OVERWRITE ),
-    "ssao"     : ( { depth_id : 1 },              { ssao_id : 0 },                [ssao_id],            framebuffer.DepthTest.OFF,  framebuffer.Blending.OVERWRITE ),
-    "blur"     : ( { color_id : 2, ssao_id : 3 }, {},                             [],                   framebuffer.DepthTest.OFF,  framebuffer.Blending.OVERWRITE ),
+    "geometry" : ( {},                            { depth_id : -1, color_id : 0, nv_id : 1 }, [depth_id, color_id, nv_id], framebuffer.DepthTest.LESS, framebuffer.Blending.OVERWRITE ),
+    "ssao"     : ( { depth_id : 1, nv_id : 3 },   { ssao_id : 0 },                            [ssao_id],                   framebuffer.DepthTest.OFF,  framebuffer.Blending.OVERWRITE ),
+    "blur"     : ( { color_id : 2, ssao_id : 4 }, {},                                         [],                          framebuffer.DepthTest.OFF,  framebuffer.Blending.OVERWRITE ),
 } )
 
 renderProcess.Create( vp )

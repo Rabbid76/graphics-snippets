@@ -1,20 +1,20 @@
 #version 450
 
-out vec4 fragColor;
+out float outSSAO;
 
 in TVertexData
 {
     vec2 pos;
 } inData;
 
-layout (binding = 1) uniform sampler2D u_samplerSSAONoise;
-layout (binding = 2) uniform sampler2D u_samplerDepth;
+layout (binding = 1) uniform sampler2D u_samplerDepth;
+layout (binding = 4) uniform sampler2D u_samplerSSAONoise;
 uniform vec2  u_viewportsize;
 uniform float u_radius;
 
 float Depth( in sampler2D depthSampler, in vec2 texC )
 {
-    float depthVal = texture2D( depthSampler, texC.st ).x;  
+    float depthVal = texture( depthSampler, texC.st ).x;  
     return depthVal;
 }
 
@@ -50,7 +50,7 @@ void main()
     if (depth > 0.0)
     {
         vec3 sampleSphere[16];
-        vec3 random = texture2D( u_samplerSSAONoise, uvVarying.st * u_viewportsize.xy / 4.0 ).xyz;
+        vec3 random = texture( u_samplerSSAONoise, uvVarying.st * u_viewportsize.xy / 4.0 ).xyz;
             
         vec3 position = vec3(uvVarying, depth);
         vec3 normal = GetNormalFromDepth(depth, uvVarying);
@@ -93,5 +93,6 @@ void main()
         ambientOcclusion = clamp(ao + ssaoBase, 0.0, 1.0);
         alpha = 1.0;
     }
-    fragColor = vec4(vec3(ambientOcclusion), alpha);
+    //outSSAO = vec4(vec3(ambientOcclusion), alpha);
+    outSSAO = ambientOcclusion;
 }

@@ -143,7 +143,7 @@ void main()
         if (fragDepth > 0.0)
         {
             vec2 noiseScale   = u_viewportsize.xy / 4.0;
-            vec4 randomVal    = texture2D( u_ssaoNoiseSampler, vec2( texC.s * noiseScale.x - floor( texC.s * noiseScale.x ), texC.t * noiseScale.y - floor( texC.t * noiseScale.y ) ) );
+            vec4 randomVal    = texture2D( u_ssaoNoiseSampler, texC.st * noiseScale );
             vec3 randomVec    = randomVal.xyz * 2.0 - 1.0;
             vec3 tangent      = normalize( randomVec - fragNV * dot( randomVec, fragNV ) );
             mat3 TBN          = mat3( tangent, cross( fragNV, tangent ), fragNV );
@@ -397,8 +397,8 @@ function generateSSAOTextures( kernelSize, noiseSize, kernelTexUnit, noiseTexUni
     gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, kernelSize, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, ssaoObject.kernel );
     gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST );
     gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST );
-    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE );
-  	gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE );
+    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT );
+  	gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT );
     
     gl.activeTexture( gl.TEXTURE0+noiseTexUnit );
     ssaoObject.noiseTexUnit = noiseTexUnit;
@@ -407,8 +407,8 @@ function generateSSAOTextures( kernelSize, noiseSize, kernelTexUnit, noiseTexUni
     gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, noiseSize, noiseSize, 0, gl.RGBA, gl.UNSIGNED_BYTE, ssaoObject.noise );
     gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST );
     gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST );
-    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE );
-  	gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE );
+    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT );
+  	gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT );
 
     gl.activeTexture( gl.TEXTURE0 );
     return ssaoObject;
