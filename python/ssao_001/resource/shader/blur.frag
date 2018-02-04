@@ -16,7 +16,7 @@ uniform float     u_color_mix;
 float SSAO44( in sampler2D ssaoSampler, in vec2 texC )
 {
     vec2 texOffs = 1.0 / u_viewportsize;
-    float ssao = texture( ssaoSampler, texC.st ).x;  
+    float ssao = 0.0;  
     for ( int inxX = -1; inxX < 3; ++ inxX )
     {
         for ( int inxY = -1; inxY < 3; ++ inxY )
