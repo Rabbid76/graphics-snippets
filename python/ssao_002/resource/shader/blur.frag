@@ -22,7 +22,7 @@ float SSAO44( in sampler2D ssaoSampler, in vec2 texC )
     for ( int inxX = -1; inxX < 3; ++ inxX )
     {
         for ( int inxY = -1; inxY < 3; ++ inxY )
-            ssao += texture( ssaoSampler, texC.st + texOffs * vec2( float(inxX), float(inxY) ) ).x;
+            ssao += texture( ssaoSampler, texC.st + texOffs * vec2(float(inxX), float(inxY)) ).x;
     }
     return ssao / 16.0;
 }
@@ -30,6 +30,7 @@ float SSAO44( in sampler2D ssaoSampler, in vec2 texC )
 void main()
 {
     vec2  texC   = inData.pos.st * 0.5 + 0.5;
+    //vec2  texC   = gl_FragCoord.xy / u_viewportsize.xy;
     vec4  texCol = texture( u_samplerColor, texC );
     float ssao   = mix( texture( u_samplerSSAO, texC.st ).x, SSAO44( u_samplerSSAO, texC ), u_blur_mix );
     vec3  color  = mix( vec3(1.0), texCol.rgb, u_color_mix );

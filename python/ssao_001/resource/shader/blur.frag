@@ -20,7 +20,7 @@ float SSAO44( in sampler2D ssaoSampler, in vec2 texC )
     for ( int inxX = -1; inxX < 3; ++ inxX )
     {
         for ( int inxY = -1; inxY < 3; ++ inxY )
-            ssao += texture( ssaoSampler, texC.st + texOffs * vec2( float(inxX), float(inxY) ) ).x;
+            ssao += texture( ssaoSampler, texC.st + texOffs * vec2(float(inxX), float(inxY)) ).x;
     }
     return ssao / 16.0;
 }

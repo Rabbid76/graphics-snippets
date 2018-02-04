@@ -35,8 +35,8 @@ float DepthToZ( in float depth )
 
 vec3 GetNormalFromDepth( in float depth, in vec2 vUV )
 {    
-    vec2 offsetX = vec2(1.0/(u_ssao_scale*u_viewportsize.x), 0.0);
-    vec2 offsetY = vec2(0.0, 1.0/(u_ssao_scale*u_viewportsize.y));
+    vec2 offsetX = vec2(1.0/u_viewportsize.x, 0.0);
+    vec2 offsetY = vec2(0.0, 1.0/u_viewportsize.y);
     
     float depthOffsetX = Depth(u_samplerDepth, vUV + offsetX); // Horizontal neighbour
     float depthOffsetY = Depth(u_samplerDepth, vUV + offsetY); // Vertical neighbour
@@ -57,7 +57,8 @@ void main()
 
     float aspect    = u_viewportsize.x / u_viewportsize.y;
     vec2  texC      = inData.pos.st * 0.5 + 0.5;
-    vec2  offset    = 1.0 / (u_ssao_scale * u_viewportsize.xy);
+    //vec2  texC      = gl_FragCoord.xy / (u_ssao_scale * u_viewportsize.xy);
+    vec2  offset    = 1.0 / u_viewportsize.xy;
     float fragDepth = Depth( u_samplerDepth, texC );
     
     //vec3  fragNV    = GetNormalFromDepth( fragDepth, texC );
