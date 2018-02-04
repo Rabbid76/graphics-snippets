@@ -330,6 +330,16 @@ class RenderProcess:
         if self.__complete and size == self.__size:
             return True
 
+        # deprecated old objects
+        old_fbs = []
+        for stage_id in self.__stage_fb: old_fbs.append( self.__stage_fb[stage_id] )
+        if old_fbs:
+            glDeleteFramebuffers( len(old_fbs), old_fbs )
+        old_texs = []
+        for buffer_id in self.__buffer_tex: old_texs.append( self.__buffer_tex[buffer_id] )
+        if old_texs:
+            glDeleteTextures( len(old_texs), old_texs )
+
         # set viewport size
         self.__size = size
 

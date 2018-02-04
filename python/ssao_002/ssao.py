@@ -49,6 +49,9 @@ class MyWindow(window.CameraWindow):
         # set up view matrix
         viewMat = self.LookAt()
 
+        vp = self._camera.vp
+        renderProcess.Create( vp )
+
         ##########
         # 1. stage
         ##########
@@ -228,8 +231,8 @@ cubeVAO.DefineVAO( [
 
 
 # define torus vertex array opject
-circum_size = 32
-tube_size = 32
+circum_size = 64
+tube_size = 128
 rad_circum = 1.5
 rad_tube = 0.5
 torus_pts = []
