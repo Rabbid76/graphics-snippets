@@ -365,37 +365,39 @@ class RenderProcess:
             cy = self.__size[1] * self.__stage_scale[stage_id]
             self.__stage_size[stage_id] = (cx, cy)
 
-            # create frame buffer
-            if len(targets) > 0:
+            if targets: # test if targets is notempty
+                            
+                # create frame buffer
                 self.__stage_fb[stage_id] = glGenFramebuffers(1)
                 glBindFramebuffer( GL_FRAMEBUFFER, self.__stage_fb[stage_id] )
 
-            # add color attachments
-            for buffer_id in targets:
-                if targets[buffer_id] == - 1:
-                    if depth_test != DepthTest.OFF:
-                        if buffer_id in self.__buffer_tex: 
-                            glFramebufferTexture2D( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, self.__buffer_tex[buffer_id], 0 )
-                        else:     
-                            renderbuffer = glGenRenderbuffers(1)
-                            glBindRenderbuffer( GL_RENDERBUFFER, renderbuffer )
-                            glRenderbufferStorage( GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, cx, cy )
-                            glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderbuffer )
-                elif buffer_id in self.__buffer_tex:
-                    glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + targets[buffer_id], GL_TEXTURE_2D, self.__buffer_tex[buffer_id], 0 )
-                else:
-                    type, format, clear_color, scale = self.__buffers[buffer_id]
-                    internalFormat = self.InternalFormat( type, format ) 
-                    renderbuffer = glGenRenderbuffers(1)
-                    glBindRenderbuffer( GL_RENDERBUFFER, renderbuffer )
-                    glRenderbufferStorage( GL_RENDERBUFFER, internalFormat, cx, cy )
-                    glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + targets[buffer_id], GL_RENDERBUFFER, renderbuffer )
+                # add color attachments
+                for buffer_id in targets:
+                    if targets[buffer_id] == - 1:
+                        if depth_test != DepthTest.OFF:
+                            if buffer_id in self.__buffer_tex: 
+                                glFramebufferTexture2D( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, self.__buffer_tex[buffer_id], 0 )
+                            else:     
+                                renderbuffer = glGenRenderbuffers(1)
+                                glBindRenderbuffer( GL_RENDERBUFFER, renderbuffer )
+                                glRenderbufferStorage( GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, cx, cy )
+                                glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderbuffer )
+                    elif buffer_id in self.__buffer_tex:
+                        glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + targets[buffer_id], GL_TEXTURE_2D, self.__buffer_tex[buffer_id], 0 )
+                    else:
+                        type, format, clear_color, scale = self.__buffers[buffer_id]
+                        internalFormat = self.InternalFormat( type, format ) 
+                        renderbuffer = glGenRenderbuffers(1)
+                        glBindRenderbuffer( GL_RENDERBUFFER, renderbuffer )
+                        glRenderbufferStorage( GL_RENDERBUFFER, internalFormat, cx, cy )
+                        glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + targets[buffer_id], GL_RENDERBUFFER, renderbuffer )
 
-            glBindRenderbuffer( GL_RENDERBUFFER, 0 )            
-            frameBufferStatus = glCheckFramebufferStatus( GL_FRAMEBUFFER )
-            if frameBufferStatus != GL_FRAMEBUFFER_COMPLETE:
-                warnings.warn( "frame buffer incomplete", RuntimeWarning )
-                self.__complete = False
+                glBindRenderbuffer( GL_RENDERBUFFER, 0 )            
+                frameBufferStatus = glCheckFramebufferStatus( GL_FRAMEBUFFER )
+                if frameBufferStatus != GL_FRAMEBUFFER_COMPLETE:
+                    warnings.warn( "frame buffer incomplete", RuntimeWarning )
+                    self.__complete = False
+
         glBindFramebuffer( GL_FRAMEBUFFER, 0 ) 
              
         return self.__complete 
@@ -407,7 +409,7 @@ class RenderProcess:
 
         # viewport
         size = self.__stage_size[stage_id]
-        glViewport(0, 0, size(0), size(1))
+        glViewport(0, 0, size[0], size[1])
 
         # depth test
         if depth_test == DepthTest.OFF:
@@ -422,7 +424,15 @@ class RenderProcess:
         # blendig
         # TODO $$$
 
-        if len(targets) > 0:
+        # bind source textures
+        for buffer_id in sources:
+            if buffer_id in self.__buffer_tex:
+                glActiveTexture( GL_TEXTURE0 + sources[buffer_id] )
+                glBindTexture( GL_TEXTURE_2D, self.__buffer_tex[buffer_id] )
+        glActiveTexture( GL_TEXTURE0 )
+
+        # handle default frame buffer
+        if not targets: # test if targets is empty
             glBindFramebuffer( GL_FRAMEBUFFER, 0 )
             glClear( GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT )
             return
@@ -446,13 +456,6 @@ class RenderProcess:
             glClear( GL_COLOR_BUFFER_BIT )
         elif clearDepth:
             glClear( GL_DEPTH_BUFFER_BIT )
-
-        # bind source textures
-        for buffer_id in sources:
-            if buffer_id in self.__buffer_tex[buffer_id]:
-                glActiveTexture( GL_TEXTURE0 + sources[buffer_id] )
-                glBindTexture( GL_TEXTURE_2D, self.__buffer_tex[buffer_id] )
-        glActiveTexture( GL_TEXTURE0 )
 
 
     def EndStage(self, stage_id):

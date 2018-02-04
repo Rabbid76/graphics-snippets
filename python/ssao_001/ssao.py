@@ -54,9 +54,7 @@ class MyWindow(window.CameraWindow):
         ##########
        
         # set up attributes and shader program
-        fbSSAO.Bind()
-        glEnable( GL_DEPTH_TEST )
-        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT )
+        renderProcess.PrepareStage( "geometry" )
         progDraw.Use()
         modelMat = mat.IdentityMat44()
         modelMat = mat.RotateX( modelMat, self.CalcAng( 13.0 ) )
@@ -81,10 +79,7 @@ class MyWindow(window.CameraWindow):
         # 2. stage
         ##########
 
-        fbSSAO.UnBind()
-        fbBlur.Bind()
-        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT )
-        fbSSAO.BindTextures( [texUnitSSAONoise+1] )
+        renderProcess.PrepareStage( "ssao" )
         progSSAO.Use()
         progSSAO.SetUniforms( {
             b"u_viewportsize" : vp,
@@ -99,10 +94,7 @@ class MyWindow(window.CameraWindow):
         # 3. stage
         ##########
 
-        fbBlur.UnBind()
-        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT )
-        fbSSAO.BindTextures( [texUnitSSAONoise+1, texUnitSSAONoise+2] )
-        fbBlur.BindTextures( [texUnitSSAONoise+3] )
+        renderProcess.PrepareStage( "blur" )
         progBlur.Use()
         progBlur.SetUniforms( {
             b"u_viewportsize" : vp,
@@ -144,10 +136,6 @@ glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST )
 glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT )
 glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT )
 glActiveTexture( GL_TEXTURE0 )
-
-# crate framebuffer
-fbSSAO = framebuffer.FrameBuffer( vp[0], vp[1], [ (GL_RGBA8, GL_RGBA) ], True, False, True )
-fbBlur = framebuffer.FrameBuffer( vp[0], vp[1], [ (GL_RGBA8, GL_RGBA) ], False )
 
 # create stages
 renderProcess = framebuffer.RenderProcess()
