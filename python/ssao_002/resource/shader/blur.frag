@@ -17,7 +17,7 @@ uniform float  u_blur_mix;
 
 float SSAO44( in sampler2D ssaoSampler, in vec2 texC )
 {
-    vec2 texOffs = u_ssao_scale / u_viewportsize;
+    vec2 texOffs = 1.0 / (u_ssao_scale * u_viewportsize);
     float ssao = texture( ssaoSampler, texC.st ).x;  
     for ( int inxX = -1; inxX < 3; ++ inxX )
     {
