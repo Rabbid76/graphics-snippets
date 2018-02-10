@@ -58,6 +58,18 @@ Addressing the columns of a `mat4 m44;` in GLSL:
     vec4 c2 = m44[2].xyzw;
     vec4 c3 = m44[3].xyzw;
 
+### Column-major order and Row-major order
+
+ See [The OpenGL Shading Language 4.6, 5.4.2 Vector and Matrix Constructors, page 101](https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.4.60.pdf):
+
+>To initialize a matrix by specifying vectors or scalars, the components are assigned to the matrix elements in **column-major order**.
+>
+    mat4(float, float, float, float,  // first column
+         float, float, float, float,  // second column
+         float, float, float, float,  // third column
+         float, float, float, float); // fourth column
+
+Note, in compare to that a mathematical matrix in general is represented in row-major order. If a matrix is set up in column-major, then the x, y, z components of an axis or of the translation are in direct succession in the memory. This is a big advantage when accessing the axis vectors or the translation vector of the matrix..
 
 <br/>
 See further:  
@@ -65,9 +77,9 @@ See further:
 - [GLSL Programming/Vector and Matrix Operations][1]
 - [Data Type (GLSL)][2]    
 - [GLSL 4x4 Matrix Fields][3]
-- [Matrix Translation in GLSL is infinitely stretched][9] 
-- [What is wrong with my matrix stack implementation (OpenGL ES 2.0)?][10]
+- [Matrix Translation in GLSL is infinitely stretched](https://stackoverflow.com/questions/46763234/matrix-translation-in-glsl-is-infinitely-stretched/46763693#46763693) 
 - [Does WebGL matrix (mat4) notation correspondes to mathematical matrix notation](https://stackoverflow.com/questions/48367593/does-webgl-matrix-mat4-notation-correspondes-to-mathematical-matrix-notation/48367941#48367941)
+- [Custom matrices & OpenGL shaders.](https://stackoverflow.com/questions/48375568/custom-matrices-opengl-shaders/48375786#48375786)
    
 
 <br/><hr/>
@@ -261,12 +273,10 @@ Note, the result of `rotate * translate` would be:
 <br/>
 See further:
 
-- [three.js object translate and rotate based on object self coordinate system or world coordinate system][11]
-- [Rotating a multipart object][12]
-- [OpenGL move object and keep transformation][13]
-- [Issues with Z-axis rotation matrix in glsl shader][14]
-- [three.js object translate and rotate based on object self coordinate system or world coordinate system][15]
-- [movement of rendered objects in opengl][16]
+- [three.js object translate and rotate based on object self coordinate system or world coordinate system](https://stackoverflow.com/questions/46700593/three-js-object-translate-and-rotate-based-on-object-self-coordinate-system-or-w/46701675#46701675)
+- [Rotating a multipart object](https://stackoverflow.com/questions/46720166/rotating-a-multipart-object/46722875#46722875)
+- [OpenGL move object and keep transformation](https://stackoverflow.com/questions/46641995/opengl-move-object-and-keep-transformation/46650784#46650784)
+- [Issues with Z-axis rotation matrix in glsl shader](https://stackoverflow.com/questions/6458051/issues-with-z-axis-rotation-matrix-in-glsl-shader/44986176#44986176)
 
 
 <br/><hr/>
@@ -316,7 +326,7 @@ If a matrix is defined like this:
         vec4( Zx  Zy  Zz, 0.0),
         vec4( Tx, Ty, Tz, 1.0) );
 
-And the matrix uniform `mat4 transformation` is set like this (see [`glUniformMatrix4fv`][18]):
+And the matrix uniform `mat4 transformation` is set like this (see [`glUniformMatrix4fv`][10]):
 
     glUniformMatrix4fv( .... , 1, GL_FALSE, &(m44[0][0] ); 
 
@@ -344,9 +354,8 @@ Then that the vector has to be multiplied to the matrix from the **left**:
 <br/>
 See further:
 
-- [What is the difference between the order in which a mat4x4 is multiplied with a vec4?][21]
-- [Translation on square made of triangles in opengl][22]
-- [Wikipedia transposed][26]
+- [What is the difference between the order in which a mat4x4 is multiplied with a vec4?](https://stackoverflow.com/questions/46888117/what-is-the-difference-between-the-order-in-which-a-mat4x4-is-multiplied-with-a/46888465#46888465)
+- [Wikipedia transposed][9]
 
 
 <br/><hr/>
@@ -390,9 +399,9 @@ See further:
 <br/>
 See further:
 
-- [Particles not oriented to the camera][31]
-- [OpenGL screen coordinates to world coordinates][32]
-- [Wikipedia, Invertible matrix][30]
+- [Wikipedia, Invertible matrix][11]
+- [Particles not oriented to the camera](https://stackoverflow.com/questions/45779313/particles-not-oriented-to-the-camera/45779696#45779696)
+- [OpenGL screen coordinates to world coordinates](https://stackoverflow.com/questions/44965202/opengl-screen-coordinates-to-world-coordinates/45000237#45000237)
 
 
 <br/><hr/>
@@ -412,9 +421,46 @@ e.g.
 <br/>
 See further:
 
-- [Transpose and Inverse][27]
-- [In which cases is the inverse matrix equal to the transpose?][29]
-- [Difference Between Transpose and Inverse Matrix][28]
+- [Transpose and Inverse](http://www.katjaas.nl/transpose/transpose.html)
+- [In which cases is the inverse matrix equal to the transpose?](https://math.stackexchange.com/questions/156735/in-which-cases-is-the-inverse-matrix-equal-to-the-transpose)
+- [Difference Between Transpose and Inverse Matrix](http://www.differencebetween.com/difference-between-transpose-and-vs-inverse-matrix/)
+
+
+<br/><hr/>
+## Normal vector transformation
+
+
+If a normal matrix has to be created form a 4*4 matrix, then the **inverse** **transposed** of the upper left 3*3, of the 4*4 matrix has to be calculated.
+
+   mat4 m44;
+   mat3 normal_m33 = transpose(inverse(mat3(m44)));
+
+   vec3 v;
+   vec3 v_ = normal_m33 * v; 
+
+See:
+
+- [Why is the transposed inverse of the model view matrix used to transform the normal vectors?](https://computergraphics.stackexchange.com/questions/1502/why-is-the-transposed-inverse-of-the-model-view-matrix-used-to-transform-the-nor)
+- [Why transforming normals with the transpose of the inverse of the modelview matrix?](https://stackoverflow.com/questions/13654401/why-transforming-normals-with-the-transpose-of-the-inverse-of-the-modelview-matr)
+
+<br/>
+Since, if a vector is multiplied to a matrix from the left, the result corresponds to to multiplying a column vector to the transposed matrix from the right, this can be simplified and the `transpose` operation can be avoided:
+
+    vec3 v_ = v * inverse(mat3(m44)); 
+
+<br/>
+If the 4*4 matrix `transformationMatrix` is a [Orthogonal matrix](https://en.wikipedia.org/wiki/Orthogonal_matrix), this means the X, Y, and Z axis are [Orthonormal](https://en.wikipedia.org/wiki/Orthonormality) (unit vectors and they are normal to each other), then it is sufficient to use the the upper left 3*3. In this case the inverse matrix is equal the transposed matrix.
+
+See [In which cases is the inverse matrix equal to the transpose?](https://math.stackexchange.com/questions/156735/in-which-cases-is-the-inverse-matrix-equal-to-the-transpose)
+
+    vec3 v_ = mat3(m44) * v; 
+
+
+<br/>
+See further:
+
+- [Normal Transformation](https://paroj.github.io/gltut/Illumination/Tut09%20Normal%20Transformation.html)
+- [Verification of transformation matrix usage in vertex shader. Correctness or normals transformation](https://stackoverflow.com/questions/48715242/verification-of-transformation-matrix-usage-in-vertex-shader-correctness-or-nor/48718732#48718732)
 
 
 <br/><hr/>
@@ -485,9 +531,9 @@ To generate a rotation only matrix you have to extract the normalized axis vecto
 <br/>
 See further:
 
-- [Drawing cubes with stacked matrix][19]
-- [OpenGL transforming objects with multiple rotations of Different axis][20]
-- [OpenGL: Moving around 3D Scene][33]
+- [Drawing cubes with stacked matrix](https://stackoverflow.com/questions/46238282/drawing-cubes-with-stacked-matrix)
+- [OpenGL transforming objects with multiple rotations of Different axis](https://stackoverflow.com/questions/45091505/opengl-transforming-objects-with-multiple-rotations-of-different-axis/45095288#45095288)
+- [opengl atan2f doesn't work](https://stackoverflow.com/questions/45234650/atan2f-doesnt-work/45239229#45239229)
 
 
 <br/><hr/>
@@ -500,10 +546,9 @@ First Person movment, the camera matrix has to be incrementally changed. This me
 <br/>
 See further:
 
-- [opengl atan2f doesn't work][23]
-- [OpenGL, First Person Camera Translation][24]
-- [how to modify the view of the camera with pygame and openGL][25]
-
+- [OpenGL, First Person Camera Translation](https://stackoverflow.com/questions/46508872/opengl-first-person-camera-translation/46509967#46509967)
+- [how to modify the view of the camera with pygame and openGL](https://stackoverflow.com/questions/47169618/how-to-modify-the-view-of-the-camera-with-pygame-and-opengl/47173089#47173089)
+- [OpenGL: Moving around 3D Scene](https://stackoverflow.com/questions/47614202/opengl-moving-around-3d-scene/47617063#47617063)
 
 
   [1]: https://en.wikibooks.org/wiki/GLSL_Programming/Vector_and_Matrix_Operations
@@ -514,29 +559,8 @@ See further:
   [6]: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glTranslate.xml
   [7]: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glRotate.xml
   [8]: https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glScale.xml
-  [9]: https://stackoverflow.com/questions/46763234/matrix-translation-in-glsl-is-infinitely-stretched/46763693#46763693
-  [10]: https://stackoverflow.com/questions/46732918/what-is-wrong-with-my-matrix-stack-implementation-opengl-es-2-0/46733128#46733128
-  [11]: https://stackoverflow.com/questions/46700593/three-js-object-translate-and-rotate-based-on-object-self-coordinate-system-or-w/46701675#46701675
-  [12]: https://stackoverflow.com/questions/46720166/rotating-a-multipart-object/46722875#46722875
-  [13]: https://stackoverflow.com/questions/46641995/opengl-move-object-and-keep-transformation/46650784#46650784
-  [14]: https://stackoverflow.com/questions/6458051/issues-with-z-axis-rotation-matrix-in-glsl-shader/44986176#44986176
-  [15]: https://stackoverflow.com/questions/46700593/three-js-object-translate-and-rotate-based-on-object-self-coordinate-system-or-w/46701675#46701675
-  [16]: https://stackoverflow.com/questions/46634046/movement-of-rendered-objects-in-opengl/46634442#46634442
-  [17]: https://glm.g-truc.net/0.9.8/api/a00169.html#gaee134ab77c6c5548a6ebf4e8e476c6ed
-  [18]: https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glUniform.xhtml
-  [19]: https://stackoverflow.com/questions/46238282/drawing-cubes-with-stacked-matrix
-  [20]: https://stackoverflow.com/questions/45091505/opengl-transforming-objects-with-multiple-rotations-of-different-axis/45095288#45095288
-  [21]: https://stackoverflow.com/questions/46888117/what-is-the-difference-between-the-order-in-which-a-mat4x4-is-multiplied-with-a/46888465#46888465
-  [22]: https://stackoverflow.com/questions/47004946/translation-on-square-made-of-triangles-in-opengl/47005569#47005569
-  [23]: https://stackoverflow.com/questions/45234650/atan2f-doesnt-work/45239229#45239229
-  [24]: https://stackoverflow.com/questions/46508872/opengl-first-person-camera-translation/46509967#46509967
-  [25]: https://stackoverflow.com/questions/47169618/how-to-modify-the-view-of-the-camera-with-pygame-and-opengl/47173089#47173089
-  [26]: https://en.wikipedia.org/wiki/Transpose
-  [27]: http://www.katjaas.nl/transpose/transpose.html
-  [28]: http://www.differencebetween.com/difference-between-transpose-and-vs-inverse-matrix/
-  [29]: https://math.stackexchange.com/questions/156735/in-which-cases-is-the-inverse-matrix-equal-to-the-transpose
-  [30]: https://en.wikipedia.org/wiki/Invertible_matrix
-  [31]: https://stackoverflow.com/questions/45779313/particles-not-oriented-to-the-camera/45779696#45779696
-  [32]: https://stackoverflow.com/questions/44965202/opengl-screen-coordinates-to-world-coordinates/45000237#45000237
-  [33]: https://stackoverflow.com/questions/47614202/opengl-moving-around-3d-scene/47617063#47617063
+  [9]: https://en.wikipedia.org/wiki/Transpose
+  [10]: https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glUniform.xhtml
+  [11]: https://en.wikipedia.org/wiki/Invertible_matrix
+
 
