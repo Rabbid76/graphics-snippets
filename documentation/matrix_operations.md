@@ -62,7 +62,7 @@ Addressing the columns of a `mat4 m44;` in GLSL:
 
  See [The OpenGL Shading Language 4.6, 5.4.2 Vector and Matrix Constructors, page 101](https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.4.60.pdf):
 
->To initialize a matrix by specifying vectors or scalars, the components are assigned to the matrix elements in **column-major order**.
+> To initialize a matrix by specifying vectors or scalars, the components are assigned to the matrix elements in **column-major order**.
 >
     mat4(float, float, float, float,  // first column
          float, float, float, float,  // second column
@@ -300,14 +300,14 @@ e.g.
 ### Transpose? It's just a matter of definition
 
 Further see [GLSL Programming/Vector and Matrix Operations][1]:
->Furthermore, the *-operator can be used for matrix-vector products of the corresponding dimension, e.g.:
+> Furthermore, the *-operator can be used for matrix-vector products of the corresponding dimension, e.g.:
 >
     vec2 v = vec2(10., 20.);
     mat2 m = mat2(1., 2.,  3., 4.);
     vec2 w = m * v; // = vec2(1. * 10. + 3. * 20., 2. * 10. + 4. * 20.)
->**Note that the vector has to be multiplied to the matrix from the right**.
-><br/><br/>
->If a vector is multiplied to a matrix from the left, the result corresponds to to multiplying a column vector to the transposed matrix from the right. This corresponds to multiplying a column vector to the transposed matrix from the right:<br/><br/>
+> **Note that the vector has to be multiplied to the matrix from the right**.
+> <br/><br/>
+> If a vector is multiplied to a matrix from the left, the result corresponds to to multiplying a column vector to the transposed matrix from the right. This corresponds to multiplying a column vector to the transposed matrix from the right:<br/><br/>
 Thus, multiplying a vector from the left to a matrix corresponds to multiplying it from the right to the transposed matrix:
 >
     vec2 v = vec2(10., 20.);
