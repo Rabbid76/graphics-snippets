@@ -199,7 +199,7 @@ A matrix multiplication `C = A * B` works like this:
     // C = A * B
     for ( int k = 0; k < 4; ++ k )
         for ( int j = 0; j < 4; ++ j )
-            C[k][j] = A[0][l] * B[k][0] + A[1][j] * B[k][1] + A[2][j] * B[k][2] +  A[3][j] * B[k][3];
+            C[k][j] = A[0][j] * B[k][0] + A[1][j] * B[k][1] + A[2][j] * B[k][2] +  A[3][j] * B[k][3];
 
 C++:
 
