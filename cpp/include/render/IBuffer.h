@@ -143,7 +143,8 @@ enum TIndexType : char
 *      ]
 *
 *
-* Implementations of this interface should use RAII (Resource acquisition is initialization) technique.
+* The implementations of this interface should make use of 
+* RAII (Resource acquisition is initialization) technique.
 * [https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization]
 *
 *

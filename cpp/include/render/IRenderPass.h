@@ -244,6 +244,10 @@ struct TPass
 /******************************************************************//**
 * \brief   Generic interface for render pass specification and managment.
 * 
+* The implementations of this interface should make use of 
+* RAII (Resource acquisition is initialization) technique.
+* [https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization]
+
 * \author  gernot
 * \date    2018-02-10
 * \version 1.0

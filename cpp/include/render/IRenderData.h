@@ -218,11 +218,27 @@ struct TCamera
 * @date    2018-02-14
 * @version 1.0
 **********************************************************************/
+struct TSceneData
+{
+  TVec3 _min; //!< minimum of AABB od the scene
+  TVec3 _max; //!< maximum of AABB od the scene
+};
+
+
+/*XEOMETRIC********************************************************//**
+* @brief   Complete render data of a scene.
+*
+* @author  gernot76
+* @date    2018-02-14
+* @version 1.0
+**********************************************************************/
 struct TRenderData
 {
+  TSceneData           _sceneData;      //!< general scene data
   TCamera              _camera;         //!< the camera
-  TLightTable          _light;          //!< light source data
-  TVertexTable         _vertices;       //!< verteex data
+  TAmbientLightTable   _ambientLights;  //!< the ambient light data
+  TLightTable          _lightSources;   //!< light source data
+  TVertexTable         _vertices;       //!< verterx data
   TSurfaceTable        _surfaces;       //!< index and surface 
   TMaterialSimpleTable _materialSimple; //!< simple material data
   TMaterialTable       _material;       //!< material data
