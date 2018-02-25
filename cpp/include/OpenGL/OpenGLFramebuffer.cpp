@@ -1251,14 +1251,34 @@ bool CRenderProcess::SetupDepthTest(
       glDisable( GL_DEPTH_TEST );
       break;
 
+    case Render::TPassDepthTest::ALWAYS:
+      glEnable( GL_DEPTH_TEST );
+      glDepthFunc( GL_ALWAYS );
+      glDepthMask( GL_TRUE );
+      break;
+
     case Render::TPassDepthTest::LESS:
       glEnable( GL_DEPTH_TEST );
       glDepthFunc( GL_LESS );
+      glDepthMask( GL_TRUE );
       break;
 
     case Render::TPassDepthTest::LESS_OR_EQUAL:
       glEnable( GL_DEPTH_TEST );
       glDepthFunc( GL_LEQUAL );
+      glDepthMask( GL_TRUE );
+      break;
+
+    case Render::TPassDepthTest::LESS_READONLY:
+      glEnable( GL_DEPTH_TEST );
+      glDepthFunc( GL_LESS );
+      glDepthMask( GL_FALSE );
+      break;
+
+    case Render::TPassDepthTest::LESS_OR_EQUAL_READONLY:
+      glEnable( GL_DEPTH_TEST );
+      glDepthFunc( GL_LEQUAL );
+      glDepthMask( GL_FALSE );
       break;
   }
  

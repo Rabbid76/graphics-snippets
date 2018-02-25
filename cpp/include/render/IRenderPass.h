@@ -86,9 +86,12 @@ enum class TBufferDataType
 **********************************************************************/
 enum class TPassDepthTest
 {
-  OFF           = 0, //!< disable depth test
-  LESS          = 1, //!< depth test: is less
-  LESS_OR_EQUAL = 2  //!< depth test: is less or equal
+  OFF                    = 0, //!< disable depth test
+  ALWAYS                 = 1, //!< depth test: is on but always pass             
+  LESS                   = 2, //!< depth test: is less
+  LESS_OR_EQUAL          = 3, //!< depth test: is less or equal
+  LESS_READONLY          = 4, //!< depth test: is less, but depth buffer will not be written
+  LESS_OR_EQUAL_READONLY = 5  //!< depth test: is less or equal, but depth buffer will not be written
 };
 
 
@@ -240,6 +243,15 @@ struct TPass
     TColor            _clear_color{ 0.0f, 0.0f, 0.0f, 0.0f }; //!< clear color for the buffer
   };
 
+
+  TPass( void ) = default;
+  TPass( const TPass & ) = default;
+  TPass & operator =( const TPass & ) = default;
+
+  TPass( TPassDepthTest depth, TPassBlending blend )
+    : _depth( depth )
+    , _blend( blend )
+  {}
 
   bool operator ==( const TPass &B ) const 
   {
