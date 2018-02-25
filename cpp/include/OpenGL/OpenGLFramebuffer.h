@@ -97,6 +97,7 @@ public:
 
   virtual bool IsValid( void ) override { return _valid; }
 
+  virtual void Invalidate( void ) override;                                                     //!< invalidate, force renew of buffers and passes
   virtual void ClearBuffers( void ) override;                                                   //!< clear all render buffer specifications
   virtual void ClearBuffer( size_t bufferID ) override;                                         //!< clear a render buffer specification
   virtual bool SpecifyBuffer( size_t bufferID, const Render::TBuffer &specification ) override; //!< specify a single render buffer
@@ -117,6 +118,8 @@ public:
   virtual bool SetupBlending( Render::TPassBlending blending );
 
 private:
+
+  bool IsLayered( unsigned int layers ) const { return layers > 1; }
 
   void Destruct( void );
   void DeleteUnnecessaryTextures( void );

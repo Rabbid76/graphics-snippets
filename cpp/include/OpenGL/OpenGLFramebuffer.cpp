@@ -39,9 +39,11 @@
 #define DebugWarning std::cout
 #endif
 
-//#define DEBUG_ERROR_CHECK
+#if !defined(__FRAMBUFFER_DEBUG_ERROR_CHECK__)
+//#define __FRAMBUFFER_DEBUG_ERROR_CHECK__
+#endif
 
-#if defined(_DEBUG) && defined(DEBUG_ERROR_CHECK)
+#if defined(_DEBUG) && defined(__FRAMBUFFER_DEBUG_ERROR_CHECK__)
 #define TEST_GL_ERROR ErrorCheck();
 #else
 #define TEST_GL_ERROR
@@ -97,6 +99,19 @@ CRenderProcess::~CRenderProcess()
 
 
 /******************************************************************//**
+* \brief   Invalidate, force renew of buffers and passes.
+* 
+* \author  gernot
+* \date    2018-02-11
+* \version 1.0
+**********************************************************************/
+void CRenderProcess::Invalidate( void )
+{
+  _valid = _complete = false;
+}
+
+
+/******************************************************************//**
 * \brief   Destroy the buffer opjects and the passes objects.
 * Destroy textue and framebuffer objects.
 * 
@@ -126,7 +141,7 @@ void CRenderProcess::Destruct( void )
   glDeleteTextures( (GLsizei)delTex.size(), delTex.data() );
   TEST_GL_ERROR
 
-  _valid = _complete = false;
+  Invalidate();
   _buffers.clear();
   _scales.clear();
   _passScales.clear();
@@ -328,11 +343,17 @@ std::array<unsigned int, 3> CRenderProcess::InternalFormat(
   unsigned int dataType = 0;
   switch ( useBuffer )
   {
-    case Render::TBufferType::DEPTH:        dataType = GL_FLOAT; break;
-    case Render::TBufferType::STENCIL:      dataType = GL_BYTE; break;
-    case Render::TBufferType::DEPTHSTENCIL: dataType = GL_BYTE; break;
+    case Render::TBufferType::DEPTH:   dataType = GL_FLOAT; break;
+    case Render::TBufferType::STENCIL: dataType = GL_UNSIGNED_BYTE; break;
+    
+    case Render::TBufferType::DEPTHSTENCIL: 
+      if ( internalFormat == GL_DEPTH24_STENCIL8 )       dataType = GL_UNSIGNED_INT_24_8;	
+      else if ( internalFormat == GL_DEPTH32F_STENCIL8 ) dataType = GL_FLOAT_32_UNSIGNED_INT_24_8_REV;
+      else                                               dataType = GL_FLOAT;
+      break;
+    
     default:
-      dataType = ( format == Render::TBufferDataType::DEFAULT || format == Render::TBufferDataType::UINT8 ) ? GL_BYTE : GL_FLOAT;
+      dataType = ( format == Render::TBufferDataType::DEFAULT || format == Render::TBufferDataType::UINT8 ) ? GL_UNSIGNED_BYTE : GL_FLOAT;
       break;
   } 
   
@@ -349,7 +370,7 @@ std::array<unsigned int, 3> CRenderProcess::InternalFormat(
 **********************************************************************/
 void CRenderProcess::CRenderProcess::ClearBuffers( void )
 {
-  _valid = _complete = false;
+  Invalidate();
   _buffers.clear();
 }
 
@@ -367,7 +388,7 @@ void CRenderProcess::CRenderProcess::ClearBuffer(
   auto it = _buffers.find( bufferID );
   if ( it == _buffers.end() )
     return;
-  _valid = _complete = false;
+  Invalidate();
   _buffers.erase( it );
 }
 
@@ -386,7 +407,7 @@ bool CRenderProcess::SpecifyBuffer(
   auto it = _buffers.find( bufferID );
   if ( it != _buffers.end() && it->second == specification )
     return true;
-  _valid = _complete = false;
+  Invalidate();
   _buffers[bufferID] = specification;
   return true;
 }
@@ -435,7 +456,7 @@ bool CRenderProcess::SpecifyBuffers(
 **********************************************************************/
 void CRenderProcess::ClearPasses( void )
 {
-  _valid = _complete = false;
+  Invalidate();
   _passes.clear();
 }
 
@@ -472,7 +493,7 @@ bool CRenderProcess::SpecifyPass(
   auto it = _passes.find( passID );
   if ( it != _passes.end() && it->second == specification )
     return true;
-  _valid = _complete = false;
+  Invalidate();
   _passes[passID] = specification;
   return true;
 }
@@ -543,7 +564,7 @@ bool CRenderProcess::Validate( void )
       auto bufferIt = _buffers.find( target._bufferID );
       if ( bufferIt == _buffers.end() )
       {
-        _valid = false;
+        Invalidate();
         DebugWarning << "buffer" << target._bufferID << " is not specified";
         continue;
       }
@@ -568,7 +589,7 @@ bool CRenderProcess::Validate( void )
       {
         if ( fabs(_scales[target._bufferID] - scale ) > 0.0001 )
         {
-          _valid = false;
+          Invalidate();
           DebugWarning << "buffer scale missmatch (" << _scales[target._bufferID] << " <-> " << scale << ") for buffer " << target._bufferID << " in pass " << passId;
         }
       }
@@ -577,7 +598,7 @@ bool CRenderProcess::Validate( void )
         _scales[target._bufferID] = scale;
       }
 
-      if ( bufferIt->second._layers > 0 )
+      if ( IsLayered( bufferIt->second._layers ) )
         any_layered = true;
     }
 
@@ -589,7 +610,7 @@ bool CRenderProcess::Validate( void )
         if ( bufferIt == _buffers.end() )
         { 
           // if ther is no buffer specification, then a render buffer is used, but render buffer cannot be layered
-          _valid = false;
+          Invalidate();
           DebugWarning << "buffer layer missmatch (" << target._bufferID << ") in pass " << passId;
         }
 
@@ -597,10 +618,10 @@ bool CRenderProcess::Validate( void )
         // If a layered image is attached to one attachment, then all attachments must be layered attachments.
         // The attached layers do not have to have the same number of layers,
         // nor do the layers have to come from the same kind of texture (a cubemap color texture can be paired with an array depth texture). 
-        bool is_layerd = bufferIt->second._layers == 0;
+        bool is_layerd = IsLayered( bufferIt->second._layers );
         if ( is_layerd == false )
         { 
-          _valid = false;
+          Invalidate();
           DebugWarning << "buffer layer missmatch (" << target._bufferID << ") in pass " << passId;
         }
       }
@@ -616,7 +637,7 @@ bool CRenderProcess::Validate( void )
     
     auto bufferFormat = InternalFormat( bufferSpec._type, bufferSpec._format );
     if ( bufferFormat[0] == 0 || bufferFormat[1] == 0 || bufferFormat[2] == 0 )
-      _valid = false;
+      Invalidate();
   }
   
   return _valid;
@@ -685,7 +706,7 @@ void CRenderProcess::UpdateTexture(
   // setup the texture size and the format
   glBindTexture( GL_TEXTURE_2D, newTexture._object ); TEST_GL_ERROR
 
-  if ( newTexture._layers == 0 )
+  if ( IsLayered( newTexture._layers ) == false )
   {
     glTexImage2D( GL_TEXTURE_2D, 0, (GLint)newTexture._format[0],
       (GLsizei)newTexture._size[0], (GLsizei)newTexture._size[1],
@@ -821,7 +842,7 @@ void CRenderProcess::AttachFrambufferTextureBuffer(
 
   
   // add texture attachmnet
-  if ( _textures[target._bufferID]._layers == 0 )
+  if ( IsLayered( _textures[target._bufferID]._layers ) == false )
   {
     glFramebufferTexture2D( GL_FRAMEBUFFER, attachType, GL_TEXTURE_2D, _textures[target._bufferID]._object, 0 );
     TEST_GL_ERROR
@@ -832,6 +853,7 @@ void CRenderProcess::AttachFrambufferTextureBuffer(
     glFramebufferTexture( GL_FRAMEBUFFER, attachType, _textures[target._bufferID]._object, 0 );
     TEST_GL_ERROR
   }
+  // TODO $$$ _textures[target._bufferID]._layers == 1 : glFramebufferTexture3D ???
       
   // TODO cubemaps: 
   //   GL_TEXTURE_CUBE_MAP_POSITIVE_X, GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 

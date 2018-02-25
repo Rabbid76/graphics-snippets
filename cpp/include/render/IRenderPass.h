@@ -132,7 +132,7 @@ struct TBuffer
 
   bool operator ==( const TBuffer &B ) const 
   {
-    return std::make_tuple( _type, _format, _scale, _flag ) == std::make_tuple( B._type, B._format, B._scale, B._flag );
+    return std::make_tuple( _type, _format, _layers, _scale, _flag ) == std::make_tuple( B._type, B._format, B._layers, B._scale, B._flag );
   }
   bool operator !=( const TBuffer &B ) const
   {
@@ -334,6 +334,7 @@ public:
   }
 
   virtual bool IsValid( void ) = 0;                 //!< check if the specifications have been successfully validated
+  virtual void Invalidate( void ) = 0;              //!< invalidate, force renew of buffers and passes
   virtual bool Validate( void ) = 0;                //!< validate the specifcations
   virtual bool Create( std::array<size_t, 2> ) = 0; //!< validate the specification and create the render passes 
   virtual void Destroy( void ) = 0;                 //!< detroy the buffer and the passes
