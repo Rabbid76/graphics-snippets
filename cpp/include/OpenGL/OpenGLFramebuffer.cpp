@@ -741,16 +741,16 @@ unsigned int CRenderProcess::CreateFrambufferRenderBuffer(
 
   GLenum                      attachType = 0;
   std::array<unsigned int, 3> format{ 0, 0, 0 };
-  if ( target._location == Render::TPass::TTarget::depth ||
-       target._location == Render::TPass::TTarget::stencil ||
-       target._location == Render::TPass::TTarget::depth_stencil )
+  if ( target._attachment == Render::TPass::TTarget::depth ||
+       target._attachment == Render::TPass::TTarget::stencil ||
+       target._attachment == Render::TPass::TTarget::depth_stencil )
   {
     // depth/stencil attachmnet 
 
     // type of the attachment
-    if ( target._location == Render::TPass::TTarget::depth )
+    if ( target._attachment == Render::TPass::TTarget::depth )
       attachType = GL_DEPTH_ATTACHMENT;
-    else if ( target._location == Render::TPass::TTarget::stencil )
+    else if ( target._attachment == Render::TPass::TTarget::stencil )
       attachType = GL_STENCIL_ATTACHMENT;
     else // if ( target._location == Render::TPass::TTarget::depth_stencil )
       attachType = GL_DEPTH_STENCIL_ATTACHMENT;
@@ -768,7 +768,7 @@ unsigned int CRenderProcess::CreateFrambufferRenderBuffer(
     // color attachmnet
 
     // type of the attachment
-    GLenum attachType = (GLenum)(GL_COLOR_ATTACHMENT0 + target._location);
+    GLenum attachType = (GLenum)(GL_COLOR_ATTACHMENT0 + target._attachment);
 
     // add render buffer attachment
 
@@ -810,12 +810,12 @@ void CRenderProcess::AttachFrambufferTextureBuffer(
   }
 
   GLenum attachType = 0;
-  switch ( target._location )
+  switch ( target._attachment )
   {
     case Render::TPass::TTarget::depth:         attachType = GL_DEPTH_ATTACHMENT; break;
     case Render::TPass::TTarget::stencil:       attachType = GL_STENCIL_ATTACHMENT; break;
     case Render::TPass::TTarget::depth_stencil: attachType = GL_DEPTH_STENCIL_ATTACHMENT; break;
-    default:                                    attachType = (GLenum)(GL_COLOR_ATTACHMENT0 + target._location); break;
+    default:                                    attachType = (GLenum)(GL_COLOR_ATTACHMENT0 + target._attachment); break;
 
   }
 
@@ -1033,19 +1033,19 @@ const CRenderProcess::TBufferInfoCache & CRenderProcess::EvaluateInfoCache(
       continue;
     TTextureObject &texture = texIt->second;
 
-    if ( target._location == Render::TPass::TTarget::depth_stencil )
+    if ( target._attachment == Render::TPass::TTarget::depth_stencil )
       info._clearMask = info._clearMask | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT; 
-    else if ( target._location == Render::TPass::TTarget::depth )
+    else if ( target._attachment == Render::TPass::TTarget::depth )
       info._clearMask = info._clearMask | GL_DEPTH_BUFFER_BIT; 
-    else if ( target._location == Render::TPass::TTarget::stencil )
+    else if ( target._attachment == Render::TPass::TTarget::stencil )
       info._clearMask = info._clearMask | GL_STENCIL_BUFFER_BIT; 
     else
     {
-      info._drawBuffers.push_back( (GLenum)(GL_COLOR_ATTACHMENT0 + target._location) );
+      info._drawBuffers.push_back( (GLenum)(GL_COLOR_ATTACHMENT0 + target._attachment) );
 
       if ( target.ClearTarget() == false || target._clear_color != Render::TColor{0.0f, 0.0f, 0.0f, 0.0f} )
         clear_all_color = false;
-      info._clearTargets.emplace_back( (GLint)target._location, target._clear_color );
+      info._clearTargets.emplace_back( (GLint)target._attachment, target._clear_color );
     }
   }
   if ( clear_all_color )
@@ -1069,7 +1069,14 @@ const CRenderProcess::TBufferInfoCache & CRenderProcess::EvaluateInfoCache(
 * \brief   Prepare and activate a render pass. 
 * 
 * The following steps are processed:
-* -
+* 
+* - set the depth test
+* - set the blendig mode
+* - set the viewport 
+* - bind the frame buffer
+* - set the drawing buffers
+* - clear the frame buffers
+* - bind the source textures
 * 
 * \author  gernot
 * \date    2018-02-11
@@ -1131,6 +1138,39 @@ bool CRenderProcess::Prepare(
     glBindTexture( GL_TEXTURE_2D, source.second ); TEST_GL_ERROR
   }
   
+  return true;
+}
+
+
+/******************************************************************//**
+* \brief   Prepare the blending and the depth mode of a render pass.
+* 
+* \author  gernot
+* \date    2018-02-11
+* \version 1.0
+**********************************************************************/
+bool CRenderProcess::PrepareMode( 
+  size_t passID ) //!< in: the name of the render pass
+{
+  if ( IsValid() == false || _complete == false )
+    return false;
+
+  // check if the pass is valid
+  auto passIt = _passes.find( passID );
+  if ( passIt == _passes.end() )
+    return false;
+  _currentPass = passID;
+  Render::TPass &pass = passIt->second;
+
+  // Update information for target buffer binding, target buffer clearing and source texture binding
+  const TBufferInfoCache &bufferInfo = EvaluateInfoCache( passID, pass );
+
+  // setup depth test
+  SetupDepthTest( pass._depth );
+
+  // setup blending
+  SetupBlending( pass._blend );
+
   return true;
 }
 

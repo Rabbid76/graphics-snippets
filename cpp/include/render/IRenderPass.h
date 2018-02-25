@@ -136,6 +136,21 @@ struct TBuffer
     return ( *this == B ) == false;
   }
 
+  TBuffer( void ) = default;
+  TBuffer( const TBuffer & ) = default;
+  TBuffer & operator =( const TBuffer & ) = default;
+
+  TBuffer( TBufferType type, TBufferDataType format )
+    : _type( type )
+    , _format( format )
+  {}
+
+  TBuffer( TBufferType type, TBufferDataType format, unsigned int layers )
+    : _type( type )
+    , _format( format )
+    , _layers( layers )
+  {}
+
   TBufferType     _type   = TBufferType::DEFAULT;     //!< type of the buffer
   TBufferDataType _format = TBufferDataType::DEFAULT; //!< internal format of the buffer
   unsigned int    _layers = 0;                        //!< number of the texture layers
@@ -184,11 +199,18 @@ struct TPass
   //!< target buffer:
   struct TTarget
   {
-    TTarget( size_t bufferID, size_t location )
+    TTarget( size_t bufferID, size_t attachment )
       : _bufferID( bufferID )
-      , _location( location )
+      , _attachment( attachment )
     {
       _prop.set(TTargetProperty::e_clear);
+    }
+
+    TTarget( size_t bufferID, size_t attachment, bool clear )
+      : _bufferID( bufferID )
+      , _attachment( attachment )
+    {
+      _prop.set(TTargetProperty::e_clear, clear);
     }
     
     TTarget( void ) : TTarget( 0, 0 ) {}
@@ -205,7 +227,7 @@ struct TPass
 
     bool operator ==( const TTarget &B ) const 
     {
-      return std::make_tuple( _bufferID, _location, _prop, _clear_color ) == std::make_tuple( B._bufferID, B._location, B._prop, B._clear_color );
+      return std::make_tuple( _bufferID, _attachment, _prop, _clear_color ) == std::make_tuple( B._bufferID, B._attachment, B._prop, B._clear_color );
     }
     bool operator !=( const TTarget &B ) const
     {
@@ -213,7 +235,7 @@ struct TPass
     }
 
     size_t            _bufferID;                              //!< buffer ID (it -1, the use render buffer)
-    size_t            _location;                              //!< -3 (depth/stencil), -2 (stencil),  -1 (depth), 0, 1, 2, ... , n
+    size_t            _attachment;                            //!< attachment: -3 (depth/stencil), -2 (stencil),  -1 (depth), 0, 1, 2, ... , n
     TTargetProperties _prop;                                  //!< buffer target properties
     TColor            _clear_color{ 0.0f, 0.0f, 0.0f, 0.0f }; //!< clear color for the buffer
   };
@@ -304,6 +326,7 @@ public:
   virtual bool Create( std::array<size_t, 2> ) = 0; //!< validate the specification and create the render passes 
   virtual void Destroy( void ) = 0;                 //!< detroy the buffer and the passes
   virtual bool Prepare( size_t passID ) = 0;        //!< prepare a render pass
+  virtual bool PrepareMode( size_t passID ) = 0;    //!< prepare the blending and the depth mode of a render pass
   virtual bool ReleasePass( size_t passID ) = 0;    //!< relase the render pass
   virtual bool Release( void ) = 0;                 //!< relase the current render pass
 };

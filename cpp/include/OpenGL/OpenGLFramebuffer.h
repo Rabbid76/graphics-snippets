@@ -109,6 +109,7 @@ public:
   virtual bool Create( TViewportSize size ) override;                                           //!< validate the specification and create the render passes                
   virtual void Destroy( void ) override;                                                        //!< destroy the buffer and the passes
   virtual bool Prepare( size_t passID ) override;                                               //!< prepare a render pass
+  virtual bool PrepareMode( size_t passID ) override;                                           //!< prepare the blending and the depth mode of a render pass
   virtual bool ReleasePass( size_t passID ) override;                                           //!< relase the render pass
   virtual bool Release( void ) override;                                                        //!< relase the current render pass
 
