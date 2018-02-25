@@ -702,18 +702,19 @@ void CRenderProcess::UpdateTexture(
 
   // create the new texture
   glGenTextures( 1, &newTexture._object ); TEST_GL_ERROR
-    
-  // setup the texture size and the format
-  glBindTexture( GL_TEXTURE_2D, newTexture._object ); TEST_GL_ERROR
 
+  // setup the texture size and the format
   if ( IsLayered( newTexture._layers ) == false )
   {
+    
+    glBindTexture( GL_TEXTURE_2D, newTexture._object ); TEST_GL_ERROR
     glTexImage2D( GL_TEXTURE_2D, 0, (GLint)newTexture._format[0],
       (GLsizei)newTexture._size[0], (GLsizei)newTexture._size[1],
       0, (GLenum)newTexture._format[1], (GLenum)newTexture._format[2], nullptr ); TEST_GL_ERROR
   }
   else
   {
+    glBindTexture( GL_TEXTURE_2D_ARRAY, newTexture._object ); TEST_GL_ERROR
     glTexImage3D( GL_TEXTURE_2D_ARRAY, 0, (GLint)newTexture._format[0],
       (GLsizei)newTexture._size[0], (GLsizei)newTexture._size[1], (GLsizei)newTexture._layers,
       0, (GLenum)newTexture._format[1], (GLenum)newTexture._format[2], nullptr ); TEST_GL_ERROR
@@ -725,7 +726,7 @@ void CRenderProcess::UpdateTexture(
   
   glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE ); TEST_GL_ERROR
   glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE ); TEST_GL_ERROR
-  if ( newTexture._layers > 0 )
+  if ( IsLayered( newTexture._layers ) )
   {
     glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE );
     TEST_GL_ERROR
