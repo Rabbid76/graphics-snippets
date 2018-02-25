@@ -719,8 +719,10 @@ void CRenderProcess::UpdateTexture(
       0, (GLenum)newTexture._format[1], (GLenum)newTexture._format[2], nullptr ); TEST_GL_ERROR
   }
   
+  // TODO $$$ GL_NEAREST blur buffer ?
   glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST ); TEST_GL_ERROR
   glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST ); TEST_GL_ERROR
+  
   glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE ); TEST_GL_ERROR
   glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE ); TEST_GL_ERROR
   if ( newTexture._layers > 0 )
@@ -948,8 +950,16 @@ bool CRenderProcess::Create(
 
     // for each frambuffer target
     std::vector<unsigned int> preDelRenderBufObjs;
+    bool has_depth   = false;
+    bool has_stencil = false;
     for ( auto target : passSpec._targets )
     {
+      // check if there is any deth or stencil attachmnet
+      if ( target._attachment == Render::TPass::TTarget::depth || target._attachment == Render::TPass::TTarget::depth_stencil )
+        has_depth = true;
+      if ( target._attachment == Render::TPass::TTarget::stencil || target._attachment == Render::TPass::TTarget::depth_stencil )
+        has_stencil = true;
+
       if ( target._bufferID == Render::TPass::TTarget::no ) 
       {
         // If there is no textue buffer specified, the create a render buffer
@@ -962,6 +972,23 @@ bool CRenderProcess::Create(
         // Attach the existing texureto the frambuffer
         AttachFrambufferTextureBuffer( newFb, target );
       }
+    }
+
+    // disable depth and stencil attachment
+    if ( has_depth == false && has_stencil == false )
+    {
+      glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, 0 );
+      TEST_GL_ERROR
+    }
+    else if ( has_depth == false )
+    {
+      glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0 );
+      TEST_GL_ERROR
+    }
+    else if ( has_stencil == false )
+    {
+      glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, 0 );
+      TEST_GL_ERROR
     }
 
     // check for frame buffer completness
