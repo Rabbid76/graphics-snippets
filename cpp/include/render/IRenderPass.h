@@ -154,6 +154,13 @@ struct TBuffer
     , _layers( layers )
   {}
 
+  TBuffer( TBufferType type, TBufferDataType format, unsigned int layers, float scale )
+    : _type( type )
+    , _format( format )
+    , _layers( layers )
+    , _scale( scale )
+  {}
+
   TBufferType     _type   = TBufferType::DEFAULT;     //!< type of the buffer
   TBufferDataType _format = TBufferDataType::DEFAULT; //!< internal format of the buffer
   unsigned int    _layers = 0;                        //!< number of the texture layers

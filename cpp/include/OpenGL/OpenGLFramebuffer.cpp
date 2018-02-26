@@ -661,7 +661,7 @@ void CRenderProcess::UpdateTexture(
   TTextureObject newTexture; //!< new texture object for the buffer
 
   // get texture size
-  newTexture._size = { (size_t)(_size[0] * _scales[bufferID]), (size_t)(_size[1] * _scales[bufferID]) };
+  newTexture._size = { (size_t)(_size[0] * _scales[bufferID] + 0.5f), (size_t)(_size[1] * _scales[bufferID] + 0.5f) };
 
   // get the buffer format
   newTexture._format = InternalFormat( specification._type, specification._format );
@@ -927,7 +927,7 @@ bool CRenderProcess::Create(
     TFramebufferObject  newFb;                  // new frambuffer object for the render pass
 
     // get renderbuffer size
-    newFb._size = { (size_t)(_size[0] * _passScales[passID]), (size_t)(_size[1] * _passScales[passID]) };
+    newFb._size = { (size_t)(_size[0] * _passScales[passID] + 0.5f), (size_t)(_size[1] * _passScales[passID] + 0.5f) };
 
     // $$$ 
     // TODO : check if the frambuffer has changed 
