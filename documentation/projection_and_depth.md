@@ -9,7 +9,7 @@ In a rendering, each mesh of the scene usually is transformed by the model matri
  ![NDC](image/NDC.png) 
 
 - View matrix:<br/>
-  The view matrix describes the direction and position from which the scene is looked at. The view matrix transforms from the wolrd space to the view (eye) space. In the coordinat system on the viewport, the X-axis points to the left, the Y-axis up and the Z-axis out of the view (Note in a right hand system the Z-Axis is the cross product of the X-Axis and the Y-Axis). In general world coordinates and view coordinates are [Cartesian coordinates](https://en.wikipedia.org/wiki/Cartesian_coordinate_system)
+  The view matrix describes the direction and position from which the scene is looked at. The view matrix transforms from the wolrd space to the view (eye) space. If the coordiante system of the view space is a [Right-hand](https://en.wikipedia.org/wiki/Right-hand_rule) system, then the X-axis points to the left, the Y-axis up and the Z-axis out of the view (Note in a right hand system the Z-Axis is the cross product of the X-Axis and the Y-Axis). In general world coordinates and view coordinates are [Cartesian coordinates](https://en.wikipedia.org/wiki/Cartesian_coordinate_system)
 
 ![view](image/view_coordinates.png)
 
@@ -84,7 +84,7 @@ The following code does the same as `gluLookAt` or `glm::lookAt` does:
 <br/><hr/>
 ## Projection
 
-The projection matrix describes the mapping from 3D points of a scene, to 2D points of the viewport. It transforms from eye space to the clip space, and the coordinates in the clip space are transformed to the normalized device coordinates (NDC) by dividing with the `w` component of the clip coordinates. The NDC are in range (-1,-1,-1) to (1,1,1).<br/> Every geometry which is out of the NDC is clipped.<br/>
+The projection matrix describes the mapping from 3D points of a scene, to 2D points of the viewport. It transforms from eye space to the clip space, and the coordinates in the clip space are transformed to the normalized device coordinates (NDC) by dividing with the `w` component of the clip coordinates. The NDC are in range (-1,-1,-1) to (1,1,1).<br/> Every geometry which is out of the clippspace is clipped.<br/>
 
 But, **if the `w` component is negative, then the vertex is clipped**. Because the condition for a homogeneous coordinate to be in clip space is 
 
