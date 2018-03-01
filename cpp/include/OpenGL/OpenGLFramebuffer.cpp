@@ -1290,6 +1290,44 @@ bool CRenderProcess::Release( void )
 
 
 /******************************************************************//**
+* \brief   Bind a frambuffer for reading and/or drawing.
+* 
+* \author  gernot
+* \date    2018-02-11
+* \version 1.0
+**********************************************************************/
+bool CRenderProcess::Bind( 
+  size_t passID, //!< in: the name of the render pass
+  bool   read,   //!< in: bind for reading
+  bool   draw )  //!< in: bind for drawing
+{
+  if ( IsValid() == false || _complete == false )
+    return false;
+
+  // check if the pass is valid
+  auto passIt = _passes.find( passID );
+  if ( passIt == _passes.end() )
+    return false;
+  _currentPass = passID;
+  Render::TPass &pass = passIt->second;
+
+  // Update information for target buffer binding, target buffer clearing and source texture binding
+  const TBufferInfoCache &bufferInfo = EvaluateInfoCache( passID, pass );
+
+  // bind the frambuffer
+  if ( read && draw == false )
+    glBindFramebuffer( GL_READ_FRAMEBUFFER, bufferInfo._fb_obj );
+  else if ( read == false && draw )
+    glBindFramebuffer( GL_DRAW_FRAMEBUFFER, bufferInfo._fb_obj );
+  else
+    glBindFramebuffer( GL_FRAMEBUFFER, bufferInfo._fb_obj );
+  TEST_GL_ERROR
+
+  return true;
+}
+
+
+/******************************************************************//**
 * \brief   Setup the depth function.
 * 
 * \author  gernot
@@ -1382,6 +1420,5 @@ bool CRenderProcess::SetupBlending(
   TEST_GL_ERROR
   return true;
 }
-
 
 } // OpenGL

@@ -222,6 +222,14 @@ struct TPass
     {
       _prop.set(TTargetProperty::e_clear, clear);
     }
+
+    TTarget( size_t bufferID, size_t attachment, bool clear, const TColor &clear_color )
+      : _bufferID( bufferID )
+      , _attachment( attachment )
+      , _clear_color( clear_color )
+    {
+      _prop.set(TTargetProperty::e_clear, clear);
+    }
     
     TTarget( void ) : TTarget( 0, 0 ) {}
     TTarget( const TTarget & ) = default;
@@ -310,6 +318,8 @@ public:
   IRenderProcess & operator =( const IRenderProcess & ) = delete;
   IRenderProcess & operator =( IRenderProcess && ) = default;
 
+  virtual const TBufferMap & Buffers( void ) const = 0;
+  virtual const TPassMap   & Passes( void ) const = 0;
 
   virtual void ClearBuffers( void ) = 0;                                           //!< clear all render buffer specifications
   virtual void ClearBuffer( size_t bufferID ) = 0;                                 //!< clear a render buffer specification
@@ -325,7 +335,6 @@ public:
     return valid;
   }
 
-
   virtual void ClearPasses( void ) = 0;                                      //!< clear all render passes specifications
   virtual void ClearPass( size_t passID ) = 0;                               //!< clear a render pass specification
   virtual bool SpecifyPass( size_t passID, const TPass &specification ) = 0; //!< specify a single render pass
@@ -340,16 +349,17 @@ public:
     return valid;
   }
 
-  virtual bool IsValid( void ) const = 0;           //!< checks if the specifications have been successfully validated
-  virtual bool IsComplete( void ) const = 0;        //!< checks if the buffers and passes have been successfully created
-  virtual void Invalidate( void ) = 0;              //!< invalidate, force renew of buffers and passes
-  virtual bool Validate( void ) = 0;                //!< validate the specifcations
-  virtual bool Create( std::array<size_t, 2> ) = 0; //!< validate the specification and create the render passes 
-  virtual void Destroy( void ) = 0;                 //!< detroy the buffer and the passes
-  virtual bool Prepare( size_t passID ) = 0;        //!< prepare a render pass
-  virtual bool PrepareMode( size_t passID ) = 0;    //!< prepare the blending and the depth mode of a render pass
-  virtual bool ReleasePass( size_t passID ) = 0;    //!< relase the render pass
-  virtual bool Release( void ) = 0;                 //!< relase the current render pass
+  virtual bool IsValid( void ) const = 0;                       //!< checks if the specifications have been successfully validated
+  virtual bool IsComplete( void ) const = 0;                    //!< checks if the buffers and passes have been successfully created
+  virtual void Invalidate( void ) = 0;                          //!< invalidate, force renew of buffers and passes
+  virtual bool Validate( void ) = 0;                            //!< validate the specifcations
+  virtual bool Create( std::array<size_t, 2> ) = 0;             //!< validate the specification and create the render passes 
+  virtual void Destroy( void ) = 0;                             //!< detroy the buffer and the passes
+  virtual bool Prepare( size_t passID ) = 0;                    //!< prepare a render pass
+  virtual bool PrepareMode( size_t passID ) = 0;                //!< prepare the blending and the depth mode of a render pass
+  virtual bool Bind( size_t passID, bool read, bool draw ) = 0; //!< binds the named famebuffer for drawing
+  virtual bool ReleasePass( size_t passID ) = 0;                //!< relase the render pass
+  virtual bool Release( void ) = 0;                             //!< relase the current render pass
 };
 
 

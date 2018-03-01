@@ -93,6 +93,9 @@ public:
   CRenderProcess( void );
   virtual ~CRenderProcess();
 
+  virtual const TBufferMap & Buffers( void ) const { return _buffers; };
+  virtual const TPassMap   & Passes( void )  const { return _passes; };
+
   static std::array<unsigned int, 3> InternalFormat( Render::TBufferType buffer, Render::TBufferDataType format );
 
   virtual bool IsValid( void )    const override { return _valid; }
@@ -112,11 +115,13 @@ public:
   virtual void Destroy( void ) override;                                                        //!< destroy the buffer and the passes
   virtual bool Prepare( size_t passID ) override;                                               //!< prepare a render pass
   virtual bool PrepareMode( size_t passID ) override;                                           //!< prepare the blending and the depth mode of a render pass
+  virtual bool Bind( size_t passID, bool read, bool draw ) override;                            //!< binds the named famebuffer
   virtual bool ReleasePass( size_t passID ) override;                                           //!< relase the render pass
   virtual bool Release( void ) override;                                                        //!< relase the current render pass
 
-  virtual bool SetupDepthTest( Render::TPassDepthTest depth );
-  virtual bool SetupBlending( Render::TPassBlending blending );
+  virtual bool SetupDepthTest( Render::TPassDepthTest depth );  //!< set up the depth test
+  virtual bool SetupBlending( Render::TPassBlending blending ); //!< set up the blending function
+
 
 private:
 
