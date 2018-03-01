@@ -681,7 +681,10 @@ void CRenderProcess::UpdateTexture(
   {
     // delte the "old" texture if it was not an external texture
     if ( texIt != _textures.end() && texIt->second._extern == false )
+    {
       glDeleteTextures( 1, &texIt->second._object );
+      TEST_GL_ERROR
+    }
     
     // update texture information
     texIt->second = newTexture;
@@ -697,7 +700,10 @@ void CRenderProcess::UpdateTexture(
     
     // Delete the "old" texture object, of course if it is not extern.
     if ( texIt->second._extern == false )
+    {
       glDeleteTextures( 1, &texIt->second._object );
+      TEST_GL_ERROR
+    }
   }
 
   // create the new texture
@@ -706,7 +712,6 @@ void CRenderProcess::UpdateTexture(
   // setup the texture size and the format
   if ( IsLayered( newTexture._layers ) == false )
   {
-    
     glBindTexture( GL_TEXTURE_2D, newTexture._object ); TEST_GL_ERROR
     glTexImage2D( GL_TEXTURE_2D, 0, (GLint)newTexture._format[0],
       (GLsizei)newTexture._size[0], (GLsizei)newTexture._size[1],

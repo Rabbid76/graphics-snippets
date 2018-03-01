@@ -95,7 +95,8 @@ public:
 
   static std::array<unsigned int, 3> InternalFormat( Render::TBufferType buffer, Render::TBufferDataType format );
 
-  virtual bool IsValid( void ) override { return _valid; }
+  virtual bool IsValid( void )    const override { return _valid; }
+  virtual bool IsComplete( void ) const override { return _complete; }
 
   virtual void Invalidate( void ) override;                                                     //!< invalidate, force renew of buffers and passes
   virtual void ClearBuffers( void ) override;                                                   //!< clear all render buffer specifications

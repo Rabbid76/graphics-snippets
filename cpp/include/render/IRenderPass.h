@@ -340,7 +340,8 @@ public:
     return valid;
   }
 
-  virtual bool IsValid( void ) = 0;                 //!< check if the specifications have been successfully validated
+  virtual bool IsValid( void ) const = 0;           //!< checks if the specifications have been successfully validated
+  virtual bool IsComplete( void ) const = 0;        //!< checks if the buffers and passes have been successfully created
   virtual void Invalidate( void ) = 0;              //!< invalidate, force renew of buffers and passes
   virtual bool Validate( void ) = 0;                //!< validate the specifcations
   virtual bool Create( std::array<size_t, 2> ) = 0; //!< validate the specification and create the render passes 
