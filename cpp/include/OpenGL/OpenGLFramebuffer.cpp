@@ -663,11 +663,10 @@ void CRenderProcess::UpdateTexture(
   // get texture size
   newTexture._size = { (size_t)(_size[0] * _scales[bufferID] + 0.5f), (size_t)(_size[1] * _scales[bufferID] + 0.5f) };
 
-  // get the buffer format
+  // get the buffer format, layers and filer
   newTexture._format = InternalFormat( specification._type, specification._format );
-
-  // set the layers
   newTexture._layers = specification._layers;
+  newTexture._linear = specification._flag.test( Render::TBuffer::e_linear );
 
   // set the the extern textue object
   newTexture._extern = false; // TODO $$$ extern textures
@@ -725,9 +724,16 @@ void CRenderProcess::UpdateTexture(
       0, (GLenum)newTexture._format[1], (GLenum)newTexture._format[2], nullptr ); TEST_GL_ERROR
   }
   
-  // TODO $$$ GL_NEAREST blur buffer ?
-  glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST ); TEST_GL_ERROR
-  glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST ); TEST_GL_ERROR
+  if ( newTexture._linear )
+  {
+    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR ); TEST_GL_ERROR
+    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR ); TEST_GL_ERROR
+  }
+  else
+  {
+    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST ); TEST_GL_ERROR
+    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST ); TEST_GL_ERROR
+  }
   
   glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE ); TEST_GL_ERROR
   glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE ); TEST_GL_ERROR

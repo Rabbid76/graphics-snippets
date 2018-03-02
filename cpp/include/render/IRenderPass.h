@@ -124,6 +124,7 @@ struct TBuffer
   enum TProperty
   {
     e_cubemap, //!< buffer has to be cleared
+    e_linear,  //!< linear filter
     //...
     e_NO_OF  //!< number of buffer properties
   };

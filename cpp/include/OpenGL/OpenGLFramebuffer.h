@@ -61,6 +61,7 @@ public:
     std::array<size_t, 2>       _size;   //!< 2D texture size
     std::array<unsigned int, 3> _format; //!< texture format
     unsigned int                _layers; //!< number of texture layers
+    bool                        _linear; //!< linear texture buffer filter
     bool                        _extern; //!< extern texture; a texture which is not maneged in this class, but was handed over for use
   };
   using TTextureMap = std::map<size_t, TTextureObject>;
