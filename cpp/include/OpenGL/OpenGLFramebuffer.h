@@ -72,7 +72,7 @@ public:
   };
   using TFrambufferMap = std::map<size_t, TFramebufferObject>;
 
-  using TTextureAndBindig = std::pair<unsigned int, unsigned int>;
+  using TTextureAndBindig = std::tuple<unsigned int, unsigned int, unsigned int>;
   struct TBufferInfoCache
   {
     TBufferInfoCache( void ) = default;

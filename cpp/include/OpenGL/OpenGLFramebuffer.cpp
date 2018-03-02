@@ -1128,7 +1128,10 @@ const CRenderProcess::TBufferInfoCache & CRenderProcess::EvaluateInfoCache(
     if ( texIt == _textures.end() )
       continue;
     TTextureObject &texture = texIt->second;
-    info._sourceTextures.emplace_back( GL_TEXTURE0 + (unsigned int)source._binding, texture._object );
+    if ( IsLayered( texture._layers ) == false )
+      info._sourceTextures.emplace_back( GL_TEXTURE0 + (unsigned int)source._binding, GL_TEXTURE_2D, texture._object );
+    else
+      info._sourceTextures.emplace_back( GL_TEXTURE0 + (unsigned int)source._binding, GL_TEXTURE_2D_ARRAY, texture._object );
   }
 
   return it->second;
@@ -1221,8 +1224,8 @@ bool CRenderProcess::Prepare(
   {
     for ( auto source : bufferInfo._sourceTextures )
     {
-      glActiveTexture( source.first ); TEST_GL_ERROR
-      glBindTexture( GL_TEXTURE_2D, source.second ); TEST_GL_ERROR
+      glActiveTexture( std::get<0>(source) ); TEST_GL_ERROR
+      glBindTexture( std::get<1>(source), std::get<2>(source) ); TEST_GL_ERROR
     }
   }
   
@@ -1255,8 +1258,8 @@ bool CRenderProcess::ReleasePass(
   {
     for ( auto source : it->second._sourceTextures )
     {
-      glActiveTexture( source.first ); TEST_GL_ERROR
-      glBindTexture( GL_TEXTURE_2D, 0 ); TEST_GL_ERROR
+      glActiveTexture( std::get<0>(source) ); TEST_GL_ERROR
+      glBindTexture( std::get<1>(source), 0 ); TEST_GL_ERROR
     }
   }
 
