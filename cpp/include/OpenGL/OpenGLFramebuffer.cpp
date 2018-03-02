@@ -1081,6 +1081,7 @@ const CRenderProcess::TBufferInfoCache & CRenderProcess::EvaluateInfoCache(
 
   // evaluate target buffers and target buffer clearing
   bool clear_all_color = true;
+  bool clear_any_color = false;
   for ( auto target : pass._targets )
   {
     auto texIt = _textures.find( target._bufferID );
@@ -1089,22 +1090,36 @@ const CRenderProcess::TBufferInfoCache & CRenderProcess::EvaluateInfoCache(
     TTextureObject &texture = texIt->second;
 
     if ( target._attachment == Render::TPass::TTarget::depth_stencil )
-      info._clearMask = info._clearMask | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT; 
+    {
+      if ( target.ClearTarget() )
+        info._clearMask = info._clearMask | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT; 
+    }
     else if ( target._attachment == Render::TPass::TTarget::depth )
-      info._clearMask = info._clearMask | GL_DEPTH_BUFFER_BIT; 
+    {
+      if ( target.ClearTarget() )
+        info._clearMask = info._clearMask | GL_DEPTH_BUFFER_BIT; 
+    }
     else if ( target._attachment == Render::TPass::TTarget::stencil )
-      info._clearMask = info._clearMask | GL_STENCIL_BUFFER_BIT; 
+    {
+      if ( target.ClearTarget() )
+        info._clearMask = info._clearMask | GL_STENCIL_BUFFER_BIT; 
+    }
     else
     {
+      clear_any_color = true;
       info._drawBuffers.push_back( (GLenum)(GL_COLOR_ATTACHMENT0 + target._attachment) );
 
       if ( target.ClearTarget() == false || target._clear_color != Render::TColor{0.0f, 0.0f, 0.0f, 0.0f} )
         clear_all_color = false;
-      info._clearTargets.emplace_back( (GLint)target._attachment, target._clear_color );
+      if ( target.ClearTarget() )
+        info._clearTargets.emplace_back( (GLint)target._attachment, target._clear_color );
     }
   }
-  if ( clear_all_color )
+  if ( clear_all_color && clear_any_color )
+  {
+    info._clearTargets.clear();
     info._clearMask = info._clearMask | GL_COLOR_BUFFER_BIT;
+  }
 
   // setup source textures
   for ( auto source : pass._sources )
@@ -1183,8 +1198,11 @@ bool CRenderProcess::Prepare(
     glClearBufferfv( GL_COLOR, (GLint)clearTarget.first, clearTarget.second.data() );
     TEST_GL_ERROR
   }
-  glClear( bufferInfo._clearMask );
-  TEST_GL_ERROR
+  if ( bufferInfo._clearMask != 0 )
+  {
+    glClear( bufferInfo._clearMask );
+    TEST_GL_ERROR
+  }
 
   // bind source textures
   for ( auto source : bufferInfo._sourceTextures )

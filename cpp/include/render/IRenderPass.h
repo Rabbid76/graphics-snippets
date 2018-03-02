@@ -307,6 +307,7 @@ public:
 
   using TBufferMap = std::map<size_t, TBuffer>; //!< buffer map
   using TPassMap   = std::map<size_t, TPass>;   //!< pass map
+  using TSize      = std::array<size_t, 2>;     //!< 2D size
 
 
   IRenderProcess( void ) = default;
@@ -349,18 +350,19 @@ public:
     return valid;
   }
 
-  virtual bool IsValid( void ) const = 0;                       //!< checks if the specifications have been successfully validated
-  virtual bool IsComplete( void ) const = 0;                    //!< checks if the buffers and passes have been successfully created
-  virtual void Invalidate( void ) = 0;                          //!< invalidate, force renew of buffers and passes
-  virtual bool Validate( void ) = 0;                            //!< validate the specifcations
-  virtual bool Create( std::array<size_t, 2> ) = 0;             //!< validate the specification and create the render passes 
-  virtual void Destroy( void ) = 0;                             //!< detroy the buffer and the passes
-  virtual bool Prepare( size_t passID ) = 0;                    //!< prepare a render pass
-  virtual bool PrepareMode( size_t passID ) = 0;                //!< prepare the blending and the depth mode of a render pass
-  virtual bool Bind( size_t passID, bool read, bool draw ) = 0; //!< binds the named famebuffer for drawing
-  virtual bool ReleasePass( size_t passID ) = 0;                //!< relase the render pass
-  virtual bool Release( void ) = 0;                             //!< relase the current render pass
-};
+  virtual bool  IsValid( void ) const = 0;                       //!< checks if the specifications have been successfully validated
+  virtual bool  IsComplete( void ) const = 0;                    //!< checks if the buffers and passes have been successfully created
+  virtual void  Invalidate( void ) = 0;                          //!< invalidate, force renew of buffers and passes
+  virtual bool  Validate( void ) = 0;                            //!< validate the specifcations
+  virtual bool  Create( std::array<size_t, 2> ) = 0;             //!< validate the specification and create the render passes 
+  virtual TSize CurrentSize( void ) const = 0;                   //!< current process buffer size
+  virtual void  Destroy( void ) = 0;                             //!< detroy the buffer and the passes
+  virtual bool  Prepare( size_t passID ) = 0;                    //!< prepare a render pass
+  virtual bool  PrepareMode( size_t passID ) = 0;                //!< prepare the blending and the depth mode of a render pass
+  virtual bool  Bind( size_t passID, bool read, bool draw ) = 0; //!< binds the named famebuffer for drawing
+  virtual bool  ReleasePass( size_t passID ) = 0;                //!< relase the render pass
+  virtual bool  Release( void ) = 0;                             //!< relase the current render pass
+};              
 
 
 } // Draw

@@ -44,7 +44,7 @@ class CRenderProcess
 public:
 
   using TScaleMap     = std::map<size_t, float>;
-  using TViewportSize = std::array<size_t, 2>;
+  using TViewportSize = Render::IRenderProcess::TSize;
 
   struct TTextureObject
   {
@@ -98,8 +98,9 @@ public:
 
   static std::array<unsigned int, 3> InternalFormat( Render::TBufferType buffer, Render::TBufferDataType format );
 
-  virtual bool IsValid( void )    const override { return _valid; }
-  virtual bool IsComplete( void ) const override { return _complete; }
+  virtual bool          IsValid( void )     const override { return _valid; }
+  virtual bool          IsComplete( void )  const override { return _complete; }
+  virtual TViewportSize CurrentSize( void ) const override { return _size; }                        
 
   virtual void Invalidate( void ) override;                                                     //!< invalidate, force renew of buffers and passes
   virtual void ClearBuffers( void ) override;                                                   //!< clear all render buffer specifications
