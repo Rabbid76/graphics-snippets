@@ -309,6 +309,19 @@ public:
   using TPassMap   = std::map<size_t, TPass>;   //!< pass map
   using TSize      = std::array<size_t, 2>;     //!< 2D size
 
+  enum class TPrepareProperty
+  {
+    depth,    //!< set the depth test
+    blend,    //!< set the blending function
+    viewport, //!< sets the viewport size
+    bind,     //!< bind the target buffers
+    targets,  //!< set target buffers
+    clear,    //!< clear target buffers according to the target specification
+    source,   //!< binde pass source buffers
+    // ...
+    NO_OF
+  }; 
+  using TPrepareProperties = std::bitset<(int)TPrepareProperty::NO_OF>;
 
   IRenderProcess( void ) = default;
   virtual ~IRenderProcess() = default;
@@ -350,18 +363,43 @@ public:
     return valid;
   }
 
-  virtual bool  IsValid( void ) const = 0;                       //!< checks if the specifications have been successfully validated
-  virtual bool  IsComplete( void ) const = 0;                    //!< checks if the buffers and passes have been successfully created
-  virtual void  Invalidate( void ) = 0;                          //!< invalidate, force renew of buffers and passes
-  virtual bool  Validate( void ) = 0;                            //!< validate the specifcations
-  virtual bool  Create( std::array<size_t, 2> ) = 0;             //!< validate the specification and create the render passes 
-  virtual TSize CurrentSize( void ) const = 0;                   //!< current process buffer size
-  virtual void  Destroy( void ) = 0;                             //!< detroy the buffer and the passes
-  virtual bool  Prepare( size_t passID ) = 0;                    //!< prepare a render pass
-  virtual bool  PrepareMode( size_t passID ) = 0;                //!< prepare the blending and the depth mode of a render pass
-  virtual bool  Bind( size_t passID, bool read, bool draw ) = 0; //!< binds the named famebuffer for drawing
-  virtual bool  ReleasePass( size_t passID ) = 0;                //!< relase the render pass
-  virtual bool  Release( void ) = 0;                             //!< relase the current render pass
+ 
+  virtual bool  IsValid( void ) const = 0;                              //!< checks if the specifications have been successfully validated
+  virtual bool  IsComplete( void ) const = 0;                           //!< checks if the buffers and passes have been successfully created
+  virtual void  Invalidate( void ) = 0;                                 //!< invalidate, force renew of buffers and passes
+  virtual bool  Validate( void ) = 0;                                   //!< validate the specifcations
+  virtual bool  Create( std::array<size_t, 2> ) = 0;                    //!< validate the specification and create the render passes 
+  virtual TSize CurrentSize( void ) const = 0;                          //!< current process buffer size
+  virtual void  Destroy( void ) = 0;                                    //!< detroy the buffer and the passes
+  virtual bool  Prepare( size_t passID, TPrepareProperties props ) = 0; //!< prepare a render pass
+  virtual bool  Bind( size_t passID, bool read, bool draw ) = 0;        //!< binds the named famebuffer for drawing
+  virtual bool  ReleasePass( size_t passID ) = 0;                       //!< relase the render pass
+  virtual bool  Release( void ) = 0;                                    //!< relase the current render pass
+ 
+  bool Prepare( size_t passID )
+  {
+    static const TPrepareProperties props = TPrepareProperties().
+      set((int)TPrepareProperty::depth).set((int)TPrepareProperty::blend).set((int)TPrepareProperty::viewport).
+      set((int)TPrepareProperty::bind).set((int)TPrepareProperty::targets).set((int)TPrepareProperty::clear).
+      set((int)TPrepareProperty::source);
+    return Prepare( passID, props );
+  }
+
+  bool PrepareMode( size_t passID )
+  {
+    static const TPrepareProperties props = TPrepareProperties().set((int)TPrepareProperty::depth).set((int)TPrepareProperty::blend);
+    return Prepare( passID, props );
+  }
+
+  bool PrepareNoClear( size_t passID )
+  {
+    static const TPrepareProperties props = TPrepareProperties().
+      set((int)TPrepareProperty::depth).set((int)TPrepareProperty::blend).set((int)TPrepareProperty::viewport).
+      set((int)TPrepareProperty::bind).set((int)TPrepareProperty::targets).
+      set((int)TPrepareProperty::source);
+    return Prepare( passID, props );
+  }
+
 };              
 
 

@@ -101,7 +101,7 @@ public:
   virtual bool          IsValid( void )     const override { return _valid; }
   virtual bool          IsComplete( void )  const override { return _complete; }
   virtual TViewportSize CurrentSize( void ) const override { return _size; }                        
-
+  
   virtual void Invalidate( void ) override;                                                     //!< invalidate, force renew of buffers and passes
   virtual void ClearBuffers( void ) override;                                                   //!< clear all render buffer specifications
   virtual void ClearBuffer( size_t bufferID ) override;                                         //!< clear a render buffer specification
@@ -114,8 +114,7 @@ public:
   virtual bool Validate( void ) override;                                                       //!< validate the specifcations
   virtual bool Create( TViewportSize size ) override;                                           //!< validate the specification and create the render passes                
   virtual void Destroy( void ) override;                                                        //!< destroy the buffer and the passes
-  virtual bool Prepare( size_t passID ) override;                                               //!< prepare a render pass
-  virtual bool PrepareMode( size_t passID ) override;                                           //!< prepare the blending and the depth mode of a render pass
+  virtual bool Prepare( size_t passID, TPrepareProperties props ) override;                     //!< prepare a render pass
   virtual bool Bind( size_t passID, bool read, bool draw ) override;                            //!< binds the named famebuffer
   virtual bool ReleasePass( size_t passID ) override;                                           //!< relase the render pass
   virtual bool Release( void ) override;                                                        //!< relase the current render pass

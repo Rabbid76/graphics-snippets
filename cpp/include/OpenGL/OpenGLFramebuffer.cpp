@@ -1060,7 +1060,7 @@ const CRenderProcess::TBufferInfoCache & CRenderProcess::EvaluateInfoCache(
   auto it = _bufferInfoMap.find( passID );
   if ( it != _bufferInfoMap.end() )
     return it->second;
-  _bufferInfoMap.emplace( passID, TBufferInfoCache() );
+  _bufferInfoMap[passID] = TBufferInfoCache();
   it = _bufferInfoMap.find( passID );
   TBufferInfoCache &info = it->second;
   
@@ -1153,7 +1153,8 @@ const CRenderProcess::TBufferInfoCache & CRenderProcess::EvaluateInfoCache(
 * \version 1.0
 **********************************************************************/
 bool CRenderProcess::Prepare( 
-  size_t passID ) //!< in: the name of the render pass
+  size_t             passID, //!< in: the name of the render pass
+  TPrepareProperties props ) //!< in: conditons
 {
   if ( IsValid() == false || _complete == false )
     return false;
@@ -1169,21 +1170,29 @@ bool CRenderProcess::Prepare(
   const TBufferInfoCache &bufferInfo = EvaluateInfoCache( passID, pass );
 
   // setup depth test
-  SetupDepthTest( pass._depth );
+  if ( props.test((int)TPrepareProperty::depth) )
+    SetupDepthTest( pass._depth );
 
   // setup blending
-  SetupBlending( pass._blend );
+  if ( props.test((int)TPrepareProperty::blend) )
+    SetupBlending( pass._blend );
 
   // render pass viewport size
-  glViewport( 0, 0, (GLsizei)bufferInfo._vp_size[0], (GLsizei)bufferInfo._vp_size[1] );
-  TEST_GL_ERROR
+  if ( props.test((int)TPrepareProperty::viewport) )
+  {
+    glViewport( 0, 0, (GLsizei)bufferInfo._vp_size[0], (GLsizei)bufferInfo._vp_size[1] );
+    TEST_GL_ERROR
+  }
 
   // bind the frambuffer
-  glBindFramebuffer( GL_FRAMEBUFFER, bufferInfo._fb_obj );
-  TEST_GL_ERROR
+  if ( props.test((int)TPrepareProperty::bind) )
+  {
+    glBindFramebuffer( GL_FRAMEBUFFER, bufferInfo._fb_obj );
+    TEST_GL_ERROR
+  }
 
   // setup tartget buffer
-  if ( bufferInfo._targetIsDefault == false )
+  if ( props.test((int)TPrepareProperty::targets) &&  bufferInfo._targetIsDefault == false )
   {
     if ( bufferInfo._drawBuffers.empty() )
       glDrawBuffer( GL_NONE );
@@ -1193,57 +1202,30 @@ bool CRenderProcess::Prepare(
   }
 
   // clear the buffers
-  for ( auto & clearTarget : bufferInfo._clearTargets )
+  if ( props.test((int)TPrepareProperty::clear) )
   {
-    glClearBufferfv( GL_COLOR, (GLint)clearTarget.first, clearTarget.second.data() );
-    TEST_GL_ERROR
-  }
-  if ( bufferInfo._clearMask != 0 )
-  {
-    glClear( bufferInfo._clearMask );
-    TEST_GL_ERROR
+    for ( auto & clearTarget : bufferInfo._clearTargets )
+    {
+      glClearBufferfv( GL_COLOR, (GLint)clearTarget.first, clearTarget.second.data() );
+      TEST_GL_ERROR
+    }
+    if ( bufferInfo._clearMask != 0 )
+    {
+      glClear( bufferInfo._clearMask );
+      TEST_GL_ERROR
+    }
   }
 
   // bind source textures
-  for ( auto source : bufferInfo._sourceTextures )
+  if ( props.test((int)TPrepareProperty::source) )
   {
-    glActiveTexture( source.first ); TEST_GL_ERROR
-    glBindTexture( GL_TEXTURE_2D, source.second ); TEST_GL_ERROR
+    for ( auto source : bufferInfo._sourceTextures )
+    {
+      glActiveTexture( source.first ); TEST_GL_ERROR
+      glBindTexture( GL_TEXTURE_2D, source.second ); TEST_GL_ERROR
+    }
   }
   
-  return true;
-}
-
-
-/******************************************************************//**
-* \brief   Prepare the blending and the depth mode of a render pass.
-* 
-* \author  gernot
-* \date    2018-02-11
-* \version 1.0
-**********************************************************************/
-bool CRenderProcess::PrepareMode( 
-  size_t passID ) //!< in: the name of the render pass
-{
-  if ( IsValid() == false || _complete == false )
-    return false;
-
-  // check if the pass is valid
-  auto passIt = _passes.find( passID );
-  if ( passIt == _passes.end() )
-    return false;
-  _currentPass = passID;
-  Render::TPass &pass = passIt->second;
-
-  // Update information for target buffer binding, target buffer clearing and source texture binding
-  const TBufferInfoCache &bufferInfo = EvaluateInfoCache( passID, pass );
-
-  // setup depth test
-  SetupDepthTest( pass._depth );
-
-  // setup blending
-  SetupBlending( pass._blend );
-
   return true;
 }
 
