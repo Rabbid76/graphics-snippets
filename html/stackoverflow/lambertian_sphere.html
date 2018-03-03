@@ -1,19 +1,19 @@
 <script id="draw-shader-vs" type="x-shader/x-vertex">
     precision mediump float;
+    
     attribute vec3 inPos;
-    varying float NdotL;
+    
+    varying vec3 v_normal;
 
     uniform mat4 u_projectionMat44;
     uniform mat4 u_viewMat44;
     uniform mat4 u_modelMat44;
-    uniform vec3 u_lightDir;
-
+    
     void main()
     {
         vec3  modelNV = mat3( u_modelMat44 ) * normalize( inPos );
         vec3  normalV = mat3( u_viewMat44 ) * modelNV;
-        vec3  lightV  = normalize( -u_lightDir );
-        NdotL         = max( 0.0, dot( normalV, lightV ) );
+        v_normal      = normalV;
 
         vec4 modelPos = u_modelMat44 * vec4( inPos, 1.0 );
         vec4 viewPos  = u_viewMat44 * modelPos;
@@ -23,11 +23,18 @@
   
 <script id="draw-shader-fs" type="x-shader/x-fragment">
     precision mediump float;
-    varying float NdotL;
+    
+    varying vec3 v_normal;
+    
+    uniform vec3 u_lightDir;
     uniform vec3 u_color;
 
     void main()
     {
+        vec3  normalV  = normalize( v_normal );
+        vec3  lightV   = normalize( -u_lightDir );
+        float NdotL    = max( 0.0, dot( normalV, lightV ) );
+
         vec3 lightCol  = (0.2 + 0.8 * NdotL) * u_color;
         gl_FragColor   = vec4( lightCol.rgb, 1.0 );
     }
@@ -90,7 +97,7 @@ html,body {
       modelMat = RotateAxis( modelMat, CalcAng( delteMS, 17.0 ), 1 );
       ShaderProgram.SetUniformM44( progDraw.prog, "u_modelMat44", modelMat );
       ShaderProgram.SetUniformF3( progDraw.prog, "u_color", [1.0, 0.5, 0.0] );
-      ShaderProgram.SetUniformF3( progDraw.prog, "u_lightDir", [-1.0, -0.5, -2.0] )
+      ShaderProgram.SetUniformF3( progDraw.prog, "u_lightDir", [-8.0, 0.0, -2.0] )
       
       // draw scene
       VertexBuffer.Draw( bufSphere );
