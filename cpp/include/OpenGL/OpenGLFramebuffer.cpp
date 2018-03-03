@@ -1123,8 +1123,11 @@ const CRenderProcess::TBufferInfoCache & CRenderProcess::EvaluateInfoCache(
   }
   if ( clear_all_color && clear_any_color )
   {
-    info._clearTargets.clear();
-    info._clearMask = info._clearMask | GL_COLOR_BUFFER_BIT;
+    // The following lines are skipped.
+    // Clear all color buffers seperatly because of `glDrawBuffers( N, [] )`
+    // A single `glClear()` won't proper work 
+    //info._clearTargets.clear();
+    //info._clearMask = info._clearMask | GL_COLOR_BUFFER_BIT;
   }
 
   // setup source textures
