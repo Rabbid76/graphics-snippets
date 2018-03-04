@@ -70,6 +70,8 @@
 
 [Cube color](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/cube_color.html)
 
+[Cube clipping](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/clip_cube.html)
+
 [Cube texture](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/cube_texture.html)
 
 [Sphere texture](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/sphere_texture.html)
