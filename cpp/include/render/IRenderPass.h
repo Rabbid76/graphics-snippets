@@ -62,7 +62,8 @@ enum class TBufferType
 enum class TBufferDataType
 {
   DEFAULT             =  0, //!< default format; is one of `UINT8`, `DEPTH32`, `DEPTH_STENCIL_24_8`
-  UINT8               =  1, //!< byte
+  F_BYTE              =  1, //!< byte [0.0, 1.0]
+  F_WORD              =  2, //!< word [0.0, 1.0]
   SNORM8              = 16, //!< [-1, 1] 8 bit
   SNORM16             = 17, //!< [-1, 1] 16 bit
   F16                 = 32, //!< 16 bit float; 1 bit sign, 10 bit mantissa, 5 bit exponent; 6.10 * 10^(-5) .. 6.55 * 10^4 

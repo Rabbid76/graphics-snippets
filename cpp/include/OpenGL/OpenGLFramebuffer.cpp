@@ -271,10 +271,11 @@ std::array<unsigned int, 3> CRenderProcess::InternalFormat(
     Render::TBufferType::DEPTHSTENCIL
   };
 
-  constexpr const int FORMATS = 13;
+  constexpr const int FORMATS = 14;
   static const std::array<Render::TBufferDataType, FORMATS> formatTypes{
     Render::TBufferDataType::DEFAULT,
-    Render::TBufferDataType::UINT8,
+    Render::TBufferDataType::F_BYTE,
+    Render::TBufferDataType::F_WORD,
     Render::TBufferDataType::SNORM8,
     Render::TBufferDataType::SNORM16,
     Render::TBufferDataType::F16,
@@ -294,7 +295,8 @@ std::array<unsigned int, 3> CRenderProcess::InternalFormat(
   {
     //                          COLOR1         COLOR2         COLOR3          COLOR4           DEPTH                  STENCIL              STENCIL DEPTHSTENCIL
     /* DEFAULT             */  { GL_RED,       GL_RG,         GL_RGB,         GL_RGBA,         GL_DEPTH_COMPONENT,    GL_STENCIL_INDEX8,   GL_DEPTH24_STENCIL8 },
-    /* UINT8               */  { GL_R8,        GL_RG8,        GL_RGB8,        GL_RGBA8,        0,                     0,                   0 },
+    /* F_BYTE              */  { GL_R8,        GL_RG8,        GL_RGB8,        GL_RGBA8,        0,                     0,                   0 },
+    /* F_WORD              */  { GL_R16,       GL_RG16,       GL_RGB16,       GL_RGBA16,       0,                     0,                   0 },
     /* SNORM8              */  { GL_R8_SNORM,  GL_RG8_SNORM,  GL_RGB8_SNORM,  GL_RGBA8_SNORM,  0,                     0,                   0 },
     /* SNORM16             */  { GL_R16_SNORM, GL_RG16_SNORM, GL_RGB16_SNORM, GL_RGBA16_SNORM, 0,                     0,                   0 },
     /* F16                 */  { GL_R16F,      GL_RG16F,      GL_RGB16F,      GL_RGBA16F,      0,                     0,                   0 },
@@ -353,7 +355,7 @@ std::array<unsigned int, 3> CRenderProcess::InternalFormat(
       break;
     
     default:
-      dataType = ( format == Render::TBufferDataType::DEFAULT || format == Render::TBufferDataType::UINT8 ) ? GL_UNSIGNED_BYTE : GL_FLOAT;
+      dataType = ( format == Render::TBufferDataType::DEFAULT || format == Render::TBufferDataType::F_BYTE ) ? GL_UNSIGNED_BYTE : GL_FLOAT;
       break;
   } 
   
