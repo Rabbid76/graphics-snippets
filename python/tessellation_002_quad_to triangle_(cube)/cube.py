@@ -96,8 +96,8 @@ for inx_col in range(0, 6):
     AddToBuffer( cubeColData, cubeCol[inx_col % len(cubeCol)], 4 )
 cubeIndices = []
 for inx in range(0, 6):
-    for inx_s in [0, 1, 2, 0, 2, 3]: cubeIndices.append( inx * 4 + inx_s )
-cubeVAO = vertex.VAObject( [ (3, cubePosData), (3, cubeNVData), (3, cubeColData) ], cubeIndices, GL_PATCHES, 3 )
+    for inx_s in [0, 1, 2, 3]: cubeIndices.append( inx * 4 + inx_s )
+cubeVAO = vertex.VAObject( [ (3, cubePosData), (3, cubeNVData), (3, cubeColData) ], cubeIndices, GL_PATCHES, 4 )
 
 # load, compile and link shader
 progDraw = shader.ShaderProgram( 
