@@ -1308,6 +1308,35 @@ bool CRenderProcess::Release( void )
 
 
 /******************************************************************//**
+* @brief   Get the implementation object for a pass
+*
+* @author  gernot
+* @date    2018-03-05
+* @version 1.0
+**********************************************************************/
+bool CRenderProcess::GetPassObject( 
+  size_t        passID, //!< in: the name of the render pass
+  unsigned int &obj )   //!< out: the GPU frambuffer object
+{
+  if ( IsValid() == false || _complete == false )
+    return false;
+
+  // check if the pass is valid
+  auto passIt = _passes.find( passID );
+  if ( passIt == _passes.end() )
+    return false;
+  _currentPass = passID;
+  Render::TPass &pass = passIt->second;
+
+  // Update information for target buffer binding, target buffer clearing and source texture binding
+  const TBufferInfoCache &bufferInfo = EvaluateInfoCache( passID, pass );
+
+  obj = bufferInfo._fb_obj;
+  return true;
+}
+
+
+/******************************************************************//**
 * \brief   Bind a frambuffer for reading and/or drawing.
 * 
 * \author  gernot

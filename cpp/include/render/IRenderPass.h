@@ -377,6 +377,7 @@ public:
   virtual bool  Bind( size_t passID, bool read, bool draw ) = 0;        //!< binds the named famebuffer for drawing
   virtual bool  ReleasePass( size_t passID ) = 0;                       //!< relase the render pass
   virtual bool  Release( void ) = 0;                                    //!< relase the current render pass
+  virtual bool  GetPassObject( size_t passID, unsigned int &obj ) = 0;  //!< get the implementation object for a pass
  
   bool Prepare( size_t passID )
   {

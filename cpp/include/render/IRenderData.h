@@ -220,8 +220,8 @@ struct TCamera
 **********************************************************************/
 struct TSceneData
 {
-  TVec3 _min; //!< minimum of AABB od the scene
-  TVec3 _max; //!< maximum of AABB od the scene
+  TVec3 _min; //!< minimum of AABB of the scene
+  TVec3 _max; //!< maximum of AABB of the scene
 };
 
 
