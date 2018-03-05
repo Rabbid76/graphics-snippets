@@ -23,16 +23,21 @@ void main()
     // See [Tessellation Triangles](https://www.khronos.org/opengl/wiki/Tessellation#Triangles)
     // Tessellation Evaluation Shader:
     //     - vertices = 4
-    //     - gl_TessLevelOuter = float[4](1.0, 1.0, 2.0, 0.0);
+    //     - gl_TessLevelOuter = float[4](2.0, 1.0, 1.0, 0.0);
     //    -  gl_TessLevelInner = float[2](1.0, 0.0);   
 
-    int inx = 2;
-    if ( gl_TessCoord.z > 0.75 )
-        inx = 0;  
-    else if ( gl_TessCoord.y > 0.75 )
+    /*
+    int inx = 0;
+    if ( gl_TessCoord.y > 0.75 )
         inx = 1;  
     else if ( gl_TessCoord.x > 0.75 )
-        inx = 3;  
+        inx = 2;  
+    else if ( gl_TessCoord.z > 0.75 )
+        inx = 3;
+    */  
+
+    float fi  = dot(vec3(2.0, 1.0, 3.0), step(vec3(0.75), gl_TessCoord.xyz));
+    int   inx = int(fi + 0.5);
 
     vec3 pos = inData[inx].pos;
     vec3 nv  = inData[inx].nv;

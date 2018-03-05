@@ -24,7 +24,7 @@ void main()
 
     if ( gl_InvocationID == 0 )
     {
-        gl_TessLevelOuter = float[4](1.0, 1.0, 2.0, 0.0);
+        gl_TessLevelOuter = float[4](2.0, 1.0, 1.0, 0.0);
         gl_TessLevelInner = float[2](1.0, 0.0);
     }
 }
