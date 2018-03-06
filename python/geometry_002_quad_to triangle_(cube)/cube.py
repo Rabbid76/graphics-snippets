@@ -97,13 +97,12 @@ for inx_col in range(0, 6):
 cubeIndices = []
 for inx in range(0, 6):
     for inx_s in [0, 1, 2, 3]: cubeIndices.append( inx * 4 + inx_s )
-cubeVAO = vertex.VAObject( [ (3, cubePosData), (3, cubeNVData), (3, cubeColData) ], cubeIndices, GL_PATCHES, 4 )
+cubeVAO = vertex.VAObject( [ (3, cubePosData), (3, cubeNVData), (3, cubeColData) ], cubeIndices, GL_LINES_ADJACENCY )
 
 # load, compile and link shader
 progDraw = shader.ShaderProgram( 
     [ ('resource/shader/blinn_phong.vert', GL_VERTEX_SHADER),
-      #('resource/shader/quad_triangle.tesc', GL_TESS_CONTROL_SHADER),
-      ('resource/shader/quad_triangle.tese', GL_TESS_EVALUATION_SHADER),
+      ('resource/shader/quad_triangle.geom', GL_GEOMETRY_SHADER),
       ('resource/shader/blinn_phong.frag', GL_FRAGMENT_SHADER) ] ) 
 
 # start main loop
