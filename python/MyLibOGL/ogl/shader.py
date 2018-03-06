@@ -11,6 +11,9 @@ from OpenGL.GL import *
 # TODO numpy -> array [https://docs.python.org/3/library/array.html]
 # TODO use double array
 
+# C
+from ctypes import c_void_p, c_char_p, POINTER, c_char
+
 
 class PrintShaderCode(Enum):
     OFF = 1
@@ -21,8 +24,10 @@ printShaderCode = PrintShaderCode.ON_ERROR
 
 # shader program object
 class ShaderProgram:
-    def __init__( self, shaderList ):
+    def __init__( self, shaderList, feedback_varyings = [], transform_feedback = 0):
         self.__printShader = printShaderCode
+        self.__transform_feedback = transform_feedback
+        self.__feedback_varyings = feedback_varyings
         shaderObjs = []
         for sh_info in shaderList: shaderObjs.append( self.CompileShader(sh_info[0], sh_info[1] ) )
         self.LinkProgram( shaderObjs )
@@ -116,6 +121,21 @@ class ShaderProgram:
     def LinkProgram(self, shaderObjs):
         self.__prog = glCreateProgram()
         for shObj in shaderObjs: glAttachShader( self.__prog, shObj )
+        if self.__transform_feedback != 0 and self.__feedback_varyings:
+            # Prepare ctypes data containing attrib names
+            out_attribs = self.__feedback_varyings
+            array_type = ctypes.c_char_p * len(out_attribs)
+            buff = array_type()
+            for i in range(len(out_attribs)):
+                buff[i] = out_attribs[i]
+                #varyings = ctypes.create_string_buffer(out_attribs[i])
+                #buff[i] = ctypes.cast(ctypes.pointer(varyings), ctypes.POINTER(GLchar)) 
+            c_text = ctypes.cast(ctypes.pointer(buff), ctypes.POINTER(ctypes.POINTER(GLchar)))
+            glTransformFeedbackVaryings(self.__prog, len(out_attribs), c_text, self.__transform_feedback)  
+            #varyings = ctypes.create_string_buffer(self.__feedback_varyings[0])
+            #varyings_pp = POINTER(POINTER(c_char))(ctypes.cast(varyings, POINTER(c_char)))       
+            #glTransformFeedbackVaryings(self.__prog, 1, varyings_pp, self.__transform_feedback)
+            #glTransformFeedbackVaryings(self.__prog, len(self.__feedback_varyings), self.__feedback_varyings, self.__transform_feedback)
         glLinkProgram( self.__prog )
         result = glGetProgramiv( self.__prog, GL_LINK_STATUS )
         if not ( result ):
