@@ -3,11 +3,11 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros">
     <TempBuildDir>c:\temp\_devenv</TempBuildDir>
-    <FreeGlutDir>_extern\freeglut\freeglut-3.0.0\</FreeGlutDir>
-    <GlfwDir>_extern\glfw-3.2.1.bin.WIN64\</GlfwDir>
-    <GlmDir>glm-0.9.6.3\glm</GlmDir>
-    <VulkanDir>_extern\VulkanSDK\1.0.61.1\</VulkanDir>
-    <SdlDir>_extern\SDL2-2.0.6\</SdlDir>
+    <GlmDir>..\..\glm-0.9.8.5\glm</GlmDir>
+    <SdlDir>..\..\_cpp_extern_extern\SDL2-2.0.6\</SdlDir>
+    <FreeGlutDir>..\..\_cpp_extern\freeglut\freeglut-3.0.0\</FreeGlutDir>
+    <GlfwDir>..\..\_cpp_extern\glfw-3.2.1.bin.WIN64\</GlfwDir>
+    <VulkanDir>..\..\_cpp_extern\VulkanSDK\1.0.61.1\</VulkanDir>
   </PropertyGroup>
   <PropertyGroup />
   <ItemDefinitionGroup />
@@ -15,6 +15,12 @@
     <BuildMacro Include="TempBuildDir">
       <Value>$(TempBuildDir)</Value>
       <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="GlmDir">
+      <Value>$(GlmDir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="SdlDir">
+      <Value>$(SdlDir)</Value>
     </BuildMacro>
     <BuildMacro Include="FreeGlutDir">
       <Value>$(FreeGlutDir)</Value>
@@ -24,14 +30,8 @@
       <Value>$(GlfwDir)</Value>
       <EnvironmentVariable>true</EnvironmentVariable>
     </BuildMacro>
-    <BuildMacro Include="GlmDir">
-      <Value>$(GlmDir)</Value>
-    </BuildMacro>
     <BuildMacro Include="VulkanDir">
       <Value>$(VulkanDir)</Value>
-    </BuildMacro>
-    <BuildMacro Include="SdlDir">
-      <Value>$(SdlDir)</Value>
     </BuildMacro>
   </ItemGroup>
 </Project>
