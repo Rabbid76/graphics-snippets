@@ -1,8 +1,8 @@
-/*XEOMETRIC********************************************************//**
+/******************************************************************//**
 * @brief   Generic interface for render data like camera, light, mesh
 *          and material.
 *
-* @author  gernot76
+* @author  gernot
 * @date    2018-02-06
 * @version 1.0
 **********************************************************************/

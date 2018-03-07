@@ -31,26 +31,59 @@ class ShaderProgram:
         shaderObjs = []
         for sh_info in shaderList: shaderObjs.append( self.CompileShader(sh_info[0], sh_info[1] ) )
         self.LinkProgram( shaderObjs )
+
+        # glGetProgramResourceiv            [https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGetProgramResource.xhtml]
+        # glGetProgramResourceIndex         [https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGetProgramResourceIndex.xhtml]
+        # glGetProgramResourceLocationIndex [https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGetProgramResourceLocationIndex.xhtml]
+
         strLengthData = numpy.zeros(1, dtype=int)
         arraysizeData = numpy.zeros(1, dtype=int)
         typeData = numpy.zeros(1, dtype='uint32')
-        nameData = numpy.chararray(glGetProgramiv( self.__prog, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH ) + 1)
+        #active_attributes = glGetProgramiv( self.__prog, GL_ACTIVE_ATTRIBUTES )
+        active_attributes = glGetProgramInterfaceiv( self.__prog, GL_PROGRAM_INPUT, GL_ACTIVE_RESOURCES ) # OpenGL 4.3
+        #active_attrib_maxnamelen = glGetProgramiv( self.__prog, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH )
+        active_attrib_maxnamelen = glGetProgramInterfaceiv( self.__prog, GL_PROGRAM_INPUT, GL_MAX_NAME_LENGTH ) # OpenGL 4.3
+        nameData = numpy.chararray(active_attrib_maxnamelen)
         self.__attributeLocation = {}
-        for i_attr in range(0, glGetProgramiv( self.__prog, GL_ACTIVE_ATTRIBUTES )):
-            glGetActiveAttrib( self.__prog, i_attr, nameData.size-1, strLengthData, arraysizeData, typeData, nameData.data )
+        for i_attr in range(active_attributes):
+            #glGetActiveAttrib( self.__prog, i_attr, nameData.size-1, strLengthData, arraysizeData, typeData, nameData.data )
+            glGetProgramResourceName( self.__prog, GL_PROGRAM_INPUT, i_attr, nameData.size, strLengthData, nameData.data ) # OpenGL 4.3 
             name = nameData.tostring()[:strLengthData[0]]
-            self.__attributeLocation[name] = glGetAttribLocation( self.__prog, name )
-            print( "attribute  %-30s at loaction %d" % (name, self.__attributeLocation[name]) )
-        nameData = numpy.chararray(glGetProgramiv( self.__prog, GL_ACTIVE_UNIFORM_MAX_LENGTH ) + 1)
+            #self.__attributeLocation[name] = glGetAttribLocation( self.__prog, name )
+            self.__attributeLocation[name] = glGetProgramResourceLocation( self.__prog, GL_PROGRAM_INPUT, name ) # OpenGL 4.3
+            print( "attribute        %-30s at loaction %d" % (name, self.__attributeLocation[name]) )
+        
+        # Fragment Outputs [https://www.khronos.org/opengl/wiki/Program_Introspection#Fragment_Outputs]
+        active_fragout = glGetProgramInterfaceiv( self.__prog, GL_PROGRAM_OUTPUT, GL_ACTIVE_RESOURCES ) # OpenGL 4.3
+        active_fragout_maxnamelen = glGetProgramInterfaceiv( self.__prog, GL_PROGRAM_OUTPUT, GL_MAX_NAME_LENGTH ) # OpenGL 4.3
+        nameData = numpy.chararray(active_fragout_maxnamelen)
+        self.__outputLocation = {}  
+        for i_fragout in range(active_fragout):  
+            glGetProgramResourceName( self.__prog, GL_PROGRAM_OUTPUT, i_fragout, nameData.size, strLengthData, nameData.data ) # OpenGL 4.3 
+            name = nameData.tostring()[:strLengthData[0]]
+            #self.__outputLocation[name] = glGetFragDataLocation( self.__prog, name )
+            self.__outputLocation[name] = glGetProgramResourceLocation( self.__prog, GL_PROGRAM_OUTPUT, name ) # OpenGL 4.3
+            # int glGetFragDataIndex( uint program, const char *name )
+            print( "fragment output  %-30s at loaction %d" % (name, self.__outputLocation[name]) )
+
+        #active_uniforms = glGetProgramiv( self.__prog, GL_ACTIVE_UNIFORMS )
+        active_uniforms = glGetProgramInterfaceiv( self.__prog, GL_UNIFORM, GL_ACTIVE_RESOURCES ) # OpenGL 4.3
+        #active_attrib_maxnamelen = glGetProgramiv( self.__prog, GL_ACTIVE_UNIFORM_MAX_LENGTH )
+        active_uniform_maxnamelen = glGetProgramInterfaceiv( self.__prog, GL_UNIFORM, GL_MAX_NAME_LENGTH ) # OpenGL 4.3
+        nameData = numpy.chararray(active_uniform_maxnamelen)
         self.__unifomLocation = {}
         self.__unifomType = {}
-        for i_attr in range(0, glGetProgramiv( self.__prog, GL_ACTIVE_UNIFORMS )):
-            glGetActiveUniform( self.__prog, i_attr, nameData.size-1, strLengthData, arraysizeData, typeData, nameData.data )
+        for i_uniform in range(active_uniforms):
+            glGetActiveUniform( self.__prog, i_uniform, nameData.size, strLengthData, arraysizeData, typeData, nameData.data )
             name = nameData.tostring()[:strLengthData[0]]
-            self.__unifomLocation[name] = glGetUniformLocation( self.__prog, name ) 
+            #self.__unifomLocation[name] = glGetUniformLocation( self.__prog, name ) 
+            self.__unifomLocation[name] = glGetProgramResourceLocation( self.__prog, GL_UNIFORM, name ) # OpenGL 4.3
             self.__unifomType[name] = numpy.copy(typeData)
-            print( "uniform    %-30s at loaction %d type %s" % (name, self.__unifomLocation[name], shaderMaps.TypeName(self.__unifomType[name])))
+            print( "uniform          %-30s at loaction %d type %s" % (name, self.__unifomLocation[name], shaderMaps.TypeName(self.__unifomType[name])))
         # glGetFragDataLocation( self.__prog, name )
+        progSize = glGetProgramiv( self.__prog, GL_PROGRAM_BINARY_LENGTH )
+        print('')
+        print("progra binary size: ", progSize) 
         print('')
     
     

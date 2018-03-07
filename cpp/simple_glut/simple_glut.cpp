@@ -87,8 +87,7 @@ int main(int argc, char** argv)
     {
       { sh_vert, GL_VERTEX_SHADER },
       { sh_frag, GL_FRAGMENT_SHADER }
-    },
-    {} ) );
+    } ) );
 
     static const std::vector<float> varray
     { 
