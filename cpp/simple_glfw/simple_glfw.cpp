@@ -11,7 +11,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 // freeglut
-#include <GL/freeglut.h>
+#include <GLFW/glfw3.h>
 
 // stl
 #include <vector>
@@ -63,29 +63,22 @@ std::unique_ptr<OpenGL::ShaderProgram> g_prog;
 
 bool valid_viewport = false;
 
-void OnIdle( void );
-void Resize( int, int );
-void Display( void );
+void Resize( GLFWwindow *, int , int );
 
 int main(int argc, char** argv)
 {
-    // Initialise FreeGLUT
-    glutInit(&argc, argv);
+    if ( glfwInit() == 0 )
+        throw std::runtime_error( "error initializing glfw" );
 
-    // Setup OpenGL window properties
-    glutInitContextProfile(GLUT_COMPATIBILITY_PROFILE);
-    glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
-
-    // Create window
-    glutInitWindowSize(800, 600);
-    int wnd = glutCreateWindow("test");
-    if ( wnd == 0 )
+    GLFWwindow *wnd = glfwCreateWindow( 800, 600, "OGL window", nullptr, nullptr );
+    if ( wnd == nullptr )
+    {
+        glfwTerminate();
         throw std::runtime_error( "error initializing window" ); 
+    }
+    glfwSetWindowSizeCallback( wnd, Resize );
 
-    // Register display callback function
-    glutDisplayFunc( Display ); 
-    glutReshapeFunc( Resize );
-    glutIdleFunc( OnIdle );
+    glfwMakeContextCurrent(wnd);
 
     if ( glewInit() != GLEW_OK )
         throw std::runtime_error( "error initializing glew" );
@@ -120,44 +113,36 @@ int main(int argc, char** argv)
     g_prog->Use();
 
     //start_time = std::chrono::high_resolution_clock::now();
-    glutMainLoop();
+    
+    while (!glfwWindowShouldClose(wnd))
+    {
+        if ( valid_viewport == false )
+        {
+          int vpSize[2];
+          glfwGetFramebufferSize( wnd, &vpSize[0], &vpSize[1] );
+          glViewport( 0, 0, vpSize[0], vpSize[1] );
+          valid_viewport = true;
+        }
+
+        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);  
+        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+      
+        glDrawArrays( GL_TRIANGLES, 0, 3 );
+
+        glfwSwapBuffers(wnd);
+        glfwPollEvents();
+    }
 
     g_prog.reset( nullptr );
+    glfwDestroyWindow( wnd );
+    wnd = nullptr;
+    glfwTerminate();
 
-    glutDestroyWindow(wnd);
     return 0;
 }
 
-void OnIdle( void )
-{
-  glutPostRedisplay();
-  // ....
-}
-
-void Resize( int cx, int cy )
+void Resize( GLFWwindow *wnd, int cx, int cy )
 {
   valid_viewport = false;
   // ....
-}
-
-
-void Display( void )
-{
-    if ( valid_viewport == false )
-    {
-      int vpSize[2]
-      {
-          glutGet(GLUT_WINDOW_WIDTH),
-          glutGet(GLUT_WINDOW_HEIGHT)
-      };
-      glViewport( 0, 0, vpSize[0], vpSize[1] );
-      valid_viewport = true;
-    }
-
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);  
-    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-      
-    glDrawArrays( GL_TRIANGLES, 0, 3 );
-
-    glutSwapBuffers();
 }
