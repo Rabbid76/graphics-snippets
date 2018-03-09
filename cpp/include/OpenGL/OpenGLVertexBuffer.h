@@ -56,7 +56,6 @@ class CDrawBuffer
 public: // public types
 
   using TGPUObj      = unsigned int;                                //!< GPU object name
-  using TDescription = std::vector<char>;                           //!< description of a vetex array object content
   using THashCode    = size_t;                                      //!< key of a vertex array content
   using TVBO         = std::tuple<TGPUObj, size_t, size_t>;         //!< <GPU name> of an array buffer, size of the buffer  and number of array elements
   using TIBO         = std::tuple<TGPUObj, size_t, size_t, size_t>; //!< <GPU name> of an element array buffer, size of the element buffer, number of array elements, size of one array element

@@ -202,6 +202,60 @@ public:
 
   virtual void Prepare( void ) = 0;
   virtual void Release( void ) = 0;
+
+
+  // buffer specification shortcuts
+
+  using TDescription = std::vector<char>;                           //!< description of a vetex array object content
+  
+  enum TSpecificationID
+  {
+    b0_xyz,       // 1 buffer (no index buffer): 3 vertex coordiantes
+                  
+    b0_xyz_uv,    // 1 buffer record (no index buffer): 3 vertex coordiantes, 2 texture coordinates
+    b0_xyz_nnn,   // 1 buffer record (no index buffer): 3 vertex coordiantes, normal vector
+    b0_xyz_nnn_uv // 1 buffer record (no index buffer): 3 vertex coordiantes, normal vector, 2 texture coordinates
+};
+
+  static const TDescription & Specification( TSpecificationID id )
+  {
+    static const TDescription spec_table[] = {
+    
+      // b0_xyz
+      TDescription{
+        -1, 1, 
+        0, 3, 1, 
+        0, 3, Render::TAttributeType::eFloat32, 0
+      },
+
+      // b0_xyz_uv
+      TDescription{
+        -1, 1, 
+        0, 5, 2, 
+        0, 3, Render::TAttributeType::eFloat32, 0,
+        1, 2, Render::TAttributeType::eFloat32, 3,
+      },
+
+      // b0_xyz_nnn
+      TDescription{
+        -1, 1, 
+        0, 6, 2, 
+        0, 3, Render::TAttributeType::eFloat32, 0,
+        1, 3, Render::TAttributeType::eFloat32, 3,
+      },
+
+      // b0_xyz_nnn_uv
+      TDescription{
+        -1, 1, 
+        0, 8, 3, 
+        0, 3, Render::TAttributeType::eFloat32, 0,
+        1, 3, Render::TAttributeType::eFloat32, 3,
+        2, 2, Render::TAttributeType::eFloat32, 6,
+      }
+    };
+
+    return spec_table[(int)id];
+  }
 };
 
 
