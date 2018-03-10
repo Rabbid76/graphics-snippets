@@ -252,10 +252,11 @@ class DrawBuffer:
 
         # define and enable an array of generic vertex attribute
         if attr_id >= 0:
-            offset = attr_offs * 4
-            ptr = ctypes.cast(0, ctypes.c_void_p)
-            glVertexAttribPointer( attr_id, attr_size, GL_FLOAT, GL_FALSE, stride*4, None if stride == 0 else ptr )
-            #glVertexAttribPointer( attr_id, attr_size, GL_FLOAT, GL_FALSE, stride, None if stride == 0 else attr_offs )
+            offset = 0
+            for i in range(attr_offs):
+                offset = offset + 1
+            offset = offset * 4
+            glVertexAttribPointer( attr_id, attr_size, GL_FLOAT, GL_FALSE, stride*4, None if stride == 0 else ctypes.cast(offset, ctypes.c_void_p) )
             glEnableVertexAttribArray( attr_id )
         
         # define an array of generic vertex attribute data

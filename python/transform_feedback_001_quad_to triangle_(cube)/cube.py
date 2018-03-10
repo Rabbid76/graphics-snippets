@@ -69,8 +69,6 @@ class MyWindow(window.CameraWindow):
         #cubeVAO.Draw()
 
         # draw object
-        #testVAO.DrawArray(GL_TRIANGLES, 0, 36) # TODO fix DrawBuffer stride
-        
         glBindVertexArray( vao_t )
         glDrawTransformFeedback(GL_TRIANGLES, tfo)
         glBindVertexArray( 0 )
@@ -162,7 +160,6 @@ glGetBufferSubData( GL_ARRAY_BUFFER, 0, transform_bytes, tf_arr_ptr )
 glBindBuffer( GL_ARRAY_BUFFER, 0 )
 print(tf_arr)
 
-
 # create the vertex array object which refers to the transfor feedback buffer
 vao_t = glGenVertexArrays( 1 )
 glBindVertexArray( vao_t )
@@ -179,18 +176,8 @@ glEnableVertexAttribArray( 2 )
 
 glBindBuffer(GL_ARRAY_BUFFER, 0)
 glBindVertexArray( 0 )
+
 print( "error:", glGetError() )
-
-
-# TODO fix DrawBuffer stride
-testVAO = vertex.DrawBuffer()
-testVAO.DefineVAO( [
-    -1, 1, 
-    0, 9, 3,
-    0, 3, vertex.TYPE_float32, 0, 
-    1, 3, vertex.TYPE_float32, 3, 
-    2, 3, vertex.TYPE_float32, 6 ],
-    [tf_arr], [] )
 
 # start main loop
 wnd.Run()
