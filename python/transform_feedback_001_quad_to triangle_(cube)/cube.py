@@ -105,16 +105,17 @@ transformVAO = vertex.VAObject( [ (3, cubePosData), (3, cubeNVData), (3, cubeCol
 cubeVAO = vertex.VAObject( [ (3, cubePosData), (3, cubeNVData), (3, cubeColData) ], cubeIndices, GL_TRIANGLES )
 
 # load, compile and link shader
+progDraw = shader.ShaderProgram( 
+    [ ('resource/shader/blinn_phong.vert', GL_VERTEX_SHADER),
+      ('resource/shader/blinn_phong.frag', GL_FRAGMENT_SHADER) ] ) 
+print( "error:", glGetError() )
+
+# load, compile and link transform feedback shader
 progTransform = shader.ShaderProgram( 
     [ ('resource/shader/quad_triangle.vert', GL_VERTEX_SHADER),
       #('resource/shader/quad_triangle.tesc', GL_TESS_CONTROL_SHADER),
       ('resource/shader/quad_triangle.tese', GL_TESS_EVALUATION_SHADER) ], 
       [ b"out_pos", b"out_nv", b"out_col" ], GL_INTERLEAVED_ATTRIBS )
-print( "error:", glGetError() )
-
-progDraw = shader.ShaderProgram( 
-    [ ('resource/shader/blinn_phong.vert', GL_VERTEX_SHADER),
-      ('resource/shader/blinn_phong.frag', GL_FRAGMENT_SHADER) ] ) 
 print( "error:", glGetError() )
 
 # create trasnform feedback buffer
@@ -157,10 +158,9 @@ glBindBuffer( GL_ARRAY_BUFFER, tbo )
 #glGetBufferSubData( GL_ARRAY_BUFFER, 0, transform_bytes, test_arr ) # causes crash why???
 glGetBufferSubData( GL_ARRAY_BUFFER, 0, transform_elem_size, test_arr )
 glBindBuffer( GL_ARRAY_BUFFER, 0 )
-print(test_arr)
+#print(test_arr)
 
 print( "error:", glGetError() )
-
 
 
 # create the vertex array object which refers to the transfor feedback buffer

@@ -168,19 +168,14 @@ class ShaderProgram:
         for shObj in shaderObjs: glAttachShader( self.__prog, shObj )
         if self.__transform_feedback != 0 and self.__feedback_varyings:
             # Prepare ctypes data containing attrib names
-            out_attribs = self.__feedback_varyings
-            array_type = ctypes.c_char_p * len(out_attribs)
+            tf_out = self.__feedback_varyings
+            no_of_tf_varyings = len(tf_out)
+            array_type = ctypes.c_char_p * no_of_tf_varyings
             buff = array_type()
-            for i in range(len(out_attribs)):
-                buff[i] = out_attribs[i]
-                #varyings = ctypes.create_string_buffer(out_attribs[i])
-                #buff[i] = ctypes.cast(ctypes.pointer(varyings), ctypes.POINTER(GLchar)) 
-            c_text = ctypes.cast(ctypes.pointer(buff), ctypes.POINTER(ctypes.POINTER(GLchar)))
-            glTransformFeedbackVaryings(self.__prog, len(out_attribs), c_text, self.__transform_feedback)  
-            #varyings = ctypes.create_string_buffer(self.__feedback_varyings[0])
-            #varyings_pp = POINTER(POINTER(c_char))(ctypes.cast(varyings, POINTER(c_char)))       
-            #glTransformFeedbackVaryings(self.__prog, 1, varyings_pp, self.__transform_feedback)
-            #glTransformFeedbackVaryings(self.__prog, len(self.__feedback_varyings), self.__feedback_varyings, self.__transform_feedback)
+            for i in range(no_of_tf_varyings):
+                buff[i] = tf_out[i]
+            varyings_pp = ctypes.cast(ctypes.pointer(buff), ctypes.POINTER(ctypes.POINTER(c_char)))
+            glTransformFeedbackVaryings(self.__prog, no_of_tf_varyings, varyings_pp, self.__transform_feedback)  
         glLinkProgram( self.__prog )
         result = glGetProgramiv( self.__prog, GL_LINK_STATUS )
         if not ( result ):

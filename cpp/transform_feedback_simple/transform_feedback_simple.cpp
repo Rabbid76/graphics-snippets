@@ -48,6 +48,8 @@ private:
 
     std::unique_ptr<OpenGL::ShaderProgram> _prog;
     std::unique_ptr<OpenGL::ShaderProgram> _transformFeedbackProg;
+    unsigned int _tfo;
+    unsigned int _vao_t;
 
     void InitScene( void );
     void Render( double time_ms );
@@ -68,7 +70,7 @@ int main(int argc, char** argv)
 
     // create OpenGL window and make OpenGL context current (`glfwInit` has to be done before).
     CWindow_Glfw window;
-    window.Init( 800, 600, 0, true, false );
+    window.Init( 800, 600, 0, true, true );
 
     // OpenGL context needs to be current for `glewInit`
     if ( glewInit() != GLEW_OK )
@@ -187,11 +189,11 @@ std::string tf_vert = R"(
 
 layout (location = 0) in vec3 inPos;
 
-out vec3 out_pos;
+out vec2 out_pos;
 
 void main()
 {
-    out_pos = inPos * 10.0;
+    out_pos = inPos.yx;
 }
 )";
 
@@ -240,20 +242,19 @@ void CWindow_Glfw::InitScene( void )
     GLuint tbo;
     glGenBuffers( 1, &tbo );
     
-    //glBindBuffer( GL_TRANSFORM_FEEDBACK_BUFFER, tbo );
-    //glBufferData( GL_TRANSFORM_FEEDBACK_BUFFER, transform_bytes, nullptr, GL_STATIC_COPY );
-    //glBindBufferRange( GL_TRANSFORM_FEEDBACK_BUFFER, 0, tbo, 0, transform_bytes );
-    //glBindBuffer( GL_TRANSFORM_FEEDBACK_BUFFER, 0 );
-    
     glBindBuffer( GL_ARRAY_BUFFER, tbo );
     glBufferData( GL_ARRAY_BUFFER, transform_bytes, nullptr, GL_STATIC_COPY );
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
 
+    // works too
+    //glBindBuffer( GL_TRANSFORM_FEEDBACK_BUFFER, tbo );
+    //glBufferData( GL_TRANSFORM_FEEDBACK_BUFFER, transform_bytes, nullptr, GL_STATIC_COPY );
+    //glBindBuffer( GL_TRANSFORM_FEEDBACK_BUFFER, 0 );
+
     std::cout << "error: " << glGetError() << std::endl;
 
-    GLuint tfo;
-    glGenTransformFeedbacks( 1, &tfo );
-    glBindTransformFeedback( GL_TRANSFORM_FEEDBACK, tfo );
+    glGenTransformFeedbacks( 1, &_tfo );
+    glBindTransformFeedback( GL_TRANSFORM_FEEDBACK, _tfo );
     glBindBufferBase( GL_TRANSFORM_FEEDBACK_BUFFER, 0, tbo );
     glBindTransformFeedback( GL_TRANSFORM_FEEDBACK, 0 );
 
@@ -263,17 +264,32 @@ void CWindow_Glfw::InitScene( void )
 
     _transformFeedbackProg->Use();
     glEnable( GL_RASTERIZER_DISCARD );
-    glBindTransformFeedback( GL_TRANSFORM_FEEDBACK, tfo );
+    glBindTransformFeedback( GL_TRANSFORM_FEEDBACK, _tfo );
     
-    GLenum tf_primitive = GL_POINTS;
-    //GLenum tf_primitive = GL_TRIANGLES;
-    glBeginTransformFeedback(tf_primitive);
-    
-    glBindVertexArray( vao );
-    glDrawArrays( tf_primitive, 0, 3 );   
-    glBindVertexArray( 0 );
+    static bool test_pause_resume = false;
+    if ( test_pause_resume == false )
+    {
+      GLenum tf_primitive = GL_POINTS;
+      //GLenum tf_primitive = GL_TRIANGLES; // does not work why?
+      glBeginTransformFeedback(tf_primitive);
+      glBindVertexArray( vao );
+      glDrawArrays( tf_primitive, 0, 3 );   
+      glBindVertexArray( 0 );
+      glEndTransformFeedback();
+    }
+    else
+    {
+      glBeginTransformFeedback(GL_POINTS);
+      glBindVertexArray( vao );
 
-    glEndTransformFeedback();
+      glDrawArrays( GL_POINTS, 2, 1 );   
+      glPauseTransformFeedback();
+      glResumeTransformFeedback();
+      glDrawArrays( GL_POINTS, 0, 2 );   
+      
+      glBindVertexArray( 0 );
+      glEndTransformFeedback();
+    }
     
     glBindTransformFeedback( GL_TRANSFORM_FEEDBACK, 0 );
     glDisable( GL_RASTERIZER_DISCARD );
@@ -294,7 +310,16 @@ void CWindow_Glfw::InitScene( void )
       std::cout << value << "  ";
     std::cout << std::endl; 
 
-    glBindVertexArray( vao );
+    glGenVertexArrays( 1, &_vao_t );
+    glBindVertexArray( _vao_t );
+    glBindBuffer( GL_ARRAY_BUFFER, tbo );
+    glVertexAttribPointer( 0, 2, GL_FLOAT, GL_FALSE, 0, 0 );
+    glEnableVertexAttribArray( 0 );
+    glBindBuffer( GL_ARRAY_BUFFER, 0 );
+    glBindVertexArray( 0 );
+
+    std::cout << "error: " << glGetError() << std::endl;
+
     _prog->Use();
 }
 
@@ -303,5 +328,10 @@ void CWindow_Glfw::Render( double time_ms )
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);  
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
       
-    glDrawArrays( GL_TRIANGLES, 0, 3 );
+    glBindVertexArray( _vao_t );
+
+    //glDrawArrays( GL_TRIANGLES, 0, 3 );
+    glDrawTransformFeedback( GL_TRIANGLES, _tfo );
+    
+    glBindVertexArray( 0 );
 }
