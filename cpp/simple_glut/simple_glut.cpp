@@ -18,6 +18,10 @@
 #include <stdexcept>
 #include <chrono>
 #include <memory>
+#include <cmath>
+
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 // Own
 #include <OpenGL_Matrix_Camera.h>

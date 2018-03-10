@@ -12,6 +12,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glew_static_v17", "glew\bui
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "simple_glfw", "simple_glfw\simple_glfw.vcxproj", "{A76F6F1B-2C7D-4E99-A7A4-F772601EF293}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "transform_feedback_simple", "transform_feedback_simple\transform_feedback_simple.vcxproj", "{1A8FB3CC-D772-426D-A70E-1A6680484CAD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -44,6 +46,14 @@ Global
 		{A76F6F1B-2C7D-4E99-A7A4-F772601EF293}.Release|x64.Build.0 = Release|x64
 		{A76F6F1B-2C7D-4E99-A7A4-F772601EF293}.Release|x86.ActiveCfg = Release|Win32
 		{A76F6F1B-2C7D-4E99-A7A4-F772601EF293}.Release|x86.Build.0 = Release|Win32
+		{1A8FB3CC-D772-426D-A70E-1A6680484CAD}.Debug|x64.ActiveCfg = Debug|x64
+		{1A8FB3CC-D772-426D-A70E-1A6680484CAD}.Debug|x64.Build.0 = Debug|x64
+		{1A8FB3CC-D772-426D-A70E-1A6680484CAD}.Debug|x86.ActiveCfg = Debug|Win32
+		{1A8FB3CC-D772-426D-A70E-1A6680484CAD}.Debug|x86.Build.0 = Debug|Win32
+		{1A8FB3CC-D772-426D-A70E-1A6680484CAD}.Release|x64.ActiveCfg = Release|x64
+		{1A8FB3CC-D772-426D-A70E-1A6680484CAD}.Release|x64.Build.0 = Release|x64
+		{1A8FB3CC-D772-426D-A70E-1A6680484CAD}.Release|x86.ActiveCfg = Release|Win32
+		{1A8FB3CC-D772-426D-A70E-1A6680484CAD}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

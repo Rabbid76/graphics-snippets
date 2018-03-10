@@ -52,6 +52,18 @@ class ShaderProgram:
             #self.__attributeLocation[name] = glGetAttribLocation( self.__prog, name )
             self.__attributeLocation[name] = glGetProgramResourceLocation( self.__prog, GL_PROGRAM_INPUT, name ) # OpenGL 4.3
             print( "attribute        %-30s at loaction %d" % (name, self.__attributeLocation[name]) )
+
+        # Transfor feedback varying
+        active_tf_resources = glGetProgramInterfaceiv( self.__prog, GL_TRANSFORM_FEEDBACK_VARYING, GL_ACTIVE_RESOURCES ) # OpenGL 4.3
+        active_tf_maxnamelen = glGetProgramInterfaceiv( self.__prog, GL_TRANSFORM_FEEDBACK_VARYING, GL_MAX_NAME_LENGTH ) # OpenGL 4.3
+        nameData = numpy.chararray(active_tf_maxnamelen)
+        self.__trandformFeedbackLocation = {}
+        for i_tf in range(active_tf_resources):  
+            glGetProgramResourceName( self.__prog, GL_TRANSFORM_FEEDBACK_VARYING, i_tf, nameData.size, strLengthData, nameData.data ) # OpenGL 4.3 
+            name = nameData.tostring()[:strLengthData[0]]
+            #self.__trandformFeedbackLocation[name] = glGetProgramResourceLocation( self.__prog, GL_TRANSFORM_FEEDBACK_VARYING, name ) # causes OpenGL error 1280 # OpenGL 4.3
+            self.__trandformFeedbackLocation[name] = -1
+            print( "transform feed back varying  %-30s at loaction %d" % (name, self.__trandformFeedbackLocation[name]) )
         
         # Fragment Outputs [https://www.khronos.org/opengl/wiki/Program_Introspection#Fragment_Outputs]
         active_fragout = glGetProgramInterfaceiv( self.__prog, GL_PROGRAM_OUTPUT, GL_ACTIVE_RESOURCES ) # OpenGL 4.3

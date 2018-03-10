@@ -40,14 +40,20 @@ private:
   bool         _verbose = true;
   GLuint       _prog    = 0;
   TResourceMap _attributeIndices;
-  TResourceMap _unifomLocation;
+  TResourceMap _transformFeedbackVaryings;
   TResourceMap _fragOutputLocation;
-
+  TResourceMap _unifomLocation;
+  
 public:
 
   ShaderProgram( const std::vector< TShaderInfo > & shaderList )
   {
-    Create( shaderList );
+    Create( shaderList, {}, 0 );
+  }
+
+  ShaderProgram( const std::vector< TShaderInfo > & shaderList, const std::vector<std::string> &tf_varyings, unsigned int tf_mode )
+  {
+    Create( shaderList, tf_varyings, tf_mode );
   }
 
   virtual ~ShaderProgram() { glDeleteProgram( _prog ); }
@@ -93,17 +99,68 @@ public:
 
 
   // Create program - compile and link
-  void Create( const std::vector< TShaderInfo > & shaderList )
+  void Create( 
+    const std::vector< TShaderInfo > & shaderList,
+    const std::vector<std::string>   & tf_varyings,
+    unsigned int                       tf_mode )
   {
+    // create and compile the shader objects
     std::vector<int> shaderObjs;
     std::transform( shaderList.begin(), shaderList.end(), std::back_inserter( shaderObjs ), [&]( const TShaderInfo & sh_info ) -> int
     {
       return CompileShader( std::get<0>( sh_info ), std::get<1>( sh_info ) );
     } );
 
+    // create the program object and attach the shader objects
+    _prog = glCreateProgram();
+    for ( auto shObj : shaderObjs )
+      glAttachShader( Prog(), shObj );
+
+    if ( _verbose )
+    {
+      GLenum err = glGetError();
+      if ( err )
+        std::cout << "shader object error: " << err << std::endl;
+    }
+
+    // int the transform feedback varyings
+    if ( tf_varyings.size() > 0 &&
+         ( tf_mode == GL_INTERLEAVED_ATTRIBS || tf_mode == GL_SEPARATE_ATTRIBS ) )
+    {
+      // When no `xfb_buffer`, `xfb_offset`, or `xfb_stride` layout qualifiers are specified, the set of variables to record is specified with the command
+      //[`glTransformFeedbackVaryings`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTransformFeedbackVaryings.xhtml)
+      std::vector<const char *>varying_ptrs;
+      for ( auto &str : tf_varyings )
+        varying_ptrs.emplace_back( str.c_str() );
+      glTransformFeedbackVaryings(	Prog(), (GLsizei)varying_ptrs.size(), varying_ptrs.data(), (GLenum)tf_mode );
+    }
+
+    if ( _verbose )
+    {
+      GLenum err = glGetError();
+      if ( err )
+        std::cout << "transform feedback varying error: " << err << std::endl;
+    }
+
+    // link the program 
     LinkProgram( shaderObjs );
 
+    if ( _verbose )
+    {
+      GLenum err = glGetError();
+      if ( err )
+        std::cout << "shader program error: " << err << std::endl;
+    }
+
+    // program introspection
     GetResources();
+
+    if ( _verbose )
+    {
+      GLenum err = glGetError();
+      if ( err )
+        std::cout << "introspection error: " << err << std::endl;
+    }
   }
 
   // read shader program and compile shader
@@ -139,9 +196,6 @@ public:
     
   // linke shader objects to shader program
   void LinkProgram( const std::vector<int> & shaderObjs ) {
-    _prog = glCreateProgram();
-    for ( auto shObj : shaderObjs )
-      glAttachShader( Prog(), shObj );
     glLinkProgram( Prog() );
     GLint status = GL_TRUE;
 	  glGetProgramiv( Prog(), GL_LINK_STATUS, &status );
@@ -172,6 +226,7 @@ public:
       std::cout << std::endl;
 
     GetAttributes();
+    GetTransformFeedbackVaryings();
     GetFragmentOutputs();
     GetUniforms();
     GetUniformBlocks();
@@ -183,8 +238,9 @@ public:
       std::cout << std::endl;
   }
 
+  enum class TResourceKind { NON, location };
   // Get program interface resources
-  void GetInterfaceResources( GLenum prog_interface, TResourceMap &resources ) const
+  void GetInterfaceResources( GLenum prog_interface, TResourceMap &resources, TResourceKind kind ) const
   {
     GLint no_of, max_len;
 		glGetProgramInterfaceiv( Prog(), prog_interface, GL_ACTIVE_RESOURCES, &no_of ); // OpenGL 4.3
@@ -195,7 +251,19 @@ public:
 		{
       GLsizei strLength;
       glGetProgramResourceName( Prog(), prog_interface, i_resource, max_len, &strLength, name.data() );
-			resources[name.data()] = glGetProgramResourceLocation( Prog(), prog_interface, name.data() ); // OpenGL 4.3
+      switch( kind )
+      {
+      default:
+      case TResourceKind::NON:
+        resources[name.data()] = -1;
+        break;
+
+      case TResourceKind::location: 
+			  resources[name.data()] = glGetProgramResourceLocation( Prog(), prog_interface, name.data() ); // OpenGL 4.3
+        break;
+      }
+      //resources[name.data()] = glGetProgramResourceIndex( Prog(), prog_interface, name.data() ); // OpenGL 4.3
+      //resources[name.data()] = glGetProgramResourceLocationIndex( Prog(), prog_interface, name.data() ); // OpenGL 4.3
 		}
   }
 
@@ -216,13 +284,24 @@ public:
 			_attributeIndices[name.data()] = glGetAttribLocation( Prog(), name.data() );
 		}
 #else
-    GetInterfaceResources( GL_PROGRAM_INPUT, _attributeIndices );
+    GetInterfaceResources( GL_PROGRAM_INPUT, _attributeIndices, TResourceKind::location );
 #endif
 
     if ( _verbose == false )
       return;
     for ( auto & resource : _attributeIndices )
       std::cout << "attribute index " << resource.second << ": " << resource.first << std::endl;
+  }
+
+  // Get transform feedvback varyings
+  void GetTransformFeedbackVaryings(void)
+  {
+    GetInterfaceResources( GL_TRANSFORM_FEEDBACK_VARYING, _transformFeedbackVaryings, TResourceKind::NON );
+
+    if ( _verbose == false )
+      return;
+    for ( auto & resource : _transformFeedbackVaryings )
+      std::cout << "transform feedback varyings " << resource.second << ": " << resource.first << std::endl;
   }
 
   // Get fragmetn outputs
@@ -233,7 +312,7 @@ public:
     // int GetFragDataLocation( uint program, const char *name )
     // int GetFragDataIndex( uint program, const char *name )
 #else
-    GetInterfaceResources( GL_PROGRAM_OUTPUT, _fragOutputLocation );
+    GetInterfaceResources( GL_PROGRAM_OUTPUT, _fragOutputLocation, TResourceKind::location );
 #endif
 
     if ( _verbose == false )
@@ -259,7 +338,7 @@ public:
       _unifomLocation[name.data()] = glGetUniformLocation( Prog(), name.data() ); 
     }
 #else
-    GetInterfaceResources( GL_UNIFORM, _unifomLocation );
+    GetInterfaceResources( GL_UNIFORM, _unifomLocation, TResourceKind::location );
 #endif
     
     if ( _verbose == false )

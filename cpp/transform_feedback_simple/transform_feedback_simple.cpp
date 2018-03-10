@@ -47,6 +47,7 @@ private:
     std::chrono::high_resolution_clock::time_point _current_time;
 
     std::unique_ptr<OpenGL::ShaderProgram> _prog;
+    std::unique_ptr<OpenGL::ShaderProgram> _transformFeedbackProg;
 
     void InitScene( void );
     void Render( double time_ms );
@@ -55,7 +56,7 @@ public:
 
     virtual ~CWindow_Glfw();
 
-    void Init( int width, int height, int multisampling, bool doubleBuffer );
+    void Init( int width, int height, int multisampling, bool doubleBuffer, bool visible );
     static void CallbackResize(GLFWwindow* window, int cx, int cy);
     void MainLoop( void );
 };
@@ -67,7 +68,7 @@ int main(int argc, char** argv)
 
     // create OpenGL window and make OpenGL context current (`glfwInit` has to be done before).
     CWindow_Glfw window;
-    window.Init( 800, 600, 4, true );
+    window.Init( 800, 600, 0, true, false );
 
     // OpenGL context needs to be current for `glewInit`
     if ( glewInit() != GLEW_OK )
@@ -91,7 +92,7 @@ void CWindow_Glfw::CallbackResize(GLFWwindow* window, int cx, int cy)
         wndPtr->Resize( cx, cy );
 }
 
-void CWindow_Glfw::Init( int width, int height, int multisampling, bool doubleBuffer )
+void CWindow_Glfw::Init( int width, int height, int multisampling, bool doubleBuffer, bool visible )
 {
     _doubleBuffer = doubleBuffer;
 
@@ -101,8 +102,10 @@ void CWindow_Glfw::Init( int width, int height, int multisampling, bool doubleBu
     glfwWindowHint( GLFW_STENCIL_BITS, 8 ); 
 
     glfwWindowHint( GLFW_SAMPLES, multisampling );
-    glfwWindowHint( GLFW_DOUBLEBUFFER, _doubleBuffer ? GLFW_TRUE : GLFW_FALSE );
-    
+    glfwWindowHint( GLFW_DOUBLEBUFFER, _doubleBuffer ? GLFW_TRUE : GLFW_FALSE );  
+
+    glfwWindowHint( GLFW_VISIBLE, visible ? GLFW_TRUE : GLFW_FALSE );
+
     _wnd = glfwCreateWindow( width, height, "OGL window", nullptr, nullptr );
     if ( _wnd == nullptr )
     {
@@ -154,39 +157,47 @@ void CWindow_Glfw::MainLoop ( void )
         
         glfwPollEvents();
     }
-} 
+}  
 
 
 std::string sh_vert = R"(
 #version 400
 
 layout (location = 0) in vec3 inPos;
-layout (location = 1) in vec4 inColor;
-
-out vec3 vertPos;
-out vec4 vertCol;
 
 void main()
 {
-    vertCol     = inColor;
-		vertPos     = inPos;
-		gl_Position = vec4(inPos, 1.0);
+    gl_Position = vec4(inPos, 1.0);
 }
 )";
 
 std::string sh_frag = R"(
 #version 400
 
-in vec3 vertPos;
-in vec4 vertCol;
-
 out vec4 fragColor;
 
 void main()
 {
-    fragColor = vertCol;
+    fragColor = vec4(0.9, 0.5, 0.2, 1.0);
 }
 )";
+
+std::string tf_vert = R"(
+#version 400
+
+layout (location = 0) in vec3 inPos;
+
+out vec3 out_pos;
+
+void main()
+{
+    out_pos = inPos * 10.0;
+}
+)";
+
+// [Transform Feedback](https://www.khronos.org/opengl/wiki/Transform_Feedback)
+// [Tessellation with Transform Feedback](https://www.opengl.org/discussion_boards/showthread.php/181664-Tessellation-with-Transform-Feedback)
+// [Transform feedback (tutorial)](https://open.gl/feedback)
 
 void CWindow_Glfw::InitScene( void )
 {
@@ -198,9 +209,9 @@ void CWindow_Glfw::InitScene( void )
 
     static const std::vector<float> varray
     { 
-      -0.707f, -0.75f,    1.0f, 0.0f, 0.0f, 1.0f, 
-       0.707f, -0.75f,    1.0f, 1.0f, 0.0f, 1.0f,
-       0.0f,    0.75f,    0.0f, 0.0f, 1.0f, 1.0f
+      -0.707f, -0.75f,
+       0.707f, -0.75f,
+       0.0f,    0.75f
     };
 
     GLuint vbo;
@@ -211,12 +222,79 @@ void CWindow_Glfw::InitScene( void )
     GLuint vao;
     glGenVertexArrays( 1, &vao );
     glBindVertexArray( vao );
-    glVertexAttribPointer( 0, 2, GL_FLOAT, GL_FALSE, 6*sizeof(*varray.data()), 0 );
+    glVertexAttribPointer( 0, 2, GL_FLOAT, GL_FALSE, 2*sizeof(*varray.data()), 0 );
     glEnableVertexAttribArray( 0 );
-    glVertexAttribPointer( 1, 4, GL_FLOAT, GL_FALSE, 6*sizeof(*varray.data()), (void*)(2*sizeof(*varray.data())) );
-    glEnableVertexAttribArray( 1 );
+    glBindBuffer( GL_ARRAY_BUFFER, 0 );
+    glBindVertexArray( 0 );
+
+
+    _transformFeedbackProg.reset( new OpenGL::ShaderProgram(
+    {
+      { tf_vert, GL_VERTEX_SHADER }
+    },
+    { "out_pos" }, GL_INTERLEAVED_ATTRIBS ) );
+
+    // TODO $$$ test tbo allown
+
+    GLsizeiptr transform_bytes = sizeof( *varray.data() ) * varray.size();
+    GLuint tbo;
+    glGenBuffers( 1, &tbo );
+    
+    //glBindBuffer( GL_TRANSFORM_FEEDBACK_BUFFER, tbo );
+    //glBufferData( GL_TRANSFORM_FEEDBACK_BUFFER, transform_bytes, nullptr, GL_STATIC_COPY );
+    //glBindBufferRange( GL_TRANSFORM_FEEDBACK_BUFFER, 0, tbo, 0, transform_bytes );
+    //glBindBuffer( GL_TRANSFORM_FEEDBACK_BUFFER, 0 );
+    
+    glBindBuffer( GL_ARRAY_BUFFER, tbo );
+    glBufferData( GL_ARRAY_BUFFER, transform_bytes, nullptr, GL_STATIC_COPY );
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
 
+    std::cout << "error: " << glGetError() << std::endl;
+
+    GLuint tfo;
+    glGenTransformFeedbacks( 1, &tfo );
+    glBindTransformFeedback( GL_TRANSFORM_FEEDBACK, tfo );
+    glBindBufferBase( GL_TRANSFORM_FEEDBACK_BUFFER, 0, tbo );
+    glBindTransformFeedback( GL_TRANSFORM_FEEDBACK, 0 );
+
+    std::cout << "error: " << glGetError() << std::endl;
+
+    // TODO $$$ test glPauseTransformFeedback, glResumeTransformFeedback 
+
+    _transformFeedbackProg->Use();
+    glEnable( GL_RASTERIZER_DISCARD );
+    glBindTransformFeedback( GL_TRANSFORM_FEEDBACK, tfo );
+    
+    GLenum tf_primitive = GL_POINTS;
+    //GLenum tf_primitive = GL_TRIANGLES;
+    glBeginTransformFeedback(tf_primitive);
+    
+    glBindVertexArray( vao );
+    glDrawArrays( tf_primitive, 0, 3 );   
+    glBindVertexArray( 0 );
+
+    glEndTransformFeedback();
+    
+    glBindTransformFeedback( GL_TRANSFORM_FEEDBACK, 0 );
+    glDisable( GL_RASTERIZER_DISCARD );
+    glUseProgram( 0 );
+    glFlush();
+
+    std::cout << "error: " << glGetError() << std::endl;
+
+    std::vector<float> tf_redaback( varray.size() );
+    glBindBuffer( GL_ARRAY_BUFFER, tbo );
+    glGetBufferSubData( GL_ARRAY_BUFFER, 0, transform_bytes, tf_redaback.data() );
+    glBindBuffer( GL_ARRAY_BUFFER, 0 );
+
+    std::cout << "error: " << glGetError() << std::endl;
+
+    std::cout << "data: ";
+    for ( float value : tf_redaback )
+      std::cout << value << "  ";
+    std::cout << std::endl; 
+
+    glBindVertexArray( vao );
     _prog->Use();
 }
 

@@ -68,7 +68,7 @@ class MyWindow(window.CameraWindow):
         # draw object
         #cubeVAO.Draw()
         glBindVertexArray( transformed_vao )
-        glDrawTransformFeedback(GL_TRIANGLES, tf)
+        glDrawTransformFeedback(GL_TRIANGLES, tfo)
         glBindVertexArray( 0 )
    
 
@@ -122,15 +122,17 @@ print( "error:", glGetError() )
 transform_attr_size = 6*6
 transform_elem_size = transform_attr_size * (3+3+3)
 transform_bytes = transform_elem_size * 4
+
+# create the buffer object which holds the data
 tbo = glGenBuffers( 1 )
-glBindBuffer(GL_TRANSFORM_FEEDBACK_BUFFER, tbo)
-glBufferData(GL_TRANSFORM_FEEDBACK_BUFFER, transform_bytes, None, GL_STATIC_COPY)
-glBindBufferRange(GL_TRANSFORM_FEEDBACK_BUFFER, 0, tbo, 0, transform_bytes)
-glBindBuffer(GL_TRANSFORM_FEEDBACK_BUFFER, 0)
+glBindBuffer( GL_ARRAY_BUFFER, tbo )
+glBufferData( GL_ARRAY_BUFFER, transform_bytes, None, GL_STATIC_COPY )
+glBindBuffer( GL_ARRAY_BUFFER, 0 )
 print( "error:", glGetError() )
 
-tf = glGenTransformFeedbacks(1)
-glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, tf);	
+# create the transform feedback object 
+tfo = glGenTransformFeedbacks(1)
+glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, tfo);	
 glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, tbo)
 glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, 0)
 print( "error:", glGetError() )
@@ -138,19 +140,23 @@ print( "error:", glGetError() )
 # fill trasnform feedback buffer
 progTransform.Use()
 glEnable(GL_RASTERIZER_DISCARD)
-glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, tf)
+glBindTransformFeedback( GL_TRANSFORM_FEEDBACK, tfo )
+
 glBeginTransformFeedback(GL_TRIANGLES)
 transformVAO.Draw()
 glEndTransformFeedback()
-glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, 0)
-glDisable(GL_RASTERIZER_DISCARD)
-glFlush()
-glUseProgram(0)
 
+glBindTransformFeedback( GL_TRANSFORM_FEEDBACK, 0 )
+glDisable( GL_RASTERIZER_DISCARD )
+glUseProgram( 0 )
+glFlush()
+
+# read back the transfor feedback data
 test_arr = numpy.empty( [transform_elem_size], dtype=numpy.float32 )
-glBindBuffer(GL_TRANSFORM_FEEDBACK_BUFFER, tbo)
-glGetBufferSubData(GL_TRANSFORM_FEEDBACK_BUFFER, 0, transform_elem_size, test_arr)
-glBindBuffer(GL_TRANSFORM_FEEDBACK_BUFFER, 0)
+glBindBuffer( GL_ARRAY_BUFFER, tbo )
+#glGetBufferSubData( GL_ARRAY_BUFFER, 0, transform_bytes, test_arr ) # causes crash why???
+glGetBufferSubData( GL_ARRAY_BUFFER, 0, transform_elem_size, test_arr )
+glBindBuffer( GL_ARRAY_BUFFER, 0 )
 print(test_arr)
 
 print( "error:", glGetError() )
