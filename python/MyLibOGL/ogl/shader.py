@@ -53,7 +53,7 @@ class ShaderProgram:
             self.__attributeLocation[name] = glGetProgramResourceLocation( self.__prog, GL_PROGRAM_INPUT, name ) # OpenGL 4.3
             print( "attribute        %-30s at loaction %d" % (name, self.__attributeLocation[name]) )
 
-        # Transfor feedback varying
+        # Transform feedback varying
         active_tf_resources = glGetProgramInterfaceiv( self.__prog, GL_TRANSFORM_FEEDBACK_VARYING, GL_ACTIVE_RESOURCES ) # OpenGL 4.3
         active_tf_maxnamelen = glGetProgramInterfaceiv( self.__prog, GL_TRANSFORM_FEEDBACK_VARYING, GL_MAX_NAME_LENGTH ) # OpenGL 4.3
         nameData = numpy.chararray(active_tf_maxnamelen)

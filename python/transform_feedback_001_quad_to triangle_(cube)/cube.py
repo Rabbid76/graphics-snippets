@@ -65,13 +65,14 @@ class MyWindow(window.CameraWindow):
             b"u_specular"        : 0.8,
             b"u_shininess"       : 10.0 } )
              
-        # draw object
+        # draw original cube     
         #cubeVAO.Draw()
-        #testVAO.DrawArray(GL_TRIANGLES, 0, 12)
+
+        # draw object
+        #testVAO.DrawArray(GL_TRIANGLES, 0, 36) # TODO fix DrawBuffer stride
         
         glBindVertexArray( vao_t )
-        glDrawArrays( GL_TRIANGLES, 0, 12 )
-        #glDrawTransformFeedback(GL_TRIANGLES, tfo)
+        glDrawTransformFeedback(GL_TRIANGLES, tfo)
         glBindVertexArray( 0 )
         
 
@@ -105,7 +106,7 @@ for inx in range(0, 6):
     for inx_s in [0, 1, 2, 3]: cubeIndices.append( inx * 4 + inx_s )
 transformVAO = vertex.VAObject( [ (3, cubePosData), (3, cubeNVData), (3, cubeColData) ], cubeIndices, GL_PATCHES, 4 )
 
-cubeVAO = vertex.VAObject( [ (3, cubePosData), (3, cubeNVData), (3, cubeColData) ], cubeIndices, GL_TRIANGLES )
+cubeVAO = vertex.VAObject( [ (3, cubePosData), (3, cubeNVData), (3, cubeColData) ], cubeIndices, GL_QUADS )
 
 # load, compile and link shader
 progDraw = shader.ShaderProgram( 
@@ -163,36 +164,33 @@ print(tf_arr)
 
 
 # create the vertex array object which refers to the transfor feedback buffer
-vbo = glGenBuffers( 1 )
-glBindBuffer( GL_ARRAY_BUFFER, vbo )
-glBufferData( GL_ARRAY_BUFFER, tf_arr, GL_STATIC_DRAW )
-glBindBuffer( GL_ARRAY_BUFFER, 0 )
-
 vao_t = glGenVertexArrays( 1 )
 glBindVertexArray( vao_t )
 glBindBuffer(GL_ARRAY_BUFFER, tbo)
 #glBindBuffer( GL_ARRAY_BUFFER, vbo )
 
 stride = (3+3+3)*4
-glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, stride, 0 )
+glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, stride, ctypes.cast(0, ctypes.c_void_p) )
 glEnableVertexAttribArray( 0 )
-glVertexAttribPointer( 1, 3, GL_FLOAT, GL_FALSE, stride, 3*4 )
+glVertexAttribPointer( 1, 3, GL_FLOAT, GL_FALSE, stride, ctypes.cast(3*4, ctypes.c_void_p) )
 glEnableVertexAttribArray( 1 )
-glVertexAttribPointer( 2, 3, GL_FLOAT, GL_FALSE, stride, (3+3)*4 )
+glVertexAttribPointer( 2, 3, GL_FLOAT, GL_FALSE, stride, ctypes.cast((3+3)*4, ctypes.c_void_p) )
 glEnableVertexAttribArray( 2 )
 
 glBindBuffer(GL_ARRAY_BUFFER, 0)
 glBindVertexArray( 0 )
 print( "error:", glGetError() )
 
-#testVAO = vertex.DrawBuffer()
-#testVAO.DefineVAO( [
-#    -1, 1, 
-#    0, 9, 3,
-#    0, 3, vertex.TYPE_float32, 0, 
-#    1, 3, vertex.TYPE_float32, 3, 
-#    2, 3, vertex.TYPE_float32, 6 ],
-#    [tf_arr], [] )
+
+# TODO fix DrawBuffer stride
+testVAO = vertex.DrawBuffer()
+testVAO.DefineVAO( [
+    -1, 1, 
+    0, 9, 3,
+    0, 3, vertex.TYPE_float32, 0, 
+    1, 3, vertex.TYPE_float32, 3, 
+    2, 3, vertex.TYPE_float32, 6 ],
+    [tf_arr], [] )
 
 # start main loop
 wnd.Run()

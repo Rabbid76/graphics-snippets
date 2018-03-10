@@ -252,7 +252,10 @@ class DrawBuffer:
 
         # define and enable an array of generic vertex attribute
         if attr_id >= 0:
-            glVertexAttribPointer( attr_id, attr_size, GL_FLOAT, GL_FALSE, stride, None if stride == 0 else attr_offs )
+            offset = attr_offs * 4
+            ptr = ctypes.cast(0, ctypes.c_void_p)
+            glVertexAttribPointer( attr_id, attr_size, GL_FLOAT, GL_FALSE, stride*4, None if stride == 0 else ptr )
+            #glVertexAttribPointer( attr_id, attr_size, GL_FLOAT, GL_FALSE, stride, None if stride == 0 else attr_offs )
             glEnableVertexAttribArray( attr_id )
         
         # define an array of generic vertex attribute data
@@ -351,7 +354,7 @@ class DrawBuffer:
             if i_vbo >= 0 and (i_vbo not in self.__vbos): self.__vbos[i_vbo] = (glGenBuffers( 1 ), 0)
             glBindBuffer( GL_ARRAY_BUFFER, self.__vbos[i_vbo][0] )
             for i_attr in range(no_of_attr):
-                attr_id, attr_size, attr_type, attr_offs = key[i_key], key[i_key+1], key[i_key+3], key[i_key+2]
+                attr_id, attr_size, attr_type, attr_offs = key[i_key], key[i_key+1], key[i_key+2], key[i_key+3]
                 i_key = i_key + 4
                 self.DefineAndEnableAttribute( attr_id, attr_size, attr_type, attr_offs, stride )
         glBindBuffer( GL_ARRAY_BUFFER, 0 )
