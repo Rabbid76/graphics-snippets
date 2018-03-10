@@ -22,6 +22,6 @@ void main()
     outData.col   = inCol;
     vec4 modelPos = u_modelMat44 * vec4( inPos, 1.0 );
     vec4 viewPos  = u_viewMat44 * modelPos;
-    outData.pos   = viewPos.xyz / viewPos.w;
+    outData.pos   = viewPos.xyz;
     gl_Position   = u_projectionMat44 * viewPos;
 }

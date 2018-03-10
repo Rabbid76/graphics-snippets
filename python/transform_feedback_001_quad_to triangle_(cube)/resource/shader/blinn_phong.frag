@@ -35,5 +35,5 @@ void main()
     float kSpecular = ( u_shininess + 2.0 ) * pow( NdotH, u_shininess ) / ( 2.0 * 3.14159265 );
     lightCol       += kSpecular * u_specular * color;
 
-    fragColor = vec4( lightCol.rgb, 1.0 );
+    fragColor = vec4( 1.0, lightCol.gb, 1.0 );
 }

@@ -67,10 +67,13 @@ class MyWindow(window.CameraWindow):
              
         # draw object
         #cubeVAO.Draw()
-        glBindVertexArray( transformed_vao )
-        glDrawTransformFeedback(GL_TRIANGLES, tfo)
+        #testVAO.DrawArray(GL_TRIANGLES, 0, 12)
+        
+        glBindVertexArray( vao_t )
+        glDrawArrays( GL_TRIANGLES, 0, 12 )
+        #glDrawTransformFeedback(GL_TRIANGLES, tfo)
         glBindVertexArray( 0 )
-   
+        
 
 def AddToBuffer( buffer, data, count=1 ): 
     for inx_c in range(0, count):
@@ -129,14 +132,12 @@ tbo = glGenBuffers( 1 )
 glBindBuffer( GL_ARRAY_BUFFER, tbo )
 glBufferData( GL_ARRAY_BUFFER, transform_bytes, None, GL_STATIC_COPY )
 glBindBuffer( GL_ARRAY_BUFFER, 0 )
-print( "error:", glGetError() )
 
 # create the transform feedback object 
 tfo = glGenTransformFeedbacks(1)
 glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, tfo);	
 glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, tbo)
 glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, 0)
-print( "error:", glGetError() )
 
 # fill trasnform feedback buffer
 progTransform.Use()
@@ -153,20 +154,24 @@ glUseProgram( 0 )
 glFlush()
 
 # read back the transfor feedback data
-test_arr = numpy.empty( [transform_elem_size], dtype=numpy.float32 )
+tf_arr = numpy.empty( [transform_elem_size], dtype=numpy.float32 )
+tf_arr_ptr = tf_arr.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
 glBindBuffer( GL_ARRAY_BUFFER, tbo )
-#glGetBufferSubData( GL_ARRAY_BUFFER, 0, transform_bytes, test_arr ) # causes crash why???
-glGetBufferSubData( GL_ARRAY_BUFFER, 0, transform_elem_size, test_arr )
+glGetBufferSubData( GL_ARRAY_BUFFER, 0, transform_bytes, tf_arr_ptr )
 glBindBuffer( GL_ARRAY_BUFFER, 0 )
-#print(test_arr)
-
-print( "error:", glGetError() )
+print(tf_arr)
 
 
 # create the vertex array object which refers to the transfor feedback buffer
-transformed_vao = glGenVertexArrays( 1 )
-glBindVertexArray( transformed_vao )
+vbo = glGenBuffers( 1 )
+glBindBuffer( GL_ARRAY_BUFFER, vbo )
+glBufferData( GL_ARRAY_BUFFER, tf_arr, GL_STATIC_DRAW )
+glBindBuffer( GL_ARRAY_BUFFER, 0 )
+
+vao_t = glGenVertexArrays( 1 )
+glBindVertexArray( vao_t )
 glBindBuffer(GL_ARRAY_BUFFER, tbo)
+#glBindBuffer( GL_ARRAY_BUFFER, vbo )
 
 stride = (3+3+3)*4
 glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, stride, 0 )
@@ -180,6 +185,14 @@ glBindBuffer(GL_ARRAY_BUFFER, 0)
 glBindVertexArray( 0 )
 print( "error:", glGetError() )
 
+#testVAO = vertex.DrawBuffer()
+#testVAO.DefineVAO( [
+#    -1, 1, 
+#    0, 9, 3,
+#    0, 3, vertex.TYPE_float32, 0, 
+#    1, 3, vertex.TYPE_float32, 3, 
+#    2, 3, vertex.TYPE_float32, 6 ],
+#    [tf_arr], [] )
 
 # start main loop
 wnd.Run()

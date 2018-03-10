@@ -246,7 +246,7 @@ void CWindow_Glfw::InitScene( void )
     glBufferData( GL_ARRAY_BUFFER, transform_bytes, nullptr, GL_STATIC_COPY );
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
 
-    // works too
+    // the following works too
     //glBindBuffer( GL_TRANSFORM_FEEDBACK_BUFFER, tbo );
     //glBufferData( GL_TRANSFORM_FEEDBACK_BUFFER, transform_bytes, nullptr, GL_STATIC_COPY );
     //glBindBuffer( GL_TRANSFORM_FEEDBACK_BUFFER, 0 );
@@ -259,8 +259,6 @@ void CWindow_Glfw::InitScene( void )
     glBindTransformFeedback( GL_TRANSFORM_FEEDBACK, 0 );
 
     std::cout << "error: " << glGetError() << std::endl;
-
-    // TODO $$$ test glPauseTransformFeedback, glResumeTransformFeedback 
 
     _transformFeedbackProg->Use();
     glEnable( GL_RASTERIZER_DISCARD );
