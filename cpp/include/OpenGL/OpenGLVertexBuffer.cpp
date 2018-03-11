@@ -627,6 +627,54 @@ void CDrawBuffer::DrawElements(
 
 
 /******************************************************************//**
+* \brief   Draw `count` indizes of the current index buffer, starting
+* at `start`.
+* If `count == 0`, all the indices from `start` to the end of the index
+* buffer will be drawn.
+* 
+* \author  gernot
+* \date    2017-11-27
+* \version 1.0
+**********************************************************************/
+void CDrawBuffer::DrawElementsBase( 
+  Render::TPrimitive primitive_type, //!< I - OpenGL primitive type
+  size_t             start,          //!< I - first index to be draw
+  size_t             count,          //!< I - number of indices to be drawn (if == 0, all the indices from `start` to the end of the index buffer will be drawn)
+  size_t             base_index,     //!< I - constant that should be added to each element of indices when chosing elements from the enabled vertex arrays
+  bool               bind )          //!< I - true : vertex array object  will be bound; false: vertex array object is already bound
+{
+  if ( _currNoElems == 0 || start >= _currNoElems )
+    return;
+  if ( bind )
+    this->BindVAO();
+  size_t noOfElements = (count == 0 || start + count > _currNoElems) ? _currNoElems - start : count;
+  glDrawElementsBaseVertex( PrimitiveType( primitive_type ), static_cast<GLsizei>( noOfElements ), IndexType( _currElemSize ), (void*)(_currElemSize * start), static_cast<GLint>( base_index ) );
+}
+
+
+
+/******************************************************************//**
+* \brief   Draw the indizes which are given by the index array.
+* 
+* \author  gernot
+* \date    2017-11-27
+* \version 1.0
+**********************************************************************/
+void CDrawBuffer::DrawElementsBase( 
+  Render::TPrimitive  primitive_type, //!< I - OpenGL primitive type
+  size_t              element_size,   //!< I - size of one array element 
+  size_t              no_of_elements, //!< I - number of of the new data
+  const void         *data,           //!< I - the new data
+  size_t              base_index,     //!< I - constant that should be added to each element of indices when chosing elements from the enabled vertex arrays
+  bool                bind )          //!< I - true : vertex array object  will be bound; false: vertex array object is already bound
+{
+  if ( bind )
+    this->BindVAO();
+  glDrawElementsBaseVertex( PrimitiveType( primitive_type ), static_cast<GLsizei>( no_of_elements ), IndexType( element_size ), data, static_cast<GLint>( base_index ) );
+}
+
+
+/******************************************************************//**
 * \brief   Draw the elemnts of the current index buffer, if the index
 * is greater or equal than `minInx` and less or equal than `maxInx` 
 * 

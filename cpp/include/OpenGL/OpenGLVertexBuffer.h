@@ -94,6 +94,8 @@ public: // public operations
   virtual void DrawElements( Render::TPrimitive primitive_type, size_t start, size_t count, bool bind ) override;
   virtual void DrawElements( Render::TPrimitive primitive_type, size_t element_size, size_t no_of_elements, const void *data, bool bind ) override;
   virtual void DrawElements( Render::TPrimitive primitive_type, size_t element_size, size_t list_size, const int *no_of_elements, const void * const *data, bool bind ) override;
+  virtual void DrawElementsBase( Render::TPrimitive primitive_type, size_t start, size_t count, size_t base_index, bool bind ) override;
+  virtual void DrawElementsBase( Render::TPrimitive primitive_type, size_t element_size, size_t no_of_elements, const void *data, size_t base_index, bool bind ) override;
   virtual void DrawRangeElements( Render::TPrimitive primitive_type, unsigned int minInx, unsigned int maxInx, bool bind ) override;
   virtual void DrawArray( Render::TPrimitive primitive_type, size_t start, size_t count, bool bind  ) override;
 

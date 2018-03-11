@@ -179,17 +179,17 @@ public:
     const char *srcCodePtr = sourceCode.data();
     glShaderSource( shaderObj, 1, &srcCodePtr, nullptr );
     glCompileShader( shaderObj );
-    GLint status = GL_TRUE;
-	  glGetShaderiv( shaderObj, GL_COMPILE_STATUS, &status );
+    GLint status;
+    glGetShaderiv( shaderObj, GL_COMPILE_STATUS, &status );
     if ( status == GL_FALSE )
     {
-      GLint logLen;
-			glGetShaderiv( shaderObj, GL_INFO_LOG_LENGTH, &logLen );
-      std::vector< char >log( logLen );
-			GLsizei written;
-			glGetShaderInfoLog( shaderObj, logLen, &written, log.data() );
-			std::cout << "compile error:" << std::endl << log.data() << std::endl;
-      throw std::runtime_error( "compile error" );
+        GLint maxLen;
+	      glGetShaderiv( shaderObj, GL_INFO_LOG_LENGTH, &maxLen );
+        std::vector< char >log( maxLen );
+		    GLsizei len;
+		    glGetShaderInfoLog( shaderObj, maxLen, &len, log.data() );
+		    std::cout << "compile error:" << std::endl << log.data() << std::endl;
+        throw std::runtime_error( "compile error" );
     }
     return shaderObj;
   }
@@ -197,17 +197,17 @@ public:
   // linke shader objects to shader program
   void LinkProgram( const std::vector<int> & shaderObjs ) {
     glLinkProgram( Prog() );
-    GLint status = GL_TRUE;
-	  glGetProgramiv( Prog(), GL_LINK_STATUS, &status );
+    GLint status;
+    glGetProgramiv( Prog(), GL_LINK_STATUS, &status );
     if ( status == GL_FALSE )
     {
-      GLint logLen;
-			glGetProgramiv( Prog(), GL_INFO_LOG_LENGTH, &logLen );
-      std::vector< char >log( logLen );
-			GLsizei written;
-			glGetProgramInfoLog( Prog(), logLen, &written, log.data() );
-			std::cout  << "link error:" << std::endl << log.data() << std::endl;
-      throw std::runtime_error( "link error" );
+        GLint maxLen;
+	      glGetProgramiv( Prog(), GL_INFO_LOG_LENGTH, &maxLen );
+        std::vector< char >log( maxLen );
+		    GLsizei len;
+		    glGetProgramInfoLog( Prog(), maxLen, &len, log.data() );
+		    std::cout  << "link error:" << std::endl << log.data() << std::endl;
+        throw std::runtime_error( "link error" );
     }
   }
 

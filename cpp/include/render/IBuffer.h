@@ -225,6 +225,8 @@ public:
   virtual void DrawElements( TPrimitive primitive_type, size_t start, size_t count, bool bind ) = 0;
   virtual void DrawElements( TPrimitive primitive_type, size_t element_size, size_t no_of_elements, const void *data, bool bind ) = 0;
   virtual void DrawElements( TPrimitive primitive_type, size_t element_size, size_t list_size, const int *no_of_elements, const void * const *data, bool bind ) = 0;
+  virtual void DrawElementsBase( TPrimitive primitive_type, size_t start, size_t count, size_t base_index, bool bind ) = 0;
+  virtual void DrawElementsBase( TPrimitive primitive_type, size_t element_size, size_t no_of_elements, const void *data, size_t base_index, bool bind ) = 0;
   virtual void DrawRangeElements( TPrimitive primitive_type, unsigned int minInx, unsigned int maxInx, bool bind ) = 0;
   virtual void DrawArray( TPrimitive primitive_type, size_t first, size_t count, bool bind  ) = 0;
 
