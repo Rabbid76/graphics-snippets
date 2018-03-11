@@ -14,6 +14,8 @@
 
 #include <IDrawType.h>
 
+#include <vector>
+
 
 
 /******************************************************************//**
@@ -93,6 +95,32 @@ enum TIndexType : char
 };
 
 
+enum TVA
+{
+  b0_xy,                     // 1 vertex buffer (no index buffer): 2 component vertex coordiante
+  b0_xyz,                    // 1 vertex buffer (no index buffer): 3 component vertex coordiante
+                  
+  b0_xyz_uv,                 // 1 vertex buffer record (no index buffer): 3 component vertex coordiante, 2 component texture coordinates
+  b0_xyz_nnn,                // 1 vertex buffer record (no index buffer): 3 component vertex coordiante, normal vector
+  b0_xyz_nnn_uv,             // 1 vertex buffer record (no index buffer): 3 component vertex coordiante, normal vector, 2 component texture coordinate
+
+  b0_xyz__b1_uv,             // 2 vertex buffers (no index buffer): 3 component vertex coordiante, 2 component texture coordinate
+  b0_xyz__b1_nnn,            // 2 vertex buffers (no index buffer): 3 component vertex coordiante, normal vector
+  b0_xyz__b1_nnn__b2_uv,     // 3 vertex buffers (no index buffer): 3 component vertex coordiante, normal vector, 2 component texture coordinate
+
+  i0__b0_xy,                 // 1 index buffer; 1 vertex buffer: 2 component vertex coordiante
+  i0__b0_xyz,                // 1 index buffer; 1 vertex buffer: 3 component vertex coordiante
+                  
+  i0__b0_xyz_uv,             // 1 index buffer; 1 vertex buffer:  3 component vertex coordiante, 2 component texture coordinate
+  i0__b0_xyz_nnn,            // 1 index buffer; 1 vertex buffer:  3 component vertex coordiante, normal vector
+  i0__b0_xyz_nnn_uv,         // 1 index buffer; 1 vertex buffer:  3 component vertex coordiante, normal vector, 2 component texture coordinate
+
+  i0__b0_xyz__b1_uv,         // 1 index buffer; 2 vertex buffers: 3 component vertex coordiante, 2 component texture coordinate
+  i0__b0_xyz__b1_nnn,        // 1 index buffer; 2 vertex buffers: 3 component vertex coordiante, normal vector
+  i0__b0_xyz__b1_nnn__b2_uv, // 1 index buffer; 3 vertex buffers: 3 component vertex coordiante, normal vector, 2 component texture coordinate
+};
+
+
 /******************************************************************//**
 * \brief   
 * 
@@ -105,7 +133,7 @@ enum TIndexType : char
 *     <stride>                : stride from one vertex attribute set to the next, in float (4 byte) units) 
 *     <no of attributes>      : number of the generic vertex attributes in the buffer - followed by the list of attribute specifications
 *     {
-*         <attribute index>   : vertex attribute index or client state
+*         <attribute index>   : vertex attribute identification; e.g. attribute index 0, 1, 2 ... or client state -1, -2, -3 ...
 *         <attribute size>    : number of elemts of the vertex attribute
 *         <attribute type>    : type of an attribute (`TAttribType`)
 *         <attribute offset>  : offset of the vertex attributes from the begin of the attributes set in float (4 byte) units) 
@@ -208,19 +236,17 @@ public:
 
   using TDescription = std::vector<char>;                           //!< description of a vetex array object content
   
-  enum TSpecificationID
-  {
-    b0_xyz,       // 1 buffer (no index buffer): 3 vertex coordiantes
-                  
-    b0_xyz_uv,    // 1 buffer record (no index buffer): 3 vertex coordiantes, 2 texture coordinates
-    b0_xyz_nnn,   // 1 buffer record (no index buffer): 3 vertex coordiantes, normal vector
-    b0_xyz_nnn_uv // 1 buffer record (no index buffer): 3 vertex coordiantes, normal vector, 2 texture coordinates
-};
-
-  static const TDescription & Specification( TSpecificationID id )
+  static const TDescription & VADescription( TVA id )
   {
     static const TDescription spec_table[] = {
     
+      // b0_xy
+      TDescription{
+        -1, 1, 
+        0, 2, 1, 
+        0, 2, Render::TAttributeType::eFloat32, 0
+      },
+
       // b0_xyz
       TDescription{
         -1, 1, 
@@ -251,7 +277,90 @@ public:
         0, 3, Render::TAttributeType::eFloat32, 0,
         1, 3, Render::TAttributeType::eFloat32, 3,
         2, 2, Render::TAttributeType::eFloat32, 6,
-      }
+      },
+
+      // b0_xyz__b1_uv
+      TDescription{
+        -1, 2, 
+        0, 0, 1, 0, 3, Render::TAttributeType::eFloat32, 0,
+        1, 0, 1, 1, 2, Render::TAttributeType::eFloat32, 0,
+      },
+
+      // b0_xyz__b1_nnn
+      TDescription{
+        -1, 2, 
+        0, 0, 1, 0, 3, Render::TAttributeType::eFloat32, 0,
+        1, 0, 1, 1, 3, Render::TAttributeType::eFloat32, 0,
+      },
+
+      // b0_xyz__b1_nnn__b2_uv
+      TDescription{
+        -1, 3, 
+        0, 0, 1, 0, 3, Render::TAttributeType::eFloat32, 0,
+        1, 0, 1, 1, 3, Render::TAttributeType::eFloat32, 0,
+        2, 0, 1, 2, 2, Render::TAttributeType::eFloat32, 0,
+      },
+
+      // i0__b0_xy
+      TDescription{
+        0, 1, 
+        0, 2, 1, 
+        0, 2, Render::TAttributeType::eFloat32, 0
+      },
+
+      // i0__b0_xyz
+      TDescription{
+        0, 1, 
+        0, 3, 1, 
+        0, 3, Render::TAttributeType::eFloat32, 0
+      },
+
+      // i0__b0_xyz_uv
+      TDescription{
+        0, 1, 
+        0, 5, 2, 
+        0, 3, Render::TAttributeType::eFloat32, 0,
+        1, 2, Render::TAttributeType::eFloat32, 3,
+      },
+
+      // i0__b0_xyz_nnn
+      TDescription{
+        0, 1, 
+        0, 6, 2, 
+        0, 3, Render::TAttributeType::eFloat32, 0,
+        1, 3, Render::TAttributeType::eFloat32, 3,
+      },
+
+      // i0__b0_xyz_nnn_uv
+      TDescription{
+        0, 1, 
+        0, 8, 3, 
+        0, 3, Render::TAttributeType::eFloat32, 0,
+        1, 3, Render::TAttributeType::eFloat32, 3,
+        2, 2, Render::TAttributeType::eFloat32, 6,
+      },
+
+      // i0__b0_xyz__b1_uv
+      TDescription{
+        0, 2, 
+        0, 0, 1, 0, 3, Render::TAttributeType::eFloat32, 0,
+        1, 0, 1, 1, 2, Render::TAttributeType::eFloat32, 0,
+      },
+
+      // i0__b0_xyz__b1_nnn
+      TDescription{
+        0, 2, 
+        0, 0, 1, 0, 3, Render::TAttributeType::eFloat32, 0,
+        1, 0, 1, 1, 3, Render::TAttributeType::eFloat32, 0,
+      },
+
+      // i0__b0_xyz__b1_nnn__b2_uv
+      TDescription{
+        0, 3, 
+        0, 0, 1, 0, 3, Render::TAttributeType::eFloat32, 0,
+        1, 0, 1, 1, 3, Render::TAttributeType::eFloat32, 0,
+        2, 0, 1, 2, 2, Render::TAttributeType::eFloat32, 0,
+      },
     };
 
     return spec_table[(int)id];
