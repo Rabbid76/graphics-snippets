@@ -83,7 +83,13 @@ See further:
    
 
 <br/><hr/>
-## Deprecated OpenGL compatibility mode matrix stack
+## Fixed Function pipeline matrix stack
+
+<br/>
+
+Noice, that the [Fixed Function Pipeline](https://www.khronos.org/opengl/wiki/Fixed_Function_Pipeline) is deprecated. See also [Khronos wiki - Legacy OpenGL](https://www.khronos.org/opengl/wiki/Legacy_OpenGL).
+
+<br/>
 
 In OpenGL there is one matrix stack for each matrix mode (See [**`glMatrixMode`**][4]). The matrix modes are `GL_MODELVIEW`, `GL_PROJECTION`, and `GL_TEXTURE`.
 
@@ -104,6 +110,102 @@ Scaling: See the documentation of [**`glScale`**][8]:
 > `glScale`produces a nonuniform scaling along the `x`, `y`, and `z` axes. The three parameters indicate the desired scale factor along each of the three axes.
 The current matrix (see `glMatrixMode`) is multiplied by this scale matrix.
 
+<br/>
+
+### Matrix stack
+
+To imagine how the matrix operations change the model, the operations onto the matrix stack have to be "read" in the reversed order. This is, because the current matrix of the matrix stack is multiplied by the matrix which is specified by the new operation and the matrices are stored in column-major order.
+
+Example of a Roboter arm from [OpenGL Programming Guide - Chapter 3 Viewing - Building an Articulated Robot Arm](http://www.glprogramming.com/red/chapter03.html).<br/>
+See also [OpenGL translation before and after a rotation](https://stackoverflow.com/questions/49236745/opengl-translation-before-and-after-a-rotation/49262569#49262569).
+
+    float shoulder_ang_deg = -15.0f;
+    float elbow_ang_deg    =  45.0f;
+
+    glTranslatef(-1.0f, 0.0f, 0.0f);
+    glRotatef(shoulder_ang_deg, 0.0f, 0.0f, 1.0f);
+    glTranslatef(1.0f, 0.0f, 0.0f);
+    glPushMatrix();
+    glScalef(2.0f, 0.4f, 1.0f);
+    glutWireCube(1.0f);
+    glPopMatrix();    
+
+    glTranslatef(1.0f, 0.0f, 0.0f);
+    glRotatef(elbow_ang_deg, 0.0f, 0.0f, 1.0f);
+    glTranslatef(1.0f, 0.0f, 0.0f);
+    glPushMatrix();
+    glScalef(2.0f, 0.4f, 1.0f);
+    glutWireCube(1.0f);
+    glPopMatrix();
+
+
+**Explanation**:
+
+Start with the elbow cube
+
+    glutWireCube(1.0f);
+
+![arm_01](image/arm/arm_01.png)
+
+Scale the elbow
+
+    glPushMatrix();
+    glScalef(2.0f, 0.4f, 1.0f);
+    glutWireCube(1.0f);
+    glPopMatrix();
+
+![arm_02](image/arm/arm_02.png)
+
+Move it to the right
+
+    glTranslatef(1.0f, 0.0f, 0.0f);
+
+![arm_03](image/arm/arm_03.png)
+
+Rotate the elbow
+
+    glRotatef(45.0f, 0.0f, 0.0f, 1.0f);
+
+![arm_04](image/arm/arm_04.png)
+
+Move the rotated elbow to the right
+
+    glTranslatef(1.0f, 0.0f, 0.0f);
+
+![arm_05](image/arm/arm_05.png)
+
+Draw the sholder cube
+
+    glutWireCube(1.0f);
+
+![arm_06](image/arm/arm_06.png)    
+
+Scale the sholder
+
+    glPushMatrix();
+    glScalef(2.0f, 0.4f, 1.0f);
+    glutWireCube(1.0f);
+    glPopMatrix();
+
+![arm_07](image/arm/arm_07.png)    
+
+Move the arm (elbow and shoulder) to the right
+
+    glTranslatef(1.0f, 0.0f, 0.0f);
+
+![arm_08](image/arm/arm_08.png)
+
+Rotate the arm
+
+    glRotatef(-15.0f, 0.0f, 0.0f, 1.0f);
+
+![arm_09](image/arm/arm_09.png)
+
+Move the arm to its final position  (to the left)
+
+    glTranslatef(-1.0f, 0.0f, 0.0f);
+
+![arm_10](image/arm/arm_10.png)
 
 <br/><hr/>
 ## Matrix operations
@@ -258,7 +360,7 @@ The result of `translate * rotate` is this:
     model[2] : ( -sin(angle), 0,  cos(angle), 0 )
     model[3] : ( tx,          ty, tz,         1 )
 
-![translate * rotate](image/translate-rotate.svg)
+![translate * rotate](image/translate-rotate.png)
 
 <br/>
 Note, the result of `rotate * translate` would be:
@@ -268,7 +370,7 @@ Note, the result of `rotate * translate` would be:
     model[2] : ( -sin(angle),                    0,   cos(angle),                     0 )
     model[3] : ( cos(angle)*tx - sin(angle)*tx,  ty,  sin(angle)*tz + cos(angle)*tz,  1 )
 
-![rotate * translate](image/rotate-translate.svg)
+![rotate * translate](image/rotate-translate.png)
 
 <br/>
 See further:
@@ -483,25 +585,25 @@ And we have rotation matrix that we want to run on the object. In this case we h
 We have several rotations we can do with this information.
 First we want to rotate the object on its local axis:
 
-![rotate local axis](image/rotate_local_axis.svg)
+![rotate local axis](image/rotate_local_axis.png)
 
     glm::mat4 modelMat = objMat * rotMat;
 
 A Rotation around the worlds origin can be performed like this:
 
-![rotate world origin](image/rotate_world_origin.svg)
+![rotate world origin](image/rotate_world_origin.png)
 
     glm::mat4 modelMat = rotMat * objMat;
 
 In order to rotate around the origin of the object in the world coordinate system, we must eliminate the rotation of the objct:
 
-![rotate object origin](image/rotate_object_origin.svg)
+![rotate object origin](image/rotate_object_origin.png)
 
     glm::mat4 modelMat = objMat * (glm::inverse(objRot) * rotMat * objRot);
 
 A Rotation around the worlds origin in relation to the object you have to do the opposite:
 
-![rotate object world](image/rotate_object_world.svg)
+![rotate object world](image/rotate_object_world.png)
 
     glm::mat4 modelMat = (objRot * rotMat * glm::inverse(objRot)) * objMat;
 
