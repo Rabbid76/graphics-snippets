@@ -146,7 +146,7 @@ Start with the elbow cube
 
     glutWireCube(1.0f);
 
-![arm_01](image/arm/arm_01.png)
+![arm_01](image/roboterarm/arm_01.png)
 
 Scale the elbow
 
@@ -155,31 +155,31 @@ Scale the elbow
     glutWireCube(1.0f);
     glPopMatrix();
 
-![arm_02](image/arm/arm_02.png)
+![arm_02](image/roboterarm/arm_02.png)
 
 Move it to the right
 
     glTranslatef(1.0f, 0.0f, 0.0f);
 
-![arm_03](image/arm/arm_03.png)
+![arm_03](image/roboterarm/arm_03.png)
 
 Rotate the elbow
 
     glRotatef(45.0f, 0.0f, 0.0f, 1.0f);
 
-![arm_04](image/arm/arm_04.png)
+![arm_04](image/roboterarm/arm_04.png)
 
 Move the rotated elbow to the right
 
     glTranslatef(1.0f, 0.0f, 0.0f);
 
-![arm_05](image/arm/arm_05.png)
+![arm_05](image/roboterarm/arm_05.png)
 
 Draw the sholder cube
 
     glutWireCube(1.0f);
 
-![arm_06](image/arm/arm_06.png)    
+![arm_06](image/roboterarm/arm_06.png)    
 
 Scale the sholder
 
@@ -188,25 +188,25 @@ Scale the sholder
     glutWireCube(1.0f);
     glPopMatrix();
 
-![arm_07](image/arm/arm_07.png)    
+![arm_07](image/roboterarm/arm_07.png)    
 
 Move the arm (elbow and shoulder) to the right
 
     glTranslatef(1.0f, 0.0f, 0.0f);
 
-![arm_08](image/arm/arm_08.png)
+![arm_08](image/roboterarm/arm_08.png)
 
 Rotate the arm
 
     glRotatef(-15.0f, 0.0f, 0.0f, 1.0f);
 
-![arm_09](image/arm/arm_09.png)
+![arm_09](image/roboterarm/arm_09.png)
 
 Move the arm to its final position  (to the left)
 
     glTranslatef(-1.0f, 0.0f, 0.0f);
 
-![arm_10](image/arm/arm_10.png)
+![arm_10](image/roboterarm/arm_10.png)
 
 
 <br/><hr/>
