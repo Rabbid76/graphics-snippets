@@ -110,6 +110,7 @@ Scaling: See the documentation of [**`glScale`**][8]:
 > `glScale`produces a nonuniform scaling along the `x`, `y`, and `z` axes. The three parameters indicate the desired scale factor along each of the three axes.
 The current matrix (see `glMatrixMode`) is multiplied by this scale matrix.
 
+
 <br/>
 
 ### Matrix stack
@@ -206,6 +207,7 @@ Move the arm to its final position  (to the left)
     glTranslatef(-1.0f, 0.0f, 0.0f);
 
 ![arm_10](image/arm/arm_10.png)
+
 
 <br/><hr/>
 ## Matrix operations
