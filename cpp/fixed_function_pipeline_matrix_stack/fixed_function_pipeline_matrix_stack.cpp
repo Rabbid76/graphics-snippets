@@ -24,6 +24,8 @@
 #include <math.h>
 
 
+//#define _CREATE_DOCUMENTATION 
+
 std::chrono::high_resolution_clock::time_point g_start_time;
 
 bool valid_viewport = false;
@@ -32,9 +34,15 @@ void OnIdle( void );
 void Resize( int, int );
 void Display( void );
 
-//int vp_lrbt[4]{ -2, -4, -2, -2 };
+#if defined(_CREATE_DOCUMENTATION)
+int vp_lrbt[4]{ -2, 4, -2, 2 };
+int wnd_width = 300;
+#else
 int vp_lrbt[4]{ -5, 5, -5, 5 };
-int wnd_width = 500; // 300;
+int wnd_width = 500;
+#endif
+
+
 
 int main(int argc, char** argv)
 {
@@ -102,6 +110,10 @@ void Display( void )
 
     double time_val = time_ms / interval_ms;
 
+#if defined(_CREATE_DOCUMENTATION)
+    time_val = 0.0;
+#endif
+
     float shoulder_ang_deg = (float)(-15.0 + time_val * 360.0 * shoulder_speed);
     float elbow_ang_deg    = (float)( 45.0 + time_val * 360.0 * elbow_speed);
 
@@ -161,6 +173,15 @@ void Display( void )
     glPopMatrix();
 
     glPopMatrix();
+
+    glLineWidth( 3.0f );
+    glColor4f( 0.9f, 0.4f, 0.3f, 1.0f );
+    glBegin( GL_LINES );
+    glVertex2f( 0.0f, -0.25f );
+    glVertex2f( 0.0f, 0.25f );
+    glVertex2f( -0.25f, 0.0f );
+    glVertex2f( 0.25f, 0.0f );
+    glEnd();
 
     glutSwapBuffers();
 }
