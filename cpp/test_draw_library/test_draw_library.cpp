@@ -166,31 +166,43 @@ void CWindow_Glfw::MainLoop ( void )
 std::string sh_vert = R"(
 #version 400
 
-layout (location = 0) in vec3 inPos;
-layout (location = 1) in vec4 inColor;
+layout (location = 0) in vec4 in_pos;
+layout (location = 1) in vec4 in_col;
 
-out vec3 vertPos;
-out vec4 vertCol;
+out TVertexData
+{
+    vec3 pos;
+    vec4 col;
+} out_data;
+
+
+uniform mat4 u_proj;
+uniform mat4 u_view;
+uniform mat4 u_model;
 
 void main()
 {
-    vertCol     = inColor;
-		vertPos     = inPos;
-		gl_Position = vec4(inPos, 1.0);
+    vec4 view_pos = u_view * u_model * in_pos; 
+    out_data.col  = in_col;
+    out_data.pos  = view_pos.xyz / view_pos.w;
+    gl_Position   = u_proj * view_pos;
 }
 )";
 
 std::string sh_frag = R"(
 #version 400
 
-in vec3 vertPos;
-in vec4 vertCol;
+in TVertexData
+{
+    vec3 pos;
+    vec4 col;
+} in_data;
 
 out vec4 fragColor;
 
 void main()
 {
-    fragColor = vertCol;
+    fragColor = in_data.col;
 }
 )";
 
@@ -203,10 +215,16 @@ void CWindow_Glfw::InitScene( void )
     } ) );
 
     _prog->Use();
+
+    _prog->SetUniformM44( "u_proj", OpenGL::Identity() );
+    _prog->SetUniformM44( "u_view", OpenGL::Identity() );
+    _prog->SetUniformM44( "u_model", OpenGL::Identity() );
 }
 
 void CWindow_Glfw::Render( double time_ms )
 {
+  _prog->SetUniformM44( "u_proj", OpenGL::Camera::Orthopraphic( (float)_vpSize[0] / (float)_vpSize[1], { -1.0f, 1.0f } ) );
+
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);  
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
       

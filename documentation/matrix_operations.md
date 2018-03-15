@@ -80,6 +80,7 @@ See further:
 - [Matrix Translation in GLSL is infinitely stretched](https://stackoverflow.com/questions/46763234/matrix-translation-in-glsl-is-infinitely-stretched/46763693#46763693) 
 - [Does WebGL matrix (mat4) notation correspondes to mathematical matrix notation](https://stackoverflow.com/questions/48367593/does-webgl-matrix-mat4-notation-correspondes-to-mathematical-matrix-notation/48367941#48367941)
 - [Custom matrices & OpenGL shaders.](https://stackoverflow.com/questions/48375568/custom-matrices-opengl-shaders/48375786#48375786)
+- [glm returning nan on simple translate](https://stackoverflow.com/questions/49058381/glm-returning-nan-on-simple-translate/49058953#49058953)
    
 
 <br/><hr/>

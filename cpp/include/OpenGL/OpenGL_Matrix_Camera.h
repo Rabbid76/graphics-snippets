@@ -82,6 +82,10 @@ struct Camera
 
   TMat44 Perspective( void );
   TMat44 LookAt( void );
+
+  static TMat44 Orthopraphic( float aspect, const std::array<float, 2> &depth_range );
+  static TMat44 Orthopraphic( const std::array<float, 4> &view_rect, const std::array<float, 2> &depth_range );
+  static TMat44 Orthopraphic( float l, float r, float b, float t, float n, float f );
 };
 
 TMat44 Camera::Perspective( void )
@@ -109,6 +113,25 @@ TMat44 Camera::LookAt( void )
   
   return v;
 }
+
+TMat44 Camera::Orthopraphic( float aspect, const std::array<float, 2> &depth_range )
+{
+  return Camera::Orthopraphic( -aspect, aspect, -1.0f, 1.0f, depth_range[0], depth_range[1] );
+}
+
+TMat44 Camera::Orthopraphic( const std::array<float, 4> &view_rect, const std::array<float, 2> &depth_range )
+{
+  return Camera::Orthopraphic( view_rect[0], view_rect[2], view_rect[1], view_rect[3], depth_range[0], depth_range[1] );
+}
+
+TMat44 Camera::Orthopraphic( float l, float r, float b, float t, float n, float f )
+{
+  return TMat44{ 
+    TVec4{ 2.0f/(r-l),   0.0f,        0.0f,        0.0f },
+    TVec4{ 0.0f,         2.0f/(t-b),  0.0f,        0.0f },
+    TVec4{ 0.0f,         0.0f,        2.0f/(f-n),  0.0f },
+    TVec4{ -(r+l)/(r-l), (t+b)/(t-b), (f+n)/(f-n), 1.0f } };
+};
 
 
 struct Mat44 : public TMat44
