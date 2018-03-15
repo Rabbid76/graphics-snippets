@@ -512,7 +512,7 @@ bool CDrawBuffer::UpdateIB(
   size_t      no_of_elements, //!< I - number of of the new data
   const void *data )          //!< I - the new data
 {
-  auto &ibIt = _ibos.find( id );
+  auto ibIt = _ibos.find( id );
   if ( ibIt == _ibos.end() )
   {
     assert( false );
@@ -670,7 +670,7 @@ void CDrawBuffer::DrawElementsBase(
 {
   if ( bind )
     this->BindVAO();
-  glDrawElementsBaseVertex( PrimitiveType( primitive_type ), static_cast<GLsizei>( no_of_elements ), IndexType( element_size ), data, static_cast<GLint>( base_index ) );
+  glDrawElementsBaseVertex( PrimitiveType( primitive_type ), static_cast<GLsizei>( no_of_elements ), IndexType( element_size ), const_cast<void*>(data), static_cast<GLint>( base_index ) );
 }
 
 

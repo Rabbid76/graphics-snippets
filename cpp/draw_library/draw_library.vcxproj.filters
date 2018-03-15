@@ -1,0 +1,90 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="library">
+      <UniqueIdentifier>{018de81f-0404-4911-b1eb-f1517f123b9e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="render">
+      <UniqueIdentifier>{3e2c9cf9-8f91-46e1-bc16-1650f82aa5a5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="OpenGL">
+      <UniqueIdentifier>{54fbf904-ad15-48e5-bc91-5bc59637b27b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="OpenGL_source">
+      <UniqueIdentifier>{3a9c0572-bee7-434d-a8b7-775da00096a2}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h">
+      <Filter>library</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>library</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\render\IBuffer.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\render\IDrawType.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\render\ILight.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\render\IProgram.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\render\IRenderData.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\render\IRenderPass.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenGL\OpenGL_Matrix_Camera.h">
+      <Filter>OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenGL\OpenGL_SimpleShaderProgram.h">
+      <Filter>OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenGL\OpenGLFixedFunctionPipelineTypes.h">
+      <Filter>OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenGL\OpenGLFramebuffer.h">
+      <Filter>OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenGL\OpenGLVertexBuffer.h">
+      <Filter>OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenGL\OpenGLVertexBuffer_2_0.h">
+      <Filter>OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenGL\OpenGLVertexBufferCompatibility.h">
+      <Filter>OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\render\IDraw.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenGL\OpenGLBasicDraw.h">
+      <Filter>OpenGL</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>library</Filter>
+    </ClCompile>
+    <ClCompile Include="source\OpenGLFramebuffer.cpp">
+      <Filter>OpenGL_source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\OpenGLVertexBuffer.cpp">
+      <Filter>OpenGL_source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\OpenGLVertexBuffer_2_0.cpp">
+      <Filter>OpenGL_source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\OpenGLVertexBufferCompatibility.cpp">
+      <Filter>OpenGL_source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\OpenGLBasicDraw.cpp">
+      <Filter>OpenGL_source</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

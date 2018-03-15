@@ -6,8 +6,8 @@
 * \version 1.0
 **********************************************************************/
 #pragma once
-#ifndef IDraw_h_INCLUDED
-#define IDraw_h_INCLUDED
+#ifndef IBuffer_h_INCLUDED
+#define IBuffer_h_INCLUDED
 
 
 // includes
@@ -118,6 +118,10 @@ enum TVA
   i0__b0_xyz__b1_uv,         // 1 index buffer; 2 vertex buffers: 3 component vertex coordiante, 2 component texture coordinate
   i0__b0_xyz__b1_nnn,        // 1 index buffer; 2 vertex buffers: 3 component vertex coordiante, normal vector
   i0__b0_xyz__b1_nnn__b2_uv, // 1 index buffer; 3 vertex buffers: 3 component vertex coordiante, normal vector, 2 component texture coordinate
+
+  b0_xy__b1_rgba,            // 2 vertex buffers (no index buffer): 2 component vertex coordiante, RGBA color
+  b0_xyz__b1_rgba,           // 2 vertex buffers (no index buffer): 3 component vertex coordiante, RGBA color
+  b0_xyzw__b1_rgba,          // 2 vertex buffers (no index buffer): 3 component vertex coordiante, RGBA color
 };
 
 
@@ -216,6 +220,16 @@ public:
 
   virtual size_t NoOf( void ) const = 0;
   virtual bool   Selected( void ) const = 0;
+
+  void SpecifyVA( const std::vector<char> & description )
+  {
+    SpecifyVA( description.size(), description.data() );
+  }
+
+  void UpdateVB( size_t id, size_t element_size, const std::vector<t_fp> &buffer )
+  {
+    UpdateVB( id, element_size, buffer.size(), buffer.data() );
+  }
 
   virtual void SpecifyVA( size_t description_size, const char *description ) = 0;
   virtual bool UpdateVB( size_t id, size_t element_size, size_t no_of_elements, const void *data ) = 0;
@@ -363,6 +377,27 @@ public:
         1, 0, 1, 1, 3, Render::TAttributeType::eFloat32, 0,
         2, 0, 1, 2, 2, Render::TAttributeType::eFloat32, 0,
       },
+
+      // b0_xy__b1_rgba
+      TDescription{
+        -1, 2, 
+        0, 0, 1, 0, 2, Render::TAttributeType::eFloat32, 0,
+        1, 0, 1, 1, 4, Render::TAttributeType::eFloat32, 0,
+      },
+
+      // b0_xyz__b1_rgba
+      TDescription{
+        -1, 2, 
+        0, 0, 1, 0, 3, Render::TAttributeType::eFloat32, 0,
+        1, 0, 1, 1, 4, Render::TAttributeType::eFloat32, 0,
+      },
+
+      // b0_xyzw__b1_rgba
+      TDescription{
+        -1, 2, 
+        0, 0, 1, 0, 4, Render::TAttributeType::eFloat32, 0,
+        1, 0, 1, 1, 4, Render::TAttributeType::eFloat32, 0,
+      },
     };
 
     return spec_table[(int)id];
@@ -373,4 +408,4 @@ public:
 } // Draw
 
 
-#endif // IDraw_h_INCLUDED
+#endif // IBuffer_h_INCLUDED
