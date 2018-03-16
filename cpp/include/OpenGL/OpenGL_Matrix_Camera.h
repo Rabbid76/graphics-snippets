@@ -83,7 +83,10 @@ struct Camera
   TMat44 Perspective( void );
   TMat44 LookAt( void );
 
+  TMat44 Orthopraphic2D( void );
+
   static TMat44 Orthopraphic( float aspect, const std::array<float, 2> &depth_range );
+  static TMat44 Orthopraphic( float scale_x, float scale_y, const std::array<float, 2> &depth_range );
   static TMat44 Orthopraphic( const std::array<float, 4> &view_rect, const std::array<float, 2> &depth_range );
   static TMat44 Orthopraphic( float l, float r, float b, float t, float n, float f );
 };
@@ -114,9 +117,21 @@ TMat44 Camera::LookAt( void )
   return v;
 }
 
+TMat44 Camera::Orthopraphic2D( void )
+{
+  return Camera::Orthopraphic( 0, 0, (float)_vp[0], (float)_vp[1], -1.0f, 1.0f );
+}
+
 TMat44 Camera::Orthopraphic( float aspect, const std::array<float, 2> &depth_range )
 {
-  return Camera::Orthopraphic( -aspect, aspect, -1.0f, 1.0f, depth_range[0], depth_range[1] );
+  if ( aspect < 1.0f )
+    return Camera::Orthopraphic( 1.0f, 1.0f/aspect, depth_range );
+  return Camera::Orthopraphic( aspect, 1.0f, depth_range );
+}
+
+TMat44 Camera::Orthopraphic( float scale_x, float scale_y, const std::array<float, 2> &depth_range )
+{
+  return Camera::Orthopraphic( -scale_x, scale_x, -scale_y, scale_y, depth_range[0], depth_range[1] );
 }
 
 TMat44 Camera::Orthopraphic( const std::array<float, 4> &view_rect, const std::array<float, 2> &depth_range )

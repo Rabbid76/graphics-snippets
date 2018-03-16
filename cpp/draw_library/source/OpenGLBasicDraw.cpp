@@ -15,6 +15,12 @@
 #include <OpenGLBasicDraw.h>
 #include <OpenGLVertexBuffer.h>
 
+// OpenGL wrapper
+
+#include <GL/glew.h>
+//#include <GL/gl.h> not necessary because of glew 
+#include <GL/glu.h>
+
 // stl
 
 #include <cassert>
@@ -148,23 +154,41 @@ Render::IDrawBuffer * CBasicDraw::NewDrawBuffer(
 
 
 /******************************************************************//**
-* \brief   Draw a convex polygon with a single color
+* \brief   Draw an array od primitives with a single color
 * 
 * \author  gernot
 * \date    2018-03-15
 * \version 1.0
 **********************************************************************/
-bool CBasicDraw::DrawConvexPolygon( 
-  size_t                size,        //!< in: size vertex coordiantes
-  size_t                coords_size, //!< in: size of coordinate buffer
-  const Render::t_fp   *coords,      //!< in: coordiant buffer
-  const Render::TColor &color )      //!< in: color for drawing
+bool CBasicDraw::Draw( 
+  Render::TPrimitive    primitive_type, //!< in: type of the primitives
+  size_t                size,           //!< in: size vertex coordiantes
+  size_t                coords_size,    //!< in: size of coordinate buffer
+  const Render::t_fp   *coords,         //!< in: coordiant buffer
+  const Render::TColor &color,          //!< in: color for drawing
+  const TStyle         &style )         //!< in: additional style parameters 
 {
   if ( size != 2 && size !=3 && size !=4 )
   {
     assert( false );
     return false;
   }
+
+  bool is_point = primitive_type == Render::TPrimitive::points;
+
+  bool is_line =
+    primitive_type == Render::TPrimitive::lines ||
+    primitive_type == Render::TPrimitive::lines_adjacency ||
+    primitive_type == Render::TPrimitive::linestrip ||
+    primitive_type == Render::TPrimitive::linestrip_adjacency ||
+    primitive_type == Render::TPrimitive::lineloop;
+
+  bool is_polygon =
+    primitive_type == Render::TPrimitive::triangles ||
+    primitive_type == Render::TPrimitive::triangle_adjacency ||
+    primitive_type == Render::TPrimitive::trianglestrip ||
+    primitive_type == Render::TPrimitive::trianglestrip_adjacency ||
+    primitive_type == Render::TPrimitive::trianglefan;
 
   // buffer specification
   Render::TVA va_id = size == 2 ? Render::TVA::b0_xy__b1_rgba : (size == 3 ? Render::TVA::b0_xyz__b1_rgba : Render::TVA::b0_xyzw__b1_rgba);
@@ -182,9 +206,24 @@ bool CBasicDraw::DrawConvexPolygon(
   buffer.UpdateVB( 0, sizeof(float), coords_size, coords );
   buffer.UpdateVB( 1, sizeof(float), color_buffer );
 
+  // set style and context
+  if ( is_line )
+  {
+    glEnable( GL_POLYGON_OFFSET_FILL );
+    glPolygonOffset( 1.0, 1.0 );
+    glLineWidth( style._thickness );
+  }
+
   // draw_buffer
-  buffer.DrawArray( Render::TPrimitive::trianglefan, 0, no_of_vertices, true );
+  buffer.DrawArray( primitive_type, 0, no_of_vertices, true );
   buffer.Release();
+
+  // set style and context
+  if ( is_line )
+  {
+    glDisable( GL_POLYGON_OFFSET_FILL );
+    glLineWidth( 1.0f );
+  }
 
   return true;
 }

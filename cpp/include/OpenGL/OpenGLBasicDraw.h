@@ -50,7 +50,9 @@ public:
   virtual Render::IDrawBuffer & DrawBuffer( void );
   virtual Render::IDrawBuffer & DrawBuffer( const void *key, bool &cached );
 
-  virtual bool DrawConvexPolygon( size_t size, size_t coords_size, const Render::t_fp *coords, const Render::TColor &color ) override;
+
+
+  virtual bool Draw( Render::TPrimitive primitive_type, size_t size, size_t coords_size, const Render::t_fp *coords, const Render::TColor &color, const TStyle &style ) override;
 
 private:
 

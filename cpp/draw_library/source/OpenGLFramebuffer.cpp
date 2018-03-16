@@ -11,10 +11,11 @@
 
 #include <stdafx.h>
 
+// OpenGL
+
 #include <OpenGLFramebuffer.h>
 
-#include <algorithm>
-#include <iostream>
+// OpenGL wrapper
 
 #include <GL/glew.h>
 //#include <GL/gl.h> not necessary because of glew 
@@ -22,6 +23,8 @@
 
 // stl
 
+#include <algorithm>
+#include <iostream>
 #include <cassert>
 
 

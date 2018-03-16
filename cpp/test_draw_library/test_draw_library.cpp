@@ -223,24 +223,31 @@ void CWindow_Glfw::InitScene( void )
 
 void CWindow_Glfw::Render( double time_ms )
 {
-  _prog->SetUniformM44( "u_proj", OpenGL::Camera::Orthopraphic( (float)_vpSize[0] / (float)_vpSize[1], { -1.0f, 1.0f } ) );
+    float aspect = (float)_vpSize[0] / (float)_vpSize[1];
+    float scale_x = aspect < 1.0f ? 1.0f : aspect;
+    float scale_y = aspect < 1.0f ? 1.0f/aspect : 1.0f;
+   
+    _prog->SetUniformM44( "u_proj", OpenGL::Camera::Orthopraphic( scale_x, scale_y, { -1.0f, 1.0f } ) );
 
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);  
+    glClearColor(0.95f, 0.95f, 0.92f, 1.0f);  
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
       
-    _draw->DrawConvexPolygon(
-    2, { -0.8f, -0.8f, 0.8f, -0.8f, 0.0f, 0.0f },
-    { 1.0f, 0.0f, 0.0f, 1.0f } );
+    glEnable( GL_BLEND );
+    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
-    _draw->DrawConvexPolygon(
-    2, { -0.8f, 0.8f, 0.8f, 0.8f, 0.0f, 0.0f },
-    { 0.0f, 1.0f, 0.0f, 1.0f } );
+    // TODO $$$ _draw->Begin() -> set shader blending and depth test
+    // TODO $$$ _draw->Projection( projection_mat4 ), _draw->View( view_mat4 ), _draw->Model( model_mat4 )
 
-    _draw->DrawConvexPolygon(
-    2, { -0.8f, -0.8f, -0.8f, 0.8f, 0.0f, 0.0f },
-    { 0.0f, 0.0f, 1.0f, 1.0f } );
+    _draw->DrawGrid2D( { -scale_x, -scale_y }, { scale_x, scale_y }, { 0.05f, 0.05f }, 1.0f, { 0.1f, 0.8f, 0.8f, 1.0f }, 1.0f );
 
-     _draw->DrawConvexPolygon(
-    2, { 0.8f, -0.8f, 0.8f, 0.8f, 0.0f, 0.0f },
-    { 1.0f, 1.0f, 0.0f, 1.0f } );
+    _draw->DrawConvexPolygon( 2, { -0.8f, -0.8f,  0.8f, -0.8f, 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f, 0.5f } );
+    _draw->DrawConvexPolygon( 2, { -0.8f,  0.8f,  0.8f,  0.8f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f, 0.5f } );
+    _draw->DrawConvexPolygon( 2, { -0.8f, -0.8f, -0.8f,  0.8f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f, 0.5f } );
+    _draw->DrawConvexPolygon( 2, {  0.8f, -0.8f,  0.8f,  0.8f, 0.0f, 0.0f }, { 1.0f, 1.0f, 0.0f, 0.5f } );
+
+    _draw->DrawRectangle2D( {-0.8f, -0.8f}, {0.8f, 0.8f}, 0.0f, { 1.0f, 0.0f, 1.0f, 1.0f }, 5 );
+
+    glDisable( GL_BLEND );
+
+    // TODO $$$ _draw->Finish() -> finish pass
 }
