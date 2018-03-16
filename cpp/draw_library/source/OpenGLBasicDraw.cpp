@@ -14,6 +14,7 @@
 
 #include <OpenGLBasicDraw.h>
 #include <OpenGLVertexBuffer.h>
+#include <OpenGLFrameBuffer.h>
 
 // OpenGL wrapper
 
@@ -107,7 +108,7 @@ CBasicDraw::CBasicDraw( void )
 * @author  gernot
 * @date    2018-02-06
 * @version 1.0
-**********************************************************************/
+*********************************************************************/
 CBasicDraw::~CBasicDraw()
 {
   Destroy();
@@ -184,35 +185,6 @@ Render::IDrawBuffer * CBasicDraw::NewDrawBuffer(
 
 
 /******************************************************************//**
-* \brief   General initializations.
-*
-* Specify the render buffers
-* 
-* \author  gernot
-* \date    2018-03-16
-* \version 1.0
-**********************************************************************/
-bool CBasicDraw::Init( void )
-{
-  if ( _initialized )
-    return true;
-
-  _draw_prog.reset( new OpenGL::ShaderProgram(
-    {
-      { draw_sh_vert, GL_VERTEX_SHADER },
-      { draw_sh_frag, GL_FRAGMENT_SHADER }
-    } ) );
-
-  // TODO $$$ render process
-  // TODO $$$ shaders
-  // TODO $$$ uniform block model, view, projection
-
-  _initialized = true;
-  return true;
-}
-
-
-/******************************************************************//**
 * @brief   destroy internal GPU objects
 *
 * @author  gernot
@@ -238,6 +210,111 @@ void CBasicDraw::Destroy( void )
 
 
 /******************************************************************//**
+* \brief   General initializations.
+*
+* Specify the render buffers
+* 
+* \author  gernot
+* \date    2018-03-16
+* \version 1.0
+**********************************************************************/
+bool CBasicDraw::Init( void )
+{
+  if ( _initialized )
+    return true;
+
+  // specify render process
+  SpecifyRenderProcess();
+
+  // draw shader
+
+  _draw_prog.reset( new OpenGL::ShaderProgram(
+    {
+      { draw_sh_vert, GL_VERTEX_SHADER },
+      { draw_sh_frag, GL_FRAGMENT_SHADER }
+    } ) );
+
+  // TODO $$$ render process
+  // TODO $$$ shaders
+  // TODO $$$ uniform block model, view, projection
+
+  _initialized = true;
+  return true;
+}
+
+
+/******************************************************************//**
+* \brief   General initializations.
+*
+* Specify the render buffers
+* 
+* \author  gernot
+* \date    2018-03-16
+* \version 1.0
+**********************************************************************/
+void CBasicDraw::BackgroundColor( 
+  const Render::TColor &bg_color ) //!< in: the background color
+{
+  _bg_color = bg_color;
+  if ( _process != nullptr )
+    _process->Invalidate();
+}
+
+
+/******************************************************************//**
+* \brief   Specifies the render process
+* 
+* \author  gernot
+* \date    2018-03-16
+* \version 1.0
+**********************************************************************/
+bool CBasicDraw::SpecifyRenderProcess( void )
+{
+  if ( _vp_size[0] == 0 || _vp_size[1] == 0 )
+    return false;
+  if ( _process == nullptr )
+    _process.reset( new OpenGL::CRenderProcess );
+  if ( _process->IsValid() && _process->IsComplete() && _process->CurrentSize() == _vp_size )
+    return true;
+
+  const size_t c_depth_ID        = 0;
+  const size_t c_color_ID        = 1;
+  const size_t c_transp_ID       = 2;
+  const size_t c_transp_attr_ID  = 3;
+  
+  Render::IRenderProcess::TBufferMap buffers;
+  buffers.emplace( c_depth_ID,       Render::TBuffer( Render::TBufferType::DEPTH,  Render::TBufferDataType::DEFAULT ) );
+  buffers.emplace( c_color_ID,       Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::DEFAULT ) );
+  buffers.emplace( c_transp_ID,      Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::F16 ) );
+  buffers.emplace( c_transp_attr_ID, Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::F16 ) );
+
+  Render::IRenderProcess::TPassMap passes;
+
+  Render::TPass draw_pass( Render::TPassDepthTest::LESS, Render::TPassBlending::OFF );
+  draw_pass._targets.emplace_back( c_depth_ID, Render::TPass::TTarget::depth ); // depth target
+  draw_pass._targets.emplace_back( c_color_ID, 0, true, _bg_color );            // color target
+  passes.emplace( c_draw_buffer, draw_pass );
+
+  Render::TPass transp_pass( Render::TPassDepthTest::LESS, Render::TPassBlending::ADD );
+  transp_pass._targets.emplace_back( c_depth_ID, Render::TPass::TTarget::depth ); // depth target
+  transp_pass._targets.emplace_back( c_transp_ID, 0 );                            // tranparency target
+  transp_pass._targets.emplace_back( c_transp_ID, 1 );                            // tranparency attribute target (adaptive tranparency)
+  passes.emplace( c_tranp_buffer, transp_pass );
+
+  Render::TPass finish_pass( Render::TPassDepthTest::OFF, Render::TPassBlending::OFF );
+  finish_pass._sources.emplace_back( c_color_ID,       1 ); // color buffer source
+  finish_pass._sources.emplace_back( c_transp_ID,      2 ); // tranparency buffer source
+  finish_pass._sources.emplace_back( c_transp_attr_ID, 3 ); // transparency attribute buffer source
+  passes.emplace( c_finish_pass, finish_pass );
+
+  _process->SpecifyBuffers( buffers );
+  _process->SpecifyPasses( passes );
+
+  return _process->Create( _vp_size );
+}
+
+
+/******************************************************************//**
 * \brief   Start the rendering.
 *
 * Specify the render buffers
@@ -246,8 +323,7 @@ void CBasicDraw::Destroy( void )
 * \date    2018-03-16
 * \version 1.0
 **********************************************************************/
-bool CBasicDraw::Begin( 
-  const Render::TColor &background_color ) //!< in clear color for the background
+bool CBasicDraw::Begin( void )
 {
   if ( _drawing || Init() == false )
   {
@@ -255,6 +331,12 @@ bool CBasicDraw::Begin(
     return false;
   }
 
+  // specify render process
+  SpecifyRenderProcess();
+  _process->PrepareClear( c_draw_buffer );
+  _process->PrepareClear( c_tranp_buffer );
+  _process->Release();
+  
   // Init matrices
   _projection = OpenGL::Identity();
   _view       = OpenGL::Identity();
@@ -263,7 +345,7 @@ bool CBasicDraw::Begin(
   // TODO $$$
 
   glClearDepth( 1.0f );
-  glClearColor( background_color[0], background_color[1], background_color[2], background_color[3] );  
+  glClearColor( _bg_color[0], _bg_color[1], _bg_color[2], _bg_color[3] );  
   glClear( GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT );
 
   glEnable( GL_DEPTH_TEST );
@@ -291,6 +373,8 @@ bool CBasicDraw::Finish( void )
     assert( false );
     return false;
   }
+
+  //_process->Prepare( c_finish_pass );
 
   // TODO $$$
 

@@ -16,6 +16,7 @@
 
 #include <IDraw.h>
 #include <IBuffer.h>
+#include <IRenderPass.h>
 
 // OpenGL
 
@@ -61,6 +62,10 @@ class CBasicDraw
 
 public:
 
+  using TProcessPtr = std::unique_ptr<Render::IRenderProcess>;
+  using TProgramPtr = std::unique_ptr<OpenGL::ShaderProgram>;
+  
+
   CBasicDraw( void );
   virtual ~CBasicDraw();
 
@@ -68,12 +73,14 @@ public:
   virtual Render::IDrawBuffer & DrawBuffer( void );
   virtual Render::IDrawBuffer & DrawBuffer( const void *key, bool &cached );
 
-  virtual bool Init( void ) override;                                    //!< general initializations
-  virtual void Destroy( void ) override;                                 //!< destroy all internal objects and clanup
-  virtual bool Begin( const Render::TColor &background_color ) override; //!< start the rendering
-  virtual bool Finish( void ) override;                                  //!< finish the rendering
-  virtual bool ClearDepth( void ) override;                              //!< interim clear of the depth buffer
-
+  virtual void Destroy( void ) override;                                   //!< destroy all internal objects and clanup
+  virtual bool Init( void ) override;                                      //!< general initializations
+  virtual bool Begin( void ) override;                                     //!< start the rendering
+  virtual bool Finish( void ) override;                                    //!< finish the rendering
+  virtual bool ClearDepth( void ) override;                                //!< interim clear of the depth buffer
+  virtual void BackgroundColor( const Render::TColor &bg_color ) override; //!< sets the background color
+  
+  virtual void ViewportSize( const TSize &vp_size )     override { _vp_size = vp_size; } //!< sete the size of the viewport
   virtual void Projection( const Render::TMat44 &proj ) override { _projection = proj; } //!< set the projection matrix
   virtual void View( const Render::TMat44 &view )       override { _view = view; }       //!< set the view matrix
   virtual void Model( const Render::TMat44 &model )     override { _model = model; }     //!< set the model matrix
@@ -82,16 +89,25 @@ public:
 
 private:
 
-  bool                                   _initialized  = false;
-  bool                                   _drawing      = false;
-  const size_t                           _max_buffers  = 8;
-  size_t                                 _nextBufferI  = 0;
-  std::array<const void*, 8>             _buffer_keys  { nullptr };
-  std::array<Render::IDrawBuffer*, 8>    _draw_buffers { nullptr };
-  Render::TMat44                         _projection   = OpenGL::Identity();
-  Render::TMat44                         _view         = OpenGL::Identity();
-  Render::TMat44                         _model        = OpenGL::Identity();
-  std::unique_ptr<OpenGL::ShaderProgram> _draw_prog;
+  bool SpecifyRenderProcess( void );
+
+  bool                                _initialized  = false;
+  bool                                _drawing      = false;
+  const size_t                        _max_buffers  = 8;
+  size_t                              _nextBufferI  = 0;
+  std::array<const void*, 8>          _buffer_keys  { nullptr };
+  std::array<Render::IDrawBuffer*, 8> _draw_buffers { nullptr };
+  TSize                               _vp_size      { 0 };
+  Render::TMat44                      _projection   = OpenGL::Identity();
+  Render::TMat44                      _view         = OpenGL::Identity();
+  Render::TMat44                      _model        = OpenGL::Identity();
+  Render::TColor                      _bg_color     { 0.0f };
+  TProcessPtr                         _process;
+  TProgramPtr                         _draw_prog;
+
+  const size_t c_draw_buffer  = 0; //!< buffer for opque drawing
+  const size_t c_tranp_buffer = 1; //!< buffer for tranparent drawing
+  const size_t c_finish_pass  = 2; //!< final pass (put it all together)
 };
 
 } // OpenGL

@@ -14,6 +14,7 @@
 
 #include <IDrawType.h>
 #include <IBuffer.h>
+#include <IRenderPass.h>
 
 // stl
 
@@ -48,6 +49,7 @@ class IDraw
 public:
 
   using TBuffer = std::vector<t_fp>;
+  using TSize   = IRenderProcess::TSize;
 
   struct TStyle
   {
@@ -56,14 +58,16 @@ public:
 
   virtual ~IDraw() = default;
   
-  virtual bool Init( void ) = 0;                            //!< general initializations
-  virtual void Destroy( void ) = 0;                         //!< destroy all internal objects and clanup
-  virtual bool Begin( const TColor &background_color ) = 0; //!< start the rendering
-  virtual bool Finish( void ) = 0;                          //!< finish the rendering
-  virtual bool ClearDepth( void ) = 0;                      //!< interim clear of the depth buffer
-  virtual void Projection( const TMat44 &proj ) = 0;        //!< set the projection matrix
-  virtual void View( const TMat44 &view ) = 0;              //!< set the view matrix
-  virtual void Model( const TMat44 &model ) = 0;            //!< set the model matrix
+  virtual void Destroy( void ) = 0;                           //!< destroy all internal objects and clanup
+  virtual bool Init( void ) = 0;                              //!< general initializations
+  virtual bool Begin( void ) = 0;                             //!< start the rendering
+  virtual bool Finish( void ) = 0;                            //!< finish the rendering
+  virtual bool ClearDepth( void ) = 0;                        //!< interim clear of the depth buffer
+  virtual void BackgroundColor( const TColor &bg_color ) = 0; //!< sets the background color
+  virtual void ViewportSize( const TSize &vp_size ) = 0;      //!< sete the size of the viewport
+  virtual void Projection( const TMat44 &proj ) = 0;          //!< set the projection matrix
+  virtual void View( const TMat44 &view ) = 0;                //!< set the view matrix
+  virtual void Model( const TMat44 &model ) = 0;              //!< set the model matrix
 
   bool DrawConvexPolygon( size_t size, const TBuffer &corrds, const TColor &color )
   {

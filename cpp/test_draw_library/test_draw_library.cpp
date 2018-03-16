@@ -162,10 +162,9 @@ void CWindow_Glfw::MainLoop ( void )
 } 
 
 
-
-
 void CWindow_Glfw::InitScene( void )
 {
+    _draw->BackgroundColor( { 0.95f, 0.95f, 0.92f, 1.0f } );
     _draw->Init();
 }
 
@@ -181,10 +180,12 @@ void CWindow_Glfw::Render( double time_ms )
     float scale_x = aspect < 1.0f ? 1.0f : aspect;
     float scale_y = aspect < 1.0f ? 1.0f/aspect : 1.0f;
    
-    _draw->Begin( { 0.95f, 0.95f, 0.92f, 1.0f } );
+    _draw->ViewportSize( { (size_t)_vpSize[0], (size_t)_vpSize[1] } );
     _draw->Projection( OpenGL::Camera::Orthopraphic( scale_x, scale_y, { -1.0f, 1.0f } )  );
     _draw->View( OpenGL::Identity() );
     _draw->Model( OpenGL::Identity() );
+
+    _draw->Begin();
     
     _draw->DrawLines2D( { -scale_x, -scale_y }, { 0.0f, scale_y }, 0.08f, 0.0f, { 0.1f, 0.8f, 0.8f, 1.0f }, 1.0f );
     _draw->DrawGrid2D( { 0.0f, -scale_y }, { scale_x, scale_y }, { 0.05f, 0.05f }, 0.0f, { 0.1f, 0.8f, 0.8f, 1.0f }, 1.0f );
@@ -197,8 +198,6 @@ void CWindow_Glfw::Render( double time_ms )
     _draw->DrawConvexPolygon( 2, {  0.8f, -0.8f,  0.8f,  0.8f, 0.0f, 0.0f }, { 1.0f, 1.0f, 0.0f, 0.5f } );
 
     _draw->DrawRectangle2D( {-0.8f, -0.8f}, {0.8f, 0.8f}, 0.0f, { 1.0f, 0.0f, 1.0f, 1.0f }, 5 );
-
-    glDisable( GL_BLEND );
 
     _draw->Finish();
 }

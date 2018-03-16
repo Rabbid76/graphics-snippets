@@ -403,6 +403,13 @@ public:
     return Prepare( passID, props );
   }
 
+  bool PrepareClear( size_t passID )
+  {
+    static const TPrepareProperties props = TPrepareProperties().
+      set( (int)TPrepareProperty::bind ).set( (int)TPrepareProperty::targets ).set( (int)TPrepareProperty::clear );
+    return Prepare( passID, props );
+  }
+
 };              
 
 
