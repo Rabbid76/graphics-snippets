@@ -90,6 +90,7 @@ public:
 private:
 
   bool SpecifyRenderProcess( void );
+  void DrawScereenspace( void );
 
   bool                                _initialized  = false;
   bool                                _drawing      = false;
@@ -104,6 +105,7 @@ private:
   Render::TColor                      _bg_color     { 0.0f };
   TProcessPtr                         _process;
   TProgramPtr                         _draw_prog;
+  TProgramPtr                         _finish_prog;
 
   const size_t c_draw_buffer  = 0; //!< buffer for opque drawing
   const size_t c_tranp_buffer = 1; //!< buffer for tranparent drawing

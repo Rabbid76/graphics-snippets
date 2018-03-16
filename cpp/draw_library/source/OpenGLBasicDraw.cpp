@@ -43,7 +43,7 @@ namespace OpenGL
 
 
 std::string draw_sh_vert = R"(
-#version 400
+#version 460
 
 layout (location = 0) in vec4 in_pos;
 layout (location = 1) in vec4 in_col;
@@ -69,7 +69,7 @@ void main()
 )";
 
 std::string draw_sh_frag = R"(
-#version 400
+#version 460
 
 in TVertexData
 {
@@ -82,6 +82,46 @@ out vec4 fragColor;
 void main()
 {
     fragColor = in_data.col;
+}
+)";
+
+std::string finish_sh_vert = R"(
+#version 460
+
+layout (location = 0) in vec2 in_pos;
+
+out TVertexData
+{
+    vec2 pos;
+} out_data;
+
+void main()
+{
+    out_data.pos = in_pos;
+    gl_Position  = vec4(in_pos, 0.0, 1.0);
+}
+)";
+
+std::string finish_sh_frag = R"(
+#version 460
+
+in TVertexData
+{
+    vec2 pos;
+} in_data;
+
+out vec4 fragColor;
+
+layout (binding = 1) uniform sampler2D u_sampler_color;
+layout (binding = 2) uniform sampler2D u_sampler_transp;
+layout (binding = 3) uniform sampler2D u_sampler_transp_attr;
+
+void main()
+{
+    vec2 tex_st = in_data.pos.xy * 0.5 + 0.5;    
+    vec4 col    = texture(u_sampler_color, tex_st);
+ 
+    fragColor = vec4(col.rgb, 1.0);
 }
 )";
 
@@ -197,6 +237,7 @@ void CBasicDraw::Destroy( void )
   _drawing     = false;
 
   _draw_prog.reset( nullptr );
+  _finish_prog.reset( nullptr );
 
   for ( auto & buffer : _draw_buffers )
   {
@@ -227,15 +268,29 @@ bool CBasicDraw::Init( void )
   SpecifyRenderProcess();
 
   // draw shader
+  try
+  {
+    _draw_prog.reset( new OpenGL::ShaderProgram(
+      {
+        { draw_sh_vert, GL_VERTEX_SHADER },
+        { draw_sh_frag, GL_FRAGMENT_SHADER }
+      } ) );
+  }
+  catch (...)
+  {}
 
-  _draw_prog.reset( new OpenGL::ShaderProgram(
-    {
-      { draw_sh_vert, GL_VERTEX_SHADER },
-      { draw_sh_frag, GL_FRAGMENT_SHADER }
-    } ) );
+  // finish shader
+  try
+  {
+    _finish_prog.reset( new OpenGL::ShaderProgram(
+      {
+        { finish_sh_vert, GL_VERTEX_SHADER },
+        { finish_sh_frag, GL_FRAGMENT_SHADER }
+      } ) );
+  }
+  catch (...)
+  {}
 
-  // TODO $$$ render process
-  // TODO $$$ shaders
   // TODO $$$ uniform block model, view, projection
 
   _initialized = true;
@@ -315,6 +370,27 @@ bool CBasicDraw::SpecifyRenderProcess( void )
 
 
 /******************************************************************//**
+* \brief   Draw full screen sapce.
+* 
+* \author  gernot
+* \date    2018-03-16
+* \version 1.0
+**********************************************************************/
+void CBasicDraw::DrawScereenspace( void )
+{
+  const std::vector<char>  bufferdescr = Render::IDrawBuffer::VADescription( Render::TVA::b0_xy );
+  const std::vector<float> coords{ -1.0f, -1.0f, 1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 1.0f };
+
+  Render::IDrawBuffer &buffer = DrawBuffer();
+  buffer.SpecifyVA( bufferdescr.size(), bufferdescr.data() );
+  buffer.UpdateVB( 0, sizeof(float), coords.size(), coords.data() );
+
+  buffer.DrawArray( Render::TPrimitive::trianglestrip, 0, 4, true );
+  buffer.Release();
+}
+
+
+/******************************************************************//**
 * \brief   Start the rendering.
 *
 * Specify the render buffers
@@ -377,6 +453,9 @@ bool CBasicDraw::Finish( void )
   //_process->Prepare( c_finish_pass );
 
   // TODO $$$
+  //DrawScereenspace();
+  // TODO $$$
+  glUseProgram( 0 );
 
   _drawing = false;
   return true;
@@ -493,6 +572,9 @@ bool CBasicDraw::Draw(
     glDisable( GL_POLYGON_OFFSET_FILL );
     glLineWidth( 1.0f );
   }
+
+  // release shader
+  glUseProgram( 0 );
 
   return true;
 }
