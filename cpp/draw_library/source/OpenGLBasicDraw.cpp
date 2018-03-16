@@ -38,11 +38,11 @@ namespace OpenGL
 
 
 //---------------------------------------------------------------------
-// Shader
+// qpaque shader
 //---------------------------------------------------------------------
 
 
-std::string draw_sh_vert = R"(
+std::string opaque_sh_vert = R"(
 #version 460
 
 layout (location = 0) in vec4 in_pos;
@@ -68,7 +68,7 @@ void main()
 }
 )";
 
-std::string draw_sh_frag = R"(
+std::string opaque_sh_frag = R"(
 #version 460
 
 in TVertexData
@@ -77,13 +77,71 @@ in TVertexData
     vec4 col;
 } in_data;
 
-out vec4 fragColor;
+out vec4 frag_color;
 
 void main()
 {
-    fragColor = in_data.col;
+    frag_color = in_data.col;
 }
 )";
+
+
+//---------------------------------------------------------------------
+// transparent shader
+//---------------------------------------------------------------------
+
+
+std::string transp_sh_vert = R"(
+#version 460
+
+layout (location = 0) in vec4 in_pos;
+layout (location = 1) in vec4 in_col;
+
+out TVertexData
+{
+    vec3 pos;
+    vec4 col;
+} out_data;
+
+
+uniform mat4 u_proj;
+uniform mat4 u_view;
+uniform mat4 u_model;
+
+void main()
+{
+    vec4 view_pos = u_view * u_model * in_pos; 
+    out_data.col  = in_col;
+    out_data.pos  = view_pos.xyz / view_pos.w;
+    gl_Position   = u_proj * view_pos;
+}
+)";
+
+std::string transp_sh_frag = R"(
+#version 460
+
+in TVertexData
+{
+    vec3 pos;
+    vec4 col;
+} in_data;
+
+layout (location = 0) out vec4 transp_color;
+layout (location = 1) out vec4 transp_attrib;
+
+void main()
+{                      
+    float weight  = in_data.col.a * (1.0 - gl_FragCoord.z);
+    transp_color  = vec4(in_data.col.rgb*weight, weight);
+    transp_attrib = vec4(1.0, 0.0, 0.0, in_data.col.a);
+}
+)";
+
+
+//---------------------------------------------------------------------
+// finish shader
+//---------------------------------------------------------------------
+
 
 std::string finish_sh_vert = R"(
 #version 460
@@ -110,7 +168,7 @@ in TVertexData
     vec2 pos;
 } in_data;
 
-out vec4 fragColor;
+out vec4 frag_color;
 
 layout (binding = 1) uniform sampler2D u_sampler_color;
 layout (binding = 2) uniform sampler2D u_sampler_transp;
@@ -120,8 +178,20 @@ void main()
 {
     vec2 tex_st = in_data.pos.xy * 0.5 + 0.5;    
     vec4 col    = texture(u_sampler_color, tex_st);
- 
-    fragColor = vec4(col.rgb, 1.0);
+    vec4 transp = texture(u_sampler_transp, tex_st);
+    vec4 t_attr = texture(u_sampler_transp_attr, tex_st);
+
+    vec4 col_transp = vec4(0.0);
+    if ( t_attr.x > 0.0 && t_attr.a > 0.0 )
+    {
+        vec3 colApprox      = transp.rgb / transp.a;
+        float averageTransp = t_attr.w / t_attr.x;
+        float alpha         = 1.0 - pow(1.0 - averageTransp, t_attr.x);
+        col_transp          = vec4(colApprox, alpha); 
+    }
+    
+    vec3 mix_col = mix(col.rgb, col_transp.rgb, col_transp.a);   
+    frag_color   = vec4(mix_col.rgb, 1.0);
 }
 )";
 
@@ -236,7 +306,8 @@ void CBasicDraw::Destroy( void )
   _initialized = false;
   _drawing     = false;
 
-  _draw_prog.reset( nullptr );
+  _opaque_prog.reset( nullptr );
+  _transp_prog.reset( nullptr );
   _finish_prog.reset( nullptr );
 
   for ( auto & buffer : _draw_buffers )
@@ -270,10 +341,22 @@ bool CBasicDraw::Init( void )
   // draw shader
   try
   {
-    _draw_prog.reset( new OpenGL::ShaderProgram(
+    _opaque_prog.reset( new OpenGL::ShaderProgram(
       {
-        { draw_sh_vert, GL_VERTEX_SHADER },
-        { draw_sh_frag, GL_FRAGMENT_SHADER }
+        { opaque_sh_vert, GL_VERTEX_SHADER },
+        { opaque_sh_frag, GL_FRAGMENT_SHADER }
+      } ) );
+  }
+  catch (...)
+  {}
+
+   // transparent shader
+  try
+  {
+    _transp_prog.reset( new OpenGL::ShaderProgram(
+      {
+        { transp_sh_vert, GL_VERTEX_SHADER },
+        { transp_sh_frag, GL_FRAGMENT_SHADER }
       } ) );
   }
   catch (...)
@@ -345,15 +428,15 @@ bool CBasicDraw::SpecifyRenderProcess( void )
 
   Render::IRenderProcess::TPassMap passes;
 
-  Render::TPass draw_pass( Render::TPassDepthTest::LESS, Render::TPassBlending::OFF );
-  draw_pass._targets.emplace_back( c_depth_ID, Render::TPass::TTarget::depth ); // depth target
-  draw_pass._targets.emplace_back( c_color_ID, 0, true, _bg_color );            // color target
-  passes.emplace( c_draw_buffer, draw_pass );
+  Render::TPass opaque_pass( Render::TPassDepthTest::LESS, Render::TPassBlending::OFF );
+  opaque_pass._targets.emplace_back( c_depth_ID, Render::TPass::TTarget::depth ); // depth target
+  opaque_pass._targets.emplace_back( c_color_ID, 0, true, _bg_color );            // color target
+  passes.emplace( c_opque_buffer, opaque_pass );
 
-  Render::TPass transp_pass( Render::TPassDepthTest::LESS, Render::TPassBlending::ADD );
+  Render::TPass transp_pass( Render::TPassDepthTest::LESS_READONLY, Render::TPassBlending::ADD );
   transp_pass._targets.emplace_back( c_depth_ID, Render::TPass::TTarget::depth ); // depth target
   transp_pass._targets.emplace_back( c_transp_ID, 0 );                            // tranparency target
-  transp_pass._targets.emplace_back( c_transp_ID, 1 );                            // tranparency attribute target (adaptive tranparency)
+  transp_pass._targets.emplace_back( c_transp_attr_ID, 1 );                       // tranparency attribute target (adaptive tranparency)
   passes.emplace( c_tranp_buffer, transp_pass );
 
   Render::TPass finish_pass( Render::TPassDepthTest::OFF, Render::TPassBlending::OFF );
@@ -409,7 +492,7 @@ bool CBasicDraw::Begin( void )
 
   // specify render process
   SpecifyRenderProcess();
-  _process->PrepareClear( c_draw_buffer );
+  _process->PrepareClear( c_opque_buffer );
   _process->PrepareClear( c_tranp_buffer );
   _process->Release();
   
@@ -417,16 +500,6 @@ bool CBasicDraw::Begin( void )
   _projection = OpenGL::Identity();
   _view       = OpenGL::Identity();
   _model      = OpenGL::Identity();
-
-  // TODO $$$
-
-  glClearDepth( 1.0f );
-  glClearColor( _bg_color[0], _bg_color[1], _bg_color[2], _bg_color[3] );  
-  glClear( GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT );
-
-  glEnable( GL_DEPTH_TEST );
-  glEnable( GL_BLEND );
-  glBlendFunci( 0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
   _drawing = true;
   return true;
@@ -450,11 +523,9 @@ bool CBasicDraw::Finish( void )
     return false;
   }
 
-  //_process->Prepare( c_finish_pass );
-
-  // TODO $$$
-  //DrawScereenspace();
-  // TODO $$$
+  _process->Prepare( c_finish_pass );
+  _finish_prog->Use();
+  DrawScereenspace();
   glUseProgram( 0 );
 
   _drawing = false;
@@ -477,9 +548,9 @@ bool CBasicDraw::ClearDepth( void )
     return false;
   }
 
-  // TODO $$$
-  glClearDepth( 1.0f );
+  _process->PrepareNoClear( c_opque_buffer );
   glClear( GL_DEPTH_BUFFER_BIT );
+  _process->Release();
 
   return true;
 }
@@ -552,15 +623,23 @@ bool CBasicDraw::Draw(
     glLineWidth( style._thickness );
   }
 
-  // set sahder
-  _draw_prog->Use();
+  // evaluate pass and shader
+  bool    is_trasnsp  = color[3] < (254.5f/255.0f);
+  size_t  pass_buffer = is_trasnsp ? c_tranp_buffer : c_opque_buffer;
+  auto   *prog_ptr    = is_trasnsp ? _transp_prog.get() : _opaque_prog.get(); 
+
+  // activate pass
+  _process->PrepareNoClear( pass_buffer );
+
+  // activate shader
+  prog_ptr->Use();
 
   // setup uniforms
   // TODO $$$ automatic type selector, uniform type introspection 
   // { { "u_proj", _projection },{ "u_view", _view }, { "u_model", _model } } ;
-  _draw_prog->SetUniformM44( "u_proj",  _projection );
-  _draw_prog->SetUniformM44( "u_view",  _view );
-  _draw_prog->SetUniformM44( "u_model", _model );
+  prog_ptr->SetUniformM44( "u_proj",  _projection );
+  prog_ptr->SetUniformM44( "u_view",  _view );
+  prog_ptr->SetUniformM44( "u_model", _model );
 
   // draw_buffer
   buffer.DrawArray( primitive_type, 0, no_of_vertices, true );
@@ -575,6 +654,7 @@ bool CBasicDraw::Draw(
 
   // release shader
   glUseProgram( 0 );
+  _process->Release();
 
   return true;
 }

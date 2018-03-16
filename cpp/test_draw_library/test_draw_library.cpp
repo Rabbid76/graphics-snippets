@@ -192,12 +192,12 @@ void CWindow_Glfw::Render( double time_ms )
 
     _draw->ClearDepth();
 
+    _draw->DrawRectangle2D( {-0.8f, -0.8f}, {0.8f, 0.8f}, 0.0f, { 1.0f, 0.0f, 1.0f, 1.0f }, 5 );
+
     _draw->DrawConvexPolygon( 2, { -0.8f, -0.8f,  0.8f, -0.8f, 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f, 0.5f } );
     _draw->DrawConvexPolygon( 2, { -0.8f,  0.8f,  0.8f,  0.8f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f, 0.5f } );
     _draw->DrawConvexPolygon( 2, { -0.8f, -0.8f, -0.8f,  0.8f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f, 0.5f } );
     _draw->DrawConvexPolygon( 2, {  0.8f, -0.8f,  0.8f,  0.8f, 0.0f, 0.0f }, { 1.0f, 1.0f, 0.0f, 0.5f } );
-
-    _draw->DrawRectangle2D( {-0.8f, -0.8f}, {0.8f, 0.8f}, 0.0f, { 1.0f, 0.0f, 1.0f, 1.0f }, 5 );
 
     _draw->Finish();
 }
