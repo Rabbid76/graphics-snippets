@@ -55,7 +55,15 @@ public:
   };
 
   virtual ~IDraw() = default;
-  virtual void Destroy( void ) = 0;
+  
+  virtual bool Init( void ) = 0;                            //!< general initializations
+  virtual void Destroy( void ) = 0;                         //!< destroy all internal objects and clanup
+  virtual bool Begin( const TColor &background_color ) = 0; //!< start the rendering
+  virtual bool Finish( void ) = 0;                          //!< finish the rendering
+  virtual bool ClearDepth( void ) = 0;                      //!< interim clear of the depth buffer
+  virtual void Projection( const TMat44 &proj ) = 0;        //!< set the projection matrix
+  virtual void View( const TMat44 &view ) = 0;              //!< set the view matrix
+  virtual void Model( const TMat44 &model ) = 0;            //!< set the model matrix
 
   bool DrawConvexPolygon( size_t size, const TBuffer &corrds, const TColor &color )
   {
@@ -85,6 +93,30 @@ public:
     style._thickness = thickness;
     TBuffer line_loop{ min[0], min[1], z, max[0], min[1], z, max[0], max[1], z, min[0], max[1], z };
     return Draw( TPrimitive::lineloop, 3, line_loop.size(), line_loop.data(), color, style );
+  }
+
+  bool DrawLines2D( const TPoint2 &min, const TPoint2 &max, float dist, float z, const TColor &color, float thickness )
+  {
+    TStyle style;
+    style._thickness = thickness;
+    
+    TBuffer lines;
+    lines.reserve( 6 * (1 + (int)((max[1]-min[1])/dist) ) );
+    float center = (min[1] + max[1]) / 2.0f;
+    float lne_2  = fabs(max[1] - min[1]) / 2.0f;
+    
+    // horizontal and vertical line in the middle
+    float line[] = { min[0], center, z, max[0], center, z };
+    lines.insert( lines.begin(), line, line + 12 );
+
+    // horizontal lines
+    for ( float y = dist; y <= lne_2; y += dist )
+    {
+      float line[] = { min[0], center+y, z, max[0], center+y, z, min[0], center-y, z, max[0], center-y, z };
+      lines.insert( lines.begin(), line, line + 12 );
+    }
+
+    return Draw( TPrimitive::lines, 3, lines.size(), lines.data(), color, style );
   }
 
   bool DrawGrid2D( const TPoint2 &min, const TPoint2 &max, const TVec2 &dist, float z, const TColor &color, float thickness )

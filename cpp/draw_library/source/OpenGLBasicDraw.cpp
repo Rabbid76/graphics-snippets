@@ -35,6 +35,56 @@
 namespace OpenGL
 {
 
+
+//---------------------------------------------------------------------
+// Shader
+//---------------------------------------------------------------------
+
+
+std::string draw_sh_vert = R"(
+#version 400
+
+layout (location = 0) in vec4 in_pos;
+layout (location = 1) in vec4 in_col;
+
+out TVertexData
+{
+    vec3 pos;
+    vec4 col;
+} out_data;
+
+
+uniform mat4 u_proj;
+uniform mat4 u_view;
+uniform mat4 u_model;
+
+void main()
+{
+    vec4 view_pos = u_view * u_model * in_pos; 
+    out_data.col  = in_col;
+    out_data.pos  = view_pos.xyz / view_pos.w;
+    gl_Position   = u_proj * view_pos;
+}
+)";
+
+std::string draw_sh_frag = R"(
+#version 400
+
+in TVertexData
+{
+    vec3 pos;
+    vec4 col;
+} in_data;
+
+out vec4 fragColor;
+
+void main()
+{
+    fragColor = in_data.col;
+}
+)";
+
+
 //---------------------------------------------------------------------
 // CBasicDraw
 //---------------------------------------------------------------------
@@ -61,26 +111,6 @@ CBasicDraw::CBasicDraw( void )
 CBasicDraw::~CBasicDraw()
 {
   Destroy();
-}
-
-
-/******************************************************************//**
-* @brief   destroy internal GPU objects
-*
-* @author  gernot
-* @date    2018-02-06
-* @version 1.0
-**********************************************************************/
-void CBasicDraw::Destroy( void )
-{
-  for ( auto & buffer : _draw_buffers )
-  {
-    delete buffer;
-    buffer = nullptr;
-  }
-  for ( auto & key : _buffer_keys )
-    key = nullptr;
-  _nextBufferI = 0;
 }
 
 
@@ -154,6 +184,145 @@ Render::IDrawBuffer * CBasicDraw::NewDrawBuffer(
 
 
 /******************************************************************//**
+* \brief   General initializations.
+*
+* Specify the render buffers
+* 
+* \author  gernot
+* \date    2018-03-16
+* \version 1.0
+**********************************************************************/
+bool CBasicDraw::Init( void )
+{
+  if ( _initialized )
+    return true;
+
+  _draw_prog.reset( new OpenGL::ShaderProgram(
+    {
+      { draw_sh_vert, GL_VERTEX_SHADER },
+      { draw_sh_frag, GL_FRAGMENT_SHADER }
+    } ) );
+
+  // TODO $$$ render process
+  // TODO $$$ shaders
+  // TODO $$$ uniform block model, view, projection
+
+  _initialized = true;
+  return true;
+}
+
+
+/******************************************************************//**
+* @brief   destroy internal GPU objects
+*
+* @author  gernot
+* @date    2018-02-06
+* @version 1.0
+**********************************************************************/
+void CBasicDraw::Destroy( void )
+{
+  _initialized = false;
+  _drawing     = false;
+
+  _draw_prog.reset( nullptr );
+
+  for ( auto & buffer : _draw_buffers )
+  {
+    delete buffer;
+    buffer = nullptr;
+  }
+  for ( auto & key : _buffer_keys )
+    key = nullptr;
+  _nextBufferI = 0;
+}
+
+
+/******************************************************************//**
+* \brief   Start the rendering.
+*
+* Specify the render buffers
+* 
+* \author  gernot
+* \date    2018-03-16
+* \version 1.0
+**********************************************************************/
+bool CBasicDraw::Begin( 
+  const Render::TColor &background_color ) //!< in clear color for the background
+{
+  if ( _drawing || Init() == false )
+  {
+    assert( false );
+    return false;
+  }
+
+  // Init matrices
+  _projection = OpenGL::Identity();
+  _view       = OpenGL::Identity();
+  _model      = OpenGL::Identity();
+
+  // TODO $$$
+
+  glClearDepth( 1.0f );
+  glClearColor( background_color[0], background_color[1], background_color[2], background_color[3] );  
+  glClear( GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT );
+
+  glEnable( GL_DEPTH_TEST );
+  glEnable( GL_BLEND );
+  glBlendFunci( 0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+
+  _drawing = true;
+  return true;
+}
+
+
+/******************************************************************//**
+* \brief   Finish the rendering.
+*
+* Finally write to the default frame buffer.
+* 
+* \author  gernot
+* \date    2018-03-16
+* \version 1.0
+**********************************************************************/
+bool CBasicDraw::Finish( void )
+{
+  if ( _drawing == false )
+  {
+    assert( false );
+    return false;
+  }
+
+  // TODO $$$
+
+  _drawing = false;
+  return true;
+}
+
+
+/******************************************************************//**
+* \brief   Interim clear of the depth buffer.
+* 
+* \author  gernot
+* \date    2018-03-16
+* \version 1.0
+**********************************************************************/
+bool CBasicDraw::ClearDepth( void )
+{
+  if ( _drawing == false )
+  {
+    assert( false );
+    return false;
+  }
+
+  // TODO $$$
+  glClearDepth( 1.0f );
+  glClear( GL_DEPTH_BUFFER_BIT );
+
+  return true;
+}
+
+
+/******************************************************************//**
 * \brief   Draw an array od primitives with a single color
 * 
 * \author  gernot
@@ -168,6 +337,12 @@ bool CBasicDraw::Draw(
   const Render::TColor &color,          //!< in: color for drawing
   const TStyle         &style )         //!< in: additional style parameters 
 {
+  if ( _drawing == false )
+  {
+    assert( false );
+    return false;
+  }
+
   if ( size != 2 && size !=3 && size !=4 )
   {
     assert( false );
@@ -213,6 +388,16 @@ bool CBasicDraw::Draw(
     glPolygonOffset( 1.0, 1.0 );
     glLineWidth( style._thickness );
   }
+
+  // set sahder
+  _draw_prog->Use();
+
+  // setup uniforms
+  // TODO $$$ automatic type selector, uniform type introspection 
+  // { { "u_proj", _projection },{ "u_view", _view }, { "u_model", _model } } ;
+  _draw_prog->SetUniformM44( "u_proj",  _projection );
+  _draw_prog->SetUniformM44( "u_view",  _view );
+  _draw_prog->SetUniformM44( "u_model", _model );
 
   // draw_buffer
   buffer.DrawArray( primitive_type, 0, no_of_vertices, true );

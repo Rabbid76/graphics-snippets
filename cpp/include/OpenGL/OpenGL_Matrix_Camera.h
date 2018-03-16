@@ -20,8 +20,8 @@ namespace OpenGL
 {
 
 
-float ToRad( float deg ) { return deg * (float)M_PI / 180.0f; }
-float ToDeg( float rad ) { return rad * 180.0f / (float)M_PI; }
+inline float ToRad( float deg ) { return deg * (float)M_PI / 180.0f; }
+inline float ToDeg( float rad ) { return rad * 180.0f / (float)M_PI; }
 
 using TShaderInfo = std::tuple< std::string, int >;
 using TVec2       = std::array< float, 2 >;
@@ -43,7 +43,7 @@ void Normalize( T_VEC & v )
   v[0] /= len; v[1] /= len; v[2] /= len;
 }
 
-TMat44 Identity( void )
+inline constexpr TMat44 Identity( void )
 {
   return TMat44( { TVec4{ 1.0f, 0.0f, 0.0f, 0.0f },
                    TVec4{ 0.0f, 1.0f, 0.0f, 0.0f },
@@ -51,7 +51,7 @@ TMat44 Identity( void )
                    TVec4{ 0.0f, 0.0f, 0.0f, 1.0f } } );
 }
 
-TMat44 Multiply( const TMat44 & matA, const TMat44 & matB )
+inline TMat44 Multiply( const TMat44 & matA, const TMat44 & matB )
 {
   TMat44 matC;
   for ( int i0 = 0; i0 < 4; ++ i0 )
@@ -60,7 +60,7 @@ TMat44 Multiply( const TMat44 & matA, const TMat44 & matB )
   return matC;
 }
 
-glm::mat4 ToGLM( const TMat44 &m )
+inline glm::mat4 ToGLM( const TMat44 &m )
 {
   return glm::mat4(
     m[0][0], m[0][1], m[0][2], m[0][3],
@@ -91,14 +91,14 @@ struct Camera
   static TMat44 Orthopraphic( float l, float r, float b, float t, float n, float f );
 };
 
-TMat44 Camera::Perspective( void )
+inline TMat44 Camera::Perspective( void )
 {
   float fn = _far + _near, f_n = _far - _near;
   float r = (float)_vp[0] / _vp[1], t = 1.0f / std::tan( ToRad( _fov_y ) / 2.0f );
   return TMat44{ TVec4{ t / r, 0.0f, 0.0f, 0.0f }, TVec4{ 0.0f, t, 0.0f, 0.0f }, TVec4{ 0.0f, 0.0f, -fn / f_n, -1.0 }, TVec4{ 0.0f, 0.0f, -2.0f*_far*_near / f_n, 0.0f } };
 }
 
-TMat44 Camera::LookAt( void )
+inline TMat44 Camera::LookAt( void )
 { 
   TVec3 mz = { _pos[0] - _target[0], _pos[1] - _target[1], _pos[2] - _target[2] };
   Normalize( mz );
@@ -117,35 +117,35 @@ TMat44 Camera::LookAt( void )
   return v;
 }
 
-TMat44 Camera::Orthopraphic2D( void )
+inline TMat44 Camera::Orthopraphic2D( void )
 {
   return Camera::Orthopraphic( 0, 0, (float)_vp[0], (float)_vp[1], -1.0f, 1.0f );
 }
 
-TMat44 Camera::Orthopraphic( float aspect, const std::array<float, 2> &depth_range )
+inline TMat44 Camera::Orthopraphic( float aspect, const std::array<float, 2> &depth_range )
 {
   if ( aspect < 1.0f )
     return Camera::Orthopraphic( 1.0f, 1.0f/aspect, depth_range );
   return Camera::Orthopraphic( aspect, 1.0f, depth_range );
 }
 
-TMat44 Camera::Orthopraphic( float scale_x, float scale_y, const std::array<float, 2> &depth_range )
+inline TMat44 Camera::Orthopraphic( float scale_x, float scale_y, const std::array<float, 2> &depth_range )
 {
   return Camera::Orthopraphic( -scale_x, scale_x, -scale_y, scale_y, depth_range[0], depth_range[1] );
 }
 
-TMat44 Camera::Orthopraphic( const std::array<float, 4> &view_rect, const std::array<float, 2> &depth_range )
+inline TMat44 Camera::Orthopraphic( const std::array<float, 4> &view_rect, const std::array<float, 2> &depth_range )
 {
   return Camera::Orthopraphic( view_rect[0], view_rect[2], view_rect[1], view_rect[3], depth_range[0], depth_range[1] );
 }
 
-TMat44 Camera::Orthopraphic( float l, float r, float b, float t, float n, float f )
+inline TMat44 Camera::Orthopraphic( float l, float r, float b, float t, float n, float f )
 {
   return TMat44{ 
-    TVec4{ 2.0f/(r-l),   0.0f,        0.0f,        0.0f },
-    TVec4{ 0.0f,         2.0f/(t-b),  0.0f,        0.0f },
-    TVec4{ 0.0f,         0.0f,        2.0f/(f-n),  0.0f },
-    TVec4{ -(r+l)/(r-l), (t+b)/(t-b), (f+n)/(f-n), 1.0f } };
+    TVec4{  2.0f/(r-l),   0.0f,         0.0f,        0.0f },
+    TVec4{  0.0f,         2.0f/(t-b),   0.0f,        0.0f },
+    TVec4{  0.0f,         0.0f,        -2.0f/(f-n),  0.0f },
+    TVec4{ -(r+l)/(r-l), -(t+b)/(t-b), -(f+n)/(f-n), 1.0f } };
 };
 
 
@@ -201,21 +201,21 @@ private:
 };
 
 
-float Fract( float val ) { return val - trunc(val); }
+inline float Fract( float val ) { return val - trunc(val); }
 
-float CalcAng( double currentTime, float intervall )
+inline float CalcAng( double currentTime, float intervall )
 { 
   return Fract( (float)( currentTime ) / intervall ) * 2.0f * (float)M_PI;
 }
 
-float CalcMove( double currentTime, float intervall, std::array< float, 2 > range )
+inline float CalcMove( double currentTime, float intervall, std::array< float, 2 > range )
 {
   float pos = Fract( (float)( currentTime ) / intervall ) * 2.0f;
   pos = pos < 1.0 ? pos : 2.0f - pos;
   return range[0] + (range[1] - range[0]) * pos;
 }
 
-TVec3 EllipticalPosition( float a, float b, float angRag )
+inline TVec3 EllipticalPosition( float a, float b, float angRag )
 {
   float a_b = a * a - b * b;
   float ea = a_b > 0.0f ? sqrt( a_b ) : 0.0f;

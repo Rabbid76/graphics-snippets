@@ -47,8 +47,7 @@ private:
     std::chrono::high_resolution_clock::time_point _start_time;
     std::chrono::high_resolution_clock::time_point _current_time;
 
-    std::unique_ptr<OpenGL::ShaderProgram> _prog;
-    std::unique_ptr<Render::IDraw>         _draw;
+    std::unique_ptr<Render::IDraw> _draw;
 
     void InitScene( void );
     void Render( double time_ms );
@@ -163,82 +162,34 @@ void CWindow_Glfw::MainLoop ( void )
 } 
 
 
-std::string sh_vert = R"(
-#version 400
 
-layout (location = 0) in vec4 in_pos;
-layout (location = 1) in vec4 in_col;
-
-out TVertexData
-{
-    vec3 pos;
-    vec4 col;
-} out_data;
-
-
-uniform mat4 u_proj;
-uniform mat4 u_view;
-uniform mat4 u_model;
-
-void main()
-{
-    vec4 view_pos = u_view * u_model * in_pos; 
-    out_data.col  = in_col;
-    out_data.pos  = view_pos.xyz / view_pos.w;
-    gl_Position   = u_proj * view_pos;
-}
-)";
-
-std::string sh_frag = R"(
-#version 400
-
-in TVertexData
-{
-    vec3 pos;
-    vec4 col;
-} in_data;
-
-out vec4 fragColor;
-
-void main()
-{
-    fragColor = in_data.col;
-}
-)";
 
 void CWindow_Glfw::InitScene( void )
 {
-    _prog.reset( new OpenGL::ShaderProgram(
-    {
-      { sh_vert, GL_VERTEX_SHADER },
-      { sh_frag, GL_FRAGMENT_SHADER }
-    } ) );
-
-    _prog->Use();
-
-    _prog->SetUniformM44( "u_proj", OpenGL::Identity() );
-    _prog->SetUniformM44( "u_view", OpenGL::Identity() );
-    _prog->SetUniformM44( "u_model", OpenGL::Identity() );
+    _draw->Init();
 }
 
 void CWindow_Glfw::Render( double time_ms )
 {
+    // TODO $$$ adaptie transparency
+    // TODO $$$ SSOA (3 frequences)
+    // TODO $$$ text + greek letters
+    // TODO $$$ post effects (cell (toon), sketch, gamma, hdr) - book of shaders
+    // TOOO $$$ meshs
+
     float aspect = (float)_vpSize[0] / (float)_vpSize[1];
     float scale_x = aspect < 1.0f ? 1.0f : aspect;
     float scale_y = aspect < 1.0f ? 1.0f/aspect : 1.0f;
    
-    _prog->SetUniformM44( "u_proj", OpenGL::Camera::Orthopraphic( scale_x, scale_y, { -1.0f, 1.0f } ) );
+    _draw->Begin( { 0.95f, 0.95f, 0.92f, 1.0f } );
+    _draw->Projection( OpenGL::Camera::Orthopraphic( scale_x, scale_y, { -1.0f, 1.0f } )  );
+    _draw->View( OpenGL::Identity() );
+    _draw->Model( OpenGL::Identity() );
+    
+    _draw->DrawLines2D( { -scale_x, -scale_y }, { 0.0f, scale_y }, 0.08f, 0.0f, { 0.1f, 0.8f, 0.8f, 1.0f }, 1.0f );
+    _draw->DrawGrid2D( { 0.0f, -scale_y }, { scale_x, scale_y }, { 0.05f, 0.05f }, 0.0f, { 0.1f, 0.8f, 0.8f, 1.0f }, 1.0f );
 
-    glClearColor(0.95f, 0.95f, 0.92f, 1.0f);  
-    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-      
-    glEnable( GL_BLEND );
-    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-
-    // TODO $$$ _draw->Begin() -> set shader blending and depth test
-    // TODO $$$ _draw->Projection( projection_mat4 ), _draw->View( view_mat4 ), _draw->Model( model_mat4 )
-
-    _draw->DrawGrid2D( { -scale_x, -scale_y }, { scale_x, scale_y }, { 0.05f, 0.05f }, 1.0f, { 0.1f, 0.8f, 0.8f, 1.0f }, 1.0f );
+    _draw->ClearDepth();
 
     _draw->DrawConvexPolygon( 2, { -0.8f, -0.8f,  0.8f, -0.8f, 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f, 0.5f } );
     _draw->DrawConvexPolygon( 2, { -0.8f,  0.8f,  0.8f,  0.8f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f, 0.5f } );
@@ -249,5 +200,5 @@ void CWindow_Glfw::Render( double time_ms )
 
     glDisable( GL_BLEND );
 
-    // TODO $$$ _draw->Finish() -> finish pass
+    _draw->Finish();
 }

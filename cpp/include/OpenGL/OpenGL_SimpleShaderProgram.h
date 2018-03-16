@@ -152,6 +152,10 @@ public:
         std::cout << "shader program error: " << err << std::endl;
     }
 
+    // clean up
+    for ( auto shObj : shaderObjs )
+      glDeleteShader( shObj );
+
     // program introspection
     GetResources();
 
