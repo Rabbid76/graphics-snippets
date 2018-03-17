@@ -2,7 +2,7 @@
 * \brief   Implementation og generic interface for basic darwing.
 * 
 * \author  gernot
-* \date    2018-02-04
+* \date    2018-03-15
 * \version 1.0
 **********************************************************************/
 #pragma once
@@ -17,6 +17,7 @@
 #include <IDraw.h>
 #include <IBuffer.h>
 #include <IRenderPass.h>
+#include <IText.h>
 
 // OpenGL
 
@@ -46,7 +47,7 @@ namespace OpenGL
 * @brief   Implementation for basic drawing.
 *
 * @author  gernot
-* @date    2018-02-06
+* @date    2018-03-15
 * @version 1.0
 **********************************************************************/
 class CBasicDraw
@@ -68,6 +69,7 @@ public:
   using TProgramPtr = OpenGL::ShaderProgram*;
   using TProcess    = std::unique_ptr<Render::IRenderProcess>;
   using TProgram    = std::unique_ptr<OpenGL::ShaderProgram>;
+  using TText       = std::unique_ptr<Render::IText>; 
   
 
   CBasicDraw( void );
@@ -77,7 +79,7 @@ public:
   virtual Render::IDrawBuffer & DrawBuffer( void );
   virtual Render::IDrawBuffer & DrawBuffer( const void *key, bool &cached );
 
-  virtual void Destroy( void ) override;             //!< destroy all internal objects and clanup
+  virtual void Destroy( void ) override;             //!< destroy all internal objects and cleanup
   virtual bool Init( void ) override;                //!< general initializations
   virtual bool Begin( void ) override;               //!< start the rendering
   virtual bool ActivateBackground( void ) override;  //!< activate rendering to background
@@ -121,12 +123,51 @@ private:
   TProgram                            _opaque_prog;
   TProgram                            _transp_prog;
   TProgram                            _finish_prog;
+  TText                               _std_text;
 
   const size_t c_opaque_pass = 1; //!< pass for opque drawing
   const size_t c_tranp_pass  = 2; //!< pass for tranparent drawing
   const size_t c_back_pass   = 3; //!< pass for drawing to background
   const size_t c_finish_pass = 4; //!< final pass (put it all together)
 };
+
+
+//---------------------------------------------------------------------
+// CFreetypeTextureText
+//---------------------------------------------------------------------
+
+
+struct TFreetypeTFont;
+
+
+/******************************************************************//**
+* @brief   Textured text implementation with freetype library.
+*
+* @author  gernot
+* @date    2018-03-18
+* @version 1.0
+**********************************************************************/
+class CFreetypeTextureText
+  : public Render::IText
+{
+public:
+
+  using TFontPtr = std::unique_ptr<TFreetypeTFont>;
+
+  CFreetypeTextureText( const char *font_filename );
+  virtual ~CFreetypeTextureText();
+
+  virtual void Destroy( void ) override; //!< destroy all internal objects and cleanup
+  virtual bool Load( void ) override;    //!< load the glyphs
+
+private:
+
+  std::string _font_filename;
+  TFontPtr    _font;
+  bool        _valid = true;
+};
+
+
 
 } // OpenGL
 

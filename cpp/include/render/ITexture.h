@@ -42,6 +42,8 @@ class ITexture
 {
 public:
 
+  virtual ~ITexture() = default;
+
 };
 
 

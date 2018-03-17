@@ -58,7 +58,7 @@ public:
 
   virtual ~IDraw() = default;
   
-  virtual void Destroy( void ) = 0;                           //!< destroy all internal objects and clanup
+  virtual void Destroy( void ) = 0;                           //!< destroy all internal objects and cleanup
   virtual bool Init( void ) = 0;                              //!< general initializations
   virtual bool Begin( void ) = 0;                             //!< start the rendering
   virtual bool ActivateBackground( void ) = 0;                //!< activate rendering to background

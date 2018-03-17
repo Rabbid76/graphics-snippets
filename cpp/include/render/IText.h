@@ -40,7 +40,12 @@ namespace Render
 **********************************************************************/
 class IText
 {
-public:
+public: 
+
+  virtual ~IText() = default;
+
+  virtual void Destroy( void ) = 0; //!< destroy all internal objects and cleanup
+  virtual bool Load( void ) = 0;    //!< load the glyphs
 
 };
 

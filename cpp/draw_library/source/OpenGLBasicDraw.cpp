@@ -25,6 +25,7 @@
 // freetype
 
 #include <ft2build.h>
+#include FT_FREETYPE_H
 
 // stl
 
@@ -345,11 +346,11 @@ bool CBasicDraw::Init( void )
   // draw shader
   try
   {
-    _opaque_prog.reset( new OpenGL::ShaderProgram(
-      {
+    _opaque_prog = std::make_unique<OpenGL::ShaderProgram>(
+      std::vector< TShaderInfo >{
         { opaque_sh_vert, GL_VERTEX_SHADER },
         { opaque_sh_frag, GL_FRAGMENT_SHADER }
-      } ) );
+      } );
   }
   catch (...)
   {}
@@ -357,11 +358,11 @@ bool CBasicDraw::Init( void )
    // transparent shader
   try
   {
-    _transp_prog.reset( new OpenGL::ShaderProgram(
-      {
+    _transp_prog = std::make_unique<OpenGL::ShaderProgram>(
+      std::vector< TShaderInfo >{
         { transp_sh_vert, GL_VERTEX_SHADER },
         { transp_sh_frag, GL_FRAGMENT_SHADER }
-      } ) );
+      } );
   }
   catch (...)
   {}
@@ -379,6 +380,18 @@ bool CBasicDraw::Init( void )
   {}
 
   // TODO $$$ uniform block model, view, projection
+
+
+  // $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+  // TODO $$$
+  try
+  {
+    _std_text = std::make_unique<CFreetypeTextureText>( "../resource/font/FreeSans.ttf" );
+    _std_text->Load();
+  }
+  catch (...)
+  {} 
+  // $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
   _initialized = true;
   return true;
@@ -425,7 +438,7 @@ bool CBasicDraw::SpecifyRenderProcess( void )
   if ( _vp_size[0] == 0 || _vp_size[1] == 0 )
     return false;
   if ( _process == nullptr )
-    _process.reset( new OpenGL::CRenderProcess );
+    _process = std::make_unique<OpenGL::CRenderProcess>();
   if ( _process->IsValid() && _process->IsComplete() && _process->CurrentSize() == _vp_size )
     return true;
 
@@ -776,6 +789,128 @@ bool CBasicDraw::Draw(
   }
 
   return true;
+}
+
+
+//---------------------------------------------------------------------
+// CFreetypeTextureText
+//---------------------------------------------------------------------
+
+
+/******************************************************************//**
+* @brief   freetype font data 
+*
+* @author  gernot
+* @date    2018-03-18
+* @version 1.0
+**********************************************************************/
+struct TFreetypeTFont
+{
+  FT_Library _hdl;  //!< library handle
+  FT_Face    _face; //!< font face
+};
+
+
+/******************************************************************//**
+* @brief   ctor.
+*
+* @author  gernot
+* @date    2018-03-18
+* @version 1.0
+**********************************************************************/
+CFreetypeTextureText::CFreetypeTextureText( 
+  const char *font_filename ) //!< in: path of the font file 
+  : _font_filename( font_filename )
+{}
+
+
+/******************************************************************//**
+* @brief   dtor.
+*
+* @author  gernot
+* @date    2018-03-18
+* @version 1.0
+**********************************************************************/
+CFreetypeTextureText::~CFreetypeTextureText()
+{}
+
+
+/******************************************************************//**
+* @brief   Destroy all internal objects and cleanup.
+*
+* @author  gernot
+* @date    2018-03-18
+* @version 1.0
+**********************************************************************/
+void CFreetypeTextureText::Destroy( void )
+{
+  _font.reset( nullptr );
+  // ...
+}
+
+
+/******************************************************************//**
+* @brief   Load the glyphs.
+*
+* @author  gernot
+* @date    2018-03-18
+* @version 1.0
+**********************************************************************/
+bool CFreetypeTextureText::Load( void )
+{
+  if ( _font != nullptr )
+    return _valid;
+
+  _font = std::make_unique<TFreetypeTFont>();
+
+
+  // init freetype library
+  FT_Error err_code = FT_Init_FreeType( &_font->_hdl );
+  if ( err_code != 0 )
+  {          
+    std::cout << "error: failed to initilaize freetype library (error code: " << err_code << ")" << std::endl;
+    throw std::runtime_error( "init freetype library" );
+  }
+
+  // load the font from file
+  err_code = FT_New_Face( _font->_hdl, _font_filename.c_str(), 0, &_font->_face );
+  if ( err_code != 0 )
+  {          
+    std::cout << "error: failed to load font file " << _font_filename << " (error code: " << err_code << ")" << std::endl;
+    throw std::runtime_error( "load font file" );
+  }
+
+  FT_Face face = _font->_face;
+
+  // set font size
+  static FT_UInt pixel_width  = 0;
+  static FT_UInt pixel_height = 48;
+  err_code = FT_Set_Pixel_Sizes( face, pixel_width, pixel_height );
+  if ( err_code != 0 )
+  {          
+    std::cout << "error: failed to set font size (error code: " << err_code << ")" << std::endl;
+    throw std::runtime_error( "load font file" );
+  }
+
+  FT_GlyphSlot glyph = face->glyph;
+
+  std::vector<std::tuple<unsigned int, unsigned int>> glyphe_size;
+  glyphe_size.reserve( 256 - 32 );
+  for ( int i = 32; i < 256; ++ i )
+  {
+    FT_Error err_code_glyph = FT_Load_Char( face, i, FT_LOAD_RENDER );
+    if ( err_code_glyph != 0 )
+    {
+      glyphe_size.emplace_back( std::tuple<unsigned int, unsigned int>{ 0, 0 } );
+      continue;
+    }
+    glyphe_size.emplace_back( std::tuple<unsigned int, unsigned int>{ glyph->bitmap.width, glyph->bitmap.rows } );
+  }
+
+  // TODO $$$
+
+  _valid = true;
+  return _valid;
 }
 
 
