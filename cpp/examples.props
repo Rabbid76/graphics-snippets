@@ -8,6 +8,7 @@
     <FreeGlutDir>..\..\_cpp_extern\freeglut\freeglut-3.0.0\</FreeGlutDir>
     <GlfwDir>..\..\_cpp_extern\glfw-3.2.1.bin.WIN64\</GlfwDir>
     <VulkanDir>..\..\_cpp_extern\VulkanSDK\1.0.61.1\</VulkanDir>
+    <FreetypeDir>..\..\_cpp_extern\freetype-2.9\</FreetypeDir>
   </PropertyGroup>
   <PropertyGroup />
   <ItemDefinitionGroup />
@@ -32,6 +33,9 @@
     </BuildMacro>
     <BuildMacro Include="VulkanDir">
       <Value>$(VulkanDir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="FreetypeDir">
+      <Value>$(FreetypeDir)</Value>
     </BuildMacro>
   </ItemGroup>
 </Project>

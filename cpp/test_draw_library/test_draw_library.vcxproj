@@ -113,18 +113,23 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>GLEW_STATIC;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.\;$(SolutionDir)include\render;$(SolutionDir)include\OpenGL;$(SolutionDir)$(GlmDir);$(SolutionDir)glew\include;$(SolutionDir)$(GlfwDir)include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\;$(SolutionDir)include\render;$(SolutionDir)include\OpenGL;$(SolutionDir)$(GlmDir);$(SolutionDir)glew\include;$(SolutionDir)$(GlfwDir)include;$(SolutionDir)$(FreetypeDir)include</AdditionalIncludeDirectories>
       <CallingConvention>StdCall</CallingConvention>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <AdditionalLibraryDirectories>$(SolutionDir)$(GlfwDir)lib-vc2015;$(SolutionDir)bin\lib\glew_static_v17\$(PlatformName)\$(Configuration)\;$(SolutionDir)bin\lib\draw_library\$(PlatformName)\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Opengl32.lib;glfw3.lib;Glu32.lib;draw_library.lib;glew32sd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)$(GlfwDir)lib-vc2015;$(SolutionDir)bin\lib\glew_static_v17\$(PlatformName)\$(Configuration)\;$(SolutionDir)bin\lib\draw_library\$(PlatformName)\$(Configuration)\;$(SolutionDir)$(FreetypeDir)objs\$(PlatformName)\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Opengl32.lib;freetype.lib;glfw3.lib;Glu32.lib;draw_library.lib;glew32sd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>MSVCRT.lib</IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
-      <Command>copy $(SolutionDir)$(FreeGlutDir)bin\$(Platform)\freeglut.dll $(TargetDir)</Command>
+      <Command>copy $(SolutionDir)$(FreeGlutDir)bin\$(Platform)\freeglut.dll $(TargetDir)
+copy $(SolutionDir)$(FreetypeDir)objs\$(PlatformName)\$(Configuration)\freetype.dll $(TargetDir)</Command>
     </PostBuildEvent>
+    <CustomBuildStep>
+      <Command>
+      </Command>
+    </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -132,13 +137,17 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>GLEW_STATIC;WIN32;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.\;$(SolutionDir)include\render;$(SolutionDir)include\OpenGL;$(SolutionDir)$(GlmDir);$(SolutionDir)glew\include;$(SolutionDir)$(GlfwDir)include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\;$(SolutionDir)include\render;$(SolutionDir)include\OpenGL;$(SolutionDir)$(GlmDir);$(SolutionDir)glew\include;$(SolutionDir)$(GlfwDir)include;$(SolutionDir)$(FreetypeDir)include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <AdditionalLibraryDirectories>$(SolutionDir)..\$(FreeGlutDir)lib\;$(SolutionDir)bin\lib\glew_static_v15\$(PlatformName)\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Opengl32.lib;freeglut.lib;Glu32.lib;glew32sd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)$(GlfwDir)lib-vc2015;$(SolutionDir)bin\lib\glew_static_v17\$(PlatformName)\$(Configuration)\;$(SolutionDir)bin\lib\draw_library\$(PlatformName)\$(Configuration)\;$(SolutionDir)$(FreetypeDir)objs\$(PlatformName)\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Opengl32.lib;freetype.lib;freeglut.lib;Glu32.lib;glew32sd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <CustomBuildStep>
+      <Command>
+      </Command>
+    </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -148,15 +157,19 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>GLEW_STATIC;WIN32;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.\;$(SolutionDir)include\render;$(SolutionDir)include\OpenGL;$(SolutionDir)$(GlmDir);$(SolutionDir)glew\include;$(SolutionDir)$(GlfwDir)include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\;$(SolutionDir)include\render;$(SolutionDir)include\OpenGL;$(SolutionDir)$(GlmDir);$(SolutionDir)glew\include;$(SolutionDir)$(GlfwDir)include;$(SolutionDir)$(FreetypeDir)include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(SolutionDir)..\$(FreeGlutDir)lib\;$(SolutionDir)bin\lib\glew_static_v15\$(PlatformName)\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Opengl32.lib;freeglut.lib;Glu32.lib;glew32s.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)$(GlfwDir)lib-vc2015;$(SolutionDir)bin\lib\glew_static_v17\$(PlatformName)\$(Configuration)\;$(SolutionDir)bin\lib\draw_library\$(PlatformName)\$(Configuration)\;$(SolutionDir)$(FreetypeDir)objs\$(PlatformName)\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Opengl32.lib;freetype.lib;freeglut.lib;Glu32.lib;glew32s.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <CustomBuildStep>
+      <Command>
+      </Command>
+    </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -166,18 +179,23 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>GLEW_STATIC;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.\;$(SolutionDir)include\render;$(SolutionDir)include\OpenGL;$(SolutionDir)$(GlmDir);$(SolutionDir)glew\include;$(SolutionDir)$(GlfwDir)include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\;$(SolutionDir)include\render;$(SolutionDir)include\OpenGL;$(SolutionDir)$(GlmDir);$(SolutionDir)glew\include;$(SolutionDir)$(GlfwDir)include;$(SolutionDir)$(FreetypeDir)include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(SolutionDir)$(GlfwDir)lib-vc2015;$(SolutionDir)bin\lib\glew_static_v17\$(PlatformName)\$(Configuration)\;$(SolutionDir)bin\lib\draw_library\$(PlatformName)\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Opengl32.lib;glfw3.lib;Glu32.lib;draw_library.lib;glew32s.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)$(GlfwDir)lib-vc2015;$(SolutionDir)bin\lib\glew_static_v17\$(PlatformName)\$(Configuration)\;$(SolutionDir)bin\lib\draw_library\$(PlatformName)\$(Configuration)\;$(SolutionDir)$(FreetypeDir)objs\$(PlatformName)\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Opengl32.lib;freetype.lib;glfw3.lib;Glu32.lib;draw_library.lib;glew32s.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>copy $(SolutionDir)$(FreeGlutDir)bin\$(Platform)\freeglut.dll $(TargetDir)</Command>
+      <Command>copy $(SolutionDir)$(FreeGlutDir)bin\$(Platform)\freeglut.dll $(TargetDir)
+copy $(SolutionDir)$(FreetypeDir)objs\$(PlatformName)\$(Configuration)\freetype.dll $(TargetDir)</Command>
     </PostBuildEvent>
+    <CustomBuildStep>
+      <Command>
+      </Command>
+    </CustomBuildStep>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

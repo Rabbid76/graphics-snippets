@@ -66,6 +66,12 @@
     <ClInclude Include="..\include\OpenGL\OpenGLBasicDraw.h">
       <Filter>OpenGL</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\render\ITexture.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\render\IText.h">
+      <Filter>render</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

@@ -22,6 +22,10 @@
 //#include <GL/gl.h> not necessary because of glew 
 #include <GL/glu.h>
 
+// freetype
+
+#include <ft2build.h>
+
 // stl
 
 #include <cassert>
