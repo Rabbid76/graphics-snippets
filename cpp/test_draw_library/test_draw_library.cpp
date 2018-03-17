@@ -187,17 +187,21 @@ void CWindow_Glfw::Render( double time_ms )
 
     _draw->Begin();
     
+    _draw->ActivateBackground();
+
     _draw->DrawLines2D( { -scale_x, -scale_y }, { 0.0f, scale_y }, 0.08f, 0.0f, { 0.1f, 0.8f, 0.8f, 1.0f }, 1.0f );
     _draw->DrawGrid2D( { 0.0f, -scale_y }, { scale_x, scale_y }, { 0.05f, 0.05f }, 0.0f, { 0.1f, 0.8f, 0.8f, 1.0f }, 1.0f );
 
-    _draw->ClearDepth();
-
+    _draw->ActivateOpaque();
+    
     _draw->DrawRectangle2D( {-0.8f, -0.8f}, {0.8f, 0.8f}, 0.0f, { 1.0f, 0.0f, 1.0f, 1.0f }, 5 );
+
+    _draw->ActivateTransparent();
 
     _draw->DrawConvexPolygon( 2, { -0.8f, -0.8f,  0.8f, -0.8f, 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f, 0.5f } );
     _draw->DrawConvexPolygon( 2, { -0.8f,  0.8f,  0.8f,  0.8f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f, 0.5f } );
     _draw->DrawConvexPolygon( 2, { -0.8f, -0.8f, -0.8f,  0.8f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f, 0.5f } );
     _draw->DrawConvexPolygon( 2, {  0.8f, -0.8f,  0.8f,  0.8f, 0.0f, 0.0f }, { 1.0f, 1.0f, 0.0f, 0.5f } );
-
+    
     _draw->Finish();
 }

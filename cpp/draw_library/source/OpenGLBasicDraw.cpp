@@ -191,7 +191,7 @@ void main()
     }
     
     vec3 mix_col = mix(col.rgb, col_transp.rgb, col_transp.a);   
-    frag_color   = vec4(mix_col.rgb, 1.0);
+    frag_color   = vec4(mix_col.rgb, max(col.a, col_transp.a));
 }
 )";
 
@@ -382,20 +382,30 @@ bool CBasicDraw::Init( void )
 
 
 /******************************************************************//**
-* \brief   General initializations.
-*
-* Specify the render buffers
+* \brief   Causes update of the render process
 * 
 * \author  gernot
 * \date    2018-03-16
 * \version 1.0
 **********************************************************************/
-void CBasicDraw::BackgroundColor( 
-  const Render::TColor &bg_color ) //!< in: the background color
+void CBasicDraw::InvalidateProcess( void )
 {
-  _bg_color = bg_color;
   if ( _process != nullptr )
     _process->Invalidate();
+}
+
+
+/******************************************************************//**
+* \brief   Causes update of the uniforms
+* 
+* \author  gernot
+* \date    2018-03-16
+* \version 1.0
+**********************************************************************/
+void CBasicDraw::InvalidateUniforms( void )
+{
+  _unifroms_valid = false;
+  // TODO $$$ invalidate uniform block
 }
 
 
@@ -430,16 +440,19 @@ bool CBasicDraw::SpecifyRenderProcess( void )
 
   Render::TPass opaque_pass( Render::TPassDepthTest::LESS, Render::TPassBlending::OFF );
   opaque_pass._targets.emplace_back( c_depth_ID, Render::TPass::TTarget::depth ); // depth target
-  opaque_pass._targets.emplace_back( c_color_ID, 0, true, _bg_color );            // color target
-  passes.emplace( c_opque_buffer, opaque_pass );
+  opaque_pass._targets.emplace_back( c_color_ID, 0 );                             // color target
+  passes.emplace( c_opaque_pass, opaque_pass );
 
   Render::TPass transp_pass( Render::TPassDepthTest::LESS_READONLY, Render::TPassBlending::ADD );
-  transp_pass._targets.emplace_back( c_depth_ID, Render::TPass::TTarget::depth ); // depth target
-  transp_pass._targets.emplace_back( c_transp_ID, 0 );                            // tranparency target
-  transp_pass._targets.emplace_back( c_transp_attr_ID, 1 );                       // tranparency attribute target (adaptive tranparency)
-  passes.emplace( c_tranp_buffer, transp_pass );
+  transp_pass._targets.emplace_back( c_depth_ID, Render::TPass::TTarget::depth, false ); // depth target
+  transp_pass._targets.emplace_back( c_transp_ID, 0 );                                   // tranparency target
+  transp_pass._targets.emplace_back( c_transp_attr_ID, 1 );                              // tranparency attribute target (adaptive tranparency)
+  passes.emplace( c_tranp_pass, transp_pass );
 
-  Render::TPass finish_pass( Render::TPassDepthTest::OFF, Render::TPassBlending::OFF );
+  Render::TPass background_pass( Render::TPassDepthTest::OFF, Render::TPassBlending::OFF );
+  passes.emplace( c_back_pass, background_pass );
+
+  Render::TPass finish_pass( Render::TPassDepthTest::OFF, Render::TPassBlending::MIX );
   finish_pass._sources.emplace_back( c_color_ID,       1 ); // color buffer source
   finish_pass._sources.emplace_back( c_transp_ID,      2 ); // tranparency buffer source
   finish_pass._sources.emplace_back( c_transp_attr_ID, 3 ); // transparency attribute buffer source
@@ -449,6 +462,32 @@ bool CBasicDraw::SpecifyRenderProcess( void )
   _process->SpecifyPasses( passes );
 
   return _process->Create( _vp_size );
+}
+
+
+/******************************************************************//**
+* \brief   Set the uniforms and update the unform blocks.
+* 
+* \author  gernot
+* \date    2018-03-16
+* \version 1.0
+**********************************************************************/
+bool CBasicDraw::UpdateUniforms( void )
+{
+  if ( _current_prog == nullptr )
+    return false;
+  if (_unifroms_valid )
+    return true;
+
+  // setup uniforms
+  // TODO $$$ automatic type selector, uniform type introspection 
+  // { { "u_proj", _projection },{ "u_view", _view }, { "u_model", _model } } ;
+  _current_prog->SetUniformM44( "u_proj",  _projection );
+  _current_prog->SetUniformM44( "u_view",  _view );
+  _current_prog->SetUniformM44( "u_model", _model );
+
+  _unifroms_valid = true;
+  return true;
 }
 
 
@@ -492,16 +531,110 @@ bool CBasicDraw::Begin( void )
 
   // specify render process
   SpecifyRenderProcess();
-  _process->PrepareClear( c_opque_buffer );
-  _process->PrepareClear( c_tranp_buffer );
-  _process->Release();
-  
-  // Init matrices
-  _projection = OpenGL::Identity();
-  _view       = OpenGL::Identity();
-  _model      = OpenGL::Identity();
+  _process->PrepareClear( c_opaque_pass );
+  _process->PrepareClear( c_tranp_pass );
 
-  _drawing = true;
+  glClearColor( _bg_color[0], _bg_color[1], _bg_color[2], _bg_color[3] );
+  _process->Prepare( c_back_pass );
+  
+  _current_pass = 0;
+  _drawing      = true;
+  return true;
+}
+
+
+/******************************************************************//**
+* \brief   Prepares and activates render to background.
+* 
+* \author  gernot
+* \date    2018-03-16
+* \version 1.0
+**********************************************************************/
+bool CBasicDraw::ActivateBackground( void )
+{
+  if ( _drawing == false )
+  {
+    assert( false );
+    return false;
+  }
+
+  // activate pass
+  _current_pass = c_back_pass;
+  _process->PrepareNoClear( _current_pass );
+
+  // activate shader
+  _current_prog = _opaque_prog.get();
+  _current_prog->Use();
+  
+  // set uniforms
+  _unifroms_valid = false;
+  UpdateUniforms();
+  
+  return true;
+}
+
+
+/******************************************************************//**
+* \brief   Prepares and activates render to the opaque buffer.
+* 
+* \author  gernot
+* \date    2018-03-16
+* \version 1.0
+**********************************************************************/
+bool CBasicDraw::ActivateOpaque( void )
+{
+  if ( _drawing == false )
+  {
+    assert( false );
+    return false;
+  }
+
+  // activate pass
+  _current_pass = c_opaque_pass;
+  _process->PrepareNoClear( _current_pass );
+  //_process->Prepare( _current_pass );
+
+  // activate shader
+  _current_prog = _opaque_prog.get();
+  _current_prog->Use();
+  _unifroms_valid = false;
+
+  // set uniforms
+  _unifroms_valid = false;
+  UpdateUniforms();
+
+  return true;
+}
+
+
+/******************************************************************//**
+* \brief   Prepares and activates render  to the transparent buffer
+* 
+* \author  gernot
+* \date    2018-03-16
+* \version 1.0
+**********************************************************************/
+bool CBasicDraw::ActivateTransparent( void )
+{
+  if ( _drawing == false )
+  {
+    assert( false );
+    return false;
+  }
+
+  // activate pass
+  _current_pass = c_tranp_pass;
+  _process->PrepareNoClear( _current_pass );
+
+  // activate shader
+  _current_prog = _transp_prog.get();
+  _current_prog->Use();
+  _unifroms_valid = false;
+
+  // set uniforms
+  _unifroms_valid = false;
+  UpdateUniforms();
+
   return true;
 }
 
@@ -523,12 +656,13 @@ bool CBasicDraw::Finish( void )
     return false;
   }
 
-  _process->Prepare( c_finish_pass );
+  _process->PrepareNoClear( c_finish_pass );
   _finish_prog->Use();
   DrawScereenspace();
   glUseProgram( 0 );
 
-  _drawing = false;
+  _current_pass = 0;
+  _drawing      = false;
   return true;
 }
 
@@ -548,7 +682,7 @@ bool CBasicDraw::ClearDepth( void )
     return false;
   }
 
-  _process->PrepareNoClear( c_opque_buffer );
+  _process->PrepareNoClear( c_opaque_pass );
   glClear( GL_DEPTH_BUFFER_BIT );
   _process->Release();
 
@@ -623,23 +757,8 @@ bool CBasicDraw::Draw(
     glLineWidth( style._thickness );
   }
 
-  // evaluate pass and shader
-  bool    is_trasnsp  = color[3] < (254.5f/255.0f);
-  size_t  pass_buffer = is_trasnsp ? c_tranp_buffer : c_opque_buffer;
-  auto   *prog_ptr    = is_trasnsp ? _transp_prog.get() : _opaque_prog.get(); 
-
-  // activate pass
-  _process->PrepareNoClear( pass_buffer );
-
-  // activate shader
-  prog_ptr->Use();
-
-  // setup uniforms
-  // TODO $$$ automatic type selector, uniform type introspection 
-  // { { "u_proj", _projection },{ "u_view", _view }, { "u_model", _model } } ;
-  prog_ptr->SetUniformM44( "u_proj",  _projection );
-  prog_ptr->SetUniformM44( "u_view",  _view );
-  prog_ptr->SetUniformM44( "u_model", _model );
+  // set uniforms
+  UpdateUniforms();
 
   // draw_buffer
   buffer.DrawArray( primitive_type, 0, no_of_vertices, true );
@@ -651,10 +770,6 @@ bool CBasicDraw::Draw(
     glDisable( GL_POLYGON_OFFSET_FILL );
     glLineWidth( 1.0f );
   }
-
-  // release shader
-  glUseProgram( 0 );
-  _process->Release();
 
   return true;
 }

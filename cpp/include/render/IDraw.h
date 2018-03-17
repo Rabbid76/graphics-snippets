@@ -61,6 +61,9 @@ public:
   virtual void Destroy( void ) = 0;                           //!< destroy all internal objects and clanup
   virtual bool Init( void ) = 0;                              //!< general initializations
   virtual bool Begin( void ) = 0;                             //!< start the rendering
+  virtual bool ActivateBackground( void ) = 0;                //!< activate rendering to background
+  virtual bool ActivateOpaque( void ) = 0;                    //!< activate rendering to the opaque buffer
+  virtual bool ActivateTransparent( void ) = 0;               //!< activate rendering to the transparent buffer
   virtual bool Finish( void ) = 0;                            //!< finish the rendering
   virtual bool ClearDepth( void ) = 0;                        //!< interim clear of the depth buffer
   virtual void BackgroundColor( const TColor &bg_color ) = 0; //!< sets the background color

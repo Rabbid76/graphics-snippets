@@ -406,6 +406,8 @@ public:
   bool PrepareClear( size_t passID )
   {
     static const TPrepareProperties props = TPrepareProperties().
+      set((int)TPrepareProperty::depth).    // depth test has to be set, otherwise depth buffer may not be cleared
+      set((int)TPrepareProperty::viewport).
       set( (int)TPrepareProperty::bind ).set( (int)TPrepareProperty::targets ).set( (int)TPrepareProperty::clear );
     return Prepare( passID, props );
   }
