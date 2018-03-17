@@ -450,13 +450,13 @@ bool CBasicDraw::SpecifyRenderProcess( void )
   passes.emplace( c_tranp_pass, transp_pass );
 
   Render::TPass background_pass( Render::TPassDepthTest::OFF, Render::TPassBlending::OFF );
-  passes.emplace( c_back_pass, background_pass );
+  passes.emplace( c_back_pass, background_pass );  // TODO $$$ set default clear
 
   Render::TPass finish_pass( Render::TPassDepthTest::OFF, Render::TPassBlending::MIX );
   finish_pass._sources.emplace_back( c_color_ID,       1 ); // color buffer source
   finish_pass._sources.emplace_back( c_transp_ID,      2 ); // tranparency buffer source
   finish_pass._sources.emplace_back( c_transp_attr_ID, 3 ); // transparency attribute buffer source
-  passes.emplace( c_finish_pass, finish_pass );
+  passes.emplace( c_finish_pass, finish_pass );  // TODO $$$ set default clear off
 
   _process->SpecifyBuffers( buffers );
   _process->SpecifyPasses( passes );

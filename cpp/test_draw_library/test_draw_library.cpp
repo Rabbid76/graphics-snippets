@@ -172,9 +172,12 @@ void CWindow_Glfw::Render( double time_ms )
 {
     // TODO $$$ adaptie transparency
     // TODO $$$ SSOA (3 frequences)
-    // TODO $$$ text + greek letters
+    // TODO $$$ text + greek letters (distance fields)
     // TODO $$$ post effects (cell (toon), sketch, gamma, hdr) - book of shaders
     // TOOO $$$ meshs
+    // TODO $$$ input polyline
+    // TODO $$$ draw arcs, curves (nurbs, spline) by tessellation shader
+    // TODO $$$ orbit controll
 
     float aspect = (float)_vpSize[0] / (float)_vpSize[1];
     float scale_x = aspect < 1.0f ? 1.0f : aspect;
@@ -198,10 +201,10 @@ void CWindow_Glfw::Render( double time_ms )
 
     _draw->ActivateTransparent();
 
-    _draw->DrawConvexPolygon( 2, { -0.8f, -0.8f,  0.8f, -0.8f, 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f, 0.5f } );
-    _draw->DrawConvexPolygon( 2, { -0.8f,  0.8f,  0.8f,  0.8f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f, 0.5f } );
-    _draw->DrawConvexPolygon( 2, { -0.8f, -0.8f, -0.8f,  0.8f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f, 0.5f } );
-    _draw->DrawConvexPolygon( 2, {  0.8f, -0.8f,  0.8f,  0.8f, 0.0f, 0.0f }, { 1.0f, 1.0f, 0.0f, 0.5f } );
+    _draw->DrawConvexPolygon( 2, { -0.8f, -0.8f,  0.8f, -0.8f,  0.0f,  0.8f }, { 1.0f, 0.0f, 0.0f, 0.5f } );
+    _draw->DrawConvexPolygon( 2, { -0.8f,  0.8f,  0.8f,  0.8f,  0.0f, -0.8f }, { 0.0f, 1.0f, 0.0f, 0.5f } );
+    _draw->DrawConvexPolygon( 2, { -0.8f, -0.8f, -0.8f,  0.8f,  0.8f,  0.0f }, { 0.0f, 0.0f, 1.0f, 0.5f } );
+    _draw->DrawConvexPolygon( 2, {  0.8f, -0.8f,  0.8f,  0.8f, -0.8f,  0.0f }, { 1.0f, 1.0f, 0.0f, 0.5f } );
     
     _draw->Finish();
 }
