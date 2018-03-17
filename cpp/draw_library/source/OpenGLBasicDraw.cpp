@@ -797,6 +797,16 @@ bool CBasicDraw::Draw(
 //---------------------------------------------------------------------
 
 
+struct TFreetypeGlyph
+{
+  FT_Glyph_Metrics           _metrics    { 0 }; //!< glyph metrics
+  unsigned int               _x          = 0;   //!< glyph start x
+  unsigned int               _y          = 0;   //!< glyph start y
+  unsigned int               _cx         = 0;   //!< glyph width
+  unsigned int               _cy         = 0;   //!< glyph height
+  std::vector<unsigned char> _image;            //!< image data
+};
+
 /******************************************************************//**
 * @brief   freetype font data 
 *
@@ -806,8 +816,11 @@ bool CBasicDraw::Draw(
 **********************************************************************/
 struct TFreetypeTFont
 {
-  FT_Library _hdl;  //!< library handle
-  FT_Face    _face; //!< font face
+  FT_Library                  _hdl;            //!< library handle
+  FT_Face                     _face;           //!< font face
+  unsigned int                _width      = 0; //!< total length 
+  unsigned int                _max_height = 0; //!< maximum height
+  std::vector<TFreetypeGlyph> _glyphs;         //!< glyph information
 };
 
 
@@ -845,6 +858,10 @@ CFreetypeTextureText::~CFreetypeTextureText()
 void CFreetypeTextureText::Destroy( void )
 {
   _font.reset( nullptr );
+
+  glDeleteTextures( 1, &_texture_obj );
+  _texture_obj = 0;
+
   // ...
 }
 
@@ -862,6 +879,7 @@ bool CFreetypeTextureText::Load( void )
     return _valid;
 
   _font = std::make_unique<TFreetypeTFont>();
+  TFreetypeTFont &data = *_font.get();
 
 
   // init freetype library
@@ -894,20 +912,59 @@ bool CFreetypeTextureText::Load( void )
 
   FT_GlyphSlot glyph = face->glyph;
 
-  std::vector<std::tuple<unsigned int, unsigned int>> glyphe_size;
-  glyphe_size.reserve( 256 - 32 );
+  // evaluate texture size  and metrics
+  // FreeType Glyph Conventions [https://www.freetype.org/freetype2/docs/glyphs/glyphs-3.html]
+
+  data._glyphs = std::vector<TFreetypeGlyph>( 256 - 32 );
   for ( int i = 32; i < 256; ++ i )
   {
     FT_Error err_code_glyph = FT_Load_Char( face, i, FT_LOAD_RENDER );
     if ( err_code_glyph != 0 )
-    {
-      glyphe_size.emplace_back( std::tuple<unsigned int, unsigned int>{ 0, 0 } );
       continue;
-    }
-    glyphe_size.emplace_back( std::tuple<unsigned int, unsigned int>{ glyph->bitmap.width, glyph->bitmap.rows } );
+
+    unsigned int cx = glyph->bitmap.width;
+    unsigned int cy = glyph->bitmap.rows;
+    
+    TFreetypeGlyph &glyph_data = data._glyphs[i-32];
+
+    glyph_data._metrics = glyph->metrics;
+    glyph_data._x       = data._width;
+    glyph_data._y       = 0;
+    glyph_data._cx      = cx;
+    glyph_data._cy      = cy;
+    
+    glyph_data._image.insert( glyph_data._image.begin(), glyph->bitmap.buffer, glyph->bitmap.buffer + cx * cy );
+    
+    data._width      += cx;
+    data._max_height  = std::max( data._max_height, cy );
   }
 
-  // TODO $$$
+  // create texture
+
+  glActiveTexture( GL_TEXTURE0 );
+  glGenTextures( 1, &_texture_obj );
+  glBindTexture( GL_TEXTURE_2D, _texture_obj );
+        
+  glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
+  glTexImage2D( GL_TEXTURE_2D, 0, GL_RED, data._width, data._max_height, 0, GL_RED, GL_UNSIGNED_BYTE, 0 );
+  glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
+
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+
+  // load glyohs and copy glyphs to texture
+
+  for ( int i = 32; i < 256; ++ i )
+  {
+    TFreetypeGlyph &glyph_data = data._glyphs[i-32];
+    if ( glyph_data._cx == 0 || glyph_data._cy == 0 )
+      continue;
+
+    glTexSubImage2D(GL_TEXTURE_2D, 0, glyph_data._x, glyph_data._y, glyph_data._cx, glyph_data._cx, GL_RED, GL_UNSIGNED_BYTE, glyph_data._image.data() );
+  }
+  glBindTexture( GL_TEXTURE_2D, 0 );
 
   _valid = true;
   return _valid;

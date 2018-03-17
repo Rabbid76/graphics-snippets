@@ -162,9 +162,10 @@ public:
 
 private:
 
-  std::string _font_filename;
-  TFontPtr    _font;
-  bool        _valid = true;
+  std::string  _font_filename;
+  TFontPtr     _font;
+  bool         _valid       = true;
+  unsigned int _texture_obj = 0; // TODO $$$ ITexture
 };
 
 
