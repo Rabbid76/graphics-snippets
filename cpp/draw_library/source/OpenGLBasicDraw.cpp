@@ -910,8 +910,25 @@ bool CBasicDraw::DrawText(
   glActiveTexture( GL_TEXTURE0 );
   glBindTexture( GL_TEXTURE_2D, _color_texture );
 
+  // set blending
+  bool set_belnding = _current_pass == c_opaque_pass || c_back_pass || _current_pass == 0;
+  if ( set_belnding )
+  {
+    glEnable( GL_BLEND );
+    glBlendFunc( GL_ONE, GL_ONE_MINUS_SRC_ALPHA ); // premulitplied alpha
+  }
+
   // TODO $$$ generalise
   bool ret = freetypeFont->DrawText( *this, text, height, width_scale, pos );
+
+  // reset blending
+  if ( set_belnding )
+  {
+    if ( _process != nullptr && _current_pass != 0 )
+      _process->PrepareMode( _current_pass );
+    else 
+      glDisable( GL_BLEND );
+  }
 
   return ret;
 }
@@ -1064,7 +1081,18 @@ bool CFreetypeTexturedFont::Load( void )
     glyph_data._cx      = cx;
     glyph_data._cy      = cy;
     
-    glyph_data._image.insert( glyph_data._image.begin(), glyph->bitmap.buffer, glyph->bitmap.buffer + cx * cy );
+    glyph_data._image = std::vector<unsigned char>( cx * cy * 4, 0 );
+    for ( unsigned int i = 0; i < cx * cy; ++ i)
+    {
+      unsigned char b = glyph->bitmap.buffer[i];
+      if ( i > 0 )
+      {
+        glyph_data._image[i*4 + 0] = b;
+        glyph_data._image[i*4 + 1] = b;
+        glyph_data._image[i*4 + 2] = b;
+        glyph_data._image[i*4 + 3] = b;
+      }
+    }
     
     data._width      += cx;
     data._max_height  = std::max( data._max_height, cy );
@@ -1083,7 +1111,7 @@ bool CFreetypeTexturedFont::Load( void )
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-  glTexImage2D( GL_TEXTURE_2D, 0, GL_RED, data._width, data._max_height, 0, GL_RED, GL_UNSIGNED_BYTE, 0 ); 
+  glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, data._width, data._max_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0 ); 
 
   // load glyohs and copy glyphs to texture
 
@@ -1093,7 +1121,7 @@ bool CFreetypeTexturedFont::Load( void )
     if ( glyph_data._cx == 0 || glyph_data._cy == 0 )
       continue;
 
-    glTexSubImage2D(GL_TEXTURE_2D, 0, glyph_data._x, glyph_data._y, glyph_data._cx, glyph_data._cy, GL_RED, GL_UNSIGNED_BYTE, glyph_data._image.data() );
+    glTexSubImage2D(GL_TEXTURE_2D, 0, glyph_data._x, glyph_data._y, glyph_data._cx, glyph_data._cy, GL_RGBA, GL_UNSIGNED_BYTE, glyph_data._image.data() );
   }
   glBindTexture( GL_TEXTURE_2D, 0 );
   glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
@@ -1165,8 +1193,6 @@ bool CFreetypeTexturedFont::DrawText(
   float                  width_scale, //!< in: scale of the text in the y direction
   const Render::TPoint3 &pos )        //!< in: the reference position
 {
-  DebugFontTexture( draw );
-  
   if ( _font == nullptr )
     return false;
 
