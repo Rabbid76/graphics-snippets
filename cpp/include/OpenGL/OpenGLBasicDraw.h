@@ -105,7 +105,8 @@ private:
   void InvalidateUniforms( void );
 
   bool SpecifyRenderProcess( void );
-  bool UpdateUniforms( void );
+  bool UpdateGeneralUniforms( void );
+  bool UpdateColorUniforms( const Render::TColor &color );
   void DrawScereenspace( void );
 
   bool                                _initialized    = false;
@@ -127,6 +128,7 @@ private:
   TProgram                            _transp_prog;
   TProgram                            _finish_prog;
   TFont                               _std_font; // TODO $$$ font map
+  unsigned int                        _color_texture  = 0; // TODO $$$ ITexture
 
   const size_t c_opaque_pass = 1; //!< pass for opque drawing
   const size_t c_tranp_pass  = 2; //!< pass for tranparent drawing
@@ -166,7 +168,7 @@ public:
   //! calculates box of a string in relation to its height (maximum height of the font from the bottom to the top)
   virtual bool CalculateTextSize( const char *str, float height, float &box_x, float &box_btm, float &box_top ) override;
 
-  bool DrawText( const char *text, float height, const Render::TPoint3 &pos ); //! render a text, TODO generalise
+  bool DrawText( const char *str, float height, const Render::TPoint3 &pos ); //! render a text, TODO generalise
 
 private:
 

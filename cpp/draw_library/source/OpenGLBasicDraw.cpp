@@ -41,22 +41,34 @@
 namespace OpenGL
 {
 
+/******************************************************************//**
+* \class OpenGL::CBasicDraw  
+*
+* Opaque and transparent shader:
+* 
+* If a rendered primitive hasn't a texture, a "white" 1*1 texture is
+* set, this causes tha the shader has not to be changed when switching
+* between color and texture.
+* Since the texture color and the color are modulated (multiplied), a
+* texture can be tint by a color.
+*
+**********************************************************************/
+
 
 //---------------------------------------------------------------------
 // qpaque shader
 //---------------------------------------------------------------------
 
-
-std::string opaque_sh_vert = R"(
+  std::string opaque_sh_vert = R"(
 #version 460
 
 layout (location = 0) in vec4 in_pos;
-layout (location = 1) in vec4 in_col;
+layout (location = 0) in vec2 in_tex;
 
 out TVertexData
 {
     vec3 pos;
-    vec4 col;
+    vec2 tex;
 } out_data;
 
 
@@ -67,8 +79,8 @@ uniform mat4 u_model;
 void main()
 {
     vec4 view_pos = u_view * u_model * in_pos; 
-    out_data.col  = in_col;
     out_data.pos  = view_pos.xyz / view_pos.w;
+    out_data.tex  = in_tex;
     gl_Position   = u_proj * view_pos;
 }
 )";
@@ -79,14 +91,20 @@ std::string opaque_sh_frag = R"(
 in TVertexData
 {
     vec3 pos;
-    vec4 col;
+    vec2 tex;
 } in_data;
 
 out vec4 frag_color;
 
+uniform vec4 u_color;
+
+layout (binding = 0) uniform sampler2D u_sampler_texture;
+
 void main()
 {
-    frag_color = in_data.col;
+    vec4 col_texture  = texture(u_sampler_texture, in_data.tex.st); 
+    vec4 col_modulate = u_color * col_texture;
+    frag_color        = col_modulate;
 }
 )";
 
@@ -100,12 +118,12 @@ std::string transp_sh_vert = R"(
 #version 460
 
 layout (location = 0) in vec4 in_pos;
-layout (location = 1) in vec4 in_col;
+layout (location = 1) in vec2 in_tex;
 
 out TVertexData
 {
     vec3 pos;
-    vec4 col;
+    vec2 tex;
 } out_data;
 
 
@@ -116,8 +134,8 @@ uniform mat4 u_model;
 void main()
 {
     vec4 view_pos = u_view * u_model * in_pos; 
-    out_data.col  = in_col;
     out_data.pos  = view_pos.xyz / view_pos.w;
+    out_data.tex  = in_tex;
     gl_Position   = u_proj * view_pos;
 }
 )";
@@ -128,17 +146,24 @@ std::string transp_sh_frag = R"(
 in TVertexData
 {
     vec3 pos;
-    vec4 col;
+    vec2 tex;
 } in_data;
 
 layout (location = 0) out vec4 transp_color;
 layout (location = 1) out vec4 transp_attrib;
 
+uniform vec4 u_color;
+
+layout (binding = 0) uniform sampler2D u_sampler_texture;
+
 void main()
 {                      
-    float weight  = in_data.col.a * (1.0 - gl_FragCoord.z);
-    transp_color  = vec4(in_data.col.rgb*weight, weight);
-    transp_attrib = vec4(1.0, 0.0, 0.0, in_data.col.a);
+    vec4 col_texture  = texture(u_sampler_texture, in_data.tex.st); 
+    vec4 col_modulate = u_color * col_texture;
+
+    float weight      = col_modulate.a * (1.0 - gl_FragCoord.z);
+    transp_color      = vec4(col_modulate.rgb * weight, weight);
+    transp_attrib     = vec4(1.0, 0.0, 0.0, col_modulate.a);
 }
 )";
 
@@ -323,6 +348,9 @@ void CBasicDraw::Destroy( void )
   for ( auto & key : _buffer_keys )
     key = nullptr;
   _nextBufferI = 0;
+
+  glDeleteTextures( 1, &_color_texture );
+  _color_texture = 0;
 }
 
 
@@ -409,6 +437,21 @@ bool CBasicDraw::Init( void )
   }
   catch (...)
   {}
+
+  // setup color texture
+  glActiveTexture( GL_TEXTURE0 );
+  glGenTextures( 1, &_color_texture );
+  glBindTexture( GL_TEXTURE_2D, _color_texture );      
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+
+  unsigned char white[]{ 255, 255, 255, 255 };
+  glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, white );
+
+  glBindTexture( GL_TEXTURE_2D, 0 );  
+
 
   // TODO $$$ uniform block model, view, projection
   
@@ -508,7 +551,7 @@ bool CBasicDraw::SpecifyRenderProcess( void )
 * \date    2018-03-16
 * \version 1.0
 **********************************************************************/
-bool CBasicDraw::UpdateUniforms( void )
+bool CBasicDraw::UpdateGeneralUniforms( void )
 {
   if ( _current_prog == nullptr )
     return false;
@@ -523,6 +566,24 @@ bool CBasicDraw::UpdateUniforms( void )
   _current_prog->SetUniformM44( "u_model", _model );
 
   _unifroms_valid = true;
+  return true;
+}
+
+
+/******************************************************************//**
+* \brief   Set the uniforms and update the unform blocks.
+* 
+* \author  gernot
+* \date    2018-03-16
+* \version 1.0
+**********************************************************************/
+bool CBasicDraw::UpdateColorUniforms( 
+  const Render::TColor &color ) //!< in: new color
+{
+  if ( _current_prog == nullptr )
+    return false;
+ 
+  _current_prog->SetUniformF4( "u_color", color );
   return true;
 }
 
@@ -604,7 +665,7 @@ bool CBasicDraw::ActivateBackground( void )
   
   // set uniforms
   _unifroms_valid = false;
-  UpdateUniforms();
+  UpdateGeneralUniforms();
   
   return true;
 }
@@ -637,7 +698,7 @@ bool CBasicDraw::ActivateOpaque( void )
 
   // set uniforms
   _unifroms_valid = false;
-  UpdateUniforms();
+  UpdateGeneralUniforms();
 
   return true;
 }
@@ -669,7 +730,7 @@ bool CBasicDraw::ActivateTransparent( void )
 
   // set uniforms
   _unifroms_valid = false;
-  UpdateUniforms();
+  UpdateGeneralUniforms();
 
   return true;
 }
@@ -770,21 +831,14 @@ bool CBasicDraw::Draw(
     primitive_type == Render::TPrimitive::trianglefan;
 
   // buffer specification
-  Render::TVA va_id = size == 2 ? Render::TVA::b0_xy__b1_rgba : (size == 3 ? Render::TVA::b0_xyz__b1_rgba : Render::TVA::b0_xyzw__b1_rgba);
+  Render::TVA va_id = size == 2 ? Render::TVA::b0_xy : (size == 3 ? Render::TVA::b0_xyz : Render::TVA::b0_xyzw);
   const std::vector<char> bufferdescr = Render::IDrawBuffer::VADescription( va_id );
-
-  // color buffer
-  size_t no_of_vertices = coords_size / size;
-  std::vector<Render::t_fp> color_buffer( no_of_vertices * 4 );
-  for ( size_t i=0; i < no_of_vertices; ++ i )
-    std::copy( color.begin(), color.end(), color_buffer.begin() + i * 4 );
 
   // create buffer
   Render::IDrawBuffer &buffer = DrawBuffer();
   buffer.SpecifyVA( bufferdescr.size(), bufferdescr.data() );
   buffer.UpdateVB( 0, sizeof(float), coords_size, coords );
-  buffer.UpdateVB( 1, sizeof(float), color_buffer );
-
+  
   // set style and context
   if ( is_line )
   {
@@ -794,13 +848,19 @@ bool CBasicDraw::Draw(
   }
 
   // set uniforms
-  UpdateUniforms();
+  UpdateGeneralUniforms();
+  UpdateColorUniforms( color );
+
+  // bind "white" color texture
+  glActiveTexture( GL_TEXTURE0 );
+  glBindTexture( GL_TEXTURE_2D, _color_texture ); 
 
   // draw_buffer
+  size_t no_of_vertices = coords_size / size;
   buffer.DrawArray( primitive_type, 0, no_of_vertices, true );
   buffer.Release();
 
-  // set style and context
+  // reset style and context
   if ( is_line )
   {
     glDisable( GL_POLYGON_OFFSET_FILL );
@@ -881,6 +941,8 @@ struct TFreetypeTFont
   unsigned int                _max_height   = 0; //!< maximum height
   int                         _max_glyph_cy = 0; //!< maximum glyph metrics height 
   int                         _max_glyph_y  = 0; //!< maximum glyph metrics bearing y 
+  int                         _min_char     = 0; //!< minimum character
+  int                         _max_char     = 0; //!< maximum character
   std::vector<TFreetypeGlyph> _glyphs;           //!< glyph information
 };
 
@@ -976,8 +1038,10 @@ bool CFreetypeTexturedFont::Load( void )
   // evaluate texture size  and metrics
   // FreeType Glyph Conventions [https://www.freetype.org/freetype2/docs/glyphs/glyphs-3.html]
 
-  data._glyphs = std::vector<TFreetypeGlyph>( 256 - 32 );
-  for ( int i = 32; i < 256; ++ i )
+  data._min_char = 32;
+  data._max_char = 256;
+  data._glyphs  = std::vector<TFreetypeGlyph>( data._max_char - data._min_char );
+  for ( int i = data._min_char; i < data._max_char ; ++ i )
   {
     FT_Error err_code_glyph = FT_Load_Char( face, i, FT_LOAD_RENDER );
     if ( err_code_glyph != 0 )
@@ -1020,9 +1084,9 @@ bool CFreetypeTexturedFont::Load( void )
 
   // load glyohs and copy glyphs to texture
 
-  for ( int i = 32; i < 256; ++ i )
+  for ( int i = data._min_char; i < data._max_char; ++ i )
   {
-    TFreetypeGlyph &glyph_data = data._glyphs[i-32];
+    TFreetypeGlyph &glyph_data = data._glyphs[i-data._min_char];
     if ( glyph_data._cx == 0 || glyph_data._cy == 0 )
       continue;
 
@@ -1050,8 +1114,33 @@ bool CFreetypeTexturedFont::CalculateTextSize(
   float      &box_btm,  //!< out: height from the base line to the top 
   float      &box_top ) //!< out: height form the base line to the bottom (usually negative)
 {
+  if ( _font == nullptr )
+    return false;
 
-  // TODO $$$
+  int min_c = _font->_min_char;
+  int max_c = _font->_min_char;
+
+  std::string std_str( str );
+  FT_Pos metrics_width  = 0;
+  FT_Pos metrics_height = 0;
+  FT_Pos metrics_top    = 0;
+  for ( char c : std_str )
+  {
+    // get the glyph index
+    int i_c = *(unsigned char*)(&c);
+    if ( i_c < min_c || i_c > max_c )
+      continue;
+    
+    metrics_width += _font->_glyphs[i_c]._metrics.horiAdvance;
+    metrics_height = std::max( metrics_height, _font->_glyphs[i_c]._metrics.height );
+    metrics_top    = std::max( metrics_top, _font->_glyphs[i_c]._metrics.horiBearingY );
+  }
+
+  float scale = height / (float)_font->_max_glyph_cy;
+
+  box_x   = scale * metrics_width;
+  box_btm = scale * metrics_top;
+  box_top = scale * (metrics_top - metrics_height);
 
   return true;
 }
@@ -1065,13 +1154,30 @@ bool CFreetypeTexturedFont::CalculateTextSize(
 * \version 1.0
 **********************************************************************/
 bool CFreetypeTexturedFont::DrawText( 
-  const char            *text,   //!< in: the text
+  const char            *str,    //!< in: the text
   float                  height, //!< in: the maximum height of the text from the bottom to the top 
   const Render::TPoint3 &pos )   //!< in: the reference position
 {
+  if ( _font == nullptr )
+    return false;
+
+  int min_c = _font->_min_char;
+  int max_c = _font->_min_char;
+
+  std::string std_str( str );
+  for ( char c : std_str )
+  {
+    // get the glyph index
+    int i_c = *(unsigned char*)(&c);
+    if ( i_c < min_c || i_c > max_c )
+      continue;
+    
+    // TODO $$$ 
+
+  }
 
   // TODO $$$
-
+ 
   return true;
 }
 

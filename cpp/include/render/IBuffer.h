@@ -99,6 +99,7 @@ enum TVA
 {
   b0_xy,                     // 1 vertex buffer (no index buffer): 2 component vertex coordiante
   b0_xyz,                    // 1 vertex buffer (no index buffer): 3 component vertex coordiante
+  b0_xyzw,                   // 1 vertex buffer (no index buffer): 4 component vertex coordiante
                   
   b0_xyz_uv,                 // 1 vertex buffer record (no index buffer): 3 component vertex coordiante, 2 component texture coordinates
   b0_xyz_nnn,                // 1 vertex buffer record (no index buffer): 3 component vertex coordiante, normal vector
@@ -259,15 +260,22 @@ public:
       // b0_xy
       TDescription{
         -1, 1, 
-        0, 2, 1, 
+        0, 0, 1, 
         0, 2, Render::TAttributeType::eFloat32, 0
       },
 
       // b0_xyz
       TDescription{
         -1, 1, 
-        0, 3, 1, 
+        0, 0, 1, 
         0, 3, Render::TAttributeType::eFloat32, 0
+      },
+
+      // b0_xyzw
+      TDescription{
+        -1, 1, 
+        0, 0, 1, 
+        0, 4, Render::TAttributeType::eFloat32, 0
       },
 
       // b0_xyz_uv
