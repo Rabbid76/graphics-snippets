@@ -15,6 +15,7 @@
 #include <IDrawType.h>
 #include <IBuffer.h>
 #include <IRenderPass.h>
+#include <IFont.h>
 
 // stl
 
@@ -50,6 +51,7 @@ public:
 
   using TBuffer = std::vector<t_fp>;
   using TSize   = IRenderProcess::TSize;
+  using TFontId = size_t;
 
   struct TStyle
   {
@@ -60,6 +62,7 @@ public:
   
   virtual void Destroy( void ) = 0;                           //!< destroy all internal objects and cleanup
   virtual bool Init( void ) = 0;                              //!< general initializations
+  virtual bool LoadFont( TFontId font_id, IFont *&font ) = 0; //!< load and return a font by its id
   virtual bool Begin( void ) = 0;                             //!< start the rendering
   virtual bool ActivateBackground( void ) = 0;                //!< activate rendering to background
   virtual bool ActivateOpaque( void ) = 0;                    //!< activate rendering to the opaque buffer
@@ -163,6 +166,16 @@ public:
   }
 
   virtual bool Draw( TPrimitive primitive_type, size_t size, size_t coords_size, const t_fp *coords, const TColor &color, const TStyle &style ) = 0;
+
+  virtual bool CalculateTextSize( TFontId font_id, const char *str, float height, float &box_x, float &box_btm, float &box_top )
+  {
+    IFont *font = nullptr;
+    if ( LoadFont( font_id, font ) == false )
+      return false;
+    return font->CalculateTextSize( str, height, box_x, box_btm, box_top );
+  }
+  
+  virtual bool DrawText( TFontId font_id, const char *text, float height, const TPoint3 &pos ) = 0;
 };
 
 

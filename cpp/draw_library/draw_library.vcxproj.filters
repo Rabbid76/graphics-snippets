@@ -69,7 +69,7 @@
     <ClInclude Include="..\include\render\ITexture.h">
       <Filter>render</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\render\IText.h">
+    <ClInclude Include="..\include\render\IFont.h">
       <Filter>render</Filter>
     </ClInclude>
   </ItemGroup>

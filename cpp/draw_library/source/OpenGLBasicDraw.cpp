@@ -327,6 +327,37 @@ void CBasicDraw::Destroy( void )
 
 
 /******************************************************************//**
+* \brief   Returns a font by its id.
+* 
+* The font is loaded, if not loaded yet.
+* 
+* \author  gernot
+* \date    2018-03-18
+* \version 1.0
+**********************************************************************/
+bool CBasicDraw::LoadFont( 
+  TFontId         font_id, //!< in: id of the font
+  Render::IFont *&font )   //!< in: the font
+{
+  assert( font_id == 0 ); // TODO $$$ at the moment only one standard font is available
+
+  if ( _std_font == nullptr )
+  {
+    try
+    {
+      _std_font = std::make_unique<CFreetypeTexturedFont>( "../resource/font/FreeSans.ttf" );
+      _std_font->Load();
+    }
+    catch (...)
+    {} 
+  }
+
+  font = _std_font.get();
+  return font != nullptr;
+}
+
+
+/******************************************************************//**
 * \brief   General initializations.
 *
 * Specify the render buffers
@@ -380,19 +411,7 @@ bool CBasicDraw::Init( void )
   {}
 
   // TODO $$$ uniform block model, view, projection
-
-
-  // $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-  // TODO $$$
-  try
-  {
-    _std_text = std::make_unique<CFreetypeTextureText>( "../resource/font/FreeSans.ttf" );
-    _std_text->Load();
-  }
-  catch (...)
-  {} 
-  // $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
+  
   _initialized = true;
   return true;
 }
@@ -792,6 +811,46 @@ bool CBasicDraw::Draw(
 }
 
 
+/******************************************************************//**
+* \brief   Render a text
+* 
+* \author  gernot
+* \date    2018-03-18
+* \version 1.0
+**********************************************************************/
+bool CBasicDraw::DrawText( 
+  TFontId                font_id,
+  const char            *text,
+  float                  height,
+  const Render::TPoint3 &pos )
+{
+  if ( _drawing == false )
+  {
+    assert( false );
+    return false;
+  }
+
+  // get the font (load the font if not loaded yet)
+  Render::IFont *font = nullptr;
+  if ( LoadFont( font_id, font ) == false )
+    return false;
+
+  // TODO $$$ generalise
+  CFreetypeTexturedFont *freetypeFont = dynamic_cast<CFreetypeTexturedFont*>( font );
+  if ( freetypeFont == nullptr )
+    return false;
+
+  // TODO $$$ set shader (texture shader)
+
+  // TODO $$$ generalise
+  freetypeFont->DrawText( text, height, pos );
+
+  // TODO $$$ reset shader
+
+  return true;
+}
+
+
 //---------------------------------------------------------------------
 // CFreetypeTextureText
 //---------------------------------------------------------------------
@@ -799,12 +858,12 @@ bool CBasicDraw::Draw(
 
 struct TFreetypeGlyph
 {
-  FT_Glyph_Metrics           _metrics    { 0 }; //!< glyph metrics
-  unsigned int               _x          = 0;   //!< glyph start x
-  unsigned int               _y          = 0;   //!< glyph start y
-  unsigned int               _cx         = 0;   //!< glyph width
-  unsigned int               _cy         = 0;   //!< glyph height
-  std::vector<unsigned char> _image;            //!< image data
+  FT_Glyph_Metrics           _metrics { 0 }; //!< glyph metrics
+  unsigned int               _x       = 0;   //!< glyph start x
+  unsigned int               _y       = 0;   //!< glyph start y
+  unsigned int               _cx      = 0;   //!< glyph width
+  unsigned int               _cy      = 0;   //!< glyph height
+  std::vector<unsigned char> _image;         //!< image data
 };
 
 /******************************************************************//**
@@ -816,11 +875,13 @@ struct TFreetypeGlyph
 **********************************************************************/
 struct TFreetypeTFont
 {
-  FT_Library                  _hdl;            //!< library handle
-  FT_Face                     _face;           //!< font face
-  unsigned int                _width      = 0; //!< total length 
-  unsigned int                _max_height = 0; //!< maximum height
-  std::vector<TFreetypeGlyph> _glyphs;         //!< glyph information
+  FT_Library                  _hdl;              //!< library handle
+  FT_Face                     _face;             //!< font face
+  unsigned int                _width        = 0; //!< total length 
+  unsigned int                _max_height   = 0; //!< maximum height
+  int                         _max_glyph_cy = 0; //!< maximum glyph metrics height 
+  int                         _max_glyph_y  = 0; //!< maximum glyph metrics bearing y 
+  std::vector<TFreetypeGlyph> _glyphs;           //!< glyph information
 };
 
 
@@ -831,7 +892,7 @@ struct TFreetypeTFont
 * @date    2018-03-18
 * @version 1.0
 **********************************************************************/
-CFreetypeTextureText::CFreetypeTextureText( 
+CFreetypeTexturedFont::CFreetypeTexturedFont( 
   const char *font_filename ) //!< in: path of the font file 
   : _font_filename( font_filename )
 {}
@@ -844,7 +905,7 @@ CFreetypeTextureText::CFreetypeTextureText(
 * @date    2018-03-18
 * @version 1.0
 **********************************************************************/
-CFreetypeTextureText::~CFreetypeTextureText()
+CFreetypeTexturedFont::~CFreetypeTexturedFont()
 {}
 
 
@@ -855,7 +916,7 @@ CFreetypeTextureText::~CFreetypeTextureText()
 * @date    2018-03-18
 * @version 1.0
 **********************************************************************/
-void CFreetypeTextureText::Destroy( void )
+void CFreetypeTexturedFont::Destroy( void )
 {
   _font.reset( nullptr );
 
@@ -873,7 +934,7 @@ void CFreetypeTextureText::Destroy( void )
 * @date    2018-03-18
 * @version 1.0
 **********************************************************************/
-bool CFreetypeTextureText::Load( void )
+bool CFreetypeTexturedFont::Load( void )
 {
   if ( _font != nullptr )
     return _valid;
@@ -937,6 +998,9 @@ bool CFreetypeTextureText::Load( void )
     
     data._width      += cx;
     data._max_height  = std::max( data._max_height, cy );
+
+    data._max_glyph_cy = std::max( data._max_glyph_cy, (int)glyph->metrics.height );
+    data._max_glyph_y  = std::max( data._max_glyph_y,  (int)glyph->metrics.horiBearingY );
   }
 
   // create texture
@@ -968,6 +1032,47 @@ bool CFreetypeTextureText::Load( void )
 
   _valid = true;
   return _valid;
+}
+
+
+/******************************************************************//**
+* \brief   Calculates box of a string, in relation to its height
+* (maximum height of the font from the bottom to the top)  
+* 
+* \author  gernot
+* \date    2018-03-18
+* \version 1.0
+**********************************************************************/
+bool CFreetypeTexturedFont::CalculateTextSize( 
+  const char *str,      //!< in: the text
+  float       height,   //!< in: the maximum height of the text from the bottom to the top  
+  float      &box_x,    //!< out: with of the text
+  float      &box_btm,  //!< out: height from the base line to the top 
+  float      &box_top ) //!< out: height form the base line to the bottom (usually negative)
+{
+
+  // TODO $$$
+
+  return true;
+}
+
+
+/******************************************************************//**
+* \brief   render a text 
+* 
+* \author  gernot
+* \date    2018-03-18
+* \version 1.0
+**********************************************************************/
+bool CFreetypeTexturedFont::DrawText( 
+  const char            *text,   //!< in: the text
+  float                  height, //!< in: the maximum height of the text from the bottom to the top 
+  const Render::TPoint3 &pos )   //!< in: the reference position
+{
+
+  // TODO $$$
+
+  return true;
 }
 
 

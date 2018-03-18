@@ -196,6 +196,12 @@ void CWindow_Glfw::Render( double time_ms )
     _draw->DrawGrid2D( { 0.0f, -scale_y }, { scale_x, scale_y }, { 0.05f, 0.05f }, 0.0f, { 0.1f, 0.8f, 0.8f, 1.0f }, 1.0f );
 
     _draw->ActivateOpaque();
+
+    const char *str = "Hello, a long text with a lot of different letters.";
+    
+    std::array<float, 4> text_rect{ 0.0f };
+    _draw->CalculateTextSize( 0, str, 0.2f, text_rect[2], text_rect[1], text_rect[3] );
+    _draw->DrawText( 0, str, 0.2f, { scale_x * -0.95f, 0.0f, -0.01f } );
     
     _draw->DrawRectangle2D( {-0.8f, -0.8f}, {0.8f, 0.8f}, 0.0f, { 1.0f, 0.0f, 1.0f, 1.0f }, 5 );
 

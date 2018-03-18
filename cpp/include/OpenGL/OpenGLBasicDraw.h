@@ -17,7 +17,7 @@
 #include <IDraw.h>
 #include <IBuffer.h>
 #include <IRenderPass.h>
-#include <IText.h>
+#include <IFont.h>
 
 // OpenGL
 
@@ -69,7 +69,7 @@ public:
   using TProgramPtr = OpenGL::ShaderProgram*;
   using TProcess    = std::unique_ptr<Render::IRenderProcess>;
   using TProgram    = std::unique_ptr<OpenGL::ShaderProgram>;
-  using TText       = std::unique_ptr<Render::IText>; 
+  using TFont       = std::unique_ptr<Render::IFont>; 
   
 
   CBasicDraw( void );
@@ -79,22 +79,25 @@ public:
   virtual Render::IDrawBuffer & DrawBuffer( void );
   virtual Render::IDrawBuffer & DrawBuffer( const void *key, bool &cached );
 
-  virtual void Destroy( void ) override;             //!< destroy all internal objects and cleanup
-  virtual bool Init( void ) override;                //!< general initializations
-  virtual bool Begin( void ) override;               //!< start the rendering
-  virtual bool ActivateBackground( void ) override;  //!< activate rendering to background
-  virtual bool ActivateOpaque( void ) override;      //!< activate rendering to the opaque buffer
-  virtual bool ActivateTransparent( void ) override; //!< activate rendering to the transparent buffer
-  virtual bool Finish( void ) override;              //!< finish the rendering
-  virtual bool ClearDepth( void ) override;          //!< interim clear of the depth buffer
+  virtual void Destroy( void ) override;                                   //!< destroy all internal objects and cleanup
+  virtual bool Init( void ) override;                                      //!< general initializations
+  virtual bool LoadFont( TFontId font_id, Render::IFont *&font ) override; //!< load and return a font by its id
+  virtual bool Begin( void ) override;                                     //!< start the rendering
+  virtual bool ActivateBackground( void ) override;                        //!< activate rendering to background
+  virtual bool ActivateOpaque( void ) override;                            //!< activate rendering to the opaque buffer
+  virtual bool ActivateTransparent( void ) override;                       //!< activate rendering to the transparent buffer
+  virtual bool Finish( void ) override;                                    //!< finish the rendering
+  virtual bool ClearDepth( void ) override;                                //!< interim clear of the depth buffer
  
   virtual void BackgroundColor( const Render::TColor &bg_color ) override {  _bg_color = bg_color; InvalidateProcess(); }; //!< sets the background color
   virtual void ViewportSize( const TSize &vp_size )              override { _vp_size = vp_size; InvalidateUniforms(); }    //!< sete the size of the viewport
   virtual void Projection( const Render::TMat44 &proj )          override { _projection = proj; InvalidateUniforms(); }    //!< set the projection matrix
   virtual void View( const Render::TMat44 &view )                override { _view = view; InvalidateUniforms(); }          //!< set the view matrix
   virtual void Model( const Render::TMat44 &model )              override { _model = model; InvalidateUniforms(); }        //!< set the model matrix
-  
+
   virtual bool Draw( Render::TPrimitive primitive_type, size_t size, size_t coords_size, const Render::t_fp *coords, const Render::TColor &color, const TStyle &style ) override;
+
+  virtual bool DrawText( TFontId font_id, const char *text, float height, const Render::TPoint3 &pos ) override;
 
 private:
 
@@ -123,7 +126,7 @@ private:
   TProgram                            _opaque_prog;
   TProgram                            _transp_prog;
   TProgram                            _finish_prog;
-  TText                               _std_text;
+  TFont                               _std_font; // TODO $$$ font map
 
   const size_t c_opaque_pass = 1; //!< pass for opque drawing
   const size_t c_tranp_pass  = 2; //!< pass for tranparent drawing
@@ -147,18 +150,23 @@ struct TFreetypeTFont;
 * @date    2018-03-18
 * @version 1.0
 **********************************************************************/
-class CFreetypeTextureText
-  : public Render::IText
+class CFreetypeTexturedFont
+  : public Render::IFont
 {
 public:
 
   using TFontPtr = std::unique_ptr<TFreetypeTFont>;
 
-  CFreetypeTextureText( const char *font_filename );
-  virtual ~CFreetypeTextureText();
+  CFreetypeTexturedFont( const char *font_filename );
+  virtual ~CFreetypeTexturedFont();
 
   virtual void Destroy( void ) override; //!< destroy all internal objects and cleanup
   virtual bool Load( void ) override;    //!< load the glyphs
+
+  //! calculates box of a string in relation to its height (maximum height of the font from the bottom to the top)
+  virtual bool CalculateTextSize( const char *str, float height, float &box_x, float &box_btm, float &box_top ) override;
+
+  bool DrawText( const char *text, float height, const Render::TPoint3 &pos ); //! render a text, TODO generalise
 
 private:
 
