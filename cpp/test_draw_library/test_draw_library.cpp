@@ -179,6 +179,8 @@ void CWindow_Glfw::Render( double time_ms )
     // TODO $$$ draw arcs, curves (nurbs, spline) by tessellation shader
     // TODO $$$ orbit controll
 
+    // TODO view matrix from pitch, yaw (and roll) or quaternation
+
     float aspect = (float)_vpSize[0] / (float)_vpSize[1];
     float scale_x = aspect < 1.0f ? 1.0f : aspect;
     float scale_y = aspect < 1.0f ? 1.0f/aspect : 1.0f;
