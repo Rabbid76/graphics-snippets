@@ -97,7 +97,7 @@ public:
 
   virtual bool Draw( Render::TPrimitive primitive_type, size_t size, size_t coords_size, const Render::t_fp *coords, const Render::TColor &color, const TStyle &style ) override;
 
-  virtual bool DrawText( TFontId font_id, const char *text, float height, const Render::TPoint3 &pos ) override;
+  virtual bool DrawText( TFontId font_id, const char *text, float height, float width_scale, const Render::TPoint3 &pos, const Render::TColor &color ) override;
 
 private:
 
@@ -168,9 +168,11 @@ public:
   //! calculates box of a string in relation to its height (maximum height of the font from the bottom to the top)
   virtual bool CalculateTextSize( const char *str, float height, float &box_x, float &box_btm, float &box_top ) override;
 
-  bool DrawText( const char *str, float height, const Render::TPoint3 &pos ); //! render a text, TODO generalise
+  bool DrawText( CBasicDraw &draw, const char *str, float height, float width_scale, const Render::TPoint3 &pos ); //! render a text, TODO generalise
 
 private:
+
+  void DebugFontTexture( CBasicDraw &draw );
 
   std::string  _font_filename;
   TFontPtr     _font;

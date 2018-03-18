@@ -63,7 +63,7 @@ namespace OpenGL
 #version 460
 
 layout (location = 0) in vec4 in_pos;
-layout (location = 0) in vec2 in_tex;
+layout (location = 1) in vec2 in_tex;
 
 out TVertexData
 {
@@ -879,10 +879,12 @@ bool CBasicDraw::Draw(
 * \version 1.0
 **********************************************************************/
 bool CBasicDraw::DrawText( 
-  TFontId                font_id,
-  const char            *text,
-  float                  height,
-  const Render::TPoint3 &pos )
+  TFontId                font_id,     //!< in: id of the font
+  const char            *text,        //!< in: the text
+  float                  height,      //!< in: the height of the text
+  float                  width_scale, //!< in: scale of the text in the y direction
+  const Render::TPoint3 &pos,         //!< in: reference position
+  const Render::TColor  &color )      //!< in: color of the text
 {
   if ( _drawing == false )
   {
@@ -900,14 +902,18 @@ bool CBasicDraw::DrawText(
   if ( freetypeFont == nullptr )
     return false;
 
-  // TODO $$$ set shader (texture shader)
+  // set uniforms
+  UpdateGeneralUniforms();
+  UpdateColorUniforms( color );
+
+  // bind "white" color texture
+  glActiveTexture( GL_TEXTURE0 );
+  glBindTexture( GL_TEXTURE_2D, _color_texture );
 
   // TODO $$$ generalise
-  freetypeFont->DrawText( text, height, pos );
+  bool ret = freetypeFont->DrawText( *this, text, height, width_scale, pos );
 
-  // TODO $$$ reset shader
-
-  return true;
+  return ret;
 }
 
 
@@ -1069,18 +1075,15 @@ bool CFreetypeTexturedFont::Load( void )
 
   // create texture
 
+  glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
   glActiveTexture( GL_TEXTURE0 );
   glGenTextures( 1, &_texture_obj );
   glBindTexture( GL_TEXTURE_2D, _texture_obj );
-        
-  glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
-  glTexImage2D( GL_TEXTURE_2D, 0, GL_RED, data._width, data._max_height, 0, GL_RED, GL_UNSIGNED_BYTE, 0 );
-  glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
-
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+  glTexImage2D( GL_TEXTURE_2D, 0, GL_RED, data._width, data._max_height, 0, GL_RED, GL_UNSIGNED_BYTE, 0 ); 
 
   // load glyohs and copy glyphs to texture
 
@@ -1090,9 +1093,10 @@ bool CFreetypeTexturedFont::Load( void )
     if ( glyph_data._cx == 0 || glyph_data._cy == 0 )
       continue;
 
-    glTexSubImage2D(GL_TEXTURE_2D, 0, glyph_data._x, glyph_data._y, glyph_data._cx, glyph_data._cx, GL_RED, GL_UNSIGNED_BYTE, glyph_data._image.data() );
+    glTexSubImage2D(GL_TEXTURE_2D, 0, glyph_data._x, glyph_data._y, glyph_data._cx, glyph_data._cy, GL_RED, GL_UNSIGNED_BYTE, glyph_data._image.data() );
   }
   glBindTexture( GL_TEXTURE_2D, 0 );
+  glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
 
   _valid = true;
   return _valid;
@@ -1118,7 +1122,7 @@ bool CFreetypeTexturedFont::CalculateTextSize(
     return false;
 
   int min_c = _font->_min_char;
-  int max_c = _font->_min_char;
+  int max_c = _font->_max_char;
 
   std::string std_str( str );
   FT_Pos metrics_width  = 0;
@@ -1126,14 +1130,15 @@ bool CFreetypeTexturedFont::CalculateTextSize(
   FT_Pos metrics_top    = 0;
   for ( char c : std_str )
   {
-    // get the glyph index
+    // get the glyph data
     int i_c = *(unsigned char*)(&c);
     if ( i_c < min_c || i_c > max_c )
       continue;
+    TFreetypeGlyph &glyph = _font->_glyphs[i_c-min_c];
     
-    metrics_width += _font->_glyphs[i_c]._metrics.horiAdvance;
-    metrics_height = std::max( metrics_height, _font->_glyphs[i_c]._metrics.height );
-    metrics_top    = std::max( metrics_top, _font->_glyphs[i_c]._metrics.horiBearingY );
+    metrics_width += glyph._metrics.horiAdvance;
+    metrics_height = std::max( metrics_height, glyph._metrics.height );
+    metrics_top    = std::max( metrics_top, glyph._metrics.horiBearingY );
   }
 
   float scale = height / (float)_font->_max_glyph_cy;
@@ -1154,32 +1159,153 @@ bool CFreetypeTexturedFont::CalculateTextSize(
 * \version 1.0
 **********************************************************************/
 bool CFreetypeTexturedFont::DrawText( 
-  const char            *str,    //!< in: the text
-  float                  height, //!< in: the maximum height of the text from the bottom to the top 
-  const Render::TPoint3 &pos )   //!< in: the reference position
+  CBasicDraw            &draw,        //!< in: draw library
+  const char            *str,         //!< in: the text
+  float                  height,      //!< in: the maximum height of the text from the bottom to the top 
+  float                  width_scale, //!< in: scale of the text in the y direction
+  const Render::TPoint3 &pos )        //!< in: the reference position
 {
+  DebugFontTexture( draw );
+  
   if ( _font == nullptr )
     return false;
 
   int min_c = _font->_min_char;
-  int max_c = _font->_min_char;
+  int max_c = _font->_max_char;
+
+  float scale_x = height / (float)_font->_max_glyph_cy;
+  float scale_y = scale_x * width_scale;
+
+  // set up vertex coordinate attribute array
 
   std::string std_str( str );
+  FT_Pos metrics_width  = 0;
+  std::vector<float> vertex_attributes; // x y z u v
+  vertex_attributes.reserve( 5 * 6 * std_str.length() );
   for ( char c : std_str )
   {
-    // get the glyph index
+    // get the glyph data
     int i_c = *(unsigned char*)(&c);
     if ( i_c < min_c || i_c > max_c )
       continue;
+    TFreetypeGlyph &glyph = _font->_glyphs[i_c-min_c];
     
-    // TODO $$$ 
+    // clculate font metrics vertex cooridnate box
+    FT_Pos metrics_coord[]{
+      metrics_width + glyph._metrics.horiBearingX,                        // min x
+      glyph._metrics.horiBearingY - glyph._metrics.height,                // min y
+      metrics_width + glyph._metrics.horiBearingX + glyph._metrics.width, // max x
+      glyph._metrics.horiBearingY                                         // max y
+    };
 
+    // incerement width to the start of the next glyph
+    metrics_width += glyph._metrics.horiAdvance;
+
+    if ( glyph._metrics.width == 0 || glyph._metrics.height == 0 )
+      continue;
+
+    // clculate vertex coordinate box
+    float glyph_coords[]{
+      pos[0] + scale_x * (float)metrics_coord[0], pos[1] + scale_y * (float)metrics_coord[1],
+      pos[0] + scale_x * (float)metrics_coord[2], pos[1] + scale_y * (float)metrics_coord[3]
+    };
+
+    // calculate texture coordiantes box
+    float glyph_tex_coords[]{
+      (float)glyph._x / (float)_font->_width,
+      (float)(glyph._y + glyph._cy) / (float)_font->_max_height,
+      (float)(glyph._x + glyph._cx) / (float)_font->_width,
+      (float)glyph._y / (float)_font->_max_height,
+    };
+
+    // set up vertex attribute array
+    std::array<std::array<float, 5>, 4> quad{
+      std::array<float, 5>{ glyph_coords[0], glyph_coords[1], pos[2], glyph_tex_coords[0], glyph_tex_coords[1] },
+      std::array<float, 5>{ glyph_coords[2], glyph_coords[1], pos[2], glyph_tex_coords[2], glyph_tex_coords[1] },
+      std::array<float, 5>{ glyph_coords[2], glyph_coords[3], pos[2], glyph_tex_coords[2], glyph_tex_coords[3] },
+      std::array<float, 5>{ glyph_coords[0], glyph_coords[3], pos[2], glyph_tex_coords[0], glyph_tex_coords[3] }
+    };
+    std::array<int, 6> indices{ 0, 1, 2, 0, 2, 3 };
+    for ( auto i : indices )
+      vertex_attributes.insert( vertex_attributes.end(), quad[i].begin(), quad[i].end() );
   }
 
-  // TODO $$$
- 
+  // buffer specification
+  Render::TVA va_id = Render::TVA::b0_xyz_uv;
+  const std::vector<char> bufferdescr = Render::IDrawBuffer::VADescription( va_id );
+
+  // create buffer
+  Render::IDrawBuffer &buffer = draw.DrawBuffer();
+  buffer.SpecifyVA( bufferdescr.size(), bufferdescr.data() );
+  buffer.UpdateVB( 0, sizeof(float), vertex_attributes.size(), vertex_attributes.data() );
+  
+  // bind glyph texture 
+  glActiveTexture( GL_TEXTURE0 );
+  glBindTexture( GL_TEXTURE_2D, _texture_obj );
+
+  // draw_buffer
+  size_t no_of_vertices = vertex_attributes.size() / 5; // 5 because of x y z u v
+  buffer.DrawArray( Render::TPrimitive::triangles, 0, no_of_vertices, true ); // TODO Render::TPrimitive::trianglestrip + indices / primitive restart
+  buffer.Release();
+
+  // unbind glyph texture
+  glBindTexture( GL_TEXTURE_2D, 0 );
+
   return true;
 }
 
+
+/******************************************************************//**
+* \brief   Draw the entire font texture for debug reasons.
+* 
+* \author  gernot
+* \date    2018-03-18
+* \version 1.0
+**********************************************************************/
+void CFreetypeTexturedFont::DebugFontTexture( 
+  CBasicDraw &draw ) //!< in: draw library
+{
+  if ( _font == nullptr )
+    return;
+
+  int min_c = _font->_min_char;
+  int max_c = _font->_max_char;
+
+  float t_0 = 0.0;
+  float t_1 = 0.4f;
+  float h = 10.0f * (float)_font->_max_height / (float)_font->_width;
+
+  // setup vertex atributes (x y z u v)
+  std::vector<float> vertex_attributes{
+    -1.0f,  -1.0f, 0.0f, t_0, 1.0f,
+     1.0f,  -1.0f, 0.0f, t_1, 1.0f,
+     1.0f, h-1.0f, 0.0f, t_1, 0.0f,
+    
+    -1.0f,  -1.0f, 0.0f, t_0, 1.0f,
+     1.0f, h-1.0f, 0.0f, t_1, 0.0f,
+    -1.0f, h-1.0f, 0.0f, t_0, 0.0f,
+  };
+
+  // buffer specification
+  Render::TVA va_id = Render::TVA::b0_xyz_uv;
+  const std::vector<char> bufferdescr = Render::IDrawBuffer::VADescription( va_id );
+
+  // create buffer
+  Render::IDrawBuffer &buffer = draw.DrawBuffer();
+  buffer.SpecifyVA( bufferdescr.size(), bufferdescr.data() );
+  buffer.UpdateVB( 0, sizeof(float), vertex_attributes.size(), vertex_attributes.data() );
+  
+  // bind glyph texture 
+  glActiveTexture( GL_TEXTURE0 );
+  glBindTexture( GL_TEXTURE_2D, _texture_obj );
+
+  // draw_buffer
+  size_t no_of_vertices = vertex_attributes.size() / 5; // 5 because of x y z u v
+  buffer.DrawArray( Render::TPrimitive::triangles, 0, no_of_vertices, true ); // TODO Render::TPrimitive::trianglestrip + indices / primitive restart
+  buffer.Release();
+
+  // unbind glyph texture
+  glBindTexture( GL_TEXTURE_2D, 0 );
+}
 
 } // OpenGL

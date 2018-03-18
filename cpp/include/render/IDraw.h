@@ -175,7 +175,7 @@ public:
     return font->CalculateTextSize( str, height, box_x, box_btm, box_top );
   }
   
-  virtual bool DrawText( TFontId font_id, const char *text, float height, const TPoint3 &pos ) = 0;
+  virtual bool DrawText( TFontId font_id, const char *text, float height, float width_scale, const TPoint3 &pos, const TColor &color ) = 0;
 };
 
 

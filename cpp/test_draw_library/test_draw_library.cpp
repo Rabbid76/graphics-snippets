@@ -197,11 +197,13 @@ void CWindow_Glfw::Render( double time_ms )
 
     _draw->ActivateOpaque();
 
-    const char *str = "Hello, a long text with a lot of different letters.";
+    const char   *text = "Hello, a long text with a lot of different letters.";
+    static float  text_height  = 0.12f;
+    static float  text_scale_y = 1.0f;
     
     std::array<float, 4> text_rect{ 0.0f };
-    _draw->CalculateTextSize( 0, str, 0.2f, text_rect[2], text_rect[1], text_rect[3] );
-    _draw->DrawText( 0, str, 0.2f, { scale_x * -0.95f, 0.0f, -0.01f } );
+    _draw->CalculateTextSize( 0, text, text_height, text_rect[2], text_rect[1], text_rect[3] );
+    _draw->DrawText( 0, text, text_height, text_scale_y, { scale_x * -0.95f, 0.0f, -0.01f }, { 0.8f, 0.5, 0.2f, 1.0f } );
     
     _draw->DrawRectangle2D( {-0.8f, -0.8f}, {0.8f, 0.8f}, 0.0f, { 1.0f, 0.0f, 1.0f, 1.0f }, 5 );
 
