@@ -943,24 +943,35 @@ bool CBasicDraw::DrawText(
   glBindTexture( GL_TEXTURE_2D, _color_texture );
 
   // set blending
-  bool set_belnding = _current_pass == c_opaque_pass || _current_pass == c_back_pass || _current_pass == 0;
-  if ( set_belnding )
+  bool set_depth_and_belnding = _current_pass == c_opaque_pass || _current_pass == c_back_pass || _current_pass == 0;
+  if ( set_depth_and_belnding )
   {
+    glEnable( GL_DEPTH_TEST );
+    glDepthFunc( GL_LEQUAL );
+    glDepthMask( GL_TRUE );
+
     glEnable( GL_BLEND );
-    //glBlendFunc( GL_ONE, GL_ONE_MINUS_SRC_ALPHA ); // premulitplied alpha
-    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA ); // premulitplied alpha
+    glBlendFunc( GL_ONE, GL_ONE_MINUS_SRC_ALPHA ); // premulitplied alpha
+    //glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA ); // D * (1-alpha) + S * alpha
   }
 
   // TODO $$$ generalise
   bool ret = freetypeFont->DrawText( *this, text, height, width_scale, pos );
 
   // reset blending
-  if ( set_belnding )
+  if ( set_depth_and_belnding )
   {
     if ( _process != nullptr && _current_pass != 0 )
+    {
       _process->PrepareMode( _current_pass );
-    else 
+    }
+    else
+    {
+      glEnable( GL_DEPTH_TEST );
+      glDepthFunc( GL_LESS );
+      glDepthMask( GL_TRUE );
       glDisable( GL_BLEND );
+    }
   }
 
   return ret;
@@ -1121,9 +1132,9 @@ bool CFreetypeTexturedFont::Load( void )
       unsigned char b = glyph->bitmap.buffer[i];
       if ( i > 0 )
       {
-        glyph_data._image[i*4 + 0] = 255;
-        glyph_data._image[i*4 + 1] = 255;
-        glyph_data._image[i*4 + 2] = 255;
+        glyph_data._image[i*4 + 0] = b;
+        glyph_data._image[i*4 + 1] = b;
+        glyph_data._image[i*4 + 2] = b;
         glyph_data._image[i*4 + 3] = b;
       }
     }
@@ -1228,6 +1239,10 @@ bool CFreetypeTexturedFont::DrawText(
   float                  width_scale, //!< in: scale of the text in the y direction
   const Render::TPoint3 &pos )        //!< in: the reference position
 {
+  static bool debug_test = false;
+  if ( debug_test )
+    DebugFontTexture( draw );
+
   if ( _font == nullptr )
     return false;
 
