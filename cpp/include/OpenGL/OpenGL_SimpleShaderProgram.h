@@ -90,6 +90,12 @@ public:
       glUniform4fv( it->second, 1, vec.data() );
   }
   
+  void SetUniformM44( const std::string &name, const float * mat ) const
+  { 
+    auto it = _unifomLocation.find( name );
+    if ( it != _unifomLocation.end() )
+      glUniformMatrix4fv( it->second, 1, GL_FALSE, mat );
+  }
   void SetUniformM44( const std::string &name, const TMat44 & mat ) const
   { 
     auto it = _unifomLocation.find( name );

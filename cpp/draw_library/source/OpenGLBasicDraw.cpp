@@ -621,6 +621,24 @@ bool CBasicDraw::UpdateColorUniforms(
 
 
 /******************************************************************//**
+* \brief   Change the model uniform. 
+* 
+* \author  gernot
+* \date    2018-03-18
+* \version 1.0
+**********************************************************************/
+bool CBasicDraw::SetModelUniform( 
+  const float *model ) //!< in: model matrix
+{
+  if ( _current_prog == nullptr )
+    return false;
+ 
+  _current_prog->SetUniformM44( "u_model", model );
+  return true;
+}
+
+
+/******************************************************************//**
 * \brief   Draw full screen sapce.
 * 
 * \author  gernot
@@ -892,12 +910,64 @@ bool CBasicDraw::Draw(
   buffer.DrawArray( primitive_type, 0, no_of_vertices, true );
   buffer.Release();
 
+  // reset line thickness
+  if ( is_line )
+    glLineWidth( 1.0f );
+  
+  // draw arrows
+  bool arrow_from = style._properites.test( (int)TStyleProperty::arrow_from );
+  bool arrow_to   = style._properites.test( (int)TStyleProperty::arrow_to );
+  if ( arrow_from || arrow_to )
+  {
+    // TODO $$$ beautify arrow
+    static const std::vector<float>arrow_vertices{ 0.0f, 0.0f, -1.0f, -0.5f, -1.0f, 0.5f };
+    static const std::vector<char> arrow_buffer_decr = Render::IDrawBuffer::VADescription( Render::TVA::b0_xy );
+    static const size_t no_arrow_vertices = 3;
+
+    // create arroe buffer
+    Render::IDrawBuffer &buffer = DrawBuffer();
+    buffer.SpecifyVA( arrow_buffer_decr.size(), arrow_buffer_decr.data() );
+    buffer.UpdateVB( 0, sizeof(float), arrow_vertices.size(), arrow_vertices.data() );
+
+    glm::mat4 model = ToGLM( _model );
+
+    // arrow at the start of the polyline
+    if ( arrow_from )
+    {
+      // TODO $$$ 3D !!! project to viewport
+      // TODO method: ArrowMat( p_from, p_to, scale, arrow_model )
+      glm::vec3 x_axis( coords[0]- coords[size], coords[1] - coords[size + 1], 0.0f );
+      x_axis = glm::normalize( x_axis );
+      glm::vec3 z_axis( 0.0f, 0.0f, 1.0f );
+      glm::vec3 y_axis = glm::cross( z_axis, x_axis );
+
+      glm::mat4 orientation(
+        x_axis[0], x_axis[1], x_axis[2], 0.0f,
+        y_axis[0], y_axis[1], y_axis[2], 0.0f,
+        z_axis[0], z_axis[1], z_axis[2], 0.0f,
+        coords[0], coords[1], coords[2], 1.0f );
+      
+      glm::mat4 arrow_model = model * orientation;
+      arrow_model = glm::scale( arrow_model, glm::vec3(style._size[0], style._size[1], 1.0f) );
+
+      SetModelUniform( glm::value_ptr(arrow_model) );
+
+      buffer.DrawArray( Render::TPrimitive::trianglefan, 0, no_arrow_vertices, true );
+      buffer.Release();
+    }
+
+    // arrow at the end of the polyline
+    if ( arrow_from )
+    {
+      // TOOD $$$
+    }
+     
+    SetModelUniform( &_model[0][0] );
+  }
+
   // reset style and context
   if ( is_line )
-  {
-    glDisable( GL_POLYGON_OFFSET_FILL );
-    glLineWidth( 1.0f );
-  }
+    glDisable( GL_POLYGON_OFFSET_FILL ); 
 
   return true;
 }

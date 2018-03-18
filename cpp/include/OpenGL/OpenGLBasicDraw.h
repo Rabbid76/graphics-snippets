@@ -118,6 +118,7 @@ private:
   bool SpecifyRenderProcess( void );
   bool UpdateGeneralUniforms( void );
   bool UpdateColorUniforms( const Render::TColor &color );
+  bool SetModelUniform( const float *model );
   void DrawScereenspace( void );
 
   bool                                _initialized    = false;

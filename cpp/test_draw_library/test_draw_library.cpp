@@ -213,6 +213,11 @@ void CWindow_Glfw::Render( double time_ms )
     
     _draw->DrawRectangle2D( {-0.8f, -0.8f}, {0.8f, 0.8f}, 0.0f, { 1.0f, 0.0f, 1.0f, 1.0f }, 5 );
 
+    _draw->DrawArrow( 
+      3, {-scale_x * 0.95f, scale_y * 0.95f, 0.5f, scale_x * 0.95f, -scale_y * 0.95f, 0.5f },
+      { 1.0f, 0.0f, 0.0f, 1.0f }, 3, { 0.05f, 0.03f }, true, true );
+
+
     _draw->ActivateTransparent();
 
     _draw->DrawConvexPolygon( 2, { -0.8f, -0.8f,  0.8f, -0.8f,  0.0f,  0.8f }, { 1.0f, 0.0f, 0.0f, 0.5f } );

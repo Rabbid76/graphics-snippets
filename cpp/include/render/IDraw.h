@@ -20,6 +20,7 @@
 // stl
 
 #include <vector>
+#include <bitset>
 
 
 /******************************************************************//**
@@ -53,9 +54,20 @@ public:
   using TSize   = IRenderProcess::TSize;
   using TFontId = size_t;
 
+  enum class TStyleProperty
+  {
+    arrow_from,
+    arrow_to,
+    // ...
+    NO_OF
+  };
+  using TStyleProperties = std::bitset<(int)TStyleProperty::NO_OF>;
+
   struct TStyle
   {
-    float _thickness = 1.0f;
+    float            _thickness = 1.0f;
+    TVec2            _size      { 0.0f };
+    TStyleProperties _properites;
   };
 
   virtual ~IDraw() = default;
@@ -94,6 +106,21 @@ public:
   {
     TStyle style;
     style._thickness = thickness;
+    return Draw( TPrimitive::linestrip, size, coords_size, coords, color, style );
+  }
+
+  bool DrawArrow( size_t size, const TBuffer &corrds, const TColor &color, float thickness, const TVec2 &arrow_size, bool arrow_from, bool arrow_to )
+  {
+    return DrawArrow( size, corrds.size(), corrds.data(), color, thickness, arrow_size, arrow_from, arrow_to );
+  }
+
+  virtual bool DrawArrow( size_t size, size_t coords_size, const t_fp *coords, const TColor &color, float thickness, const TVec2 &arrow_size, bool arrow_from, bool arrow_to )
+  {
+    TStyle style;
+    style._thickness = thickness;
+    style._size      = arrow_size;
+    style._properites.set( (int)TStyleProperty::arrow_from, arrow_from );
+    style._properites.set( (int)TStyleProperty::arrow_to, arrow_to );
     return Draw( TPrimitive::linestrip, size, coords_size, coords, color, style );
   }
 
