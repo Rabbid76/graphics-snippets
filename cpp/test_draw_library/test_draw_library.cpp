@@ -203,7 +203,13 @@ void CWindow_Glfw::Render( double time_ms )
     
     std::array<float, 4> text_rect{ 0.0f };
     _draw->CalculateTextSize( 0, text, text_height, text_rect[2], text_rect[1], text_rect[3] );
-    _draw->DrawText( 0, text, text_height, text_scale_y, { scale_x * -0.96f, 0.0f, -0.01f }, { 1.0f, 0.5f, 0.0f, 1.0f } );
+    _draw->DrawText( OpenGL::CBasicDraw::font_sans, text, text_height, text_scale_y, { scale_x * -0.96f, 0.3f, -0.01f }, { 1.0f, 0.5f, 0.0f, 1.0f } );
+    
+    const char *greek_text = "DEFGHIJKLMNOPQRSTUVW";
+    _draw->DrawText( OpenGL::CBasicDraw::font_symbol, greek_text, 0.2f, 1.0f, { scale_x * -0.96f, 0.0f, -0.01f }, { 0.0f, 1.0f, 1.0f, 1.0f } );
+    
+    const char *letter_text = "Hallo letter";
+    _draw->DrawText( OpenGL::CBasicDraw::font_pcifico, letter_text, 0.2f, 1.0f, { scale_x * -0.96f, -0.3f, -0.01f }, { 0.0f, 0.1f, 0.1f, 1.0f } );
     
     _draw->DrawRectangle2D( {-0.8f, -0.8f}, {0.8f, 0.8f}, 0.0f, { 1.0f, 0.0f, 1.0f, 1.0f }, 5 );
 

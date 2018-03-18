@@ -353,6 +353,8 @@ void CBasicDraw::Destroy( void )
 
   glDeleteTextures( 1, &_color_texture );
   _color_texture = 0;
+
+  _fonts.clear();
 }
 
 
@@ -360,6 +362,9 @@ void CBasicDraw::Destroy( void )
 * \brief   Returns a font by its id.
 * 
 * The font is loaded, if not loaded yet.
+*
+* Most Popular Fonts [https://www.fontsquirrel.com/fonts/list/popular]
+* Fonts [https://www.fontsquirrel.com/]
 * 
 * \author  gernot
 * \date    2018-03-18
@@ -369,21 +374,46 @@ bool CBasicDraw::LoadFont(
   TFontId         font_id, //!< in: id of the font
   Render::IFont *&font )   //!< in: the font
 {
-  assert( font_id == 0 ); // TODO $$$ at the moment only one standard font is available
-
-  if ( _std_font == nullptr )
+  auto it = _fonts.find( font_id );
+  if ( it != _fonts.end() )
   {
-    try
-    {
-      _std_font = std::make_unique<CFreetypeTexturedFont>( "../resource/font/FreeSans.ttf" );
-      _std_font->Load();
-    }
-    catch (...)
-    {} 
+    font = it->second.get();
+    return true;
   }
 
-  font = _std_font.get();
-  return font != nullptr;
+  std::string font_finename;
+  switch( font_id )
+  {
+    default: break;
+
+    case font_sans:        font_finename = "../resource/font/FreeSans.ttf"; break;
+    case font_symbol:      font_finename = "../resource/font/symbol.ttf"; break;
+    case font_pcifico:     font_finename = "../resource/font/Pacifico.ttf"; break;
+    case font_alura:       font_finename = "../resource/font/Allura-Regular.otf"; break;
+    case font_grandhotel:  font_finename = "../resource/font/GrandHotel-Regular.otf"; break;
+    case font_greatevibes: font_finename = "../resource/font/GreatVibes-Regular.otf"; break;
+  }
+
+  if ( font_finename.empty() )
+  {
+    assert( false );
+    return false;
+  }
+
+  Render::IFont *newFont = nullptr;
+  try
+  {
+    newFont = new CFreetypeTexturedFont( font_finename.c_str() );
+    newFont->Load();
+    _fonts[font_id].reset( newFont );
+  }
+  catch (...)
+  {
+    return false;
+  }
+
+  font = newFont;
+  return newFont != nullptr;
 }
 
 
@@ -913,11 +943,12 @@ bool CBasicDraw::DrawText(
   glBindTexture( GL_TEXTURE_2D, _color_texture );
 
   // set blending
-  bool set_belnding = _current_pass == c_opaque_pass || c_back_pass || _current_pass == 0;
+  bool set_belnding = _current_pass == c_opaque_pass || _current_pass == c_back_pass || _current_pass == 0;
   if ( set_belnding )
   {
     glEnable( GL_BLEND );
-    glBlendFunc( GL_ONE, GL_ONE_MINUS_SRC_ALPHA ); // premulitplied alpha
+    //glBlendFunc( GL_ONE, GL_ONE_MINUS_SRC_ALPHA ); // premulitplied alpha
+    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA ); // premulitplied alpha
   }
 
   // TODO $$$ generalise
@@ -1090,9 +1121,9 @@ bool CFreetypeTexturedFont::Load( void )
       unsigned char b = glyph->bitmap.buffer[i];
       if ( i > 0 )
       {
-        glyph_data._image[i*4 + 0] = b;
-        glyph_data._image[i*4 + 1] = b;
-        glyph_data._image[i*4 + 2] = b;
+        glyph_data._image[i*4 + 0] = 255;
+        glyph_data._image[i*4 + 1] = 255;
+        glyph_data._image[i*4 + 2] = 255;
         glyph_data._image[i*4 + 3] = b;
       }
     }

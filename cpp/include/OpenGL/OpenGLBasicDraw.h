@@ -66,10 +66,21 @@ class CBasicDraw
 
 public:
 
+  enum TFontID : size_t
+  {
+    font_sans,
+    font_symbol,
+    font_pcifico,
+    font_alura,
+    font_grandhotel,
+    font_greatevibes
+  };
+
   using TProgramPtr = OpenGL::ShaderProgram*;
   using TProcess    = std::unique_ptr<Render::IRenderProcess>;
   using TProgram    = std::unique_ptr<OpenGL::ShaderProgram>;
   using TFont       = std::unique_ptr<Render::IFont>; 
+  using TFontMap    = std::map<size_t, TFont>;
   
 
   CBasicDraw( void );
@@ -127,7 +138,7 @@ private:
   TProgram                            _opaque_prog;
   TProgram                            _transp_prog;
   TProgram                            _finish_prog;
-  TFont                               _std_font; // TODO $$$ font map
+  TFontMap                            _fonts;
   unsigned int                        _color_texture  = 0; // TODO $$$ ITexture
 
   const size_t c_opaque_pass = 1; //!< pass for opque drawing
