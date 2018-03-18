@@ -211,6 +211,8 @@ void main()
     vec4 transp = texture(u_sampler_transp, tex_st);
     vec4 t_attr = texture(u_sampler_transp_attr, tex_st);
 
+    //col.rgb /= (col.a > 1.0/255.0 ? col.a : 1.0); // resolve premultiplied alpha
+
     vec4 col_transp = vec4(0.0);
     if ( t_attr.x > 0.0 && t_attr.a > 0.0 )
     {
@@ -1061,6 +1063,7 @@ bool CFreetypeTexturedFont::Load( void )
   // evaluate texture size  and metrics
   // FreeType Glyph Conventions [https://www.freetype.org/freetype2/docs/glyphs/glyphs-3.html]
 
+  data._width    = 1;  
   data._min_char = 32;
   data._max_char = 256;
   data._glyphs  = std::vector<TFreetypeGlyph>( data._max_char - data._min_char );
@@ -1077,7 +1080,7 @@ bool CFreetypeTexturedFont::Load( void )
 
     glyph_data._metrics = glyph->metrics;
     glyph_data._x       = data._width;
-    glyph_data._y       = 0;
+    glyph_data._y       = 1;
     glyph_data._cx      = cx;
     glyph_data._cy      = cy;
     
@@ -1094,12 +1097,13 @@ bool CFreetypeTexturedFont::Load( void )
       }
     }
     
-    data._width      += cx;
+    data._width      += cx+1;
     data._max_height  = std::max( data._max_height, cy );
 
     data._max_glyph_cy = std::max( data._max_glyph_cy, (int)glyph->metrics.height );
     data._max_glyph_y  = std::max( data._max_glyph_y,  (int)glyph->metrics.horiBearingY );
   }
+  data._max_height += 2;
 
   // create texture
 
