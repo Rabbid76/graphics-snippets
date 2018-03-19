@@ -134,7 +134,9 @@ struct TBuffer
 
   bool operator ==( const TBuffer &B ) const 
   {
-    return std::make_tuple( _type, _format, _layers, _scale, _flag ) == std::make_tuple( B._type, B._format, B._layers, B._scale, B._flag );
+    return 
+      std::make_tuple( _type, _format, _layers, _scale, _multisamples, _flag ) == 
+      std::make_tuple( B._type, B._format, B._layers, B._scale, B._multisamples, B._flag );
   }
   bool operator !=( const TBuffer &B ) const
   {
@@ -163,10 +165,19 @@ struct TBuffer
     , _scale( scale )
   {}
 
+  TBuffer( TBufferType type, TBufferDataType format, unsigned int layers, float scale, unsigned int multisamples )
+    : _type( type )
+    , _format( format )
+    , _layers( layers )
+    , _scale( scale )
+    , _multisamples( multisamples )
+  {}
+
   TBufferType     _type   = TBufferType::DEFAULT;     //!< type of the buffer
   TBufferDataType _format = TBufferDataType::DEFAULT; //!< internal format of the buffer
   unsigned int    _layers = 0;                        //!< number of the texture layers
   float           _scale  = 1.0f;                     //!< buffer size scale (down scale or up scale)
+  unsigned int    _multisamples = 0;                  //!< multisamples
   TProperties     _flag;                              //!< buffer properties
 };
 

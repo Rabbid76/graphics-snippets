@@ -43,7 +43,7 @@
 #endif
 
 #if !defined(__FRAMBUFFER_DEBUG_ERROR_CHECK__)
-//#define __FRAMBUFFER_DEBUG_ERROR_CHECK__
+#define __FRAMBUFFER_DEBUG_ERROR_CHECK__
 #endif
 
 #if defined(_DEBUG) && defined(__FRAMBUFFER_DEBUG_ERROR_CHECK__)
@@ -583,6 +583,7 @@ bool CRenderProcess::Validate( void )
     float scale = ( scale_range[0] < scale_range[1] + 0.001 ) ? scale_range[0] : 1.0f;
     _passScales[passId] = scale;
     bool any_layered = false;
+    bool any_multisampled = false;
     for ( auto & target : passSpec._targets )
     {
       auto bufferIt = _buffers.find( target._bufferID );
@@ -605,6 +606,8 @@ bool CRenderProcess::Validate( void )
 
       if ( IsLayered( bufferIt->second._layers ) )
         any_layered = true;
+      if ( IsMultisampled( bufferIt->second._multisamples ) )
+        any_multisampled = true;
     }
 
     if ( any_layered )
@@ -628,6 +631,25 @@ bool CRenderProcess::Validate( void )
         { 
           Invalidate();
           DebugWarning << "buffer layer missmatch (" << target._bufferID << ") in pass " << passId;
+        }
+      }
+    }
+
+    if ( any_multisampled )
+    {
+      for ( auto & target : passSpec._targets )
+      {
+        auto bufferIt = _buffers.find( target._bufferID );
+        if ( bufferIt == _buffers.end() )
+        { 
+          Invalidate();
+          DebugWarning << "buffer multisample missmatch (" << target._bufferID << ") in pass " << passId;
+        }
+        bool is_multisampled = IsMultisampled( bufferIt->second._multisamples );
+        if ( is_multisampled == false )
+        { 
+          Invalidate();
+          DebugWarning << "buffer multisample missmatch (" << target._bufferID << ") in pass " << passId;
         }
       }
     }
@@ -669,9 +691,10 @@ void CRenderProcess::UpdateTexture(
   newTexture._size = { (size_t)(_size[0] * _scales[bufferID] + 0.5f), (size_t)(_size[1] * _scales[bufferID] + 0.5f) };
 
   // get the buffer format, layers and filer
-  newTexture._format = InternalFormat( specification._type, specification._format );
-  newTexture._layers = specification._layers;
-  newTexture._linear = specification._flag.test( Render::TBuffer::e_linear );
+  newTexture._format       = InternalFormat( specification._type, specification._format );
+  newTexture._layers       = specification._layers;
+  newTexture._multisamples = specification._multisamples;
+  newTexture._linear       = specification._flag.test( Render::TBuffer::e_linear );
 
   // set the the extern textue object
   newTexture._extern = false; // TODO $$$ extern textures
@@ -714,17 +737,10 @@ void CRenderProcess::UpdateTexture(
   glGenTextures( 1, &newTexture._object ); TEST_GL_ERROR
 
   // setup the texture size and the format
-  bool is_layered = IsLayered( newTexture._layers );
+  bool is_layered      = IsLayered( newTexture._layers );
+  bool is_multisampled = IsMultisampled( newTexture._multisamples );
   GLenum target_texture = 0;
-  if ( is_layered == false )
-  {
-    target_texture = GL_TEXTURE_2D;
-    glBindTexture( target_texture, newTexture._object ); TEST_GL_ERROR
-    glTexImage2D( target_texture, 0, (GLint)newTexture._format[0],
-      (GLsizei)newTexture._size[0], (GLsizei)newTexture._size[1],
-      0, (GLenum)newTexture._format[1], (GLenum)newTexture._format[2], nullptr ); TEST_GL_ERROR
-  }
-  else
+  if ( is_layered )
   {
     target_texture = GL_TEXTURE_2D_ARRAY;
     glBindTexture( target_texture, newTexture._object ); TEST_GL_ERROR
@@ -732,24 +748,42 @@ void CRenderProcess::UpdateTexture(
       (GLsizei)newTexture._size[0], (GLsizei)newTexture._size[1], (GLsizei)newTexture._layers,
       0, (GLenum)newTexture._format[1], (GLenum)newTexture._format[2], nullptr ); TEST_GL_ERROR
   }
-  
-  if ( newTexture._linear )
+  else if ( is_multisampled )
   {
-    glTexParameterf( target_texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR ); TEST_GL_ERROR
-    glTexParameterf( target_texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR ); TEST_GL_ERROR
+    target_texture = GL_TEXTURE_2D_MULTISAMPLE;
+    glBindTexture( target_texture, newTexture._object ); TEST_GL_ERROR
+    glTexImage2DMultisample( target_texture, newTexture._multisamples, (GLint)newTexture._format[0],
+      (GLsizei)newTexture._size[0], (GLsizei)newTexture._size[1], GL_FALSE ); TEST_GL_ERROR
   }
-  else
+  else 
   {
-    glTexParameterf( target_texture, GL_TEXTURE_MAG_FILTER, GL_NEAREST ); TEST_GL_ERROR
-    glTexParameterf( target_texture, GL_TEXTURE_MIN_FILTER, GL_NEAREST ); TEST_GL_ERROR
+    target_texture = GL_TEXTURE_2D;
+    glBindTexture( target_texture, newTexture._object ); TEST_GL_ERROR
+    glTexImage2D( target_texture, 0, (GLint)newTexture._format[0],
+      (GLsizei)newTexture._size[0], (GLsizei)newTexture._size[1],
+      0, (GLenum)newTexture._format[1], (GLenum)newTexture._format[2], nullptr ); TEST_GL_ERROR
   }
-  
-  glTexParameterf( target_texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE ); TEST_GL_ERROR
-  glTexParameterf( target_texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE ); TEST_GL_ERROR
-  if ( is_layered )
+
+  if ( is_multisampled == false )
   {
-    glTexParameterf( target_texture, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE );
-    TEST_GL_ERROR
+    if ( newTexture._linear )
+    {
+      glTexParameterf( target_texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR ); TEST_GL_ERROR
+      glTexParameterf( target_texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR ); TEST_GL_ERROR
+    }
+    else
+    {
+      glTexParameterf( target_texture, GL_TEXTURE_MAG_FILTER, GL_NEAREST ); TEST_GL_ERROR
+      glTexParameterf( target_texture, GL_TEXTURE_MIN_FILTER, GL_NEAREST ); TEST_GL_ERROR
+    }
+  
+    glTexParameterf( target_texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE ); TEST_GL_ERROR
+    glTexParameterf( target_texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE ); TEST_GL_ERROR
+    if ( is_layered )
+    {
+      glTexParameterf( target_texture, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE );
+      TEST_GL_ERROR
+    }
   }
 
   // add the texture to the texture map
@@ -865,15 +899,19 @@ void CRenderProcess::AttachFrambufferTextureBuffer(
 
   
   // add texture attachmnet
-  if ( IsLayered( _textures[target._bufferID]._layers ) == false )
+  if ( IsLayered( _textures[target._bufferID]._layers ) )
   {
-    glFramebufferTexture2D( GL_FRAMEBUFFER, attachType, GL_TEXTURE_2D, _textures[target._bufferID]._object, 0 );
+    // layerd or multisample texture attachment
+    glFramebufferTexture( GL_FRAMEBUFFER, attachType, _textures[target._bufferID]._object, 0 );
     TEST_GL_ERROR
+  }
+  else if ( IsMultisampled( _textures[target._bufferID]._multisamples ) )
+  {
+    glFramebufferTexture2D( GL_FRAMEBUFFER, attachType, GL_TEXTURE_2D_MULTISAMPLE, _textures[target._bufferID]._object, 0 );
   }
   else
   {
-    // layerd texture attachment
-    glFramebufferTexture( GL_FRAMEBUFFER, attachType, _textures[target._bufferID]._object, 0 );
+    glFramebufferTexture2D( GL_FRAMEBUFFER, attachType, GL_TEXTURE_2D, _textures[target._bufferID]._object, 0 );
     TEST_GL_ERROR
   }
   // TODO $$$ _textures[target._bufferID]._layers == 1 : glFramebufferTexture3D ???
@@ -1146,10 +1184,12 @@ const CRenderProcess::TBufferInfoCache & CRenderProcess::EvaluateInfoCache(
     if ( texIt == _textures.end() )
       continue;
     TTextureObject &texture = texIt->second;
-    if ( IsLayered( texture._layers ) == false )
-      info._sourceTextures.emplace_back( GL_TEXTURE0 + (unsigned int)source._binding, GL_TEXTURE_2D, texture._object );
-    else
+    if ( IsLayered( texture._layers ) )
       info._sourceTextures.emplace_back( GL_TEXTURE0 + (unsigned int)source._binding, GL_TEXTURE_2D_ARRAY, texture._object );
+    else if ( IsMultisampled( texture._multisamples ) )
+      info._sourceTextures.emplace_back( GL_TEXTURE0 + (unsigned int)source._binding, GL_TEXTURE_2D_MULTISAMPLE, texture._object );
+    else
+      info._sourceTextures.emplace_back( GL_TEXTURE0 + (unsigned int)source._binding, GL_TEXTURE_2D, texture._object );
   }
 
   return it->second;

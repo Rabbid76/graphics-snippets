@@ -83,7 +83,7 @@ public:
   using TFontMap    = std::map<size_t, TFont>;
   
 
-  CBasicDraw( void );
+  CBasicDraw( unsigned int multisamples );
   virtual ~CBasicDraw();
 
   virtual Render::IDrawBuffer * NewDrawBuffer( Render::TDrawBufferUsage usage );
@@ -124,6 +124,7 @@ private:
   bool                                _initialized    = false;
   bool                                _drawing        = false;
   bool                                _unifroms_valid = false;
+  unsigned int                        _multisamples   = 0;
   size_t                              _current_pass   = 0;
   TProgramPtr                         _current_prog   = nullptr;
   const size_t                        _max_buffers    = 8;

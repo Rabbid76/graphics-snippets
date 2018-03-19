@@ -39,6 +39,7 @@ private:
     std::array< int, 2 > _vpSize         {0, 0};
     bool                 _updateViewport = true;
     bool                 _doubleBuffer   = true;
+    unsigned int         _multisamples   = 0;
     GLFWwindow *         _wnd            = nullptr;
     GLFWmonitor *        _monitor        = nullptr;
 
@@ -56,7 +57,7 @@ public:
 
     virtual ~CWindow_Glfw();
 
-    void Init( int width, int height, int multisampling, bool doubleBuffer );
+    void Init( int width, int height, unsigned int multisampling, bool doubleBuffer );
     static void CallbackResize(GLFWwindow* window, int cx, int cy);
     void MainLoop( void );
 };
@@ -92,16 +93,17 @@ void CWindow_Glfw::CallbackResize(GLFWwindow* window, int cx, int cy)
         wndPtr->Resize( cx, cy );
 }
 
-void CWindow_Glfw::Init( int width, int height, int multisampling, bool doubleBuffer )
+void CWindow_Glfw::Init( int width, int height, unsigned int multisamples, bool doubleBuffer )
 {
     _doubleBuffer = doubleBuffer;
+    _multisamples = multisamples;
 
     // [GLFW Window guide; Window creation hints](http://www.glfw.org/docs/latest/window_guide.html#window_hints_values)
 
     glfwWindowHint( GLFW_DEPTH_BITS, 24 );
     glfwWindowHint( GLFW_STENCIL_BITS, 8 ); 
 
-    glfwWindowHint( GLFW_SAMPLES, multisampling );
+    glfwWindowHint( GLFW_SAMPLES, _multisamples );
     glfwWindowHint( GLFW_DOUBLEBUFFER, _doubleBuffer ? GLFW_TRUE : GLFW_FALSE );
     
     _wnd = glfwCreateWindow( width, height, "OGL window", nullptr, nullptr );
@@ -121,7 +123,13 @@ void CWindow_Glfw::Init( int width, int height, int multisampling, bool doubleBu
     glfwGetWindowPos( _wnd, &_wndPos[0], &_wndPos[1] );
     _updateViewport = true;
 
-    _draw = std::make_unique<OpenGL::CBasicDraw>();
+    _draw = std::make_unique<OpenGL::CBasicDraw>( _multisamples ); // TODO $$$ does not work. Why?
+    
+    // possibly `glBlitFramebuffer`
+    // alternative implement FXAA
+    // see Multisampling [https://www.khronos.org/opengl/wiki/Multisampling]
+    
+    //_draw = std::make_unique<OpenGL::CBasicDraw>( 0 );
 }
 
 void CWindow_Glfw::Resize( int cx, int cy )
@@ -178,6 +186,7 @@ void CWindow_Glfw::Render( double time_ms )
     // TODO $$$ input polyline
     // TODO $$$ draw arcs, curves (nurbs, spline) by tessellation shader
     // TODO $$$ orbit controll
+    // TODO $$$ FXAA !!!
 
     // TODO view matrix from pitch, yaw (and roll) or quaternation
 

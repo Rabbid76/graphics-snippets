@@ -57,12 +57,13 @@ public:
 
     bool operator !=( TTextureObject &B ) const { return (*this == B) == false; }
 
-    unsigned int                _object; //!< GPU object name
-    std::array<size_t, 2>       _size;   //!< 2D texture size
-    std::array<unsigned int, 3> _format; //!< texture format
-    unsigned int                _layers; //!< number of texture layers
-    bool                        _linear; //!< linear texture buffer filter
-    bool                        _extern; //!< extern texture; a texture which is not maneged in this class, but was handed over for use
+    unsigned int                _object;       //!< GPU object name
+    std::array<size_t, 2>       _size;         //!< 2D texture size
+    std::array<unsigned int, 3> _format;       //!< texture format
+    unsigned int                _layers;       //!< number of texture layers
+    unsigned int                _multisamples; //!< number of texture layers
+    bool                        _linear;       //!< linear texture buffer filter
+    bool                        _extern;       //!< extern texture; a texture which is not maneged in this class, but was handed over for use
   };
   using TTextureMap = std::map<size_t, TTextureObject>;
 
@@ -127,7 +128,8 @@ public:
 
 private:
 
-  bool IsLayered( unsigned int layers ) const { return layers > 1; }
+  bool IsLayered(      unsigned int layers )       const { return layers > 1; }
+  bool IsMultisampled( unsigned int multisamples ) const { return multisamples > 1; }
 
   void Destruct( void );
   void DeleteUnnecessaryTextures( void );

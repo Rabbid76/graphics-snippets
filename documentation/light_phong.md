@@ -68,7 +68,7 @@ See also:
 - [wikipedia, Phong reflection model][1]
 - [wikibooks, GLSL Programming/Unity/Smooth Specular Highlights](https://en.wikibooks.org/wiki/GLSL_Programming/Unity/Smooth_Specular_Highlights)
 - [Bui Tuong Phong, University of Utah, Illumination for computer generated pictures, 1975](http://www.cs.northwestern.edu/~ago820/cs395/Papers/Phong_1975.pdf)
-- [S�bastien Lagarde, Relationship between Phong and Blinn lighting model](https://seblagarde.wordpress.com/2012/03/29/relationship-between-phong-and-blinn-lighting-model/)
+- [Sebastien Lagarde, Relationship between Phong and Blinn lighting model](https://seblagarde.wordpress.com/2012/03/29/relationship-between-phong-and-blinn-lighting-model/)
 - [Learning Modern 3D Graphics Programming - Phong Model](https://alfonse.bitbucket.io/oldtut/Illumination/Tut11%20Phong%20Model.html)
 - [Phong lighting: add specular lighting separately or with ambient and diffuse?](https://stackoverflow.com/questions/48160165/phong-lighting-add-specular-lighting-separately-or-with-ambient-and-diffuse/48162382#48162382)
 
