@@ -123,11 +123,9 @@ void CWindow_Glfw::Init( int width, int height, unsigned int multisamples, bool 
     glfwGetWindowPos( _wnd, &_wndPos[0], &_wndPos[1] );
     _updateViewport = true;
 
-    _draw = std::make_unique<OpenGL::CBasicDraw>();
-    
-    // possibly `glBlitFramebuffer`
-    // alternative implement FXAA
-    // see Multisampling [https://www.khronos.org/opengl/wiki/Multisampling]
+    static float c_scale = 1.0f;
+    static bool  c_fxaa = false;
+    _draw = std::make_unique<OpenGL::CBasicDraw>( c_scale, c_fxaa );
 }
 
 void CWindow_Glfw::Resize( int cx, int cy )

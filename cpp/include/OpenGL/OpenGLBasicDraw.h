@@ -83,7 +83,7 @@ public:
   using TFontMap    = std::map<size_t, TFont>;
   
 
-  CBasicDraw( void );
+  CBasicDraw( float scale, bool fxaa );
   virtual ~CBasicDraw();
 
   virtual Render::IDrawBuffer * NewDrawBuffer( Render::TDrawBufferUsage usage );
@@ -124,6 +124,7 @@ private:
   bool                                _initialized    = false;
   bool                                _drawing        = false;
   bool                                _unifroms_valid = false;
+  bool                                _fxaa           = false;
   float                               _fb_scale       = 1.0f;
   size_t                              _current_pass   = 0;
   TProgramPtr                         _current_prog   = nullptr;

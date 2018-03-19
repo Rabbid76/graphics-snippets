@@ -250,6 +250,27 @@ void main()
 }
 )";
 
+std::string finish_pass_sh_frag = R"(
+#version 460
+
+in TVertexData
+{
+    vec2 pos;
+} in_data;
+
+out vec4 frag_color;
+
+layout (binding = 1) uniform sampler2D u_sampler_color;
+
+uniform vec2 vp_size;
+
+void main()
+{
+    vec4 col   = texture(u_sampler_color, gl_FragCoord.xy/vp_size); 
+    frag_color = vec4(col.rgb, 1.0);
+}
+)";
+
 std::string finish_sh_frag = R"(
 #version 460
 
@@ -262,21 +283,265 @@ out vec4 frag_color;
 
 layout (binding = 1) uniform sampler2D u_sampler_color;
 
+uniform vec2 vp_size;
+
+
+#define FXAA_DEBUG 0       
+#define FXAA_CALCULATE_LUMA 1
+#define FXAA_GREEN_AS_LUMA 0
+
+float FxaaLuma(vec4 rgba)
+{ 
+  #if (FXAA_CALCULATE_LUMA == 1)
+    return dot(rgba.xyz, vec3(0.299, 0.587, 0.114));
+  #else
+  #if (FXAA_GREEN_AS_LUMA == 1)
+    return rgba.y;
+  #else
+    return rgba.w;
+  #endif
+  #endif
+}
+
+vec4 FXAA(vec2 pos, sampler2D tex, vec2 fxaaQualityRcpFrame, float fxaaQualitySubpix, float fxaaQualityEdgeThreshold, float fxaaQualityEdgeThresholdMin)
+{
+  #define FXAA_QUALITY_PS 12
+  const float FXAA_QUALITY_P[FXAA_QUALITY_PS] = float[FXAA_QUALITY_PS](1.0, 1.0, 1.0, 1.0, 1.0, 1.5, 2.0, 2.0, 2.0, 2.0, 4.0, 8.0);
+  vec2 posM  = pos.xy;
+  vec4 rgbyM = textureLod(tex, posM, 0.0);
+
+  #if (FXAA_CALCULATE_LUMA == 1)
+    float lumaM = FxaaLuma(rgbyM);
+    float lumaE = FxaaLuma(textureLodOffset(tex, posM, 0.0, ivec2(1, 0)));
+    float lumaS = FxaaLuma(textureLodOffset(tex, posM, 0.0, ivec2(0, 1)));
+    float lumaSE = FxaaLuma(textureLodOffset(tex, posM, 0.0, ivec2(1, 1)));
+    float lumaNW = FxaaLuma(textureLodOffset(tex, posM, 0.0, ivec2(-1, -1)));
+    float lumaN = FxaaLuma(textureLodOffset(tex, posM, 0.0, ivec2(0, -1)));
+    float lumaW = FxaaLuma(textureLodOffset(tex, posM, 0.0, ivec2(-1, 0)));
+  #else      
+  #if (FXAA_GREEN_AS_LUMA == 1)
+    #define lumaM rgbyM.y
+    vec4 luma4A = textureGather(tex, posM, 1);
+    vec4 luma4B = textureGatherOffset(tex, posM, ivec2(-1, -1), 1);
+  #else
+    #define lumaM rgbyM.w
+    vec4 luma4A = textureGather(tex, posM, 3);
+    vec4 luma4B = textureGatherOffset(tex, posM, ivec2(-1, -1), 3);
+  #endif
+  #define lumaE luma4A.z
+  #define lumaS luma4A.x
+  #define lumaSE luma4A.y
+  #define lumaNW luma4B.w
+  #define lumaN luma4B.z
+  #define lumaW luma4B.x
+  #endif
+      
+  float maxSM = max(lumaS, lumaM);
+  float minSM = min(lumaS, lumaM);
+  float maxESM = max(lumaE, maxSM);
+  float minESM = min(lumaE, minSM);
+  float maxWN = max(lumaN, lumaW);
+  float minWN = min(lumaN, lumaW);
+  float rangeMax = max(maxWN, maxESM);
+  float rangeMin = min(minWN, minESM);
+  float rangeMaxScaled = rangeMax * fxaaQualityEdgeThreshold;
+  float range = rangeMax - rangeMin;
+  float rangeMaxClamped = max(fxaaQualityEdgeThresholdMin, rangeMaxScaled);
+  bool earlyExit = range < rangeMaxClamped;
+
+  if(earlyExit)
+    return rgbyM;
+
+  float lumaNE = FxaaLuma(textureLodOffset(tex, posM, 0.0, ivec2(1, -1)));
+  float lumaSW = FxaaLuma(textureLodOffset(tex, posM, 0.0, ivec2(-1, 1)));
+      
+  float lumaNS = lumaN + lumaS;
+  float lumaWE = lumaW + lumaE;
+  float subpixRcpRange = 1.0/range;
+  float subpixNSWE = lumaNS + lumaWE;
+  float edgeHorz1 = (-2.0 * lumaM) + lumaNS;
+  float edgeVert1 = (-2.0 * lumaM) + lumaWE;
+      
+  float lumaNESE = lumaNE + lumaSE;
+  float lumaNWNE = lumaNW + lumaNE;
+  float edgeHorz2 = (-2.0 * lumaE) + lumaNESE;
+  float edgeVert2 = (-2.0 * lumaN) + lumaNWNE;
+      
+  float lumaNWSW = lumaNW + lumaSW;
+  float lumaSWSE = lumaSW + lumaSE;
+  float edgeHorz4 = (abs(edgeHorz1) * 2.0) + abs(edgeHorz2);
+  float edgeVert4 = (abs(edgeVert1) * 2.0) + abs(edgeVert2);
+  float edgeHorz3 = (-2.0 * lumaW) + lumaNWSW;
+  float edgeVert3 = (-2.0 * lumaS) + lumaSWSE;
+  float edgeHorz = abs(edgeHorz3) + edgeHorz4;
+  float edgeVert = abs(edgeVert3) + edgeVert4;
+      
+  float subpixNWSWNESE = lumaNWSW + lumaNESE;
+  float lengthSign = fxaaQualityRcpFrame.x;
+  bool horzSpan = edgeHorz >= edgeVert;
+  float subpixA = subpixNSWE * 2.0 + subpixNWSWNESE;
+      
+  if(!horzSpan) lumaN = lumaW;
+  if(!horzSpan) lumaS = lumaE;
+  if(horzSpan) lengthSign = fxaaQualityRcpFrame.y;
+  float subpixB = (subpixA * (1.0/12.0)) - lumaM;
+
+  float gradientN = lumaN - lumaM;
+  float gradientS = lumaS - lumaM;
+  float lumaNN = lumaN + lumaM;
+  float lumaSS = lumaS + lumaM;
+  bool pairN = abs(gradientN) >= abs(gradientS);
+  float gradient = max(abs(gradientN), abs(gradientS));
+  if(pairN) lengthSign = -lengthSign;
+  float subpixC = clamp(abs(subpixB) * subpixRcpRange, 0.0, 1.0);
+
+  vec2 posB;
+  posB.x = posM.x;
+  posB.y = posM.y;
+  vec2 offNP;
+  offNP.x = (!horzSpan) ? 0.0 : fxaaQualityRcpFrame.x;
+  offNP.y = ( horzSpan) ? 0.0 : fxaaQualityRcpFrame.y;
+  if(!horzSpan) posB.x += lengthSign * 0.5;
+  if( horzSpan) posB.y += lengthSign * 0.5;
+
+  vec2 posN;
+  posN.x = posB.x - offNP.x * FXAA_QUALITY_P[0];
+  posN.y = posB.y - offNP.y * FXAA_QUALITY_P[0];
+  vec2 posP;
+  posP.x = posB.x + offNP.x * FXAA_QUALITY_P[0];
+  posP.y = posB.y + offNP.y * FXAA_QUALITY_P[0];
+  float subpixD = ((-2.0)*subpixC) + 3.0;
+  float lumaEndN = FxaaLuma(textureLod(tex, posN, 0.0));
+  float subpixE = subpixC * subpixC;
+  float lumaEndP = FxaaLuma(textureLod(tex, posP, 0.0));
+
+  if(!pairN) lumaNN = lumaSS;
+  float gradientScaled = gradient * 1.0/4.0;
+  float lumaMM = lumaM - lumaNN * 0.5;
+  float subpixF = subpixD * subpixE;
+  bool lumaMLTZero = lumaMM < 0.0;
+
+  lumaEndN -= lumaNN * 0.5;
+  lumaEndP -= lumaNN * 0.5;
+  bool doneN = abs(lumaEndN) >= gradientScaled;
+  bool doneP = abs(lumaEndP) >= gradientScaled;
+  if(!doneN) posN.x -= offNP.x * FXAA_QUALITY_P[1];
+  if(!doneN) posN.y -= offNP.y * FXAA_QUALITY_P[1];
+  bool doneNP = (!doneN) || (!doneP);
+  if(!doneP) posP.x += offNP.x * FXAA_QUALITY_P[1];
+  if(!doneP) posP.y += offNP.y * FXAA_QUALITY_P[1];
+
+  #if (FXAA_DEBUG == 1)
+    float it = 0.0;
+  #endif
+  for ( int i = 2; doneNP && i < FXAA_QUALITY_PS; ++ i )
+  {
+    #if (FXAA_DEBUG == 1)
+      it += 1.0/float(FXAA_QUALITY_PS-1);
+    #endif
+    if(!doneN) lumaEndN = FxaaLuma(textureLod(tex, posN.xy, 0.0));
+    if(!doneP) lumaEndP = FxaaLuma(textureLod(tex, posP.xy, 0.0));
+    if(!doneN) lumaEndN = lumaEndN - lumaNN * 0.5;
+    if(!doneP) lumaEndP = lumaEndP - lumaNN * 0.5;
+    doneN = abs(lumaEndN) >= gradientScaled;
+    doneP = abs(lumaEndP) >= gradientScaled;
+    if(!doneN) posN.x -= offNP.x * FXAA_QUALITY_P[i];
+    if(!doneN) posN.y -= offNP.y * FXAA_QUALITY_P[i];
+    doneNP = (!doneN) || (!doneP);
+    if(!doneP) posP.x += offNP.x * FXAA_QUALITY_P[i];
+    if(!doneP) posP.y += offNP.y * FXAA_QUALITY_P[i];
+  } 
+
+  float dstN = posM.x - posN.x;
+  float dstP = posP.x - posM.x;
+  if(!horzSpan) dstN = posM.y - posN.y;
+  if(!horzSpan) dstP = posP.y - posM.y;
+
+  bool goodSpanN = (lumaEndN < 0.0) != lumaMLTZero;
+  float spanLength = (dstP + dstN);
+  bool goodSpanP = (lumaEndP < 0.0) != lumaMLTZero;
+  float spanLengthRcp = 1.0/spanLength;
+
+  bool directionN = dstN < dstP;
+  float dst = min(dstN, dstP);
+  bool goodSpan = directionN ? goodSpanN : goodSpanP;
+  float subpixG = subpixF * subpixF;
+  float pixelOffset = (dst * (-spanLengthRcp)) + 0.5;
+  float subpixH = subpixG * fxaaQualitySubpix;
+
+  float pixelOffsetGood = goodSpan ? pixelOffset : 0.0;
+  float pixelOffsetSubpix = max(pixelOffsetGood, subpixH);
+  if(!horzSpan) posM.x += pixelOffsetSubpix * lengthSign;
+  if( horzSpan) posM.y += pixelOffsetSubpix * lengthSign;
+   
+  vec3 fxaaCol = textureLod(tex, posM, 0.0).xyz;
+  #if (FXAA_DEBUG == 1)
+    fxaaCol.rgb = vec3(it, dot(fxaaCol.rgb, vec3(0.299, 0.587, 0.114)), 1.0-it); 
+  #endif
+  return vec4(fxaaCol, lumaM);
+}
+
 void main()
 {
-    vec2  pos_st  = in_data.pos.xy * 0.5 + 0.5;    
-    vec4  col     = texture(u_sampler_color, pos_st);
-    frag_color    = col.rgba;
+    // float fxaaQualitySubpix
+    //   Only used on FXAA Quality.
+    //   This used to be the FXAA_QUALITY__SUBPIX define.
+    //   It is here now to allow easier tuning.
+    //   Choose the amount of sub-pixel aliasing removal.
+    //   This can effect sharpness.
+    //     1.00 - upper limit (softer)
+    //     0.75 - default amount of filtering
+    //     0.50 - lower limit (sharper, less sub-pixel aliasing removal)
+    //     0.25 - almost off
+    //     0.00 - completely off
+
+    float fxaaQualitySubpix = 0.75;
+
+
+    // float fxaaQualityEdgeThreshold                                  
+    //   Only used on FXAA Quality.
+    //   This used to be the FXAA_QUALITY__EDGE_THRESHOLD define.
+    //   It is here now to allow easier tuning.
+    //   The minimum amount of local contrast required to apply algorithm.
+    //     0.333 - too little (faster)
+    //     0.250 - low quality
+    //     0.166 - default
+    //     0.125 - high quality 
+    //     0.063 - overkill (slower)
+    
+    float fxaaQualityEdgeThreshold = 0.125;
+
+
+    // float fxaaQualityEdgeThresholdMin
+    //   Only used on FXAA Quality.
+    //   This used to be the FXAA_QUALITY__EDGE_THRESHOLD_MIN define.
+    //   It is here now to allow easier tuning.
+    //   Trims the algorithm from processing darks.
+    //     0.0833 - upper limit (default, the start of visible unfiltered edges)
+    //     0.0625 - high quality (faster)
+    //     0.0312 - visible limit (slower)
+    //   Special notes when using FXAA_GREEN_AS_LUMA,
+    //     Likely want to set this to zero.
+    //     As colors that are mostly not-green
+    //     will appear very dark in the green channel!
+    //     Tune by looking at mostly non-green content,
+    //     then start at zero and increase until aliasing is a problem.
+    
+    float fxaaQualityEdgeThresholdMin = 0.0312;
+
+    vec4 fxaa_col = FXAA(
+        gl_FragCoord.xy/vp_size, u_sampler_color, 1.0/vp_size,
+        fxaaQualitySubpix, fxaaQualityEdgeThreshold, fxaaQualityEdgeThresholdMin ); 
+    
+    frag_color = vec4(fxaa_col.rgb, 1.0);
 }
 )";
-
+   
 
 //---------------------------------------------------------------------
 // CBasicDraw
 //---------------------------------------------------------------------
 
-
-static float up_scale = 1.0f;
 
 /******************************************************************//**
 * @brief   ctor
@@ -285,8 +550,11 @@ static float up_scale = 1.0f;
 * @date    2018-02-06
 * @version 1.0
 **********************************************************************/
-CBasicDraw::CBasicDraw( void )
-  : _fb_scale( up_scale )
+CBasicDraw::CBasicDraw( 
+  float scale, //!< - framebuffer scale
+  bool  fxaa ) //!< - true: FXAA
+  : _fb_scale( scale )
+  , _fxaa( fxaa )
 {}
 
 
@@ -522,7 +790,7 @@ bool CBasicDraw::Init( void )
     _finish_prog.reset( new OpenGL::ShaderProgram(
       {
         { finish_sh_vert, GL_VERTEX_SHADER },
-        { finish_sh_frag, GL_FRAGMENT_SHADER }
+        { _fxaa ? finish_sh_frag : finish_pass_sh_frag, GL_FRAGMENT_SHADER }
       } ) );
   }
   catch (...)
@@ -600,12 +868,12 @@ bool CBasicDraw::SpecifyRenderProcess( void )
   const size_t c_transp_attr_ID  = 3;
   const size_t c_mixed_col_ID    = 4;
 
-  bool linear = _fb_scale > 1.5f;
+  bool linear = _fxaa || _fb_scale > 1.5f;
   Render::IRenderProcess::TBufferMap buffers;
-  buffers.emplace( c_depth_ID,       Render::TBuffer( Render::TBufferType::DEPTH,  Render::TBufferDataType::DEFAULT, 0, _fb_scale, 0, linear ) );
-  buffers.emplace( c_color_ID,       Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::DEFAULT, 0, _fb_scale, 0, linear ) );
-  buffers.emplace( c_transp_ID,      Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::F16,     0, _fb_scale, 0, linear ) );
-  buffers.emplace( c_transp_attr_ID, Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::F16,     0, _fb_scale, 0, linear ) );
+  buffers.emplace( c_depth_ID,       Render::TBuffer( Render::TBufferType::DEPTH,  Render::TBufferDataType::DEFAULT, 0, _fb_scale, 0, false ) );
+  buffers.emplace( c_color_ID,       Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::DEFAULT, 0, _fb_scale, 0, false ) );
+  buffers.emplace( c_transp_ID,      Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::F16,     0, _fb_scale, 0, false ) );
+  buffers.emplace( c_transp_attr_ID, Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::F16,     0, _fb_scale, 0, false ) );
   buffers.emplace( c_mixed_col_ID,   Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::DEFAULT, 0, _fb_scale, 0, linear ) );
 
   Render::IRenderProcess::TPassMap passes;
@@ -632,7 +900,7 @@ bool CBasicDraw::SpecifyRenderProcess( void )
   mixcol_pass._targets.emplace_back( c_mixed_col_ID, 0, false ); // color target
   passes.emplace( c_mixcol_pass, mixcol_pass );
 
-  Render::TPass finish_pass( Render::TPassDepthTest::OFF, Render::TPassBlending::MIX );
+  Render::TPass finish_pass( Render::TPassDepthTest::OFF, Render::TPassBlending::OFF );
   finish_pass._sources.emplace_back( c_mixed_col_ID, 1 ); // color buffer source
   passes.emplace( c_finish_pass, finish_pass );  // TODO $$$ set default clear off
 
@@ -876,6 +1144,7 @@ bool CBasicDraw::Finish( void )
 
   _process->PrepareNoClear( c_finish_pass );
   _finish_prog->Use();
+  _finish_prog->SetUniformF2( "vp_size", TVec2{ (float)_vp_size[0], (float)_vp_size[1] } );
   DrawScereenspace();
   glUseProgram( 0 );
 
