@@ -123,13 +123,11 @@ void CWindow_Glfw::Init( int width, int height, unsigned int multisamples, bool 
     glfwGetWindowPos( _wnd, &_wndPos[0], &_wndPos[1] );
     _updateViewport = true;
 
-    _draw = std::make_unique<OpenGL::CBasicDraw>( _multisamples ); // TODO $$$ does not work. Why?
+    _draw = std::make_unique<OpenGL::CBasicDraw>();
     
     // possibly `glBlitFramebuffer`
     // alternative implement FXAA
     // see Multisampling [https://www.khronos.org/opengl/wiki/Multisampling]
-    
-    //_draw = std::make_unique<OpenGL::CBasicDraw>( 0 );
 }
 
 void CWindow_Glfw::Resize( int cx, int cy )

@@ -190,17 +190,8 @@ void main()
 }
 )";
 
-std::string finish_sh_frag_head = R"(
-#version 460
-#define SAMPLER_2D sampler2D
-)";
-
-std::string finish_sh_frag_head_msaa = R"(
-#version 460
-#define SAMPLER_2D sampler2DMS
-)";
-
 std::string finish_sh_frag = R"(
+#version 460
 
 in TVertexData
 {
@@ -209,9 +200,9 @@ in TVertexData
 
 out vec4 frag_color;
 
-layout (binding = 1) uniform SAMPLER_2D u_sampler_color;
-layout (binding = 2) uniform SAMPLER_2D u_sampler_transp;
-layout (binding = 3) uniform SAMPLER_2D u_sampler_transp_attr;
+layout (binding = 1) uniform sampler2D u_sampler_color;
+layout (binding = 2) uniform sampler2D u_sampler_transp;
+layout (binding = 3) uniform sampler2D u_sampler_transp_attr;
 
 void main()
 {
@@ -219,8 +210,6 @@ void main()
     vec4  col     = texelFetch(u_sampler_color,       itex_xy, 0);
     vec4  transp  = texelFetch(u_sampler_transp,      itex_xy, 0);
     vec4  t_attr  = texelFetch(u_sampler_transp_attr, itex_xy, 0);
-
-    //col.rgb /= (col.a > 1.0/255.0 ? col.a : 1.0); // resolve premultiplied alpha
 
     vec4 col_transp = vec4(0.0);
     if ( t_attr.x > 0.0 && t_attr.a > 0.0 )
@@ -230,9 +219,11 @@ void main()
         float alpha         = 1.0 - pow(1.0 - averageTransp, t_attr.x);
         col_transp          = vec4(colApprox, alpha); 
     }
+    else
+      col.rgb /= (col.a > 1.0/255.0 ? col.a : 1.0); // resolve premultiplied alpha
     
-    vec3 mix_col = mix(col.rgb, col_transp.rgb, col_transp.a);   
-    frag_color   = vec4(mix_col.rgb, max(col.a, col_transp.a));
+    vec4 mix_col = mix(col.rgba, col_transp.rgba, col_transp.a);   
+    frag_color   = mix_col;
 }
 )";
 
@@ -249,9 +240,7 @@ void main()
 * @date    2018-02-06
 * @version 1.0
 **********************************************************************/
-CBasicDraw::CBasicDraw( 
-  unsigned int multisamples ) //!< in multisamples
-  : _multisamples( multisamples )
+CBasicDraw::CBasicDraw( void )
 {}
 
 
@@ -472,12 +461,10 @@ bool CBasicDraw::Init( void )
   // finish shader
   try
   {
-    std::string frag_sh = ( _multisamples > 1 ? finish_sh_frag_head_msaa : finish_sh_frag_head ) + finish_sh_frag;
-
     _finish_prog.reset( new OpenGL::ShaderProgram(
       {
         { finish_sh_vert, GL_VERTEX_SHADER },
-        { frag_sh, GL_FRAGMENT_SHADER }
+        { finish_sh_frag, GL_FRAGMENT_SHADER }
       } ) );
   }
   catch (...)
@@ -553,15 +540,14 @@ bool CBasicDraw::SpecifyRenderProcess( void )
   const size_t c_color_ID        = 1;
   const size_t c_transp_ID       = 2;
   const size_t c_transp_attr_ID  = 3;
-  const size_t c_finish_msaa_ID  = 4;
+  const size_t c_finish_ID  = 4;
   
   Render::IRenderProcess::TBufferMap buffers;
-  buffers.emplace( c_depth_ID,       Render::TBuffer( Render::TBufferType::DEPTH,  Render::TBufferDataType::DEFAULT, 0, 1.0f, _multisamples ) );
-  buffers.emplace( c_color_ID,       Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::DEFAULT, 0, 1.0f, _multisamples ) );
-  buffers.emplace( c_transp_ID,      Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::F16,     0, 1.0f, _multisamples ) );
-  buffers.emplace( c_transp_attr_ID, Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::F16,     0, 1.0f, _multisamples ) );
-  if ( _multisamples > 1 )
-    buffers.emplace( c_finish_msaa_ID, Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::DEFAULT, 0, 1.0f, _multisamples ) );
+  buffers.emplace( c_depth_ID,       Render::TBuffer( Render::TBufferType::DEPTH,  Render::TBufferDataType::DEFAULT, 0, 1.0f, 0 ) );
+  buffers.emplace( c_color_ID,       Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::DEFAULT, 0, 1.0f, 0 ) );
+  buffers.emplace( c_transp_ID,      Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::F16,     0, 1.0f, 0 ) );
+  buffers.emplace( c_transp_attr_ID, Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::F16,     0, 1.0f, 0 ) );
+  buffers.emplace( c_finish_ID,      Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::DEFAULT, 0, 1.0f, 0 ) );
 
   Render::IRenderProcess::TPassMap passes;
 
@@ -577,16 +563,14 @@ bool CBasicDraw::SpecifyRenderProcess( void )
   passes.emplace( c_tranp_pass, transp_pass );
 
   Render::TPass background_pass( Render::TPassDepthTest::OFF, Render::TPassBlending::OFF );
-  if ( _multisamples > 1 )
-    background_pass._targets.emplace_back( c_finish_msaa_ID, 0 ); // color target
+  //background_pass._targets.emplace_back( c_finish_ID, 0 ); // color target
   passes.emplace( c_back_pass, background_pass );  // TODO $$$ set default clear
 
   Render::TPass finish_pass( Render::TPassDepthTest::OFF, Render::TPassBlending::MIX );
-  finish_pass._sources.emplace_back( c_color_ID,       1 ); // color buffer source
-  finish_pass._sources.emplace_back( c_transp_ID,      2 ); // tranparency buffer source
-  finish_pass._sources.emplace_back( c_transp_attr_ID, 3 ); // transparency attribute buffer source
-  if ( _multisamples > 1 )
-    finish_pass._targets.emplace_back( c_finish_msaa_ID, 0, false ); // color target
+  finish_pass._sources.emplace_back( c_color_ID,       1 );        // color buffer source
+  finish_pass._sources.emplace_back( c_transp_ID,      2 );        // tranparency buffer source
+  finish_pass._sources.emplace_back( c_transp_attr_ID, 3 );        // transparency attribute buffer source
+  //finish_pass._targets.emplace_back( c_finish_ID, 0, false ); // color target
   passes.emplace( c_finish_pass, finish_pass );  // TODO $$$ set default clear off
 
   _process->SpecifyBuffers( buffers );
@@ -695,10 +679,6 @@ bool CBasicDraw::Begin( void )
     assert( false );
     return false;
   }
-
-  // enable multisampling
-  if ( _multisamples > 1 )
-    glEnable( GL_MULTISAMPLE );
 
   // specify render process
   SpecifyRenderProcess();
@@ -831,18 +811,6 @@ bool CBasicDraw::Finish( void )
   _finish_prog->Use();
   DrawScereenspace();
   glUseProgram( 0 );
-
-  if ( _multisamples > 1 )
-  {
-     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);  
-    _process->Bind( c_finish_pass, true, false );
-    glDrawBuffer(GL_BACK);                      
-    glBlitFramebuffer(0, 0, GLint(_vp_size[0]), GLint(_vp_size[1]), 0, 0, GLint(_vp_size[0]), GLint(_vp_size[1]), GL_COLOR_BUFFER_BIT, GL_NEAREST);
-  }
-
-  // disable multisampling
-  if ( _multisamples > 1 )
-    glDisable( GL_MULTISAMPLE );
 
   _current_pass = 0;
   _drawing      = false;
