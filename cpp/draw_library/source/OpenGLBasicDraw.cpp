@@ -264,8 +264,8 @@ layout (binding = 1) uniform sampler2D u_sampler_color;
 
 void main()
 {
-    ivec2 itex_xy = ivec2(int(gl_FragCoord.x), int(gl_FragCoord.y));    
-    vec4  col     = texelFetch(u_sampler_color,       itex_xy, 0);
+    vec2  pos_st  = in_data.pos.xy * 0.5 + 0.5;    
+    vec4  col     = texture(u_sampler_color, pos_st);
     frag_color    = col.rgba;
 }
 )";
@@ -276,6 +276,8 @@ void main()
 //---------------------------------------------------------------------
 
 
+static float up_scale = 1.0f;
+
 /******************************************************************//**
 * @brief   ctor
 *
@@ -284,6 +286,7 @@ void main()
 * @version 1.0
 **********************************************************************/
 CBasicDraw::CBasicDraw( void )
+  : _fb_scale( up_scale )
 {}
 
 
@@ -596,13 +599,14 @@ bool CBasicDraw::SpecifyRenderProcess( void )
   const size_t c_transp_ID       = 2;
   const size_t c_transp_attr_ID  = 3;
   const size_t c_mixed_col_ID    = 4;
-  
+
+  bool linear = _fb_scale > 1.5f;
   Render::IRenderProcess::TBufferMap buffers;
-  buffers.emplace( c_depth_ID,       Render::TBuffer( Render::TBufferType::DEPTH,  Render::TBufferDataType::DEFAULT, 0, 1.0f, 0 ) );
-  buffers.emplace( c_color_ID,       Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::DEFAULT, 0, 1.0f, 0 ) );
-  buffers.emplace( c_transp_ID,      Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::F16,     0, 1.0f, 0 ) );
-  buffers.emplace( c_transp_attr_ID, Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::F16,     0, 1.0f, 0 ) );
-  buffers.emplace( c_mixed_col_ID,   Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::DEFAULT, 0, 1.0f, 0 ) );
+  buffers.emplace( c_depth_ID,       Render::TBuffer( Render::TBufferType::DEPTH,  Render::TBufferDataType::DEFAULT, 0, _fb_scale, 0, linear ) );
+  buffers.emplace( c_color_ID,       Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::DEFAULT, 0, _fb_scale, 0, linear ) );
+  buffers.emplace( c_transp_ID,      Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::F16,     0, _fb_scale, 0, linear ) );
+  buffers.emplace( c_transp_attr_ID, Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::F16,     0, _fb_scale, 0, linear ) );
+  buffers.emplace( c_mixed_col_ID,   Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::DEFAULT, 0, _fb_scale, 0, linear ) );
 
   Render::IRenderProcess::TPassMap passes;
 
@@ -961,7 +965,7 @@ bool CBasicDraw::Draw(
   {
     glEnable( GL_POLYGON_OFFSET_FILL );
     glPolygonOffset( 1.0, 1.0 );
-    glLineWidth( style._thickness );
+    glLineWidth( style._thickness * _fb_scale );
   }
 
   // set uniforms

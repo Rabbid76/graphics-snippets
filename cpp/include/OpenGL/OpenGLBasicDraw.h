@@ -124,6 +124,7 @@ private:
   bool                                _initialized    = false;
   bool                                _drawing        = false;
   bool                                _unifroms_valid = false;
+  float                               _fb_scale       = 1.0f;
   size_t                              _current_pass   = 0;
   TProgramPtr                         _current_prog   = nullptr;
   const size_t                        _max_buffers    = 8;
