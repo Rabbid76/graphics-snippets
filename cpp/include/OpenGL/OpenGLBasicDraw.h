@@ -138,6 +138,7 @@ private:
   TProcess                            _process;
   TProgram                            _opaque_prog;
   TProgram                            _transp_prog;
+  TProgram                            _mixcol_prog;
   TProgram                            _finish_prog;
   TFontMap                            _fonts;
   unsigned int                        _color_texture  = 0; // TODO $$$ ITexture
@@ -145,7 +146,8 @@ private:
   const size_t c_opaque_pass = 1; //!< pass for opque drawing
   const size_t c_tranp_pass  = 2; //!< pass for tranparent drawing
   const size_t c_back_pass   = 3; //!< pass for drawing to background
-  const size_t c_finish_pass = 4; //!< final pass (put it all together)
+  const size_t c_mixcol_pass = 4; //!< mix color pass (put it all together)
+  const size_t c_finish_pass = 5; //!< final pass (fxaa)
 };
 
 

@@ -169,11 +169,11 @@ void main()
 
 
 //---------------------------------------------------------------------
-// finish shader
+// mix color shader
 //---------------------------------------------------------------------
 
 
-std::string finish_sh_vert = R"(
+std::string mixcol_sh_vert = R"(
 #version 460
 
 layout (location = 0) in vec2 in_pos;
@@ -190,7 +190,7 @@ void main()
 }
 )";
 
-std::string finish_sh_frag = R"(
+std::string mixcol_sh_frag = R"(
 #version 460
 
 in TVertexData
@@ -223,7 +223,50 @@ void main()
       col.rgb /= (col.a > 1.0/255.0 ? col.a : 1.0); // resolve premultiplied alpha
     
     vec4 mix_col = mix(col.rgba, col_transp.rgba, col_transp.a);   
-    frag_color   = mix_col;
+    frag_color   = vec4(mix_col.rgb*mix_col.a, mix_col.a);
+}
+)";
+
+
+//---------------------------------------------------------------------
+// final shader
+//---------------------------------------------------------------------
+
+
+std::string finish_sh_vert = R"(
+#version 460
+
+layout (location = 0) in vec2 in_pos;
+
+out TVertexData
+{
+    vec2 pos;
+} out_data;
+
+void main()
+{
+    out_data.pos = in_pos;
+    gl_Position  = vec4(in_pos, 0.0, 1.0);
+}
+)";
+
+std::string finish_sh_frag = R"(
+#version 460
+
+in TVertexData
+{
+    vec2 pos;
+} in_data;
+
+out vec4 frag_color;
+
+layout (binding = 1) uniform sampler2D u_sampler_color;
+
+void main()
+{
+    ivec2 itex_xy = ivec2(int(gl_FragCoord.x), int(gl_FragCoord.y));    
+    vec4  col     = texelFetch(u_sampler_color,       itex_xy, 0);
+    frag_color    = col.rgba;
 }
 )";
 
@@ -340,7 +383,7 @@ void CBasicDraw::Destroy( void )
 
   _opaque_prog.reset( nullptr );
   _transp_prog.reset( nullptr );
-  _finish_prog.reset( nullptr );
+  _mixcol_prog.reset( nullptr );
 
   for ( auto & buffer : _draw_buffers )
   {
@@ -458,6 +501,18 @@ bool CBasicDraw::Init( void )
   catch (...)
   {}
 
+  // mix color shader
+  try
+  {
+    _mixcol_prog.reset( new OpenGL::ShaderProgram(
+      {
+        { mixcol_sh_vert, GL_VERTEX_SHADER },
+        { mixcol_sh_frag, GL_FRAGMENT_SHADER }
+      } ) );
+  }
+  catch (...)
+  {}
+
   // finish shader
   try
   {
@@ -540,14 +595,14 @@ bool CBasicDraw::SpecifyRenderProcess( void )
   const size_t c_color_ID        = 1;
   const size_t c_transp_ID       = 2;
   const size_t c_transp_attr_ID  = 3;
-  const size_t c_finish_ID  = 4;
+  const size_t c_mixed_col_ID    = 4;
   
   Render::IRenderProcess::TBufferMap buffers;
   buffers.emplace( c_depth_ID,       Render::TBuffer( Render::TBufferType::DEPTH,  Render::TBufferDataType::DEFAULT, 0, 1.0f, 0 ) );
   buffers.emplace( c_color_ID,       Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::DEFAULT, 0, 1.0f, 0 ) );
   buffers.emplace( c_transp_ID,      Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::F16,     0, 1.0f, 0 ) );
   buffers.emplace( c_transp_attr_ID, Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::F16,     0, 1.0f, 0 ) );
-  buffers.emplace( c_finish_ID,      Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::DEFAULT, 0, 1.0f, 0 ) );
+  buffers.emplace( c_mixed_col_ID,   Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::DEFAULT, 0, 1.0f, 0 ) );
 
   Render::IRenderProcess::TPassMap passes;
 
@@ -563,14 +618,18 @@ bool CBasicDraw::SpecifyRenderProcess( void )
   passes.emplace( c_tranp_pass, transp_pass );
 
   Render::TPass background_pass( Render::TPassDepthTest::OFF, Render::TPassBlending::OFF );
-  //background_pass._targets.emplace_back( c_finish_ID, 0 ); // color target
+  background_pass._targets.emplace_back( c_mixed_col_ID, 0, true, _bg_color ); // color target
   passes.emplace( c_back_pass, background_pass );  // TODO $$$ set default clear
 
+  Render::TPass mixcol_pass( Render::TPassDepthTest::OFF, Render::TPassBlending::MIX_PREMULTIPLIED_ALPHA );
+  mixcol_pass._sources.emplace_back( c_color_ID,       1 );      // color buffer source
+  mixcol_pass._sources.emplace_back( c_transp_ID,      2 );      // tranparency buffer source
+  mixcol_pass._sources.emplace_back( c_transp_attr_ID, 3 );      // transparency attribute buffer source
+  mixcol_pass._targets.emplace_back( c_mixed_col_ID, 0, false ); // color target
+  passes.emplace( c_mixcol_pass, mixcol_pass );
+
   Render::TPass finish_pass( Render::TPassDepthTest::OFF, Render::TPassBlending::MIX );
-  finish_pass._sources.emplace_back( c_color_ID,       1 );        // color buffer source
-  finish_pass._sources.emplace_back( c_transp_ID,      2 );        // tranparency buffer source
-  finish_pass._sources.emplace_back( c_transp_attr_ID, 3 );        // transparency attribute buffer source
-  //finish_pass._targets.emplace_back( c_finish_ID, 0, false ); // color target
+  finish_pass._sources.emplace_back( c_mixed_col_ID, 1 ); // color buffer source
   passes.emplace( c_finish_pass, finish_pass );  // TODO $$$ set default clear off
 
   _process->SpecifyBuffers( buffers );
@@ -684,9 +743,8 @@ bool CBasicDraw::Begin( void )
   SpecifyRenderProcess();
   _process->PrepareClear( c_opaque_pass );
   _process->PrepareClear( c_tranp_pass );
-
-  glClearColor( _bg_color[0], _bg_color[1], _bg_color[2], _bg_color[3] );
-  _process->Prepare( c_back_pass );
+  _process->PrepareClear( c_back_pass );
+  _process->Prepare( c_finish_pass );
   
   _current_pass = 0;
   _drawing      = true;
@@ -806,6 +864,11 @@ bool CBasicDraw::Finish( void )
     assert( false );
     return false;
   }
+
+  _process->PrepareNoClear( c_mixcol_pass );
+  _mixcol_prog->Use();
+  DrawScereenspace();
+  glUseProgram( 0 );
 
   _process->PrepareNoClear( c_finish_pass );
   _finish_prog->Use();
