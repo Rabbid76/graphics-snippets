@@ -553,12 +553,15 @@ bool CBasicDraw::SpecifyRenderProcess( void )
   const size_t c_color_ID        = 1;
   const size_t c_transp_ID       = 2;
   const size_t c_transp_attr_ID  = 3;
+  const size_t c_finish_msaa_ID  = 4;
   
   Render::IRenderProcess::TBufferMap buffers;
   buffers.emplace( c_depth_ID,       Render::TBuffer( Render::TBufferType::DEPTH,  Render::TBufferDataType::DEFAULT, 0, 1.0f, _multisamples ) );
   buffers.emplace( c_color_ID,       Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::DEFAULT, 0, 1.0f, _multisamples ) );
   buffers.emplace( c_transp_ID,      Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::F16,     0, 1.0f, _multisamples ) );
   buffers.emplace( c_transp_attr_ID, Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::F16,     0, 1.0f, _multisamples ) );
+  if ( _multisamples > 1 )
+    buffers.emplace( c_finish_msaa_ID, Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::DEFAULT, 0, 1.0f, _multisamples ) );
 
   Render::IRenderProcess::TPassMap passes;
 
@@ -574,12 +577,16 @@ bool CBasicDraw::SpecifyRenderProcess( void )
   passes.emplace( c_tranp_pass, transp_pass );
 
   Render::TPass background_pass( Render::TPassDepthTest::OFF, Render::TPassBlending::OFF );
+  if ( _multisamples > 1 )
+    background_pass._targets.emplace_back( c_finish_msaa_ID, 0 ); // color target
   passes.emplace( c_back_pass, background_pass );  // TODO $$$ set default clear
 
   Render::TPass finish_pass( Render::TPassDepthTest::OFF, Render::TPassBlending::MIX );
   finish_pass._sources.emplace_back( c_color_ID,       1 ); // color buffer source
   finish_pass._sources.emplace_back( c_transp_ID,      2 ); // tranparency buffer source
   finish_pass._sources.emplace_back( c_transp_attr_ID, 3 ); // transparency attribute buffer source
+  if ( _multisamples > 1 )
+    finish_pass._targets.emplace_back( c_finish_msaa_ID, 0, false ); // color target
   passes.emplace( c_finish_pass, finish_pass );  // TODO $$$ set default clear off
 
   _process->SpecifyBuffers( buffers );
@@ -824,6 +831,14 @@ bool CBasicDraw::Finish( void )
   _finish_prog->Use();
   DrawScereenspace();
   glUseProgram( 0 );
+
+  if ( _multisamples > 1 )
+  {
+     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);  
+    _process->Bind( c_finish_pass, true, false );
+    glDrawBuffer(GL_BACK);                      
+    glBlitFramebuffer(0, 0, GLint(_vp_size[0]), GLint(_vp_size[1]), 0, 0, GLint(_vp_size[0]), GLint(_vp_size[1]), GL_COLOR_BUFFER_BIT, GL_NEAREST);
+  }
 
   // disable multisampling
   if ( _multisamples > 1 )
