@@ -83,7 +83,7 @@ public:
   using TFontMap    = std::map<size_t, TFont>;
   
 
-  CBasicDraw( float scale, bool fxaa );
+  CBasicDraw( unsigned int samples, float scale, bool fxaa );
   virtual ~CBasicDraw();
 
   virtual Render::IDrawBuffer * NewDrawBuffer( Render::TDrawBufferUsage usage );
@@ -111,6 +111,9 @@ public:
   virtual bool DrawText( TFontId font_id, const char *text, float height, float width_scale, const Render::TPoint3 &pos, const Render::TColor &color ) override;
 
 private:
+                                                        
+  bool Multisample( void ) const { return _samples > 1; }
+  bool EnableMultisample( bool enable );
 
   void InvalidateProcess( void );
   void InvalidateUniforms( void );
@@ -125,6 +128,7 @@ private:
   bool                                _drawing        = false;
   bool                                _unifroms_valid = false;
   bool                                _fxaa           = false;
+  unsigned int                        _samples        = 0;
   float                               _fb_scale       = 1.0f;
   size_t                              _current_pass   = 0;
   TProgramPtr                         _current_prog   = nullptr;

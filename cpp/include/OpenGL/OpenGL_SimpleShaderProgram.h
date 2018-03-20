@@ -62,6 +62,13 @@ public:
   void Use( void ) const { glUseProgram( _prog ); }
   void Release( void ) const { glUseProgram( 0 ); }
   
+  void SetUniformI1( const std::string &name, int val ) const
+  { 
+    auto it = _unifomLocation.find( name );
+    if ( it != _unifomLocation.end() )
+      glUniform1i( it->second, val );
+  }
+
   void SetUniformF1( const std::string &name, float val ) const
   { 
     auto it = _unifomLocation.find( name );

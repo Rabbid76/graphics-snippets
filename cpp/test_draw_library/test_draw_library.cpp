@@ -39,7 +39,6 @@ private:
     std::array< int, 2 > _vpSize         {0, 0};
     bool                 _updateViewport = true;
     bool                 _doubleBuffer   = true;
-    unsigned int         _multisamples   = 0;
     GLFWwindow *         _wnd            = nullptr;
     GLFWmonitor *        _monitor        = nullptr;
 
@@ -57,7 +56,7 @@ public:
 
     virtual ~CWindow_Glfw();
 
-    void Init( int width, int height, unsigned int multisampling, bool doubleBuffer );
+    void Init( int width, int height, bool doubleBuffer );
     static void CallbackResize(GLFWwindow* window, int cx, int cy);
     void MainLoop( void );
 };
@@ -69,7 +68,7 @@ int main(int argc, char** argv)
 
     // create OpenGL window and make OpenGL context current (`glfwInit` has to be done before).
     CWindow_Glfw window;
-    window.Init( 800, 600, 4, true );
+    window.Init( 800, 600, true );
 
     // OpenGL context needs to be current for `glewInit`
     if ( glewInit() != GLEW_OK )
@@ -93,17 +92,16 @@ void CWindow_Glfw::CallbackResize(GLFWwindow* window, int cx, int cy)
         wndPtr->Resize( cx, cy );
 }
 
-void CWindow_Glfw::Init( int width, int height, unsigned int multisamples, bool doubleBuffer )
+void CWindow_Glfw::Init( int width, int height, bool doubleBuffer )
 {
     _doubleBuffer = doubleBuffer;
-    _multisamples = multisamples;
 
     // [GLFW Window guide; Window creation hints](http://www.glfw.org/docs/latest/window_guide.html#window_hints_values)
 
     glfwWindowHint( GLFW_DEPTH_BITS, 24 );
     glfwWindowHint( GLFW_STENCIL_BITS, 8 ); 
 
-    glfwWindowHint( GLFW_SAMPLES, _multisamples );
+    glfwWindowHint( GLFW_SAMPLES, 1 );
     glfwWindowHint( GLFW_DOUBLEBUFFER, _doubleBuffer ? GLFW_TRUE : GLFW_FALSE );
     
     _wnd = glfwCreateWindow( width, height, "OGL window", nullptr, nullptr );
@@ -123,9 +121,10 @@ void CWindow_Glfw::Init( int width, int height, unsigned int multisamples, bool 
     glfwGetWindowPos( _wnd, &_wndPos[0], &_wndPos[1] );
     _updateViewport = true;
 
-    static float c_scale = 1.0f;
-    static bool  c_fxaa = false;
-    _draw = std::make_unique<OpenGL::CBasicDraw>( c_scale, c_fxaa );
+    static float        c_scale   = 1.0f;
+    static bool         c_fxaa    = false;
+    static unsigned int c_samples = 4;
+    _draw = std::make_unique<OpenGL::CBasicDraw>( c_samples, c_scale, c_fxaa );
 }
 
 void CWindow_Glfw::Resize( int cx, int cy )

@@ -228,6 +228,58 @@ void main()
 )";
 
 
+std::string mixcol_multisamples_sh_frag = R"(
+#version 460
+
+in TVertexData
+{
+    vec2 pos;
+} in_data;
+
+out vec4 frag_color;
+
+layout (binding = 1) uniform sampler2DMS u_sampler_color;
+layout (binding = 2) uniform sampler2DMS u_sampler_transp;
+layout (binding = 3) uniform sampler2DMS u_sampler_transp_attr;
+
+uniform int u_no_of_samples;
+
+void main()
+{
+    ivec2 itex_xy = ivec2(int(gl_FragCoord.x), int(gl_FragCoord.y)); 
+
+    vec4 col    = vec4(0.0);
+    vec4 transp = vec4(0.0);
+    vec4 t_attr = vec4(0.0);
+   
+    int no_of_samples = u_no_of_samples;
+    for (int i = 0; i < no_of_samples; ++ i)
+    { 
+        col    += texelFetch(u_sampler_color,       itex_xy, i);
+        transp += texelFetch(u_sampler_transp,      itex_xy, i);
+        t_attr += texelFetch(u_sampler_transp_attr, itex_xy, i);
+    }
+    col    /= float(no_of_samples);
+    transp /= float(no_of_samples);
+    t_attr /= float(no_of_samples);
+
+    vec4 col_transp = vec4(0.0);
+    if ( t_attr.x > 0.0 && t_attr.a > 0.0 )
+    {
+        vec3 colApprox      = transp.rgb / transp.a;
+        float averageTransp = t_attr.w / t_attr.x;
+        float alpha         = 1.0 - pow(1.0 - averageTransp, t_attr.x);
+        col_transp          = vec4(colApprox, alpha); 
+    }
+    else
+      col.rgb /= (col.a > 1.0/255.0 ? col.a : 1.0); // resolve premultiplied alpha
+    
+    vec4 mix_col = mix(col.rgba, col_transp.rgba, col_transp.a);   
+    frag_color   = vec4(mix_col.rgb*mix_col.a, mix_col.a);
+}
+)";
+
+
 //---------------------------------------------------------------------
 // final shader
 //---------------------------------------------------------------------
@@ -551,9 +603,11 @@ void main()
 * @version 1.0
 **********************************************************************/
 CBasicDraw::CBasicDraw( 
-  float scale, //!< - framebuffer scale
-  bool  fxaa ) //!< - true: FXAA
-  : _fb_scale( scale )
+  unsigned int samples, //!< - sapmles for multisampling
+  float        scale,   //!< - framebuffer scale
+  bool         fxaa )   //!< - true: FXAA
+  : _samples( samples )
+  , _fb_scale( scale )
   , _fxaa( fxaa )
 {}
 
@@ -778,7 +832,7 @@ bool CBasicDraw::Init( void )
     _mixcol_prog.reset( new OpenGL::ShaderProgram(
       {
         { mixcol_sh_vert, GL_VERTEX_SHADER },
-        { mixcol_sh_frag, GL_FRAGMENT_SHADER }
+        { Multisample() ? mixcol_multisamples_sh_frag :  mixcol_sh_frag, GL_FRAGMENT_SHADER }
       } ) );
   }
   catch (...)
@@ -870,11 +924,11 @@ bool CBasicDraw::SpecifyRenderProcess( void )
 
   bool linear = _fxaa || _fb_scale > 1.5f;
   Render::IRenderProcess::TBufferMap buffers;
-  buffers.emplace( c_depth_ID,       Render::TBuffer( Render::TBufferType::DEPTH,  Render::TBufferDataType::DEFAULT, 0, _fb_scale, 0, false ) );
-  buffers.emplace( c_color_ID,       Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::DEFAULT, 0, _fb_scale, 0, false ) );
-  buffers.emplace( c_transp_ID,      Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::F16,     0, _fb_scale, 0, false ) );
-  buffers.emplace( c_transp_attr_ID, Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::F16,     0, _fb_scale, 0, false ) );
-  buffers.emplace( c_mixed_col_ID,   Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::DEFAULT, 0, _fb_scale, 0, linear ) );
+  buffers.emplace( c_depth_ID,       Render::TBuffer( Render::TBufferType::DEPTH,  Render::TBufferDataType::DEFAULT, 0, _fb_scale, _samples, false ) );
+  buffers.emplace( c_color_ID,       Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::DEFAULT, 0, _fb_scale, _samples, false ) );
+  buffers.emplace( c_transp_ID,      Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::F16,     0, _fb_scale, _samples, false ) );
+  buffers.emplace( c_transp_attr_ID, Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::F16,     0, _fb_scale, _samples, false ) );
+  buffers.emplace( c_mixed_col_ID,   Render::TBuffer( Render::TBufferType::COLOR4, Render::TBufferDataType::DEFAULT, 0, _fb_scale, 0,        linear ) );
 
   Render::IRenderProcess::TPassMap passes;
 
@@ -995,6 +1049,27 @@ void CBasicDraw::DrawScereenspace( void )
 
 
 /******************************************************************//**
+* \brief   Enables or disables multisampling.
+* 
+* \author  gernot
+* \date    2018-03-20
+* \version 1.0
+**********************************************************************/
+bool CBasicDraw::EnableMultisample( 
+  bool enable ) //!< in: true: enambe multisample; false: disable mutisample
+{
+  if ( Multisample() == false )
+    return false;
+
+  if ( enable )
+    glEnable( GL_MULTISAMPLE );
+  else
+    glDisable( GL_MULTISAMPLE );
+
+  return true;
+}
+
+/******************************************************************//**
 * \brief   Start the rendering.
 *
 * Specify the render buffers
@@ -1017,7 +1092,10 @@ bool CBasicDraw::Begin( void )
   _process->PrepareClear( c_tranp_pass );
   _process->PrepareClear( c_back_pass );
   _process->Prepare( c_finish_pass );
-  
+
+  // disable multisampling
+  EnableMultisample( false );
+
   _current_pass = 0;
   _drawing      = true;
   return true;
@@ -1050,6 +1128,9 @@ bool CBasicDraw::ActivateBackground( void )
   // set uniforms
   _unifroms_valid = false;
   UpdateGeneralUniforms();
+
+  // disable multisampling
+  EnableMultisample( false );
   
   return true;
 }
@@ -1084,6 +1165,9 @@ bool CBasicDraw::ActivateOpaque( void )
   _unifroms_valid = false;
   UpdateGeneralUniforms();
 
+  // enabel multisampling
+  EnableMultisample( true );
+
   return true;
 }
 
@@ -1116,6 +1200,9 @@ bool CBasicDraw::ActivateTransparent( void )
   _unifroms_valid = false;
   UpdateGeneralUniforms();
 
+  // enabel multisampling
+  EnableMultisample( true );
+
   return true;
 }
 
@@ -1137,11 +1224,18 @@ bool CBasicDraw::Finish( void )
     return false;
   }
 
+  // disable multisampling
+  EnableMultisample( false );
+
+  // mix opaque and transparent color
   _process->PrepareNoClear( c_mixcol_pass );
   _mixcol_prog->Use();
+  if ( Multisample() )
+    _mixcol_prog->SetUniformI1( "u_no_of_samples", _samples );
   DrawScereenspace();
   glUseProgram( 0 );
 
+  // finsh pass (fxaa)
   _process->PrepareNoClear( c_finish_pass );
   _finish_prog->Use();
   _finish_prog->SetUniformF2( "vp_size", TVec2{ (float)_vp_size[0], (float)_vp_size[1] } );
