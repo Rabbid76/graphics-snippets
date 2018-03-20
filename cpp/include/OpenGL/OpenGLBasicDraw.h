@@ -122,6 +122,7 @@ private:
   bool UpdateGeneralUniforms( void );
   bool UpdateColorUniforms( const Render::TColor &color );
   bool SetModelUniform( const float *model );
+  bool SetModelUniform( const TVec3 &scale, const TVec3 &p0, const TVec3 &px, const TVec3 &xz_plane );
   void DrawScereenspace( void );
 
   bool                                _initialized    = false;

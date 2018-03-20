@@ -1010,7 +1010,7 @@ bool CBasicDraw::UpdateColorUniforms(
 
 
 /******************************************************************//**
-* \brief   Change the model uniform. 
+* \brief   Change the model matrix uniform. 
 * 
 * \author  gernot
 * \date    2018-03-18
@@ -1023,6 +1023,43 @@ bool CBasicDraw::SetModelUniform(
     return false;
  
   _current_prog->SetUniformM44( "u_model", model );
+  return true;
+}
+    
+
+/******************************************************************//**
+* \brief   Change the model matrix uniform.   
+
+* Set up a scaled model matrix, where `p0` the origin, `px` is on
+* the (-)x-axis and a vector in the xz-plan.
+* Multiplies the current model matrix by the new model matrix.
+* 
+* \author  gernot
+* \date    2018-03-18
+* \version 1.0
+**********************************************************************/
+bool CBasicDraw::SetModelUniform( 
+  const TVec3 &scale,    //!< scale
+  const TVec3 &p0,       //!< origin
+  const TVec3 &px,       //!< point on the x-axis (negative)
+  const TVec3 &xz_plane) //!< the z axis
+{
+  glm::vec3 x_axis( p0[0]- px[0], p0[1]- px[1], p0[2]- px[2] );
+  x_axis = glm::normalize( x_axis );
+  glm::vec3 z_axis( xz_plane[0], xz_plane[1], xz_plane[2] );
+  glm::vec3 y_axis = glm::cross( z_axis, x_axis );
+
+  glm::mat4 orientation(
+    x_axis[0], x_axis[1], x_axis[2], 0.0f,
+    y_axis[0], y_axis[1], y_axis[2], 0.0f,
+    z_axis[0], z_axis[1], z_axis[2], 0.0f,
+    p0[0],     p0[1],     p0[2],     1.0f );
+      
+  glm::mat4 arrow_model = ToGLM( _model ) * orientation;
+  arrow_model = glm::scale( arrow_model, glm::vec3(scale[0], scale[1], scale[2]) );
+
+  std::memcpy( &_model[0][0], glm::value_ptr(arrow_model), 16*sizeof(float) );
+  SetModelUniform( glm::value_ptr(arrow_model) );
   return true;
 }
 
@@ -1292,7 +1329,7 @@ bool CBasicDraw::Draw(
     return false;
   }
 
-  if ( size != 2 && size !=3 && size !=4 )
+  if ( size != 2 && size != 3 && size != 4 )
   {
     assert( false );
     return false;
@@ -1353,6 +1390,8 @@ bool CBasicDraw::Draw(
   bool arrow_to   = style._properites.test( (int)TStyleProperty::arrow_to );
   if ( arrow_from || arrow_to )
   {
+    TMat44 model_bk = _model;
+
     // TODO $$$ beautify arrow
     static const std::vector<float>arrow_vertices{ 0.0f, 0.0f, -1.0f, -0.5f, -1.0f, 0.5f };
     static const std::vector<char> arrow_buffer_decr = Render::IDrawBuffer::VADescription( Render::TVA::b0_xy );
@@ -1369,33 +1408,36 @@ bool CBasicDraw::Draw(
     if ( arrow_from )
     {
       // TODO $$$ 3D !!! project to viewport
-      // TODO method: ArrowMat( p_from, p_to, scale, arrow_model )
-      glm::vec3 x_axis( coords[0]- coords[size], coords[1] - coords[size + 1], 0.0f );
-      x_axis = glm::normalize( x_axis );
-      glm::vec3 z_axis( 0.0f, 0.0f, 1.0f );
-      glm::vec3 y_axis = glm::cross( z_axis, x_axis );
-
-      glm::mat4 orientation(
-        x_axis[0], x_axis[1], x_axis[2], 0.0f,
-        y_axis[0], y_axis[1], y_axis[2], 0.0f,
-        z_axis[0], z_axis[1], z_axis[2], 0.0f,
-        coords[0], coords[1], coords[2], 1.0f );
+      size_t i0 = 0;
+      size_t ix = size;
+      SetModelUniform(
+        TVec3{ style._size[0], style._size[1], 1.0f },
+        TVec3{ coords[i0], coords[i0+1], size == 3 ? coords[i0+2] : 0.0f },
+        TVec3{ coords[ix], coords[ix+1], size == 3 ? coords[ix+2] : 0.0f },
+        TVec3{ 0.0f, 0.0f, 1.0f } );
       
-      glm::mat4 arrow_model = model * orientation;
-      arrow_model = glm::scale( arrow_model, glm::vec3(style._size[0], style._size[1], 1.0f) );
+      buffer.DrawArray( Render::TPrimitive::trianglefan, 0, no_arrow_vertices, true );
+      buffer.Release();
+    }
+    _model = model_bk;
 
-      SetModelUniform( glm::value_ptr(arrow_model) );
+    // arrow at the end of the polyline
+    if ( arrow_to )
+    {
+      // TODO $$$ 3D !!! project to viewport
+      size_t i0 = coords_size - size;
+      size_t ix = coords_size - size*2;
+      SetModelUniform(
+        TVec3{ style._size[0], style._size[1], 1.0f },
+        TVec3{ coords[i0], coords[i0+1], size == 3 ? coords[i0+2] : 0.0f },
+        TVec3{ coords[ix], coords[ix+1], size == 3 ? coords[ix+2] : 0.0f },
+        TVec3{ 0.0f, 0.0f, 1.0f } );
 
       buffer.DrawArray( Render::TPrimitive::trianglefan, 0, no_arrow_vertices, true );
       buffer.Release();
     }
-
-    // arrow at the end of the polyline
-    if ( arrow_from )
-    {
-      // TOOD $$$
-    }
      
+    _model = model_bk;
     SetModelUniform( &_model[0][0] );
   }
 
