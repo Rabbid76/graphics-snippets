@@ -54,10 +54,9 @@ class CBasicDraw
   : public Render::IDraw
 {
 
-  // TODO $$$ adaptie transparency
   // TODO $$$ unifrom blocks (model, view, projection)
   // TODO $$$ SSOA (3 frequences)
-  // TODO $$$ text + greek letters (distance fields)
+  // TODO $$$ text + greek letters: distance fields!
   // TODO $$$ post effects (cell (toon), sketch, gamma, hdr) - book of shaders
   // TOOO $$$ meshs
   // TODO $$$ input polyline

@@ -173,15 +173,17 @@ void CWindow_Glfw::InitScene( void )
 
 void CWindow_Glfw::Render( double time_ms )
 {
-    // TODO $$$ adaptie transparency
     // TODO $$$ SSOA (3 frequences)
-    // TODO $$$ text + greek letters (distance fields)
+    // TODO $$$ text + greek letters: distance fields!
     // TODO $$$ post effects (cell (toon), sketch, gamma, hdr) - book of shaders
     // TOOO $$$ meshs
     // TODO $$$ input polyline
     // TODO $$$ draw arcs, curves (nurbs, spline) by tessellation shader
     // TODO $$$ orbit controll
-    // TODO $$$ FXAA !!!
+    
+    // TODO core mode 
+    // see [Vertex Specification; Index buffers](https://www.khronos.org/opengl/wiki/Vertex_Specification#Index_buffers)
+    // The index buffer binding is stored within the VAO. If no VAO is bound, then you cannot bind a buffer object to GL_ELEMENT_ARRAY_BUFFER.
 
     // TODO view matrix from pitch, yaw (and roll) or quaternation
 
