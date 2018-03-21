@@ -105,6 +105,8 @@ public:
   virtual void View( const Render::TMat44 &view )                override { _view = view; InvalidateUniforms(); }          //!< set the view matrix
   virtual void Model( const Render::TMat44 &model )              override { _model = model; InvalidateUniforms(); }        //!< set the model matrix
 
+  virtual TVec3 Project( const TVec3 &pt ) const override; //!< project by projection, view and model
+
   virtual bool Draw( Render::TPrimitive primitive_type, size_t size, size_t coords_size, const Render::t_fp *coords, const Render::TColor &color, const TStyle &style ) override;
 
   virtual bool DrawText( TFontId font_id, const char *text, float height, float width_scale, const Render::TPoint3 &pos, const Render::TColor &color ) override;

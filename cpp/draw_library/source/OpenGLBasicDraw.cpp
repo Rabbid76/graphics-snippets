@@ -1048,6 +1048,8 @@ bool CBasicDraw::SetModelUniform(
   x_axis = glm::normalize( x_axis );
   glm::vec3 z_axis( xz_plane[0], xz_plane[1], xz_plane[2] );
   glm::vec3 y_axis = glm::cross( z_axis, x_axis );
+  y_axis = glm::normalize( y_axis );
+  z_axis = glm::cross( x_axis, y_axis );
 
   glm::mat4 orientation(
     x_axis[0], x_axis[1], x_axis[2], 0.0f,
@@ -1309,6 +1311,22 @@ bool CBasicDraw::ClearDepth( void )
 
 
 /******************************************************************//**
+* \brief   Project by projection, view and model.
+* 
+* \author  gernot
+* \date    2018-03-15
+* \version 1.0
+**********************************************************************/
+TVec3 CBasicDraw::Project( 
+  const TVec3 &pt //!< in: the taht will be projected 
+  ) const
+{
+  glm::vec4 prj_pt = ToGLM(_projection) * ToGLM(_view) * ToGLM(_model) * glm::vec4( pt[0], pt[1], pt[2], 1.0f );
+  return { prj_pt[0]/prj_pt[3], prj_pt[1]/prj_pt[3], prj_pt[2]/prj_pt[3] };
+}
+
+
+/******************************************************************//**
 * \brief   Draw an array od primitives with a single color
 * 
 * \author  gernot
@@ -1357,6 +1375,13 @@ bool CBasicDraw::Draw(
   Render::TVA va_id = size == 2 ? Render::TVA::b0_xy : (size == 3 ? Render::TVA::b0_xyz : Render::TVA::b0_xyzw);
   const std::vector<char> bufferdescr = Render::IDrawBuffer::VADescription( va_id );
 
+  // set style and context
+  if ( is_line )
+  {
+    glEnable( GL_POLYGON_OFFSET_FILL );
+    glPolygonOffset( 1.0, 1.0 );
+  }
+
   // create buffer
   Render::IDrawBuffer &buffer = DrawBuffer();
   buffer.SpecifyVA( bufferdescr.size(), bufferdescr.data() );
@@ -1402,11 +1427,7 @@ bool CBasicDraw::Draw(
   
   // set style and context
   if ( is_line )
-  {
-    glEnable( GL_POLYGON_OFFSET_FILL );
-    glPolygonOffset( 1.0, 1.0 );
     glLineWidth( style._thickness * _fb_scale );
-  }
 
   // set uniforms
   UpdateGeneralUniforms();
@@ -1452,7 +1473,7 @@ bool CBasicDraw::Draw(
         TVec3{ style._size[0], style._size[1], 1.0f },
         TVec3{ coords[i0], coords[i0+1], size == 3 ? coords[i0+2] : 0.0f },
         TVec3{ coords[ix], coords[ix+1], size == 3 ? coords[ix+2] : 0.0f },
-        TVec3{ 0.0f, 0.0f, 1.0f } );
+        TVec3{ _view[2][0], _view[2][1], -_view[2][2] } );
       
       buffer.DrawArray( Render::TPrimitive::trianglefan, 0, no_arrow_vertices, true );
       buffer.Release();
@@ -1469,7 +1490,7 @@ bool CBasicDraw::Draw(
         TVec3{ style._size[0], style._size[1], 1.0f },
         TVec3{ coords[i0], coords[i0+1], size == 3 ? coords[i0+2] : 0.0f },
         TVec3{ coords[ix], coords[ix+1], size == 3 ? coords[ix+2] : 0.0f },
-        TVec3{ 0.0f, 0.0f, 1.0f } );
+        TVec3{ _view[2][0], _view[2][1], -_view[2][2] } );
 
       buffer.DrawArray( Render::TPrimitive::trianglefan, 0, no_arrow_vertices, true );
       buffer.Release();
@@ -1802,8 +1823,8 @@ bool CFreetypeTexturedFont::CalculateTextSize(
   float scale = height / (float)_font->_max_glyph_cy;
 
   box_x   = scale * metrics_width;
-  box_btm = scale * metrics_top;
-  box_top = scale * (metrics_top - metrics_height);
+  box_top = scale * metrics_top;
+  box_btm = scale * (metrics_top - metrics_height);
 
   return true;
 }
@@ -1833,8 +1854,8 @@ bool CFreetypeTexturedFont::DrawText(
   int min_c = _font->_min_char;
   int max_c = _font->_max_char;
 
-  float scale_x = height / (float)_font->_max_glyph_cy;
-  float scale_y = scale_x * width_scale;
+  float scale_y = height / (float)_font->_max_glyph_cy;
+  float scale_x = scale_y * width_scale;
 
   // set up vertex coordinate attribute array
 

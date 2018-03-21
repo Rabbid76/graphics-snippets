@@ -72,24 +72,40 @@ public:
 
   virtual ~IDraw() = default;
   
-  virtual void Destroy( void ) = 0;                           //!< destroy all internal objects and cleanup
-  virtual bool Init( void ) = 0;                              //!< general initializations
-  virtual bool LoadFont( TFontId font_id, IFont *&font ) = 0; //!< load and return a font by its id
-  virtual bool Begin( void ) = 0;                             //!< start the rendering
-  virtual bool ActivateBackground( void ) = 0;                //!< activate rendering to background
-  virtual bool ActivateOpaque( void ) = 0;                    //!< activate rendering to the opaque buffer
-  virtual bool ActivateTransparent( void ) = 0;               //!< activate rendering to the transparent buffer
-  virtual bool Finish( void ) = 0;                            //!< finish the rendering
-  virtual bool ClearDepth( void ) = 0;                        //!< interim clear of the depth buffer
-  virtual void BackgroundColor( const TColor &bg_color ) = 0; //!< sets the background color
-  virtual void ViewportSize( const TSize &vp_size ) = 0;      //!< sete the size of the viewport
-  virtual void Projection( const TMat44 &proj ) = 0;          //!< set the projection matrix
-  virtual void View( const TMat44 &view ) = 0;                //!< set the view matrix
-  virtual void Model( const TMat44 &model ) = 0;              //!< set the model matrix
+  virtual void  Destroy( void ) = 0;                           //!< destroy all internal objects and cleanup
+  virtual bool  Init( void ) = 0;                              //!< general initializations
+  virtual bool  LoadFont( TFontId font_id, IFont *&font ) = 0; //!< load and return a font by its id
+  virtual bool  Begin( void ) = 0;                             //!< start the rendering
+  virtual bool  ActivateBackground( void ) = 0;                //!< activate rendering to background
+  virtual bool  ActivateOpaque( void ) = 0;                    //!< activate rendering to the opaque buffer
+  virtual bool  ActivateTransparent( void ) = 0;               //!< activate rendering to the transparent buffer
+  virtual bool  Finish( void ) = 0;                            //!< finish the rendering
+  virtual bool  ClearDepth( void ) = 0;                        //!< interim clear of the depth buffer
+  virtual void  BackgroundColor( const TColor &bg_color ) = 0; //!< sets the background color
+  virtual void  ViewportSize( const TSize &vp_size ) = 0;      //!< sete the size of the viewport
+  virtual void  Projection( const TMat44 &proj ) = 0;          //!< set the projection matrix
+  virtual void  View( const TMat44 &view ) = 0;                //!< set the view matrix
+  virtual void  Model( const TMat44 &model ) = 0;              //!< set the model matrix
+  virtual TVec3 Project( const TVec3 &pt ) const = 0;          //!< project by projection, view and model
 
   bool DrawConvexPolygon( size_t size, const TBuffer &corrds, const TColor &color )
   {
     return DrawConvexPolygon( size, corrds.size(), corrds.data(), color );
+  }
+
+  bool DrawConvexPolygon( const std::vector<TPoint2> &corrds, const TColor &color )
+  {
+    return DrawConvexPolygon( 2, corrds.size()*2, &corrds[0][0], color );
+  }
+
+  bool DrawConvexPolygon( const std::vector<TPoint3> &corrds, const TColor &color )
+  {
+    return DrawConvexPolygon( 3, corrds.size()*3, &corrds[0][0], color );
+  }
+
+  bool DrawConvexPolygon( const std::vector<TPoint4> &corrds, const TColor &color )
+  {
+    return DrawConvexPolygon( 4, corrds.size()*4, &corrds[0][0], color );
   }
 
   virtual bool DrawConvexPolygon( size_t size, size_t coords_size, const t_fp *coords, const TColor &color )
