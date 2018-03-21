@@ -9,7 +9,7 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>source</Filter>
     </ClCompile>
-    <ClCompile Include="test_draw_library.cpp">
+    <ClCompile Include="draw_library_scenes.cpp">
       <Filter>source</Filter>
     </ClCompile>
   </ItemGroup>

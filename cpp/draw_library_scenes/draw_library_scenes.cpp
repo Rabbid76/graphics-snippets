@@ -52,6 +52,8 @@ private:
     void InitScene( void );
     void Render( double time_ms );
 
+    void TestScene( double time_ms );
+
 public:
 
     virtual ~CWindow_Glfw();
@@ -171,7 +173,19 @@ void CWindow_Glfw::InitScene( void )
     _draw->Init();
 }
 
+
 void CWindow_Glfw::Render( double time_ms )
+{
+  static int scene = 0;
+
+  switch (scene)
+  {
+    default: TestScene( time_ms ); break;
+  }
+}
+
+
+void CWindow_Glfw::TestScene( double time_ms )
 {
     // TODO $$$ SSOA (3 frequences)
     // TODO $$$ text + greek letters: distance fields!
