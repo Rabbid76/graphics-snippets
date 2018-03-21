@@ -1335,7 +1335,9 @@ bool CBasicDraw::Draw(
     return false;
   }
 
-  bool is_point = primitive_type == Render::TPrimitive::points;
+  bool arrow_from = style._properites.test( (int)TStyleProperty::arrow_from );
+  bool arrow_to   = style._properites.test( (int)TStyleProperty::arrow_to );
+  bool is_point   = primitive_type == Render::TPrimitive::points;
 
   bool is_line =
     primitive_type == Render::TPrimitive::lines ||
@@ -1358,7 +1360,45 @@ bool CBasicDraw::Draw(
   // create buffer
   Render::IDrawBuffer &buffer = DrawBuffer();
   buffer.SpecifyVA( bufferdescr.size(), bufferdescr.data() );
-  buffer.UpdateVB( 0, sizeof(float), coords_size, coords );
+  if ( arrow_from || arrow_to )
+  {
+    std::vector<Render::t_fp> temp_coords( coords_size );
+    std::copy( coords, coords + coords_size, temp_coords.begin() );
+
+    // cut line at arraw (thick lines would jut out at the peak of the arrow)
+    if (arrow_from)
+    {
+      size_t i0 = 0;
+      size_t ix = size;
+      glm::vec3 p0( coords[i0], coords[i0+1], size == 3 ? coords[i0+2] : 0.0f );
+      glm::vec3 p1( coords[ix], coords[ix+1], size == 3 ? coords[ix+2] : 0.0f );
+      glm::vec3 v0 = p0 - p1;
+      float l = glm::length( v0 );
+      p0 = p1 + v0 * (l-style._size[0]) / l;
+      temp_coords[i0] = p0[0];
+      temp_coords[i0+1] = p0[1];
+      if (size == 3)
+        temp_coords[i0+2] = p0[2];
+    }
+    if (arrow_to)
+    {
+      size_t i0 = coords_size - size;
+      size_t ix = coords_size - size*2;
+      glm::vec3 p0( coords[i0], coords[i0+1], size == 3 ? coords[i0+2] : 0.0f );
+      glm::vec3 p1( coords[ix], coords[ix+1], size == 3 ? coords[ix+2] : 0.0f );
+      glm::vec3 v0 = p0 - p1;
+      float l = glm::length( v0 );
+      p0 = p1 + v0 * (l-style._size[0]) / l;
+      temp_coords[i0] = p0[0];
+      temp_coords[i0+1] = p0[1];
+      if (size == 3)
+        temp_coords[i0+2] = p0[2];
+    }
+
+    buffer.UpdateVB( 0, sizeof(float), temp_coords.size(), temp_coords.data() );
+  }
+  else
+    buffer.UpdateVB( 0, sizeof(float), coords_size, coords );
   
   // set style and context
   if ( is_line )
@@ -1386,8 +1426,6 @@ bool CBasicDraw::Draw(
     glLineWidth( 1.0f );
   
   // draw arrows
-  bool arrow_from = style._properites.test( (int)TStyleProperty::arrow_from );
-  bool arrow_to   = style._properites.test( (int)TStyleProperty::arrow_to );
   if ( arrow_from || arrow_to )
   {
     TMat44 model_bk = _model;
