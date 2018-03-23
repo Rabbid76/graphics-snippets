@@ -32,6 +32,7 @@
 
 #include <cassert>
 #include <algorithm>
+#include <cstddef>
 
 
 // class implementation
@@ -57,10 +58,10 @@ namespace OpenGL
 
 
 //---------------------------------------------------------------------
-// qpaque shader
+// opaque and transparent polygon shader
 //---------------------------------------------------------------------
 
-  std::string opaque_sh_vert = R"(
+std::string opaque_transp_sh_vert = R"(
 #version 460
 
 layout (location = 0) in vec4 in_pos;
@@ -73,9 +74,13 @@ out TVertexData
 } out_data;
 
 
-uniform mat4 u_proj;
-uniform mat4 u_view;
-uniform mat4 u_model;
+layout(std430, binding = 1) buffer TUniform
+{
+    mat4 u_proj;
+    mat4 u_view;
+    mat4 u_model;
+    vec2 u_vp_size;
+};
 
 void main()
 {
@@ -109,37 +114,6 @@ void main()
 }
 )";
 
-
-//---------------------------------------------------------------------
-// transparent shader
-//---------------------------------------------------------------------
-
-
-std::string transp_sh_vert = R"(
-#version 460
-
-layout (location = 0) in vec4 in_pos;
-layout (location = 1) in vec2 in_tex;
-
-out TVertexData
-{
-    vec3 pos;
-    vec2 tex;
-} out_data;
-
-
-uniform mat4 u_proj;
-uniform mat4 u_view;
-uniform mat4 u_model;
-
-void main()
-{
-    vec4 view_pos = u_view * u_model * in_pos; 
-    out_data.pos  = view_pos.xyz / view_pos.w;
-    out_data.tex  = in_tex;
-    gl_Position   = u_proj * view_pos;
-}
-)";
 
 std::string transp_sh_frag = R"(
 #version 460
@@ -315,11 +289,17 @@ out vec4 frag_color;
 
 layout (binding = 1) uniform sampler2D u_sampler_color;
 
-uniform vec2 vp_size;
+layout(std430, binding = 1) buffer TUniform
+{
+    mat4 u_proj;
+    mat4 u_view;
+    mat4 u_model;
+    vec2 u_vp_size;
+};
 
 void main()
 {
-    vec4 col   = texture(u_sampler_color, gl_FragCoord.xy/vp_size); 
+    vec4 col   = texture(u_sampler_color, gl_FragCoord.xy/u_vp_size); 
     frag_color = vec4(col.rgb, 1.0);
 }
 )";
@@ -336,8 +316,13 @@ out vec4 frag_color;
 
 layout (binding = 1) uniform sampler2D u_sampler_color;
 
-uniform vec2 vp_size;
-
+layout(std430, binding = 1) buffer TUniform
+{
+    mat4 u_proj;
+    mat4 u_view;
+    mat4 u_model;
+    vec2 u_vp_size;
+};
 
 #define FXAA_DEBUG 0       
 #define FXAA_CALCULATE_LUMA 1
@@ -583,7 +568,7 @@ void main()
     float fxaaQualityEdgeThresholdMin = 0.0312;
 
     vec4 fxaa_col = FXAA(
-        gl_FragCoord.xy/vp_size, u_sampler_color, 1.0/vp_size,
+        gl_FragCoord.xy/u_vp_size, u_sampler_color, 1.0/u_vp_size,
         fxaaQualitySubpix, fxaaQualityEdgeThreshold, fxaaQualityEdgeThresholdMin ); 
     
     frag_color = vec4(fxaa_col.rgb, 1.0);
@@ -722,9 +707,19 @@ void CBasicDraw::Destroy( void )
     key = nullptr;
   _nextBufferI = 0;
 
-  glDeleteTextures( 1, &_color_texture );
-  OPENGL_CHECK_GL_ERROR
-  _color_texture = 0;
+  if ( _color_texture != 0 )
+  {
+    glDeleteTextures( 1, &_color_texture );
+    OPENGL_CHECK_GL_ERROR
+    _color_texture = 0;
+  }
+
+  if ( _uniform_ssbo != 0 )
+  {
+    glDeleteBuffers( 1, &_uniform_ssbo );
+    OPENGL_CHECK_GL_ERROR
+    _uniform_ssbo = 0;
+  }
 
   _fonts.clear();
 }
@@ -811,7 +806,7 @@ bool CBasicDraw::Init( void )
   {
     _opaque_prog = std::make_unique<OpenGL::ShaderProgram>(
       std::vector< TShaderInfo >{
-        { opaque_sh_vert, GL_VERTEX_SHADER },
+        { opaque_transp_sh_vert, GL_VERTEX_SHADER },
         { opaque_sh_frag, GL_FRAGMENT_SHADER }
       } );
   }
@@ -823,7 +818,7 @@ bool CBasicDraw::Init( void )
   {
     _transp_prog = std::make_unique<OpenGL::ShaderProgram>(
       std::vector< TShaderInfo >{
-        { transp_sh_vert, GL_VERTEX_SHADER },
+        { opaque_transp_sh_vert, GL_VERTEX_SHADER },
         { transp_sh_frag, GL_FRAGMENT_SHADER }
       } );
   }
@@ -869,6 +864,12 @@ bool CBasicDraw::Init( void )
   glBindTexture( GL_TEXTURE_2D, 0 );  
   OPENGL_CHECK_GL_ERROR
 
+  // setup shader storage buffer
+  glGenBuffers( 1, &_uniform_ssbo );
+  glBindBuffer( GL_SHADER_STORAGE_BUFFER, _uniform_ssbo ); // OpenGL 4.3
+  glBufferData( GL_SHADER_STORAGE_BUFFER, sizeof(_uniforms), &_uniforms, GL_STATIC_DRAW );
+  glBindBufferBase( GL_SHADER_STORAGE_BUFFER, 1, _uniform_ssbo );
+  glBindBuffer( GL_SHADER_STORAGE_BUFFER, 0 );
 
   // TODO $$$ uniform block model, view, projection
   
@@ -984,12 +985,9 @@ bool CBasicDraw::UpdateGeneralUniforms( void )
   if (_unifroms_valid )
     return true;
 
-  // setup uniforms
-  // TODO $$$ automatic type selector, uniform type introspection 
-  // { { "u_proj", _projection },{ "u_view", _view }, { "u_model", _model } } ;
-  _current_prog->SetUniformM44( "u_proj",  _projection );
-  _current_prog->SetUniformM44( "u_view",  _view );
-  _current_prog->SetUniformM44( "u_model", _model );
+  // update shader storage buffer
+  glNamedBufferSubData( _uniform_ssbo, 0, sizeof( _uniforms ), &_uniforms );
+  OPENGL_CHECK_GL_ERROR
 
   _unifroms_valid = true;
   return true;
@@ -1026,8 +1024,11 @@ bool CBasicDraw::SetModelUniform(
 {
   if ( _current_prog == nullptr )
     return false;
- 
-  _current_prog->SetUniformM44( "u_model", model );
+
+  // update shader storage buffer
+  glNamedBufferSubData( _uniform_ssbo, offsetof( TUniforms, _model ), sizeof( _uniforms._model ), &_uniforms._model );
+  OPENGL_CHECK_GL_ERROR
+
   return true;
 }
     
@@ -1062,10 +1063,10 @@ bool CBasicDraw::SetModelUniform(
     z_axis[0], z_axis[1], z_axis[2], 0.0f,
     p0[0],     p0[1],     p0[2],     1.0f );
       
-  glm::mat4 arrow_model = ToGLM( _model ) * orientation;
+  glm::mat4 arrow_model = ToGLM( _uniforms._model ) * orientation;
   arrow_model = glm::scale( arrow_model, glm::vec3(scale[0], scale[1], scale[2]) );
 
-  std::memcpy( &_model[0][0], glm::value_ptr(arrow_model), 16*sizeof(float) );
+  std::memcpy( &_uniforms._model[0][0], glm::value_ptr(arrow_model), 16*sizeof(float) );
   SetModelUniform( glm::value_ptr(arrow_model) );
   return true;
 }
@@ -1288,7 +1289,6 @@ bool CBasicDraw::Finish( void )
   // finsh pass (fxaa)
   _process->PrepareNoClear( c_finish_pass );
   _finish_prog->Use();
-  _finish_prog->SetUniformF2( "vp_size", TVec2{ (float)_vp_size[0], (float)_vp_size[1] } );
   DrawScereenspace();
   glUseProgram( 0 );
   OPENGL_CHECK_GL_ERROR
@@ -1334,7 +1334,7 @@ TVec3 CBasicDraw::Project(
   const TVec3 &pt //!< in: the taht will be projected 
   ) const
 {
-  glm::vec4 prj_pt = ToGLM(_projection) * ToGLM(_view) * ToGLM(_model) * glm::vec4( pt[0], pt[1], pt[2], 1.0f );
+  glm::vec4 prj_pt = ToGLM(_uniforms._projection) * ToGLM(_uniforms._view) * ToGLM(_uniforms._model) * glm::vec4( pt[0], pt[1], pt[2], 1.0f );
   return { prj_pt[0]/prj_pt[3], prj_pt[1]/prj_pt[3], prj_pt[2]/prj_pt[3] };
 }
 
@@ -1391,7 +1391,7 @@ bool CBasicDraw::Draw(
   // set style and context
   if ( is_line )
   {
-    glEnable( GL_POLYGON_OFFSET_FILL );
+    glEnable( GL_POLYGON_OFFSET_LINE );
     glPolygonOffset( 1.0, 1.0 );
     OPENGL_CHECK_GL_ERROR
   }
@@ -1473,7 +1473,7 @@ bool CBasicDraw::Draw(
   // draw arrows
   if ( arrow_from || arrow_to )
   {
-    TMat44 model_bk = _model;
+    TMat44 model_bk = _uniforms._model;
 
     // TODO $$$ beautify arrow
     static const std::vector<float>arrow_vertices{ 0.0f, 0.0f, -1.0f, -0.5f, -1.0f, 0.5f };
@@ -1485,7 +1485,7 @@ bool CBasicDraw::Draw(
     buffer.SpecifyVA( arrow_buffer_decr.size(), arrow_buffer_decr.data() );
     buffer.UpdateVB( 0, sizeof(float), arrow_vertices.size(), arrow_vertices.data() );
 
-    glm::mat4 model = ToGLM( _model );
+    glm::mat4 model = ToGLM( _uniforms._model );
 
     // arrow at the start of the polyline
     if ( arrow_from )
@@ -1497,12 +1497,12 @@ bool CBasicDraw::Draw(
         TVec3{ style._size[0], style._size[1], 1.0f },
         TVec3{ coords[i0], coords[i0+1], size == 3 ? coords[i0+2] : 0.0f },
         TVec3{ coords[ix], coords[ix+1], size == 3 ? coords[ix+2] : 0.0f },
-        TVec3{ _view[2][0], _view[2][1], -_view[2][2] } );
+        TVec3{ _uniforms._view[2][0], _uniforms._view[2][1], -_uniforms._view[2][2] } );
       
       buffer.DrawArray( Render::TPrimitive::trianglefan, 0, no_arrow_vertices, true );
       buffer.Release();
     }
-    _model = model_bk;
+    _uniforms._model = model_bk;
 
     // arrow at the end of the polyline
     if ( arrow_to )
@@ -1514,20 +1514,20 @@ bool CBasicDraw::Draw(
         TVec3{ style._size[0], style._size[1], 1.0f },
         TVec3{ coords[i0], coords[i0+1], size == 3 ? coords[i0+2] : 0.0f },
         TVec3{ coords[ix], coords[ix+1], size == 3 ? coords[ix+2] : 0.0f },
-        TVec3{ _view[2][0], _view[2][1], -_view[2][2] } );
+        TVec3{ _uniforms._view[2][0], _uniforms._view[2][1], -_uniforms._view[2][2] } );
 
       buffer.DrawArray( Render::TPrimitive::trianglefan, 0, no_arrow_vertices, true );
       buffer.Release();
     }
      
-    _model = model_bk;
-    SetModelUniform( &_model[0][0] );
+    _uniforms._model = model_bk;
+    SetModelUniform( &_uniforms._model[0][0] );
   }
 
   // reset style and context
   if ( is_line )
   {
-    glDisable( GL_POLYGON_OFFSET_FILL ); 
+    glDisable( GL_POLYGON_OFFSET_LINE ); 
     OPENGL_CHECK_GL_ERROR
   }
 

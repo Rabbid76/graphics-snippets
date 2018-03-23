@@ -241,7 +241,7 @@ void CWindow_Glfw::Render( double time_ms )
     e_viewport_coordsys
   };
 
-  static int scene = e_viewport_coordsys;
+  static int scene = e_default;
 
   _aspect = (float)_vpSize[0] / (float)_vpSize[1];
   _scale_x = _aspect < 1.0f ? 1.0f : _aspect;
@@ -286,8 +286,8 @@ void CWindow_Glfw::TestScene( double time_ms )
     // TOOO $$$ meshs
     // TODO $$$ input polyline
     // TODO $$$ draw arcs, curves (nurbs, spline) by tessellation shader
+    // TODO $$$ glLineWidth( > 1.0 ) is deprecated in core profile
     // TODO $$$ orbit controll
-    // TODO $$$ glLineWidth( > 1.0 ) is deprecated in cor profile
 
     // TODO view matrix from pitch, yaw (and roll) or quaternation
     

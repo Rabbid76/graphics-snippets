@@ -82,6 +82,14 @@ public:
   using TFont       = std::unique_ptr<Render::IFont>; 
   using TFontMap    = std::map<size_t, TFont>;
   
+  struct TUniforms
+  {
+    Render::TMat44 _projection = OpenGL::Identity();
+    Render::TMat44 _view       = OpenGL::Identity();
+    Render::TMat44 _model      = OpenGL::Identity();
+    Render::TVec2  _vp_size    = { 0.0f };
+  };
+
 
   CBasicDraw( bool core_mode, unsigned int samples, float scale, bool fxaa );
   virtual ~CBasicDraw();
@@ -100,11 +108,41 @@ public:
   virtual bool Finish( void ) override;                                    //!< finish the rendering
   virtual bool ClearDepth( void ) override;                                //!< interim clear of the depth buffer
  
-  virtual void BackgroundColor( const Render::TColor &bg_color ) override {  _bg_color = bg_color; InvalidateProcess(); }; //!< sets the background color
-  virtual void ViewportSize( const TSize &vp_size )              override { _vp_size = vp_size; InvalidateUniforms(); }    //!< sete the size of the viewport
-  virtual void Projection( const Render::TMat44 &proj )          override { _projection = proj; InvalidateUniforms(); }    //!< set the projection matrix
-  virtual void View( const Render::TMat44 &view )                override { _view = view; InvalidateUniforms(); }          //!< set the view matrix
-  virtual void Model( const Render::TMat44 &model )              override { _model = model; InvalidateUniforms(); }        //!< set the model matrix
+  //!< sets the background color
+  virtual void BackgroundColor( const Render::TColor &bg_color ) override
+  {
+    _bg_color = bg_color;
+    InvalidateProcess();
+  };
+
+  //!< sete the size of the viewport
+  virtual void ViewportSize( const TSize &vp_size ) override
+  { 
+    _vp_size = vp_size;
+    _uniforms._vp_size = { (float)vp_size[0], (float)vp_size[1] };
+    InvalidateUniforms();
+  }  
+
+  //!< set the projection matrix
+  virtual void Projection( const Render::TMat44 &proj ) override
+  { 
+    _uniforms._projection = proj;
+    InvalidateUniforms();
+  }
+
+  //!< set the view matrix
+  virtual void View( const Render::TMat44 &view ) override
+  { 
+    _uniforms._view = view;
+    InvalidateUniforms();
+  }          
+  
+  //!< set the model matrix
+  virtual void Model( const Render::TMat44 &model ) override
+  { 
+    _uniforms._model =
+    model; InvalidateUniforms(); 
+  }        
 
   virtual TVec3 Project( const TVec3 &pt ) const override; //!< project by projection, view and model
 
@@ -141,10 +179,8 @@ private:
   std::array<const void*, 8>          _buffer_keys    { nullptr };
   std::array<Render::IDrawBuffer*, 8> _draw_buffers   { nullptr };
   TSize                               _vp_size        { 0 };
-  Render::TMat44                      _projection     = OpenGL::Identity();
-  Render::TMat44                      _view           = OpenGL::Identity();
-  Render::TMat44                      _model          = OpenGL::Identity();
   Render::TColor                      _bg_color       { 0.0f };
+  TUniforms                           _uniforms;
   TProcess                            _process;
   TProgram                            _opaque_prog;
   TProgram                            _transp_prog;
@@ -152,6 +188,7 @@ private:
   TProgram                            _finish_prog;
   TFontMap                            _fonts;
   unsigned int                        _color_texture  = 0; // TODO $$$ ITexture
+  unsigned int                        _uniform_ssbo   = 0; // TODO $$$ IUniform?
 
   const size_t c_opaque_pass = 1; //!< pass for opque drawing
   const size_t c_tranp_pass  = 2; //!< pass for tranparent drawing
