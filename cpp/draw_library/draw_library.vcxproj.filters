@@ -72,6 +72,9 @@
     <ClInclude Include="..\include\render\IFont.h">
       <Filter>render</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\OpenGL\OpenGLError.h">
+      <Filter>OpenGL</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -90,6 +93,9 @@
       <Filter>OpenGL_source</Filter>
     </ClCompile>
     <ClCompile Include="source\OpenGLBasicDraw.cpp">
+      <Filter>OpenGL_source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\OpenGLError.cpp">
       <Filter>OpenGL_source</Filter>
     </ClCompile>
   </ItemGroup>

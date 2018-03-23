@@ -12,6 +12,7 @@
 
 // OpenGL
 
+#include <OpenGLError.h>
 #include <OpenGLBasicDraw.h>
 #include <OpenGLVertexBuffer.h>
 #include <OpenGLFrameBuffer.h>
@@ -720,6 +721,7 @@ void CBasicDraw::Destroy( void )
   _nextBufferI = 0;
 
   glDeleteTextures( 1, &_color_texture );
+  OPENGL_CHECK_GL_ERROR
   _color_texture = 0;
 
   _fonts.clear();
@@ -863,6 +865,7 @@ bool CBasicDraw::Init( void )
   glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, white );
 
   glBindTexture( GL_TEXTURE_2D, 0 );  
+  OPENGL_CHECK_GL_ERROR
 
 
   // TODO $$$ uniform block model, view, projection
@@ -1104,6 +1107,7 @@ bool CBasicDraw::EnableMultisample(
     glEnable( GL_MULTISAMPLE );
   else
     glDisable( GL_MULTISAMPLE );
+  OPENGL_CHECK_GL_ERROR
 
   return true;
 }
@@ -1134,6 +1138,10 @@ bool CBasicDraw::Begin( void )
 
   // disable multisampling
   EnableMultisample( false );
+
+  // draw settings
+  glEnable( GL_LINE_SMOOTH );
+  OPENGL_CHECK_GL_ERROR
 
   _current_pass = 0;
   _drawing      = true;
@@ -1273,6 +1281,7 @@ bool CBasicDraw::Finish( void )
     _mixcol_prog->SetUniformI1( "u_no_of_samples", _samples );
   DrawScereenspace();
   glUseProgram( 0 );
+  OPENGL_CHECK_GL_ERROR
 
   // finsh pass (fxaa)
   _process->PrepareNoClear( c_finish_pass );
@@ -1280,6 +1289,7 @@ bool CBasicDraw::Finish( void )
   _finish_prog->SetUniformF2( "vp_size", TVec2{ (float)_vp_size[0], (float)_vp_size[1] } );
   DrawScereenspace();
   glUseProgram( 0 );
+  OPENGL_CHECK_GL_ERROR
 
   _current_pass = 0;
   _drawing      = false;
@@ -1304,6 +1314,7 @@ bool CBasicDraw::ClearDepth( void )
 
   _process->PrepareNoClear( c_opaque_pass );
   glClear( GL_DEPTH_BUFFER_BIT );
+  OPENGL_CHECK_GL_ERROR
   _process->Release();
 
   return true;
@@ -1380,6 +1391,7 @@ bool CBasicDraw::Draw(
   {
     glEnable( GL_POLYGON_OFFSET_FILL );
     glPolygonOffset( 1.0, 1.0 );
+    OPENGL_CHECK_GL_ERROR
   }
 
   // create buffer
@@ -1427,7 +1439,13 @@ bool CBasicDraw::Draw(
   
   // set style and context
   if ( is_line )
+  {
+    //! see [OpenGL 4.6 API Core Profile Specification; E.2.1 Deprecated But Still Supported Features; page 672](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf)<br/>
+    //! > Wide lines - `LineWidth` values greater than 1.0 will generate an INVALID_VALUE error.
+    // see [OpenGL 3.2 Core Profile glLineWidth](https://stackoverflow.com/questions/8791531/opengl-3-2-core-profile-gllinewidth)
     glLineWidth( style._thickness * _fb_scale );
+    OPENGL_CHECK_GL_ERROR
+  }
 
   // set uniforms
   UpdateGeneralUniforms();
@@ -1436,6 +1454,7 @@ bool CBasicDraw::Draw(
   // bind "white" color texture
   glActiveTexture( GL_TEXTURE0 );
   glBindTexture( GL_TEXTURE_2D, _color_texture ); 
+  OPENGL_CHECK_GL_ERROR
 
   // draw_buffer
   size_t no_of_vertices = coords_size / size;
@@ -1444,7 +1463,10 @@ bool CBasicDraw::Draw(
 
   // reset line thickness
   if ( is_line )
+  {
     glLineWidth( 1.0f );
+    OPENGL_CHECK_GL_ERROR
+  }
   
   // draw arrows
   if ( arrow_from || arrow_to )
@@ -1502,7 +1524,10 @@ bool CBasicDraw::Draw(
 
   // reset style and context
   if ( is_line )
+  {
     glDisable( GL_POLYGON_OFFSET_FILL ); 
+    OPENGL_CHECK_GL_ERROR
+  }
 
   return true;
 }
@@ -1546,6 +1571,7 @@ bool CBasicDraw::DrawText(
   // bind "white" color texture
   glActiveTexture( GL_TEXTURE0 );
   glBindTexture( GL_TEXTURE_2D, _color_texture );
+  OPENGL_CHECK_GL_ERROR
 
   // set blending
   bool set_depth_and_belnding = _current_pass == c_opaque_pass || _current_pass == c_back_pass || _current_pass == 0;
@@ -1558,6 +1584,7 @@ bool CBasicDraw::DrawText(
     glEnable( GL_BLEND );
     glBlendFunc( GL_ONE, GL_ONE_MINUS_SRC_ALPHA ); // premulitplied alpha
     //glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA ); // D * (1-alpha) + S * alpha
+    OPENGL_CHECK_GL_ERROR
   }
 
   // TODO $$$ generalise
@@ -1576,6 +1603,7 @@ bool CBasicDraw::DrawText(
       glDepthFunc( GL_LESS );
       glDepthMask( GL_TRUE );
       glDisable( GL_BLEND );
+      OPENGL_CHECK_GL_ERROR
     }
   }
 

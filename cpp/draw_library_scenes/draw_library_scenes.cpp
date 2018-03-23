@@ -85,8 +85,36 @@ int main(int argc, char** argv)
     window.Init( 800, 600, true );
 
     // OpenGL context needs to be current for `glewInit`
+    glewExperimental = true;
     if ( glewInit() != GLEW_OK )
         throw std::runtime_error( "error initializing glew" );
+
+    std::cout << glGetString( GL_VENDOR ) << std::endl;
+    std::cout << glGetString( GL_RENDERER ) << std::endl;
+    std::cout << glGetString( GL_VERSION ) << std::endl;
+    std::cout << glGetString( GL_SHADING_LANGUAGE_VERSION ) << std::endl;
+
+    GLint major = 0, minor = 0, contex_mask = 0;
+    glGetIntegerv(GL_MAJOR_VERSION, &major);
+    glGetIntegerv(GL_MINOR_VERSION, &minor);
+    glGetIntegerv(GL_CONTEXT_PROFILE_MASK, &contex_mask);
+    std::cout << "context: " << major << "." << minor << " ";
+    if ( contex_mask & GL_CONTEXT_CORE_PROFILE_BIT  )
+      std::cout << "core";
+    else if ( contex_mask & GL_CONTEXT_COMPATIBILITY_PROFILE_BIT )
+      std::cout << "compatibility";
+    if ( contex_mask & GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT  )
+      std::cout << ", forward compatibility";
+    if ( contex_mask & GL_CONTEXT_FLAG_ROBUST_ACCESS_BIT  )
+      std::cout << ", robust access";
+    if ( contex_mask & GL_CONTEXT_FLAG_DEBUG_BIT  )
+      std::cout << ", debug";
+    std::cout << std::endl;
+    
+    // extensions
+    //std::cout << glGetStringi( GL_EXTENSIONS, ... ) << std::endl;
+
+    std::cout << std::endl;
 
     window.MainLoop();
     return 0;
@@ -112,11 +140,30 @@ void CWindow_Glfw::Init( int width, int height, bool doubleBuffer )
 
     // [GLFW Window guide; Window creation hints](http://www.glfw.org/docs/latest/window_guide.html#window_hints_values)
 
+    
+    //$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+    // TODO $$$
+    /*
+    glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, 4 );
+    glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, 6 );
+    glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE );
+    glfwWindowHint( GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE );
+#if defined(_DEBUG)
+    glfwWindowHint( GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE );
+#endif
+    */
+    //$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+    //GLFW_CONTEXT_ROBUSTNESS
+
     glfwWindowHint( GLFW_DEPTH_BITS, 24 );
     glfwWindowHint( GLFW_STENCIL_BITS, 8 ); 
 
     glfwWindowHint( GLFW_SAMPLES, 1 );
     glfwWindowHint( GLFW_DOUBLEBUFFER, _doubleBuffer ? GLFW_TRUE : GLFW_FALSE );
+
+    glfwWindowHint( GLFW_DEPTH_BITS, 24 );
+    glfwWindowHint( GLFW_STENCIL_BITS, 8 ); 
     
     _wnd = glfwCreateWindow( width, height, "OGL window", nullptr, nullptr );
     if ( _wnd == nullptr )
@@ -240,10 +287,7 @@ void CWindow_Glfw::TestScene( double time_ms )
     // TODO $$$ input polyline
     // TODO $$$ draw arcs, curves (nurbs, spline) by tessellation shader
     // TODO $$$ orbit controll
-    
-    // TODO core mode 
-    // see [Vertex Specification; Index buffers](https://www.khronos.org/opengl/wiki/Vertex_Specification#Index_buffers)
-    // The index buffer binding is stored within the VAO. If no VAO is bound, then you cannot bind a buffer object to GL_ELEMENT_ARRAY_BUFFER.
+    // TODO $$$ glLineWidth( > 1.0 ) is deprecated in cor profile
 
     // TODO view matrix from pitch, yaw (and roll) or quaternation
     

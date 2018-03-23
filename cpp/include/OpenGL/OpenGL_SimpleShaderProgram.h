@@ -2,9 +2,12 @@
 
 // include
 
+// OpenGL
+
 #include <OpenGL_Matrix_Camera.h>
 
-// OpenGL
+
+// OpenGL wrapper
 
 #include <GL/glew.h>
 //#include <GL/gl.h> not necessary because of glew 

@@ -19,6 +19,7 @@
 #include <chrono>
 #include <memory>
 #include <cmath>
+#include <iostream>
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -69,8 +70,36 @@ int main(int argc, char** argv)
     glutReshapeFunc( Resize );
     glutIdleFunc( OnIdle );
 
+    glewExperimental = true;
     if ( glewInit() != GLEW_OK )
-        throw std::runtime_error( "error initializing glew" );
+        throw std::runtime_error( "error initializing glew" );     
+
+    std::cout << glGetString( GL_VENDOR ) << std::endl;
+    std::cout << glGetString( GL_RENDERER ) << std::endl;
+    std::cout << glGetString( GL_VERSION ) << std::endl;
+    std::cout << glGetString( GL_SHADING_LANGUAGE_VERSION ) << std::endl;
+
+    GLint major = 0, minor = 0, contex_mask = 0;
+    glGetIntegerv(GL_MAJOR_VERSION, &major);
+    glGetIntegerv(GL_MINOR_VERSION, &minor);
+    glGetIntegerv(GL_CONTEXT_PROFILE_MASK, &contex_mask);
+    std::cout << "context: " << major << "." << minor << " ";
+    if ( contex_mask & GL_CONTEXT_CORE_PROFILE_BIT  )
+      std::cout << "core";
+    else if ( contex_mask & GL_CONTEXT_COMPATIBILITY_PROFILE_BIT )
+      std::cout << "compatibility";
+    if ( contex_mask & GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT  )
+      std::cout << ", forward compatibility";
+    if ( contex_mask & GL_CONTEXT_FLAG_ROBUST_ACCESS_BIT  )
+      std::cout << ", robust access";
+    if ( contex_mask & GL_CONTEXT_FLAG_DEBUG_BIT  )
+      std::cout << ", debug";
+    std::cout << std::endl;
+    
+    // extensions
+    //std::cout << glGetStringi( GL_EXTENSIONS, ... ) << std::endl;
+
+    std::cout << std::endl;
 
     // setup orthographic projection
     glMatrixMode( GL_PROJECTION );

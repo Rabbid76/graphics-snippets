@@ -164,6 +164,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\include\OpenGL\OpenGLBasicDraw.h" />
+    <ClInclude Include="..\include\OpenGL\OpenGLError.h" />
     <ClInclude Include="..\include\OpenGL\OpenGLFixedFunctionPipelineTypes.h" />
     <ClInclude Include="..\include\OpenGL\OpenGLFramebuffer.h" />
     <ClInclude Include="..\include\OpenGL\OpenGLVertexBuffer.h" />
@@ -185,6 +186,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\OpenGLBasicDraw.cpp" />
+    <ClCompile Include="source\OpenGLError.cpp" />
     <ClCompile Include="source\OpenGLFramebuffer.cpp" />
     <ClCompile Include="source\OpenGLVertexBuffer.cpp" />
     <ClCompile Include="source\OpenGLVertexBufferCompatibility.cpp" />

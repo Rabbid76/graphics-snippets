@@ -13,6 +13,7 @@
 
 // OpenGL
 
+#include <OpenGLError.h>
 #include <OpenGLFramebuffer.h>
 
 // OpenGL wrapper
@@ -23,7 +24,7 @@
 
 // stl
 
-#include <algorithm>
+#include <algorithm> 
 #include <iostream>
 #include <cassert>
 
@@ -42,15 +43,6 @@
 #define DebugWarning std::cout
 #endif
 
-#if !defined(__FRAMBUFFER_DEBUG_ERROR_CHECK__)
-#define __FRAMBUFFER_DEBUG_ERROR_CHECK__
-#endif
-
-#if defined(_DEBUG) && defined(__FRAMBUFFER_DEBUG_ERROR_CHECK__)
-#define TEST_GL_ERROR ErrorCheck();
-#else
-#define TEST_GL_ERROR
-#endif
 
 // class implementations
 
@@ -60,16 +52,6 @@
 **********************************************************************/
 namespace OpenGL
 {
-
-
-GLenum ErrorCheck( void )
-{
-  GLenum err = glGetError();
-  if ( err != GL_NO_ERROR )
-    DebugWarning << "OpenGL ERROR" << err;
-  return err;
-}
-
 
 
 //*********************************************************************
@@ -132,7 +114,7 @@ void CRenderProcess::Destruct( void )
       delFbs.push_back( fbs.second._object );
   }
   glDeleteFramebuffers( (GLsizei)delFbs.size(), delFbs.data() );
-  TEST_GL_ERROR
+  OPENGL_CHECK_GL_ERROR
 
   // destroy texture opbjects (GPU)
   std::vector<unsigned int> delTex;
@@ -142,7 +124,7 @@ void CRenderProcess::Destruct( void )
       delTex.push_back( tex.second._object );
   }
   glDeleteTextures( (GLsizei)delTex.size(), delTex.data() );
-  TEST_GL_ERROR
+  OPENGL_CHECK_GL_ERROR
 
   Invalidate();
   _buffers.clear();
@@ -201,7 +183,7 @@ void CRenderProcess::DeleteUnnecessaryTextures( void )
   if ( texDelObjects.empty() == false )
   {
     glDeleteTextures( (GLsizei)texDelObjects.size(), texDelObjects.data() );
-    TEST_GL_ERROR
+    OPENGL_CHECK_GL_ERROR
   }
 }
 
@@ -241,7 +223,7 @@ void CRenderProcess::DeleteUnnecessaryFrambuffers( void )
   if ( fbDelObjects.empty() == false )
   {
     glDeleteFramebuffers( (GLsizei)fbDelObjects.size(), fbDelObjects.data() );
-    TEST_GL_ERROR
+    OPENGL_CHECK_GL_ERROR
   }
 }
 
@@ -710,7 +692,7 @@ void CRenderProcess::UpdateTexture(
     if ( texIt != _textures.end() && texIt->second._extern == false )
     {
       glDeleteTextures( 1, &texIt->second._object );
-      TEST_GL_ERROR
+      OPENGL_CHECK_GL_ERROR
     }
     
     // update texture information
@@ -729,12 +711,12 @@ void CRenderProcess::UpdateTexture(
     if ( texIt->second._extern == false )
     {
       glDeleteTextures( 1, &texIt->second._object );
-      TEST_GL_ERROR
+      OPENGL_CHECK_GL_ERROR
     }
   }
 
   // create the new texture
-  glGenTextures( 1, &newTexture._object ); TEST_GL_ERROR
+  glGenTextures( 1, &newTexture._object ); OPENGL_CHECK_GL_ERROR
 
   // setup the texture size and the format
   bool is_layered      = IsLayered( newTexture._layers );
@@ -743,46 +725,46 @@ void CRenderProcess::UpdateTexture(
   if ( is_layered )
   {
     target_texture = GL_TEXTURE_2D_ARRAY;
-    glBindTexture( target_texture, newTexture._object ); TEST_GL_ERROR
+    glBindTexture( target_texture, newTexture._object ); OPENGL_CHECK_GL_ERROR
     glTexImage3D( target_texture, 0, (GLint)newTexture._format[0],
       (GLsizei)newTexture._size[0], (GLsizei)newTexture._size[1], (GLsizei)newTexture._layers,
-      0, (GLenum)newTexture._format[1], (GLenum)newTexture._format[2], nullptr ); TEST_GL_ERROR
+      0, (GLenum)newTexture._format[1], (GLenum)newTexture._format[2], nullptr ); OPENGL_CHECK_GL_ERROR
   }
   else if ( is_multisampled )
   {
     target_texture = GL_TEXTURE_2D_MULTISAMPLE;
-    glBindTexture( target_texture, newTexture._object ); TEST_GL_ERROR
+    glBindTexture( target_texture, newTexture._object ); OPENGL_CHECK_GL_ERROR
     glTexImage2DMultisample( target_texture, newTexture._multisamples, (GLint)newTexture._format[0],
-      (GLsizei)newTexture._size[0], (GLsizei)newTexture._size[1], GL_FALSE ); TEST_GL_ERROR
+      (GLsizei)newTexture._size[0], (GLsizei)newTexture._size[1], GL_FALSE ); OPENGL_CHECK_GL_ERROR
   }
   else 
   {
     target_texture = GL_TEXTURE_2D;
-    glBindTexture( target_texture, newTexture._object ); TEST_GL_ERROR
+    glBindTexture( target_texture, newTexture._object ); OPENGL_CHECK_GL_ERROR
     glTexImage2D( target_texture, 0, (GLint)newTexture._format[0],
       (GLsizei)newTexture._size[0], (GLsizei)newTexture._size[1],
-      0, (GLenum)newTexture._format[1], (GLenum)newTexture._format[2], nullptr ); TEST_GL_ERROR
+      0, (GLenum)newTexture._format[1], (GLenum)newTexture._format[2], nullptr ); OPENGL_CHECK_GL_ERROR
   }
 
   if ( is_multisampled == false )
   {
     if ( newTexture._linear )
     {
-      glTexParameterf( target_texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR ); TEST_GL_ERROR
-      glTexParameterf( target_texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR ); TEST_GL_ERROR
+      glTexParameterf( target_texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR ); OPENGL_CHECK_GL_ERROR
+      glTexParameterf( target_texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR ); OPENGL_CHECK_GL_ERROR
     }
     else
     {
-      glTexParameterf( target_texture, GL_TEXTURE_MAG_FILTER, GL_NEAREST ); TEST_GL_ERROR
-      glTexParameterf( target_texture, GL_TEXTURE_MIN_FILTER, GL_NEAREST ); TEST_GL_ERROR
+      glTexParameterf( target_texture, GL_TEXTURE_MAG_FILTER, GL_NEAREST ); OPENGL_CHECK_GL_ERROR
+      glTexParameterf( target_texture, GL_TEXTURE_MIN_FILTER, GL_NEAREST ); OPENGL_CHECK_GL_ERROR
     }
   
-    glTexParameterf( target_texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE ); TEST_GL_ERROR
-    glTexParameterf( target_texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE ); TEST_GL_ERROR
+    glTexParameterf( target_texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE ); OPENGL_CHECK_GL_ERROR
+    glTexParameterf( target_texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE ); OPENGL_CHECK_GL_ERROR
     if ( is_layered )
     {
       glTexParameterf( target_texture, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE );
-      TEST_GL_ERROR
+      OPENGL_CHECK_GL_ERROR
     }
   }
 
@@ -814,8 +796,8 @@ unsigned int CRenderProcess::CreateFrambufferRenderBuffer(
 
   // create render buffer object
   unsigned int rbo;
-  glGenRenderbuffers( 1, &rbo ); TEST_GL_ERROR
-  glBindRenderbuffer( GL_RENDERBUFFER, rbo ); TEST_GL_ERROR
+  glGenRenderbuffers( 1, &rbo ); OPENGL_CHECK_GL_ERROR
+  glBindRenderbuffer( GL_RENDERBUFFER, rbo ); OPENGL_CHECK_GL_ERROR
 
   GLenum                      attachType = 0;
   std::array<unsigned int, 3> format{ 0, 0, 0 };
@@ -856,13 +838,13 @@ unsigned int CRenderProcess::CreateFrambufferRenderBuffer(
   }
 
   // specify the format of the render buffer
-  glRenderbufferStorage( GL_RENDERBUFFER, format[0], (GLsizei)fb._size[0], (GLsizei)fb._size[0] ); TEST_GL_ERROR
+  glRenderbufferStorage( GL_RENDERBUFFER, format[0], (GLsizei)fb._size[0], (GLsizei)fb._size[0] ); OPENGL_CHECK_GL_ERROR
 
   // unbind the render buffer
-  glBindRenderbuffer( GL_RENDERBUFFER, 0 ); TEST_GL_ERROR
+  glBindRenderbuffer( GL_RENDERBUFFER, 0 ); OPENGL_CHECK_GL_ERROR
   
   // attach render buffer to frambuffer 
-  glFramebufferRenderbuffer( GL_FRAMEBUFFER, attachType, GL_RENDERBUFFER, rbo ); TEST_GL_ERROR
+  glFramebufferRenderbuffer( GL_FRAMEBUFFER, attachType, GL_RENDERBUFFER, rbo ); OPENGL_CHECK_GL_ERROR
 
   return rbo;
 }
@@ -903,7 +885,7 @@ void CRenderProcess::AttachFrambufferTextureBuffer(
   {
     // layerd or multisample texture attachment
     glFramebufferTexture( GL_FRAMEBUFFER, attachType, _textures[target._bufferID]._object, 0 );
-    TEST_GL_ERROR
+    OPENGL_CHECK_GL_ERROR
   }
   else if ( IsMultisampled( _textures[target._bufferID]._multisamples ) )
   {
@@ -912,7 +894,7 @@ void CRenderProcess::AttachFrambufferTextureBuffer(
   else
   {
     glFramebufferTexture2D( GL_FRAMEBUFFER, attachType, GL_TEXTURE_2D, _textures[target._bufferID]._object, 0 );
-    TEST_GL_ERROR
+    OPENGL_CHECK_GL_ERROR
   }
   // TODO $$$ _textures[target._bufferID]._layers == 1 : glFramebufferTexture3D ???
       
@@ -965,7 +947,7 @@ bool CRenderProcess::Create(
   if ( _buffers.empty() == false )
   {
     glActiveTexture( GL_TEXTURE0 );
-    TEST_GL_ERROR
+    OPENGL_CHECK_GL_ERROR
   }
   for ( auto & buffer : _buffers )
     UpdateTexture( buffer.first, buffer.second );
@@ -974,7 +956,7 @@ bool CRenderProcess::Create(
   if ( _buffers.empty() == false )
   {
     glBindTexture( GL_TEXTURE_2D, 0 );
-    TEST_GL_ERROR
+    OPENGL_CHECK_GL_ERROR
   }
 
   // for each pass
@@ -994,7 +976,7 @@ bool CRenderProcess::Create(
     if ( fbIt != _fbs.end() )
     {
       glDeleteFramebuffers( 1, &fbIt->second._object );
-      TEST_GL_ERROR
+      OPENGL_CHECK_GL_ERROR
     }
 
     // Check if a new frambuffer has to be created
@@ -1003,8 +985,8 @@ bool CRenderProcess::Create(
       continue;
     
     // create the new buffer object
-    glGenFramebuffers( 1, &newFb._object ); TEST_GL_ERROR
-    glBindFramebuffer( GL_FRAMEBUFFER, newFb._object ); TEST_GL_ERROR
+    glGenFramebuffers( 1, &newFb._object ); OPENGL_CHECK_GL_ERROR
+    glBindFramebuffer( GL_FRAMEBUFFER, newFb._object ); OPENGL_CHECK_GL_ERROR
     _fbs[passID] = newFb;
 
     // for each frambuffer target
@@ -1037,17 +1019,17 @@ bool CRenderProcess::Create(
     if ( has_depth == false && has_stencil == false )
     {
       glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, 0 );
-      TEST_GL_ERROR
+      OPENGL_CHECK_GL_ERROR
     }
     else if ( has_depth == false )
     {
       glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0 );
-      TEST_GL_ERROR
+      OPENGL_CHECK_GL_ERROR
     }
     else if ( has_stencil == false )
     {
       glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, 0 );
-      TEST_GL_ERROR
+      OPENGL_CHECK_GL_ERROR
     }
 
     // check for frame buffer completness
@@ -1062,13 +1044,13 @@ bool CRenderProcess::Create(
     }
 
     // unbind the framebuffer before pre deleting the render buffers
-    glBindFramebuffer( GL_FRAMEBUFFER, 0 ); TEST_GL_ERROR
+    glBindFramebuffer( GL_FRAMEBUFFER, 0 ); OPENGL_CHECK_GL_ERROR
 
     if ( preDelRenderBufObjs.empty() == false )
     {
       // pre delete the render buffer objects (see comment block of this method)
       glDeleteRenderbuffers( (GLsizei)preDelRenderBufObjs.size(), preDelRenderBufObjs.data() );
-      TEST_GL_ERROR
+      OPENGL_CHECK_GL_ERROR
     }
   }
 
@@ -1076,7 +1058,7 @@ bool CRenderProcess::Create(
   if ( _passes.empty() == false )
   {
     glBindFramebuffer( GL_FRAMEBUFFER, 0 );
-    TEST_GL_ERROR
+    OPENGL_CHECK_GL_ERROR
   }
 
   return _complete;
@@ -1242,14 +1224,14 @@ bool CRenderProcess::Prepare(
   if ( props.test((int)TPrepareProperty::viewport) )
   {
     glViewport( 0, 0, (GLsizei)bufferInfo._vp_size[0], (GLsizei)bufferInfo._vp_size[1] );
-    TEST_GL_ERROR
+    OPENGL_CHECK_GL_ERROR
   }
 
   // bind the frambuffer
   if ( props.test((int)TPrepareProperty::bind) )
   {
     glBindFramebuffer( GL_FRAMEBUFFER, bufferInfo._fb_obj );
-    TEST_GL_ERROR
+    OPENGL_CHECK_GL_ERROR
   }
 
   // setup tartget buffer
@@ -1259,7 +1241,7 @@ bool CRenderProcess::Prepare(
       glDrawBuffer( GL_NONE );
     else
       glDrawBuffers( (GLsizei)bufferInfo._drawBuffers.size(),  bufferInfo._drawBuffers.data() );
-    TEST_GL_ERROR
+    OPENGL_CHECK_GL_ERROR
   }
 
   // clear the buffers
@@ -1268,12 +1250,12 @@ bool CRenderProcess::Prepare(
     for ( auto & clearTarget : bufferInfo._clearTargets )
     {
       glClearBufferfv( GL_COLOR, (GLint)clearTarget.first, clearTarget.second.data() );
-      TEST_GL_ERROR
+      OPENGL_CHECK_GL_ERROR
     }
     if ( bufferInfo._clearMask != 0 )
     {
       glClear( bufferInfo._clearMask );
-      TEST_GL_ERROR
+      OPENGL_CHECK_GL_ERROR
     }
   }
 
@@ -1282,8 +1264,8 @@ bool CRenderProcess::Prepare(
   {
     for ( auto source : bufferInfo._sourceTextures )
     {
-      glActiveTexture( std::get<0>(source) ); TEST_GL_ERROR
-      glBindTexture( std::get<1>(source), std::get<2>(source) ); TEST_GL_ERROR
+      glActiveTexture( std::get<0>(source) ); OPENGL_CHECK_GL_ERROR
+      glBindTexture( std::get<1>(source), std::get<2>(source) ); OPENGL_CHECK_GL_ERROR
     }
   }
   
@@ -1316,18 +1298,18 @@ bool CRenderProcess::ReleasePass(
   {
     for ( auto source : it->second._sourceTextures )
     {
-      glActiveTexture( std::get<0>(source) ); TEST_GL_ERROR
-      glBindTexture( std::get<1>(source), 0 ); TEST_GL_ERROR
+      glActiveTexture( std::get<0>(source) ); OPENGL_CHECK_GL_ERROR
+      glBindTexture( std::get<1>(source), 0 ); OPENGL_CHECK_GL_ERROR
     }
   }
 
   // restore the viewport size
   glViewport( 0, 0, (GLsizei)_size[0], (GLsizei)_size[1] );
-  TEST_GL_ERROR
+  OPENGL_CHECK_GL_ERROR
 
   // release any framebuffer
   glBindFramebuffer( GL_FRAMEBUFFER, 0 );
-  TEST_GL_ERROR
+  OPENGL_CHECK_GL_ERROR
 
   return true;
 }
@@ -1411,7 +1393,7 @@ bool CRenderProcess::Bind(
     glBindFramebuffer( GL_DRAW_FRAMEBUFFER, bufferInfo._fb_obj );
   else
     glBindFramebuffer( GL_FRAMEBUFFER, bufferInfo._fb_obj );
-  TEST_GL_ERROR
+  OPENGL_CHECK_GL_ERROR
 
   return true;
 }
@@ -1465,7 +1447,7 @@ bool CRenderProcess::SetupDepthTest(
       break;
   }
  
-  TEST_GL_ERROR
+  OPENGL_CHECK_GL_ERROR
   return true;
 }
 
@@ -1507,7 +1489,7 @@ bool CRenderProcess::SetupBlending(
       break;
   }
 
-  TEST_GL_ERROR
+  OPENGL_CHECK_GL_ERROR
   return true;
 }
 

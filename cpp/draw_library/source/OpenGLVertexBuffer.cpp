@@ -12,6 +12,7 @@
 
 #include <stdafx.h>
 
+#include <OpenGLError.h>
 #include <OpenGLVertexBuffer.h>
 
 #include <array>
@@ -114,24 +115,34 @@ CDrawBuffer::~CDrawBuffer()
 {
   // unbind any vertex array
   glBindVertexArray( 0 );
+  OPENGL_CHECK_GL_ERROR
 
   // delete array buffers
   std::vector<TGPUObj> vbos( _vbos.size() );
   std::transform( _vbos.begin(), _vbos.end(), vbos.begin(), [](auto &vbo) -> TGPUObj { return std::get<c_obj>( vbo ); } );
   if ( vbos.empty() == false )
+  {
     glDeleteBuffers( static_cast<GLsizei>(vbos.size()), vbos.data() );
+    OPENGL_CHECK_GL_ERROR
+  }
 
   // delete element array buffers
   std::vector<TGPUObj> ibos( _ibos.size() );
   std::transform( _ibos.begin(), _ibos.end(), ibos.begin(), [](auto &ibo) -> TGPUObj { return std::get<c_obj>( ibo.second ); } );
   if ( ibos.empty() == false )
+  {
     glDeleteBuffers( static_cast<GLsizei>(ibos.size()), ibos.data() );
+    OPENGL_CHECK_GL_ERROR
+  }
 
   // delete vertex array objects
   std::vector<TGPUObj> vaos( _vaos.size() );
   std::transform( _vaos.begin(), _vaos.end(), vaos.begin(), [](auto &vao) -> TGPUObj { return std::get<c_obj>( vao.second ); } );
   if ( vaos.empty() == false )
+  {
     glDeleteVertexArrays( static_cast<GLsizei>(vaos.size()), vaos.data() );
+    OPENGL_CHECK_GL_ERROR
+  }
 }
 
 
@@ -233,6 +244,7 @@ unsigned int CDrawBuffer::Usage( void ) const
 void CDrawBuffer::UnbindVAO( void )
 {
   glBindVertexArray( 0 );
+  OPENGL_CHECK_GL_ERROR
 }
 
 
@@ -247,6 +259,7 @@ void CDrawBuffer::BindVAO( void )
 {
   assert( _currentVAO != 0 );
   glBindVertexArray( _currentVAO );
+  OPENGL_CHECK_GL_ERROR
 }
 
 
@@ -271,6 +284,7 @@ void CDrawBuffer::DefineAndEnableAttribute(
   
   glVertexAttribPointer( attr_id, attr_size, DataType(elem_type), GL_FALSE, stride, (void*)(stride == 0 ? 0 : (size_t)attr_offs) );
   glEnableVertexAttribArray( attr_id );
+  OPENGL_CHECK_GL_ERROR
 }
 
 
@@ -289,6 +303,7 @@ void CDrawBuffer::DisableAttribute(
   if ( attr_id < 0 )
     return;
   glDisableVertexAttribArray( attr_id );
+  OPENGL_CHECK_GL_ERROR
 }
 
 
@@ -326,10 +341,14 @@ void CDrawBuffer::PreprateAttributesAndIndices(
     }
   }
   glBindBuffer( GL_ARRAY_BUFFER, 0 );
+  OPENGL_CHECK_GL_ERROR
 
   // Associate the element array buffer (index buffer) to the vertex array object
   if ( i_ibo >= 0 )
+  {
     glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, std::get<c_obj>( _ibos[i_ibo] ) );
+    OPENGL_CHECK_GL_ERROR
+  }
 }
 
 
@@ -350,12 +369,14 @@ void CDrawBuffer::CreateMissingBuffers(
   {
     GLuint ibo = 0;
     glGenBuffers( 1, &ibo );
+    OPENGL_CHECK_GL_ERROR
     _ibos[i_ibo] = std::make_tuple( ibo, 0, 0, 0 );
   }
   if ( _vbos.size() < no_of_vbo )
   {
     std::vector<GLuint> vbos( no_of_vbo - _vbos.size() );
     glGenBuffers( static_cast<GLsizei>( vbos.size() ), vbos.data() );
+    OPENGL_CHECK_GL_ERROR
     for ( auto vbo : vbos )
       _vbos.emplace_back( vbo, 0, 0 );
   }
@@ -379,6 +400,7 @@ size_t CDrawBuffer::UpdateBuffer(
   ) const
 {
   glBindBuffer( type, bo );
+  OPENGL_CHECK_GL_ERROR
 
   if ( curr_size == 0 || data_size > curr_size )
   {
@@ -386,6 +408,7 @@ size_t CDrawBuffer::UpdateBuffer(
     {
       glBufferData( type, static_cast<GLsizei>(data_size), data, Usage() );
       glBindBuffer( type, 0 );
+      OPENGL_CHECK_GL_ERROR
       return data_size;
     }
     else
@@ -393,12 +416,14 @@ size_t CDrawBuffer::UpdateBuffer(
       glBufferData( type, static_cast<GLsizei>(min_size), nullptr, Usage() );
       glBufferSubData( type, 0, static_cast<GLsizei>(data_size), data );
       glBindBuffer( type, 0 );
+      OPENGL_CHECK_GL_ERROR
       return min_size;
     }
   }
   
   glBufferSubData( type, 0, static_cast<GLsizei>(data_size), data );
   glBindBuffer( type, 0 );
+  OPENGL_CHECK_GL_ERROR
   return curr_size;
 }
 
@@ -444,6 +469,7 @@ void CDrawBuffer::SpecifyVA(
   
   // Create vertex array object
   glGenVertexArrays( 1, &_currentVAO );
+  OPENGL_CHECK_GL_ERROR
   TDescription key( description_size );
   std::copy( description, description + description_size, key.begin() );
   _vaos[hashCode] = std::make_tuple( _currentVAO, key );
@@ -458,7 +484,10 @@ void CDrawBuffer::SpecifyVA(
   // Unbinde the element array buffer
   // This has to be done after the vertex array object is unbound, otherwise the association to the vertex array object would be lost.
   if ( i_ibo >= 0 )
+  {
     glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
+    OPENGL_CHECK_GL_ERROR
+  }
 }
 
 
@@ -501,6 +530,9 @@ bool CDrawBuffer::UpdateVB(
 * but if the current buffer is to small it is recreated.
 * Reusing is much faster (`glBufferSubData`) than recreating
 * (`glBufferData`)
+*
+* see [Vertex Specification; Index buffers](https://www.khronos.org/opengl/wiki/Vertex_Specification#Index_buffers)
+  The index buffer binding is stored within the VAO. If no VAO is bound, then you cannot bind a buffer object to GL_ELEMENT_ARRAY_BUFFER.
 * 
 * \author  gernot
 * \date    2017-11-27
@@ -556,6 +588,7 @@ void CDrawBuffer::DrawAllElements(
   if ( bind )
     this->BindVAO();
   glDrawElements( PrimitiveType( primitive_type ), static_cast<GLsizei>( _currNoElems ), IndexType( _currElemSize ), nullptr );
+  OPENGL_CHECK_GL_ERROR
 }
 
 
@@ -581,6 +614,7 @@ void CDrawBuffer::DrawElements(
     this->BindVAO();
   size_t noOfElements = (count == 0 || start + count > _currNoElems) ? _currNoElems - start : count;
   glDrawElements( PrimitiveType( primitive_type ), static_cast<GLsizei>( noOfElements ), IndexType( _currElemSize ), (void*)(_currElemSize * start) );
+  OPENGL_CHECK_GL_ERROR
 }
 
 
@@ -602,6 +636,7 @@ void CDrawBuffer::DrawElements(
   if ( bind )
     this->BindVAO();
   glDrawElements( PrimitiveType( primitive_type ), static_cast<GLsizei>( no_of_elements ), IndexType( element_size ), data );
+  OPENGL_CHECK_GL_ERROR
 }
 
 
@@ -623,6 +658,7 @@ void CDrawBuffer::DrawElements(
   if ( bind )
     this->BindVAO();
   glMultiDrawElements( PrimitiveType( primitive_type ), no_of_elements, IndexType( element_size ), data, static_cast<GLsizei>( list_size ) );
+  OPENGL_CHECK_GL_ERROR
 }
 
 
@@ -649,6 +685,7 @@ void CDrawBuffer::DrawElementsBase(
     this->BindVAO();
   size_t noOfElements = (count == 0 || start + count > _currNoElems) ? _currNoElems - start : count;
   glDrawElementsBaseVertex( PrimitiveType( primitive_type ), static_cast<GLsizei>( noOfElements ), IndexType( _currElemSize ), (void*)(_currElemSize * start), static_cast<GLint>( base_index ) );
+  OPENGL_CHECK_GL_ERROR
 }
 
 
@@ -671,6 +708,7 @@ void CDrawBuffer::DrawElementsBase(
   if ( bind )
     this->BindVAO();
   glDrawElementsBaseVertex( PrimitiveType( primitive_type ), static_cast<GLsizei>( no_of_elements ), IndexType( element_size ), const_cast<void*>(data), static_cast<GLint>( base_index ) );
+  OPENGL_CHECK_GL_ERROR
 }
 
 
@@ -693,6 +731,7 @@ void CDrawBuffer::DrawRangeElements(
   if ( bind )
     this->BindVAO();
   glDrawRangeElements( PrimitiveType( primitive_type ), minInx, maxInx, static_cast<GLsizei>( _currNoElems ), IndexType( _currElemSize ), nullptr );
+  OPENGL_CHECK_GL_ERROR
 }
 
 
@@ -712,6 +751,7 @@ void CDrawBuffer::DrawArray(
   if ( bind )
     this->BindVAO();
   glDrawArrays( PrimitiveType( primitive_type ), static_cast<GLsizei>( first ), static_cast<GLsizei>( count ) );
+  OPENGL_CHECK_GL_ERROR
 }
 
 

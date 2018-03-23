@@ -18,6 +18,7 @@
 
 #include <stdafx.h>
 
+#include <OpenGLError.h>
 #include <OpenGLVertexBuffer_2_0.h>
 
 #include <assert.h>
@@ -119,6 +120,7 @@ CDrawBuffer_2_0 & CDrawBuffer_2_0::operator = (
 void CDrawBuffer_2_0::UnbindVAO( void )
 {
   glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
+  OPENGL_CHECK_GL_ERROR
 
   // find the current vertex array object emulation
   if ( _currentVAO == 0 )

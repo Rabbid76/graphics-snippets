@@ -21,6 +21,7 @@
 
 // OpenGL
 
+#include <OpenGLError.h>
 #include <OpenGL_Matrix_Camera.h>
 #include <OpenGL_SimpleShaderProgram.h>
 

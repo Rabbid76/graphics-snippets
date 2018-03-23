@@ -19,6 +19,7 @@
 
 #include <stdafx.h>
 
+#include <OpenGLError.h>
 #include <OpenGLVertexBufferCompatibility.h>
 
 #include <assert.h>
@@ -176,6 +177,7 @@ void CDrawBuffer::DefineAndEnableAttribute(
       glEnableClientState( GL_FOG_COORD_ARRAY );
       break;
   }
+  OPENGL_CHECK_GL_ERROR
 }
 
 
@@ -206,6 +208,7 @@ void CDrawBuffer::DisableAttribute(
     case eCLIENT_EDGE_FLAG: glDisableClientState( GL_EDGE_FLAG_ARRAY ); break;
     case eCLIENT_FOG_COORD: glDisableClientState( GL_FOG_COORD_ARRAY ); break;
   }
+  OPENGL_CHECK_GL_ERROR
 }
 
 } // Compatibility

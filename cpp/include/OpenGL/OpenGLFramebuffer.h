@@ -15,7 +15,7 @@
 #include <IRenderPass.h>
 
 
-// calss declarations
+// class definitions
 
 namespace OpenGL
 {
