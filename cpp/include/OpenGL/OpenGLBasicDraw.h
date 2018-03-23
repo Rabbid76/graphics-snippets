@@ -83,7 +83,7 @@ public:
   using TFontMap    = std::map<size_t, TFont>;
   
 
-  CBasicDraw( unsigned int samples, float scale, bool fxaa );
+  CBasicDraw( bool core_mode, unsigned int samples, float scale, bool fxaa );
   virtual ~CBasicDraw();
 
   virtual Render::IDrawBuffer * NewDrawBuffer( Render::TDrawBufferUsage usage );
@@ -130,6 +130,7 @@ private:
   bool                                _initialized    = false;
   bool                                _drawing        = false;
   bool                                _unifroms_valid = false;
+  bool                                _core_mode      = true;
   bool                                _fxaa           = false;
   unsigned int                        _samples        = 0;
   float                               _fb_scale       = 1.0f;

@@ -604,10 +604,12 @@ void main()
 * @version 1.0
 **********************************************************************/
 CBasicDraw::CBasicDraw( 
-  unsigned int samples, //!< - sapmles for multisampling
-  float        scale,   //!< - framebuffer scale
-  bool         fxaa )   //!< - true: FXAA
-  : _samples( samples )
+  bool         core_mode, //!< - OpenGL core, forward compatibility mode
+  unsigned int samples,   //!< - sapmles for multisampling
+  float        scale,     //!< - framebuffer scale
+  bool         fxaa )     //!< - true: FXAA
+  : _core_mode( core_mode )
+  , _samples( samples )
   , _fb_scale( scale )
   , _fxaa( fxaa )
 {}
@@ -1438,7 +1440,7 @@ bool CBasicDraw::Draw(
     buffer.UpdateVB( 0, sizeof(float), coords_size, coords );
   
   // set style and context
-  if ( is_line )
+  if ( _core_mode == false && is_line )
   {
     //! see [OpenGL 4.6 API Core Profile Specification; E.2.1 Deprecated But Still Supported Features; page 672](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf)<br/>
     //! > Wide lines - `LineWidth` values greater than 1.0 will generate an INVALID_VALUE error.
@@ -1462,7 +1464,7 @@ bool CBasicDraw::Draw(
   buffer.Release();
 
   // reset line thickness
-  if ( is_line )
+  if ( _core_mode == false && is_line )
   {
     glLineWidth( 1.0f );
     OPENGL_CHECK_GL_ERROR

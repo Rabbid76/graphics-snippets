@@ -136,23 +136,26 @@ void CWindow_Glfw::CallbackResize(GLFWwindow* window, int cx, int cy)
 
 void CWindow_Glfw::Init( int width, int height, bool doubleBuffer )
 {
+    static bool         c_core    = true;
+    static float        c_scale   = 1.0f;
+    static bool         c_fxaa    = false;
+    static unsigned int c_samples = 4;
+
     _doubleBuffer = doubleBuffer;
 
     // [GLFW Window guide; Window creation hints](http://www.glfw.org/docs/latest/window_guide.html#window_hints_values)
 
-    
-    //$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-    // TODO $$$
-    /*
-    glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, 4 );
-    glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, 6 );
-    glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE );
-    glfwWindowHint( GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE );
+    if ( c_core )
+    {
+        glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, 4 );
+        glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, 6 );
+        glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE );
+        glfwWindowHint( GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE );
+    }
+
 #if defined(_DEBUG)
     glfwWindowHint( GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE );
 #endif
-    */
-    //$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
     //GLFW_CONTEXT_ROBUSTNESS
 
@@ -182,10 +185,7 @@ void CWindow_Glfw::Init( int width, int height, bool doubleBuffer )
     glfwGetWindowPos( _wnd, &_wndPos[0], &_wndPos[1] );
     _updateViewport = true;
 
-    static float        c_scale   = 1.0f;
-    static bool         c_fxaa    = false;
-    static unsigned int c_samples = 4;
-    _draw = std::make_unique<OpenGL::CBasicDraw>( c_samples, c_scale, c_fxaa );
+    _draw = std::make_unique<OpenGL::CBasicDraw>( c_core, c_samples, c_scale, c_fxaa );
 }
 
 void CWindow_Glfw::Resize( int cx, int cy )
