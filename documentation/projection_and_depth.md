@@ -1,20 +1,22 @@
 
 # Projection, View, Model and Depth
 
-In a rendering, each mesh of the scene usually is transformed by the model matrix, the view matrix and the projection matrix.
+In a rendering, each mesh of the scene usually is transformed by the model matrix, the view matrix and the projection matrix. Finall the projected scene is mapped to the viewport.
 
-- Projection matrix:<br/> 
-  The projection matrix describes the mapping from 3D points of a scene, to 2D points of the viewport. The projection matrix transforms from view space to the clip space. Clip space coordinates are [Homogeneous coordinates](https://en.wikipedia.org/wiki/Homogeneous_coordinates). The coordinates in the clip space are transformed to the normalized device coordinates (NDC) in the range (-1, -1, -1) to (1, 1, 1) by dividing with the `w` component of the clip coordinates.
+## Coordiante Systems
 
- ![NDC](image/NDC.png) 
+### Model coordinates (Object coordinates)
 
-- View matrix:<br/>
-  The view matrix describes the direction and position from which the scene is looked at. The view matrix transforms from the wolrd space to the view (eye) space. If the coordiante system of the view space is a [Right-hand](https://en.wikipedia.org/wiki/Right-hand_rule) system, then the X-axis points to the left, the Y-axis up and the Z-axis out of the view (Note in a right hand system the Z-Axis is the cross product of the X-Axis and the Y-Axis). In general world coordinates and view coordinates are [Cartesian coordinates](https://en.wikipedia.org/wiki/Cartesian_coordinate_system)
+  The model space is the local space, where within a mesh is defined. The vertex coordinates are defined in model space.
 
-![view](image/view_coordinates.png)
 
-- Model matrix:<br/>
-  The model matrix defines the location, oriantation and the relative size of a mesh in the scene. The model matrix transforms the vertex positions from of the mesh to the world space.
+### World coordinates
+
+  The world sapce is the coordinate system of the scene. Different models (objects) can be placed multiple times in the world space to form a scene, in together.
+
+**Model matrix**
+
+The model matrix defines the location, oriantation and the relative size of a model (object, mesh) in the scene. The model matrix transforms the vertex positions of a single mesh to world space for a single specific positioning. There are different model matrices, one for each combination of a model (object) and a location of the object in the wolrd space.
 
 ![model](image/model.png)
 
@@ -23,8 +25,57 @@ The model matrix looks like this:
     ( X-axis.x, X-axis.y, X-axis.z, 0 )
     ( Y-axis.x, Y-axis.y, Y-axis.z, 0 )
     ( Z-axis.x, Z-axis.y, Z-axis.z, 0 )
-    ( trans.x,  trans.y,  trans.z,  1 ) 
+    ( trans.x,  trans.y,  trans.z,  1 )
 
+
+### View sapce (Eye coordinates)
+
+The view space is the local system which is defined by the point of view onto the scene.
+The position of the view, the line of sight and the upwards direction of the view, define a coordinate system relative to the world coordinate system. The objects of a scene have to drawn in this coordinate system, to be seen from the viewing position. The inverse matrix of the view coordinate system is named the **view matrix**.<br/>
+In general world coordinates and view coordinates are [Cartesian coordinates](https://en.wikipedia.org/wiki/Cartesian_coordinate_system)
+
+**View matrix**
+  
+The view coordinates system describes the direction and position from which the scene is looked at. The view matrix transforms from the wolrd space to the view (eye) space. 
+
+If the coordiante system of the view space is a [Right-hand](https://en.wikipedia.org/wiki/Right-hand_rule) system, then the X-axis points to the left, the Y-axis up and the Z-axis out of the view (Note in a right hand system the Z-Axis is the cross product of the X-Axis and the Y-Axis). 
+
+![view](image/view_coordinates.png) 
+
+
+### Clip coordinates
+
+Clip space coordinates are [Homogeneous coordinates](https://en.wikipedia.org/wiki/Homogeneous_coordinates). In clipspace the clipping of the scene is performed.<br/>
+A point is in clip space if the `x`, `y` and `z` components are in the range defined by the inverted `w` component and the `w` component of the homogeneous coordinates of the point:
+
+    -w <=  x, y, z  <= w.
+
+
+**Projection matrix**
+
+The projection matrix describes the mapping from 3D points of a scene, to 2D points of the viewport. The projection matrix transforms from view space to the clip space. The coordinates in the clip space are transformed to the normalized device coordinates (NDC) in the range (-1, -1, -1) to (1, 1, 1) by dividing with the `w` component of the clip coordinates.
+
+
+### Normaliced device coordinates
+
+The normalized device coordinates are the clip space coordinates divide by the `w` component of the clip coordinates. This is called [Perspective divide](https://www.khronos.org/opengl/wiki/Vertex_Post-Processing#Perspective_divide)
+
+ ![NDC](image/NDC.png)
+
+
+### Window coordinates (Screen coordinates)
+
+The window coordinates are the coordinates of the viewport rectangle. The window coordinates finally are passed to the raterization process.
+
+**Viewport and depthrange**
+
+The normalized device coordinates are mapped to the viewports Window Coordinates (Screen Coordinates) and to the depth for the depth buffer.
+The viewport is defined by [`glViewport`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glViewport.xhtml). The depthrange is set by [`glDepthRange`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glDepthRange.xhtml) and is by default [0, 1].
+
+
+<br/>
+See also:
+[OpenGL Transformation](http://www.songho.ca/opengl/gl_transform.html)<br/> 
 
 <br/><hr/>
 ## View
