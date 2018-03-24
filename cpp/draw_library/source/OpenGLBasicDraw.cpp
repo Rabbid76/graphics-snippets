@@ -801,7 +801,7 @@ bool CBasicDraw::Init( void )
   // specify render process
   SpecifyRenderProcess();
 
-  // draw shader
+  // opaue shader
   try
   {
     _opaque_prog = std::make_unique<OpenGL::ShaderProgram>(
@@ -813,7 +813,31 @@ bool CBasicDraw::Init( void )
   catch (...)
   {}
 
-   // transparent shader
+  // opaue line shader
+  try
+  {
+    _opaque_line_prog = std::make_unique<OpenGL::ShaderProgram>(
+      std::vector< TShaderInfo >{
+        { opaque_transp_sh_vert, GL_VERTEX_SHADER },
+        { opaque_sh_frag, GL_FRAGMENT_SHADER }
+      } );
+  }
+  catch (...)
+  {}
+
+  // transparent shader
+  try
+  {
+    _transp_prog = std::make_unique<OpenGL::ShaderProgram>(
+      std::vector< TShaderInfo >{
+        { opaque_transp_sh_vert, GL_VERTEX_SHADER },
+        { transp_sh_frag, GL_FRAGMENT_SHADER }
+      } );
+  }
+  catch (...)
+  {}
+
+  // transparent line shader
   try
   {
     _transp_prog = std::make_unique<OpenGL::ShaderProgram>(
@@ -1372,10 +1396,14 @@ bool CBasicDraw::Draw(
 
   bool is_line =
     primitive_type == Render::TPrimitive::lines ||
-    primitive_type == Render::TPrimitive::lines_adjacency ||
     primitive_type == Render::TPrimitive::linestrip ||
-    primitive_type == Render::TPrimitive::linestrip_adjacency ||
     primitive_type == Render::TPrimitive::lineloop;
+
+  bool is_line_adjacency =
+    primitive_type == Render::TPrimitive::lines_adjacency ||
+    primitive_type == Render::TPrimitive::linestrip_adjacency; 
+
+  bool draw_line = is_line || is_line_adjacency;
 
   bool is_polygon =
     primitive_type == Render::TPrimitive::triangles ||
@@ -1384,12 +1412,61 @@ bool CBasicDraw::Draw(
     primitive_type == Render::TPrimitive::trianglestrip_adjacency ||
     primitive_type == Render::TPrimitive::trianglefan;
 
+  // create indices
+  Render::TPrimitive final_primitive_type = primitive_type;
+  bool               index_buffer         = is_line;
+  size_t             no_of_vertices       = coords_size / size;
+  std::vector<unsigned short int> indices;
+  indices.reserve( no_of_vertices * 2 );
+  if ( index_buffer )
+  {
+    switch(primitive_type)
+    {
+      case Render::TPrimitive::lines:
+        {
+          for ( unsigned short int i = 0; i < (unsigned short int)no_of_vertices; i += 2 )
+          {
+            indices.push_back( i+1 );
+            indices.push_back( i );
+            indices.push_back( i+1 );
+            indices.push_back( i );
+          }
+         
+          final_primitive_type = Render::TPrimitive::lines_adjacency;
+        }
+        break;
+
+      case Render::TPrimitive::linestrip:
+        {
+          indices.push_back( 1 );
+          for ( unsigned short int i = 0; i < (unsigned short int)no_of_vertices; ++ i )
+            indices.push_back( i );
+          indices.push_back( (unsigned short int)(no_of_vertices-2) );
+
+          final_primitive_type = Render::TPrimitive::linestrip_adjacency;
+        }
+        break;
+
+      case Render::TPrimitive::lineloop:
+        {
+          indices.push_back( (unsigned short int)(no_of_vertices-1) );
+          for ( unsigned short int i = 0; i < (unsigned short int)no_of_vertices; ++ i )
+            indices.push_back( i );
+          indices.push_back( 0 );
+          indices.push_back( 1 );
+
+          final_primitive_type = Render::TPrimitive::linestrip_adjacency;
+        }
+        break;
+    }
+  }
+
   // buffer specification
   Render::TVA va_id = size == 2 ? Render::TVA::b0_xy : (size == 3 ? Render::TVA::b0_xyz : Render::TVA::b0_xyzw);
   const std::vector<char> bufferdescr = Render::IDrawBuffer::VADescription( va_id );
 
   // set style and context
-  if ( is_line )
+  if ( draw_line )
   {
     glEnable( GL_POLYGON_OFFSET_LINE );
     glPolygonOffset( 1.0, 1.0 );
@@ -1440,7 +1517,7 @@ bool CBasicDraw::Draw(
     buffer.UpdateVB( 0, sizeof(float), coords_size, coords );
   
   // set style and context
-  if ( _core_mode == false && is_line )
+  if ( _core_mode == false && draw_line )
   {
     //! see [OpenGL 4.6 API Core Profile Specification; E.2.1 Deprecated But Still Supported Features; page 672](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf)<br/>
     //! > Wide lines - `LineWidth` values greater than 1.0 will generate an INVALID_VALUE error.
@@ -1448,6 +1525,13 @@ bool CBasicDraw::Draw(
     glLineWidth( style._thickness * _fb_scale );
     OPENGL_CHECK_GL_ERROR
   }
+
+  // set program
+  bool transparent_pass = _current_pass == c_tranp_pass;
+  if ( transparent_pass )
+    draw_line ? _transp_line_prog->Use() : _transp_prog->Use();
+  else
+    draw_line ? _opaque_line_prog->Use() : _opaque_prog->Use();
 
   // set uniforms
   UpdateGeneralUniforms();
@@ -1459,12 +1543,14 @@ bool CBasicDraw::Draw(
   OPENGL_CHECK_GL_ERROR
 
   // draw_buffer
-  size_t no_of_vertices = coords_size / size;
-  buffer.DrawArray( primitive_type, 0, no_of_vertices, true );
+  if ( index_buffer )
+    buffer.DrawElements( final_primitive_type, 2, indices.size(), indices.data(), true );
+  else
+    buffer.DrawArray( final_primitive_type, 0, no_of_vertices, true );
   buffer.Release();
 
   // reset line thickness
-  if ( _core_mode == false && is_line )
+  if ( _core_mode == false && draw_line )
   {
     glLineWidth( 1.0f );
     OPENGL_CHECK_GL_ERROR
@@ -1525,7 +1611,7 @@ bool CBasicDraw::Draw(
   }
 
   // reset style and context
-  if ( is_line )
+  if ( draw_line )
   {
     glDisable( GL_POLYGON_OFFSET_LINE ); 
     OPENGL_CHECK_GL_ERROR

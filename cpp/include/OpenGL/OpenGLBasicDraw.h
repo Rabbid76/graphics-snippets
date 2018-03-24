@@ -183,7 +183,9 @@ private:
   TUniforms                           _uniforms;
   TProcess                            _process;
   TProgram                            _opaque_prog;
+  TProgram                            _opaque_line_prog;
   TProgram                            _transp_prog;
+  TProgram                            _transp_line_prog;
   TProgram                            _mixcol_prog;
   TProgram                            _finish_prog;
   TFontMap                            _fonts;
