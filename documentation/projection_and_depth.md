@@ -9,6 +9,7 @@ In a rendering, each mesh of the scene usually is transformed by the model matri
 
   The model space is the local space, where within a mesh is defined. The vertex coordinates are defined in model space.
 
+![model coordinates](image/model_coordinates.png)
 
 ### World coordinates
 

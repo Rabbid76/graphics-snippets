@@ -19,6 +19,8 @@
 #include <chrono>
 #include <memory>
 #include <cmath>
+#include <string>
+#include <sstream>
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -61,6 +63,7 @@ private:
     static constexpr const Render::TColor Color_red_2( void )        { return { 0.8f, 0.0f, 0.0f, 1.0f }; }
     static constexpr const Render::TColor Color_green_2( void )      { return { 0.0f, 0.8f, 0.0f, 1.0f }; }
     static constexpr const Render::TColor Color_blue_2( void )       { return { 0.0f, 0.0f, 0.8f, 1.0f }; }
+    static constexpr const Render::TColor Color_darkgray( void )     { return { 0.2f, 0.2f, 0.2f, 1.0f }; }
     static constexpr const Render::TColor Color_ink( void )          { return { 0.1f, 0.3f, 0.8f, 1.0f }; }
     static constexpr const Render::TColor Color_paper_nature( void ) { return { 0.96f, 0.96f, 0.93f, 1.0f }; }
     static constexpr const Render::TColor Color_paper_line( void )   { return { 0.8f, 0.9f, 0.9f, 1.0f }; }
@@ -403,6 +406,23 @@ void CWindow_Glfw::ViewportCoordsys( double time_ms )
 
 void CWindow_Glfw::Model( double time_ms )
 {
+  std::vector<std::array<int, 3>> pts_orig{
+    { -1, -2, 9 },
+    {  1, -2, 7 },
+    {  1,  0, 7 },
+    {  2,  0, 1 },
+    {  0,  2, 2 },
+    { -2,  0, 3 },
+    { -1,  0, 9 }
+  };
+
+  std::vector<float> poly;
+  for ( auto & pt : pts_orig )
+  {
+    poly.push_back( (float)pt[0] / 10.0f );
+    poly.push_back( (float)pt[1] / 10.0f );
+  }
+
   _draw->ActivateBackground();
   Checkered( BL(), TR() );
 
@@ -410,5 +430,21 @@ void CWindow_Glfw::Model( double time_ms )
 
   _draw->DrawPolyline( 2, 
     { -0.1f, -0.2f, 0.1f, -0.2f, 0.1f, 0.0f, 0.2f, 0.0f, 0.0f, 0.2f, -0.2f, 0.0f, -0.1f, 0.0f, -0.1f, -0.2f },
-    Color_ink(), 3.0f );
+    Color_ink(), 3.0f, false );
+
+  _draw->ActivateOpaque();
+  _draw->ClearDepth();
+
+  static float text_height  = 0.05f;
+  static float text_scale_y = 1.0f;
+  for ( size_t i=0; i < pts_orig.size(); ++ i )
+  {               
+    auto & pt = pts_orig[i];
+    std::stringstream strstr;
+    strstr << "(" << pt[0] << ", " << pt[1] << ")";
+    Render::TPoint3 pos{ (float)pt[0]/10.0f, (float)pt[1]/10.0f, 0.0f };
+    pos[0] += ( pos[0] < -0.001f ) ? -0.02f : ( pos[0] > 0.001f ) ? 0.02f : 0.0f;
+    pos[1] += ( pos[1] < -0.001f || i==2 || i==6 ) ? -0.02f : ( pos[1] > 0.001f || i==3 || i==5 ) ? 0.02f : 0.0f;
+    _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, strstr.str().c_str(), pt[2], text_height, text_scale_y, pos, Color_darkgray() );
+  }
 }

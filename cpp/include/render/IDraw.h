@@ -124,16 +124,16 @@ public:
     return Draw( TPrimitive::trianglefan, size, coords_size, coords, color, TStyle() );
   }
 
-  bool DrawPolyline( size_t size, const TBuffer &corrds, const TColor &color, float thickness )
+  bool DrawPolyline( size_t size, const TBuffer &corrds, const TColor &color, float thickness, bool closed )
   {
-    return DrawPolyline( size, corrds.size(), corrds.data(), color, thickness );
+    return DrawPolyline( size, corrds.size(), corrds.data(), color, thickness, closed );
   }
 
-  virtual bool DrawPolyline( size_t size, size_t coords_size, const t_fp *coords, const TColor &color, float thickness )
+  virtual bool DrawPolyline( size_t size, size_t coords_size, const t_fp *coords, const TColor &color, float thickness, bool closed )
   {
     TStyle style;
     style._thickness = thickness;
-    return Draw( TPrimitive::linestrip, size, coords_size, coords, color, style );
+    return Draw( closed ? TPrimitive::lineloop : TPrimitive::linestrip, size, coords_size, coords, color, style );
   }
 
   bool DrawArrow( size_t size, const TBuffer &corrds, const TColor &color, float thickness, const TVec2 &arrow_size, bool arrow_from, bool arrow_to )
