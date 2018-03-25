@@ -87,17 +87,9 @@ See also:
 <br/><hr/>
 ## View
 
-While in the world the X-axis is pointing to the right, the Y-axis to the front, and the Z-axis to the top,on the viewport the X-axis points to the left, the Y-axis up and the Z-axis out of the view (Note in a right hand system the Z-Axis is the cross product of the X-Axis and the Y-Axis).
+On the viewport the X-axis points to the left, the Y-axis up and the Z-axis out of the view (Note in a right hand system the Z-Axis is the cross product of the X-Axis and the Y-Axis).
 
 ![view](image/view.png)
-
-Each point and each vector from the reference system of the scene must therefore be converted first into viewport coordinates. This can be easily processed by the following table:
-
-     x  y  z
-    --------
-     1  0  0  | x' =  x
-     0  0  1  | y' =  z
-     0 -1  0  | z' = -y
 
 The code below defines a matrix that exactly encapsulates the steps necessary to calculate a look at the scene:
 
