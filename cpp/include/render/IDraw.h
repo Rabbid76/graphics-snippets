@@ -71,7 +71,24 @@ public:
   };
 
   virtual ~IDraw() = default;
+
+  void MVP( const TMat44 &proj, const TMat44 &view, const TMat44 &model )
+  {
+    Projection( proj );
+    View( view );
+    Model( model );
+  }
+
+  virtual const TMat44 & Projection( void ) const = 0; //!< get the projection matrix
+  virtual const TMat44 & View( void ) const = 0;       //!< get the view matrix
+  virtual const TMat44 & Model( void ) const = 0;      //!< get the model matrix
   
+  virtual void  BackgroundColor( const TColor &bg_color ) = 0; //!< sets the background color
+  virtual void  ViewportSize( const TSize &vp_size ) = 0;      //!< sete the size of the viewport
+  virtual void  Projection( const TMat44 &proj ) = 0;          //!< set the projection matrix
+  virtual void  View( const TMat44 &view ) = 0;                //!< set the view matrix
+  virtual void  Model( const TMat44 &model ) = 0;              //!< set the model matrix
+  virtual TVec3 Project( const TVec3 &pt ) const = 0;          //!< project by projection, view and model
   virtual void  Destroy( void ) = 0;                           //!< destroy all internal objects and cleanup
   virtual bool  Init( void ) = 0;                              //!< general initializations
   virtual bool  LoadFont( TFontId font_id, IFont *&font ) = 0; //!< load and return a font by its id
@@ -81,13 +98,7 @@ public:
   virtual bool  ActivateTransparent( void ) = 0;               //!< activate rendering to the transparent buffer
   virtual bool  Finish( void ) = 0;                            //!< finish the rendering
   virtual bool  ClearDepth( void ) = 0;                        //!< interim clear of the depth buffer
-  virtual void  BackgroundColor( const TColor &bg_color ) = 0; //!< sets the background color
-  virtual void  ViewportSize( const TSize &vp_size ) = 0;      //!< sete the size of the viewport
-  virtual void  Projection( const TMat44 &proj ) = 0;          //!< set the projection matrix
-  virtual void  View( const TMat44 &view ) = 0;                //!< set the view matrix
-  virtual void  Model( const TMat44 &model ) = 0;              //!< set the model matrix
-  virtual TVec3 Project( const TVec3 &pt ) const = 0;          //!< project by projection, view and model
-
+  
   bool DrawConvexPolygon( size_t size, const TBuffer &corrds, const TColor &color )
   {
     return DrawConvexPolygon( size, corrds.size(), corrds.data(), color );
@@ -218,7 +229,39 @@ public:
     return font->CalculateTextSize( str, height, box_x, box_btm, box_top );
   }
   
-  virtual bool DrawText( TFontId font_id, const char *text, float height, float width_scale, const TPoint3 &pos, const TColor &color ) = 0;
+  virtual bool DrawText2D( TFontId font_id, const char *text, float height, float width_scale, const TPoint3 &pos, const TColor &color ) = 0;
+
+  virtual bool DrawText2D( TFontId font_id, const char *text, int origin, float height, float width_scale, const TPoint3 &pos, const TColor &color )
+  {
+    std::array<float, 4> text_rect{ 0.0f };
+    CalculateTextSize( font_id, text, height, text_rect[2], text_rect[1], text_rect[3] );
+    float width = fabs(text_rect[2]) * width_scale;
+    TPoint3 origin_pos = pos;
+    if ( origin % 3 == 0 ) // 3, 6, 9
+      origin_pos[0] -= width;
+    else if ( origin % 3 == 2 ) // 2, 5, 8
+      origin_pos[0] -= width * 0.5f;
+    if ( origin >= 7 && origin <= 9 ) // 7, 8, 9
+      origin_pos[1] -= text_rect[3];
+    else if ( origin >= 4 && origin <= 6 ) // 4, 5, 6
+      origin_pos[1] -= text_rect[3] * 0.5f;
+
+    return DrawText2D( font_id, text, height, width_scale, origin_pos, color );
+  }
+
+  virtual bool DrawText2DProjected( TFontId font_id, const char *text, int origin, float height, float width_scale, const TPoint3 &pos, const TColor &color )
+  {
+     TPoint3 prj_pos = Project( pos );
+
+     TMat44 m[]{ Projection(), View(), Model() };
+     MVP( Identity(), Identity(), Identity() );
+     
+     bool ret = DrawText2D( font_id, text, origin, height, width_scale, prj_pos, color );
+
+     MVP( m[0], m[1], m[2] );
+
+     return ret;
+  }
 };
 
 

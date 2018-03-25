@@ -1724,7 +1724,7 @@ bool CBasicDraw::Draw(
 * \date    2018-03-18
 * \version 1.0
 **********************************************************************/
-bool CBasicDraw::DrawText( 
+bool CBasicDraw::DrawText2D( 
   TFontId                font_id,     //!< in: id of the font
   const char            *text,        //!< in: the text
   float                  height,      //!< in: the height of the text

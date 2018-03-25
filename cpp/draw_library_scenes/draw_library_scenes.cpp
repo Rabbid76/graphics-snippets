@@ -300,19 +300,14 @@ void CWindow_Glfw::TestScene( double time_ms )
 
     _draw->ActivateOpaque();
 
-    const char   *text = "Hello, a long text with a lot of different letters.";
     static float  text_height  = 0.126f;
     static float  text_scale_y = 1.0f;
-    
-    std::array<float, 4> text_rect{ 0.0f };
-    _draw->CalculateTextSize( 0, text, text_height, text_rect[2], text_rect[1], text_rect[3] );
-    _draw->DrawText( OpenGL::CBasicDraw::font_sans, text, text_height, text_scale_y, { _scale_x * -0.96f, 0.3f, -0.01f }, { 1.0f, 0.5f, 0.0f, 1.0f } );
-    
+    const char *text = "Hello, a long text with a lot of different letters.";
+    _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, text, text_height, text_scale_y, { _scale_x * -0.96f, 0.3f, -0.01f }, { 1.0f, 0.5f, 0.0f, 1.0f } );
     const char *greek_text = "DEFGHIJKLMNOPQRSTUVW";
-    _draw->DrawText( OpenGL::CBasicDraw::font_symbol, greek_text, 0.2f, 1.0f, { _scale_x * -0.96f, 0.0f, -0.01f }, { 0.0f, 1.0f, 1.0f, 1.0f } );
-    
+    _draw->DrawText2D( OpenGL::CBasicDraw::font_symbol, greek_text, 0.2f, 1.0f, { _scale_x * -0.96f, 0.0f, -0.01f }, { 0.0f, 1.0f, 1.0f, 1.0f } );
     const char *letter_text = "Hallo letter";
-    _draw->DrawText( OpenGL::CBasicDraw::font_pcifico, letter_text, 0.2f, 1.0f, { _scale_x * -0.96f, -0.3f, -0.01f }, { 0.0f, 0.1f, 0.1f, 1.0f } );
+    _draw->DrawText2D( OpenGL::CBasicDraw::font_pcifico, letter_text, 0.2f, 1.0f, { _scale_x * -0.96f, -0.3f, -0.01f }, { 0.0f, 0.1f, 0.1f, 1.0f } );
     
     _draw->DrawRectangle2D( {-0.8f, -0.8f}, {0.8f, 0.8f}, 0.0f, { 1.0f, 0.0f, 1.0f, 1.0f }, 5 );
 
@@ -374,37 +369,15 @@ void CWindow_Glfw::ViewportCoordsys( double time_ms )
 
   _draw->ActivateOpaque();
 
-  Render::TVec3 pt_x     = _draw->Project( {axis_len, 0.0f, 0.0f} );
-  Render::TVec3 pt_y     = _draw->Project( {0.0f, axis_len, 0.0f} );
-  Render::TVec3 pt_z     = _draw->Project( {0.0f, 0.0f, axis_len} );
-  Render::TVec3 pt_los   = _draw->Project( {0.0f, 0.0f, -6.0f} );
-  Render::TVec3 pt_title = _draw->Project( {0.0f, 2.5f, 0.0f} );
-
-  _draw->Projection( OpenGL::Identity() );
-  _draw->View( OpenGL::Identity() );
-  _draw->Model( OpenGL::Identity() );
-
-  // TODO text origin ->DrawText( origin 0..9 )
-  // TODO CalculateTextSize font!!!
-  std::array<float, 4> text_rect_X{ 0.0f };
-  _draw->CalculateTextSize( 0, "X", axis_text_height, text_rect_X[2], text_rect_X[1], text_rect_X[3] );
-  _draw->DrawText( OpenGL::CBasicDraw::font_sans, "X", axis_text_height, axis_text_scale_y, { pt_x[0], pt_x[1]-text_rect_X[3], 0.0f }, { 0.8f, 0.0f, 0.0f, 1.0f } );
-  std::array<float, 4> text_rect_Y{ 0.0f };
-  _draw->CalculateTextSize( 0, "Y", axis_text_height, text_rect_Y[2], text_rect_Y[1], text_rect_Y[3] );
-  _draw->DrawText( OpenGL::CBasicDraw::font_sans, "Y", axis_text_height, axis_text_scale_y, { pt_y[0], pt_y[1], 0.0f }, { 0.0f, 0.8f, 0.0f, 1.0f } );
-  std::array<float, 4> text_rect_Z{ 0.0f };
-  _draw->CalculateTextSize( 0, "Y", axis_text_height, text_rect_Z[2], text_rect_Z[1], text_rect_Z[3] );
-  _draw->DrawText( OpenGL::CBasicDraw::font_sans, "Z", axis_text_height, axis_text_scale_y, { pt_z[0]-text_rect_Z[2], pt_z[1], 0.0f }, { 0.0f, 0.0f, 0.8f, 1.0f } );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "X", 7, axis_text_height, axis_text_scale_y, { axis_len, 0.0f, 0.0f }, { 0.8f, 0.0f, 0.0f, 1.0f } );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "Y", 1, axis_text_height, axis_text_scale_y, { 0.0f, axis_len, 0.0f }, { 0.0f, 0.8f, 0.0f, 1.0f } );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "Z", 3, axis_text_height, axis_text_scale_y, { 0.0f, 0.0f, axis_len }, { 0.0f, 0.0f, 0.8f, 1.0f } );
 
   const char *los_text = "Line of sight (-Z)";
-  std::array<float, 4> text_rect_los{ 0.0f };
-  _draw->CalculateTextSize( 0, los_text, axis_text_height, text_rect_los[2], text_rect_los[1], text_rect_los[3] );
-  _draw->DrawText( OpenGL::CBasicDraw::font_sans, los_text, 0.09f, 0.7f, { pt_los[0], pt_los[1], 0.0f }, { 0.0f, 0.0f, 0.0f, 1.0f } );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, los_text, 1, 0.09f, 0.7f, { 0.0f, 0.0f, -6.0f }, { 0.0f, 0.0f, 0.0f, 1.0f } );
 
   const char *title_text = "Viewport / view coordinate system";
-  std::array<float, 4> text_rect_title{ 0.0f };
-  _draw->CalculateTextSize( 0, title_text, axis_text_height, text_rect_title[2], text_rect_title[1], text_rect_title[3] );
-  _draw->DrawText( OpenGL::CBasicDraw::font_sans, title_text, 0.09f, 0.7f, { pt_title[0]-text_rect_title[2]*0.2f, pt_title[1], 0.0f }, { 0.0f, 0.0f, 0.0f, 1.0f } );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, title_text, 2, 0.09f, 0.7f, { 0.0f, 2.5f, 0.0f }, { 0.0f, 0.0f, 0.0f, 1.0f } );
 
 
   _draw->ClearDepth();

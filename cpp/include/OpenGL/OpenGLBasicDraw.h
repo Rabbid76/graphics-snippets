@@ -98,17 +98,11 @@ public:
   virtual Render::IDrawBuffer & DrawBuffer( void );
   virtual Render::IDrawBuffer & DrawBuffer( const void *key, bool &cached );
 
-  virtual void Destroy( void ) override;                                   //!< destroy all internal objects and cleanup
-  virtual bool Init( void ) override;                                      //!< general initializations
-  virtual bool LoadFont( TFontId font_id, Render::IFont *&font ) override; //!< load and return a font by its id
-  virtual bool Begin( void ) override;                                     //!< start the rendering
-  virtual bool ActivateBackground( void ) override;                        //!< activate rendering to background
-  virtual bool ActivateOpaque( void ) override;                            //!< activate rendering to the opaque buffer
-  virtual bool ActivateTransparent( void ) override;                       //!< activate rendering to the transparent buffer
-  virtual bool Finish( void ) override;                                    //!< finish the rendering
-  virtual bool ClearDepth( void ) override;                                //!< interim clear of the depth buffer
- 
-  //!< sets the background color
+  virtual const TMat44 & Projection( void ) const override { return _uniforms._projection; } //!< get the projection matrix
+  virtual const TMat44 & View( void )       const override { return _uniforms._view; }       //!< get the view matrix
+  virtual const TMat44 & Model( void )      const override { return _uniforms._model; }      //!< get the model matrix
+
+    //!< sets the background color
   virtual void BackgroundColor( const Render::TColor &bg_color ) override
   {
     _bg_color = bg_color;
@@ -146,9 +140,19 @@ public:
 
   virtual TVec3 Project( const TVec3 &pt ) const override; //!< project by projection, view and model
 
+  virtual void Destroy( void ) override;                                   //!< destroy all internal objects and cleanup
+  virtual bool Init( void ) override;                                      //!< general initializations
+  virtual bool LoadFont( TFontId font_id, Render::IFont *&font ) override; //!< load and return a font by its id
+  virtual bool Begin( void ) override;                                     //!< start the rendering
+  virtual bool ActivateBackground( void ) override;                        //!< activate rendering to background
+  virtual bool ActivateOpaque( void ) override;                            //!< activate rendering to the opaque buffer
+  virtual bool ActivateTransparent( void ) override;                       //!< activate rendering to the transparent buffer
+  virtual bool Finish( void ) override;                                    //!< finish the rendering
+  virtual bool ClearDepth( void ) override;                                //!< interim clear of the depth buffer
+ 
   virtual bool Draw( Render::TPrimitive primitive_type, size_t size, size_t coords_size, const Render::t_fp *coords, const Render::TColor &color, const TStyle &style ) override;
 
-  virtual bool DrawText( TFontId font_id, const char *text, float height, float width_scale, const Render::TPoint3 &pos, const Render::TColor &color ) override;
+  virtual bool DrawText2D( TFontId font_id, const char *text, float height, float width_scale, const Render::TPoint3 &pos, const Render::TColor &color ) override;
 
 private:
                                                         

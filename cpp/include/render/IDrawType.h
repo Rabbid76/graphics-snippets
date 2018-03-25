@@ -76,6 +76,15 @@ inline TColor8 toColor8( const TColor &col8 )
   };
 };
 
+//! get the identity matrix
+inline constexpr TMat44 Identity( void )
+{
+  return TMat44( { TVec4{ 1.0f, 0.0f, 0.0f, 0.0f },
+                   TVec4{ 0.0f, 1.0f, 0.0f, 0.0f },
+                   TVec4{ 0.0f, 0.0f, 1.0f, 0.0f },
+                   TVec4{ 0.0f, 0.0f, 0.0f, 1.0f } } );
+}
+
 } // Draw
 
 #endif // ILight_h_INCLUDED
