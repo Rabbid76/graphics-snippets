@@ -21,6 +21,7 @@
 #include <cmath>
 #include <string>
 #include <sstream>
+#include <algorithm>
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -458,11 +459,11 @@ void CWindow_Glfw::World( double time_ms )
 {
   std::vector<std::array<int, 3>> pts_orig{
     { -1, -2, 9 },
-    {  1, -2, 7 },
-    {  1,  0, 7 },
+    {  1, -2, 3 },
+    {  1,  0, 3 },
     {  2,  0, 1 },
-    {  0,  2, 2 },
-    { -2,  0, 3 },
+    {  0,  2, 4 },
+    { -2,  0, 7 },
     { -1,  0, 9 }
   };
 
@@ -478,6 +479,14 @@ void CWindow_Glfw::World( double time_ms )
 
   _draw->ActivateOpaque();
 
+  _draw->Model( Render::Identity() );
+  _draw->DrawPolyline( 2, 
+    { -0.1f, -0.2f, 0.1f, -0.2f, 0.1f, 0.0f, 0.2f, 0.0f, 0.0f, 0.2f, -0.2f, 0.0f, -0.1f, 0.0f, -0.1f, -0.2f },
+    Color_gray(), 3.0f, false );
+
+  _draw->ActivateOpaque();
+  _draw->ClearDepth();
+
   Render::TMat44 model_mat = Render::Identity();
   model_mat[0][0] = 0.0f;
   model_mat[0][1] = -0.5f;
@@ -490,8 +499,26 @@ void CWindow_Glfw::World( double time_ms )
     { -0.1f, -0.2f, 0.1f, -0.2f, 0.1f, 0.0f, 0.2f, 0.0f, 0.0f, 0.2f, -0.2f, 0.0f, -0.1f, 0.0f, -0.1f, -0.2f },
     Color_ink(), 3.0f, false );
 
+  _draw->ActivateOpaque();
+  _draw->ClearDepth();
   _draw->Model( Render::Identity() );
-  _draw->DrawPolyline( 2, 
-    { -0.1f, -0.2f, 0.1f, -0.2f, 0.1f, 0.0f, 0.2f, 0.0f, 0.0f, 0.2f, -0.2f, 0.0f, -0.1f, 0.0f, -0.1f, -0.2f },
-    Color_gray(), 3.0f, false );
+
+  static float text_height  = 0.05f;
+  static float text_scale_y = 1.0f;
+  for ( size_t i=0; i < pts_orig.size(); ++ i )
+  {               
+    auto & pt = pts_orig[i];
+    float p[]{ (float)pt[0], (float)pt[1] };
+    std::swap( p[0], p[1] );
+    p[0] *= 2.0;
+    p[0] += 4.0;
+    p[1] *= 0.5f;
+
+    std::stringstream strstr;
+    strstr << "(" << p[0] << ", " << p[1] << ")";
+    Render::TPoint3 pos{ (float)p[0]/10.0f, (float)p[1]/10.0f, 0.0f };
+    pos[0] += ( pos[0] < -0.001f  || i==2 || i==6 ) ? -0.02f : ( pos[0] > 0.001f ) ? 0.02f : 0.0f;
+    pos[1] += ( pos[1] < -0.001f ) ? -0.02f : ( pos[1] > 0.001f ) ? 0.02f : 0.0f;
+    _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, strstr.str().c_str(), pt[2], text_height, text_scale_y, pos, Color_darkgray() );
+  }
 }
