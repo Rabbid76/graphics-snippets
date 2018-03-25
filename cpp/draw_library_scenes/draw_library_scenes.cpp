@@ -67,6 +67,7 @@ private:
     static constexpr const Render::TColor Color_blue_2( void )       { return { 0.0f, 0.0f, 0.8f, 1.0f }; }
     static constexpr const Render::TColor Color_darkgray( void )     { return { 0.2f, 0.2f, 0.2f, 1.0f }; }
     static constexpr const Render::TColor Color_gray( void )         { return { 0.5f, 0.5f, 0.5f, 1.0f }; }
+    static constexpr const Render::TColor Color_lightgray( void )    { return { 0.75f, 0.75f, 0.75f, 1.0f }; }
     static constexpr const Render::TColor Color_ink( void )          { return { 0.1f, 0.3f, 0.8f, 1.0f }; }
     static constexpr const Render::TColor Color_paper_nature( void ) { return { 0.96f, 0.96f, 0.93f, 1.0f }; }
     static constexpr const Render::TColor Color_paper_line( void )   { return { 0.8f, 0.9f, 0.9f, 1.0f }; }
@@ -482,7 +483,7 @@ void CWindow_Glfw::World( double time_ms )
   _draw->Model( Render::Identity() );
   _draw->DrawPolyline( 2, 
     { -0.1f, -0.2f, 0.1f, -0.2f, 0.1f, 0.0f, 0.2f, 0.0f, 0.0f, 0.2f, -0.2f, 0.0f, -0.1f, 0.0f, -0.1f, -0.2f },
-    Color_gray(), 3.0f, false );
+    Color_lightgray(), 3.0f, false );
 
   _draw->ActivateOpaque();
   _draw->ClearDepth();
