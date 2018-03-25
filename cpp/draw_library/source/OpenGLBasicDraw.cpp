@@ -1439,10 +1439,16 @@ bool CBasicDraw::ClearDepth( void )
     return false;
   }
 
-  _process->PrepareNoClear( c_opaque_pass );
+  if ( _current_pass != c_opaque_pass )
+    _process->PrepareNoClear( c_opaque_pass );
+  
   glClear( GL_DEPTH_BUFFER_BIT );
   OPENGL_CHECK_GL_ERROR
-  _process->Release();
+  
+  if ( _current_pass == 0 )
+    _process->Release();
+  else if ( _current_pass != c_opaque_pass )
+    _process->PrepareNoClear( _current_pass );
 
   return true;
 }

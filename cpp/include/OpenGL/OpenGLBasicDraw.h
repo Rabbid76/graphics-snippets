@@ -105,6 +105,7 @@ public:
     //!< sets the background color
   virtual void BackgroundColor( const Render::TColor &bg_color ) override
   {
+    // TODO $$$ process change clear color
     _bg_color = bg_color;
     InvalidateProcess();
   };
