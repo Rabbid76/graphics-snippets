@@ -190,7 +190,14 @@ public:
     std::string sourceCode = file;
     if ( sourceFile.is_open() )
       sourceCode = std::string( (std::istreambuf_iterator<char>( sourceFile )), std::istreambuf_iterator<char>() );
-    const std::map<int, std::string>nameMap{ { GL_VERTEX_SHADER,  "vertex" }, { GL_FRAGMENT_SHADER, "fragment" } };
+    const std::map<int, std::string>nameMap{ 
+      { GL_VERTEX_SHADER,  "vertex" },
+      { GL_TESS_CONTROL_SHADER, "tessellation control" },
+      { GL_TESS_EVALUATION_SHADER, "tessellation evaluation" },
+      { GL_GEOMETRY_SHADER,  "geometry" },
+      { GL_FRAGMENT_SHADER, "fragment" },
+      { GL_COMPUTE_SHADER, "compute" }
+    };
 
     if ( _verbose )
       std::cout << nameMap.find(shaderStage)->second.data() << "shader code:" << std::endl << sourceCode << std::endl << std::endl;

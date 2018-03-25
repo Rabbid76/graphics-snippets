@@ -38,7 +38,7 @@ In general world coordinates and view coordinates are [Cartesian coordinates](ht
   
 The view coordinates system describes the direction and position from which the scene is looked at. The view matrix transforms from the wolrd space to the view (eye) space. 
 
-If the coordiante system of the view space is a [Right-hand](https://en.wikipedia.org/wiki/Right-hand_rule) system, then the X-axis points to the left, the Y-axis up and the Z-axis out of the view (Note in a right hand system the Z-Axis is the cross product of the X-Axis and the Y-Axis). 
+If the coordiante system of the view space is a [Right-handed](https://en.wikipedia.org/wiki/Right-hand_rule) system, then the X-axis points to the left, the Y-axis up and the Z-axis out of the view (Note in a right hand system the Z-Axis is the cross product of the X-Axis and the Y-Axis). 
 
 ![view](image/view_coordinates.png) 
 

@@ -91,6 +91,53 @@ void main()
 }
 )";
 
+std::string line_sh_geom = R"(
+#version 460
+
+layout( invocations = 1 ) in;
+layout( lines_adjacency ) in;
+layout( line_strip, max_vertices = 2 ) out;
+
+in TVertexData
+{
+    vec3 pos;
+    vec2 tex;
+} in_data[];
+
+out TVertexData
+{
+    vec3 pos;
+    vec2 tex;
+} out_data;
+
+layout(std430, binding = 1) buffer TUniform
+{
+    mat4 u_proj;
+    mat4 u_view;
+    mat4 u_model;
+    vec2 u_vp_size;
+};
+
+void main()
+{
+    vec3 view_pos;
+
+    out_data.tex = in_data[1].tex;
+    view_pos     = in_data[1].pos;
+    out_data.pos = view_pos;
+    gl_Position  = u_proj * vec4(view_pos.xyz, 1.0);
+    EmitVertex();
+
+    out_data.tex = in_data[2].tex;
+    view_pos     = in_data[2].pos;
+    out_data.pos = view_pos;
+    gl_Position  = u_proj * vec4(view_pos.xyz, 1.0);
+    EmitVertex();
+
+    EndPrimitive();
+}
+)";
+
 std::string opaque_sh_frag = R"(
 #version 460
 
@@ -819,6 +866,7 @@ bool CBasicDraw::Init( void )
     _opaque_line_prog = std::make_unique<OpenGL::ShaderProgram>(
       std::vector< TShaderInfo >{
         { opaque_transp_sh_vert, GL_VERTEX_SHADER },
+        { line_sh_geom, GL_GEOMETRY_SHADER },
         { opaque_sh_frag, GL_FRAGMENT_SHADER }
       } );
   }
@@ -840,9 +888,10 @@ bool CBasicDraw::Init( void )
   // transparent line shader
   try
   {
-    _transp_prog = std::make_unique<OpenGL::ShaderProgram>(
+    _transp_line_prog = std::make_unique<OpenGL::ShaderProgram>(
       std::vector< TShaderInfo >{
         { opaque_transp_sh_vert, GL_VERTEX_SHADER },
+        { line_sh_geom, GL_GEOMETRY_SHADER },
         { transp_sh_frag, GL_FRAGMENT_SHADER }
       } );
   }
@@ -1559,6 +1608,14 @@ bool CBasicDraw::Draw(
   // draw arrows
   if ( arrow_from || arrow_to )
   {
+    // set program
+    bool transparent_pass = _current_pass == c_tranp_pass;
+    transparent_pass ? _transp_prog->Use() : _opaque_prog->Use(); 
+
+    // set uniforms
+    UpdateGeneralUniforms();
+    UpdateColorUniforms( color );
+
     TMat44 model_bk = _uniforms._model;
 
     // TODO $$$ beautify arrow
