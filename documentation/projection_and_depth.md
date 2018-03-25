@@ -13,13 +13,11 @@ In a rendering, each mesh of the scene usually is transformed by the model matri
 
 ### World coordinates
 
-  The world sapce is the coordinate system of the scene. Different models (objects) can be placed multiple times in the world space to form a scene, in together.
+The world sapce is the coordinate system of the scene. Different models (objects) can be placed multiple times in the world space to form a scene, in together.
 
 **Model matrix**
 
 The model matrix defines the location, oriantation and the relative size of a model (object, mesh) in the scene. The model matrix transforms the vertex positions of a single mesh to world space for a single specific positioning. There are different model matrices, one for each combination of a model (object) and a location of the object in the wolrd space.
-
-![model](image/model.png)
 
 The model matrix looks like this:
 
@@ -28,6 +26,14 @@ The model matrix looks like this:
     ( Z-axis.x, Z-axis.y, Z-axis.z, 0 )
     ( trans.x,  trans.y,  trans.z,  1 )
 
+e.g.
+
+    (  0.0, -0.5,  0.0,  0.0 )
+    (  2.0,  0.0,  0.0,  0.0 )
+    (  0.0,  0.0,  1.0,  0.0 )
+    (  0.4,  0.0,  0.0,  1.0 )
+
+![model to world](image/model_to_world.png)    
 
 ### View sapce (Eye coordinates)
 

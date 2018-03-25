@@ -40,7 +40,8 @@ private:
     {
       e_default,
       e_viewport_coordsys,
-      e_model
+      e_model,
+      e_world,
     };
 
     std::array< int, 2 > _wndPos         {0, 0};
@@ -64,6 +65,7 @@ private:
     static constexpr const Render::TColor Color_green_2( void )      { return { 0.0f, 0.8f, 0.0f, 1.0f }; }
     static constexpr const Render::TColor Color_blue_2( void )       { return { 0.0f, 0.0f, 0.8f, 1.0f }; }
     static constexpr const Render::TColor Color_darkgray( void )     { return { 0.2f, 0.2f, 0.2f, 1.0f }; }
+    static constexpr const Render::TColor Color_gray( void )         { return { 0.5f, 0.5f, 0.5f, 1.0f }; }
     static constexpr const Render::TColor Color_ink( void )          { return { 0.1f, 0.3f, 0.8f, 1.0f }; }
     static constexpr const Render::TColor Color_paper_nature( void ) { return { 0.96f, 0.96f, 0.93f, 1.0f }; }
     static constexpr const Render::TColor Color_paper_line( void )   { return { 0.8f, 0.9f, 0.9f, 1.0f }; }
@@ -77,7 +79,7 @@ private:
     float  _aspect = 1.0;
     float  _scale_x = 1.0;
     float  _scale_y = 1.0;
-    TScene _scene   = e_model;
+    TScene _scene   = e_world;
 
     Render::TPoint2 BL( void ) const { return{ -_scale_x, -_scale_y}; }
     Render::TPoint2 TL( void ) const { return{  _scale_x, -_scale_y}; }
@@ -93,6 +95,7 @@ private:
     void TestScene( double time_ms );
     void ViewportCoordsys( double time_ms );
     void Model( double time_ms );
+    void World( double time_ms );
 
 public:
 
@@ -285,6 +288,7 @@ void CWindow_Glfw::Render( double time_ms )
     case e_default:           TestScene( time_ms ); break;
     case e_viewport_coordsys: ViewportCoordsys( time_ms ); break;
     case e_model:             Model( time_ms ); break;
+    case e_world:             World( time_ms ); break;
   }
 
   _draw->Finish();
@@ -447,4 +451,47 @@ void CWindow_Glfw::Model( double time_ms )
     pos[1] += ( pos[1] < -0.001f || i==2 || i==6 ) ? -0.02f : ( pos[1] > 0.001f || i==3 || i==5 ) ? 0.02f : 0.0f;
     _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, strstr.str().c_str(), pt[2], text_height, text_scale_y, pos, Color_darkgray() );
   }
+}
+
+
+void CWindow_Glfw::World( double time_ms )
+{
+  std::vector<std::array<int, 3>> pts_orig{
+    { -1, -2, 9 },
+    {  1, -2, 7 },
+    {  1,  0, 7 },
+    {  2,  0, 1 },
+    {  0,  2, 2 },
+    { -2,  0, 3 },
+    { -1,  0, 9 }
+  };
+
+  std::vector<float> poly;
+  for ( auto & pt : pts_orig )
+  {
+    poly.push_back( (float)pt[0] / 10.0f );
+    poly.push_back( (float)pt[1] / 10.0f );
+  }
+
+  _draw->ActivateBackground();
+  Checkered( BL(), TR() );
+
+  _draw->ActivateOpaque();
+
+  Render::TMat44 model_mat = Render::Identity();
+  model_mat[0][0] = 0.0f;
+  model_mat[0][1] = -0.5f;
+  model_mat[1][0] = 2.0f;
+  model_mat[1][1] = 0.0f;
+  model_mat[3][0] = 0.4f;
+
+  _draw->Model( model_mat );
+  _draw->DrawPolyline( 2, 
+    { -0.1f, -0.2f, 0.1f, -0.2f, 0.1f, 0.0f, 0.2f, 0.0f, 0.0f, 0.2f, -0.2f, 0.0f, -0.1f, 0.0f, -0.1f, -0.2f },
+    Color_ink(), 3.0f, false );
+
+  _draw->Model( Render::Identity() );
+  _draw->DrawPolyline( 2, 
+    { -0.1f, -0.2f, 0.1f, -0.2f, 0.1f, 0.0f, 0.2f, 0.0f, 0.0f, 0.2f, -0.2f, 0.0f, -0.1f, 0.0f, -0.1f, -0.2f },
+    Color_gray(), 3.0f, false );
 }
