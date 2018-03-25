@@ -96,7 +96,7 @@ std::string line_sh_geom = R"(
 
 layout( invocations = 1 ) in;
 layout( lines_adjacency ) in;
-layout( line_strip, max_vertices = 2 ) out;
+layout( triangle_strip, max_vertices = 4 ) out;
 
 in TVertexData
 {
@@ -118,20 +118,72 @@ layout(std430, binding = 1) buffer TUniform
     vec2 u_vp_size;
 };
 
+uniform float u_thickness; 
+
 void main()
 {
-    vec3 view_pos;
+    vec3 pos0    = in_data[1].pos;
+    vec3 pos1    = in_data[2].pos;
+    vec3 dirLine = normalize( pos1 - pos0 ); 
+    vec3 dirPred = normalize( in_data[0].pos - pos0 );
+    vec3 dirSucc = normalize( in_data[3].pos - pos1 );
+    vec3 dirNorm = normalize(cross(vec3(0.0, 0.0, 1.0), dirLine));      
+    dirSucc      = faceforward( dirSucc, -dirNorm, dirSucc );
+    vec3 dir0    = abs( dot(dirPred, dirLine) ) > 0.99 ? dirNorm : normalize( dirPred + dirLine );
+    vec3 dir1    = abs( dot(dirSucc, dirLine) ) > 0.99 ? dirNorm : normalize( dirSucc - dirLine );
+
+    // normalized quad positions
+    vec3 normal_pos[4];
+    normal_pos[0] = pos0 - dirNorm;
+    normal_pos[1] = pos1 - dirNorm;
+    normal_pos[2] = pos0 + dirNorm;
+    normal_pos[3] = pos1 + dirNorm;
+
+    // projected normalized quad positions
+    vec4 prj_pos[4];
+    for(int i=0; i<4; ++i)
+        prj_pos[i] = u_proj * vec4(normal_pos[i], 1.0);
+
+    // NDC normalized quad positions
+    vec3 ndc_pos[4];
+    for(int i=0; i<4; ++i)
+        ndc_pos[i] = prj_pos[i].xyz / prj_pos[i].w;
+
+    // window normalized quad positions
+    vec2 wnd_pos[4];
+    for(int i=0; i<4; ++i)
+        wnd_pos[i] = (ndc_pos[i].xy*0.5 + 0.5) * u_vp_size;
+
+    float thickness_scale0 = u_thickness / length(wnd_pos[2] - wnd_pos[0]);
+    float thickness_scale1 = u_thickness / length(wnd_pos[3] - wnd_pos[1]);
+
+    // miter positions
+    vec3 pos[4];
+    pos[0] = pos0 - thickness_scale0 * dir0 / dot(dir0, dirNorm);
+    pos[1] = pos1 - thickness_scale1 * dir1 / dot(dir1, dirNorm);
+    pos[2] = pos0 + thickness_scale0 * dir0 / dot(dir0, dirNorm);
+    pos[3] = pos1 + thickness_scale1 * dir1 / dot(dir1, dirNorm);
+
+    // create the vertices and the primitive
 
     out_data.tex = in_data[1].tex;
-    view_pos     = in_data[1].pos;
-    out_data.pos = view_pos;
-    gl_Position  = u_proj * vec4(view_pos.xyz, 1.0);
+    
+    out_data.pos = pos[0];
+    gl_Position  = u_proj * vec4(pos[0], 1.0);
+    EmitVertex();
+    
+    out_data.pos = pos[1];
+    gl_Position  = u_proj * vec4(pos[1], 1.0);
     EmitVertex();
 
     out_data.tex = in_data[2].tex;
-    view_pos     = in_data[2].pos;
-    out_data.pos = view_pos;
-    gl_Position  = u_proj * vec4(view_pos.xyz, 1.0);
+    
+    out_data.pos = pos[2];
+    gl_Position = u_proj * vec4(pos[2], 1.0);
+    EmitVertex();
+    
+    out_data.pos = pos[3];
+    gl_Position  = u_proj * vec4(pos[3], 1.0);
     EmitVertex();
 
     EndPrimitive();
@@ -1565,26 +1617,19 @@ bool CBasicDraw::Draw(
   else
     buffer.UpdateVB( 0, sizeof(float), coords_size, coords );
   
-  // set style and context
-  if ( _core_mode == false && draw_line )
-  {
-    //! see [OpenGL 4.6 API Core Profile Specification; E.2.1 Deprecated But Still Supported Features; page 672](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf)<br/>
-    //! > Wide lines - `LineWidth` values greater than 1.0 will generate an INVALID_VALUE error.
-    // see [OpenGL 3.2 Core Profile glLineWidth](https://stackoverflow.com/questions/8791531/opengl-3-2-core-profile-gllinewidth)
-    glLineWidth( style._thickness * _fb_scale );
-    OPENGL_CHECK_GL_ERROR
-  }
-
   // set program
   bool transparent_pass = _current_pass == c_tranp_pass;
   if ( transparent_pass )
-    draw_line ? _transp_line_prog->Use() : _transp_prog->Use();
+    _current_prog = draw_line ? _transp_line_prog.get() : _transp_prog.get();
   else
-    draw_line ? _opaque_line_prog->Use() : _opaque_prog->Use();
+    _current_prog = draw_line ? _opaque_line_prog.get() : _opaque_prog.get();
+   _current_prog->Use();
 
   // set uniforms
   UpdateGeneralUniforms();
   UpdateColorUniforms( color );
+  if ( draw_line )
+     _current_prog->SetUniformF1( "u_thickness", style._thickness * _fb_scale );
 
   // bind "white" color texture
   glActiveTexture( GL_TEXTURE0 );
@@ -1598,19 +1643,13 @@ bool CBasicDraw::Draw(
     buffer.DrawArray( final_primitive_type, 0, no_of_vertices, true );
   buffer.Release();
 
-  // reset line thickness
-  if ( _core_mode == false && draw_line )
-  {
-    glLineWidth( 1.0f );
-    OPENGL_CHECK_GL_ERROR
-  }
-  
   // draw arrows
   if ( arrow_from || arrow_to )
   {
     // set program
     bool transparent_pass = _current_pass == c_tranp_pass;
-    transparent_pass ? _transp_prog->Use() : _opaque_prog->Use(); 
+    _current_prog = transparent_pass ? _transp_prog.get() : _opaque_prog.get();
+    _current_prog->Use(); 
 
     // set uniforms
     UpdateGeneralUniforms();

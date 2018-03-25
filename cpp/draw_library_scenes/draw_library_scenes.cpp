@@ -81,8 +81,10 @@ int main(int argc, char** argv)
         throw std::runtime_error( "error initializing glfw" );
 
     // create OpenGL window and make OpenGL context current (`glfwInit` has to be done before).
+    static int cx = 800;
+    static int cy = 600;
     CWindow_Glfw window;
-    window.Init( 800, 600, true );
+    window.Init( cx, cy, true );
 
     // OpenGL context needs to be current for `glewInit`
     glewExperimental = true;
@@ -241,7 +243,7 @@ void CWindow_Glfw::Render( double time_ms )
     e_viewport_coordsys
   };
 
-  static int scene = e_default;
+  static int scene = e_viewport_coordsys;
 
   _aspect = (float)_vpSize[0] / (float)_vpSize[1];
   _scale_x = _aspect < 1.0f ? 1.0f : _aspect;
