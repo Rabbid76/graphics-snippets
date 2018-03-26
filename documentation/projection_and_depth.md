@@ -38,7 +38,7 @@ e.g.
 ### View sapce (Eye coordinates)
 
 The view space is the local system which is defined by the point of view onto the scene.
-The position of the view, the line of sight and the upwards direction of the view, define a coordinate system relative to the world coordinate system. The objects of a scene have to drawn in this coordinate system, to be seen from the viewing position. The inverse matrix of the view coordinate system is named the **view matrix**.<br/>
+The position of the view, the line of sight and the upwards direction of the view, define a coordinate system relative to the world coordinate system. The objects of a scene have to be drawn in relation to the view coordinate system, to be "seen" from the viewing position. The inverse matrix of the view coordinate system is named the **view matrix**.<br/>
 In general world coordinates and view coordinates are [Cartesian coordinates](https://en.wikipedia.org/wiki/Cartesian_coordinate_system)
 
 **View matrix**
@@ -62,6 +62,14 @@ A point is in clip space if the `x`, `y` and `z` components are in the range def
 
 The projection matrix describes the mapping from 3D points of a scene, to 2D points of the viewport. The projection matrix transforms from view space to the clip space. The coordinates in the clip space are transformed to the normalized device coordinates (NDC) in the range (-1, -1, -1) to (1, 1, 1) by dividing with the `w` component of the clip coordinates.
 
+e.g.:
+
+look at: `eye = (2.5, -1.5, 3.5)`, `center = (2, 0, 0)`, `up = (0, 1, 0)`
+
+perspcetive projection: field of view (y) of *100°*, near plane at *0.1*, far plane at *20.0* 
+
+
+![normaliced device coordinates](image/ndc_coordinates.png)
 
 ### Normaliced device coordinates
 

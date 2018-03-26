@@ -43,6 +43,9 @@ private:
       e_viewport_coordsys,
       e_model,
       e_world,
+      e_view,
+      e_projection,
+      e_NDC
     };
 
     std::array< int, 2 > _wndPos         {0, 0};
@@ -81,7 +84,7 @@ private:
     float  _aspect = 1.0;
     float  _scale_x = 1.0;
     float  _scale_y = 1.0;
-    TScene _scene   = e_world;
+    TScene _scene   = e_projection;
 
     Render::TPoint2 BL( void ) const { return{ -_scale_x, -_scale_y}; }
     Render::TPoint2 TL( void ) const { return{  _scale_x, -_scale_y}; }
@@ -98,6 +101,9 @@ private:
     void ViewportCoordsys( double time_ms );
     void Model( double time_ms );
     void World( double time_ms );
+    void View( double time_ms );
+    void Projection( double time_ms );
+    void NDC( double time_ms );
 
 public:
 
@@ -174,7 +180,7 @@ void CWindow_Glfw::Init( int width, int height, bool doubleBuffer )
     static bool         c_core    = true;
     static float        c_scale   = 1.0f;
     static bool         c_fxaa    = false;
-    static unsigned int c_samples = 4;
+    static unsigned int c_samples = 16;
 
     _doubleBuffer = doubleBuffer;
 
@@ -291,6 +297,9 @@ void CWindow_Glfw::Render( double time_ms )
     case e_viewport_coordsys: ViewportCoordsys( time_ms ); break;
     case e_model:             Model( time_ms ); break;
     case e_world:             World( time_ms ); break;
+    case e_view:              View( time_ms ); break;
+    case e_projection:        Projection( time_ms ); break;
+    case e_NDC:               NDC( time_ms ); break;
   }
 
   _draw->Finish();
@@ -434,9 +443,7 @@ void CWindow_Glfw::Model( double time_ms )
 
   _draw->ActivateOpaque();
 
-  _draw->DrawPolyline( 2, 
-    { -0.1f, -0.2f, 0.1f, -0.2f, 0.1f, 0.0f, 0.2f, 0.0f, 0.0f, 0.2f, -0.2f, 0.0f, -0.1f, 0.0f, -0.1f, -0.2f },
-    Color_ink(), 3.0f, false );
+  _draw->DrawPolyline( 2, poly, Color_ink(), 3.0f, true );
 
   _draw->ActivateOpaque();
   _draw->ClearDepth();
@@ -481,9 +488,7 @@ void CWindow_Glfw::World( double time_ms )
   _draw->ActivateOpaque();
 
   _draw->Model( Render::Identity() );
-  _draw->DrawPolyline( 2, 
-    { -0.1f, -0.2f, 0.1f, -0.2f, 0.1f, 0.0f, 0.2f, 0.0f, 0.0f, 0.2f, -0.2f, 0.0f, -0.1f, 0.0f, -0.1f, -0.2f },
-    Color_lightgray(), 3.0f, false );
+  _draw->DrawPolyline( 2, poly, Color_lightgray(), 3.0f, true );
 
   _draw->ActivateOpaque();
   _draw->ClearDepth();
@@ -496,9 +501,7 @@ void CWindow_Glfw::World( double time_ms )
   model_mat[3][0] = 0.4f;
 
   _draw->Model( model_mat );
-  _draw->DrawPolyline( 2, 
-    { -0.1f, -0.2f, 0.1f, -0.2f, 0.1f, 0.0f, 0.2f, 0.0f, 0.0f, 0.2f, -0.2f, 0.0f, -0.1f, 0.0f, -0.1f, -0.2f },
-    Color_ink(), 3.0f, false );
+  _draw->DrawPolyline( 2, poly, Color_ink(), 3.0f, true );
 
   _draw->ActivateOpaque();
   _draw->ClearDepth();
@@ -522,4 +525,206 @@ void CWindow_Glfw::World( double time_ms )
     pos[1] += ( pos[1] < -0.001f ) ? -0.02f : ( pos[1] > 0.001f ) ? 0.02f : 0.0f;
     _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, strstr.str().c_str(), pt[2], text_height, text_scale_y, pos, Color_darkgray() );
   }
+}
+
+
+void CWindow_Glfw::View( double time_ms )
+{
+  // TODO $$$
+
+  std::vector<std::array<int, 3>> pts_orig{
+    { -1, -2, 3 },
+    {  1, -2, 9 },
+    {  1,  0, 9 },
+    {  2,  0, 7 },
+    {  0,  2, 4 },
+    { -2,  0, 1 },
+    { -1,  0, 9 }
+  };
+
+  std::vector<float> poly;
+  for ( auto & pt : pts_orig )
+  {
+    poly.push_back( (float)pt[0] );
+    poly.push_back( (float)pt[1] );
+  }
+
+  _draw->ActivateBackground();
+  Checkered( BL(), TR() );
+
+  OpenGL::Camera polyCamera;
+  polyCamera._vp     = { (int)_vpSize[0], (int)_vpSize[1] };
+  polyCamera._near   = 0.5f;
+  polyCamera._far    = 20.0f;
+  polyCamera._pos    = { -2.5f, -1.5f, 3.5f };
+  polyCamera._target = { 2.0f, 0.0f, 0.0f };
+  polyCamera._up     = { 0.0f, 1.0f, 0.0f };
+  polyCamera._fov_y  = 100.0f;
+  Render::TMat44 polyView = polyCamera.LookAt();
+
+  OpenGL::Camera camera;
+  camera._vp     = { (int)_vpSize[0], (int)_vpSize[1] };
+  camera._near   = 0.5f;
+  camera._far    = 20.0f;
+  camera._pos    = { 0.0f, 2.0f, 4.0f };
+  camera._target = { 0.0f, 0.0f, 0.0f };
+  camera._up     = { 0.0f, 1.0f, 0.0f };
+  camera._fov_y  = 100.0f;
+  Render::TMat44 prj = OpenGL::Camera::Orthopraphic( _scale_x*10.0f, _scale_y*10.0f, { 0.0f, 20.0f } );
+  Render::TMat44 view = camera.LookAt();
+
+  Render::TMat44 model_mat = Render::Identity();
+  model_mat[0][0] = 0.0f;
+  model_mat[0][1] = -0.5f;
+  model_mat[1][0] = 2.0f;
+  model_mat[1][1] = 0.0f;
+  model_mat[3][0] = 0.4f;
+
+
+  _draw->Projection( prj );
+  _draw->View( view );
+  _draw->Model( model_mat );
+
+  _draw->ActivateOpaque();
+
+  _draw->DrawPolyline( 2, poly, Color_ink(), 3.0f, true );
+
+  _draw->Model( Render::Identity() );
+
+  Render::TVec2 arr_size{ 0.2f, 0.12f };
+  Render::TVec3 origin = polyCamera._pos;
+  float a_len = 2.0f;
+  Render::TVec3 ax{ ( origin[0] + a_len * polyView[0][0] ), ( origin[1] + a_len * polyView[0][1] ), ( origin[2] + a_len * polyView[0][2] ) };
+  Render::TVec3 ay{ ( origin[0] + a_len * polyView[1][0] ), ( origin[1] + a_len * polyView[1][1] ), ( origin[2] + a_len * polyView[1][2] ) };
+  Render::TVec3 az{ ( origin[0] - a_len * polyView[2][0] ), ( origin[1] - a_len * polyView[2][1] ), ( origin[2] - a_len * polyView[2][2] ) };
+  _draw->DrawArrow( 3, {origin[0], origin[1], origin[2], ax[0], ax[1], ax[2] }, Color_red_2(), 3, arr_size, false, true );
+  _draw->DrawArrow( 3, {origin[0], origin[1], origin[2], ay[0], ay[1], ay[2] }, Color_green_2(), 3, arr_size, false, true );
+  _draw->DrawArrow( 3, {origin[0], origin[1], origin[2], az[0], az[1], az[2] }, Color_blue_2(), 3, arr_size, false, true );
+
+  _draw->ActivateOpaque();
+  _draw->ClearDepth();
+}
+
+
+void CWindow_Glfw::Projection( double time_ms )
+{
+  std::vector<std::array<int, 3>> pts_orig{
+    { -1, -2, 3 },
+    {  1, -2, 9 },
+    {  1,  0, 9 },
+    {  2,  0, 7 },
+    {  0,  2, 4 },
+    { -2,  0, 1 },
+    { -1,  0, 9 }
+  };
+
+  std::vector<float> poly;
+  for ( auto & pt : pts_orig )
+  {
+    poly.push_back( (float)pt[0] );
+    poly.push_back( (float)pt[1] );
+  }
+
+  _draw->ActivateBackground();
+  Checkered( BL(), TR() );
+
+  OpenGL::Camera camera;
+  camera._vp     = { (int)_vpSize[0], (int)_vpSize[1] };
+  camera._near   = 0.5f;
+  camera._far    = 20.0f;
+  camera._pos    = { -2.5f, -1.5f, 3.5f };
+  camera._target = { 2.0f, 0.0f, 0.0f };
+  camera._up     = { 0.0f, 1.0f, 0.0f };
+  camera._fov_y  = 100.0f;
+  Render::TMat44 polyView = camera.LookAt();
+
+  Render::TMat44 model_mat = Render::Identity();
+  model_mat[0][0] = 0.0f;
+  model_mat[0][1] = -0.5f;
+  model_mat[1][0] = 2.0f;
+  model_mat[1][1] = 0.0f;
+  model_mat[3][0] = 0.4f;
+
+  _draw->Projection( camera.Perspective() );
+  _draw->View( camera.LookAt() );
+  _draw->Model( model_mat );
+
+  _draw->ActivateOpaque();
+
+  _draw->DrawPolyline( 2, poly, Color_ink(), 3.0f, true );
+
+  _draw->ActivateOpaque();
+  _draw->ClearDepth();
+
+  static float text_height  = 0.05f;
+  static float text_scale_y = 1.0f;
+  for ( size_t i=0; i < pts_orig.size(); ++ i )
+  {               
+    auto & pt = pts_orig[i];
+    Render::TPoint3 pos{ (float)pt[0], (float)pt[1] };
+    Render::TPoint3 pos_prj = _draw->Project( pos );
+
+    float p[]{ (float)pt[0], (float)pt[1] };
+
+    std::stringstream strstr;
+    strstr.precision( 2 );
+    strstr << std::fixed << "(" << pos_prj[0] << ", " << pos_prj[1] << ", " << pos_prj[2] << ")";
+    
+    pos[0] += ( pos[0] < -0.001f ) ? -0.02f : ( pos[0] > 0.001f ) ? 0.02f : 0.0f;
+    pos[1] += ( pos[1] < -0.001f ) ? -0.02f : ( pos[1] > 0.001f ) ? 0.02f : 0.0f;
+    _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, strstr.str().c_str(), pt[2], text_height, text_scale_y, pos, Color_darkgray() );
+  }
+}
+
+
+void CWindow_Glfw::NDC( double time_ms )
+{
+  Render::TVec2   arr_size{ 0.2f, 0.12f };
+  Render::TVec2   arr_los_size{ arr_size[0]*2.0f, arr_size[1]*2.0f };
+  float           axis_len = 2.2f;
+  static float    axis_text_height  = 0.126f;
+  static float    axis_text_scale_y = 0.9f;
+
+  OpenGL::Camera camera;
+  camera._vp     = { (int)_vpSize[0], (int)_vpSize[1] };
+  camera._near   = 0.5f;
+  camera._far    = 20.0f;
+  camera._pos    = { 3.0f, 1.5f, 3.8f };
+  camera._target = { 0.0f, 0.0f, 0.0f };
+  camera._up     = { 0.0f, 1.0f, 0.0f };
+  camera._fov_y  = 80.0f;
+  Render::TMat44 prj = camera.Perspective();
+  Render::TMat44 view = camera.LookAt();
+
+  _draw->Projection( prj );
+  _draw->View( view );
+  _draw->Model( Render::Identity() );
+
+  _draw->ActivateOpaque();
+
+  _draw->DrawPolyline( 3, { -1.0f, -1.0f, -1.0f,   1.0f, -1.0f, -1.0f,   1.0f,  1.0f, -1.0f,   -1.0f,  1.0f, -1.0f }, Color_darkgray(), 1.0f, true );
+  _draw->DrawPolyline( 3, { -1.0f, -1.0f,  1.0f,   1.0f, -1.0f,  1.0f,   1.0f,  1.0f,  1.0f,   -1.0f,  1.0f,  1.0f }, Color_darkgray(), 1.0f, true );
+  _draw->DrawPolyline( 3, { -1.0f, -1.0f, -1.0f,  -1.0f, -1.0f,  1.0f,   1.0f, -1.0f,  1.0f,    1.0f, -1.0f, -1.0f }, Color_darkgray(), 1.0f, true );
+  _draw->DrawPolyline( 3, { -1.0f,  1.0f, -1.0f,  -1.0f,  1.0f,  1.0f,   1.0f,  1.0f,  1.0f,    1.0f,  1.0f, -1.0f }, Color_darkgray(), 1.0f, true );
+
+  _draw->DrawArrow( 3, {0.0f, 0.0f, 0.0f, axis_len, 0.0f, 0.0f }, Color_red_2(), 3, arr_size, false, true );
+  _draw->DrawArrow( 3, {0.0f, 0.0f, 0.0f, 0.0f, axis_len, 0.0f }, Color_green_2(), 3, arr_size, false, true );
+  _draw->DrawArrow( 3, {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, axis_len }, Color_blue_2(), 3, arr_size, false, true );
+
+  _draw->ActivateOpaque();
+  _draw->ClearDepth();
+  
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "X", 7, axis_text_height, axis_text_scale_y, { axis_len, 0.0f, 0.0f }, Color_red_2() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "Y", 1, axis_text_height, axis_text_scale_y, { 0.0f, axis_len, 0.0f }, Color_green_2() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "Z", 3, axis_text_height, axis_text_scale_y, { 0.0f, 0.0f, axis_len }, Color_blue_2() );
+
+  static float text_height  = 0.05f;
+  static float text_scale_y = 1.0f;
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(-1, -1, -1)", 9, text_height, text_scale_y, {-1.0f, -1.1f, 1.0f}, Color_darkgray() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(1, -1, -1)", 8, text_height, text_scale_y, {1.0f, -1.1f, 1.0f}, Color_darkgray() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(-1, 1, -1)", 3, text_height, text_scale_y, {-1.0f, 1.1f, 1.0f}, Color_darkgray() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(1, 1, -1)", 7, text_height, text_scale_y, {1.0f, 0.95f, 1.0f}, Color_darkgray() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(1, 1, 1)", 1, text_height*0.8f, text_scale_y, {1.0f, 1.1f, -1.0f}, Color_darkgray() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(1, -1, 1)", 7, text_height*0.8f, text_scale_y, {1.0f, -1.1f, -1.0f}, Color_darkgray() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(-1, 1, 1)", 3, text_height*0.8f, text_scale_y, {-1.0f, 1.1f, -1.0f}, Color_darkgray() );
 }
