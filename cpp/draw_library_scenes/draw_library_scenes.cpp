@@ -84,7 +84,7 @@ private:
     float  _aspect = 1.0;
     float  _scale_x = 1.0;
     float  _scale_y = 1.0;
-    TScene _scene   = e_projection;
+    TScene _scene   = e_NDC;
 
     Render::TPoint2 BL( void ) const { return{ -_scale_x, -_scale_y}; }
     Render::TPoint2 TL( void ) const { return{  _scale_x, -_scale_y}; }
@@ -180,7 +180,7 @@ void CWindow_Glfw::Init( int width, int height, bool doubleBuffer )
     static bool         c_core    = true;
     static float        c_scale   = 1.0f;
     static bool         c_fxaa    = false;
-    static unsigned int c_samples = 16;
+    static unsigned int c_samples = 4;
 
     _doubleBuffer = doubleBuffer;
 

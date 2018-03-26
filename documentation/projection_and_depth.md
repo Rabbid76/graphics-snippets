@@ -7,9 +7,12 @@ In a rendering, each mesh of the scene usually is transformed by the model matri
 
 ### Model coordinates (Object coordinates)
 
-  The model space is the local space, where within a mesh is defined. The vertex coordinates are defined in model space.
+The model space is the local space, where within a mesh is defined. The vertex coordinates are defined in model space.
+
+e.g.:
 
 ![model coordinates](image/model_coordinates.png)
+
 
 ### World coordinates
 
@@ -26,7 +29,7 @@ The model matrix looks like this:
     ( Z-axis.x, Z-axis.y, Z-axis.z, 0 )
     ( trans.x,  trans.y,  trans.z,  1 )
 
-e.g.
+e.g.:
 
     (  0.0, -0.5,  0.0,  0.0 )
     (  2.0,  0.0,  0.0,  0.0 )
@@ -34,6 +37,7 @@ e.g.
     (  0.4,  0.0,  0.0,  1.0 )
 
 ![model to world](image/model_to_world.png)    
+
 
 ### View sapce (Eye coordinates)
 
@@ -47,7 +51,7 @@ The view coordinates system describes the direction and position from which the 
 
 If the coordiante system of the view space is a [Right-handed](https://en.wikipedia.org/wiki/Right-hand_rule) system, then the X-axis points to the left, the Y-axis up and the Z-axis out of the view (Note in a right hand system the Z-Axis is the cross product of the X-Axis and the Y-Axis). 
 
-![view](image/view_coordinates.png) 
+![view coordinates](image/view_coordinates.png) 
 
 
 ### Clip coordinates
@@ -68,14 +72,14 @@ look at: eye position *(2.5, -1.5, 3.5)*, center *(2, 0, 0)*, up vector *(0, 1, 
 
 perspcetive projection: field of view (y) of *100°*, near plane at *0.1*, far plane at *20.0* 
 
+![perspective projection](image/ndc_coordinates.png)
 
-![normaliced device coordinates](image/ndc_coordinates.png)
 
 ### Normaliced device coordinates
 
 The normalized device coordinates are the clip space coordinates divide by the `w` component of the clip coordinates. This is called [Perspective divide](https://www.khronos.org/opengl/wiki/Vertex_Post-Processing#Perspective_divide)
 
- ![NDC](image/NDC.png)
+![normaliced device coordinates](image/NDC.png)
 
 
 ### Window coordinates (Screen coordinates)
@@ -96,8 +100,6 @@ See also:
 ## View
 
 On the viewport the X-axis points to the left, the Y-axis up and the Z-axis out of the view (Note in a right hand system the Z-Axis is the cross product of the X-Axis and the Y-Axis).
-
-![view](image/view.png)
 
 The code below defines a matrix that exactly encapsulates the steps necessary to calculate a look at the scene:
 
