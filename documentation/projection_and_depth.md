@@ -70,7 +70,7 @@ e.g.:
 
 look at: eye position *(2.5, -1.5, 3.5)*, center *(2, 0, 0)*, up vector *(0, 1, 0)*
 
-perspcetive projection: field of view (y) of *100°*, near plane at *0.1*, far plane at *20.0* 
+perspcetive projection: field of view (y) of *100Â° degrees*, near plane at *0.1*, far plane at *20.0* 
 
 ![perspective projection](image/ndc_coordinates.png)
 
