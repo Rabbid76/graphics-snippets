@@ -84,7 +84,7 @@ The window coordinates are the coordinates of the viewport rectangle. The window
 
 **Viewport and depthrange**
 
-The normalized device coordinates are mapped to the viewports Window Coordinates (Screen Coordinates) and to the depth for the depth buffer.
+The normalized device coordinates are linearly mapped to the Window Coordinates (Screen Coordinates) and to the depth for the depth buffer.
 The viewport is defined by [`glViewport`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glViewport.xhtml). The depthrange is set by [`glDepthRange`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glDepthRange.xhtml) and is by default [0, 1].
 
 
