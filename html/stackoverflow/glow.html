@@ -42,7 +42,7 @@
         vec3  halfV    = normalize( eyeV + normalV );
         float NdotH    = max( 0.0, dot( normalV, halfV ) );
         float shineFac = ( u_shininess + 2.0 ) * pow( NdotH, u_shininess ) / ( 2.0 * 3.14159265 );
-        gl_FragColor   = vec4( color.rgb * u_glow * shineFac * 0.5, 1.0 );
+        gl_FragColor   = vec4( 0.1 * u_glow + color.rgb * u_glow * shineFac * 0.5, 1.0 );
     } 
 </script>
   

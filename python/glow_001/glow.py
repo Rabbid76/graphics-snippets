@@ -53,6 +53,7 @@ class MyWindow(window.CameraWindow):
         viewMat = mat.RotateX( viewMat, self.CalcAng( 13.0 ) )
         viewMat = mat.RotateY( viewMat, self.CalcAng( 17.0 ) )
         progDraw.SetUniform( b"u_modelViewMat44", viewMat )
+        progDraw.SetUniform( b"u_glow", 3.0 )
         objVAO.Draw()
 
         sigma = 0.8
