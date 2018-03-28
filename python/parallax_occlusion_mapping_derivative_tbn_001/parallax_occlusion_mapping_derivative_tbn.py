@@ -162,9 +162,8 @@ progDraw = shader.ShaderProgram(
       ('resource/shader/displacement_map.frag', GL_FRAGMENT_SHADER) ] ) 
 
 #texture objects
-textureObj         = ReadTexture('../../resource/texture/test1_texture.bmp', 0)
-displacementmapObj = ReadTexture('../../resource/texture/test1_heightmap.bmp', 1)
-normalmapObj       = ReadTexture('../../resource/texture/test1_normalmap.bmp', 2)
+textureObj         = ReadTexture('../../resource/texture/example_1_texture.bmp', 0)
+displacementmapObj = ReadTexture('../../resource/texture/example_1_heightmap.bmp', 1)
 
 # start main loop
 wnd.Run()

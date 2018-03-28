@@ -24,6 +24,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "draw_library_scenes", "draw
 		{287C92C5-1D7E-4214-8DB9-39C6F645087C} = {287C92C5-1D7E-4214-8DB9-39C6F645087C}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "example_map_generator", "example_map_generator\example_map_generator.vcxproj", "{E50E95FE-9805-4099-85E0-FB048A60D863}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -88,6 +90,14 @@ Global
 		{1B15D0AF-5D95-4EE7-990E-AA2B8B507D1E}.Release|x64.Build.0 = Release|x64
 		{1B15D0AF-5D95-4EE7-990E-AA2B8B507D1E}.Release|x86.ActiveCfg = Release|Win32
 		{1B15D0AF-5D95-4EE7-990E-AA2B8B507D1E}.Release|x86.Build.0 = Release|Win32
+		{E50E95FE-9805-4099-85E0-FB048A60D863}.Debug|x64.ActiveCfg = Debug|x64
+		{E50E95FE-9805-4099-85E0-FB048A60D863}.Debug|x64.Build.0 = Debug|x64
+		{E50E95FE-9805-4099-85E0-FB048A60D863}.Debug|x86.ActiveCfg = Debug|Win32
+		{E50E95FE-9805-4099-85E0-FB048A60D863}.Debug|x86.Build.0 = Debug|Win32
+		{E50E95FE-9805-4099-85E0-FB048A60D863}.Release|x64.ActiveCfg = Release|x64
+		{E50E95FE-9805-4099-85E0-FB048A60D863}.Release|x64.Build.0 = Release|x64
+		{E50E95FE-9805-4099-85E0-FB048A60D863}.Release|x86.ActiveCfg = Release|Win32
+		{E50E95FE-9805-4099-85E0-FB048A60D863}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

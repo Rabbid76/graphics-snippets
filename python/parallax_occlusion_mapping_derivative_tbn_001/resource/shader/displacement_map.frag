@@ -3,10 +3,13 @@
 //#define NORMAL_MAP_TEXTURE
 #define NORMAL_MAP_QUALITY 1
 
-in vec3 vertPos;
-in vec3 vertNV;
-in vec3 vertCol;
-in vec2 vertUV;
+in TVertexData
+{
+    vec3 pos;
+    vec3 nv;
+    vec3 col;
+    vec2 uv;
+} in_data;
 
 out vec4 fragColor;
 
@@ -81,7 +84,8 @@ vec3 SteepParallax( in vec3 texDir3D, in vec2 texCoord )
     float numSteps        = clamp( quality * mix( 5.0, 10.0 * clamp( 1.0 + 30.0 * maxBumpHeight, 1.0, 4.0 ), 1.0 - abs(texDir3D.z) ), 1.0, 50.0 );
     int   numBinarySteps  = int( clamp( quality * 5.1, 1.0, 7.0 ) );
     vec2  texDir          = -texDir3D.xy / texDir3D.z;
-    texCoord.xy          += texDir * maxBumpHeight / 2.0;
+    //texCoord.xy          += texDir * maxBumpHeight / 2.0;
+    texCoord.xy          += texDir * maxBumpHeight;
     vec2  texStep         = texDir * maxBumpHeight;
     float bumpHeightStep  = 1.0 / numSteps;
     mapHeight             = 1.0;
@@ -112,9 +116,9 @@ vec3 SteepParallax( in vec3 texDir3D, in vec2 texCoord )
 
 void main()
 {
-    vec3  objPosEs     = vertPos;
-    vec3  objNormalEs  = vertNV;
-    vec2  texCoords    = vertUV.st;
+    vec3  objPosEs     = in_data.pos;
+    vec3  objNormalEs  = in_data.nv;
+    vec2  texCoords    = in_data.uv.st;
     vec3  normalEs     = ( gl_FrontFacing ? 1.0 : -1.0 ) * normalize( objNormalEs );
     
     // orthonormal tangent space matrix
@@ -159,7 +163,7 @@ void main()
     lightCol     += NdotL * u_diffuse * color;
     
     // specular part
-    vec3  eyeV      = normalize( -vertPos );
+    vec3  eyeV      = normalize( -objPosEs );
     vec3  halfV     = normalize( eyeV + lightV );
     float NdotH     = max( 0.0, dot( normalV, halfV ) );
     float kSpecular = ( u_shininess + 2.0 ) * pow( NdotH, u_shininess ) / ( 2.0 * 3.14159265 );
