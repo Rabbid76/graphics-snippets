@@ -6,6 +6,8 @@ in vec3 vertCol;
 
 out vec4 fragColor;
 
+uniform float u_glow;
+
 void main()
 {
     vec3 color = vertCol;
@@ -17,5 +19,5 @@ void main()
     float NdotH   = max( 0.0, dot( normalV, halfV ) );
     float glowFac = ( shininess + 2.0 ) * pow( NdotH, shininess ) / ( 2.0 * 3.14159265 );
     
-    fragColor = vec4( color.rgb * glowFac * 0.5, 1.0 );
+    fragColor = vec4( u_glow * (0.1 + color.rgb * glowFac * 0.5), 1.0 );
 }
