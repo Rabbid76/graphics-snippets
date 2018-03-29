@@ -6,10 +6,11 @@
     attribute vec2 inUV;
     attribute vec3 inCol;
   
-    varying vec3 vertPos;
-    varying vec3 vertNV;
-    varying vec2 vertUV;
-    varying vec3 vertCol;
+    varying vec3  v_view_pos;
+    varying vec3  v_view_nv;
+    varying vec2  v_uv;
+    varying vec3  v_col;
+    varying float clip_distance;
      
     uniform mat4 u_projectionMat44;
     uniform mat4 u_viewMat44;
@@ -18,31 +19,62 @@
     
     void main()
     {   
-        mat4 mv      = u_viewMat44 * u_modelMat44; 
-        vertCol      = inCol;
-        vertUV       = inUV;
-        vertNV       = normalize(mat3(mv) * inNV);
-        vec4 viewPos = mv * vec4( inPos, 1.0 );
-        vertPos      = viewPos.xyz;
-        gl_Position  = u_projectionMat44 * viewPos;
+        mat4 mv        = u_viewMat44 * u_modelMat44; 
+        v_col          = inCol;
+        v_uv           = inUV;
+        v_view_nv      = normalize(mat3(mv) * inNV);
+        vec4 viewPos   = mv * vec4( inPos, 1.0 );
+        v_view_pos     = viewPos.xyz;
+        gl_Position    = u_projectionMat44 * viewPos;
+        vec4 modelPos  = u_modelMat44 * vec4( inPos, 1.0 );
+        vec4 clipPlane = vec4(normalize(u_clipPlane.xyz), u_clipPlane.w); 
+        clip_distance  = dot(modelPos, clipPlane);
     }
 </script>
   
 <script id="draw-shader-fs" type="x-shader/x-fragment">
     precision mediump float;
 
-    varying vec3 vertPos;
-    varying vec3 vertNV;
-    varying vec2 vertUV;
-    varying vec3 vertCol;
+    varying vec3  v_view_pos;
+    varying vec3  v_view_nv;
+    varying vec2  v_uv;
+    varying vec3  v_col;
+    varying float clip_distance;
 
     uniform sampler2D u_texture;
+
+    uniform vec3  u_lightDir;
+    uniform float u_ambient;
+    uniform float u_diffuse;
+    uniform float u_specular;
+    uniform float u_shininess;
     
     void main()
     {
-        //vec3 color   = vertCol;
-        vec3 color   = texture2D( u_texture, vertUV.st ).rgb;
-        gl_FragColor = vec4( color.rgb+0.1, 1.0 );
+        if ( clip_distance < 0.0 )
+            discard;
+
+        vec3 fac_nv = sign(dot(v_view_nv, -v_view_pos)) * normalize(v_view_nv);    
+
+        vec3 color = texture2D( u_texture, v_uv.st ).rgb;
+
+        // ambient part
+        vec3 lightCol = u_ambient * color;
+
+        // diffuse part
+        vec3  normalV = normalize( fac_nv );
+        vec3  lightV  = normalize( -u_lightDir );
+        float NdotL   = max( 0.0, dot( normalV, lightV ) );
+        lightCol     += NdotL * u_diffuse * color;
+    
+        // specular part
+        vec3  eyeV      = normalize( -v_view_pos );
+        vec3  halfV     = normalize( eyeV + lightV );
+        float NdotH     = max( 0.0, dot( normalV, halfV ) );
+        float kSpecular = ( u_shininess + 2.0 ) * pow( NdotH, u_shininess ) / ( 2.0 * 3.14159265 );
+        lightCol       += kSpecular * u_specular * color;
+
+        gl_FragColor = vec4( lightCol.rgb, 1.0 );
     } 
 </script>
   
@@ -71,14 +103,14 @@ html,body {
 
 <body>
   
-  <!--div>
+  <div>
     <form id="gui" name="inputs">
         <table>
-            <tr> <td> <font color= #CCF></font> </td> 
-                 <td> <input type="range" id="clip" min="0" max="100" value="50" onchange="changeEventHandler(event);"/></td> </tr>
+            <tr> <td> <font color= #CCF>clipping</font> </td> 
+                 <td> <input type="range" id="clip" min="0" max="100" value="100" onchange="changeEventHandler(event);"/></td> </tr>
         </table>
     </form>
-  </div-->
+  </div>
 
   <!--div id="ref-link">
         <a href=""> 
@@ -98,13 +130,14 @@ html,body {
   
   var gl, progDraw, vp_size;
   var bufCube = {};
+  var clip = 0.0;
   var tex_unit = 1;
 
   function render(delteMS){
 
       if ( readInput ) {
-          readInput = false;
-          // ...
+          //readInput = false;
+          clip = (document.getElementById( "clip" ).value - 50) / 50;
       }
 
       Camera.create();
@@ -118,12 +151,18 @@ html,body {
       // set up draw shader
       ShaderProgram.Use( progDraw );
       ShaderProgram.SetUniformI1( progDraw, "u_texture", tex_unit );
+      ShaderProgram.SetUniformF3( progDraw, "u_lightDir", [-1.0, -0.5, -2.0] );
+      ShaderProgram.SetUniformF1( progDraw, "u_ambient", 0.2 );
+      ShaderProgram.SetUniformF1( progDraw, "u_diffuse", 0.8 );
+      ShaderProgram.SetUniformF1( progDraw, "u_specular", 0.8 );
+      ShaderProgram.SetUniformF1( progDraw, "u_shininess", 10.0 );
       ShaderProgram.SetUniformM44( progDraw, "u_projectionMat44", Camera.Perspective() );
       ShaderProgram.SetUniformM44( progDraw, "u_viewMat44", Camera.LookAt() );
       var modelMat = IdentityMat44()
       modelMat = RotateAxis( modelMat, CalcAng( delteMS, 13.0 ), 0 );
       modelMat = RotateAxis( modelMat, CalcAng( delteMS, 17.0 ), 1 );
       ShaderProgram.SetUniformM44( progDraw, "u_modelMat44", modelMat );
+      ShaderProgram.SetUniformF4( progDraw, "u_clipPlane", [1.0,-1.0,0.0,clip*1.7321] );
       
       // draw scene
       VertexBuffer.Draw( bufCube );
@@ -198,7 +237,7 @@ html,body {
         { data : cubeColData, attrSize : 3, attrLoc : progDraw.inCol } ],
         cubeInxData );
 
-      Texture.LoadTexture2D( tex_unit, "https://raw.githubusercontent.com/Rabbid76/graphics-snippets/master/resource/texture/supermario.jpg" );
+      Texture.LoadTexture2D( tex_unit, "https://raw.githubusercontent.com/Rabbid76/graphics-snippets/master/resource/texture/example_1_texture.bmp" );
         
       window.onresize = resize;
       resize();
