@@ -2,10 +2,6 @@
 # Normal, Parallax and Relief mapping
 
 
-![test](html/parallax_001_no_parallax_mapping.html)
-
-![test2](https://rabbid76.github.io/graphics-snippets/html/technique/parallax_001_no_parallax_mapping.html)
-
 # TODO
 
 ## Reliefmepping with geometry shader
