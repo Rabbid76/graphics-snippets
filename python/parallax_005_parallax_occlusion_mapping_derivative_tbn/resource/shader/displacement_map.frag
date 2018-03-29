@@ -73,7 +73,7 @@ vec4 CalculateNormal( in vec2 texCoords )
 }
 
 // Parallax Occlusion Mapping in GLSL [http://sunandblackcat.com/tipFullView.php?topicid=28]
-vec3 SteepParallax( in vec3 texDir3D, in vec2 texCoord )
+vec3 ParallaxOcclusion( in vec3 texDir3D, in vec2 texCoord )
 {   
   float mapHeight;
   float maxBumpHeight = u_displacement_scale;
@@ -145,7 +145,7 @@ void main()
     mat3  tbnMat      = mat3(T * invmax, B * invmax, N);
    
     vec3  texDir3D     = normalize( inverse( tbnMat ) * objPosEs );
-    vec3  newTexCoords = SteepParallax( texDir3D, texCoords.st );
+    vec3  newTexCoords = ParallaxOcclusion( texDir3D, texCoords.st );
     texCoords.st       = newTexCoords.xy;
     vec4  normalVec    = CalculateNormal( texCoords ); 
     vec3  nvMappedEs   = normalize( tbnMat * normalVec.xyz );
