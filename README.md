@@ -41,7 +41,23 @@
 
 ### Technique
 
+
+**SSAO**
+
 [SSAO](https://rabbid76.github.io/graphics-snippets/html/technique/ssao.html)
+
+
+**Normal and Parallax Mapping**
+
+[No Mapping](https://rabbid76.github.io/graphics-snippets/html/technique/parallax_001_no_parallax_mapping.html)
+
+[Normal Mapping](https://rabbid76.github.io/graphics-snippets/html/technique/parallax_002_normal_mapping.html)
+
+[Offset Limiting](https://rabbid76.github.io/graphics-snippets/html/technique/parallax_003_offset_limiting.html)
+
+[Steep Parallax Mapping](https://rabbid76.github.io/graphics-snippets/html/technique/parallax_004_steep_parallax_mapping_derivative_tbn.html)
+
+[Parallax Occlusion Mapping](https://rabbid76.github.io/graphics-snippets/html/technique/parallax_005_parallax_occlusion_mapping_derivative_tbn.html)
 
 
 ### Stackoverflow examples
