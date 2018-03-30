@@ -72,6 +72,15 @@ vec4 CalculateNormal( in vec2 texCoords )
 #endif 
 }
 
+// Parallax Occlusion Mapping in GLSL [http://sunandblackcat.com/tipFullView.php?topicid=28]
+vec3 OffsetLimiting( in vec3 texDir3D, in vec2 texCoord )
+{
+    float parallaxScale = 0.05;
+    float mapHeight     = CalculateHeight( texCoord.st );
+    vec2  texCoordOffst = parallaxScale * mapHeight * texDir3D.xy / texDir3D.z;
+    return vec3(texCoord.xy + texCoordOffst.xy, mapHeight);
+}
+
 void main()
 {
     vec3  objPosEs     = in_data.pos;
@@ -92,14 +101,11 @@ void main()
     float invmax       = inversesqrt(max(dot(T, T), dot(B, B)));
     mat3  tbnMat       = mat3(T * invmax, B * invmax, N);
     
-    float parallaxScale = 0.05;
-    float mapHeight     = CalculateHeight( texCoords.st );
-    vec3  texDir3D      = normalize( inverse( tbnMat ) * objPosEs );
-    vec2  texCoordOffst = parallaxScale * mapHeight * texDir3D.xy / texDir3D.z;
-    vec2  newTexCoords  = texCoords.st + texCoordOffst.xy;
-    texCoords.st        = newTexCoords.xy;
-    vec4  normalVec     = CalculateNormal( texCoords ); 
-    vec3  nvMappedEs    = normalize( tbnMat * normalVec.xyz );
+    vec3  texDir3D     = normalize( inverse( tbnMat ) * objPosEs );
+    vec3  newTexCoords = OffsetLimiting( texDir3D, texCoords.st );
+    texCoords.st       = newTexCoords.xy;
+    vec4  normalVec    = CalculateNormal( texCoords ); 
+    vec3  nvMappedEs   = normalize( tbnMat * normalVec.xyz );
 
     //vec3 color = vertCol;
     vec3 color = texture( u_texture, texCoords.st ).rgb;

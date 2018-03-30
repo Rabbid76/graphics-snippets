@@ -73,6 +73,11 @@ vec4 CalculateNormal( in vec2 texCoords )
 }
 
 
+vec3 NoParallax( in vec3 texDir3D, in vec2 texCoord )
+{
+    return vec3(texCoord.xy, 0.0);
+}
+
 void main()
 {
     vec3  objPosEs     = in_data.pos;
@@ -93,6 +98,9 @@ void main()
     float invmax      = inversesqrt(max(dot(T, T), dot(B, B)));
     mat3  tbnMat      = mat3(T * invmax, B * invmax, N);
    
+    vec3  texDir3D     = normalize( inverse( tbnMat ) * objPosEs );
+    vec3  newTexCoords = NoParallax( texDir3D, texCoords.st );
+    texCoords.st       = newTexCoords.xy;
     vec4  normalVec    = CalculateNormal( texCoords ); 
     vec3  nvMappedEs   = normalize( tbnMat * normalVec.xyz );
 
