@@ -28,22 +28,16 @@ uniform vec2      u_parallax_quality;
 uniform sampler2D u_normal_map;
 #endif
 
-float CalculateHeight( in vec2 texCoords )
+float GetHeight( in vec2 texCoords )
 {
     float height = texture( u_displacement_map, texCoords ).r;
-    return clamp( height, 0.0, 1.0 );
-}
-
-float CalculateCone( in vec2 texCoords )
-{
-    float height = texture( u_displacement_map, texCoords ).g;
     return clamp( height, 0.0, 1.0 );
 }
 
 vec4 CalculateNormal( in vec2 texCoords )
 {
 #if defined(NORMAL_MAP_TEXTURE)
-    float height = CalculateHeight( texCoords );
+    float height = GetHeight( texCoords );
     vec3  tempNV = texture( u_normal_map, texCoords ).xyz * 2.0 / 1.0;
     return vec4( normalize( tempNV ), height );
 #else
@@ -78,45 +72,151 @@ vec4 CalculateNormal( in vec2 texCoords )
 #endif 
 }
 
+// the super fast version
+// (change number of iterations at run time)
+float intersect_cone_fixed(in vec2 dp, in vec3 ds)
+{
+    // the "not Z" component of the direction vector
+    // (requires that the vector ds was normalized!)
+    float iz = sqrt(1.0-ds.z*ds.z);
+    // my starting location (is at z=1,
+    // and moving down so I don't have
+    // to invert height maps)
+    // texture lookup (and initialized to starting location)
+    vec4 t;
+    // scaling distance along vector ds
+    float sc;
+    // the ds.z component is positive!
+    // (headed the wrong way, since
+    // I'm using heightmaps)
+    // find the initial location and height
+    t=texture(u_displacement_map,dp);
+    // right, I need to take one step.
+    // I use the current height above the texture,
+    // and the information about the cone-ratio
+    // to size a single step. So it is fast and
+    // precise! (like a coneified version of
+    // "space leaping", but adapted from voxels)
+    sc = (1.0-ds.z*sc-t.r) / (ds.z + iz/(t.g*t.g));
+    // and repeat a few (4x) times
+    t=texture(u_displacement_map,dp+ds.xy*sc);
+    sc += (1.0-ds.z*sc-t.r) / (ds.z + iz/(t.g*t.g));
+    t=texture(u_displacement_map,dp+ds.xy*sc);
+    sc += (1.0-ds.z*sc-t.r) / (ds.z + iz/(t.g*t.g));
+    t=texture(u_displacement_map,dp+ds.xy*sc);
+    sc += (1.0-ds.z*sc-t.r) / (ds.z + iz/(t.g*t.g));
+    t=texture(u_displacement_map,dp+ds.xy*sc);
+    sc += (1.0-ds.z*sc-t.r) / (ds.z + iz/(t.g*t.g));
+    // and another five!
+    t=texture(u_displacement_map,dp+ds.xy*sc);
+    sc += (1.0-ds.z*sc-t.r) / (ds.z + iz/(t.g*t.g));
+    t=texture(u_displacement_map,dp+ds.xy*sc);
+    sc += (1.0-ds.z*sc-t.r) / (ds.z + iz/(t.g*t.g));
+    t=texture(u_displacement_map,dp+ds.xy*sc);
+    sc += (1.0-ds.z*sc-t.r) / (ds.z + iz/(t.g*t.g));
+    t=texture(u_displacement_map,dp+ds.xy*sc);
+    sc += (1.0-ds.z*sc-t.r) / (ds.z + iz/(t.g*t.g));
+    t=texture(u_displacement_map,dp+ds.xy*sc);
+    sc += (1.0-ds.z*sc-t.r) / (ds.z + iz/(t.g*t.g));
+    // return the vector length needed to hit the height-map
+    return (sc);
+}
+
+// (and you can do LOD by changing "conesteps" based on size/distance, etc.)
+float intersect_cone_loop(in vec2 dp, in vec3 ds)
+{
+    const int conesteps = 10; // ???
+    // the "not Z" component of the direction vector
+    // (requires that the vector ds was normalized!)
+    float iz = sqrt(1.0-ds.z*ds.z);
+    // my starting location (is at z=1,
+    // and moving down so I don't have
+    // to invert height maps)
+    // texture lookup (and initialized to starting location)
+    vec4 t;
+    // scaling distance along vector ds
+    float sc=0.0;
+    //t=texture2D(stepmap,dp);
+    //return (max(0.0,-(t.b-0.5)*ds.x-(t.a-0.5)*ds.y));
+    // the ds.z component is positive!
+    // (headed the wrong way, since
+    // I'm using heightmaps)
+    // adaptive (same speed as it averages the same # steps)
+    //for (int i = int(float(conesteps)*(0.5+iz)); i > 0; --i)
+    // fixed
+    for (int i = conesteps; i > 0; --i)
+    {
+        // find the new location and height
+        t=texture(u_displacement_map,dp+ds.xy*sc);
+        // right, I need to take one step.
+        // I use the current height above the texture,
+        // and the information about the cone-ratio
+        // to size a single step. So it is fast and
+        // precise! (like a coneified version of
+        // "space leaping", but adapted from voxels)
+        sc += (1.0-ds.z*sc-t.r) / (ds.z + iz/(t.g*t.g));
+    }
+    // return the vector length needed to hit the height-map
+    return (sc);
+}
+
+// slowest, but best quality
+float intersect_cone_exact(in vec2 dp, in vec3 ds)
+{
+    vec2 texsize = textureSize( u_displacement_map, 0 );
+
+    // minimum feature size parameter
+    float w = 1.0 / max(texsize.x, texsize.y);
+    // the "not Z" component of the direction vector
+    // (requires that the vector ds was normalized!)
+    float iz = sqrt(1.0-ds.z*ds.z);
+    // my starting location (is at z=1,
+    // and moving down so I don't have
+    // to invert height maps)
+    // texture lookup
+    vec4 t;
+    // scaling distance along vector ds
+    float sc=0.0;
+    // the ds.z component is positive!
+    // (headed the wrong way, since
+    // I'm using heightmaps)
+    // find the starting location and height
+    t=texture(u_displacement_map,dp);
+    while (1.0-ds.z*sc > t.r)
+    {
+        // right, I need to take one step.
+        // I use the current height above the texture,
+        // and the information about the cone-ratio
+        // to size a single step. So it is fast and
+        // precise! (like a coneified version of
+        // "space leaping", but adapted from voxels)
+        sc += w + (1.0-ds.z*sc-t.r) / (ds.z + iz/(t.g*t.g));
+        // find the new location and height
+        t=texture(u_displacement_map,dp+ds.xy*sc);
+    }
+    // back off one step
+    sc -= w;
+    // return the vector length needed to hit the height-map
+    return (sc);
+}
+
 // Parallax Occlusion Mapping in GLSL [http://sunandblackcat.com/tipFullView.php?topicid=28]
-vec3 ParallaxOcclusion( in vec3 texDir3D, in vec2 texCoord )
+vec3 ConeStep( in vec3 texDir3D, in vec2 texCoord )
 {   
-  float mapHeight;
   float maxBumpHeight = u_displacement_scale;
   vec2  quality_range = u_parallax_quality;
   if ( maxBumpHeight > 0.0 && texDir3D.z < 0.9994 )
   {
-    float quality         = mix( quality_range.x, quality_range.y , gl_FragCoord.z * gl_FragCoord.z );
-    float numSteps        = clamp( quality * mix( 5.0, 10.0 * clamp( 1.0 + 30.0 * maxBumpHeight, 1.0, 4.0 ), 1.0 - abs(texDir3D.z) ), 1.0, 50.0 );
-    int   numBinarySteps  = int( clamp( quality * 5.1, 1.0, 7.0 ) );
-    vec2  texDir          = -texDir3D.xy / texDir3D.z;
-    //texCoord.xy          += texDir * maxBumpHeight / 2.0;
-    texCoord.xy          += texDir * maxBumpHeight;
-    vec2  texStep         = texDir * maxBumpHeight;
-    float bumpHeightStep  = 1.0 / numSteps;
-    mapHeight             = 1.0;
-    float bestBumpHeight  = 1.0;
-    for ( int i = 0; i < int( numSteps ); ++ i )
-    {
-      mapHeight = CalculateHeight( texCoord.xy - bestBumpHeight * texStep.xy );
-      if ( mapHeight >= bestBumpHeight )
-        break;
-      bestBumpHeight -= bumpHeightStep;
-    }
-    bestBumpHeight += bumpHeightStep;
-    for ( int i = 0; i < numBinarySteps; ++ i )
-    {
-      bumpHeightStep *= 0.5;
-      bestBumpHeight -= bumpHeightStep;
-      mapHeight       = CalculateHeight( texCoord.xy - bestBumpHeight * texStep.xy );
-      bestBumpHeight += ( bestBumpHeight < mapHeight ) ? bumpHeightStep : 0.0;
-    }
-    bestBumpHeight -= bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / bumpHeightStep, 0.0, 1.0 );
-    mapHeight       = bestBumpHeight;
-    texCoord       -= mapHeight * texStep;
+    float d;
+    
+    //d = intersect_cone_fixed(texCoord, texDir3D);
+    d = intersect_cone_loop(texCoord, texDir3D);
+    //d = intersect_cone_exact(texCoord, texDir3D);
+    
+    texCoord += texDir3D.xy * d;
   }
-  else 
-    mapHeight = CalculateHeight( texCoord.xy );
+  
+  float mapHeight = GetHeight( texCoord.xy );
   return vec3( texCoord.xy, mapHeight );
 }
 
@@ -151,7 +251,7 @@ void main()
     mat3  tbnMat      = mat3(T * invmax, B * invmax, N);
    
     vec3  texDir3D     = normalize( inverse( tbnMat ) * objPosEs );
-    vec3  newTexCoords = ParallaxOcclusion( texDir3D, texCoords.st );
+    vec3  newTexCoords = ConeStep( texDir3D, texCoords.st );
     texCoords.st       = newTexCoords.xy;
     vec4  normalVec    = CalculateNormal( texCoords ); 
     vec3  nvMappedEs   = normalize( tbnMat * normalVec.xyz );
