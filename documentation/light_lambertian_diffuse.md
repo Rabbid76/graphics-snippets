@@ -9,7 +9,7 @@ A perfect diffuse surface has a BRDF that has the same value for all incident an
 
 Lambertian reflection is often used as a model for diffuse reflection. This technique causes all closed polygons (such as a triangle within a 3D mesh) to reflect light equally in all directions when rendered. The diffusion coefficient is calculated from the angle between the normal vector and the light vector.
 
-    f_Lambertian = max( 0.0, dot( N, L )
+    f_Lambertian = max( 0.0, dot( N, L ) )
 
 where `N` is the normal vector of the surface, and `L` is the vector towards to the light source.  
 

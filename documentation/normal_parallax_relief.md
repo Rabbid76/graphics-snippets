@@ -26,6 +26,8 @@ Parallax Occlusion Mapping<br/>
 <br/><hr/>
 ## Displacement map (Height map)
 
+![height map](../resource/texture/example_1_heightmap.bmp)
+
 TODO
 
 
@@ -189,6 +191,22 @@ TODO
 
 <br/><hr/>
 ## Steep Prallax Mapping
+
+The idea of advanced parallax algorithms like "Steep Parallax Mapping", is to displace the fragments of a surface by the corresponding heights from height map along its normal vectors.
+
+At "Steep Parallax Mapping" the line of sight is transfomed to the (co-)tangent space, this is the reference system, where the uv-coordinates of a texture form the xy-plane and the z-axis points out of the texture.
+
+Along the projection of the line of sight onto the texture, the heights of the height map define a 2 dimensional curve.
+
+The *Steep Parallax* algorithm is used to identify a texel in the texture, by testing sample points along the line of sight.
+A texel is found when the normal distance of a sample point to the surface, is less than or equal to the *height* of the texel below the point.
+
+![steep parallax](image/steep_prallax_1.png)
+
+In this calculation, the scaling of the texture does not have to be taken into account since the texture coordinates and the height of the texture are scaled in equal space. 
+This is different when calculating the depth (e.g. depth-dependent shadow).
+The change in depth is the absolute distance between the intersection of the line of sight with the surface and the identified sampling point on the line of sight.
+The absolute distance changes proportionally with the reciprocal scaling factor of the texture.
 
     vec3 Parallax( in vec3 texDir3D, in vec2 texCoord )
     {   
