@@ -30,7 +30,13 @@ uniform sampler2D u_normal_map;
 
 float CalculateHeight( in vec2 texCoords )
 {
-    float height = texture( u_displacement_map, texCoords ).x;
+    float height = texture( u_displacement_map, texCoords ).r;
+    return clamp( height, 0.0, 1.0 );
+}
+
+float CalculateCone( in vec2 texCoords )
+{
+    float height = texture( u_displacement_map, texCoords ).g;
     return clamp( height, 0.0, 1.0 );
 }
 

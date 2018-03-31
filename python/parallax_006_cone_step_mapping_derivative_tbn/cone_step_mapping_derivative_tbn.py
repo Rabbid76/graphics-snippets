@@ -78,6 +78,11 @@ def CreateHeightMapFromFile(filename, textureUnit):
       textureObj = CreateTexture(image, textureUnit, 1) 
       return textureObj
 
+def CreateConeMapFromFile(filename, textureUnit):
+      image = ReadTexture(filename)
+      textureObj = CreateTexture(image, textureUnit, 2) 
+      return textureObj
+
 
 class MyWindow(window.CameraWindow):
     def __init__( self, cx, cy, multisample=True ):
@@ -176,7 +181,7 @@ progDraw = shader.ShaderProgram(
 
 #texture objects
 textureObj         = CreateTextureFromFile('../../resource/texture/example_1_texture.bmp', 0)
-displacementmapObj = CreateHeightMapFromFile('../../resource/texture/example_1_heightmap.bmp', 1)
+displacementmapObj = CreateConeMapFromFile('../../resource/texture/example_1_conemap.bmp', 1)
 
 # start main loop
 wnd.Run()
