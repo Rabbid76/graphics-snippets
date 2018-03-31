@@ -49,7 +49,7 @@ def ReadTexture(filename):
       print('opened file: size=', image.size, 'format=', image.format)
       return image
  
-def CreateTexture(image, textureUnit, is_height_map):
+def CreateTexture(image, textureUnit, internal_channels):
       imageData = numpy.array(list(image.getdata()), numpy.uint8)
 
       glActiveTexture( GL_TEXTURE0 + textureUnit )
@@ -57,9 +57,9 @@ def CreateTexture(image, textureUnit, is_height_map):
       glPixelStorei(GL_UNPACK_ALIGNMENT, 4)
       glBindTexture(GL_TEXTURE_2D, textureObj)
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0)
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0)
-      internal_format = GL_R8 if is_height_map else GL_RGBA8
-      glTexImage2D(GL_TEXTURE_2D, 0, internal_format, image.size[0], image.size[1],0, GL_RGB, GL_UNSIGNED_BYTE, imageData)
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0)    
+      internal_formats = [GL_R8, GL_RG8, GL_RGB8, GL_RGBA8]
+      glTexImage2D(GL_TEXTURE_2D, 0, internal_formats[internal_channels], image.size[0], image.size[1],0, GL_RGB, GL_UNSIGNED_BYTE, imageData)
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
@@ -70,12 +70,12 @@ def CreateTexture(image, textureUnit, is_height_map):
 
 def CreateTextureFromFile(filename, textureUnit):
       image = ReadTexture(filename)
-      textureObj = CreateTexture(image, textureUnit, False) 
+      textureObj = CreateTexture(image, textureUnit, 3) 
       return textureObj
 
 def CreateHeightMapFromFile(filename, textureUnit):
       image = ReadTexture(filename)
-      textureObj = CreateTexture(image, textureUnit, True) 
+      textureObj = CreateTexture(image, textureUnit, 1) 
       return textureObj
 
 

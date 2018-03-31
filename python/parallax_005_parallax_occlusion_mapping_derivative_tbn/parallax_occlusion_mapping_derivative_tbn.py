@@ -36,7 +36,7 @@ from MyLibOGL.ogl import uniform
 from MyLibOGL.glut import window
 
 
-def ReadTexture(filename, textureUnit):
+def ReadTexture(filename):
       # PIL can open BMP, EPS, FIG, IM, JPEG, MSP, PCX, PNG, PPM
       # and other file types.  We convert into a texture using GL.
       print('trying to open', filename)
@@ -47,6 +47,9 @@ def ReadTexture(filename, textureUnit):
          sys.exit()
          return -1
       print('opened file: size=', image.size, 'format=', image.format)
+      return image
+ 
+def CreateTexture(image, textureUnit, is_height_map):
       imageData = numpy.array(list(image.getdata()), numpy.uint8)
 
       glActiveTexture( GL_TEXTURE0 + textureUnit )
@@ -55,14 +58,24 @@ def ReadTexture(filename, textureUnit):
       glBindTexture(GL_TEXTURE_2D, textureObj)
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0)
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0)
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.size[0], image.size[1],0, GL_RGB, GL_UNSIGNED_BYTE, imageData)
-
+      internal_format = GL_R8 if is_height_map else GL_RGBA8
+      glTexImage2D(GL_TEXTURE_2D, 0, internal_format, image.size[0], image.size[1],0, GL_RGB, GL_UNSIGNED_BYTE, imageData)
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
 
       image.close()
+      return textureObj
+
+def CreateTextureFromFile(filename, textureUnit):
+      image = ReadTexture(filename)
+      textureObj = CreateTexture(image, textureUnit, False) 
+      return textureObj
+
+def CreateHeightMapFromFile(filename, textureUnit):
+      image = ReadTexture(filename)
+      textureObj = CreateTexture(image, textureUnit, True) 
       return textureObj
 
 
@@ -162,8 +175,8 @@ progDraw = shader.ShaderProgram(
       ('resource/shader/displacement_map.frag', GL_FRAGMENT_SHADER) ] ) 
 
 #texture objects
-textureObj         = ReadTexture('../../resource/texture/example_1_texture.bmp', 0)
-displacementmapObj = ReadTexture('../../resource/texture/example_1_heightmap.bmp', 1)
+textureObj         = CreateTextureFromFile('../../resource/texture/example_1_texture.bmp', 0)
+displacementmapObj = CreateHeightMapFromFile('../../resource/texture/example_1_heightmap.bmp', 1)
 
 # start main loop
 wnd.Run()
