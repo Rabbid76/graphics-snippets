@@ -213,50 +213,42 @@ vec3 ConeStep( in vec3 texDir3D, in vec2 texCoord )
   vec2  quality_range = u_parallax_quality;
   if ( maxBumpHeight > 0.0 && texDir3D.z < 0.9994 )
   {
-    float quality         = mix( quality_range.x, quality_range.y , gl_FragCoord.z * gl_FragCoord.z );
-    float numSteps        = clamp( quality * mix( 5.0, 10.0 * clamp( 1.0 + 30.0 * maxBumpHeight, 1.0, 4.0 ), 1.0 - abs(texDir3D.z) ), 1.0, 50.0 );
-    int   numBinarySteps  = int( clamp( quality * 5.1, 1.0, 7.0 ) );
-    vec2  texDir          = texDir3D.xy / texDir3D.z;
-    //texCoord.xy          -= texDir * maxBumpHeight / 2.0;
-    texCoord.xy          -= texDir * maxBumpHeight;
-    vec2  texStep         = texDir * maxBumpHeight;
-    float bumpHeightStep  = 1.0 / numSteps;
-    mapHeight             = 1.0;
-    float bestBumpHeight  = 1.0;
-    float lastStep        = bumpHeightStep;
-
     // [Determinante](https://de.wikipedia.org/wiki/Determinante)
     // A x B = A.x * B.y - A.y * B.x = dot(A, vec2(B.y,-B.x)) = det(mat2(A,B))
 
     // [How do you detect where two line segments intersect?](https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect)
     vec2 R = normalize(vec2(length(texDir3D.xy), texDir3D.z)); 
-    vec2 P = R / texDir3D.z; 
+    vec2 P = maxBumpHeight * R / texDir3D.z; 
 
-    for ( int i = 0; i < int( numSteps ); ++ i )
+    vec2 tex_size = textureSize( u_displacement_map, 0 ).xy;
+    vec2 min_tex_step = normalize(texDir3D.xy) / tex_size;
+    float min_step = length(min_tex_step) * length(R/R.x);
+    min_step = 0.000001; // TODO $$$
+
+    float t = 0.0;
+
+    const int max_no_of_steps = 50; // TODO $$$ 20
+    for ( int i = 0; i < max_no_of_steps; ++ i )
     {
-      vec2 sample_tex = texCoord.xy + bestBumpHeight * texStep.xy;
-  
-      vec2 h_and_c = GetHeightAndCone( sample_tex );
-      mapHeight = h_and_c.x;
-      if ( mapHeight >= bestBumpHeight )
+      vec3 sample_pt = vec3(texCoord.xy, maxBumpHeight) + texDir3D * t;
+
+      vec2 h_and_c = GetHeightAndCone( sample_pt.xy );
+      float h = h_and_c.x * maxBumpHeight;
+      float c = h_and_c.y / maxBumpHeight;
+
+      vec2 C = P + R * t;
+      //if ( C.y <= h ) // TODO $$$
+      if ( C.y <= h+0.001 )
         break;
       
-      vec2 Q = vec2(length(sample_tex), h_and_c.x);
-      vec2 S = normalize(vec2(h_and_c.y/maxBumpHeight, 1.0));
-
-      float u = dot(P-Q, vec2(R.y, -R.x)) / dot(R, vec2(S.y,-S.x));    
-      float tex_h = u * S.y;
-      float cone_step = abs(bestBumpHeight - tex_h);
-
-      lastStep        = max(cone_step, bumpHeightStep);
-      bestBumpHeight -= lastStep;
+      vec2 Q = vec2(C.x, h);
+      vec2 S = normalize(vec2(c, 1.0));
+      float new_t = dot(Q-P, vec2(S.y, -S.x)) / dot(R, vec2(S.y,-S.x));
+      t = max(t+min_step, new_t);
     }
-    bestBumpHeight += lastStep * (1.0 - clamp( ( lastStep - mapHeight ) / lastStep, 0.0, 1.0 )); // TODO $$$ skip
-    mapHeight       = bestBumpHeight;
-    texCoord       += mapHeight * texStep;
+    texCoord.xy = texCoord.xy + texDir3D.xy * t;
   }
-  else 
-    mapHeight = GetHeightAndCone( texCoord.xy ).x;
+  mapHeight = GetHeightAndCone( texCoord.xy ).x;
   return vec3( texCoord.xy, mapHeight );
 }
 
