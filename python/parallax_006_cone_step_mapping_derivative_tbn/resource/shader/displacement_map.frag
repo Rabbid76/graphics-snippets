@@ -241,7 +241,7 @@ vec3 ConeStep( in vec3 texDir3D, in vec2 texCoord )
       if ( mapHeight >= bestBumpHeight )
         break;
       
-      vec2 Q = vec2(length(sample_tex), 0.0);
+      vec2 Q = vec2(length(sample_tex), h_and_c.x);
       vec2 S = normalize(vec2(h_and_c.y/maxBumpHeight, 1.0));
 
       float u = dot(P-Q, vec2(R.y, -R.x)) / dot(R, vec2(S.y,-S.x));    
