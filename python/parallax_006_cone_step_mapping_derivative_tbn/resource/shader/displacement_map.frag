@@ -28,10 +28,10 @@ uniform vec2      u_parallax_quality;
 uniform sampler2D u_normal_map;
 #endif
 
-float GetHeight( in vec2 texCoords )
+vec2 GetHeightAndCone( in vec2 texCoords )
 {
-    float height = texture( u_displacement_map, texCoords ).r;
-    return clamp( height, 0.0, 1.0 );
+    vec2 h_and_c = texture( u_displacement_map, texCoords ).rg;
+    return clamp( h_and_c, 0.0, 1.0 );
 }
 
 vec4 CalculateNormal( in vec2 texCoords )
@@ -125,6 +125,8 @@ float intersect_cone_fixed(in vec2 dp, in vec3 ds)
 // (and you can do LOD by changing "conesteps" based on size/distance, etc.)
 float intersect_cone_loop(in vec2 dp, in vec3 ds)
 {
+    float maxBumpHeight = u_displacement_scale;
+
     const int conesteps = 10; // ???
     // the "not Z" component of the direction vector
     // (requires that the vector ds was normalized!)
@@ -148,6 +150,9 @@ float intersect_cone_loop(in vec2 dp, in vec3 ds)
     {
         // find the new location and height
         t=texture(u_displacement_map,dp+ds.xy*sc);
+        t.r = t.r * maxBumpHeight;
+        t.g = t.g / maxBumpHeight; 
+
         // right, I need to take one step.
         // I use the current height above the texture,
         // and the information about the cone-ratio
@@ -203,20 +208,55 @@ float intersect_cone_exact(in vec2 dp, in vec3 ds)
 // Parallax Occlusion Mapping in GLSL [http://sunandblackcat.com/tipFullView.php?topicid=28]
 vec3 ConeStep( in vec3 texDir3D, in vec2 texCoord )
 {   
+  float mapHeight;
   float maxBumpHeight = u_displacement_scale;
   vec2  quality_range = u_parallax_quality;
   if ( maxBumpHeight > 0.0 && texDir3D.z < 0.9994 )
   {
-    float d;
-    
-    //d = intersect_cone_fixed(texCoord, texDir3D);
-    d = intersect_cone_loop(texCoord, texDir3D);
-    //d = intersect_cone_exact(texCoord, texDir3D);
-    
-    texCoord += texDir3D.xy * d;
-  }
+    float quality         = mix( quality_range.x, quality_range.y , gl_FragCoord.z * gl_FragCoord.z );
+    float numSteps        = clamp( quality * mix( 5.0, 10.0 * clamp( 1.0 + 30.0 * maxBumpHeight, 1.0, 4.0 ), 1.0 - abs(texDir3D.z) ), 1.0, 50.0 );
+    int   numBinarySteps  = int( clamp( quality * 5.1, 1.0, 7.0 ) );
+    vec2  texDir          = texDir3D.xy / texDir3D.z;
+    //texCoord.xy          -= texDir * maxBumpHeight / 2.0;
+    texCoord.xy          -= texDir * maxBumpHeight;
+    vec2  texStep         = texDir * maxBumpHeight;
+    float bumpHeightStep  = 1.0 / numSteps;
+    mapHeight             = 1.0;
+    float bestBumpHeight  = 1.0;
+    float lastStep        = bumpHeightStep;
+
+    // [Determinante](https://de.wikipedia.org/wiki/Determinante)
+    // A x B = A.x * B.y - A.y * B.x = dot(A, vec2(B.y,-B.x)) = det(mat2(A,B))
+
+    // [How do you detect where two line segments intersect?](https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect)
+    vec2 R = normalize(vec2(length(texDir3D.xy), texDir3D.z)); 
+    vec2 P = R / texDir3D.z; 
+
+    for ( int i = 0; i < int( numSteps ); ++ i )
+    {
+      vec2 sample_tex = texCoord.xy + bestBumpHeight * texStep.xy;
   
-  float mapHeight = GetHeight( texCoord.xy );
+      vec2 h_and_c = GetHeightAndCone( sample_tex );
+      mapHeight = h_and_c.x;
+      if ( mapHeight >= bestBumpHeight )
+        break;
+      
+      vec2 Q = vec2(length(sample_tex), 0.0);
+      vec2 S = normalize(vec2(h_and_c.y/maxBumpHeight, 1.0));
+
+      float u = dot(P-Q, vec2(R.y, -R.x)) / dot(R, vec2(S.y,-S.x));    
+      float tex_h = u * S.y;
+      float cone_step = abs(bestBumpHeight - tex_h);
+
+      lastStep        = max(cone_step, bumpHeightStep);
+      bestBumpHeight -= lastStep;
+    }
+    bestBumpHeight += lastStep * (1.0 - clamp( ( lastStep - mapHeight ) / lastStep, 0.0, 1.0 )); // TODO $$$ skip
+    mapHeight       = bestBumpHeight;
+    texCoord       += mapHeight * texStep;
+  }
+  else 
+    mapHeight = GetHeightAndCone( texCoord.xy ).x;
   return vec3( texCoord.xy, mapHeight );
 }
 
