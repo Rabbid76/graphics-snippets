@@ -19,7 +19,7 @@
     gamma  =  180° - alpha - beta
 
     h  =  | Q - P | * sin(alpha)
-    u  =  h / sin( beta )
+    u  =  h / sin(beta)
 
     t  = | Q - P | * sin(gamma) / sin(beta)
     
