@@ -40,13 +40,22 @@ private:
     enum TScene
     {
       e_default,
+
+      // intersection
+      e_isect_line_line,
+      e_isect_line_plane,
+      e_isect_plane_cone,
+      
+      // depth, model, view, projection, clip space, ndc and viewport
       e_viewport_coordsys,
       e_model,
       e_world,
       e_view,
       e_projection,
       e_NDC,
-      e_cone_Step
+
+      // parallax
+      e_cone_step
     };
 
     std::array< int, 2 > _wndPos         {0, 0};
@@ -88,7 +97,7 @@ private:
     float  _aspect = 1.0;
     float  _scale_x = 1.0;
     float  _scale_y = 1.0;
-    TScene _scene   = e_cone_Step;
+    TScene _scene   = e_isect_line_line;
 
     Render::TPoint2 BL( void ) const { return{ -_scale_x, -_scale_y}; }
     Render::TPoint2 TL( void ) const { return{  _scale_x, -_scale_y}; }
@@ -103,6 +112,9 @@ private:
     void Setup2DCheckered( void );
 
     void TestScene( double time_ms );
+    void IsectLineLine( double time_ms );
+    void IsectLinePlane( double time_ms );
+    void IsectPlaneCone( double time_ms );
     void ViewportCoordsys( double time_ms );
     void Model( double time_ms );
     void World( double time_ms );
@@ -298,18 +310,23 @@ void CWindow_Glfw::Render( double time_ms )
 
   _draw->Begin();
 
+  // TODO $$$ loop all 2 seconds per scene
+
   switch (_scene)
   {
 
     default:
     case e_default:           TestScene( time_ms ); break;
+    case e_isect_line_line:   IsectLineLine( time_ms ); break;
+    case e_isect_line_plane:  IsectLinePlane( time_ms ); break;
+    case e_isect_plane_cone:  IsectPlaneCone( time_ms ); break;
     case e_viewport_coordsys: ViewportCoordsys( time_ms ); break;
     case e_model:             Model( time_ms ); break;
     case e_world:             World( time_ms ); break;
     case e_view:              View( time_ms ); break;
     case e_projection:        Projection( time_ms ); break;
     case e_NDC:               NDC( time_ms ); break;
-    case e_cone_Step:         ConeStep( time_ms ); break;
+    case e_cone_step:         ConeStep( time_ms ); break;
   }
 
   _draw->Finish();
@@ -382,6 +399,91 @@ void CWindow_Glfw::TestScene( double time_ms )
     _draw->DrawConvexPolygon( 2, {  0.8f, -0.8f,  0.8f,  0.8f, -0.8f,  0.0f }, { 1.0f, 1.0f, 0.0f, 0.5f } );
 }
 
+
+void CWindow_Glfw::IsectLineLine( double time_ms )
+{
+  static Render::TVec2 arr_size{ 0.08f, 0.03f };
+  static float arrow_th = 2.0f;
+  static float point_size = 8.0f;
+  static float text_height  = 0.07f;
+  static float text_scale_y = 1.0f;
+  static float text_margin  = 0.02f;
+
+  Render::TColor color_line = Color_ink();
+  Render::TColor color_source = Color_orange();
+  Render::TColor color_result = Color_darkgreen();
+
+  static glm::vec2 p0( 0.9f, 0.6f );
+  static glm::vec2 p1( -0.7f, -0.0f );
+  static glm::vec2 q0( 0.7f, -0.5f );
+  static glm::vec2 q1( -0.7f, 0.3f );
+
+  glm::vec2 R = normalize( p1 - p0 );
+  glm::vec2 P = p0 + R * 0.3f;
+  glm::vec2 S = normalize( q1 - q0 );
+  glm::vec2 Q = q0 + S * 0.3f;
+  glm::vec2 Q_P_mid = (P + Q) / 2.0f;
+
+  //float t = glm::determinant(glm::mat2(Q-P, S)) / glm::determinant(glm::mat2(R, S));
+  //float u = glm::determinant(glm::mat2(Q-P, R)) / glm::determinant(glm::mat2(R, S));
+  float t = glm::dot(Q-P, glm::vec2(S.y, -S.x)) / glm::dot(R, glm::vec2(S.y, -S.x));
+  float u = glm::dot(Q-P, glm::vec2(R.y, -R.x)) / glm::dot(R, glm::vec2(S.y, -S.x));
+
+  float t_h = glm::dot(Q-P, R);
+  glm::vec2 h_pt = P + R * t_h;
+  glm::vec2 h_mid = (h_pt + Q) / 2.0f;
+
+  glm::vec2 R_pt = P + R * t;
+  glm::vec2 S_pt = Q + S * u;
+  glm::vec2 X = R_pt;
+  glm::vec2 R_mid_pt = P + R * t * 0.5f;
+  glm::vec2 S_mid_pt = Q + S * u * 0.5f;
+
+  Setup2DCheckered();
+
+  _draw->ActivateOpaque();
+
+  _draw->DrawPoint2D( { P[0], P[1] }, color_source, point_size );
+  _draw->DrawPoint2D( { Q[0], Q[1] }, color_source, point_size );
+  _draw->DrawPoint2D( { X[0], X[1] }, color_result, point_size );
+
+  _draw->DrawArrow( 2, { P[0], P[1], R_pt[0], R_pt[1] }, color_source, arrow_th, arr_size, false, true );
+  _draw->DrawArrow( 2, { Q[0], Q[1], S_pt[0], S_pt[1] }, color_source, arrow_th, arr_size, false, true );
+  _draw->DrawArrow( 2, { P[0], P[1], Q[0], Q[1] }, color_result, arrow_th, arr_size, false, true );
+
+  _draw->DrawPolyline( 2, { Q[0], Q[1], h_pt[0], h_pt[1] }, color_result, 2.0f, false );
+  _draw->DrawPolyline( 2, { p0[0], p0[1], p1[0], p1[1] }, color_line, 2.0f, false );
+  _draw->DrawPolyline( 2, { q0[0], q0[1], q1[0], q1[1] }, color_line, 2.0f, false );
+
+  _draw->ActivateOpaque();
+  _draw->ClearDepth();
+
+  _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, "P", 3, text_height, text_scale_y, text_margin, {P[0], P[1], 0.0f}, color_source );
+  _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, "Q", 9, text_height, text_scale_y, text_margin, {Q[0], Q[1], 0.0f}, color_source );
+  _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, "R * t", 3, text_height, text_scale_y, text_margin, {R_mid_pt[0], R_mid_pt[1], 0.0f}, color_source );
+  _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, "S * u", 9, text_height, text_scale_y, text_margin, {S_mid_pt[0], S_mid_pt[1], 0.0f}, color_source );
+  
+  char alpha[]{ 'a'-29, 0 };
+  char beta[]{ 'b'-29, 0 };
+  _draw->DrawText2D( OpenGL::CBasicDraw::font_symbol, alpha, 9, text_height*1.4f, text_scale_y, 0.08f, {P[0], P[1], 0.0f}, color_result );
+  _draw->DrawText2D( OpenGL::CBasicDraw::font_symbol, beta, 4, text_height*1.4f, text_scale_y, 0.14f, {X[0], X[1], 0.0f}, color_result );
+
+  _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, "Q-P", 4, text_height, text_scale_y, text_margin, {Q_P_mid[0], Q_P_mid[1], 0.0f}, color_result );
+  _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, "X", 2, text_height, text_scale_y, 0.05f, {R_pt[0], R_pt[1], 0.0f}, color_result );
+  _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, "h", 4, text_height, text_scale_y, 0.035f, {h_mid[0], h_mid[1], 0.0f}, color_result );  
+}
+
+void CWindow_Glfw::IsectLinePlane( double time_ms )
+{
+  // TODO $$$
+}
+
+// TODO $$$ interselc los viewport -> in docaumatation as example for intersection of a line and a plane
+
+void CWindow_Glfw::IsectPlaneCone( double time_ms )
+{
+  // TODO $$$
+}
 
 void CWindow_Glfw::ViewportCoordsys( double time_ms )
 {
@@ -752,7 +854,7 @@ void CWindow_Glfw::NDC( double time_ms )
 
 void CWindow_Glfw::ConeStep( double time_ms )
 {
-  Render::TVec2 arr_size{ 0.08f, 0.03f };
+  static Render::TVec2 arr_size{ 0.08f, 0.03f };
   static float arrow_th = 2.0f;
   static float point_size = 8.0f;
   static float text_height  = 0.07f;
@@ -845,8 +947,8 @@ void CWindow_Glfw::ConeStep( double time_ms )
   //
   //_draw->DrawConcavePolygon( 2, start ... height_field ... end, { 0.5f, 0.5f, 0.5f, 0.5f } );
 
-  //_draw->ActivateOpaque();
-  //_draw->ClearDepth();
+  _draw->ActivateOpaque();
+  _draw->ClearDepth();
 
   _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, "P", 7, text_height, text_scale_y, text_margin, {P[0], P[1], 0.0f}, color_formula );
   _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, "Q", 7, text_height, text_scale_y, text_margin, {Q[0], Q[1], 0.0f}, color_formula );

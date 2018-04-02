@@ -243,6 +243,7 @@ vec3 ConeStep( in vec3 texDir3D, in vec2 texCoord )
       if ( C.y <= h+0.01 )
         break;
       
+      //vec2 Q = vec2(C.x, 0.0);
       vec2 Q = vec2(C.x, h);
       vec2 S = normalize(vec2(c, 1.0));
       float new_t = dot(Q-P, vec2(S.y, -S.x)) / dot(R, vec2(S.y, -S.x));

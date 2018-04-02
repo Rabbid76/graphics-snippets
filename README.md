@@ -2,6 +2,8 @@
 
 ## Documentation
 
+[Intersection](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/intersection.md)
+
 [Draw geometry](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/draw_mesh.md)
 
 [Model View Projection and Depth](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/projection_and_depth.md)
