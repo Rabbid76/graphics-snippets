@@ -478,7 +478,7 @@ void CWindow_Glfw::IsectLinePlane( double time_ms )
   // TODO $$$
 }
 
-// TODO $$$ interselc los viewport -> in docaumatation as example for intersection of a line and a plane
+// TODO $$$ intersect los viewport -> in docaumatation as example for intersection of a line and a plane
 
 void CWindow_Glfw::IsectPlaneCone( double time_ms )
 {
