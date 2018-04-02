@@ -819,6 +819,7 @@ void CWindow_Glfw::ConeStep( double time_ms )
   _draw->DrawPoint2D( { P[0], P[1] }, color_formula, point_size );
   _draw->DrawPoint2D( { Q[0], Q[1] }, color_formula, point_size );
   _draw->DrawPoint2D( { sample_pt[0], sample_pt[1] }, color_sample, point_size );
+  _draw->DrawPoint2D( { R_pt[0], R_pt[1] }, color_los, point_size );
 
   _draw->DrawArrow( 2, { P[0], P[1], R_pt[0], R_pt[1] }, color_formula, arrow_th, arr_size, false, true );
   _draw->DrawArrow( 2, { Q[0], Q[1], S_pt[0], S_pt[1] }, color_formula, arrow_th, arr_size, false, true );
@@ -849,8 +850,9 @@ void CWindow_Glfw::ConeStep( double time_ms )
 
   _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, "P", 7, text_height, text_scale_y, text_margin, {P[0], P[1], 0.0f}, color_formula );
   _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, "Q", 7, text_height, text_scale_y, text_margin, {Q[0], Q[1], 0.0f}, color_formula );
-  _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, "R * d", 3, text_height, text_scale_y, text_margin, {R_mid_pt[0], R_mid_pt[1], 0.0f}, color_formula );
+  _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, "R * t", 3, text_height, text_scale_y, text_margin, {R_mid_pt[0], R_mid_pt[1], 0.0f}, color_formula );
   _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, "S * u", 9, text_height, text_scale_y, text_margin, {S_mid_pt[0], S_mid_pt[1], 0.0f}, color_formula );
+  _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, "X", 2, text_height, text_scale_y, 0.05f, {R_pt[0], R_pt[1], 0.0f}, color_los );
     
   _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, "h", 4, text_height, text_scale_y, text_margin, {sample_mid_pt[0], sample_mid_pt[1], 0.0f}, color_sample );
   _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, "1.0", 4, text_height, text_scale_y, text_margin, {sample_mid_top_pt[0], sample_mid_top_pt[1], 0.0f}, color_sample );

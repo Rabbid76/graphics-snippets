@@ -291,10 +291,20 @@ The absolute distance changes proportionally with the reciprocal scaling factor 
 
 ![cone step](image/parallax_cone_step.png)
 
-    X  =  P + R * t  =  Q + S * u
+    P  ... start of sampling - in (co-)tangent space
+    R  ... Line of Sight - normalized direction in (co-)tangent space
 
-    t  =  dot(Q-P, vec2(S.y, -S.x)) / dot(R, vec2(S.y, -S.x))  =  determinant(mat2(Q-P, S)) / determinant(mat2(R, S))
-    u  =  dot(Q-P, vec2(R.y, -R.x)) / dot(R, vec2(S.y, -S.x))  =  determinant(mat2(Q-P, R)) / determinant(mat2(R, S))
+    Tx ... Sample point in the height map texture - in (co-)tangent space
+    h  ... height of the height filed - stored in the height map texture
+    c  ... gradient of the cone (cone equation: x = c * y) - stored in the height map texture
+
+    Q  =  (Tx.x, h) 
+    S  =  normalize( (c, 1) )
+    
+    t  =  dot(Q-P, (S.y, -S.x)) / dot(R, (S.y, -S.x))  =  determinant(mat2(Q-P, S)) / determinant(mat2(R, S))
+    u  =  dot(Q-P, (R.y, -R.x)) / dot(R, (S.y, -S.x))  =  determinant(mat2(Q-P, R)) / determinant(mat2(R, S))
+
+    X  =  P + R * t  =  Q + S * u
 
 <br/><hr/>
 # TODO
