@@ -286,6 +286,15 @@ The absolute distance changes proportionally with the reciprocal scaling factor 
         return vec3( texCoord.xy, mapHeight );
     }
 
+<br/><hr/>
+## Cone Step Mapping
+
+![cone step](image/parallax_cone_step.png)
+
+    X  =  P + R * t  =  Q + S * u
+
+    t  =  dot(Q-P, vec2(S.y, -S.x)) / dot(R, vec2(S.y, -S.x))  =  determinant(mat2(Q-P, S)) / determinant(mat2(R, S))
+    u  =  dot(Q-P, vec2(R.y, -R.x)) / dot(R, vec2(S.y, -S.x))  =  determinant(mat2(Q-P, R)) / determinant(mat2(R, S))
 
 <br/><hr/>
 # TODO

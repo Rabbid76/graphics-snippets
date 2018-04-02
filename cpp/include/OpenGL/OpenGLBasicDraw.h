@@ -227,7 +227,7 @@ public:
 
   using TFontPtr = std::unique_ptr<TFreetypeTFont>;
 
-  CFreetypeTexturedFont( const char *font_filename );
+  CFreetypeTexturedFont( const char *font_filename, int min_char );
   virtual ~CFreetypeTexturedFont();
 
   virtual void Destroy( void ) override; //!< destroy all internal objects and cleanup
@@ -243,6 +243,7 @@ private:
   void DebugFontTexture( CBasicDraw &draw );
 
   std::string  _font_filename;
+  int          _min_char    = 32;
   TFontPtr     _font;
   bool         _valid       = true;
   unsigned int _texture_obj = 0; // TODO $$$ ITexture

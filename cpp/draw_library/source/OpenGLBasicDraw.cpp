@@ -848,16 +848,17 @@ bool CBasicDraw::LoadFont(
   }
 
   std::string font_finename;
+  int min_char;
   switch( font_id )
   {
     default: break;
 
-    case font_sans:        font_finename = "../resource/font/FreeSans.ttf"; break;
-    case font_symbol:      font_finename = "../resource/font/symbol.ttf"; break;
-    case font_pcifico:     font_finename = "../resource/font/Pacifico.ttf"; break;
-    case font_alura:       font_finename = "../resource/font/Allura-Regular.otf"; break;
-    case font_grandhotel:  font_finename = "../resource/font/GrandHotel-Regular.otf"; break;
-    case font_greatevibes: font_finename = "../resource/font/GreatVibes-Regular.otf"; break;
+    case font_sans:        min_char = 32; font_finename = "../resource/font/FreeSans.ttf"; break;
+    case font_symbol:      min_char = 32; font_finename = "../resource/font/37043_SYMBOL.ttf"; break;
+    case font_pcifico:     min_char = 32; font_finename = "../resource/font/Pacifico.ttf"; break;
+    case font_alura:       min_char = 32; font_finename = "../resource/font/Allura-Regular.otf"; break;
+    case font_grandhotel:  min_char = 32; font_finename = "../resource/font/GrandHotel-Regular.otf"; break;
+    case font_greatevibes: min_char = 32; font_finename = "../resource/font/GreatVibes-Regular.otf"; break;
   }
 
   if ( font_finename.empty() )
@@ -869,7 +870,7 @@ bool CBasicDraw::LoadFont(
   Render::IFont *newFont = nullptr;
   try
   {
-    newFont = new CFreetypeTexturedFont( font_finename.c_str() );
+    newFont = new CFreetypeTexturedFont( font_finename.c_str(), min_char );
     newFont->Load();
     _fonts[font_id].reset( newFont );
   }
@@ -1579,6 +1580,14 @@ bool CBasicDraw::Draw(
     glPolygonOffset( 1.0, 1.0 );
     OPENGL_CHECK_GL_ERROR
   }
+  if ( is_point )
+  {
+    glEnable( GL_POLYGON_OFFSET_LINE );
+    glPolygonOffset( 2.0, 1.0 );
+    OPENGL_CHECK_GL_ERROR
+    glPointSize( style._thickness );
+    OPENGL_CHECK_GL_ERROR
+  }
 
   // create buffer
   Render::IDrawBuffer &buffer = DrawBuffer();
@@ -1718,6 +1727,13 @@ bool CBasicDraw::Draw(
     glDisable( GL_POLYGON_OFFSET_LINE ); 
     OPENGL_CHECK_GL_ERROR
   }
+  if ( is_point )
+  {
+    glPointSize( 1.0 );
+    OPENGL_CHECK_GL_ERROR
+    glDisable( GL_POLYGON_OFFSET_LINE ); 
+    OPENGL_CHECK_GL_ERROR
+  }
 
   return true;
 }
@@ -1845,8 +1861,10 @@ struct TFreetypeTFont
 * @version 1.0
 **********************************************************************/
 CFreetypeTexturedFont::CFreetypeTexturedFont( 
-  const char *font_filename ) //!< in: path of the font file 
+  const char *font_filename,  //!< in: path of the font file 
+  int         min_char )      //!< in: first representable character in the font
   : _font_filename( font_filename )
+  , _min_char( min_char )
 {}
 
 
@@ -1929,7 +1947,7 @@ bool CFreetypeTexturedFont::Load( void )
   // FreeType Glyph Conventions [https://www.freetype.org/freetype2/docs/glyphs/glyphs-3.html]
 
   data._width    = 1;  
-  data._min_char = 32;
+  data._min_char = _min_char;
   data._max_char = 256;
   data._glyphs  = std::vector<TFreetypeGlyph>( data._max_char - data._min_char );
   for ( int i = data._min_char; i < data._max_char ; ++ i )
@@ -1941,7 +1959,7 @@ bool CFreetypeTexturedFont::Load( void )
     unsigned int cx = glyph->bitmap.width;
     unsigned int cy = glyph->bitmap.rows;
     
-    TFreetypeGlyph &glyph_data = data._glyphs[i-32];
+    TFreetypeGlyph &glyph_data = data._glyphs[i-data._min_char];
 
     glyph_data._metrics = glyph->metrics;
     glyph_data._x       = data._width;

@@ -214,6 +214,13 @@ public:
     return Draw( TPrimitive::lines, 3, lines.size(), lines.data(), color, style );
   }
 
+  bool DrawPoint2D( Render::TPoint2 pt, const TColor &color, float point_size )
+  {
+    TStyle style;
+    style._thickness = point_size;
+    return Draw( TPrimitive::points, 2, { pt[0], pt[1] }, color, style );
+  }
+
   bool Draw( TPrimitive primitive_type, size_t size, const TBuffer &corrds, const TColor &color, const TStyle &style )
   {
     return Draw( primitive_type, size, corrds.size(), corrds.data(), color, style );
@@ -231,32 +238,35 @@ public:
   
   virtual bool DrawText2D( TFontId font_id, const char *text, float height, float width_scale, const TPoint3 &pos, const TColor &color ) = 0;
 
-  virtual bool DrawText2D( TFontId font_id, const char *text, int origin, float height, float width_scale, const TPoint3 &pos, const TColor &color )
+  virtual bool DrawText2D( TFontId font_id, const char *text, int origin, float height, float width_scale, float margin, const TPoint3 &pos, const TColor &color )
   {
     std::array<float, 4> text_rect{ 0.0f };
     CalculateTextSize( font_id, text, height, text_rect[2], text_rect[1], text_rect[3] );
     float width = fabs(text_rect[2]) * width_scale;
     TPoint3 origin_pos = pos;
     if ( origin % 3 == 0 ) // 3, 6, 9
-      origin_pos[0] -= width;
+      origin_pos[0] -= width + margin;
     else if ( origin % 3 == 2 ) // 2, 5, 8
       origin_pos[0] -= width * 0.5f;
+    else
+      origin_pos[0] += margin;
     if ( origin >= 7 && origin <= 9 ) // 7, 8, 9
-      origin_pos[1] -= text_rect[3];
+      origin_pos[1] -= text_rect[3] + margin;
     else if ( origin >= 4 && origin <= 6 ) // 4, 5, 6
       origin_pos[1] -= text_rect[3] * 0.5f;
-
+    else
+      origin_pos[1] += margin;
     return DrawText2D( font_id, text, height, width_scale, origin_pos, color );
   }
 
-  virtual bool DrawText2DProjected( TFontId font_id, const char *text, int origin, float height, float width_scale, const TPoint3 &pos, const TColor &color )
+  virtual bool DrawText2DProjected( TFontId font_id, const char *text, int origin, float height, float width_scale, float margin, const TPoint3 &pos, const TColor &color )
   {
      TPoint3 prj_pos = Project( pos );
 
      TMat44 m[]{ Projection(), View(), Model() };
      MVP( Identity(), Identity(), Identity() );
      
-     bool ret = DrawText2D( font_id, text, origin, height, width_scale, prj_pos, color );
+     bool ret = DrawText2D( font_id, text, origin, height, width_scale, margin, prj_pos, color );
 
      MVP( m[0], m[1], m[2] );
 

@@ -45,7 +45,8 @@ private:
       e_world,
       e_view,
       e_projection,
-      e_NDC
+      e_NDC,
+      e_cone_Step
     };
 
     std::array< int, 2 > _wndPos         {0, 0};
@@ -61,6 +62,9 @@ private:
     static constexpr const Render::TColor Color_red( void )          { return { 1.0f, 0.0f, 0.0f, 1.0f }; }
     static constexpr const Render::TColor Color_green( void )        { return { 0.0f, 1.0f, 0.0f, 1.0f }; }
     static constexpr const Render::TColor Color_blue( void )         { return { 0.0f, 0.0f, 1.0f, 1.0f }; }
+    static constexpr const Render::TColor Color_darkred( void )      { return { 0.5f, 0.0f, 0.0f, 1.0f }; }
+    static constexpr const Render::TColor Color_darkgreen( void )    { return { 0.0f, 0.5f, 0.0f, 1.0f }; }
+    static constexpr const Render::TColor Color_darkblue( void )     { return { 0.0f, 0.0f, 0.5f, 1.0f }; }
     static constexpr const Render::TColor Color_yellow( void )       { return { 1.0f, 1.0f, 0.0f, 1.0f }; }
     static constexpr const Render::TColor Color_magenta( void )      { return { 1.0f, 0.0f, 1.0f, 1.0f }; }
     static constexpr const Render::TColor Color_cyan( void )         { return { 0.0f, 1.0f, 1.0f, 1.0f }; }
@@ -84,7 +88,7 @@ private:
     float  _aspect = 1.0;
     float  _scale_x = 1.0;
     float  _scale_y = 1.0;
-    TScene _scene   = e_NDC;
+    TScene _scene   = e_cone_Step;
 
     Render::TPoint2 BL( void ) const { return{ -_scale_x, -_scale_y}; }
     Render::TPoint2 TL( void ) const { return{  _scale_x, -_scale_y}; }
@@ -96,6 +100,7 @@ private:
 
     void Lined( const Render::TPoint2 &bl, const Render::TPoint2 &tr, float dist=0.08f, float z=0.0f, float thickness=1.0f, const Render::TColor color=Color_paper_line() );
     void Checkered( const Render::TPoint2 &bl, const Render::TPoint2 &tr, Render::TVec2 dist={ 0.05f, 0.05f }, float z=0.0f, float thickness=1.0f, const Render::TColor color=Color_paper_line() );
+    void Setup2DCheckered( void );
 
     void TestScene( double time_ms );
     void ViewportCoordsys( double time_ms );
@@ -104,6 +109,7 @@ private:
     void View( double time_ms );
     void Projection( double time_ms );
     void NDC( double time_ms );
+    void ConeStep( double time_ms );
 
 public:
 
@@ -120,8 +126,8 @@ int main(int argc, char** argv)
         throw std::runtime_error( "error initializing glfw" );
 
     // create OpenGL window and make OpenGL context current (`glfwInit` has to be done before).
-    static int cx = 800;
-    static int cy = 600;
+    static int cx = 800; // 600
+    static int cy = 600; // 450
     CWindow_Glfw window;
     window.Init( cx, cy, true );
 
@@ -177,10 +183,11 @@ void CWindow_Glfw::CallbackResize(GLFWwindow* window, int cx, int cy)
 
 void CWindow_Glfw::Init( int width, int height, bool doubleBuffer )
 {
-    static bool         c_core    = true;
-    static float        c_scale   = 1.0f;
-    static bool         c_fxaa    = false;
-    static unsigned int c_samples = 4;
+    static bool         c_core      = true;
+    static float        c_scale     = 1.0f;
+    static bool         c_fxaa      = false;
+    static unsigned int c_samples   = 4;
+    static bool         c_frameless = false;
 
     _doubleBuffer = doubleBuffer;
 
@@ -208,6 +215,8 @@ void CWindow_Glfw::Init( int width, int height, bool doubleBuffer )
 
     glfwWindowHint( GLFW_DEPTH_BITS, 24 );
     glfwWindowHint( GLFW_STENCIL_BITS, 8 ); 
+
+    glfwWindowHint( GLFW_DECORATED, c_frameless ? GLFW_FALSE : GLFW_TRUE );
     
     _wnd = glfwCreateWindow( width, height, "OGL window", nullptr, nullptr );
     if ( _wnd == nullptr )
@@ -300,6 +309,7 @@ void CWindow_Glfw::Render( double time_ms )
     case e_view:              View( time_ms ); break;
     case e_projection:        Projection( time_ms ); break;
     case e_NDC:               NDC( time_ms ); break;
+    case e_cone_Step:         ConeStep( time_ms ); break;
   }
 
   _draw->Finish();
@@ -315,6 +325,16 @@ void CWindow_Glfw::Checkered( const Render::TPoint2 &bl, const Render::TPoint2 &
 {
   // { 0.3f, 0.8f, 0.8f, 1.0f }
   _draw->DrawGrid2D( bl, tr, dist, z, { 0.8f, 0.9f, 0.9f, 1.0f }, thickness );
+}
+
+void CWindow_Glfw::Setup2DCheckered( void )
+{
+  _draw->Projection( OpenGL::Camera::Orthopraphic( _scale_x, _scale_y, { -10.0f, 10.0f } ) );
+  _draw->View( Render::Identity() );
+  _draw->Model( Render::Identity() );
+
+  _draw->ActivateBackground();
+  Checkered( BL(), TR() );
 }
 
 
@@ -407,15 +427,15 @@ void CWindow_Glfw::ViewportCoordsys( double time_ms )
   _draw->ActivateOpaque();
   _draw->ClearDepth();
   
-  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "X", 7, axis_text_height, axis_text_scale_y, { axis_len, 0.0f, 0.0f }, Color_red_2() );
-  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "Y", 1, axis_text_height, axis_text_scale_y, { 0.0f, axis_len, 0.0f }, Color_green_2() );
-  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "Z", 3, axis_text_height, axis_text_scale_y, { 0.0f, 0.0f, axis_len }, Color_blue_2() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "X", 7, axis_text_height, axis_text_scale_y, 0.0f, { axis_len, 0.0f, 0.0f }, Color_red_2() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "Y", 1, axis_text_height, axis_text_scale_y, 0.0f, { 0.0f, axis_len, 0.0f }, Color_green_2() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "Z", 3, axis_text_height, axis_text_scale_y, 0.0f, { 0.0f, 0.0f, axis_len }, Color_blue_2() );
 
   const char *los_text = "Line of sight (-Z)";
-  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, los_text, 1, 0.09f, 0.7f, { 0.0f, 0.0f, -6.0f }, Color_black() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, los_text, 1, 0.09f, 0.7f, 0.0f, { 0.0f, 0.0f, -6.0f }, Color_black() );
 
   const char *title_text = "Viewport / view coordinate system";
-  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, title_text, 2, 0.09f, 0.7f, { 0.0f, 2.5f, 0.0f }, Color_black() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, title_text, 2, 0.09f, 0.7f, 0.0f, { 0.0f, 2.5f, 0.0f }, Color_black() );
 }
 
 
@@ -458,7 +478,7 @@ void CWindow_Glfw::Model( double time_ms )
     Render::TPoint3 pos{ (float)pt[0]/10.0f, (float)pt[1]/10.0f, 0.0f };
     pos[0] += ( pos[0] < -0.001f ) ? -0.02f : ( pos[0] > 0.001f ) ? 0.02f : 0.0f;
     pos[1] += ( pos[1] < -0.001f || i==2 || i==6 ) ? -0.02f : ( pos[1] > 0.001f || i==3 || i==5 ) ? 0.02f : 0.0f;
-    _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, strstr.str().c_str(), pt[2], text_height, text_scale_y, pos, Color_darkgray() );
+    _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, strstr.str().c_str(), pt[2], text_height, text_scale_y, 0.0f, pos, Color_darkgray() );
   }
 }
 
@@ -523,7 +543,7 @@ void CWindow_Glfw::World( double time_ms )
     Render::TPoint3 pos{ (float)p[0]/10.0f, (float)p[1]/10.0f, 0.0f };
     pos[0] += ( pos[0] < -0.001f  || i==2 || i==6 ) ? -0.02f : ( pos[0] > 0.001f ) ? 0.02f : 0.0f;
     pos[1] += ( pos[1] < -0.001f ) ? -0.02f : ( pos[1] > 0.001f ) ? 0.02f : 0.0f;
-    _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, strstr.str().c_str(), pt[2], text_height, text_scale_y, pos, Color_darkgray() );
+    _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, strstr.str().c_str(), pt[2], text_height, text_scale_y, 0.0f, pos, Color_darkgray() );
   }
 }
 
@@ -672,7 +692,7 @@ void CWindow_Glfw::Projection( double time_ms )
     
     pos[0] += ( pos[0] < -0.001f ) ? -0.02f : ( pos[0] > 0.001f ) ? 0.02f : 0.0f;
     pos[1] += ( pos[1] < -0.001f ) ? -0.02f : ( pos[1] > 0.001f ) ? 0.02f : 0.0f;
-    _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, strstr.str().c_str(), pt[2], text_height, text_scale_y, pos, Color_darkgray() );
+    _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, strstr.str().c_str(), pt[2], text_height, text_scale_y, 0.0f, pos, Color_darkgray() );
   }
 }
 
@@ -714,17 +734,130 @@ void CWindow_Glfw::NDC( double time_ms )
   _draw->ActivateOpaque();
   _draw->ClearDepth();
   
-  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "X", 7, axis_text_height, axis_text_scale_y, { axis_len, 0.0f, 0.0f }, Color_red_2() );
-  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "Y", 1, axis_text_height, axis_text_scale_y, { 0.0f, axis_len, 0.0f }, Color_green_2() );
-  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "Z", 3, axis_text_height, axis_text_scale_y, { 0.0f, 0.0f, axis_len }, Color_blue_2() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "X", 7, axis_text_height, axis_text_scale_y, 0.0f, { axis_len, 0.0f, 0.0f }, Color_red_2() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "Y", 1, axis_text_height, axis_text_scale_y, 0.0f, { 0.0f, axis_len, 0.0f }, Color_green_2() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "Z", 3, axis_text_height, axis_text_scale_y, 0.0f, { 0.0f, 0.0f, axis_len }, Color_blue_2() );
 
   static float text_height  = 0.05f;
   static float text_scale_y = 1.0f;
-  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(-1, -1, -1)", 9, text_height, text_scale_y, {-1.0f, -1.1f, 1.0f}, Color_darkgray() );
-  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(1, -1, -1)", 8, text_height, text_scale_y, {1.0f, -1.1f, 1.0f}, Color_darkgray() );
-  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(-1, 1, -1)", 3, text_height, text_scale_y, {-1.0f, 1.1f, 1.0f}, Color_darkgray() );
-  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(1, 1, -1)", 7, text_height, text_scale_y, {1.0f, 0.95f, 1.0f}, Color_darkgray() );
-  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(1, 1, 1)", 1, text_height*0.8f, text_scale_y, {1.0f, 1.1f, -1.0f}, Color_darkgray() );
-  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(1, -1, 1)", 7, text_height*0.8f, text_scale_y, {1.0f, -1.1f, -1.0f}, Color_darkgray() );
-  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(-1, 1, 1)", 3, text_height*0.8f, text_scale_y, {-1.0f, 1.1f, -1.0f}, Color_darkgray() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(-1, -1, -1)", 9, text_height, text_scale_y, 0.0f, {-1.0f, -1.1f, 1.0f}, Color_darkgray() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(1, -1, -1)", 8, text_height, text_scale_y, 0.0f, {1.0f, -1.1f, 1.0f}, Color_darkgray() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(-1, 1, -1)", 3, text_height, text_scale_y, 0.0f, {-1.0f, 1.1f, 1.0f}, Color_darkgray() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(1, 1, -1)", 7, text_height, text_scale_y, 0.0f, {1.0f, 0.95f, 1.0f}, Color_darkgray() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(1, 1, 1)", 1, text_height*0.8f, text_scale_y, 0.0f, {1.0f, 1.1f, -1.0f}, Color_darkgray() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(1, -1, 1)", 7, text_height*0.8f, text_scale_y, 0.0f, {1.0f, -1.1f, -1.0f}, Color_darkgray() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(-1, 1, 1)", 3, text_height*0.8f, text_scale_y, 0.0f, {-1.0f, 1.1f, -1.0f}, Color_darkgray() );
+}
+
+
+void CWindow_Glfw::ConeStep( double time_ms )
+{
+  Render::TVec2 arr_size{ 0.08f, 0.03f };
+  static float arrow_th = 2.0f;
+  static float point_size = 8.0f;
+  static float text_height  = 0.07f;
+  static float text_scale_y = 1.0f;
+  static float text_margin  = 0.02f;
+
+  static float top = 0.8f;
+  static float btm = -0.8f;
+  static float left = -1.0f;
+  static float right = 1.0f;
+  static glm::vec2 target{ -0.7f, -0.1f };
+  static glm::vec2 P{ 0.9f, top };
+  static glm::vec2 Q{ 0.0f, -0.4f };
+  static glm::vec2 cone_hit{ target[0]-0.1f, target[1]+0.6f };
+
+  static Render::TColor color_formula = Color_orange();
+  static Render::TColor color_sample = Color_ink();
+  static Render::TColor color_los = Color_darkgreen();
+  static Render::TColor color_height_filed = Color_darkred();
+  static Render::TColor color_height_map = Color_black();
+  
+  glm::vec2 cone_l = cone_hit - Q;
+  cone_l = Q + glm::normalize(cone_l) * (glm::length(cone_l) + 0.2f);
+  glm::vec2 cone_r = glm::vec2( 2.0f * Q[0] - cone_l[0], cone_l[1] );
+
+  glm::vec2 R = glm::normalize(target - P);
+  glm::vec2 S = glm::normalize(cone_l - Q);
+  
+  //float t = glm::determinant(glm::mat2(Q-P, S)) / glm::determinant(glm::mat2(R, S));
+  //float u = glm::determinant(glm::mat2(Q-P, R)) / glm::determinant(glm::mat2(R, S));
+  float t = glm::dot(Q-P, glm::vec2(S.y, -S.x)) / glm::dot(R, glm::vec2(S.y, -S.x));
+  float u = glm::dot(Q-P, glm::vec2(R.y, -R.x)) / glm::dot(R, glm::vec2(S.y, -S.x));
+
+  glm::vec2 R_pt = P + R * t;
+  glm::vec2 S_pt = Q + S * u;
+  glm::vec2 R_mid_pt = P + R * t * 0.5f;
+  glm::vec2 S_mid_pt = Q + S * u * 0.5f;
+
+  float t_c = glm::dot(Q-P, glm::vec2(1.0f, 0.0f)) / glm::dot(R, glm::vec2(1.0f, 0.0f));
+  glm::vec2 C_pt1 = P + R * t_c;
+  glm::vec2 C_pt0 = glm::vec2( Q[0], btm - 0.05f );
+
+  glm::vec2 los_0 = P - target;
+  los_0 = target + glm::normalize( los_0 ) * ( glm::length( los_0 ) + 0.2f );
+  glm::vec2 los_1 = target - P;
+  los_1 = P + glm::normalize( los_1 ) * ( glm::length( los_1 ) + 0.4f );
+
+  glm::vec2 sample_pt = glm::vec2(Q[0], btm);
+  glm::vec2 sample_mid_pt = (Q + sample_pt) * 0.5f;
+  glm::vec2 sample_top_pt = glm::vec2(Q[0], cone_l[1]);
+  glm::vec2 sample_mid_top_pt = ( sample_top_pt + Q ) * 0.5f;
+  glm::vec2 sample_cone_mid_pt = ( sample_top_pt + cone_l ) * 0.5f;
+
+  std::vector<float> height_field{
+    left,  cone_hit[1], cone_hit[0], cone_hit[1], target[0], target[1], target[0]+0.1f, -0.7f, Q[0]-0.4f, -0.7f,
+    Q[0]-0.3f, Q[1], Q[0], Q[1], Q[0]+0.3f, Q[1], Q[0]+0.4f, -0.7f, 
+    0.6f, -0.7f, 0.9f,  0.2f,     1.0f, 0.2f
+  };
+
+  Setup2DCheckered();
+
+  _draw->ActivateOpaque();
+
+  _draw->DrawPoint2D( { P[0], P[1] }, color_formula, point_size );
+  _draw->DrawPoint2D( { Q[0], Q[1] }, color_formula, point_size );
+  _draw->DrawPoint2D( { sample_pt[0], sample_pt[1] }, color_sample, point_size );
+
+  _draw->DrawArrow( 2, { P[0], P[1], R_pt[0], R_pt[1] }, color_formula, arrow_th, arr_size, false, true );
+  _draw->DrawArrow( 2, { Q[0], Q[1], S_pt[0], S_pt[1] }, color_formula, arrow_th, arr_size, false, true );
+  _draw->DrawArrow( 2, { los_0[0], los_0[1], target[0], target[1] }, color_los, arrow_th, arr_size, false, true );
+  _draw->DrawPolyline( 2, { target[0], target[1], los_1[0], los_1[1] }, color_los, 1.0, false );
+  _draw->DrawArrow( 2, { sample_pt[0], sample_pt[1], Q[0], Q[1] }, color_sample, arrow_th, arr_size, true, true );
+  _draw->DrawArrow( 2, { sample_top_pt[0], sample_top_pt[1], Q[0], Q[1] }, color_sample, arrow_th, arr_size, true, true );
+  _draw->DrawArrow( 2, { sample_top_pt[0], sample_top_pt[1], cone_l[0], cone_l[1] }, color_sample, arrow_th, arr_size, true, true );
+
+  //_draw->DrawPolyline( 2, { C_pt0[0], C_pt0[1], C_pt1[0], C_pt1[1] }, color_los, arrow_th, false );
+  _draw->DrawPolyline( 2, { cone_l[0], cone_l[1], Q[0], Q[1], cone_r[0], cone_r[1] }, color_height_map, 2.0f, false );
+
+  _draw->DrawPolyline( 2, height_field, color_height_filed, 3.0f, false );
+
+  _draw->DrawPolyline( 2, {left, top, right, top}, Color_black(), 2.0f, false );
+  _draw->DrawPolyline( 2, {left, btm, right, btm}, Color_black(), 2.0f, false );
+
+  _draw->ActivateTransparent();
+
+  _draw->DrawConvexPolygon( 2, { Q[0], Q[1], cone_l[0], cone_l[1], cone_r[0], cone_r[1] }, { 0.8f, 0.2f, 0.2f, 0.4f } );
+
+  // TODO $$$
+  //
+  //_draw->DrawConcavePolygon( 2, start ... height_field ... end, { 0.5f, 0.5f, 0.5f, 0.5f } );
+
+  //_draw->ActivateOpaque();
+  //_draw->ClearDepth();
+
+  _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, "P", 7, text_height, text_scale_y, text_margin, {P[0], P[1], 0.0f}, color_formula );
+  _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, "Q", 7, text_height, text_scale_y, text_margin, {Q[0], Q[1], 0.0f}, color_formula );
+  _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, "R * d", 3, text_height, text_scale_y, text_margin, {R_mid_pt[0], R_mid_pt[1], 0.0f}, color_formula );
+  _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, "S * u", 9, text_height, text_scale_y, text_margin, {S_mid_pt[0], S_mid_pt[1], 0.0f}, color_formula );
+    
+  _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, "h", 4, text_height, text_scale_y, text_margin, {sample_mid_pt[0], sample_mid_pt[1], 0.0f}, color_sample );
+  _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, "1.0", 4, text_height, text_scale_y, text_margin, {sample_mid_top_pt[0], sample_mid_top_pt[1], 0.0f}, color_sample );
+  _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, "c", 1, text_height, text_scale_y, text_margin, {sample_cone_mid_pt[0], sample_cone_mid_pt[1], 0.0f}, color_sample );
+  _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, "Tx", 7, text_height, text_scale_y, text_margin, {sample_pt[0], sample_pt[1], 0.0f}, color_sample );
+  
+  _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, "Line of Sight", 3, text_height, text_scale_y, text_margin, {target[0], target[1], 0.0f}, color_los );
+  _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, "Height field", 3, text_height, text_scale_y, text_margin, {*(height_field.rbegin()+1), height_field.back(), 0.0f}, color_height_filed );
+  _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, "Height map texture ", 7, text_height, text_scale_y, text_margin, {left, btm, 0.0f}, color_height_map );
 }
