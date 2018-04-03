@@ -228,6 +228,7 @@
     <div>
         <form id="gui" name="inputs">
             <table>
+                <tr><td> <font color=#CCF><span id="fps_val"></span>0</span></font> </td></tr>
                 <tr>
                     <td> <font color=#CCF>clipping</font> </td>
                     <td> <input type="range" id="clip" min="0" max="100" value="100" onchange="changeEventHandler(event);" /></td>
@@ -265,12 +266,13 @@
             var height_map_unit = 2;
             var height_map_size = [0, 0];
 
-            function render(delteMS) {
+            function render(deltaMS) {
 
                 if (readInput) {
                     //readInput = false;
                     clip = (document.getElementById("clip").value - 50) / 50;
                     displacement = document.getElementById("displacement").value / 400;
+                    document.getElementById("fps_val").innerHTML = getFPS(deltaMS).toFixed(1);
                 }
 
                 Camera.create();
@@ -299,8 +301,8 @@
                 //modelMat = RotateAxis( modelMat, 0.3, 0 );
                 //modelMat = RotateAxis( modelMat, 0.8, 0 );
                 //modelMat = RotateAxis( modelMat, 0.65, 1 );
-                modelMat = RotateAxis(modelMat, CalcAng(delteMS, 13.0), 0);
-                modelMat = RotateAxis(modelMat, CalcAng(delteMS, 17.0), 1);
+                modelMat = RotateAxis(modelMat, CalcAng(deltaMS, 13.0), 0);
+                modelMat = RotateAxis(modelMat, CalcAng(deltaMS, 17.0), 1);
                 ShaderProgram.SetUniformM44(progDraw, "u_modelMat44", modelMat);
                 ShaderProgram.SetUniformF4(progDraw, "u_clipPlane", [1.0, -1.0, 0.0, clip * 1.7321]);
 
@@ -387,6 +389,32 @@
                 window.onresize = resize;
                 resize();
                 requestAnimationFrame(render);
+            }
+            
+            var times     = [];
+            var timeSum   = 0;
+            var actIndex  = 0;
+            var maxTimes  = 100;
+            var first     = true;
+            var prevTime  = 0;
+            function getFPS(delta_sum_MS) {
+                if (first)
+                { 
+                  prevTime = delta_sum_MS;
+                  first = false;
+                  return 0;
+                }
+                var deltaMS = delta_sum_MS - prevTime;
+                prevTime = delta_sum_MS; 
+                timeSum = timeSum + deltaMS;
+                if ( times.length < maxTimes ) {
+                    times.push(deltaMS);
+                } else {
+                    timeSum         = timeSum - times[actIndex];
+                    times[actIndex] = deltaMS;
+                    actIndex        = actIndex < maxTimes-1 ? actIndex+1 : 0;
+                }
+                return 1000 * times.length / timeSum;
             }
 
             function Fract(val) {
