@@ -22,11 +22,16 @@ Parallax Occlusion Mapping<br/>
 [![no_parallax](image/parallax_mapping/parallax_005_parallax_occlusion_mapping_derivative_tbn_1.png)][5]
 [![no_parallax](image/parallax_mapping/parallax_005_parallax_occlusion_mapping_derivative_tbn_2.png)][5]
 
+Parallax Occlusion Mapping<br/>
+[![no_parallax](image/parallax_mapping/parallax_006_cone_step_mapping_derivative_tbn_1.png)][6]
+[![no_parallax](image/parallax_mapping/parallax_006_cone_step_mapping_derivative_tbn_2.png)][6]
+
 
 <br/><hr/>
 ## Displacement map (Height map)
 
 ![height map](../resource/texture/example_1_heightmap.bmp)
+![cone map](../resource/texture/example_1_conemap_only.bmp)
 
 TODO
 
@@ -306,6 +311,47 @@ The absolute distance changes proportionally with the reciprocal scaling factor 
 
     X  =  P + R * t  =  Q + S * u
 
+</>
+
+    vec3 ConeStep( in vec3 texDir3D, in vec2 texCoord )
+    {   
+        float mapHeight;
+        float maxBumpHeight = u_displacement_scale;
+        vec2  quality_range = u_parallax_quality;
+        if ( maxBumpHeight > 0.0 && texDir3D.z < 0.9994 )
+        {
+            vec2 R = normalize(vec2(length(texDir3D.xy), texDir3D.z)); 
+            vec2 P = R * maxBumpHeight / texDir3D.z; 
+
+            vec2 tex_size = textureSize( u_displacement_map, 0 ).xy;
+            vec2 min_tex_step = normalize(texDir3D.xy) / tex_size;
+            float min_step = length(min_tex_step) * 1.0/R.x;
+            
+            float t = 0.0;
+            const int max_no_of_steps = 10;
+            for ( int i = 0; i < max_no_of_steps; ++ i )
+            {
+                vec3 sample_pt = vec3(texCoord.xy, maxBumpHeight) + texDir3D * t;
+
+                vec2 h_and_c = GetHeightAndCone( sample_pt.xy );
+                float h = h_and_c.x * maxBumpHeight;
+                float c = h_and_c.y * h_and_c.y / maxBumpHeight;
+
+                vec2 C = P + R * t;
+                if ( C.y <= h )
+                    break;
+                
+                vec2 Q = vec2(C.x, h);
+                vec2 S = normalize(vec2(c, 1.0));
+                float new_t = dot(Q-P, vec2(S.y, -S.x)) / dot(R, vec2(S.y, -S.x));
+                t = max(t+min_step, new_t);
+            }
+            texCoord.xy = texCoord.xy + texDir3D.xy * t;
+        }
+        mapHeight = GetHeightAndCone( texCoord.xy ).x;
+        return vec3( texCoord.xy, mapHeight );
+    }
+
 <br/><hr/>
 # TODO
 
@@ -325,3 +371,4 @@ This algorithm should well fit with cone step mapping.
   [3]: https://rabbid76.github.io/graphics-snippets/html/technique/parallax_003_offset_limiting.html
   [4]: https://rabbid76.github.io/graphics-snippets/html/technique/parallax_004_steep_parallax_mapping_derivative_tbn.html
   [5]: https://rabbid76.github.io/graphics-snippets/html/technique/parallax_005_parallax_occlusion_mapping_derivative_tbn.html
+  [6]: https://rabbid76.github.io/graphics-snippets/html/technique/parallax_006_cone_step_mapping_derivative_tbn.html
