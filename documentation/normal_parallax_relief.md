@@ -30,7 +30,10 @@ Parallax Occlusion Mapping<br/>
 <br/><hr/>
 ## Displacement map (Height map)
 
+Height map<br/>
 ![height map](../resource/texture/example_1_heightmap.bmp)
+
+Cone map<br/>
 ![cone map](../resource/texture/example_1_conemap_only.bmp)
 
 TODO
