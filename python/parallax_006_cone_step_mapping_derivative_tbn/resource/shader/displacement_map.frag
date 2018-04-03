@@ -236,7 +236,7 @@ vec3 ConeStep( in vec3 texDir3D, in vec2 texCoord )
 
       vec2 h_and_c = GetHeightAndCone( sample_pt.xy );
       float h = h_and_c.x * maxBumpHeight;
-      float c = h_and_c.y / maxBumpHeight;
+      float c = h_and_c.y * h_and_c.y / maxBumpHeight;
 
       vec2 C = P + R * t;
       //if ( C.y <= h ) // TODO $$$
