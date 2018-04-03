@@ -221,15 +221,11 @@ vec3 ConeStep( in vec3 texDir3D, in vec2 texCoord )
     vec2 P = R * maxBumpHeight / texDir3D.z; 
 
     vec2 tex_size = textureSize( u_displacement_map, 0 ).xy;
-    //float tex_len = length(1.0/tex_size);
-    //float tex_z = maxBumpHeight * tex_len;
     vec2 min_tex_step = normalize(texDir3D.xy) / tex_size;
     float min_step = length(min_tex_step) * 1.0/R.x;
-    //min_step = 0.000001; // TODO $$$
-
+    
     float t = 0.0;
-
-    const int max_no_of_steps = 50; // TODO $$$ 20
+    const int max_no_of_steps = 10;
     for ( int i = 0; i < max_no_of_steps; ++ i )
     {
       vec3 sample_pt = vec3(texCoord.xy, maxBumpHeight) + texDir3D * t;
@@ -239,15 +235,12 @@ vec3 ConeStep( in vec3 texDir3D, in vec2 texCoord )
       float c = h_and_c.y * h_and_c.y / maxBumpHeight;
 
       vec2 C = P + R * t;
-      //if ( C.y <= h ) // TODO $$$
-      if ( C.y <= h+0.01 )
+      if ( C.y <= h )
         break;
       
-      //vec2 Q = vec2(C.x, 0.0);
       vec2 Q = vec2(C.x, h);
       vec2 S = normalize(vec2(c, 1.0));
       float new_t = dot(Q-P, vec2(S.y, -S.x)) / dot(R, vec2(S.y, -S.x));
-      //new_t = t;
       t = max(t+min_step, new_t);
     }
     texCoord.xy = texCoord.xy + texDir3D.xy * t;
