@@ -14,7 +14,11 @@
 #include <GL/freeglut.h>
 
 // stl
+#include <array>
 #include <vector>
+#include <map>
+#include <tuple>
+#include <algorithm>
 #include <stdexcept>
 #include <chrono>
 #include <memory>
@@ -90,6 +94,7 @@ void Resize( int, int );
 void Display( void );
 
 void CreateConeMap( std::vector<unsigned char> &data_out, long cx, long cy, long ch, long bpl, const unsigned char *data_in, int log_level );
+void CreateConeMap_from_ConeStepMapping_pdf_linear( std::vector<unsigned char> &data_out, long cx, long cy, long ch, long bpl, const unsigned char *data_in, int log_level );
 void CreateConeMap_from_ConeStepMapping_pdf( std::vector<unsigned char> &data_out, long cx, long cy, long ch, long bpl, const unsigned char *data_in, int log_level );
 
 int main(int argc, char** argv)
@@ -181,7 +186,7 @@ int main(int argc, char** argv)
     if ( img != nullptr )
     {
         std::vector<unsigned char> cone_map;
-        CreateConeMap( cone_map, cx, cy, 3, cx*3, img, 2 ); // log_level 2 for full logging
+        CreateConeMap_from_ConeStepMapping_pdf_linear( cone_map, cx, cy, 3, cx*3, img, 2 ); // log_level 2 for full logging
         stbi_image_free( img );
 
         int texture_unit = 1;
@@ -260,6 +265,159 @@ void Display( void )
     glutSwapBuffers();
 }
 
+
+void CreateConeMap( 
+  std::vector<unsigned char> &data_out,   //!< out: conse step map
+  long                        cx,         //!< in:  width of the image 
+  long                        cy,         //!< in:  height of the image
+  long                        ch,         //!< in:  color channels (e.g. 3 for RGB, 4 for RGBA)
+  long                        bpl,        //!< in:  bytes per scan line
+  const unsigned char        *data_in,    //!< in:  image bits
+  int                         log_level ) //!< in:  true: process logging
+{
+  // TODO $$$ seamless?
+  const double max_cone_c = 1.0;
+
+  clock_t t_start = std::clock();
+
+  if ( log_level > 0 )
+  {
+    std::cout << "Create cone step map" << std::endl;
+    std::cout << "    Image size: " << cx << " x " << cy << std::endl;
+
+  }
+
+  data_out.reserve( cx*cy * 4 );
+  for ( int y=0; y < cy; ++ y )
+  {
+    for ( int x=0; x < cx; ++ x )
+    {
+      unsigned char c = data_in[y*bpl + x*ch];
+
+      // invert this (used to convert depth-map to height-map)
+      if (false)
+        c = 255 - c;
+      
+      unsigned char rgba[]{c, c, c, c};
+      data_out.insert( data_out.end(), rgba, rgba + 4 );
+    }
+  }
+
+  long width           = cx;
+  long height          = cy;
+  long chans           = 4;
+  long ScanWidth       = width*chans;
+  long TheSize         = ScanWidth * height;
+  unsigned char  *Data = data_out.data();
+
+  float iheight   = 1.0f / height;
+  float iwidth    = 1.0f / width;
+  int   wProgress = width / 50;
+  int   hProgress = height / 50;
+  int   dProgress = width * height / 50;
+
+  if ( log_level > 0 )
+    std::cout << "    create distance map" << std::endl << "        [";
+  std::map<float, std::vector<std::array<int,2>>> dist_map;
+  const int cone_div = 2;
+  //const int cone_div = 10;
+  for ( int y = -cy/cone_div; y < cy/cone_div; ++ y )
+  {
+    for ( int x = -cx/cone_div; x < cx/cone_div; ++ x )
+    {
+      if ( x == 0 && y == 0 )
+        continue;
+      int i = ( y*cx + x )-1;
+      if ( log_level > 0 && (i % dProgress) == 0 )
+        std::cout << ".";
+      double fx = (double)x / (double)cx;
+      double fy = (double)y / (double)cy;
+      double dist = std::sqrt(fx*fx + fy*fy);
+      if ( dist < max_cone_c ) // TODO $$$ max 
+        dist_map[(float)dist].emplace_back( std::array<int,2>{x, y} );
+    }
+  }
+  if ( log_level > 0 )
+    std::cout << "]" << std::endl;
+  
+  // pre-processing: compute derivatives
+  if ( log_level > 0 )
+    std::cout << "    calcualte derivatives for normal vectors (blue = dx, alpha = dy)" << std::endl << "        [";
+  for (int y = 0; y < height; ++y)
+  {
+    // progress report: works great...if it's square!
+    if ( log_level > 0 && (y % wProgress) == 0 )
+      std::cout << ".";
+    for (int x = 0; x < width; ++x)
+    {
+      int der;
+      // Blue is the slope in x
+      if (x == 0)
+        der = (Data[y*ScanWidth + chans*(x+1)] - Data[y*ScanWidth + chans*(x)]) / 2;
+      else if (x == width - 1)
+        der = (Data[y*ScanWidth + chans*(x)] - Data[y*ScanWidth + chans*(x-1)]) / 2;
+      else
+        der = Data[y*ScanWidth + chans*(x+1)] - Data[y*ScanWidth + chans*(x-1)];
+      Data[y*ScanWidth + chans*x + 2] = 127 + der / 2;
+      // Alpha is the slope in y
+      if (y == 0)
+        der = (Data[(y+1)*ScanWidth + chans*x] - Data[(y)*ScanWidth + chans*x]) / 2;
+      else if (y == height - 1)
+        der = (Data[(y)*ScanWidth + chans*x] - Data[(y-1)*ScanWidth + chans*x]) / 2;
+      else
+        der = (Data[(y+1)*ScanWidth + chans*x] - Data[(y-1)*ScanWidth + chans*x]);
+      // And the sign of Y will be reversed in OpenGL
+      Data[y*ScanWidth + chans*x + 3] = 127 - der / 2;
+    }
+  }
+  if ( log_level > 0 )
+    std::cout << "]" << std::endl;
+
+  if ( log_level > 0 )
+      std::cout << "    scan " << height << " lines; red ... height, green ... cone equation (x = y * c) " << std::endl << "        [";
+  for (int y = 0; y < height; ++y)
+  {
+    if ( log_level > 0 && (y % hProgress) == 0 )
+      std::cout << ".";
+    for (int x = 0; x < width; ++x)
+    {
+      float c        = max_cone_c;
+      float h        = (float)Data[y*ScanWidth + chans * x] / 255.0f;
+      float max_h    = 1.0f - h;
+      float max_dist = (float)max_cone_c * max_h;
+      for ( auto &d_info : dist_map )
+      {
+        float dist = d_info.first;
+        if ( dist > max_dist )
+          break;
+        float min_c = d_info.first / max_h;
+        if ( min_c >= c )
+          break;
+
+        for ( auto &sample : d_info.second )
+        {
+          int sx = (cx + x + sample[0]) % cx;
+          int sy = (cy + y + sample[1]) % cy;
+          float sample_h = (float)Data[sy*ScanWidth + chans * sx] / 255.0f;
+          if ( sample_h <= h )
+            continue;
+          float d_h = sample_h - h;
+          float sample_c = dist / d_h;
+          c = std::min( c, sample_c );
+        }
+      }
+      Data[y*ScanWidth + chans * x + 1] = (unsigned char)( c*255.0f );
+    }
+  }
+  if ( log_level > 0 )
+    std::cout << "]" << std::endl;
+
+  clock_t t_end = std::clock();
+  clock_t dt = t_end - t_start;
+  if ( log_level )
+    std::cout << "Processed in " << (double)dt * 0.001 << " seconds" << std::endl << std::endl;
+}
+
 /*
 basically, 99% of all pixels will fall in under 2.0
 (most of the time, on the heightmaps I've tested)
@@ -273,7 +431,8 @@ const float max_ratio = 1.0;
 bool x_seamless = true;
 bool y_seamless = true;
 
-void CreateConeMap( 
+// Algortihm from http://www.lonesock.net/files/ConeStepMapping.pdf
+void CreateConeMap_from_ConeStepMapping_pdf_linear( 
   std::vector<unsigned char> &data_out,   //!< out: conse step map
   long                        cx,         //!< in:  width of the image 
   long                        cy,         //!< in:  height of the image
@@ -316,8 +475,8 @@ void CreateConeMap(
   long TheSize         = ScanWidth * height;
   unsigned char  *Data = data_out.data();
 
-  float iheight   = 1.0 / height;
-  float iwidth    = 1.0 / width;
+  float iheight   = 1.0f / height;
+  float iwidth    = 1.0f / width;
   int   wProgress = width / 50;
   int   hProgress = height / 50;
   
@@ -370,9 +529,9 @@ void CreateConeMap(
       // and taking sqrt at the end...faster)
       min_ratio2 = max_ratio * max_ratio;
       // information about this center point
-      ht = Data[y*ScanWidth + chans*x] / 255.0;
-      dhdx = +(Data[y*ScanWidth + chans*x + 2] / 255.0 - 0.5) * width;
-      dhdy = -(Data[y*ScanWidth + chans*x + 3] / 255.0 - 0.5) * height;
+      ht = Data[y*ScanWidth + chans*x] / 255.0f;
+      dhdx = +(Data[y*ScanWidth + chans*x + 2] / 255.0f - 0.5f) * width;
+      dhdy = -(Data[y*ScanWidth + chans*x + 3] / 255.0f - 0.5f) * height;
       // scan in outwardly expanding blocks
       // (so I can stop if I reach my minimum ratio)
       for (int rad = 1;
@@ -401,8 +560,8 @@ void CreateConeMap(
           {
             float dely = (dy-y)*iheight;
             r2 = delx*delx + dely*dely;
-            h2 = Data[dy*ScanWidth + chans*x1] / 255.0 - ht;
-            if ((h2 > 0.0) && (h2*h2 * min_ratio2> r2))
+            h2 = Data[dy*ScanWidth + chans*x1] / 255.0f - ht;
+            if ((h2 > 0.0f) && (h2*h2 * min_ratio2> r2))
             {
               // this is the new (lowest) value
               min_ratio2 = r2 / (h2 * h2);
@@ -429,8 +588,8 @@ void CreateConeMap(
           {
             float dely = (dy-y)*iheight;
             r2 = delx*delx + dely*dely;
-            h2 = Data[dy*ScanWidth + chans*x2] / 255.0 - ht;
-            if ((h2 > 0.0) && (h2*h2 * min_ratio2> r2))
+            h2 = Data[dy*ScanWidth + chans*x2] / 255.0f - ht;
+            if ((h2 > 0.0f) && (h2*h2 * min_ratio2> r2))
             {
               // this is the new (lowest) value
               min_ratio2 = r2 / (h2 * h2);
@@ -457,8 +616,8 @@ void CreateConeMap(
           {
             float delx = (dx-x)*iwidth;
             r2 = delx*delx + dely*dely;
-            h2 = Data[y1*ScanWidth + chans*dx] / 255.0 - ht;
-            if ((h2 > 0.0) && (h2*h2 * min_ratio2> r2))
+            h2 = Data[y1*ScanWidth + chans*dx] / 255.0f - ht;
+            if ((h2 > 0.0f) && (h2*h2 * min_ratio2> r2))
             {
               // this is the new (lowest) value
               min_ratio2 = r2 / (h2 * h2);
@@ -485,8 +644,8 @@ void CreateConeMap(
           {
             float delx = (dx-x)*iwidth;
             r2 = delx*delx + dely*dely;
-            h2 = Data[y2*ScanWidth + chans*dx] / 255.0 - ht;
-            if ((h2 > 0.0) && (h2*h2 * min_ratio2> r2))
+            h2 = Data[y2*ScanWidth + chans*dx] / 255.0f - ht;
+            if ((h2 > 0.0f) && (h2*h2 * min_ratio2> r2))
             {
               // this is the new (lowest) value
               min_ratio2 = r2 / (h2 * h2);
@@ -511,7 +670,7 @@ void CreateConeMap(
       // but make sure it is > 0.0, since I divide by it in the shader
       if (Data[y*ScanWidth + chans*x + 1] < 1)
         Data[y*ScanWidth + chans*x + 1] = 1;
-      }
+    }
   }
   if ( log_level > 0 )
     std::cout << "]" << std::endl;
@@ -566,8 +725,8 @@ void CreateConeMap_from_ConeStepMapping_pdf(
   long TheSize         = ScanWidth * height;
   unsigned char  *Data = data_out.data();
 
-  float iheight   = 1.0 / height;
-  float iwidth    = 1.0 / width;
+  float iheight   = 1.0f / height;
+  float iwidth    = 1.0f / width;
   int   wProgress = width / 50;
   int   hProgress = height / 50;
   
@@ -620,9 +779,9 @@ void CreateConeMap_from_ConeStepMapping_pdf(
       // and taking sqrt at the end...faster)
       min_ratio2 = max_ratio * max_ratio;
       // information about this center point
-      ht = Data[y*ScanWidth + chans*x] / 255.0;
-      dhdx = +(Data[y*ScanWidth + chans*x + 2] / 255.0 - 0.5) * width;
-      dhdy = -(Data[y*ScanWidth + chans*x + 3] / 255.0 - 0.5) * height;
+      ht = Data[y*ScanWidth + chans*x] / 255.0f;
+      dhdx = +(Data[y*ScanWidth + chans*x + 2] / 255.0f - 0.5f) * width;
+      dhdy = -(Data[y*ScanWidth + chans*x + 3] / 255.0f - 0.5f) * height;
       // scan in outwardly expanding blocks
       // (so I can stop if I reach my minimum ratio)
       for (int rad = 1;
@@ -651,8 +810,8 @@ void CreateConeMap_from_ConeStepMapping_pdf(
           {
             float dely = (dy-y)*iheight;
             r2 = delx*delx + dely*dely;
-            h2 = Data[dy*ScanWidth + chans*x1] / 255.0 - ht;
-            if ((h2 > 0.0) && (h2*h2 * min_ratio2> r2))
+            h2 = Data[dy*ScanWidth + chans*x1] / 255.0f - ht;
+            if ((h2 > 0.0f) && (h2*h2 * min_ratio2> r2))
             {
               // this is the new (lowest) value
               min_ratio2 = r2 / (h2 * h2);
@@ -679,8 +838,8 @@ void CreateConeMap_from_ConeStepMapping_pdf(
           {
             float dely = (dy-y)*iheight;
             r2 = delx*delx + dely*dely;
-            h2 = Data[dy*ScanWidth + chans*x2] / 255.0 - ht;
-            if ((h2 > 0.0) && (h2*h2 * min_ratio2> r2))
+            h2 = Data[dy*ScanWidth + chans*x2] / 255.0f - ht;
+            if ((h2 > 0.0f) && (h2*h2 * min_ratio2> r2))
             {
               // this is the new (lowest) value
               min_ratio2 = r2 / (h2 * h2);
@@ -707,8 +866,8 @@ void CreateConeMap_from_ConeStepMapping_pdf(
           {
             float delx = (dx-x)*iwidth;
             r2 = delx*delx + dely*dely;
-            h2 = Data[y1*ScanWidth + chans*dx] / 255.0 - ht;
-            if ((h2 > 0.0) && (h2*h2 * min_ratio2> r2))
+            h2 = Data[y1*ScanWidth + chans*dx] / 255.0f - ht;
+            if ((h2 > 0.0f) && (h2*h2 * min_ratio2> r2))
             {
               // this is the new (lowest) value
               min_ratio2 = r2 / (h2 * h2);
@@ -735,8 +894,8 @@ void CreateConeMap_from_ConeStepMapping_pdf(
           {
             float delx = (dx-x)*iwidth;
             r2 = delx*delx + dely*dely;
-            h2 = Data[y2*ScanWidth + chans*dx] / 255.0 - ht;
-            if ((h2 > 0.0) && (h2*h2 * min_ratio2> r2))
+            h2 = Data[y2*ScanWidth + chans*dx] / 255.0f - ht;
+            if ((h2 > 0.0f) && (h2*h2 * min_ratio2> r2))
             {
               // this is the new (lowest) value
               min_ratio2 = r2 / (h2 * h2);
@@ -761,7 +920,7 @@ void CreateConeMap_from_ConeStepMapping_pdf(
       // but make sure it is > 0.0, since I divide by it in the shader
       if (Data[y*ScanWidth + chans*x + 1] < 1)
         Data[y*ScanWidth + chans*x + 1] = 1;
-      }
+    }
   }
   if ( log_level > 0 )
     std::cout << "]" << std::endl;
