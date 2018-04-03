@@ -49,7 +49,7 @@ def ReadTexture(filename):
       print('opened file: size=', image.size, 'format=', image.format)
       return image
  
-def CreateTexture(image, textureUnit, internal_channels):
+def CreateTexture(image, textureUnit, internal_channels, linear):
       imageData = numpy.array(list(image.getdata()), numpy.uint8)
 
       glActiveTexture( GL_TEXTURE0 + textureUnit )
@@ -60,8 +60,8 @@ def CreateTexture(image, textureUnit, internal_channels):
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0)    
       internal_formats = [GL_R8, GL_RG8, GL_RGB8, GL_RGBA8]
       glTexImage2D(GL_TEXTURE_2D, 0, internal_formats[internal_channels], image.size[0], image.size[1],0, GL_RGB, GL_UNSIGNED_BYTE, imageData)
-      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR if linear else GL_NEAREST)
+      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR if linear else GL_NEAREST)
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
 
@@ -70,17 +70,17 @@ def CreateTexture(image, textureUnit, internal_channels):
 
 def CreateTextureFromFile(filename, textureUnit):
       image = ReadTexture(filename)
-      textureObj = CreateTexture(image, textureUnit, 3) 
+      textureObj = CreateTexture(image, textureUnit, 3, True) 
       return textureObj
 
 def CreateHeightMapFromFile(filename, textureUnit):
       image = ReadTexture(filename)
-      textureObj = CreateTexture(image, textureUnit, 1) 
+      textureObj = CreateTexture(image, textureUnit, 1, True) 
       return textureObj
 
 def CreateConeMapFromFile(filename, textureUnit):
       image = ReadTexture(filename)
-      textureObj = CreateTexture(image, textureUnit, 2) 
+      textureObj = CreateTexture(image, textureUnit, 2, False) 
       return textureObj
 
 

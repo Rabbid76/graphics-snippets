@@ -186,8 +186,8 @@ int main(int argc, char** argv)
     {
         std::vector<unsigned char> cone_map;
         
-        CreateConeMap( cone_map, cx, cy, 3, cx*3, img, 1 );
-        //CreateConeMap_from_ConeStepMapping_pdf ( cone_map, cx, cy, 3, cx*3, img, 1 );
+        //CreateConeMap( cone_map, cx, cy, 3, cx*3, img, 1 );
+        CreateConeMap_from_ConeStepMapping_pdf ( cone_map, cx, cy, 3, cx*3, img, 1 );
 
         stbi_image_free( img );
 
@@ -334,7 +334,7 @@ void CreateConeMap(
         std::cout << ".";
       double fx = (double)x / (double)cx;
       double fy = (double)y / (double)cy;
-      double dist = fx*fx + fy*fy;
+      double dist = std::sqrt(fx*fx + fy*fy);
       if ( dist < max_cone_c ) // TODO $$$ max 
         dist_map[(float)dist].emplace_back( std::array<int,2>{x, y} );
     }
@@ -389,10 +389,10 @@ void CreateConeMap(
       float max_dist = (float)max_cone_c * max_h;
       for ( auto &d_info : dist_map )
       {
-        float dist2 = d_info.first;
-        if ( dist2 > max_dist*max_h )
+        float dist = d_info.first;
+        if ( dist > max_dist )
           break;
-        float min_c = d_info.first / (max_h*max_h);
+        float min_c = d_info.first / max_h;
         if ( min_c >= c )
           break;
 
@@ -404,11 +404,11 @@ void CreateConeMap(
           if ( sample_h <= h )
             continue;
           float d_h = sample_h - h;
-          float sample_c = dist2 / (d_h*d_h);
+          float sample_c = dist / d_h;
           c = std::min( c, sample_c );
         }
       }
-      Data[y*ScanWidth + chans * x + 1] = (unsigned char)( sqrt(c)*255.0f );
+      Data[y*ScanWidth + chans * x + 1] = (unsigned char)( c*255.0f );
     }
   }
   if ( log_level > 0 )
@@ -563,7 +563,8 @@ void CreateConeMap_from_ConeStepMapping_pdf(
           {
             float dely = (dy-y)*iheight;
             r2 = delx*delx + dely*dely;
-            h2 = Data[dy*ScanWidth + chans*x1] / 255.0f - ht;
+             //h2 = Data[dy*ScanWidth + chans*x1] / 255.0f - ht;
+            h2 = (0.5f+Data[dy*ScanWidth + chans*x1]) / 255.0f - ht;
             if ((h2 > 0.0f) && (h2*h2 * min_ratio2> r2))
             {
               // this is the new (lowest) value
@@ -591,7 +592,8 @@ void CreateConeMap_from_ConeStepMapping_pdf(
           {
             float dely = (dy-y)*iheight;
             r2 = delx*delx + dely*dely;
-            h2 = Data[dy*ScanWidth + chans*x2] / 255.0f - ht;
+            //h2 = Data[dy*ScanWidth + chans*x2] / 255.0f - ht;
+            h2 = (0.5f+Data[dy*ScanWidth + chans*x2]) / 255.0f - ht;
             if ((h2 > 0.0f) && (h2*h2 * min_ratio2> r2))
             {
               // this is the new (lowest) value
@@ -619,7 +621,8 @@ void CreateConeMap_from_ConeStepMapping_pdf(
           {
             float delx = (dx-x)*iwidth;
             r2 = delx*delx + dely*dely;
-            h2 = Data[y1*ScanWidth + chans*dx] / 255.0f - ht;
+            //h2 = Data[y1*ScanWidth + chans*dx] / 255.0f - ht;
+            h2 = (0.5f+Data[y1*ScanWidth + chans*dx]) / 255.0f - ht;
             if ((h2 > 0.0f) && (h2*h2 * min_ratio2> r2))
             {
               // this is the new (lowest) value
@@ -647,7 +650,8 @@ void CreateConeMap_from_ConeStepMapping_pdf(
           {
             float delx = (dx-x)*iwidth;
             r2 = delx*delx + dely*dely;
-            h2 = Data[y2*ScanWidth + chans*dx] / 255.0f - ht;
+            //h2 = Data[y2*ScanWidth + chans*dx] / 255.0f - ht;
+            h2 = (0.5f+Data[y2*ScanWidth + chans*dx]) / 255.0f - ht;
             if ((h2 > 0.0f) && (h2*h2 * min_ratio2> r2))
             {
               // this is the new (lowest) value
