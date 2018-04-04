@@ -113,13 +113,11 @@ vec3 Parallax( in vec3 texDir3D, in vec2 texCoord )
     }
     bestBumpHeight -= bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / bumpHeightStep, 0.0, 1.0 );
     mapHeight       = bestBumpHeight;
-    texC       += mapHeight * texStep;
-    if ( dot(texC-texCoord,texDir) > 0.0 )
-      texCoord = texC; 
+    texC           += mapHeight * texStep;
   }
   else 
     mapHeight = CalculateHeight( texCoord.xy );
-  return vec3( texCoord.xy, mapHeight );
+  return vec3( texC.xy, mapHeight );
 }
 
 void main()
