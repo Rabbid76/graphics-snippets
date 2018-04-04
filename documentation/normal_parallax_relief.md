@@ -22,7 +22,7 @@ Parallax Occlusion Mapping<br/>
 [![no_parallax](image/parallax_mapping/parallax_005_parallax_occlusion_mapping_derivative_tbn_1.png)][5]
 [![no_parallax](image/parallax_mapping/parallax_005_parallax_occlusion_mapping_derivative_tbn_2.png)][5]
 
-Parallax Occlusion Mapping<br/>
+COne Step Mapping<br/>
 [![no_parallax](image/parallax_mapping/parallax_006_cone_step_mapping_derivative_tbn_1.png)][6]
 [![no_parallax](image/parallax_mapping/parallax_006_cone_step_mapping_derivative_tbn_2.png)][6]
 
@@ -365,13 +365,13 @@ The absolute distance changes proportionally with the reciprocal scaling factor 
 
 **Reference**
 
-[Cone Step Mapping: An Iterative Ray-Heightfield Intersection Algorithm, Jonathan ?LoneSock? Dummer](http://www.lonesock.net/files/ConeStepMapping.pdf)<br/>
+[Cone Step Mapping: An Iterative Ray-Heightfield Intersection Algorithm, Jonathan "LoneSock" Dummer](http://www.lonesock.net/files/ConeStepMapping.pdf)<br/>
 [Relaxed Cone Stepping for Relief Mapping; GPU Gems 3; Fabio Policarpo, Manuel M. Oliveira](https://pdfs.semanticscholar.org/e52f/c7648691b9472c60ae17bfb316bb244c5978.pdf)<br/>
 [Anisotropic Cone Mapping; Yu-Jen Chen and Yung-Yu Chuang - National Taiwan University](https://www.csie.ntu.edu.tw/~cyy/publications/papers/apsipa2009.pdf)<br/>
 
 
 <br/><hr/>
-### Proturded Displacement Mapping
+### Protruded Displacement Mapping
 
 
 **Reference**
