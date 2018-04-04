@@ -77,7 +77,8 @@ vec3 OffsetLimiting( in vec3 texDir3D, in vec2 texCoord )
 {
     float parallaxScale = 0.05;
     float mapHeight     = CalculateHeight( texCoord.st );
-    vec2  texCoordOffst = parallaxScale * mapHeight * texDir3D.xy / texDir3D.z;
+    //vec2  texCoordOffst = parallaxScale * mapHeight * texDir3D.xy / texDir3D.z;
+    vec2  texCoordOffst = -parallaxScale * mapHeight * texDir3D.xy;
     return vec3(texCoord.xy + texCoordOffst.xy, mapHeight);
 }
 

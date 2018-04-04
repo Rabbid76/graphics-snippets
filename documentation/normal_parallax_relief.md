@@ -185,8 +185,9 @@ TODO
         fragColor = vec4( lightCol.rgb, 1.0 );
     }
 
+
 <br/><hr/>
-## Offset Limiting
+## Steep Prallax Mapping
 
     vec3 Parallax( in vec3 texDir3D, in vec2 texCoord )
     {
@@ -195,6 +196,7 @@ TODO
         vec2  texCoordOffst = parallaxScale * mapHeight * texDir3D.xy / texDir3D.z;
         return vec3(texCoord.xy + texCoordOffst.xy, mapHeight);
     }
+
 
 
 <br/><hr/>
@@ -294,6 +296,12 @@ The absolute distance changes proportionally with the reciprocal scaling factor 
         return vec3( texCoord.xy, mapHeight );
     }
 
+
+**Reference**
+
+[Parallax Occlusion Mapping in GLSL](http://sunandblackcat.com/tipFullView.php?topicid=28)<br/>
+
+
 <br/><hr/>
 ## Cone Step Mapping
 
@@ -354,6 +362,43 @@ The absolute distance changes proportionally with the reciprocal scaling factor 
         mapHeight = GetHeightAndCone( texCoord.xy ).x;
         return vec3( texCoord.xy, mapHeight );
     }
+
+**Reference**
+
+[Cone Step Mapping: An Iterative Ray-Heightfield Intersection Algorithm, Jonathan ?LoneSock? Dummer](http://www.lonesock.net/files/ConeStepMapping.pdf)<br/>
+[Relaxed Cone Stepping for Relief Mapping; GPU Gems 3; Fabio Policarpo, Manuel M. Oliveira](https://pdfs.semanticscholar.org/e52f/c7648691b9472c60ae17bfb316bb244c5978.pdf)<br/>
+[Anisotropic Cone Mapping; Yu-Jen Chen and Yung-Yu Chuang - National Taiwan University](https://www.csie.ntu.edu.tw/~cyy/publications/papers/apsipa2009.pdf)<br/>
+
+
+<br/><hr/>
+### Proturded Displacement Mapping
+
+
+**Reference**
+
+[Protruded displacement mapping for image-based urban representation](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/12/Generalized_Displacement_Maps.pdf)<br/>
+[Silhouette Management for Protruded Displacement Mapping](https://www.researchgate.net/profile/Byounghyun_Yoo/publication/234830509_Silhouette_management_for_protruded_displacement_mapping/links/0c9605264737dd1797000000/Silhouette-management-for-protruded-displacement-mapping.pdf)<br/>
+
+
+<br/><hr/>
+### Generalized Displacement Mapping
+
+
+**References**
+
+[Generalized Displacement Maps; Eurographics Symposium on Rendering (2004)](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/12/Generalized_Displacement_Maps.pdf)<br/>
+[Per Pixel Displacement Mapping - Generalized Displacement Mapping; Enrico Leonhardt](https://www.inf.tu-dresden.de/content/institutes/smt/cg/teaching/seminars/HauptseminarWS0506/public/Enrico%20Leonhardt/GDM.pdf)<br/>
+
+
+<br/><hr/>
+## Inverse Displacement Mapping
+
+
+**References**
+
+[A Prism-Free Method for Silhouette Rendering in Inverse Displacement Mapping; Pacific Graphics 2008](http://www.cs.nthu.edu.tw/~chunfa/PG08_1258.pdf)<br/>
+[Displacement Mapping on the GPU - State of the Art](http://sirkan.iit.bme.hu/~szirmay/egdisfinal3.pdf)<br/>
+[Generalized Displacement Maps; Eurographics Symposium on Rendering (2004)](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/12/Generalized_Displacement_Maps.pdf)<br/>
 
 <br/><hr/>
 # TODO
