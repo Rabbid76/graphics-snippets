@@ -267,6 +267,12 @@ void Display( void )
     glutSwapBuffers();
 }
 
+struct TDistInfo
+{
+  float _dist;
+  int   _x;
+  int   _y;
+};
 
 void CreateConeMap( 
   std::vector<unsigned char> &data_out,   //!< out: conse step map
@@ -341,6 +347,16 @@ void CreateConeMap(
   }
   if ( log_level > 0 )
     std::cout << "]" << std::endl;
+
+  /*
+  std::vector<TDistInfo>dist_tab;
+  dist_tab.reserve( dist_map.size() );
+  for ( auto &d_info : dist_map )
+  {
+    for ( auto &sample : d_info.second )
+      dist_tab.push_back( { d_info.first, sample[0], sample[1] } );
+  }
+  */
   
   // pre-processing: compute derivatives
   if ( log_level > 0 )
@@ -387,6 +403,7 @@ void CreateConeMap(
       float h        = (float)Data[y*ScanWidth + chans * x] / 255.0f;
       float max_h    = 1.0f - h;
       float max_dist = (float)max_cone_c * max_h;
+
       for ( auto &d_info : dist_map )
       {
         float dist = d_info.first;
@@ -401,14 +418,35 @@ void CreateConeMap(
           int sx = (cx + x + sample[0]) % cx;
           int sy = (cy + y + sample[1]) % cy;
           float sample_h = (float)Data[sy*ScanWidth + chans * sx] / 255.0f;
-          if ( sample_h <= h )
-            continue;
-          float d_h = sample_h - h;
+          //if ( sample_h <= h )
+          //  continue;
+          float d_h = std::max(0.00001f,sample_h - h);
           float sample_c = dist / d_h;
           c = std::min( c, sample_c );
         }
       }
-      Data[y*ScanWidth + chans * x + 1] = (unsigned char)( c*255.0f );
+      
+      /*
+      for ( auto &d_info : dist_tab )
+      {
+        if ( d_info._dist > max_dist )
+          break;
+        float min_c = d_info._dist / max_h;
+        if ( min_c >= c )
+          break;
+
+        int sx = (cx + x + d_info._x) % cx;
+        int sy = (cy + y + d_info._y) % cy;
+        float sample_h = (float)Data[sy*ScanWidth + chans * sx] / 255.0f;
+        //if ( sample_h <= h )
+        //  continue;
+        float d_h = std::max(0.00001f,sample_h - h);
+        float sample_c = d_info._dist / d_h;
+        c = std::min( c, sample_c );
+      }
+      */
+
+      Data[y*ScanWidth + chans * x + 1] = (unsigned char)( sqrt(c)*255.0f );
     }
   }
   if ( log_level > 0 )
@@ -524,17 +562,17 @@ void CreateConeMap_from_ConeStepMapping_pdf(
       std::cout << ".";
     for (int x = 0; x < width; ++x)
     {
-      float min_ratio2, actual_ratio;
+      float actual_ratio;
       int x1, x2, y1, y2;
-      float ht, dhdx, dhdy, r2, h2;
+      float r2, h2;
       // set up some initial values
       // (note I'm using ratio squared throughout,
       // and taking sqrt at the end...faster)
-      min_ratio2 = max_ratio * max_ratio;
+      float min_ratio2 = max_ratio * max_ratio;
       // information about this center point
-      ht = Data[y*ScanWidth + chans*x] / 255.0f;
-      dhdx = +(Data[y*ScanWidth + chans*x + 2] / 255.0f - 0.5f) * width;
-      dhdy = -(Data[y*ScanWidth + chans*x + 3] / 255.0f - 0.5f) * height;
+      float ht   = Data[y*ScanWidth + chans*x] / 255.0f;
+      float dhdx = +(Data[y*ScanWidth + chans*x + 2] / 255.0f - 0.5f) * width;
+      float dhdy = -(Data[y*ScanWidth + chans*x + 3] / 255.0f - 0.5f) * height;
       // scan in outwardly expanding blocks
       // (so I can stop if I reach my minimum ratio)
       for (int rad = 1;
