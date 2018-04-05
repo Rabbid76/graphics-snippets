@@ -181,12 +181,14 @@ int main(int argc, char** argv)
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
 
     std::string path = dir + "../resource/texture/example_1_heightmap.bmp";
+    path = "C:/source/graphics-snippets/resource/texture/example_1_heightmap.bmp";
     int cx, cy, ch;
     stbi_uc *img = stbi_load( path.c_str(), &cx, &cy, &ch, 3 );
     if ( img != nullptr )
     {
         std::vector<unsigned char> cone_map;
         
+        for ( int i = 0; i < 100; ++ i)
         CreateConeMap_1( cone_map, cx, cy, 3, cx*3, img, 1 );
         //CreateConeMap_2( cone_map, cx, cy, 3, cx*3, img, 1 );
         //CreateConeMap_from_ConeStepMapping_pdf ( cone_map, cx, cy, 3, cx*3, img, 1 );
@@ -314,8 +316,6 @@ void CreateConeMap_1(
   long TheSize         = ScanWidth * height;
   unsigned char  *Data = data_out.data();
 
-  float iheight   = 1.0f / height;
-  float iwidth    = 1.0f / width;
   int   wProgress = width / 50;
   int   hProgress = height / 50;
   int   dProgress = width * height / 50;
@@ -366,8 +366,9 @@ void CreateConeMap_1(
       std::cout << ".";
     for (int x = 0; x < width; ++x)
     {
+      int   act_h    = Data[y*ScanWidth + chans * x];
       float c        = max_cone_c;
-      float h        = (float)Data[y*ScanWidth + chans * x] / 255.0f;
+      float h        = (float)act_h / 255.0f;
       float max_h    = 1.0f - h;
       float max_dist = std::min((float)max_cone_c * max_h, 0.5f);
 
@@ -379,43 +380,28 @@ void CreateConeMap_1(
           float fy = sqrt(dist*dist - fx*fx);
           int   dy = (int)(fy/step_y + 0.5f);
 
+          int sx, sy, sample_h;
+          
+          sx = (cx + x + dx) % cx;
+          sy = (cy + y + dy) % cy;
+          sample_h = Data[sy*ScanWidth + chans * sx];
+
+          sx = (cx + x - dx) % cx;
+          sy = (cy + y + dy) % cy;
+          sample_h = std::max( sample_h, (int)Data[sy*ScanWidth + chans * sx] );
+
+          sx = (cx + x + dx) % cx;
+          sy = (cy + y - dy) % cy;
+          sample_h = std::max( sample_h, (int)Data[sy*ScanWidth + chans * sx] );
+
+          sx = (cx + x - dx) % cx;
+          sy = (cy + y - dy) % cy;
+          sample_h = std::max( sample_h, (int)Data[sy*ScanWidth + chans * sx] );
+
+          if ( sample_h > act_h )
           {
-            int sx = (cx + x + dx) % cx;
-            int sy = (cy + y + dy) % cy;
-
-            float sample_h = (float)Data[sy*ScanWidth + chans * sx] / 255.0f;
-            float d_h = std::max(0.00001f,sample_h - h);
-            float sample_c = dist / d_h;
-            c = std::min( c, sample_c );
-          }
-
-          {
-            int sx = (cx + x + dx) % cx;
-            int sy = (cy + y - dy) % cy;
-
-            float sample_h = (float)Data[sy*ScanWidth + chans * sx] / 255.0f;
-            float d_h = std::max(0.00001f,sample_h - h);
-            float sample_c = dist / d_h;
-            c = std::min( c, sample_c );
-          }
-
-          {
-            int sx = (cx + x - dx) % cx;
-            int sy = (cy + y + dy) % cy;
-
-            float sample_h = (float)Data[sy*ScanWidth + chans * sx] / 255.0f;
-            float d_h = std::max(0.00001f,sample_h - h);
-            float sample_c = dist / d_h;
-            c = std::min( c, sample_c );
-          }
-
-          {
-            int sx = (cx + x - dx) % cx;
-            int sy = (cy + y - dy) % cy;
-
-            float sample_h = (float)Data[sy*ScanWidth + chans * sx] / 255.0f;
-            float d_h = std::max(0.00001f,sample_h - h);
-            float sample_c = dist / d_h;
+            float d_h =  (float)(sample_h-act_h) / 255.0f;
+            float sample_c = dist / d_h;  // TODO $$$ 32.98 %  
             c = std::min( c, sample_c );
           }
         }
