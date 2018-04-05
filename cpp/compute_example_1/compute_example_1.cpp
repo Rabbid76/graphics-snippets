@@ -144,10 +144,28 @@ void main() {
     pixel = vec4(0.4, 0.4, 1.0, 1.0);
   }
 
-
-  
   // output to a specific pixel in the image
   imageStore(img_output, pixel_coords, pixel);
+}
+)";
+
+// compute shader
+std::string sh_compute_2 = R"(
+#version 460
+
+layout (local_size_x = 16, local_size_y = 16) in;
+layout(rgba32f, binding = 0) uniform image2D destTex;
+
+//uniform float roll;
+
+void main() {
+  const float roll = 0.0;
+
+  // http://wili.cc/blog/opengl-cs.html
+  ivec2 storePos   = ivec2(gl_GlobalInvocationID.xy);
+  float localCoef  = length(vec2(ivec2(gl_LocalInvocationID.xy)-8)/8.0);
+  float globalCoef = sin(float(gl_WorkGroupID.x+gl_WorkGroupID.y)*0.1 + roll)*0.5;
+  imageStore(destTex, storePos, vec4(1.0-globalCoef*localCoef, 0.0, 0.0, 0.0));
 }
 )";
 
@@ -258,8 +276,15 @@ int main(int argc, char** argv)
       { sh_frag, GL_FRAGMENT_SHADER }
     } ) );
 
-    static bool compute_test = false;
-    std::string sh_compute = compute_test ? sh_test_compute : sh_compute_1;
+    static int compute_id = 2;
+    std::string sh_compute;
+    switch (compute_id)
+    {
+      default:
+      case 0: sh_compute = sh_test_compute; break;
+      case 1: sh_compute = sh_compute_1; break;
+      case 2: sh_compute = sh_compute_2; break;
+    }
     g_compute_prog.reset( new OpenGL::ShaderProgram(
     {
       { sh_compute.c_str(), GL_COMPUTE_SHADER }

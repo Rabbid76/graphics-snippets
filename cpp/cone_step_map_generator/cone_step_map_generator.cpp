@@ -93,7 +93,8 @@ void OnIdle( void );
 void Resize( int, int );
 void Display( void );
 
-void CreateConeMap( std::vector<unsigned char> &data_out, long cx, long cy, long ch, long bpl, const unsigned char *data_in, int log_level );
+void CreateConeMap_1( std::vector<unsigned char> &data_out, long cx, long cy, long ch, long bpl, const unsigned char *data_in, int log_level );
+void CreateConeMap_2( std::vector<unsigned char> &data_out, long cx, long cy, long ch, long bpl, const unsigned char *data_in, int log_level );
 void CreateConeMap_from_ConeStepMapping_pdf( std::vector<unsigned char> &data_out, long cx, long cy, long ch, long bpl, const unsigned char *data_in, int log_level );
 
 int main(int argc, char** argv)
@@ -186,8 +187,9 @@ int main(int argc, char** argv)
     {
         std::vector<unsigned char> cone_map;
         
-        //CreateConeMap( cone_map, cx, cy, 3, cx*3, img, 1 );
-        CreateConeMap_from_ConeStepMapping_pdf ( cone_map, cx, cy, 3, cx*3, img, 1 );
+        CreateConeMap_1( cone_map, cx, cy, 3, cx*3, img, 1 );
+        //CreateConeMap_2( cone_map, cx, cy, 3, cx*3, img, 1 );
+        //CreateConeMap_from_ConeStepMapping_pdf ( cone_map, cx, cy, 3, cx*3, img, 1 );
 
         stbi_image_free( img );
 
@@ -267,6 +269,171 @@ void Display( void )
     glutSwapBuffers();
 }
 
+
+void CreateConeMap_1( 
+  std::vector<unsigned char> &data_out,   //!< out: conse step map
+  long                        cx,         //!< in:  width of the image 
+  long                        cy,         //!< in:  height of the image
+  long                        ch,         //!< in:  color channels (e.g. 3 for RGB, 4 for RGBA)
+  long                        bpl,        //!< in:  bytes per scan line
+  const unsigned char        *data_in,    //!< in:  image bits
+  int                         log_level ) //!< in:  true: process logging
+{
+  // TODO $$$ seamless?
+  const double max_cone_c = 1.0;
+
+  clock_t t_start = std::clock();
+
+  if ( log_level > 0 )
+  {
+    std::cout << "Create cone step map" << std::endl;
+    std::cout << "    Image size: " << cx << " x " << cy << std::endl;
+
+  }
+
+  data_out.reserve( cx*cy * 4 );
+  for ( int y=0; y < cy; ++ y )
+  {
+    for ( int x=0; x < cx; ++ x )
+    {
+      unsigned char c = data_in[y*bpl + x*ch];
+
+      // invert this (used to convert depth-map to height-map)
+      if (false)
+        c = 255 - c;
+      
+      unsigned char rgba[]{c, c, c, c};
+      data_out.insert( data_out.end(), rgba, rgba + 4 );
+    }
+  }
+
+  long width           = cx;
+  long height          = cy;
+  long chans           = 4;
+  long ScanWidth       = width*chans;
+  long TheSize         = ScanWidth * height;
+  unsigned char  *Data = data_out.data();
+
+  float iheight   = 1.0f / height;
+  float iwidth    = 1.0f / width;
+  int   wProgress = width / 50;
+  int   hProgress = height / 50;
+  int   dProgress = width * height / 50;
+
+  // pre-processing: compute derivatives
+  if ( log_level > 0 )
+    std::cout << "    calcualte derivatives for normal vectors (blue = dx, alpha = dy)" << std::endl << "        [";
+  for (int y = 0; y < height; ++y)
+  {
+    // progress report: works great...if it's square!
+    if ( log_level > 0 && (y % wProgress) == 0 )
+      std::cout << ".";
+    for (int x = 0; x < width; ++x)
+    {
+      int der;
+      // Blue is the slope in x
+      if (x == 0)
+        der = (Data[y*ScanWidth + chans*(x+1)] - Data[y*ScanWidth + chans*(x)]) / 2;
+      else if (x == width - 1)
+        der = (Data[y*ScanWidth + chans*(x)] - Data[y*ScanWidth + chans*(x-1)]) / 2;
+      else
+        der = Data[y*ScanWidth + chans*(x+1)] - Data[y*ScanWidth + chans*(x-1)];
+      Data[y*ScanWidth + chans*x + 2] = 127 + der / 2;
+      // Alpha is the slope in y
+      if (y == 0)
+        der = (Data[(y+1)*ScanWidth + chans*x] - Data[(y)*ScanWidth + chans*x]) / 2;
+      else if (y == height - 1)
+        der = (Data[(y)*ScanWidth + chans*x] - Data[(y-1)*ScanWidth + chans*x]) / 2;
+      else
+        der = (Data[(y+1)*ScanWidth + chans*x] - Data[(y-1)*ScanWidth + chans*x]);
+      // And the sign of Y will be reversed in OpenGL
+      Data[y*ScanWidth + chans*x + 3] = 127 - der / 2;
+    }
+  }
+  if ( log_level > 0 )
+    std::cout << "]" << std::endl;
+
+  if ( log_level > 0 )
+      std::cout << "    scan " << height << " lines; red ... height, green ... cone equation (x = y * c) " << std::endl << "        [";
+  
+
+  float step_x = 1.0f / (float)cx;
+  float step_y = 1.0f / (float)cy;
+  float step   = std::max( step_x, step_y );
+  for (int y = 0; y < height; ++y)
+  {
+    if ( log_level > 0 && (y % hProgress) == 0 )
+      std::cout << ".";
+    for (int x = 0; x < width; ++x)
+    {
+      float c        = max_cone_c;
+      float h        = (float)Data[y*ScanWidth + chans * x] / 255.0f;
+      float max_h    = 1.0f - h;
+      float max_dist = std::min((float)max_cone_c * max_h, 0.5f);
+
+      for( float dist = step; dist <= max_dist && c > dist / max_h; dist += step )
+      {
+        float fx = 0.0f;
+        for( int dx = 0; (float)dx / (float)width <= dist && c > dist / max_h; ++ dx, fx += step_x )
+        {
+          float fy = sqrt(dist*dist - fx*fx);
+          int   dy = (int)(fy/step_y + 0.5f);
+
+          {
+            int sx = (cx + x + dx) % cx;
+            int sy = (cy + y + dy) % cy;
+
+            float sample_h = (float)Data[sy*ScanWidth + chans * sx] / 255.0f;
+            float d_h = std::max(0.00001f,sample_h - h);
+            float sample_c = dist / d_h;
+            c = std::min( c, sample_c );
+          }
+
+          {
+            int sx = (cx + x + dx) % cx;
+            int sy = (cy + y - dy) % cy;
+
+            float sample_h = (float)Data[sy*ScanWidth + chans * sx] / 255.0f;
+            float d_h = std::max(0.00001f,sample_h - h);
+            float sample_c = dist / d_h;
+            c = std::min( c, sample_c );
+          }
+
+          {
+            int sx = (cx + x - dx) % cx;
+            int sy = (cy + y + dy) % cy;
+
+            float sample_h = (float)Data[sy*ScanWidth + chans * sx] / 255.0f;
+            float d_h = std::max(0.00001f,sample_h - h);
+            float sample_c = dist / d_h;
+            c = std::min( c, sample_c );
+          }
+
+          {
+            int sx = (cx + x - dx) % cx;
+            int sy = (cy + y - dy) % cy;
+
+            float sample_h = (float)Data[sy*ScanWidth + chans * sx] / 255.0f;
+            float d_h = std::max(0.00001f,sample_h - h);
+            float sample_c = dist / d_h;
+            c = std::min( c, sample_c );
+          }
+        }
+      }
+
+      Data[y*ScanWidth + chans * x + 1] = (unsigned char)( sqrt(c)*255.0f );
+    }
+  }
+  if ( log_level > 0 )
+    std::cout << "]" << std::endl;
+
+  clock_t t_end = std::clock();
+  clock_t dt = t_end - t_start;
+  if ( log_level )
+    std::cout << "Processed in " << (double)dt * 0.001 << " seconds" << std::endl << std::endl;
+}
+
+
 struct TDistInfo
 {
   float _dist;
@@ -274,7 +441,7 @@ struct TDistInfo
   int   _y;
 };
 
-void CreateConeMap( 
+void CreateConeMap_2( 
   std::vector<unsigned char> &data_out,   //!< out: conse step map
   long                        cx,         //!< in:  width of the image 
   long                        cy,         //!< in:  height of the image
