@@ -225,7 +225,7 @@ vec3 ConeStep( in vec3 texDir3D, in vec2 texCoord )
     float min_step = length(min_tex_step) * 1.0/R.x;
     
     float t = 0.0;
-    const int max_no_of_steps = 10;
+    const int max_no_of_steps = 30;
     for ( int i = 0; i < max_no_of_steps; ++ i )
     {
       vec3 sample_pt = vec3(texCoord.xy, maxBumpHeight) + texDir3D * t;

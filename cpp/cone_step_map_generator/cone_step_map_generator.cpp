@@ -85,7 +85,8 @@ void main()
     //fragColor = vec4(0.0, delta*10.0, 0.0, 1.0);
     //fragColor = vec4(tex_color.rg, 0.0, 1.0);
     
-    fragColor = vec4(tex_color.rg, 0.0, 1.0);
+    //fragColor = vec4(tex_color.rg, 0.0, 1.0);
+    fragColor = vec4( normalize( vec3(tex_color.ba, 1.0) ), 1.0);
     //fragColor = tex_color;
 }
 )";
@@ -102,7 +103,7 @@ void Resize( int, int );
 void Display( void );
 
 void CreateConeMap_1( std::vector<unsigned char> &data_out, long cx, long cy, long ch, long bpl, const unsigned char *data_in, int log_level );
-void CreateConeMap_2( std::vector<unsigned char> &data_out, long cx, long cy, long ch, long bpl, const unsigned char *data_in, int log_level );
+void CreateConeMap_flat( std::vector<unsigned char> &data_out, long cx, long cy, long ch, long bpl, const unsigned char *data_in, int log_level );
 void CreateConeMap_from_ConeStepMapping_pdf( std::vector<unsigned char> &data_out, long cx, long cy, long ch, long bpl, const unsigned char *data_in, int log_level );
 
 int main(int argc, char** argv)
@@ -214,9 +215,9 @@ int main(int argc, char** argv)
 
         std::vector<unsigned char> cone_map;
         
-        for ( int i = 0; i < 10; ++ i)
+        //for ( int i = 0; i < 100; ++ i)
         CreateConeMap_1( cone_map, cx, cy, 3, cx*3, img, 1 );
-        //CreateConeMap_2( cone_map, cx, cy, 3, cx*3, img, 1 );
+        //CreateConeMap_flat( cone_map, cx, cy, 3, cx*3, img, 1 );
         //CreateConeMap_from_ConeStepMapping_pdf ( cone_map, cx, cy, 3, cx*3, img, 1 );
 
         stbi_image_free( img );
@@ -401,7 +402,7 @@ void CreateConeMap_1(
 
       for( float dist = step; dist <= max_dist && c > dist / max_h; dist += step )
       {
-        int   d2 = (int)(0.5f + (dist*dist) / (step*step_y));
+        int   d2 = (int)(0.5f + (dist*dist) / (step*step));
         int   dy = (int)(0.5f + dist / step_y);
         int   sample_h = 0;
         for( int dx = 0; sample_h < 255 && (float)dx / (float)width <= dist; ++ dx )
@@ -453,7 +454,7 @@ void CreateConeMap_1(
 }
 
 
-void CreateConeMap_2( 
+void CreateConeMap_flat( 
   std::vector<unsigned char> &data_out,   //!< out: conse step map
   long                        cx,         //!< in:  width of the image 
   long                        cy,         //!< in:  height of the image
@@ -552,33 +553,28 @@ void CreateConeMap_2(
 
       for( float dist = step; dist <= max_dist && c > dist / max_h; dist += step )
       {
+        int   d2 = (int)(0.5f + (dist*dist) / (step*step));
         int   dy = (int)(0.5f + dist / step_y);
-        float fy = dist;
-        float fx = 0.0f;
         int   sample_h = 0;
-        for( int dx = 0; sample_h < 255 && (float)dx / (float)width <= dist; ++ dx, fx += step_x )
+        for( int dx = 0; sample_h < 255 && (float)dx / (float)width <= dist; ++ dx )
         {
-          if ( (fx*fx + fy*fy) < dist*dist )
-          {
+          if ( (dx*dx + dy*dy) < d2 && dy < cy-1 )
             dy ++;
-            fy += step;
-          }
           do
           {
-            int sx_n = (cx + x - dx) % cx;
-            int sy_n = (cy + y - dy) % cy;
-            int sx_p = (cx + x + dx) % cx;
-            int sy_p = (cy + y + dy) % cy;
-
-            sample_h = std::max( sample_h, (int)Data[sy_p*ScanWidth + chans * sx_p] );
-            sample_h = std::max( sample_h, (int)Data[sy_n*ScanWidth + chans * sx_p] );
-            sample_h = std::max( sample_h, (int)Data[sy_p*ScanWidth + chans * sx_n] );
-            sample_h = std::max( sample_h, (int)Data[sy_n*ScanWidth + chans * sx_n] );
+            int sx_n = ((cx + x - dx) % cx) * chans;
+            int sx_p = ((cx + x + dx) % cx) * chans;
+            int sy_n = ((cy + y - dy) % cy) * ScanWidth;
+            int sy_p = ((cy + y + dy) % cy) * ScanWidth;
+            
+            sample_h = std::max( sample_h, (int)Data[sy_p + sx_p] );
+            sample_h = std::max( sample_h, (int)Data[sy_n + sx_p] );
+            sample_h = std::max( sample_h, (int)Data[sy_p + sx_n] );
+            sample_h = std::max( sample_h, (int)Data[sy_n + sx_n] );
 
             dy --;
-            fy -= step_y;
           }
-          while ( dy > 0 && (fx*fx + fy*fy) > dist*dist );
+          while ( dy > 0 && (dx*dx + dy*dy) >= d2 );
         }
         if ( sample_h > act_h )
         {
