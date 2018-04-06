@@ -188,7 +188,7 @@ int main(int argc, char** argv)
     {
         std::vector<unsigned char> cone_map;
         
-        for ( int i = 0; i < 100; ++ i)
+        for ( int i = 0; i < 10; ++ i)
         CreateConeMap_1( cone_map, cx, cy, 3, cx*3, img, 1 );
         //CreateConeMap_2( cone_map, cx, cy, 3, cx*3, img, 1 );
         //CreateConeMap_from_ConeStepMapping_pdf ( cone_map, cx, cy, 3, cx*3, img, 1 );
@@ -271,6 +271,9 @@ void Display( void )
     glutSwapBuffers();
 }
 
+
+static int mesaure_count = 0;
+static double time_sum = 0.0;
 
 void CreateConeMap_1( 
   std::vector<unsigned char> &data_out,   //!< out: conse step map
@@ -366,25 +369,27 @@ void CreateConeMap_1(
       std::cout << ".";
     for (int x = 0; x < width; ++x)
     {
-      int   act_h    = Data[y*ScanWidth + chans * x];
-      float c        = max_cone_c;
-      float h        = (float)act_h / 255.0f;
-      float max_h    = 1.0f - h;
-      float max_dist = std::min((float)max_cone_c * max_h, 0.5f);
+      int   act_h        = Data[y*ScanWidth + chans * x];
+      float c            = max_cone_c;
+      float h            = (float)act_h / 255.0f;
+      float max_h        = 1.0f - h;
+      float max_dist     = std::min((float)max_cone_c * max_h, 1.0f);
 
       for( float dist = step; dist <= max_dist && c > dist / max_h; dist += step )
       {
         float fx = 0.0f;
-        for( int dx = 0; (float)dx / (float)width <= dist && c > dist / max_h; ++ dx, fx += step_x )
+        int   sample_h = 0;
+        for( int dx = 0; sample_h < 255 && (float)dx / (float)width <= dist; ++ dx, fx += step_x )
+        //for( int dx = 0; (float)dx / (float)width <= dist && c > dist / max_h; ++ dx, fx += step_x )
         {
           float fy = sqrt(dist*dist - fx*fx);
           int   dy = (int)(fy/step_y + 0.5f);
 
-          int sx, sy, sample_h;
+          int sx, sy;
           
           sx = (cx + x + dx) % cx;
           sy = (cy + y + dy) % cy;
-          sample_h = Data[sy*ScanWidth + chans * sx];
+          sample_h = std::max( sample_h, (int)Data[sy*ScanWidth + chans * sx] );
 
           sx = (cx + x - dx) % cx;
           sy = (cy + y + dy) % cy;
@@ -396,15 +401,15 @@ void CreateConeMap_1(
 
           sx = (cx + x - dx) % cx;
           sy = (cy + y - dy) % cy;
-          sample_h = std::max( sample_h, (int)Data[sy*ScanWidth + chans * sx] );
-
-          if ( sample_h > act_h )
-          {
-            float d_h =  (float)(sample_h-act_h) / 255.0f;
-            float sample_c = dist / d_h;  // TODO $$$ 32.98 %  
-            c = std::min( c, sample_c );
-          }
+          sample_h = std::max( sample_h, (int)Data[sy*ScanWidth + chans * sx] ); 
+       }
+        if ( sample_h > act_h )
+        {
+          float d_h =  (float)(sample_h-act_h) / 255.0f;
+          float sample_c = dist / d_h; 
+          c = std::min( c, sample_c );
         }
+        //}
       }
 
       Data[y*ScanWidth + chans * x + 1] = (unsigned char)( sqrt(c)*255.0f );
@@ -416,7 +421,15 @@ void CreateConeMap_1(
   clock_t t_end = std::clock();
   clock_t dt = t_end - t_start;
   if ( log_level )
-    std::cout << "Processed in " << (double)dt * 0.001 << " seconds" << std::endl << std::endl;
+  {
+    std::cout << "Processed in " << (double)dt * 0.001 << " seconds" << std::endl;
+
+    mesaure_count ++;
+    time_sum += (double)dt;
+    if ( mesaure_count > 1 )
+      std::cout << "Average " << (double)time_sum * 0.001 / (double)mesaure_count << " seconds" << std::endl << std::endl;
+    std::cout << std::endl;
+  }
 }
 
 
