@@ -214,7 +214,7 @@ int main(int argc, char** argv)
 
         std::vector<unsigned char> cone_map;
         
-        for ( int i = 0; i < 100; ++ i)
+        for ( int i = 0; i < 10; ++ i)
         CreateConeMap_1( cone_map, cx, cy, 3, cx*3, img, 1 );
         //CreateConeMap_2( cone_map, cx, cy, 3, cx*3, img, 1 );
         //CreateConeMap_from_ConeStepMapping_pdf ( cone_map, cx, cy, 3, cx*3, img, 1 );
@@ -410,19 +410,19 @@ void CreateConeMap_1(
             dy ++;
           do
           {
-            int sx_n = (cx + x - dx) % cx;
-            int sy_n = (cy + y - dy) % cy;
-            int sx_p = (cx + x + dx) % cx;
-            int sy_p = (cy + y + dy) % cy;
-
-            sample_h = std::max( sample_h, (int)Data[sy_p*ScanWidth + chans * sx_p] );
-            sample_h = std::max( sample_h, (int)Data[sy_n*ScanWidth + chans * sx_p] );
-            sample_h = std::max( sample_h, (int)Data[sy_p*ScanWidth + chans * sx_n] );
-            sample_h = std::max( sample_h, (int)Data[sy_n*ScanWidth + chans * sx_n] );
+            int sx_n = ((cx + x - dx) % cx) * chans;
+            int sx_p = ((cx + x + dx) % cx) * chans;
+            int sy_n = ((cy + y - dy) % cy) * ScanWidth;
+            int sy_p = ((cy + y + dy) % cy) * ScanWidth;
+            
+            sample_h = std::max( sample_h, (int)Data[sy_p + sx_p] );
+            sample_h = std::max( sample_h, (int)Data[sy_n + sx_p] );
+            sample_h = std::max( sample_h, (int)Data[sy_p + sx_n] );
+            sample_h = std::max( sample_h, (int)Data[sy_n + sx_n] );
 
             dy --;
           }
-          while ( dy > 0 && (dx*dx + dy*dy) > d2 );
+          while ( dy > 0 && (dx*dx + dy*dy) >= d2 );
         }
         if ( sample_h > act_h )
         {
@@ -447,7 +447,7 @@ void CreateConeMap_1(
     mesaure_count ++;
     time_sum += (double)dt;
     if ( mesaure_count > 1 )
-      std::cout << "Average " << (double)time_sum * 0.001 / (double)mesaure_count << " seconds" << std::endl << std::endl;
+      std::cout << "Average " << (double)time_sum * 0.001 / (double)mesaure_count << " seconds (" << time_sum << ")" << std::endl;
     std::cout << std::endl;
   }
 }
@@ -603,7 +603,7 @@ void CreateConeMap_2(
     mesaure_count ++;
     time_sum += (double)dt;
     if ( mesaure_count > 1 )
-      std::cout << "Average " << (double)time_sum * 0.001 / (double)mesaure_count << " seconds" << std::endl << std::endl;
+      std::cout << "Average " << (double)time_sum * 0.001 / (double)mesaure_count << " seconds (" << time_sum << ")" << std::endl;
     std::cout << std::endl;
   }
 }
