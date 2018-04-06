@@ -189,8 +189,8 @@ int main(int argc, char** argv)
         std::vector<unsigned char> cone_map;
         
         for ( int i = 0; i < 10; ++ i)
-        CreateConeMap_1( cone_map, cx, cy, 3, cx*3, img, 1 );
-        //CreateConeMap_2( cone_map, cx, cy, 3, cx*3, img, 1 );
+        //CreateConeMap_1( cone_map, cx, cy, 3, cx*3, img, 1 );
+        CreateConeMap_2( cone_map, cx, cy, 3, cx*3, img, 1 );
         //CreateConeMap_from_ConeStepMapping_pdf ( cone_map, cx, cy, 3, cx*3, img, 1 );
 
         stbi_image_free( img );
@@ -380,36 +380,26 @@ void CreateConeMap_1(
         float fx = 0.0f;
         int   sample_h = 0;
         for( int dx = 0; sample_h < 255 && (float)dx / (float)width <= dist; ++ dx, fx += step_x )
-        //for( int dx = 0; (float)dx / (float)width <= dist && c > dist / max_h; ++ dx, fx += step_x )
         {
           float fy = sqrt(dist*dist - fx*fx);
           int   dy = (int)(fy/step_y + 0.5f);
 
-          int sx, sy;
-          
-          sx = (cx + x + dx) % cx;
-          sy = (cy + y + dy) % cy;
-          sample_h = std::max( sample_h, (int)Data[sy*ScanWidth + chans * sx] );
+          int sx_n = (cx + x - dx) % cx;
+          int sy_n = (cy + y - dy) % cy;
+          int sx_p = (cx + x + dx) % cx;
+          int sy_p = (cy + y + dy) % cy;
 
-          sx = (cx + x - dx) % cx;
-          sy = (cy + y + dy) % cy;
-          sample_h = std::max( sample_h, (int)Data[sy*ScanWidth + chans * sx] );
-
-          sx = (cx + x + dx) % cx;
-          sy = (cy + y - dy) % cy;
-          sample_h = std::max( sample_h, (int)Data[sy*ScanWidth + chans * sx] );
-
-          sx = (cx + x - dx) % cx;
-          sy = (cy + y - dy) % cy;
-          sample_h = std::max( sample_h, (int)Data[sy*ScanWidth + chans * sx] ); 
-       }
+          sample_h = std::max( sample_h, (int)Data[sy_p*ScanWidth + chans * sx_p] );
+          sample_h = std::max( sample_h, (int)Data[sy_n*ScanWidth + chans * sx_p] );
+          sample_h = std::max( sample_h, (int)Data[sy_p*ScanWidth + chans * sx_n] );
+          sample_h = std::max( sample_h, (int)Data[sy_n*ScanWidth + chans * sx_n] );
+        }
         if ( sample_h > act_h )
         {
           float d_h =  (float)(sample_h-act_h) / 255.0f;
           float sample_c = dist / d_h; 
           c = std::min( c, sample_c );
         }
-        //}
       }
 
       Data[y*ScanWidth + chans * x + 1] = (unsigned char)( sqrt(c)*255.0f );
@@ -432,13 +422,6 @@ void CreateConeMap_1(
   }
 }
 
-
-struct TDistInfo
-{
-  float _dist;
-  int   _x;
-  int   _y;
-};
 
 void CreateConeMap_2( 
   std::vector<unsigned char> &data_out,   //!< out: conse step map
@@ -484,46 +467,10 @@ void CreateConeMap_2(
   long TheSize         = ScanWidth * height;
   unsigned char  *Data = data_out.data();
 
-  float iheight   = 1.0f / height;
-  float iwidth    = 1.0f / width;
   int   wProgress = width / 50;
   int   hProgress = height / 50;
   int   dProgress = width * height / 50;
 
-  if ( log_level > 0 )
-    std::cout << "    create distance map" << std::endl << "        [";
-  std::map<float, std::vector<std::array<int,2>>> dist_map;
-  const int cone_div = 2;
-  //const int cone_div = 10;
-  for ( int y = -cy/cone_div; y < cy/cone_div; ++ y )
-  {
-    for ( int x = -cx/cone_div; x < cx/cone_div; ++ x )
-    {
-      if ( x == 0 && y == 0 )
-        continue;
-      int i = ( y*cx + x )-1;
-      if ( log_level > 0 && (i % dProgress) == 0 )
-        std::cout << ".";
-      double fx = (double)x / (double)cx;
-      double fy = (double)y / (double)cy;
-      double dist = std::sqrt(fx*fx + fy*fy);
-      if ( dist < max_cone_c ) // TODO $$$ max 
-        dist_map[(float)dist].emplace_back( std::array<int,2>{x, y} );
-    }
-  }
-  if ( log_level > 0 )
-    std::cout << "]" << std::endl;
-
-  /*
-  std::vector<TDistInfo>dist_tab;
-  dist_tab.reserve( dist_map.size() );
-  for ( auto &d_info : dist_map )
-  {
-    for ( auto &sample : d_info.second )
-      dist_tab.push_back( { d_info.first, sample[0], sample[1] } );
-  }
-  */
-  
   // pre-processing: compute derivatives
   if ( log_level > 0 )
     std::cout << "    calcualte derivatives for normal vectors (blue = dx, alpha = dy)" << std::endl << "        [";
@@ -559,58 +506,57 @@ void CreateConeMap_2(
 
   if ( log_level > 0 )
       std::cout << "    scan " << height << " lines; red ... height, green ... cone equation (x = y * c) " << std::endl << "        [";
+  
+
+  float step_x = 1.0f / (float)cx;
+  float step_y = 1.0f / (float)cy;
+  float step   = std::max( step_x, step_y );
   for (int y = 0; y < height; ++y)
   {
     if ( log_level > 0 && (y % hProgress) == 0 )
       std::cout << ".";
     for (int x = 0; x < width; ++x)
     {
-      float c        = max_cone_c;
-      float h        = (float)Data[y*ScanWidth + chans * x] / 255.0f;
-      float max_h    = 1.0f - h;
-      float max_dist = (float)max_cone_c * max_h;
+      int   act_h        = Data[y*ScanWidth + chans * x];
+      float c            = max_cone_c;
+      float h            = (float)act_h / 255.0f;
+      float max_h        = 1.0f - h;
+      float max_dist     = std::min((float)max_cone_c * max_h, 1.0f);
 
-      for ( auto &d_info : dist_map )
+      for( float dist = step; dist <= max_dist && c > dist / max_h; dist += step )
       {
-        float dist = d_info.first;
-        if ( dist > max_dist )
-          break;
-        float min_c = d_info.first / max_h;
-        if ( min_c >= c )
-          break;
-
-        for ( auto &sample : d_info.second )
+        float fx = 0.0f;
+        int   sample_h = 0;
+        for( int dx = 0; sample_h < 255 && (float)dx / (float)width <= dist; ++ dx, fx += step_x )
         {
-          int sx = (cx + x + sample[0]) % cx;
-          int sy = (cy + y + sample[1]) % cy;
-          float sample_h = (float)Data[sy*ScanWidth + chans * sx] / 255.0f;
-          //if ( sample_h <= h )
-          //  continue;
-          float d_h = std::max(0.00001f,sample_h - h);
-          float sample_c = dist / d_h;
+          float fy = sqrt(dist*dist - fx*fx);
+          int   dy = (int)(fy/step_y + 0.5f);
+
+          int sx, sy;
+          
+          sx = (cx + x + dx) % cx;
+          sy = (cy + y + dy) % cy;
+          sample_h = std::max( sample_h, (int)Data[sy*ScanWidth + chans * sx] );
+
+          sx = (cx + x - dx) % cx;
+          sy = (cy + y + dy) % cy;
+          sample_h = std::max( sample_h, (int)Data[sy*ScanWidth + chans * sx] );
+
+          sx = (cx + x + dx) % cx;
+          sy = (cy + y - dy) % cy;
+          sample_h = std::max( sample_h, (int)Data[sy*ScanWidth + chans * sx] );
+
+          sx = (cx + x - dx) % cx;
+          sy = (cy + y - dy) % cy;
+          sample_h = std::max( sample_h, (int)Data[sy*ScanWidth + chans * sx] ); 
+        }
+        if ( sample_h > act_h )
+        {
+          float d_h =  (float)(sample_h-act_h) / 255.0f;
+          float sample_c = dist / d_h; 
           c = std::min( c, sample_c );
         }
       }
-      
-      /*
-      for ( auto &d_info : dist_tab )
-      {
-        if ( d_info._dist > max_dist )
-          break;
-        float min_c = d_info._dist / max_h;
-        if ( min_c >= c )
-          break;
-
-        int sx = (cx + x + d_info._x) % cx;
-        int sy = (cy + y + d_info._y) % cy;
-        float sample_h = (float)Data[sy*ScanWidth + chans * sx] / 255.0f;
-        //if ( sample_h <= h )
-        //  continue;
-        float d_h = std::max(0.00001f,sample_h - h);
-        float sample_c = d_info._dist / d_h;
-        c = std::min( c, sample_c );
-      }
-      */
 
       Data[y*ScanWidth + chans * x + 1] = (unsigned char)( sqrt(c)*255.0f );
     }
@@ -621,7 +567,15 @@ void CreateConeMap_2(
   clock_t t_end = std::clock();
   clock_t dt = t_end - t_start;
   if ( log_level )
-    std::cout << "Processed in " << (double)dt * 0.001 << " seconds" << std::endl << std::endl;
+  {
+    std::cout << "Processed in " << (double)dt * 0.001 << " seconds" << std::endl;
+
+    mesaure_count ++;
+    time_sum += (double)dt;
+    if ( mesaure_count > 1 )
+      std::cout << "Average " << (double)time_sum * 0.001 / (double)mesaure_count << " seconds" << std::endl << std::endl;
+    std::cout << std::endl;
+  }
 }
 
 /*
