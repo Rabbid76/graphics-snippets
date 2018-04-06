@@ -532,23 +532,15 @@ void CreateConeMap_2(
           float fy = sqrt(dist*dist - fx*fx);
           int   dy = (int)(fy/step_y + 0.5f);
 
-          int sx, sy;
-          
-          sx = (cx + x + dx) % cx;
-          sy = (cy + y + dy) % cy;
-          sample_h = std::max( sample_h, (int)Data[sy*ScanWidth + chans * sx] );
+          int sx_n = (cx + x - dx) % cx;
+          int sy_n = (cy + y - dy) % cy;
+          int sx_p = (cx + x + dx) % cx;
+          int sy_p = (cy + y + dy) % cy;
 
-          sx = (cx + x - dx) % cx;
-          sy = (cy + y + dy) % cy;
-          sample_h = std::max( sample_h, (int)Data[sy*ScanWidth + chans * sx] );
-
-          sx = (cx + x + dx) % cx;
-          sy = (cy + y - dy) % cy;
-          sample_h = std::max( sample_h, (int)Data[sy*ScanWidth + chans * sx] );
-
-          sx = (cx + x - dx) % cx;
-          sy = (cy + y - dy) % cy;
-          sample_h = std::max( sample_h, (int)Data[sy*ScanWidth + chans * sx] ); 
+          sample_h = std::max( sample_h, (int)Data[sy_p*ScanWidth + chans * sx_p] );
+          sample_h = std::max( sample_h, (int)Data[sy_n*ScanWidth + chans * sx_p] );
+          sample_h = std::max( sample_h, (int)Data[sy_p*ScanWidth + chans * sx_n] );
+          sample_h = std::max( sample_h, (int)Data[sy_n*ScanWidth + chans * sx_n] );
         }
         if ( sample_h > act_h )
         {
