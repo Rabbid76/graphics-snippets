@@ -214,7 +214,7 @@ int main(int argc, char** argv)
 
         std::vector<unsigned char> cone_map;
         
-        //for ( int i = 0; i < 10; ++ i)
+        for ( int i = 0; i < 100; ++ i)
         CreateConeMap_1( cone_map, cx, cy, 3, cx*3, img, 1 );
         //CreateConeMap_2( cone_map, cx, cy, 3, cx*3, img, 1 );
         //CreateConeMap_from_ConeStepMapping_pdf ( cone_map, cx, cy, 3, cx*3, img, 1 );
@@ -310,17 +310,15 @@ void CreateConeMap_1(
   const unsigned char        *data_in,    //!< in:  image bits
   int                         log_level ) //!< in:  true: process logging
 {
-  // TODO $$$ seamless?
-  const double max_cone_c = 1.0;
-
-  clock_t t_start = std::clock();
-
   if ( log_level > 0 )
   {
     std::cout << "Create cone step map" << std::endl;
     std::cout << "    Image size: " << cx << " x " << cy << std::endl;
 
   }
+  clock_t t_start = std::clock();
+
+  const double max_cone_c = 1.0;
 
   data_out.reserve( cx*cy * 4 );
   for ( int y=0; y < cy; ++ y )
@@ -350,12 +348,12 @@ void CreateConeMap_1(
   int   dProgress = width * height / 50;
 
   // pre-processing: compute derivatives
-  if ( log_level > 0 )
+  if ( log_level > 1 )
     std::cout << "    calcualte derivatives for normal vectors (blue = dx, alpha = dy)" << std::endl << "        [";
   for (int y = 0; y < height; ++y)
   {
     // progress report: works great...if it's square!
-    if ( log_level > 0 && (y % wProgress) == 0 )
+    if ( log_level > 1 && (y % wProgress) == 0 )
       std::cout << ".";
     for (int x = 0; x < width; ++x)
     {
@@ -379,10 +377,10 @@ void CreateConeMap_1(
       Data[y*ScanWidth + chans*x + 3] = 127 - der / 2;
     }
   }
-  if ( log_level > 0 )
+  if ( log_level > 1 )
     std::cout << "]" << std::endl;
 
-  if ( log_level > 0 )
+  if ( log_level > 1 )
       std::cout << "    scan " << height << " lines; red ... height, green ... cone equation (x = y * c) " << std::endl << "        [";
   
 
@@ -391,7 +389,7 @@ void CreateConeMap_1(
   float step   = std::max( step_x, step_y );
   for (int y = 0; y < height; ++y)
   {
-    if ( log_level > 0 && (y % hProgress) == 0 )
+    if ( log_level > 1 && (y % hProgress) == 0 )
       std::cout << ".";
     for (int x = 0; x < width; ++x)
     {
@@ -437,7 +435,7 @@ void CreateConeMap_1(
       Data[y*ScanWidth + chans * x + 1] = (unsigned char)( sqrt(c)*255.0f );
     }
   }
-  if ( log_level > 0 )
+  if ( log_level > 1 )
     std::cout << "]" << std::endl;
 
   clock_t t_end = std::clock();
@@ -464,17 +462,14 @@ void CreateConeMap_2(
   const unsigned char        *data_in,    //!< in:  image bits
   int                         log_level ) //!< in:  true: process logging
 {
-  // TODO $$$ seamless?
-  const double max_cone_c = 1.0;
-
-  clock_t t_start = std::clock();
-
   if ( log_level > 0 )
   {
     std::cout << "Create cone step map" << std::endl;
     std::cout << "    Image size: " << cx << " x " << cy << std::endl;
-
   }
+  clock_t t_start = std::clock();
+
+  const double max_cone_c = 1.0;
 
   data_out.reserve( cx*cy * 4 );
   for ( int y=0; y < cy; ++ y )
@@ -504,12 +499,12 @@ void CreateConeMap_2(
   int   dProgress = width * height / 50;
 
   // pre-processing: compute derivatives
-  if ( log_level > 0 )
+  if ( log_level > 1 )
     std::cout << "    calcualte derivatives for normal vectors (blue = dx, alpha = dy)" << std::endl << "        [";
   for (int y = 0; y < height; ++y)
   {
     // progress report: works great...if it's square!
-    if ( log_level > 0 && (y % wProgress) == 0 )
+    if ( log_level > 1 && (y % wProgress) == 0 )
       std::cout << ".";
     for (int x = 0; x < width; ++x)
     {
@@ -533,10 +528,10 @@ void CreateConeMap_2(
       Data[y*ScanWidth + chans*x + 3] = 127 - der / 2;
     }
   }
-  if ( log_level > 0 )
+  if ( log_level > 1 )
     std::cout << "]" << std::endl;
 
-  if ( log_level > 0 )
+  if ( log_level > 1 )
       std::cout << "    scan " << height << " lines; red ... height, green ... cone equation (x = y * c) " << std::endl << "        [";
   
 
@@ -545,7 +540,7 @@ void CreateConeMap_2(
   float step   = std::max( step_x, step_y );
   for (int y = 0; y < height; ++y)
   {
-    if ( log_level > 0 && (y % hProgress) == 0 )
+    if ( log_level > 1 && (y % hProgress) == 0 )
       std::cout << ".";
     for (int x = 0; x < width; ++x)
     {
@@ -596,7 +591,7 @@ void CreateConeMap_2(
       Data[y*ScanWidth + chans * x + 1] = (unsigned char)( sqrt(c)*255.0f );
     }
   }
-  if ( log_level > 0 )
+  if ( log_level > 1 )
     std::cout << "]" << std::endl;
 
   clock_t t_end = std::clock();
@@ -637,14 +632,13 @@ void CreateConeMap_from_ConeStepMapping_pdf(
   const unsigned char        *data_in,    //!< in:  image bits
   int                         log_level ) //!< in:  true: process logging
 {
-  clock_t t_start = std::clock();
-
   if ( log_level > 0 )
   {
     std::cout << "Create cone step map" << std::endl;
     std::cout << "    Image size: " << cx << " x " << cy << std::endl;
 
   }
+  clock_t t_start = std::clock();
 
   float really_max = 1.0;
   
@@ -677,12 +671,12 @@ void CreateConeMap_from_ConeStepMapping_pdf(
   int   hProgress = height / 50;
   
   // pre-processing: compute derivatives
-  if ( log_level > 0 )
+  if ( log_level > 1 )
     std::cout << "    calcualte derivatives for normal vectors (blue = dx, alpha = dy)" << std::endl << "        [";
   for (int y = 0; y < height; ++y)
   {
     // progress report: works great...if it's square!
-    if ( y % wProgress == 0 && log_level > 0 )
+    if ( log_level > 1 && y % wProgress == 0)
       std::cout << ".";
     for (int x = 0; x < width; ++x)
     {
@@ -706,14 +700,14 @@ void CreateConeMap_from_ConeStepMapping_pdf(
       Data[y*ScanWidth + chans*x + 3] = 127 - der / 2;
     }
   }
-  if ( log_level > 0 )
+  if ( log_level > 1 )
     std::cout << "]" << std::endl;
   // OK, do the processing
-  if ( log_level > 0 )
+  if ( log_level > 1 )
       std::cout << "    scan " << height << " lines; red ... height, green ... cone equation (x = y * c) " << std::endl << "        [";
   for (int y = 0; y < height; ++y)
   {
-    if ((y % hProgress) == 0 && log_level > 0)
+    if (log_level > 1 && (y % hProgress) == 0)
       std::cout << ".";
     for (int x = 0; x < width; ++x)
     {
@@ -872,7 +866,7 @@ void CreateConeMap_from_ConeStepMapping_pdf(
         Data[y*ScanWidth + chans*x + 1] = 1;
     }
   }
-  if ( log_level > 0 )
+  if ( log_level > 1 )
     std::cout << "]" << std::endl;
 
   clock_t t_end = std::clock();
