@@ -72,11 +72,19 @@ in TVertexData
 
 out vec4 fragColor;
 
-layout (binding = 1) uniform sampler2D u_texture; 
+layout (binding = 1) uniform sampler2D u_texture;
+layout (binding = 2) uniform sampler2D u_texture_truth; 
 
 void main()
 {
-    vec4 tex_color = texture(u_texture, in_data.uv);
+    vec2 uv = vec2(in_data.uv.x, 1.0-in_data.uv.y);
+    vec4 tex_color = texture(u_texture, uv);
+    
+    //vec4 tex_truth = texture(u_texture_truth, uv);
+    //float delta = abs(tex_color.g - tex_truth.g);
+    //fragColor = vec4(0.0, delta*10.0, 0.0, 1.0);
+    //fragColor = vec4(tex_color.rg, 0.0, 1.0);
+    
     fragColor = vec4(tex_color.rg, 0.0, 1.0);
     //fragColor = tex_color;
 }
@@ -186,9 +194,27 @@ int main(int argc, char** argv)
     stbi_uc *img = stbi_load( path.c_str(), &cx, &cy, &ch, 3 );
     if ( img != nullptr )
     {
+        static bool ground_truth = false;
+        if (ground_truth)
+        {
+          std::vector<unsigned char> cone_map_truth;
+          CreateConeMap_from_ConeStepMapping_pdf ( cone_map_truth, cx, cy, 3, cx*3, img, 1 );
+
+          int truth_texture_unit = 2;
+          unsigned int tobj;
+          glGenTextures(1, &tobj);
+          glActiveTexture( GL_TEXTURE0 + truth_texture_unit );
+          glBindTexture(GL_TEXTURE_2D, tobj);
+          glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+          glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+          glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+          glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+          glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, cx, cy, 0, GL_RGBA, GL_UNSIGNED_BYTE, cone_map_truth.data());
+        }
+
         std::vector<unsigned char> cone_map;
         
-        for ( int i = 0; i < 10; ++ i)
+        //for ( int i = 0; i < 10; ++ i)
         CreateConeMap_1( cone_map, cx, cy, 3, cx*3, img, 1 );
         //CreateConeMap_2( cone_map, cx, cy, 3, cx*3, img, 1 );
         //CreateConeMap_from_ConeStepMapping_pdf ( cone_map, cx, cy, 3, cx*3, img, 1 );
