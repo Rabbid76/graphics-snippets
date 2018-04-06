@@ -85,8 +85,8 @@ void main()
     //fragColor = vec4(0.0, delta*10.0, 0.0, 1.0);
     //fragColor = vec4(tex_color.rg, 0.0, 1.0);
     
-    //fragColor = vec4(tex_color.rg, 0.0, 1.0);
-    fragColor = vec4( normalize( vec3(tex_color.ba, 1.0) ), 1.0);
+    fragColor = vec4(tex_color.rg, 0.0, 1.0);
+    //fragColor = vec4( normalize( vec3(tex_color.ba, 1.0) ), 1.0);
     //fragColor = tex_color;
 }
 )";
