@@ -101,17 +101,71 @@ layout(local_size_x = 1, local_size_y = 1) in;
 layout(rgba8, binding = 1) writeonly uniform image2D img_output;
 //layout(binding = 1) writeonly uniform image2D img_output;
 
+
 layout(binding = 2) uniform sampler2D u_height_map;
+
+float get_height(in ivec2 coord)
+{
+  return texelFetch(u_height_map, coord, 0).x;
+}
+
+
+const float max_cone_c = 1.0;
 
 void main() {
   
   ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);  // get index in global work group i.e x,y position
 
-  float height_map = texelFetch(u_height_map, pixel_coords, 0).x; 
+  ivec2 map_dim  = imageSize(img_output);
+  int   cx       = map_dim.x;   
+  int   cy       = map_dim.y;  
+  int   x        = pixel_coords.x;   
+  int   y        = pixel_coords.y;        
+  float step_x   = 1.0 / float(cx);
+  float step_y   = 1.0 / float(cy);
+  float step     = max(step_x, step_y); 
   
+  float h        = get_height(pixel_coords);  
+  float c        = max_cone_c;
+  float max_h    = 1.0 - h;
+  float max_dist = min(max_cone_c * max_h, 1.0);
+
+  for( float dist = step; dist <= max_dist && c > dist / max_h; dist += step )
+  {
+    int   d2       = int(round((dist*dist) / (step*step)));
+    int   dy       = int(round(dist / step_y));
+    float sample_h = 0;
+    for( int dx = 0; sample_h < 1.0 && float(dx) / float(cx) <= dist; ++ dx )
+    {
+      if ( (dx*dx + dy*dy) < d2 && dy < cy-1 )
+        dy ++;
+      do
+      {
+        int sx_n = ((cx + x - dx) % cx);
+        int sx_p = ((cx + x + dx) % cx);
+        int sy_n = ((cy + y - dy) % cy);
+        int sy_p = ((cy + y + dy) % cy);
+            
+        sample_h = max( sample_h, get_height(ivec2(sx_p, sy_p)) );
+        sample_h = max( sample_h, get_height(ivec2(sx_p, sy_n)) );
+        sample_h = max( sample_h, get_height(ivec2(sx_n, sy_p)) );
+        sample_h = max( sample_h, get_height(ivec2(sx_n, sy_n)) );
+
+        dy --;
+      }
+      while ( dy > 0 && (dx*dx + dy*dy) >= d2 );
+    }
+    if ( sample_h > h )
+    {
+      float d_h      =  float(sample_h - h);
+      float sample_c = dist / d_h; 
+      c              = min(c, sample_c);
+    }
+  }
     
+  vec4 cone_map = vec4(h, sqrt(c), 0.0, 0.0);
   
-  imageStore(img_output, pixel_coords, vec4(height_map, height_map, height_map, 1.0));
+  imageStore(img_output, pixel_coords, cone_map);
 }
 )";
 
@@ -504,7 +558,7 @@ void CreateConeMap_1(
   {
     if ( log_level > 1 && (y % hProgress) == 0 )
       std::cout << ".";
-    for (int x = 0; x < width; ++x)
+    for (int x = 0; x < cx; ++x)
     {
       int   act_h        = Data[y*ScanWidth + chans * x];
       float c            = max_cone_c;
@@ -517,7 +571,7 @@ void CreateConeMap_1(
         int   d2 = (int)(0.5f + (dist*dist) / (step*step));
         int   dy = (int)(0.5f + dist / step_y);
         int   sample_h = 0;
-        for( int dx = 0; sample_h < 255 && (float)dx / (float)width <= dist; ++ dx )
+        for( int dx = 0; sample_h < 255 && (float)dx / (float)cx <= dist; ++ dx )
         {
           if ( (dx*dx + dy*dy) < d2 && dy < cy-1 )
             dy ++;
@@ -655,7 +709,7 @@ void CreateConeMap_flat(
   {
     if ( log_level > 1 && (y % hProgress) == 0 )
       std::cout << ".";
-    for (int x = 0; x < width; ++x)
+    for (int x = 0; x < cx; ++x)
     {
       int   act_h        = Data[y*ScanWidth + chans * x];
       float c            = max_cone_c;
@@ -668,7 +722,7 @@ void CreateConeMap_flat(
         int   d2 = (int)(0.5f + (dist*dist) / (step*step));
         int   dy = (int)(0.5f + dist / step_y);
         int   sample_h = 0;
-        for( int dx = 0; sample_h < 255 && (float)dx / (float)width <= dist; ++ dx )
+        for( int dx = 0; sample_h < 255 && (float)dx / (float)cx <= dist; ++ dx )
         {
           if ( (dx*dx + dy*dy) < d2 && dy < cy-1 )
             dy ++;
