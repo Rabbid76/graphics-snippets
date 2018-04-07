@@ -15,6 +15,9 @@
     <ClCompile Include="cone_step_map_generator.cpp">
       <Filter>source</Filter>
     </ClCompile>
+    <ClCompile Include="..\draw_library\source\OpenGLError.cpp">
+      <Filter>OpenGL</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -27,6 +30,9 @@
       <Filter>OpenGL</Filter>
     </ClInclude>
     <ClInclude Include="..\include\OpenGL\OpenGL_SimpleShaderProgram.h">
+      <Filter>OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenGL\OpenGLError.h">
       <Filter>OpenGL</Filter>
     </ClInclude>
   </ItemGroup>

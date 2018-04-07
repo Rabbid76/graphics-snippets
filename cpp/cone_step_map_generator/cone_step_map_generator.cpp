@@ -35,6 +35,7 @@
 // Own
 #include <OpenGL_Matrix_Camera.h>
 #include <OpenGL_SimpleShaderProgram.h>
+#include <OpenGLError.h>
 
 
 std::string sh_vert = R"(
@@ -91,8 +92,32 @@ void main()
 }
 )";
 
+// test compute shader
+std::string sh_cone_compute = R"(
+#version 460
+
+layout(local_size_x = 1, local_size_y = 1) in;
+
+layout(rgba8, binding = 1) writeonly uniform image2D img_output;
+//layout(binding = 1) writeonly uniform image2D img_output;
+
+layout(binding = 2) uniform sampler2D u_height_map;
+
+void main() {
+  
+  ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);  // get index in global work group i.e x,y position
+
+  float height_map = texelFetch(u_height_map, pixel_coords, 0).x; 
+  
+    
+  
+  imageStore(img_output, pixel_coords, vec4(height_map, height_map, height_map, 1.0));
+}
+)";
+
 
 std::unique_ptr<OpenGL::ShaderProgram> g_prog;
+std::unique_ptr<OpenGL::ShaderProgram> g_cone_prog;
 
 std::chrono::high_resolution_clock::time_point g_start_time;
 
@@ -102,6 +127,7 @@ void OnIdle( void );
 void Resize( int, int );
 void Display( void );
 
+void ComputeShader( unsigned int target_tex_obj, int tex_format, unsigned int shader_obj, long cx, long cy, long ch, long bpl, const unsigned char *data_in, int log_level );
 void CreateConeMap_1( std::vector<unsigned char> &data_out, long cx, long cy, long ch, long bpl, const unsigned char *data_in, int log_level );
 void CreateConeMap_flat( std::vector<unsigned char> &data_out, long cx, long cy, long ch, long bpl, const unsigned char *data_in, int log_level );
 void CreateConeMap_from_ConeStepMapping_pdf( std::vector<unsigned char> &data_out, long cx, long cy, long ch, long bpl, const unsigned char *data_in, int log_level );
@@ -165,6 +191,11 @@ int main(int argc, char** argv)
       { sh_frag, GL_FRAGMENT_SHADER }
     } ) );
 
+    g_cone_prog.reset( new OpenGL::ShaderProgram(
+    {
+      { sh_cone_compute.c_str(), GL_COMPUTE_SHADER }
+    } ) );
+
     static const std::vector<float> varray
     { 
       -1.0f, -1.0f,    0.0f, 0.0f,    0.0f, 0.0f, 1.0f, 1.0f, 
@@ -213,14 +244,25 @@ int main(int argc, char** argv)
           glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, cx, cy, 0, GL_RGBA, GL_UNSIGNED_BYTE, cone_map_truth.data());
         }
 
+        int trace_level = 1;
+#ifdef _DEBUG
+        trace_level = 2;
+#endif
+
         std::vector<unsigned char> cone_map;
         
-        //for ( int i = 0; i < 100; ++ i)
-        CreateConeMap_1( cone_map, cx, cy, 3, cx*3, img, 1 );
-        //CreateConeMap_flat( cone_map, cx, cy, 3, cx*3, img, 1 );
-        //CreateConeMap_from_ConeStepMapping_pdf ( cone_map, cx, cy, 3, cx*3, img, 1 );
+        int con_algorithm = 0;
+        bool shader_algorithm = con_algorithm == 0;
 
-        stbi_image_free( img );
+        //for ( int i = 0; i < 100; ++ i)
+        switch ( con_algorithm )
+        {
+          default: 
+          case 0: break;
+          case 1: CreateConeMap_1( cone_map, cx, cy, 3, cx * 3, img, trace_level ); break;
+          case 2: CreateConeMap_flat( cone_map, cx, cy, 3, cx*3, img, trace_level ); break;
+          case 3: CreateConeMap_from_ConeStepMapping_pdf ( cone_map, cx, cy, 3, cx*3, img, trace_level ); break;
+        }
 
         int texture_unit = 1;
         unsigned int tobj;
@@ -232,8 +274,19 @@ int main(int argc, char** argv)
         glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
         glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
         //glPixelStorei( GL_UNPACK_ALIGNMENT, 1 ); RGBA is always aliged 4
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, cx, cy, 0, GL_RGBA, GL_UNSIGNED_BYTE, cone_map.data());
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, cx, cy, 0, GL_RGBA, GL_UNSIGNED_BYTE, shader_algorithm ? nullptr : cone_map.data());
         //glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
+
+        switch ( con_algorithm )
+        {
+          case 0: ComputeShader( tobj, GL_RGBA8, g_cone_prog->Prog(), cx, cy, 3, cx * 3, img, trace_level ); break;
+          default:
+          case 1: break;
+          case 2: break;
+          case 3: break;
+        }
+
+        stbi_image_free( img );
     }
 
     g_prog->Use();
@@ -301,6 +354,65 @@ void Display( void )
 
 static int mesaure_count = 0;
 static double time_sum = 0.0;
+
+
+void ComputeShader(  
+  unsigned int         target_tex_obj, //!< in:  target texture object 
+  int                  tex_format,     //!< in:  internal texture format
+  unsigned int         shader_obj,     //!< in:  compute shader program object 
+  long                 cx,             //!< in:  width of the image 
+  long                 cy,             //!< in:  height of the image
+  long                 ch,             //!< in:  color channels (e.g. 3 for RGB, 4 for RGBA)
+  long                 bpl,            //!< in:  bytes per scan line
+  const unsigned char *data_in,        //!< in:  image bits
+  int                  log_level )     //!< in:  true: process logging
+{
+  int height_map_texture_unit = 2;
+  unsigned int height_map_obj;
+  glGenTextures(1, &height_map_obj);
+  glActiveTexture( GL_TEXTURE0 + height_map_texture_unit );
+  glBindTexture(GL_TEXTURE_2D, height_map_obj);
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+  glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, cx, cy, 0, ch == 3 ? GL_RGB : GL_RGBA, GL_UNSIGNED_BYTE, data_in);
+  glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
+
+
+  if ( log_level > 0 )
+  {
+    std::cout << "Create cone step map" << std::endl;
+    std::cout << "    Image size: " << cx << " x " << cy << std::endl;
+
+  }
+  clock_t t_start = std::clock();
+
+  glBindImageTexture(1, target_tex_obj, 0, GL_FALSE, 0, GL_WRITE_ONLY, tex_format); 
+  OPENGL_CHECK_GL_ERROR
+
+  glUseProgram( shader_obj );
+  glDispatchCompute((GLuint)cx, (GLuint)cy, 1); 
+  OPENGL_CHECK_GL_ERROR
+    
+  glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT); // alternative: GL_ALL_BARRIER_BITS
+  OPENGL_CHECK_GL_ERROR
+
+  clock_t t_end = std::clock();
+  clock_t dt = t_end - t_start;
+  if ( log_level )
+  {
+    std::cout << "Processed in " << (double)dt * 0.001 << " seconds" << std::endl;
+
+    mesaure_count ++;
+    time_sum += (double)dt;
+    if ( mesaure_count > 1 )
+      std::cout << "Average " << (double)time_sum * 0.001 / (double)mesaure_count << " seconds (" << time_sum << ")" << std::endl;
+    std::cout << std::endl;
+  }
+}
+
 
 void CreateConeMap_1( 
   std::vector<unsigned char> &data_out,   //!< out: conse step map
