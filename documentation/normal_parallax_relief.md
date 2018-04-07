@@ -22,7 +22,7 @@ Parallax Occlusion Mapping<br/>
 [![no_parallax](image/parallax_mapping/parallax_005_parallax_occlusion_mapping_derivative_tbn_1.png)][5]
 [![no_parallax](image/parallax_mapping/parallax_005_parallax_occlusion_mapping_derivative_tbn_2.png)][5]
 
-COne Step Mapping<br/>
+Cone Step Mapping<br/>
 [![no_parallax](image/parallax_mapping/parallax_006_cone_step_mapping_derivative_tbn_1.png)][6]
 [![no_parallax](image/parallax_mapping/parallax_006_cone_step_mapping_derivative_tbn_2.png)][6]
 
