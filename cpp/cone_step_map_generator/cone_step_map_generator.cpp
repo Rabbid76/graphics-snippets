@@ -98,16 +98,35 @@ std::string sh_cone_compute = R"(
 
 layout(local_size_x = 1, local_size_y = 1) in;
 
-layout(rgba8, binding = 1) writeonly uniform image2D img_output;
+//#define SOURCE_TEXTURE
+
+#if defined( SOURCE_TEXTURE )
+
+// writeonly cone map image
 //layout(binding = 1) writeonly uniform image2D img_output;
+layout(rgba8, binding = 1) writeonly uniform image2D cone_map_image;
 
-
+// height map source texture
 layout(binding = 2) uniform sampler2D u_height_map;
 
+// read height from height map
 float get_height(in ivec2 coord)
 {
   return texelFetch(u_height_map, coord, 0).x;
 }
+
+#else
+
+// read and write cone map image
+layout(rgba8, binding = 1) uniform image2D cone_map_image;
+
+// read height from image
+float get_height(in ivec2 coord)
+{
+  return imageLoad(cone_map_image, coord).x;
+}
+
+#endif
 
 
 const float max_cone_c = 1.0;
@@ -116,7 +135,7 @@ void main() {
   
   ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);  // get index in global work group i.e x,y position
 
-  ivec2 map_dim  = imageSize(img_output);
+  ivec2 map_dim  = imageSize(cone_map_image);
   int   cx       = map_dim.x;   
   int   cy       = map_dim.y;  
   int   x        = pixel_coords.x;   
@@ -157,7 +176,7 @@ void main() {
     }
     if ( sample_h > h )
     {
-      float d_h      =  float(sample_h - h);
+      float d_h      = float(sample_h - h);
       float sample_c = dist / d_h; 
       c              = min(c, sample_c);
     }
@@ -165,7 +184,7 @@ void main() {
     
   vec4 cone_map = vec4(h, sqrt(c), 0.0, 0.0);
   
-  imageStore(img_output, pixel_coords, cone_map);
+  imageStore(cone_map_image, pixel_coords, cone_map);
 }
 )";
 
@@ -306,9 +325,9 @@ int main(int argc, char** argv)
         std::vector<unsigned char> cone_map;
         
         int con_algorithm = 0;
-        bool shader_algorithm = con_algorithm == 0;
+        bool use_compute_shader = con_algorithm == 0;
 
-        //for ( int i = 0; i < 100; ++ i)
+        for ( int i = 0; i < 100; ++ i)
         switch ( con_algorithm )
         {
           default: 
@@ -327,9 +346,16 @@ int main(int argc, char** argv)
         glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
         glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
         glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-        //glPixelStorei( GL_UNPACK_ALIGNMENT, 1 ); RGBA is always aliged 4
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, cx, cy, 0, GL_RGBA, GL_UNSIGNED_BYTE, shader_algorithm ? nullptr : cone_map.data());
-        //glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
+        if ( use_compute_shader)
+        {
+          glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
+          glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, cx, cy, 0, GL_RGB, GL_UNSIGNED_BYTE, img);
+          glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
+        }
+        else
+        {
+          glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, cx, cy, 0, GL_RGBA, GL_UNSIGNED_BYTE, cone_map.data());
+        }
 
         switch ( con_algorithm )
         {
@@ -421,6 +447,7 @@ void ComputeShader(
   const unsigned char *data_in,        //!< in:  image bits
   int                  log_level )     //!< in:  true: process logging
 {
+  /*
   int height_map_texture_unit = 2;
   unsigned int height_map_obj;
   glGenTextures(1, &height_map_obj);
@@ -433,7 +460,7 @@ void ComputeShader(
   glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
   glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, cx, cy, 0, ch == 3 ? GL_RGB : GL_RGBA, GL_UNSIGNED_BYTE, data_in);
   glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
-
+  */
 
   if ( log_level > 0 )
   {
@@ -443,14 +470,16 @@ void ComputeShader(
   }
   clock_t t_start = std::clock();
 
-  glBindImageTexture(1, target_tex_obj, 0, GL_FALSE, 0, GL_WRITE_ONLY, tex_format); 
+  //glBindImageTexture(1, target_tex_obj, 0, GL_FALSE, 0, GL_WRITE_ONLY, tex_format); 
+  glBindImageTexture(1, target_tex_obj, 0, GL_FALSE, 0, GL_READ_WRITE, tex_format);
   OPENGL_CHECK_GL_ERROR
 
   glUseProgram( shader_obj );
   glDispatchCompute((GLuint)cx, (GLuint)cy, 1); 
   OPENGL_CHECK_GL_ERROR
     
-  glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT); // alternative: GL_ALL_BARRIER_BITS
+  //glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+  glMemoryBarrier(GL_ALL_BARRIER_BITS); 
   OPENGL_CHECK_GL_ERROR
 
   clock_t t_end = std::clock();
