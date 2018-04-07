@@ -131,8 +131,8 @@ float get_height(in ivec2 coord)
 
 const float max_cone_c = 1.0;
 
-void main() {
-  
+void main()
+{  
   ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);  // get index in global work group i.e x,y position
 
   ivec2 map_dim  = imageSize(cone_map_image);

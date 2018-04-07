@@ -33,9 +33,6 @@ COne Step Mapping<br/>
 Height map<br/>
 ![height map](../resource/texture/example_1_heightmap.bmp)
 
-Cone map<br/>
-![cone map](../resource/texture/example_1_conemap_only.bmp)
-
 TODO
 
 
@@ -362,6 +359,111 @@ The absolute distance changes proportionally with the reciprocal scaling factor 
         mapHeight = GetHeightAndCone( texCoord.xy ).x;
         return vec3( texCoord.xy, mapHeight );
     }
+
+### Cone Step Map generation
+
+The following compute shader can either create a cone map from an height map, or it can turn a height map into a cone map.
+In both cases the floating point height in range [0, 1] has to be stored in the first (red) channel of either the height map texture or respectively the cone map image.
+The cone map is stored in the second (green) channel. 
+
+    #version 430
+
+    layout(local_size_x = 1, local_size_y = 1) in;
+
+    //#define SOURCE_TEXTURE
+
+    #if defined( SOURCE_TEXTURE )
+
+    // writeonly cone map image
+    //layout(binding = 1) writeonly uniform image2D img_output;
+    layout(rgba8, binding = 1) writeonly uniform image2D cone_map_image;
+
+    // height map source texture
+    layout(binding = 2) uniform sampler2D u_height_map;
+
+    // read height from height map
+    float get_height(in ivec2 coord)
+    {
+        return texelFetch(u_height_map, coord, 0).x;
+    }
+
+    #else
+
+    // read and write cone map image
+    layout(rgba8, binding = 1) uniform image2D cone_map_image;
+
+    // read height from image
+    float get_height(in ivec2 coord)
+    {
+        return imageLoad(cone_map_image, coord).x;
+    }
+
+    #endif
+
+
+    const float max_cone_c = 1.0;
+
+    void main()
+    {  
+        ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);  // get index in global work group i.e x,y position
+
+        ivec2 map_dim  = imageSize(cone_map_image);
+        int   cx       = map_dim.x;   
+        int   cy       = map_dim.y;  
+        int   x        = pixel_coords.x;   
+        int   y        = pixel_coords.y;        
+        float step_x   = 1.0 / float(cx);
+        float step_y   = 1.0 / float(cy);
+        float step     = max(step_x, step_y); 
+        
+        float h        = get_height(pixel_coords);  
+        float c        = max_cone_c;
+        float max_h    = 1.0 - h;
+        float max_dist = min(max_cone_c * max_h, 1.0);
+
+        for( float dist = step; dist <= max_dist && c > dist / max_h; dist += step )
+        {
+            int   d2       = int(round((dist*dist) / (step*step)));
+            int   dy       = int(round(dist / step_y));
+            float sample_h = 0;
+            for( int dx = 0; sample_h < 1.0 && float(dx) / float(cx) <= dist; ++ dx )
+            {
+                if ( (dx*dx + dy*dy) < d2 && dy < cy-1 )
+                    dy ++;
+                do
+                {
+                    int sx_n = ((cx + x - dx) % cx);
+                    int sx_p = ((cx + x + dx) % cx);
+                    int sy_n = ((cy + y - dy) % cy);
+                    int sy_p = ((cy + y + dy) % cy);
+                        
+                    sample_h = max( sample_h, get_height(ivec2(sx_p, sy_p)) );
+                    sample_h = max( sample_h, get_height(ivec2(sx_p, sy_n)) );
+                    sample_h = max( sample_h, get_height(ivec2(sx_n, sy_p)) );
+                    sample_h = max( sample_h, get_height(ivec2(sx_n, sy_n)) );
+
+                    dy --;
+                }
+                while ( dy > 0 && (dx*dx + dy*dy) >= d2 );
+            }
+            if ( sample_h > h )
+            {
+                float d_h      = float(sample_h - h);
+                float sample_c = dist / d_h; 
+                c              = min(c, sample_c);
+            }
+        }
+            
+        vec4 cone_map = vec4(h, sqrt(c), 0.0, 0.0);
+        
+        imageStore(cone_map_image, pixel_coords, cone_map);
+    }
+
+Cone map only<br/>
+![cone map](../resource/texture/example_1_conemap_only.bmp)
+
+Combined Height map and Cone map (red: height map, green : cone map)<br/>
+![cone map](../resource/texture/example_1_conemap.bmp)
 
 **Reference**
 
