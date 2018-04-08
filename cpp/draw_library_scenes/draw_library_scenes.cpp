@@ -41,6 +41,9 @@ private:
     {
       e_default,
 
+      // transformation
+      e_text_rotate,
+
       // intersection
       e_isect_line_line,
       e_isect_line_plane,
@@ -97,7 +100,7 @@ private:
     float  _aspect = 1.0;
     float  _scale_x = 1.0;
     float  _scale_y = 1.0;
-    TScene _scene   = e_isect_line_line;
+    TScene _scene   = e_text_rotate;
 
     Render::TPoint2 BL( void ) const { return{ -_scale_x, -_scale_y}; }
     Render::TPoint2 TL( void ) const { return{  _scale_x, -_scale_y}; }
@@ -112,6 +115,7 @@ private:
     void Setup2DCheckered( void );
 
     void TestScene( double time_ms );
+    void TextRotate( double time_ms );
     void IsectLineLine( double time_ms );
     void IsectLinePlane( double time_ms );
     void IsectPlaneCone( double time_ms );
@@ -138,8 +142,8 @@ int main(int argc, char** argv)
         throw std::runtime_error( "error initializing glfw" );
 
     // create OpenGL window and make OpenGL context current (`glfwInit` has to be done before).
-    static int cx = 800; // 600
-    static int cy = 600; // 450
+    static int cx = 400; // 600
+    static int cy = 300; // 450
     CWindow_Glfw window;
     window.Init( cx, cy, true );
 
@@ -198,8 +202,8 @@ void CWindow_Glfw::Init( int width, int height, bool doubleBuffer )
     static bool         c_core      = true;
     static float        c_scale     = 1.0f;
     static bool         c_fxaa      = false;
-    static unsigned int c_samples   = 4;
-    static bool         c_frameless = false;
+    static unsigned int c_samples   = 16;
+    static bool         c_frameless = true;
 
     _doubleBuffer = doubleBuffer;
 
@@ -317,6 +321,7 @@ void CWindow_Glfw::Render( double time_ms )
 
     default:
     case e_default:           TestScene( time_ms ); break;
+    case e_text_rotate:       TextRotate( time_ms ); break;
     case e_isect_line_line:   IsectLineLine( time_ms ); break;
     case e_isect_line_plane:  IsectLinePlane( time_ms ); break;
     case e_isect_plane_cone:  IsectPlaneCone( time_ms ); break;
@@ -397,6 +402,74 @@ void CWindow_Glfw::TestScene( double time_ms )
     _draw->DrawConvexPolygon( 2, { -0.8f,  0.8f,  0.8f,  0.8f,  0.0f, -0.8f }, { 0.0f, 1.0f, 0.0f, 0.5f } );
     _draw->DrawConvexPolygon( 2, { -0.8f, -0.8f, -0.8f,  0.8f,  0.8f,  0.0f }, { 0.0f, 0.0f, 1.0f, 0.5f } );
     _draw->DrawConvexPolygon( 2, {  0.8f, -0.8f,  0.8f,  0.8f, -0.8f,  0.0f }, { 1.0f, 1.0f, 0.0f, 0.5f } );
+}
+
+
+void CWindow_Glfw::TextRotate( double time_ms )
+{
+    _draw->Projection( OpenGL::Camera::Orthopraphic( _scale_x, _scale_y, { -10.0f, 10.0f } ) );
+    _draw->View( Render::Identity() );
+    _draw->Model( Render::Identity() );
+
+    _draw->ActivateBackground();
+
+    Setup2DCheckered();
+
+    _draw->ActivateOpaque();
+
+    Render::IDraw::TStyle style;
+    style._thickness = 2.0f;
+    _draw->Draw( Render::TPrimitive::lines, 2, { -0.1f, 0.0f,  0.1f, 0.0f, 0.0f, -0.1f,  0.0f, 0.1f  }, Color_red(), style );
+
+    _draw->ActivateOpaque();
+    
+    static float  text_height  = 0.2f;
+    static float  text_scale_x = 1.0f;
+    const char *text = "ABCD";
+
+    std::array<float, 4> text_rect{ 0.0f };
+    _draw->CalculateTextSize( OpenGL::CBasicDraw::font_sans, text, text_height, text_rect[2], text_rect[1], text_rect[3] );
+    text_rect[0] *= text_scale_x;
+    text_rect[2] *= text_scale_x;
+
+    float tx = text_rect[2] - text_rect[0];
+    float ty = text_rect[3] - text_rect[1];
+
+    float rx = tx / 2.0f;
+    float ry = ty / 2.0f;
+
+    float origin_x = -0.7f;
+    float origin_y = 0.2f;
+  
+    double intervall_s = 2.0;
+    int step = (int)(time_ms / intervall_s / 1000.0) % 6;
+
+    float scale_x = 2.0f;
+    float scale_y = 2.0f;
+
+    glm::mat4 model( 1.0f );
+
+    _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, text, text_height, text_scale_x, { 0.0f, 0.0f, -0.02f }, Color_gray() );
+
+    for ( int i = 0; i < step;  ++ i )
+    {
+      if ( i == step-5 )
+        model = glm::translate( model, glm::vec3( origin_x, origin_y, 1.0f ) );
+      if ( i == step-4 )
+        model = glm::translate( model, glm::vec3( rx*scale_x, ry*scale_y, 1.0f ) );
+      if ( i == step-3 )
+        model = glm::rotate( model, glm::radians(45.0f), glm::vec3( 0.0f, 0.0f, 1.0f ) );
+      if ( i == step-2 )
+        model = glm::translate( model, glm::vec3( -rx*scale_x, -ry*scale_y, 1.0f ) );
+      if ( i == step-1  )
+        model = glm::scale( model, glm::vec3( scale_x, scale_y, 1.0f ) );     
+    }
+    
+    Render::TMat44 model_mat;
+    memcpy( &model_mat[0][0], glm::value_ptr( model ), sizeof(Render::TMat44) );
+    _draw->Model( model_mat );
+
+    _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, text, text_height, text_scale_x, { 0.0f, 0.0f, -0.01f }, Color_ink() );
 }
 
 

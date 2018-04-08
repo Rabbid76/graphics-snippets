@@ -227,7 +227,7 @@ where :
     2 * n / (r-l) = 1 / (ta * a)
     2 * n / (t-b) = 1 / ta
 
-If the projection is symmetric, where the line of sight is in the center of the view port and the field of view is not displaced, then the matrix can be simplified:
+If the projection is symmetric, where the line of sight is axis of symmetry the frustum, then the matrix can be simplified:
 
     1/(ta*a)  0     0              0
     0         1/ta  0              0

@@ -77,7 +77,10 @@ int main(int argc, char** argv)
 
     // Setup OpenGL window properties
     glutInitContextProfile(GLUT_COMPATIBILITY_PROFILE);
-    glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
+    //glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
+
+    glutSetOption(GLUT_MULTISAMPLE, 8);
+    glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE | GLUT_MULTISAMPLE);
 
     // Create window
     glutInitWindowSize(800, 600);
@@ -120,6 +123,9 @@ int main(int argc, char** argv)
     //std::cout << glGetStringi( GL_EXTENSIONS, ... ) << std::endl;
 
     std::cout << std::endl;
+
+    //glEnable(GL_MULTISAMPLE);
+    //glHint(GL_MULTISAMPLE_FILTER_HINT_NV, GL_NICEST);
 
     g_prog.reset( new OpenGL::ShaderProgram(
     {
