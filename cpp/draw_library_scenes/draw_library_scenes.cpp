@@ -443,6 +443,7 @@ void CWindow_Glfw::TextRotate( double time_ms )
   
     double intervall_s = 2.0;
     int step = (int)(time_ms / intervall_s / 1000.0) % 6;
+    step = 6;
 
     float scale_x = 2.0f;
     float scale_y = 2.0f;
@@ -451,6 +452,8 @@ void CWindow_Glfw::TextRotate( double time_ms )
 
     _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, text, text_height, text_scale_x, { 0.0f, 0.0f, -0.02f }, Color_gray() );
 
+    float angle = 10.0f * time_ms / 1000.0f;
+    angle = 45.0f;
     for ( int i = 0; i < step;  ++ i )
     {
       if ( i == step-5 )
@@ -458,7 +461,7 @@ void CWindow_Glfw::TextRotate( double time_ms )
       if ( i == step-4 )
         model = glm::translate( model, glm::vec3( rx*scale_x, ry*scale_y, 1.0f ) );
       if ( i == step-3 )
-        model = glm::rotate( model, glm::radians(45.0f), glm::vec3( 0.0f, 0.0f, 1.0f ) );
+        model = glm::rotate( model, glm::radians(angle), glm::vec3( 0.0f, 0.0f, 1.0f ) );
       if ( i == step-2 )
         model = glm::translate( model, glm::vec3( -rx*scale_x, -ry*scale_y, 1.0f ) );
       if ( i == step-1  )

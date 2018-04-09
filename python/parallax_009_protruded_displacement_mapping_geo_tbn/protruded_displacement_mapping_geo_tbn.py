@@ -100,6 +100,10 @@ class MyWindow(window.CameraWindow):
         prjMat = self.Perspective() 
         # set up view matrix
         viewMat = self.LookAt()
+
+        glEnable(GL_CULL_FACE)
+        glFrontFace(GL_CCW)  # GL_CCW, GL_CW
+        glCullFace(GL_BACK) # GL_FRONT GL_BACK, GL_FRONT_AND_BACK 
         
         # set up attributes and shader program
         glEnable( GL_DEPTH_TEST )

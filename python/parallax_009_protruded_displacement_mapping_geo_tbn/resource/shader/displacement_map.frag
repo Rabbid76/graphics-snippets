@@ -3,10 +3,12 @@
 //#define NORMAL_MAP_TEXTURE
 #define NORMAL_MAP_QUALITY 1
 
-in TVertexData
+in TGeometryData
 {
     vec3 pos;
     vec3 nv;
+    vec3 tv;
+    vec3 bv;
     vec3 col;
     vec2 uv;
 } in_data;
