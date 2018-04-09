@@ -41,14 +41,27 @@ void main()
     vec2  duv1 = inData[1].uv.xy - inData[0].uv.xy;
     vec2  duv2 = inData[2].uv.xy - inData[0].uv.xy;
 
+    vec3 tv[3];
+    vec3 bv[3];
     for ( int i=0; i < 3; ++i )
     {
         vec3 dp2perp = cross(dp2, inData[i].nv); 
         vec3 dp1perp = cross(inData[i].nv, dp1);
-        
+        tv[i] = dp2perp * duv1.x + dp1perp * duv2.x;
+        bv[i] = dp2perp * duv1.y + dp1perp * duv2.y;
+    }
+
+    // distance to edge
+    for ( int i=0; i < 3; ++i )
+    {
+      // X  =  R0 + D * dot(PA - R0, N) / dot(D, N)
+    }
+
+    for ( int i=0; i < 3; ++i )
+    {
         outData.nv  = inData[i].nv;
-        outData.tv  = dp2perp * duv1.x + dp1perp * duv2.x;
-        outData.bv  = dp2perp * duv1.y + dp1perp * duv2.y;
+        outData.tv  = tv[i];
+        outData.bv  = bv[i];
         outData.pos = inData[i].pos;
         outData.col = inData[i].col;
         outData.uv  = inData[i].uv;
