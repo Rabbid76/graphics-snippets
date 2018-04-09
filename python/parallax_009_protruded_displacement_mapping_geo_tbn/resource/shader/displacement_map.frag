@@ -124,31 +124,16 @@ vec3 Parallax( in vec3 texDir3D, in vec2 texCoord )
 
 void main()
 {
-    vec3  objPosEs     = in_data.pos;
-    vec3  objNormalEs  = in_data.nv;
-    vec2  texCoords    = in_data.uv.st;
-    vec3  normalEs     = ( gl_FrontFacing ? 1.0 : -1.0 ) * normalize( objNormalEs );
+    vec3 objPosEs    = in_data.pos;
+    vec3 objNormalEs = in_data.nv;
+    vec2 texCoords   = in_data.uv.st;
+    vec3 normalEs    = ( gl_FrontFacing ? 1.0 : -1.0 ) * normalize( objNormalEs );
     
-    // orthonormal tangent space matrix
-    //vec3  p_dx         = dFdx( objPosEs );
-    //vec3  p_dy         = dFdy( objPosEs );
-    //vec2  tc_dx        = dFdx( texCoords );
-    //vec2  tc_dy        = dFdy( texCoords );
-    //float texDet       = determinant( mat2( tc_dx, tc_dy ) );
-    //vec3  tangentVec   = ( tc_dy.y * p_dx - tc_dx.y * p_dy ) / abs( texDet );
-    //vec3  tangentEs    = normalize( tangentVec - normalEs * dot(tangentVec, normalEs ) );
-    //mat3  tbnMat       = mat3( sign( texDet ) * tangentEs, cross( normalEs, tangentEs ), normalEs );
-
+    // tangent space
     // Followup: Normal Mapping Without Precomputed Tangents [http://www.thetenthplanet.de/archives/1180]
     vec3  N           = normalEs;
-    vec3  dp1         = dFdx( objPosEs );
-    vec3  dp2         = dFdy( objPosEs );
-    vec2  duv1        = dFdx( texCoords );
-    vec2  duv2        = dFdy( texCoords );
-    vec3  dp2perp     = cross(dp2, normalEs); 
-    vec3  dp1perp     = cross(normalEs, dp1);
-    vec3  T           = dp2perp * duv1.x + dp1perp * duv2.x;
-    vec3  B           = dp2perp * duv1.y + dp1perp * duv2.y;   
+    vec3  T           = in_data.tv;
+    vec3  B           = in_data.bv;
     float invmax      = inversesqrt(max(dot(T, T), dot(B, B)));
     mat3  tbnMat      = mat3(T * invmax, B * invmax, N);
    

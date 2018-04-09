@@ -103,7 +103,8 @@ class MyWindow(window.CameraWindow):
 
         glEnable(GL_CULL_FACE)
         glFrontFace(GL_CCW)  # GL_CCW, GL_CW
-        glCullFace(GL_BACK) # GL_FRONT GL_BACK, GL_FRONT_AND_BACK 
+        glCullFace(GL_BACK) # GL_FRONT GL_BACK, GL_FRONT_AND_BACK
+        #glCullFace(GL_FRONT) 
         
         # set up attributes and shader program
         glEnable( GL_DEPTH_TEST )
