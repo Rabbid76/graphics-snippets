@@ -60,7 +60,8 @@ Addressing the columns of a `mat4 m44;` in GLSL:
 
 ### Column-major order and Row-major order
 
- See [The OpenGL Shading Language 4.6, 5.4.2 Vector and Matrix Constructors, page 101](https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.4.60.pdf):
+See [The OpenGL Shading Language 4.6, 5.4.2 Vector and Matrix Constructors, page 101](https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.4.60.pdf)<br/>
+and [OpenGL ES Shading Language 3.20 Specification, 5.4.2 Vector and Matrix Constructors, page 100](https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.4.60.pdf):
 
 > To initialize a matrix by specifying vectors or scalars, the components are assigned to the matrix elements in **column-major order**.
 >
