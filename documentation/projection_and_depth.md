@@ -56,7 +56,7 @@ If the coordiante system of the view space is a [Right-handed](https://en.wikipe
 
 ### Clip coordinates
 
-Clip space coordinates are [Homogeneous coordinates](https://en.wikipedia.org/wiki/Homogeneous_coordinates). In clipspace the clipping of the scene is performed.<br/>
+Clip space coordinates are [Homogeneous coordinates](https://en.wikipedia.org/wiki/Homogeneous_coordinates). In clip space the clipping of the scene is performed.<br/>
 A point is in clip space if the `x`, `y` and `z` components are in the range defined by the inverted `w` component and the `w` component of the homogeneous coordinates of the point:
 
     -w <=  x, y, z  <= w.
