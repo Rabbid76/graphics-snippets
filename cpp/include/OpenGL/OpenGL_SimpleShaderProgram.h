@@ -376,48 +376,49 @@ public:
 
   void GetUniformBlocks( void )
   {
-    /*
+   
     GLint nUniformBlocks;
-    glGetProgramiv( Object(), GL_ACTIVE_UNIFORM_BLOCKS, &nUniformBlocks );
+    glGetProgramiv( Prog(), GL_ACTIVE_UNIFORM_BLOCKS, &nUniformBlocks );
 		
     if ( nUniformBlocks > 0 )
     {					  
 			GLint bufferSize = 0;
-			glGetProgramiv( Object(), GL_ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH, &bufferSize );
-      bufferSize = cutil::Max( bufferSize, 256 );
+			glGetProgramiv( Prog(), GL_ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH, &bufferSize );
+      bufferSize =std:: max( bufferSize, 256 );
 
       std::vector< GLchar >name( bufferSize );
       for ( int sourceInx = 0; sourceInx < nUniformBlocks; sourceInx++ )
       {
-        glGetActiveUniformBlockName( Object(), sourceInx, bufferSize, &size, name.data() );
-        GLuint uniformBlockInx = glGetUniformBlockIndex( Object(), name.data() );
-        ASSERT( sourceInx == (int)uniformBlockInx );
-
+        GLsizei size;
+        glGetActiveUniformBlockName( Prog(), sourceInx, bufferSize, &size, name.data() );
+        GLuint uniformBlockInx = glGetUniformBlockIndex( Prog(), name.data() );
+        
 				// do not change inactive uniform block (just in case)
 				if (uniformBlockInx == GL_INVALID_INDEX)
 					continue;
         
-        TUniformBlockOffsets &offsets = m_uniformBlockMap[name.data()];
-        offsets.m_index             = sourceInx;
-        offsets.m_uniformBlockIndex = uniformBlockInx;
-        glGetActiveUniformBlockiv( Object(), uniformBlockInx, GL_UNIFORM_BLOCK_DATA_SIZE, &offsets.m_bufferSize );
-
-        GLib().EvaluateGlError( s_subComponentName );
+        GLint m_bufferSize;
+        glGetActiveUniformBlockiv( Prog(), uniformBlockInx, GL_UNIFORM_BLOCK_DATA_SIZE, &m_bufferSize );
 
         GLint numberOfUniforms;
-        glGetActiveUniformBlockiv( Object(), uniformBlockInx, GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &numberOfUniforms );
-        offsets.m_indices.swap( std::vector< GLuint >( numberOfUniforms, 0 ) );
-        glGetActiveUniformBlockiv( Object(), uniformBlockInx, GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, (GLint*)offsets.m_indices.data() );
-        offsets.m_offsets.swap( std::vector< GLint >( numberOfUniforms, 0 ) );
-        glGetActiveUniformsiv( Object(), numberOfUniforms, offsets.m_indices.data(), GL_UNIFORM_OFFSET, offsets.m_offsets.data() );
-          
-        for ( size_t inx = 0; inx < offsets.m_indices.size(); inx ++ )
+        glGetActiveUniformBlockiv( Prog(), uniformBlockInx, GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &numberOfUniforms );
+        std::vector< GLuint > indices( numberOfUniforms );
+        glGetActiveUniformBlockiv( Prog(), uniformBlockInx, GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, (GLint*)indices.data() );
+        std::vector< GLuint > offsets( numberOfUniforms );
+        glGetActiveUniformsiv( Prog(), numberOfUniforms, indices.data(), GL_UNIFORM_OFFSET, (GLint*)offsets.data() );
+        
+        
+        std::vector<std::string> names;
+        for ( size_t inx = 0; inx < indices.size(); inx ++ )
         {
-          std::vector< GLchar >name( maxUniformLen+1 );
-          glGetActiveUniform( Object(), offsets.m_indices[inx], maxUniformLen, &written, &size, &type, name.data() );
-          name[maxUniformLen] = 0;
-          offsets.m_nameMap[name.data()] = inx;
+          std::vector< GLchar >name( bufferSize );
+          GLsizei written;
+          GLenum type;
+          glGetActiveUniform( Prog(), indices[inx], bufferSize, &written, &size, &type, name.data() );
+          name[bufferSize-1] = 0;
+          names.push_back( name.data() );
         }
+        
 
         // glGetActiveUniformBlockiv
         // GL_UNIFORM_BLOCK_BINDING
@@ -430,12 +431,12 @@ public:
         // GL_UNIFORM_BLOCK_REFERENCED_BY_FRAGMENT_SHADER
         // GL_UNIFORM_BLOCK_REFERENCED_BY_COMPUTE_SHADER
 
-        int bindingPoint = TUniformBlockLinkHelper().LinkLoop( name.data(), uniformBlockInx, m_usedUniformBlocks, m_ubIndizes, offsets );
-        if ( bindingPoint >= 0 )
-          LinkUniformBlock( uniformBlockInx, bindingPoint );
+        //int bindingPoint = TUniformBlockLinkHelper().LinkLoop( name.data(), uniformBlockInx, m_usedUniformBlocks, m_ubIndizes, offsets );
+        //if ( bindingPoint >= 0 )
+         // LinkUniformBlock( uniformBlockInx, bindingPoint );
       }
     }
-    */
+    
   }
 
   void GetSubroutines( void )
