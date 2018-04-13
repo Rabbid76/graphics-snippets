@@ -23,6 +23,8 @@ out TGeometryData
 
 uniform mat4 u_projectionMat44;
 
+uniform float u_displacement_scale;
+
 void main()
 {
     // tangent space
@@ -59,7 +61,7 @@ void main()
 
     for ( int i=0; i < 3; ++i )
     {
-        outData.nv  = inData[i].nv;
+        outData.nv  = inData[i].nv * u_displacement_scale;
         outData.tv  = tv[i];
         outData.bv  = bv[i];
         outData.pos = inData[i].pos;

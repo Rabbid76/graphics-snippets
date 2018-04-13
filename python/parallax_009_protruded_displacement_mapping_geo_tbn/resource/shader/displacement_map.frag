@@ -83,18 +83,17 @@ vec4 CalculateNormal( in vec2 texCoords )
 vec3 Parallax( in vec3 texDir3D, in vec2 texCoord )
 {   
   float mapHeight;
-  float maxBumpHeight = u_displacement_scale;
   vec2  quality_range = u_parallax_quality;
   vec2  texC = texCoord;
-  if ( maxBumpHeight > 0.0 && texDir3D.z < 0.9994 )
+  if ( texDir3D.z < 0.9994 )
   {
-    float quality         = mix( quality_range.x, quality_range.y , gl_FragCoord.z * gl_FragCoord.z );
-    float numSteps        = clamp( quality * mix( 5.0, 10.0 * clamp( 1.0 + 30.0 * maxBumpHeight, 1.0, 4.0 ), 1.0 - abs(texDir3D.z) ), 1.0, 50.0 );
-    int   numBinarySteps  = int( clamp( quality * 5.1, 1.0, 7.0 ) );
+    float quality         = mix( quality_range.x, quality_range.y, 1.0 - pow(abs(normalize(texDir3D).z),2.0) );
+    float numSteps        = clamp( quality * 50.0, 1.0, 50.0 );
+    int   numBinarySteps  = int( clamp( quality * 10.0, 1.0, 7.0 ) );
     vec2  texDir          = texDir3D.xy / texDir3D.z;
-    //texC.xy          -= texDir * maxBumpHeight / 2.0;
-    //texC.xy          -= texDir * maxBumpHeight;
-    vec2  texStep         = texDir * maxBumpHeight;
+    //texC.xy          -= texDir / 2.0;
+    //texC.xy          -= texDir;
+    vec2  texStep         = texDir;
     float bumpHeightStep  = 1.0 / numSteps;
     mapHeight             = 1.0;
     float bestBumpHeight  = 1.0;
@@ -134,11 +133,11 @@ void main()
 
     // tangent space
     // Followup: Normal Mapping Without Precomputed Tangents [http://www.thetenthplanet.de/archives/1180]
-    vec3  N           = normalEs;
+    vec3  N           = ( gl_FrontFacing ? 1.0 : -1.0 ) * objNormalEs;
     vec3  T           = in_data.tv;
     vec3  B           = in_data.bv;
     float invmax      = inversesqrt(max(dot(T, T), dot(B, B)));
-    mat3  tbnMat      = mat3(T * invmax, B * invmax, N);
+    mat3  tbnMat      = mat3(T * invmax, B * invmax, N * invmax);
    
     vec3  texDir3D     = normalize( inverse( tbnMat ) * objPosEs );
     vec3  newTexCoords = Parallax( texDir3D, texCoords.st );

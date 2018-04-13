@@ -128,8 +128,8 @@ class MyWindow(window.CameraWindow):
             b"u_texture"            : 0,
             b"u_displacement_map"   : 1,
             b"u_normal_map"         : 2,
-            b"u_displacement_scale" : 0.2, 
-            b"u_parallax_quality"   : [2.0, 1.0]
+            b"u_displacement_scale" : 0.25, 
+            b"u_parallax_quality"   : [0.5, 1.0]
         } )
         
         # draw object
@@ -186,8 +186,8 @@ progDraw = shader.ShaderProgram(
       ('resource/shader/displacement_map.frag', GL_FRAGMENT_SHADER) ] ) 
 
 #texture objects
-textureObj         = CreateTextureFromFile('../../resource/texture/example_1_texture.bmp', 0, True)
-displacementmapObj = CreateConeMapFromFile('../../resource/texture/example_1_conemap.bmp', 1, True)
+textureObj         = CreateTextureFromFile('../../resource/texture/example_1_texture.bmp', 0, False)
+displacementmapObj = CreateConeMapFromFile('../../resource/texture/example_1_conemap.bmp', 1, False)
 
 # start main loop
 wnd.Run()
