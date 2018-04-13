@@ -82,12 +82,11 @@ vec4 CalculateNormal( in vec2 texCoords )
 
 vec3 Parallax( in vec3 texDir3D, in vec3 texCoord )
 {   
-  float mapHeight;
-  vec2  quality_range = u_parallax_quality;
-  vec2  texC          = texCoord.st;
-  float base_height   = texCoord.p;
-  if ( texDir3D.z < 0.9994 )
-  {
+    float mapHeight;
+    vec2  quality_range = u_parallax_quality;
+    vec2  texC          = texCoord.st;
+    float base_height   = texCoord.p;
+  
     float quality         = mix( quality_range.x, quality_range.y, 1.0 - pow(abs(normalize(texDir3D).z),2.0) );
     float numSteps        = clamp( quality * 50.0, 1.0, 50.0 );
     int   numBinarySteps  = int( clamp( quality * 10.0, 1.0, 7.0 ) );
@@ -96,29 +95,27 @@ vec3 Parallax( in vec3 texDir3D, in vec3 texCoord )
     vec2  texStep         = texDir;
     float bumpHeightStep  = 1.0 / numSteps;
     mapHeight             = 1.0;
-    float bestBumpHeight  = 1.0;
+    float bestBumpHeight  = mapHeight;
     for ( int i = 0; i < int( numSteps ); ++ i )
     {
-      mapHeight = CalculateHeight( texC.xy - bestBumpHeight * texStep.xy );
-      if ( mapHeight >= bestBumpHeight )
+        mapHeight = CalculateHeight( texC.xy - bestBumpHeight * texStep.xy );
+        if ( mapHeight >= bestBumpHeight )
         break;
-      bestBumpHeight -= bumpHeightStep;
+        bestBumpHeight -= bumpHeightStep;
     }
     bestBumpHeight += bumpHeightStep;
     for ( int i = 0; i < numBinarySteps; ++ i )
     {
-      bumpHeightStep *= 0.5;
-      bestBumpHeight -= bumpHeightStep;
-      mapHeight       = CalculateHeight( texC.xy - bestBumpHeight * texStep.xy );
-      bestBumpHeight += ( bestBumpHeight < mapHeight ) ? bumpHeightStep : 0.0;
+        bumpHeightStep *= 0.5;
+        bestBumpHeight -= bumpHeightStep;
+        mapHeight       = CalculateHeight( texC.xy - bestBumpHeight * texStep.xy );
+        bestBumpHeight += ( bestBumpHeight < mapHeight ) ? bumpHeightStep : 0.0;
     }
     bestBumpHeight -= bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / bumpHeightStep, 0.0, 1.0 );
     mapHeight       = bestBumpHeight;
     texC           -= mapHeight * texStep;
-  }
-  else 
-    mapHeight = CalculateHeight( texCoord.xy );
-  return vec3( texC.xy, mapHeight );
+  
+    return vec3( texC.xy, mapHeight );
 }
 
 void main()
@@ -144,7 +141,7 @@ void main()
 
     vec2  range_vec  = step(vec2(0.0), newTexCoords.st) * step(newTexCoords.st, vec2(1.0));
     float range_test = range_vec.x * range_vec.y;
-    if ( range_test == 0.0 && texCoords.p > 0.0 )
+    if ( texCoords.p > 0.0 && range_test == 0.0 )
       discard;
 
     texCoords.st       = newTexCoords.xy;
