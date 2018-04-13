@@ -50,7 +50,7 @@ vec4 CalculateNormal( in vec2 texCoords )
     return vec4( normalize( tempNV ), height );
 #else
     vec2 texOffs = 1.0 / textureSize( u_displacement_map, 0 ).xy;
-    vec2 scale   = u_displacement_scale / texOffs;
+    vec2 scale   = 1.0 / texOffs; // 1.0 / u_displacement_scale
 #if NORMAL_MAP_QUALITY > 1
     float hx[9];
     hx[0] = texture( u_displacement_map, texCoords.st + texOffs * vec2(-1.0, -1.0) ).r;
@@ -91,15 +91,15 @@ vec3 Parallax( in vec3 texDir3D, in vec3 texCoord )
     float quality         = mix( quality_range.x, quality_range.y, 1.0 - pow(abs(normalize(texDir3D).z),2.0) );
     float numSteps        = clamp( quality * 50.0, 1.0, 50.0 );
     int   numBinarySteps  = int( clamp( quality * 10.0, 1.0, 7.0 ) );
-    vec2  texDir          = texDir3D.xy / texDir3D.z;
-    texC.xy              -= texDir * base_height;
+    vec2  texDir          = texDir3D.xy / abs(texDir3D.z); // (z is negative) the direction vector points downwards int tangent-space
+    texC.xy              += texDir * base_height;
     vec2  texStep         = texDir;
     float bumpHeightStep  = 1.0 / numSteps;
     mapHeight             = 1.0;
     float bestBumpHeight  = 1.0;
     for ( int i = 0; i < int( numSteps ); ++ i )
     {
-      mapHeight = CalculateHeight( texC.xy + bestBumpHeight * texStep.xy );
+      mapHeight = CalculateHeight( texC.xy - bestBumpHeight * texStep.xy );
       if ( mapHeight >= bestBumpHeight )
         break;
       bestBumpHeight -= bumpHeightStep;
@@ -109,12 +109,12 @@ vec3 Parallax( in vec3 texDir3D, in vec3 texCoord )
     {
       bumpHeightStep *= 0.5;
       bestBumpHeight -= bumpHeightStep;
-      mapHeight       = CalculateHeight( texC.xy + bestBumpHeight * texStep.xy );
+      mapHeight       = CalculateHeight( texC.xy - bestBumpHeight * texStep.xy );
       bestBumpHeight += ( bestBumpHeight < mapHeight ) ? bumpHeightStep : 0.0;
     }
     bestBumpHeight -= bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / bumpHeightStep, 0.0, 1.0 );
     mapHeight       = bestBumpHeight;
-    texC           += mapHeight * texStep;
+    texC           -= mapHeight * texStep;
   }
   else 
     mapHeight = CalculateHeight( texCoord.xy );
