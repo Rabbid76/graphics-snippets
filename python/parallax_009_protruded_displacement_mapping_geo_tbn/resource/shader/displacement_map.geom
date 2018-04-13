@@ -1,7 +1,7 @@
 #version 450
 
 layout( triangles ) in;
-layout( triangle_strip, max_vertices = 3 ) out;
+layout( triangle_strip, max_vertices = 15 ) out;
 
 in TVertexData
 {
@@ -18,7 +18,7 @@ out TGeometryData
     vec3 tv;
     vec3 bv;
     vec3 col;
-    vec2 uv;
+    vec3 uvh;
 } outData;
 
 uniform mat4 u_projectionMat44;
@@ -43,12 +43,15 @@ void main()
     vec2  duv1 = inData[1].uv.xy - inData[0].uv.xy;
     vec2  duv2 = inData[2].uv.xy - inData[0].uv.xy;
 
+    vec3 nv[3];
     vec3 tv[3];
     vec3 bv[3];
     for ( int i=0; i < 3; ++i )
     {
         vec3 dp2perp = cross(dp2, inData[i].nv); 
         vec3 dp1perp = cross(inData[i].nv, dp1);
+        
+        nv[i] = inData[i].nv * u_displacement_scale;
         tv[i] = dp2perp * duv1.x + dp1perp * duv2.x;
         bv[i] = dp2perp * duv1.y + dp1perp * duv2.y;
     }
@@ -61,14 +64,57 @@ void main()
 
     for ( int i=0; i < 3; ++i )
     {
-        outData.nv  = inData[i].nv * u_displacement_scale;
+        outData.nv  = nv[i];
         outData.tv  = tv[i];
         outData.bv  = bv[i];
         outData.pos = inData[i].pos;
         outData.col = inData[i].col;
-        outData.uv  = inData[i].uv;
+        outData.uvh = vec3(inData[i].uv, 0.0);
         gl_Position = u_projectionMat44 * vec4( outData.pos, 1.0 );
         EmitVertex();
     }
     EndPrimitive();
+
+    for ( int i=0; i < 3; ++i )
+    {
+        int i2 = (i+1) % 3;
+
+        outData.nv  = nv[i];
+        outData.tv  = tv[i];
+        outData.bv  = bv[i];
+        outData.pos = inData[i].pos;
+        outData.col = inData[i].col;
+        outData.uvh = vec3(inData[i].uv, 0.0);
+        gl_Position = u_projectionMat44 * vec4( outData.pos, 1.0 );
+        EmitVertex();
+
+        outData.nv  = nv[i2];
+        outData.tv  = tv[i2];
+        outData.bv  = bv[i2];
+        outData.pos = inData[i2].pos;
+        outData.col = inData[i2].col;
+        outData.uvh = vec3(inData[i2].uv, 0.0);
+        gl_Position = u_projectionMat44 * vec4( outData.pos, 1.0 );
+        EmitVertex();
+
+        outData.nv  = nv[i];
+        outData.tv  = tv[i];
+        outData.bv  = bv[i];
+        outData.pos = inData[i].pos + nv[i];
+        outData.col = inData[i].col;
+        outData.uvh = vec3(inData[i].uv, 1.0);
+        gl_Position = u_projectionMat44 * vec4( outData.pos, 1.0 );
+        EmitVertex();
+
+        outData.nv  = nv[i2];
+        outData.tv  = tv[i2];
+        outData.bv  = bv[i2];
+        outData.pos = inData[i2].pos + nv[i2];
+        outData.col = inData[i2].col;
+        outData.uvh = vec3(inData[i2].uv, 1.0);
+        gl_Position = u_projectionMat44 * vec4( outData.pos, 1.0 );
+        EmitVertex();
+
+        EndPrimitive();
+    }
 }

@@ -101,7 +101,7 @@ class MyWindow(window.CameraWindow):
         # set up view matrix
         viewMat = self.LookAt()
 
-        glEnable(GL_CULL_FACE)
+        #glEnable(GL_CULL_FACE) # TODO $$$
         glFrontFace(GL_CCW)  # GL_CCW, GL_CW
         glCullFace(GL_BACK) # GL_FRONT GL_BACK, GL_FRONT_AND_BACK
         #glCullFace(GL_FRONT) 

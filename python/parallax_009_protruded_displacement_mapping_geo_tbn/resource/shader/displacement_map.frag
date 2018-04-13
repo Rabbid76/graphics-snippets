@@ -10,7 +10,7 @@ in TGeometryData
     vec3 tv;
     vec3 bv;
     vec3 col;
-    vec2 uv;
+    vec3 uvh;
 } in_data;
 
 out vec4 fragColor;
@@ -80,19 +80,19 @@ vec4 CalculateNormal( in vec2 texCoords )
 #endif 
 }
 
-vec3 Parallax( in vec3 texDir3D, in vec2 texCoord )
+vec3 Parallax( in vec3 texDir3D, in vec3 texCoord )
 {   
   float mapHeight;
   vec2  quality_range = u_parallax_quality;
-  vec2  texC = texCoord;
+  vec2  texC          = texCoord.st;
+  float base_height   = texCoord.p;
   if ( texDir3D.z < 0.9994 )
   {
     float quality         = mix( quality_range.x, quality_range.y, 1.0 - pow(abs(normalize(texDir3D).z),2.0) );
     float numSteps        = clamp( quality * 50.0, 1.0, 50.0 );
     int   numBinarySteps  = int( clamp( quality * 10.0, 1.0, 7.0 ) );
     vec2  texDir          = texDir3D.xy / texDir3D.z;
-    //texC.xy          -= texDir / 2.0;
-    //texC.xy          -= texDir;
+    texC.xy              -= texDir * base_height;
     vec2  texStep         = texDir;
     float bumpHeightStep  = 1.0 / numSteps;
     mapHeight             = 1.0;
@@ -125,7 +125,7 @@ void main()
 {
     vec3 objPosEs    = in_data.pos;
     vec3 objNormalEs = in_data.nv;
-    vec2 texCoords   = in_data.uv.st;
+    vec3 texCoords   = in_data.uvh.stp;
     vec3 normalEs    = ( gl_FrontFacing ? 1.0 : -1.0 ) * normalize( objNormalEs );
     
     //vec3  tangentEs    = normalize( tangentVec - normalEs * dot(tangentVec, normalEs ) );
@@ -140,9 +140,16 @@ void main()
     mat3  tbnMat      = mat3(T * invmax, B * invmax, N * invmax);
    
     vec3  texDir3D     = normalize( inverse( tbnMat ) * objPosEs );
-    vec3  newTexCoords = Parallax( texDir3D, texCoords.st );
+    vec3  newTexCoords = Parallax( texDir3D, texCoords.stp );
+
+    vec2  range_vec  = step(vec2(0.0), newTexCoords.st) * step(newTexCoords.st, vec2(1.0));
+    float range_test = range_vec.x * range_vec.y;
+    if ( range_test == 0.0 && texCoords.p > 0.0 )
+      discard;
+
     texCoords.st       = newTexCoords.xy;
-    vec4  normalVec    = CalculateNormal( texCoords ); 
+    
+    vec4  normalVec    = CalculateNormal( texCoords.st ); 
     vec3  nvMappedEs   = normalize( tbnMat * normalVec.xyz );
 
     //vec3 color = vertCol;
