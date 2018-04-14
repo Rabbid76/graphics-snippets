@@ -102,7 +102,7 @@ vec3 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
     {
         float surf_sign = base_height > 0.01 ? 1.0 : frontFace;
         float back_face = step(0.0, -surf_sign); 
-        
+    
         texC += texStep.xy * base_height + back_face * texStep.xy;
         for ( int i = 0; i < int( numSteps ); ++ i )
         {
@@ -182,7 +182,7 @@ void main()
     texCoords.st       = newTexCoords.xy;
     
     vec4  normalVec    = CalculateNormal( texCoords.st );
-    tbnMat[2].xyz     *= (gl_FrontFacing ? 1.0 : -1.0) * N / u_displacement_scale; 
+    tbnMat[2].xyz      = (gl_FrontFacing ? 1.0 : -1.0) * N / u_displacement_scale; 
     vec3  nvMappedEs   = normalize( tbnMat * normalVec.xyz );
 
     vec3 color = texture( u_texture, texCoords.st ).rgb;

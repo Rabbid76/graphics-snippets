@@ -82,8 +82,8 @@ vec3 ParallaxOcclusion( in float frontFace, in vec3 texDir3D, in vec2 texCoord )
     
     float surf_sign       = frontFace;
     float back_face       = step(0.0, -surf_sign); 
-    vec2  texStep         = texDir3D.xy / abs(texDir3D.z); // (z is negative) the direction vector points downwards int tangent-space
-    vec2  texC            = texCoord.st + texStep + back_face * texStep.xy; 
+    vec2  texStep         = surf_sign * texDir3D.xy / abs(texDir3D.z); // (z is negative) the direction vector points downwards int tangent-space
+    vec2  texC            = texCoord.st + surf_sign * texStep + back_face * texStep.xy; 
     float mapHeight       = 1.0;
     float bestBumpHeight  = mapHeight;
     float bumpHeightStep  = 1.0 / numSteps;
