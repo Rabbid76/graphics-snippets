@@ -80,7 +80,7 @@ vec4 CalculateNormal( in vec2 texCoords )
 #endif 
 }
 
-vec3 Parallax( in vec3 texDir3D, in vec3 texCoord )
+vec3 Parallax( in vec3 texDir3D, in float cosDir, in vec3 texCoord )
 {   
     vec2  quality_range = u_parallax_quality;
    
@@ -89,33 +89,63 @@ vec3 Parallax( in vec3 texDir3D, in vec3 texCoord )
     int   numBinarySteps  = int( clamp( quality * 10.0, 1.0, 7.0 ) );
     
     vec2  texDir          = texDir3D.xy / abs(texDir3D.z); // (z is negative) the direction vector points downwards int tangent-space
-    float facesign        = -sign(texDir3D.z);
-
-    float base_height     = texCoord.p;
-    vec2  texC            = texCoord.st + texDir * base_height;
-    vec2  texStep         = texDir;
-    float bumpHeightStep  = 1.0 / numSteps;
+    
     float mapHeight       = 1.0;
     float bestBumpHeight  = mapHeight;
-    for ( int i = 0; i < int( numSteps ); ++ i )
+    vec2  texC            = texCoord.st; 
+    vec2  texStep         = texDir;
+    if ( cosDir < 0.0 )
     {
-        mapHeight = CalculateHeight( texC.xy - bestBumpHeight * texStep.xy );
-        if ( mapHeight >= bestBumpHeight )
-        break;
-        bestBumpHeight -= bumpHeightStep;
+        float base_height     = texCoord.p;
+        texC                 += texDir * base_height;
+        float bumpHeightStep  = 1.0 / numSteps;
+        
+        for ( int i = 0; i < int( numSteps ); ++ i )
+        {
+            mapHeight = CalculateHeight( texC.xy - bestBumpHeight * texStep.xy );
+            if ( mapHeight >= bestBumpHeight )
+                break;
+            bestBumpHeight -= bumpHeightStep;   
+        }
+        bestBumpHeight += bumpHeightStep;
+        for ( int i = 0; i < numBinarySteps; ++ i )
+        {
+            bumpHeightStep *= 0.5;
+            bestBumpHeight -= bumpHeightStep;
+            mapHeight       = CalculateHeight( texC.xy - bestBumpHeight * texStep.xy );
+            bestBumpHeight += ( bestBumpHeight < mapHeight ) ? bumpHeightStep : 0.0;
+        }
+        bestBumpHeight -= bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / bumpHeightStep, 0.0, 1.0 );
+        mapHeight       = bestBumpHeight;
+        texC           -= mapHeight * texStep;
     }
-    bestBumpHeight += bumpHeightStep;
-    for ( int i = 0; i < numBinarySteps; ++ i )
+    else
     {
-        bumpHeightStep *= 0.5;
+        float base_height     = texCoord.p;
+        texC                 -= texDir * base_height;
+        float bumpHeightStep  = 1.0 / numSteps;
+        bestBumpHeight = base_height;
+        for ( int i = 0; i < int( numSteps ); ++ i )
+        {
+            mapHeight = CalculateHeight( texC.xy + bestBumpHeight * texStep.xy );
+            if ( mapHeight >= bestBumpHeight || bestBumpHeight >= 1.0 )
+                break;
+            bestBumpHeight += bumpHeightStep;   
+        }
         bestBumpHeight -= bumpHeightStep;
-        mapHeight       = CalculateHeight( texC.xy - bestBumpHeight * texStep.xy );
-        bestBumpHeight += ( bestBumpHeight < mapHeight ) ? bumpHeightStep : 0.0;
+        for ( int i = 0; i < numBinarySteps; ++ i )
+        {
+            bumpHeightStep *= 0.5;
+            bestBumpHeight += bumpHeightStep;
+            mapHeight       = CalculateHeight( texC.xy + bestBumpHeight * texStep.xy );
+            bestBumpHeight -= ( bestBumpHeight < mapHeight ) ? bumpHeightStep : 0.0;
+        }
+        bestBumpHeight += bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / bumpHeightStep, 0.0, 1.0 );
+        texC           += bestBumpHeight * texStep;
+        mapHeight       = bestBumpHeight;
     }
-    bestBumpHeight -= bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / bumpHeightStep, 0.0, 1.0 );
-    mapHeight       = bestBumpHeight;
-    texC           -= mapHeight * texStep;
-  
+    
+   
     return vec3( texC.xy, mapHeight );
 }
 
@@ -131,18 +161,21 @@ void main()
 
     // tangent space
     // Followup: Normal Mapping Without Precomputed Tangents [http://www.thetenthplanet.de/archives/1180]
-    vec3  N           = ( gl_FrontFacing ? 1.0 : -1.0 ) * objNormalEs;
+    vec3  N           = objNormalEs;
     vec3  T           = in_data.tv;
     vec3  B           = in_data.bv;
     float invmax      = inversesqrt(max(dot(T, T), dot(B, B)));
     mat3  tbnMat      = mat3(T * invmax, B * invmax, N * invmax);
    
     vec3  texDir3D     = normalize( inverse( tbnMat ) * objPosEs );
-    vec3  newTexCoords = Parallax( texDir3D, texCoords.stp );
+    float cosDir       = texDir3D.z;
+    vec3  newTexCoords = Parallax( texDir3D, cosDir, texCoords.stp );
+
+    // TODO $$$ calcualte depth by adding length( texDir3D.xy / texDir3D.z ) * newTexCoords.z
 
     vec2  range_vec  = step(vec2(0.0), newTexCoords.st) * step(newTexCoords.st, vec2(1.0));
     float range_test = range_vec.x * range_vec.y;
-    if ( texCoords.p > 0.0 && range_test == 0.0 )
+    if ( texCoords.p > 0.0 && (range_test == 0.0 || newTexCoords.z > 1.0))
       discard;
 
     texCoords.st       = newTexCoords.xy;
@@ -150,7 +183,6 @@ void main()
     vec4  normalVec    = CalculateNormal( texCoords.st ); 
     vec3  nvMappedEs   = normalize( tbnMat * normalVec.xyz );
 
-    //vec3 color = vertCol;
     vec3 color = texture( u_texture, texCoords.st ).rgb;
 
     // ambient part

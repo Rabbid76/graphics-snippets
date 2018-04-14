@@ -125,29 +125,27 @@ vec3 Parallax( in vec3 texDir3D, in float cosDir, in vec3 texCoord )
     else
     {
         float base_height     = texCoord.p;
-        texC                 += texDir * (1.0 - base_height);
+        texC                 -= texDir * base_height;
         float bumpHeightStep  = 1.0 / numSteps;
-        
+        bestBumpHeight = base_height;
         for ( int i = 0; i < int( numSteps ); ++ i )
         {
-            mapHeight = CalculateHeight( texC.xy - bestBumpHeight * texStep.xy );
-            if ( mapHeight >= bestBumpHeight )
+            mapHeight = CalculateHeight( texC.xy + bestBumpHeight * texStep.xy );
+            if ( mapHeight >= bestBumpHeight || bestBumpHeight >= 1.0 )
                 break;
-            bestBumpHeight -= bumpHeightStep;   
+            bestBumpHeight += bumpHeightStep;   
         }
-        bestBumpHeight += bumpHeightStep;
-        /*
+        bestBumpHeight -= bumpHeightStep;
         for ( int i = 0; i < numBinarySteps; ++ i )
         {
             bumpHeightStep *= 0.5;
-            bestBumpHeight -= bumpHeightStep;
-            mapHeight       = CalculateHeight( texC.xy - bestBumpHeight * texStep.xy );
-            bestBumpHeight += ( bestBumpHeight < mapHeight ) ? bumpHeightStep : 0.0;
+            bestBumpHeight += bumpHeightStep;
+            mapHeight       = CalculateHeight( texC.xy + bestBumpHeight * texStep.xy );
+            bestBumpHeight -= ( bestBumpHeight < mapHeight ) ? bumpHeightStep : 0.0;
         }
-        */
-        //bestBumpHeight -= bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / bumpHeightStep, 0.0, 1.0 );
+        bestBumpHeight += bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / bumpHeightStep, 0.0, 1.0 );
+        texC           += bestBumpHeight * texStep;
         mapHeight       = bestBumpHeight;
-        texC           -= mapHeight * texStep;
     }
     
    
@@ -180,8 +178,8 @@ void main()
 
     vec2  range_vec  = step(vec2(0.0), newTexCoords.st) * step(newTexCoords.st, vec2(1.0));
     float range_test = range_vec.x * range_vec.y;
-    //if ( texCoords.p > 0.0 && (range_test == 0.0 || newTexCoords.z > 1.0))
-    if ( texCoords.p > 0.0 && range_test == 0.0)
+    if ( texCoords.p > 0.0 && (range_test == 0.0 || newTexCoords.z > 1.0))
+    //if ( texCoords.p > 0.0 && range_test == 0.0)
       discard;
     //if ( cosDir > 0.0 )
     //  discard;

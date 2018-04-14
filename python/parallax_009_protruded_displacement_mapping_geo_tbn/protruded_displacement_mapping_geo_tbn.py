@@ -183,7 +183,8 @@ cubeVAO.DefineIB( cubeIndices )
 progDraw = shader.ShaderProgram( 
     [ ('resource/shader/displacement_map.vert', GL_VERTEX_SHADER),
       ('resource/shader/displacement_map.geom', GL_GEOMETRY_SHADER),
-      ('resource/shader/displacement_map_debug.frag', GL_FRAGMENT_SHADER) ] ) 
+      ('resource/shader/displacement_map.frag', GL_FRAGMENT_SHADER) ] ) 
+      #('resource/shader/displacement_map_debug.frag', GL_FRAGMENT_SHADER) ] ) 
 
 #texture objects
 textureObj         = CreateTextureFromFile('../../resource/texture/example_1_texture.bmp', 0, False)
