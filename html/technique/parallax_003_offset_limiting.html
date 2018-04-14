@@ -266,8 +266,8 @@ html, body {
                 //modelMat = RotateAxis( modelMat, 0.3, 0 );
                 //modelMat = RotateAxis( modelMat, 0.8, 0 );
                 //modelMat = RotateAxis( modelMat, 0.65, 1 );
-                modelMat = RotateAxis(modelMat, CalcAng(deltaMS, 13.0), 0);
-                modelMat = RotateAxis(modelMat, CalcAng(deltaMS, 17.0), 1);
+                //modelMat = RotateAxis(modelMat, CalcAng(deltaMS, 13.0), 0);
+                //modelMat = RotateAxis(modelMat, CalcAng(deltaMS, 17.0), 1);
                 ShaderProgram.SetUniformM44(progDraw, "u_modelMat44", modelMat);
                 ShaderProgram.SetUniformF4(progDraw, "u_clipPlane", [1.0, -1.0, 0.0, clip * 1.7321]);
 
