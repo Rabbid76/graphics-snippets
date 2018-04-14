@@ -75,25 +75,19 @@ vec4 CalculateNormal( in vec2 texCoords )
 // Parallax Occlusion Mapping in GLSL [http://sunandblackcat.com/tipFullView.php?topicid=28]
 vec3 SteepParallax( in float frontFace, in vec3 texDir3D, in vec2 texCoord )
 {   
-    float maxBumpHeight = u_displacement_scale;
-    vec2  quality_range = u_parallax_quality;
-   
+    vec2  quality_range   = u_parallax_quality;
     float quality         = mix( quality_range.x, quality_range.y, 1.0 - pow(abs(normalize(texDir3D).z),2.0) );
     float numSteps        = clamp( quality * 50.0, 1.0, 50.0 );
     int   numBinarySteps  = int( clamp( quality * 10.0, 1.0, 7.0 ) );
     
-    vec2  texDir          = texDir3D.xy / abs(texDir3D.z); // (z is negative) the direction vector points downwards int tangent-space
-    
+    float surf_sign       = frontFace;
+    float back_face       = step(0.0, -surf_sign); 
+    vec2  texStep         = texDir3D.xy / abs(texDir3D.z); // (z is negative) the direction vector points downwards int tangent-space
+    vec2  texC            = texCoord.st + texStep + back_face * texStep.xy; 
     float mapHeight       = 1.0;
     float bestBumpHeight  = mapHeight;
-    vec2  texStep         = texDir * maxBumpHeight;
-    vec2  texC            = texCoord.st + texStep; 
     float bumpHeightStep  = 1.0 / numSteps;
     
-    float surf_sign = frontFace;
-    float back_face = step(0.0, -surf_sign); 
-    
-    texC += back_face * texStep.xy;
     for ( int i = 0; i < int( numSteps ); ++ i )
     {
         mapHeight = back_face + surf_sign * CalculateHeight( texC.xy - bestBumpHeight * texStep.xy );
@@ -126,23 +120,24 @@ void main()
     //mat3  tbnMat       = mat3( sign( texDet ) * tangentEs, cross( normalEs, tangentEs ), normalEs );
 
     // Followup: Normal Mapping Without Precomputed Tangents [http://www.thetenthplanet.de/archives/1180]
-    vec3  N           = normalEs;
+    vec3  N           = normalize( objNormalEs );
     vec3  dp1         = dFdx( objPosEs );
     vec3  dp2         = dFdy( objPosEs );
     vec2  duv1        = dFdx( texCoords );
     vec2  duv2        = dFdy( texCoords );
-    vec3  dp2perp     = cross(dp2, normalEs); 
-    vec3  dp1perp     = cross(normalEs, dp1);
+    vec3  dp2perp     = cross(dp2, N); 
+    vec3  dp1perp     = cross(N, dp1);
     vec3  T           = dp2perp * duv1.x + dp1perp * duv2.x;
     vec3  B           = dp2perp * duv1.y + dp1perp * duv2.y;   
     float invmax      = inversesqrt(max(dot(T, T), dot(B, B)));
-    mat3  tbnMat      = mat3(T * invmax, B * invmax, N);
+    mat3  tbnMat      = mat3(T * invmax, B * invmax, N * u_displacement_scale);
    
     vec3  texDir3D     = normalize( inverse( tbnMat ) * objPosEs );
     float frontFace    = gl_FrontFacing ? 1.0 : -1.0; // TODO $$$ sign(dot(N,objPosEs));
     vec3  newTexCoords = SteepParallax( frontFace, texDir3D, texCoords.st );
     texCoords.st       = newTexCoords.xy;
     vec4  normalVec    = CalculateNormal( texCoords ); 
+    tbnMat[2].xyz     *= (gl_FrontFacing ? 1.0 : -1.0) * N;
     vec3  nvMappedEs   = normalize( tbnMat * normalVec.xyz );
 
     //vec3 color = vertCol;
