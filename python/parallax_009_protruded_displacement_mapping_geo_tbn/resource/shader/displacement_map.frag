@@ -82,19 +82,20 @@ vec4 CalculateNormal( in vec2 texCoords )
 
 vec3 Parallax( in vec3 texDir3D, in vec3 texCoord )
 {   
-    float mapHeight;
     vec2  quality_range = u_parallax_quality;
-    vec2  texC          = texCoord.st;
-    float base_height   = texCoord.p;
-  
+   
     float quality         = mix( quality_range.x, quality_range.y, 1.0 - pow(abs(normalize(texDir3D).z),2.0) );
     float numSteps        = clamp( quality * 50.0, 1.0, 50.0 );
     int   numBinarySteps  = int( clamp( quality * 10.0, 1.0, 7.0 ) );
+    
     vec2  texDir          = texDir3D.xy / abs(texDir3D.z); // (z is negative) the direction vector points downwards int tangent-space
-    texC.xy              += texDir * base_height;
+    float facesign        = -sign(texDir3D.z);
+
+    float base_height     = texCoord.p;
+    vec2  texC            = texCoord.st + texDir * base_height;
     vec2  texStep         = texDir;
     float bumpHeightStep  = 1.0 / numSteps;
-    mapHeight             = 1.0;
+    float mapHeight       = 1.0;
     float bestBumpHeight  = mapHeight;
     for ( int i = 0; i < int( numSteps ); ++ i )
     {
