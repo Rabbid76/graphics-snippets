@@ -119,7 +119,7 @@ class MyWindow(window.CameraWindow):
             b"u_displacement_map"   : 1,
             b"u_normal_map"         : 2,
             b"u_displacement_scale" : 0.2, 
-            b"u_parallax_quality"   : [2.0, 1.0]
+            b"u_parallax_quality"   : [0.5, 1.0]
         } )
         
         # draw object

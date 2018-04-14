@@ -210,4 +210,9 @@ void main()
     // debug
     float gray = dot(lightCol.rgb, vec3(0.2126, 0.7152, 0.0722));
     fragColor = vec4( vec3( step(0.0, -frontFace), step(0.0, texDir3D.z), step(0.0, -texDir3D.z) ) * gray, 1.0 );
+
+    //vec3 newObjPosEs = objPosEs - normalize(objPosEs) * length(texDir3D.xyz/texDir3D.z) * newTexCoords.z;
+    //vec3 newObjPosEs = objPosEs;
+    //vec4 objPosClip  = u_projectionMat44 * vec4(newObjPosEs.xyz, 1.0); 
+    //gl_FragDepth     = 0.5 + 0.5 * objPosClip.z/objPosClip.w;
 }

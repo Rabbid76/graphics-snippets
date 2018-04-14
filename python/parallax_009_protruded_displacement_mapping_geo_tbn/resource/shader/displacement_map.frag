@@ -26,6 +26,8 @@ uniform sampler2D u_displacement_map;
 uniform float     u_displacement_scale;
 uniform vec2      u_parallax_quality;
 
+uniform mat4      u_projectionMat44;
+
 #if defined(NORMAL_MAP_TEXTURE)
 uniform sampler2D u_normal_map;
 #endif

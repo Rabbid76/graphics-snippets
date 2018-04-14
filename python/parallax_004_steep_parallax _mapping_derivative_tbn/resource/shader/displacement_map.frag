@@ -73,37 +73,39 @@ vec4 CalculateNormal( in vec2 texCoords )
 }
 
 // Parallax Occlusion Mapping in GLSL [http://sunandblackcat.com/tipFullView.php?topicid=28]
-vec3 SteepParallax( in vec3 texDir3D, in vec2 texCoord )
+vec3 SteepParallax( in float frontFace, in vec3 texDir3D, in vec2 texCoord )
 {   
-  float mapHeight;
-  float maxBumpHeight = u_displacement_scale;
-  vec2  quality_range = u_parallax_quality;
-  if ( maxBumpHeight > 0.0 && texDir3D.z < 0.9994 )
-  {
-    float quality         = mix( quality_range.x, quality_range.y , gl_FragCoord.z * gl_FragCoord.z );
-    float numSteps        = clamp( quality * mix( 5.0, 10.0 * clamp( 1.0 + 30.0 * maxBumpHeight, 1.0, 4.0 ), 1.0 - abs(texDir3D.z) ), 1.0, 50.0 );
-    int   numBinarySteps  = int( clamp( quality * 5.1, 1.0, 7.0 ) );
-    vec2  texDir          = texDir3D.xy / texDir3D.z;
-    //texCoord.xy          -= texDir * maxBumpHeight / 2.0;
-    texCoord.xy          -= texDir * maxBumpHeight;
+    float maxBumpHeight = u_displacement_scale;
+    vec2  quality_range = u_parallax_quality;
+   
+    float quality         = mix( quality_range.x, quality_range.y, 1.0 - pow(abs(normalize(texDir3D).z),2.0) );
+    float numSteps        = clamp( quality * 50.0, 1.0, 50.0 );
+    int   numBinarySteps  = int( clamp( quality * 10.0, 1.0, 7.0 ) );
+    
+    vec2  texDir          = texDir3D.xy / abs(texDir3D.z); // (z is negative) the direction vector points downwards int tangent-space
+    
+    float mapHeight       = 1.0;
+    float bestBumpHeight  = mapHeight;
     vec2  texStep         = texDir * maxBumpHeight;
+    vec2  texC            = texCoord.st + texStep; 
     float bumpHeightStep  = 1.0 / numSteps;
-    mapHeight             = 1.0;
-    float bestBumpHeight  = 1.0;
+    
+    float surf_sign = frontFace;
+    float back_face = step(0.0, -surf_sign); 
+    
+    texC += back_face * texStep.xy;
     for ( int i = 0; i < int( numSteps ); ++ i )
     {
-      mapHeight = CalculateHeight( texCoord.xy + bestBumpHeight * texStep.xy );
-      if ( mapHeight >= bestBumpHeight )
-        break;
-      bestBumpHeight -= bumpHeightStep;
+        mapHeight = back_face + surf_sign * CalculateHeight( texC.xy - bestBumpHeight * texStep.xy );
+        if ( mapHeight >= bestBumpHeight )
+            break;
+        bestBumpHeight -= bumpHeightStep;   
     }
-    bestBumpHeight += bumpHeightStep * (1.0 - clamp( ( bestBumpHeight - mapHeight ) / bumpHeightStep, 0.0, 1.0 ));
+    bestBumpHeight -= bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / bumpHeightStep, 0.0, 1.0 );
     mapHeight       = bestBumpHeight;
-    texCoord       += mapHeight * texStep;
-  }
-  else 
-    mapHeight = CalculateHeight( texCoord.xy );
-  return vec3( texCoord.xy, mapHeight );
+    texC           -= mapHeight * texStep;
+        
+    return vec3( texC.xy, mapHeight );
 }
 
 void main()
@@ -137,7 +139,8 @@ void main()
     mat3  tbnMat      = mat3(T * invmax, B * invmax, N);
    
     vec3  texDir3D     = normalize( inverse( tbnMat ) * objPosEs );
-    vec3  newTexCoords = SteepParallax( texDir3D, texCoords.st );
+    float frontFace    = gl_FrontFacing ? 1.0 : -1.0; // TODO $$$ sign(dot(N,objPosEs));
+    vec3  newTexCoords = SteepParallax( frontFace, texDir3D, texCoords.st );
     texCoords.st       = newTexCoords.xy;
     vec4  normalVec    = CalculateNormal( texCoords ); 
     vec3  nvMappedEs   = normalize( tbnMat * normalVec.xyz );
