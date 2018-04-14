@@ -42,7 +42,7 @@ vec4 CalculateNormal( in vec2 texCoords )
     return vec4( normalize( tempNV ), height );
 #else
     vec2 texOffs = 1.0 / textureSize( u_displacement_map, 0 ).xy;
-    vec2 scale   = u_displacement_scale / texOffs;
+    vec2 scale   = 1.0 / texOffs;
 #if NORMAL_MAP_QUALITY > 1
     float hx[9];
     hx[0] = texture( u_displacement_map, texCoords.st + texOffs * vec2(-1.0, -1.0) ).r;
@@ -145,7 +145,7 @@ void main()
     vec3  newTexCoords = ParallaxOcclusion( frontFace, texDir3D, texCoords.st );
     texCoords.st       = newTexCoords.xy;
     vec4  normalVec    = CalculateNormal( texCoords ); 
-    tbnMat[2].xyz      = (gl_FrontFacing ? 1.0 : -1.0) * N;
+    tbnMat[2].xyz      = (gl_FrontFacing ? 1.0 : -1.0) * N / u_displacement_scale;
     vec3  nvMappedEs   = normalize( tbnMat * normalVec.xyz );
 
     //vec3 color = vertCol;
