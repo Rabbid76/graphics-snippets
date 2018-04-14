@@ -1,181 +1,182 @@
 <body>
 
-    <script id="draw-shader-vs" type="x-shader/x-vertex">
-        precision highp float;
+<script id="draw-shader-vs" type="x-shader/x-vertex">
+precision highp float;
 
-        attribute vec3 inPos;
-        attribute vec3 inNV;
-        attribute vec2 inUV;
-        attribute vec3 inCol;
+attribute vec3 inPos;
+attribute vec3 inNV;
+attribute vec2 inUV;
+attribute vec3 inCol;
 
-        varying vec3  v_view_pos;
-        varying vec3  v_view_nv;
-        varying vec2  v_uv;
-        varying vec3  v_col;
-        varying float clip_distance;
+varying vec3  v_view_pos;
+varying vec3  v_view_nv;
+varying vec2  v_uv;
+varying vec3  v_col;
+varying float clip_distance;
 
-        uniform mat4 u_projectionMat44;
-        uniform mat4 u_viewMat44;
-        uniform mat4 u_modelMat44;
-        uniform vec4 u_clipPlane;
+uniform mat4 u_projectionMat44;
+uniform mat4 u_viewMat44;
+uniform mat4 u_modelMat44;
+uniform vec4 u_clipPlane;
 
-        void main()
-        {
-        mat4 mv        = u_viewMat44 * u_modelMat44;
-        v_col          = inCol;
-        v_uv           = inUV;
-        v_view_nv      = normalize(mat3(mv) * inNV);
-        vec4 viewPos   = mv * vec4( inPos, 1.0 );
-        v_view_pos     = viewPos.xyz;
-        gl_Position    = u_projectionMat44 * viewPos;
-        vec4 modelPos  = u_modelMat44 * vec4( inPos, 1.0 );
-        vec4 clipPlane = vec4(normalize(u_clipPlane.xyz), u_clipPlane.w);
-        clip_distance  = dot(modelPos, clipPlane);
-        }
-    </script>
+void main()
+{
+    mat4 mv        = u_viewMat44 * u_modelMat44;
+    v_col          = inCol;
+    v_uv           = inUV;
+    v_view_nv      = normalize(mat3(mv) * inNV);
+    vec4 viewPos   = mv * vec4( inPos, 1.0 );
+    v_view_pos     = viewPos.xyz;
+    gl_Position    = u_projectionMat44 * viewPos;
+    vec4 modelPos  = u_modelMat44 * vec4( inPos, 1.0 );
+    vec4 clipPlane = vec4(normalize(u_clipPlane.xyz), u_clipPlane.w);
+    clip_distance  = dot(modelPos, clipPlane);
+}
+</script>
 
-    <script id="draw-shader-fs" type="x-shader/x-fragment">
-        #extension GL_OES_standard_derivatives : enable
-        precision mediump float;
+<script id="draw-shader-fs" type="x-shader/x-fragment">
+#extension GL_OES_standard_derivatives : enable
+precision mediump float;
 
-        varying vec3  v_view_pos;
-        varying vec3  v_view_nv;
-        varying vec2  v_uv;
-        varying vec3  v_col;
-        varying float clip_distance;
+varying vec3  v_view_pos;
+varying vec3  v_view_nv;
+varying vec2  v_uv;
+varying vec3  v_col;
+varying float clip_distance;
 
-        uniform sampler2D u_texture;
-        uniform sampler2D u_displacement_map;
-        uniform vec2      u_displacement_map_size;
-        uniform float     u_displacement_scale;
-        uniform vec2      u_parallax_quality;
+uniform sampler2D u_texture;
+uniform sampler2D u_displacement_map;
+uniform vec2      u_displacement_map_size;
+uniform float     u_displacement_scale;
+uniform vec2      u_parallax_quality;
 
-        uniform vec3  u_lightDir;
-        uniform float u_ambient;
-        uniform float u_diffuse;
-        uniform float u_specular;
-        uniform float u_shininess;
+uniform vec3  u_lightDir;
+uniform float u_ambient;
+uniform float u_diffuse;
+uniform float u_specular;
+uniform float u_shininess;
 
-        float CalculateHeight( in vec2 texCoords )
-        {
-        float height = texture2D( u_displacement_map, texCoords ).x;
-        return clamp( height, 0.0, 1.0 );
-        }
+float CalculateHeight( in vec2 texCoords )
+{
+    float height = texture2D( u_displacement_map, texCoords ).x;
+    return clamp( height, 0.0, 1.0 );
+}
 
-        //#define NORMAL_MAP_TEXTURE
-        #define NORMAL_MAP_QUALITY 0
+//#define NORMAL_MAP_TEXTURE
+#define NORMAL_MAP_QUALITY 0
 
-        vec4 CalculateNormal( in vec2 texCoords )
-        {
-        #if defined(NORMAL_MAP_TEXTURE)
-        float height = CalculateHeight( texCoords );
-        vec3  tempNV = texture2D( u_normal_map, texCoords ).xyz * 2.0 / 1.0;
-        return vec4( normalize( tempNV ), height );
-        #else
-        vec2 texOffs = 1.0 / u_displacement_map_size;
-        vec2 scale   = u_displacement_scale / texOffs;
-        #if NORMAL_MAP_QUALITY > 0
-        float hx[9];
-        hx[0] = texture2D( u_displacement_map, texCoords.st + texOffs * vec2(-1.0, -1.0) ).r;
-        hx[1] = texture2D( u_displacement_map, texCoords.st + texOffs * vec2( 0.0, -1.0) ).r;
-        hx[2] = texture2D( u_displacement_map, texCoords.st + texOffs * vec2( 1.0, -1.0) ).r;
-        hx[3] = texture2D( u_displacement_map, texCoords.st + texOffs * vec2(-1.0,  0.0) ).r;
-        hx[4] = texture2D( u_displacement_map, texCoords.st ).r;
-        hx[5] = texture2D( u_displacement_map, texCoords.st + texOffs * vec2( 1.0, 0.0) ).r;
-        hx[6] = texture2D( u_displacement_map, texCoords.st + texOffs * vec2(-1.0, 1.0) ).r;
-        hx[7] = texture2D( u_displacement_map, texCoords.st + texOffs * vec2( 0.0, 1.0) ).r;
-        hx[8] = texture2D( u_displacement_map, texCoords.st + texOffs * vec2( 1.0, 1.0) ).r;
-        vec2  deltaH = vec2(hx[0]-hx[2] + 2.0*(hx[3]-hx[5]) + hx[6]-hx[8], hx[0]-hx[6] + 2.0*(hx[1]-hx[7]) + hx[2]-hx[8]);
-        float h_mid  = hx[4];
-        #else
-        float h_mid  = texture2D( u_displacement_map, texCoords.st ).r;
-        float h_xa   = texture2D( u_displacement_map, texCoords.st + texOffs * vec2(-1.0,  0.0) ).r;
-        float h_xb   = texture2D( u_displacement_map, texCoords.st + texOffs * vec2( 1.0,  0.0) ).r;
-        float h_ya   = texture2D( u_displacement_map, texCoords.st + texOffs * vec2( 0.0, -1.0) ).r;
-        float h_yb   = texture2D( u_displacement_map, texCoords.st + texOffs * vec2( 0.0,  1.0) ).r;
-        vec2  deltaH = vec2(h_xa-h_xb, h_ya-h_yb);
-        #endif
-        return vec4( normalize( vec3( deltaH * scale, 1.0 ) ), h_mid );
-        #endif
-        }
+vec4 CalculateNormal( in vec2 texCoords )
+{
+#if defined(NORMAL_MAP_TEXTURE)
+    float height = CalculateHeight( texCoords );
+    vec3  tempNV = texture2D( u_normal_map, texCoords ).xyz * 2.0 / 1.0;
+    return vec4( normalize( tempNV ), height );
+#else
+    vec2 texOffs = 1.0 / u_displacement_map_size;
+    vec2 scale   = 1.0 / texOffs;
+#if NORMAL_MAP_QUALITY > 0
+    float hx[9];
+    hx[0] = texture2D( u_displacement_map, texCoords.st + texOffs * vec2(-1.0, -1.0) ).r;
+    hx[1] = texture2D( u_displacement_map, texCoords.st + texOffs * vec2( 0.0, -1.0) ).r;
+    hx[2] = texture2D( u_displacement_map, texCoords.st + texOffs * vec2( 1.0, -1.0) ).r;
+    hx[3] = texture2D( u_displacement_map, texCoords.st + texOffs * vec2(-1.0,  0.0) ).r;
+    hx[4] = texture2D( u_displacement_map, texCoords.st ).r;
+    hx[5] = texture2D( u_displacement_map, texCoords.st + texOffs * vec2( 1.0, 0.0) ).r;
+    hx[6] = texture2D( u_displacement_map, texCoords.st + texOffs * vec2(-1.0, 1.0) ).r;
+    hx[7] = texture2D( u_displacement_map, texCoords.st + texOffs * vec2( 0.0, 1.0) ).r;
+    hx[8] = texture2D( u_displacement_map, texCoords.st + texOffs * vec2( 1.0, 1.0) ).r;
+    vec2  deltaH = vec2(hx[0]-hx[2] + 2.0*(hx[3]-hx[5]) + hx[6]-hx[8], hx[0]-hx[6] + 2.0*(hx[1]-hx[7]) + hx[2]-hx[8]);
+    float h_mid  = hx[4];
+    #else
+    float h_mid  = texture2D( u_displacement_map, texCoords.st ).r;
+    float h_xa   = texture2D( u_displacement_map, texCoords.st + texOffs * vec2(-1.0,  0.0) ).r;
+    float h_xb   = texture2D( u_displacement_map, texCoords.st + texOffs * vec2( 1.0,  0.0) ).r;
+    float h_ya   = texture2D( u_displacement_map, texCoords.st + texOffs * vec2( 0.0, -1.0) ).r;
+    float h_yb   = texture2D( u_displacement_map, texCoords.st + texOffs * vec2( 0.0,  1.0) ).r;
+    vec2  deltaH = vec2(h_xa-h_xb, h_ya-h_yb);
+#endif
+    return vec4( normalize( vec3( deltaH * scale, 1.0 ) ), h_mid );
+#endif
+}
 
-        void main()
-        {
-        if ( clip_distance < 0.0 )
+void main()
+{
+    if ( clip_distance < 0.0 )
         discard;
 
-        vec3 fac_nv = sign(dot(v_view_nv, -v_view_pos)) * normalize(v_view_nv);
+    float face_sign   = sign(dot(v_view_nv, -v_view_pos));
+    
+    // Followup: Normal Mapping Without Precomputed Tangents [http://www.thetenthplanet.de/archives/1180]
+    vec3  N           = normalize(v_view_nv);
+    vec3  dp1         = dFdx( v_view_pos );
+    vec3  dp2         = dFdy( v_view_pos );
+    vec2  duv1        = dFdx( v_uv );
+    vec2  duv2        = dFdy( v_uv );
+    vec3  dp2perp     = cross(dp2, N);
+    vec3  dp1perp     = cross(N, dp1);
+    vec3  T           = dp2perp * duv1.x + dp1perp * duv2.x;
+    vec3  B           = dp2perp * duv1.y + dp1perp * duv2.y;
+    float invmax      = inversesqrt(max(dot(T, T), dot(B, B)));
+    mat3  tbnMat      = mat3(T * invmax, B * invmax, N * u_displacement_scale);
 
-        // Followup: Normal Mapping Without Precomputed Tangents [http://www.thetenthplanet.de/archives/1180]
-        vec3  N           = fac_nv;
-        vec3  dp1         = dFdx( v_view_pos );
-        vec3  dp2         = dFdy( v_view_pos );
-        vec2  duv1        = dFdx( v_uv );
-        vec2  duv2        = dFdy( v_uv );
-        vec3  dp2perp     = cross(dp2, fac_nv);
-        vec3  dp1perp     = cross(fac_nv, dp1);
-        vec3  T           = dp2perp * duv1.x + dp1perp * duv2.x;
-        vec3  B           = dp2perp * duv1.y + dp1perp * duv2.y;
-        float invmax      = inversesqrt(max(dot(T, T), dot(B, B)));
-        mat3  tbnMat      = mat3(T * invmax, B * invmax, N);
+    vec4 normalVec    = CalculateNormal( v_uv );
+    tbnMat[2]         = face_sign * N / u_displacement_scale;
+    vec3 nvMappedEs   = normalize( tbnMat * normalVec.xyz );
+    
+    vec3 color        = texture2D( u_texture, v_uv.st ).rgb;
 
-        vec4 normalVec    = CalculateNormal( v_uv );
-        vec3 nvMappedEs   = normalize( tbnMat * normalVec.xyz );
-        vec3 color        = texture2D( u_texture, v_uv.st ).rgb;
+    // ambient part
+    vec3 lightCol = u_ambient * color;
 
-        // ambient part
-        vec3 lightCol = u_ambient * color;
+    // diffuse part
+    vec3  normalV = normalize( nvMappedEs );
+    vec3  lightV  = normalize( -u_lightDir );
+    float NdotL   = max( 0.0, dot( normalV, lightV ) );
+    lightCol     += NdotL * u_diffuse * color;
 
-        // diffuse part
-        vec3  normalV = normalize( nvMappedEs );
-        vec3  lightV  = normalize( -u_lightDir );
-        float NdotL   = max( 0.0, dot( normalV, lightV ) );
-        lightCol     += NdotL * u_diffuse * color;
+    // specular part
+    vec3  eyeV      = normalize( -v_view_pos );
+    vec3  halfV     = normalize( eyeV + lightV );
+    float NdotH     = max( 0.0, dot( normalV, halfV ) );
+    float kSpecular = ( u_shininess + 2.0 ) * pow( NdotH, u_shininess ) / ( 2.0 * 3.14159265 );
+    lightCol       += kSpecular * u_specular * color;
 
-        // specular part
-        vec3  eyeV      = normalize( -v_view_pos );
-        vec3  halfV     = normalize( eyeV + lightV );
-        float NdotH     = max( 0.0, dot( normalV, halfV ) );
-        float kSpecular = ( u_shininess + 2.0 ) * pow( NdotH, u_shininess ) / ( 2.0 * 3.14159265 );
-        lightCol       += kSpecular * u_specular * color;
+    gl_FragColor = vec4( lightCol.rgb, 1.0 );
+}
+</script>
 
-        gl_FragColor = vec4( lightCol.rgb, 1.0 );
-        }
-    </script>
+<style>
+html, body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    overflow: hidden;
+}
 
-    <style>
+#gui {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
 
-        html, body {
-            height: 100%;
-            width: 100%;
-            margin: 0;
-            overflow: hidden;
-        }
+#ref-link {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+}
+</style>
 
-        #gui {
-            position: absolute;
-            top: 0;
-            left: 0;
-        }
-
-        #ref-link {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-        }
-    </style>
-
-    <div>
-        <form id="gui" name="inputs">
-            <table>
-                <tr><td> <font color=#CCF><span id="fps_val">0</span></font> </td></tr>
-                <tr>
-                    <td> <font color=#CCF>clipping</font> </td>
-                    <td> <input type="range" id="clip" min="0" max="100" value="100" onchange="changeEventHandler(event);" /></td>
-                </tr>
-            </table>
-        </form>
-    </div>
+<div>
+    <form id="gui" name="inputs">
+        <table>
+            <tr><td> <font color=#CCF><span id="fps_val">0</span></font> </td></tr>
+            <tr>
+                <td> <font color=#CCF>clipping</font> </td>
+                <td> <input type="range" id="clip" min="0" max="100" value="100" onchange="changeEventHandler(event);" /></td>
+            </tr>
+        </table>
+    </form>
+</div>
 
     <!--div id="ref-link">
           <a href="">

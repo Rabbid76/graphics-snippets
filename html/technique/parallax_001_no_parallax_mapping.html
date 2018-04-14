@@ -1,106 +1,106 @@
 <body>
 
-    <script id="draw-shader-vs" type="x-shader/x-vertex">
-        precision highp float;
+<script id="draw-shader-vs" type="x-shader/x-vertex">
+precision highp float;
 
-        attribute vec3 inPos;
-        attribute vec3 inNV;
-        attribute vec2 inUV;
-        attribute vec3 inCol;
+attribute vec3 inPos;
+attribute vec3 inNV;
+attribute vec2 inUV;
+attribute vec3 inCol;
 
-        varying vec3  v_view_pos;
-        varying vec3  v_view_nv;
-        varying vec2  v_uv;
-        varying vec3  v_col;
-        varying float clip_distance;
+varying vec3  v_view_pos;
+varying vec3  v_view_nv;
+varying vec2  v_uv;
+varying vec3  v_col;
+varying float clip_distance;
 
-        uniform mat4 u_projectionMat44;
-        uniform mat4 u_viewMat44;
-        uniform mat4 u_modelMat44;
-        uniform vec4 u_clipPlane;
+uniform mat4 u_projectionMat44;
+uniform mat4 u_viewMat44;
+uniform mat4 u_modelMat44;
+uniform vec4 u_clipPlane;
 
-        void main()
-        {
-        mat4 mv        = u_viewMat44 * u_modelMat44;
-        v_col          = inCol;
-        v_uv           = inUV;
-        v_view_nv      = normalize(mat3(mv) * inNV);
-        vec4 viewPos   = mv * vec4( inPos, 1.0 );
-        v_view_pos     = viewPos.xyz;
-        gl_Position    = u_projectionMat44 * viewPos;
-        vec4 modelPos  = u_modelMat44 * vec4( inPos, 1.0 );
-        vec4 clipPlane = vec4(normalize(u_clipPlane.xyz), u_clipPlane.w);
-        clip_distance  = dot(modelPos, clipPlane);
-        }
-    </script>
+void main()
+{
+    mat4 mv        = u_viewMat44 * u_modelMat44;
+    v_col          = inCol;
+    v_uv           = inUV;
+    v_view_nv      = normalize(mat3(mv) * inNV);
+    vec4 viewPos   = mv * vec4( inPos, 1.0 );
+    v_view_pos     = viewPos.xyz;
+    gl_Position    = u_projectionMat44 * viewPos;
+    vec4 modelPos  = u_modelMat44 * vec4( inPos, 1.0 );
+    vec4 clipPlane = vec4(normalize(u_clipPlane.xyz), u_clipPlane.w);
+    clip_distance  = dot(modelPos, clipPlane);
+}
+</script>
 
-    <script id="draw-shader-fs" type="x-shader/x-fragment">
-        precision mediump float;
+<script id="draw-shader-fs" type="x-shader/x-fragment">
+precision mediump float;
 
-        varying vec3  v_view_pos;
-        varying vec3  v_view_nv;
-        varying vec2  v_uv;
-        varying vec3  v_col;
-        varying float clip_distance;
+varying vec3  v_view_pos;
+varying vec3  v_view_nv;
+varying vec2  v_uv;
+varying vec3  v_col;
+varying float clip_distance;
 
-        uniform sampler2D u_texture;
+uniform sampler2D u_texture;
 
-        uniform vec3  u_lightDir;
-        uniform float u_ambient;
-        uniform float u_diffuse;
-        uniform float u_specular;
-        uniform float u_shininess;
+uniform vec3  u_lightDir;
+uniform float u_ambient;
+uniform float u_diffuse;
+uniform float u_specular;
+uniform float u_shininess;
 
-        void main()
-        {
-        if ( clip_distance < 0.0 )
-        discard;
+void main()
+{
+    if ( clip_distance < 0.0 )
+    discard;
 
-        vec3 fac_nv = sign(dot(v_view_nv, -v_view_pos)) * normalize(v_view_nv);
+    vec3 fac_nv = sign(dot(v_view_nv, -v_view_pos)) * normalize(v_view_nv);
 
-        vec3 color = texture2D( u_texture, v_uv.st ).rgb;
+    vec3 color = texture2D( u_texture, v_uv.st ).rgb;
 
-        // ambient part
-        vec3 lightCol = u_ambient * color;
+    // ambient part
+    vec3 lightCol = u_ambient * color;
 
-        // diffuse part
-        vec3  normalV = normalize( fac_nv );
-        vec3  lightV  = normalize( -u_lightDir );
-        float NdotL   = max( 0.0, dot( normalV, lightV ) );
-        lightCol     += NdotL * u_diffuse * color;
+    // diffuse part
+    vec3  normalV = normalize( fac_nv );
+    vec3  lightV  = normalize( -u_lightDir );
+    float NdotL   = max( 0.0, dot( normalV, lightV ) );
+    lightCol     += NdotL * u_diffuse * color;
 
-        // specular part
-        vec3  eyeV      = normalize( -v_view_pos );
-        vec3  halfV     = normalize( eyeV + lightV );
-        float NdotH     = max( 0.0, dot( normalV, halfV ) );
-        float kSpecular = ( u_shininess + 2.0 ) * pow( NdotH, u_shininess ) / ( 2.0 * 3.14159265 );
-        lightCol       += kSpecular * u_specular * color;
+    // specular part
+    vec3  eyeV      = normalize( -v_view_pos );
+    vec3  halfV     = normalize( eyeV + lightV );
+    float NdotH     = max( 0.0, dot( normalV, halfV ) );
+    float kSpecular = ( u_shininess + 2.0 ) * pow( NdotH, u_shininess ) / ( 2.0 * 3.14159265 );
+    lightCol       += kSpecular * u_specular * color;
 
-        gl_FragColor = vec4( lightCol.rgb, 1.0 );
-        }
-    </script>
+    gl_FragColor = vec4( lightCol.rgb, 1.0 );
+}
+</script>
 
-    <style>
+<style>
 
-        html, body {
-            height: 100%;
-            width: 100%;
-            margin: 0;
-            overflow: hidden;
-        }
+html, body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    overflow: hidden;
+}
 
-        #gui {
-            position: absolute;
-            top: 0;
-            left: 0;
-        }
+#gui {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
 
-        #ref-link {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-        }
-    </style>
+#ref-link {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+}
+</style>
 
 
     <div>
