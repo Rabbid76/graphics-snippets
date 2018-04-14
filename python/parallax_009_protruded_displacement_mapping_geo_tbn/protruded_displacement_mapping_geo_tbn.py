@@ -103,8 +103,8 @@ class MyWindow(window.CameraWindow):
 
         #glEnable(GL_CULL_FACE) # TODO $$$
         glFrontFace(GL_CCW)  # GL_CCW, GL_CW
-        glCullFace(GL_BACK) # GL_FRONT GL_BACK, GL_FRONT_AND_BACK
-        #glCullFace(GL_FRONT) 
+        #glCullFace(GL_BACK) # GL_FRONT GL_BACK, GL_FRONT_AND_BACK
+        glCullFace(GL_FRONT) 
         
         # set up attributes and shader program
         glEnable( GL_DEPTH_TEST )
@@ -183,8 +183,8 @@ cubeVAO.DefineIB( cubeIndices )
 progDraw = shader.ShaderProgram( 
     [ ('resource/shader/displacement_map.vert', GL_VERTEX_SHADER),
       ('resource/shader/displacement_map.geom', GL_GEOMETRY_SHADER),
-      ('resource/shader/displacement_map.frag', GL_FRAGMENT_SHADER) ] ) 
-      #('resource/shader/displacement_map_debug.frag', GL_FRAGMENT_SHADER) ] ) 
+      #('resource/shader/displacement_map.frag', GL_FRAGMENT_SHADER) ] ) 
+      ('resource/shader/displacement_map_debug.frag', GL_FRAGMENT_SHADER) ] ) 
 
 #texture objects
 textureObj         = CreateTextureFromFile('../../resource/texture/example_1_texture.bmp', 0, False)
