@@ -1,0 +1,218 @@
+#version 400
+
+//#define NORMAL_MAP_TEXTURE
+#define NORMAL_MAP_QUALITY 1
+
+in TGeometryData
+{
+    vec3 pos;
+    vec3 nv;
+    vec3 tv;
+    vec3 bv;
+    vec3 col;
+    vec3 uvh;
+} in_data;
+
+out vec4 fragColor;
+
+uniform vec3  u_lightDir;
+uniform float u_ambient;
+uniform float u_diffuse;
+uniform float u_specular;
+uniform float u_shininess;
+
+uniform sampler2D u_texture;
+uniform sampler2D u_displacement_map;
+uniform float     u_displacement_scale;
+uniform vec2      u_parallax_quality;
+
+#if defined(NORMAL_MAP_TEXTURE)
+uniform sampler2D u_normal_map;
+#endif
+
+float CalculateHeight( in vec2 texCoords )
+{
+    float height = texture( u_displacement_map, texCoords ).x;
+    return clamp( height, 0.0, 1.0 );
+}
+
+vec2 GetHeightAndCone( in vec2 texCoords )
+{
+    vec2 h_and_c = texture( u_displacement_map, texCoords ).rg;
+    return clamp( h_and_c, 0.0, 1.0 );
+}
+
+vec4 CalculateNormal( in vec2 texCoords )
+{
+#if defined(NORMAL_MAP_TEXTURE)
+    float height = GetHeight( texCoords );
+    vec3  tempNV = texture( u_normal_map, texCoords ).xyz * 2.0 / 1.0;
+    return vec4( normalize( tempNV ), height );
+#else
+    vec2 texOffs = 1.0 / textureSize( u_displacement_map, 0 ).xy;
+    vec2 scale   = 1.0 / texOffs; // 1.0 / u_displacement_scale
+#if NORMAL_MAP_QUALITY > 1
+    float hx[9];
+    hx[0] = texture( u_displacement_map, texCoords.st + texOffs * vec2(-1.0, -1.0) ).r;
+    hx[1] = texture( u_displacement_map, texCoords.st + texOffs * vec2( 0.0, -1.0) ).r;
+    hx[2] = texture( u_displacement_map, texCoords.st + texOffs * vec2( 1.0, -1.0) ).r;
+    hx[3] = texture( u_displacement_map, texCoords.st + texOffs * vec2(-1.0,  0.0) ).r;
+    hx[4] = texture( u_displacement_map, texCoords.st ).r;
+    hx[5] = texture( u_displacement_map, texCoords.st + texOffs * vec2( 1.0, 0.0) ).r;
+    hx[6] = texture( u_displacement_map, texCoords.st + texOffs * vec2(-1.0, 1.0) ).r;
+    hx[7] = texture( u_displacement_map, texCoords.st + texOffs * vec2( 0.0, 1.0) ).r;
+    hx[8] = texture( u_displacement_map, texCoords.st + texOffs * vec2( 1.0, 1.0) ).r;
+    vec2  deltaH = vec2(hx[0]-hx[2] + 2.0*(hx[3]-hx[5]) + hx[6]-hx[8], hx[0]-hx[6] + 2.0*(hx[1]-hx[7]) + hx[2]-hx[8]); 
+    float h_mid  = hx[4];
+#elif NORMAL_MAP_QUALITY > 0
+    float h_mid  = texture( u_displacement_map, texCoords.st ).r;
+    float h_xa   = texture( u_displacement_map, texCoords.st + texOffs * vec2(-1.0,  0.0) ).r;
+    float h_xb   = texture( u_displacement_map, texCoords.st + texOffs * vec2( 1.0,  0.0) ).r;
+    float h_ya   = texture( u_displacement_map, texCoords.st + texOffs * vec2( 0.0, -1.0) ).r;
+    float h_yb   = texture( u_displacement_map, texCoords.st + texOffs * vec2( 0.0,  1.0) ).r;
+    vec2  deltaH = vec2(h_xa-h_xb, h_ya-h_yb); 
+#else
+    vec4  heights = textureGather( u_displacement_map, texCoords, 0 );
+    vec2  deltaH  = vec2(dot(heights, vec4(1.0, -1.0, -1.0, 1.0)), dot(heights, vec4(-1.0, -1.0, 1.0, 1.0)));
+    float h_mid   = heights.w; 
+#endif
+    return vec4( normalize( vec3( deltaH * scale, 1.0 ) ), h_mid );
+#endif 
+}
+
+vec3 Parallax( in vec3 texDir3D, in float cosDir, in vec3 texCoord )
+{   
+    vec2  quality_range = u_parallax_quality;
+   
+    float quality         = mix( quality_range.x, quality_range.y, 1.0 - pow(abs(normalize(texDir3D).z),2.0) );
+    float numSteps        = clamp( quality * 50.0, 1.0, 50.0 );
+    int   numBinarySteps  = int( clamp( quality * 10.0, 1.0, 7.0 ) );
+    
+    vec2  texDir          = texDir3D.xy / abs(texDir3D.z); // (z is negative) the direction vector points downwards int tangent-space
+    //float z_sign          = -sign(cosDir); //z_sign = 1.0;
+    //float down            = step(0.0, z_sign);
+    
+    float mapHeight       = 1.0;
+    float bestBumpHeight  = mapHeight;
+    vec2  texC            = texCoord.st; 
+    vec2  texStep         = texDir;
+    if ( cosDir < 0.0 )
+    //if ( true )
+    {
+        float base_height     = texCoord.p;
+        texC                 += texDir * base_height;
+        float bumpHeightStep  = 1.0 / numSteps;
+        
+        for ( int i = 0; i < int( numSteps ); ++ i )
+        {
+            mapHeight = CalculateHeight( texC.xy - bestBumpHeight * texStep.xy );
+            if ( mapHeight >= bestBumpHeight )
+                break;
+            bestBumpHeight -= bumpHeightStep;   
+        }
+        bestBumpHeight += bumpHeightStep;
+        for ( int i = 0; i < numBinarySteps; ++ i )
+        {
+            bumpHeightStep *= 0.5;
+            bestBumpHeight -= bumpHeightStep;
+            mapHeight       = CalculateHeight( texC.xy - bestBumpHeight * texStep.xy );
+            bestBumpHeight += ( bestBumpHeight < mapHeight ) ? bumpHeightStep : 0.0;
+        }
+        bestBumpHeight -= bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / bumpHeightStep, 0.0, 1.0 );
+        mapHeight       = bestBumpHeight;
+        texC           -= mapHeight * texStep;
+    }
+    else
+    {
+        float base_height     = texCoord.p;
+        texC                 += texDir * (1.0 - base_height);
+        float bumpHeightStep  = 1.0 / numSteps;
+        
+        for ( int i = 0; i < int( numSteps ); ++ i )
+        {
+            mapHeight = CalculateHeight( texC.xy - bestBumpHeight * texStep.xy );
+            if ( mapHeight >= bestBumpHeight )
+                break;
+            bestBumpHeight -= bumpHeightStep;   
+        }
+        bestBumpHeight += bumpHeightStep;
+        /*
+        for ( int i = 0; i < numBinarySteps; ++ i )
+        {
+            bumpHeightStep *= 0.5;
+            bestBumpHeight -= bumpHeightStep;
+            mapHeight       = CalculateHeight( texC.xy - bestBumpHeight * texStep.xy );
+            bestBumpHeight += ( bestBumpHeight < mapHeight ) ? bumpHeightStep : 0.0;
+        }
+        */
+        //bestBumpHeight -= bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / bumpHeightStep, 0.0, 1.0 );
+        mapHeight       = bestBumpHeight;
+        texC           -= mapHeight * texStep;
+    }
+    
+   
+    return vec3( texC.xy, mapHeight );
+}
+
+void main()
+{
+    vec3 objPosEs    = in_data.pos;
+    vec3 objNormalEs = in_data.nv;
+    vec3 texCoords   = in_data.uvh.stp;
+    vec3 normalEs    = ( gl_FrontFacing ? 1.0 : -1.0 ) * normalize( objNormalEs );
+    
+    //vec3  tangentEs    = normalize( tangentVec - normalEs * dot(tangentVec, normalEs ) );
+    //mat3  tbnMat       = mat3( tangentEs, binormalSign * cross( normalEs, tangentEs ), normalEs );
+
+    // tangent space
+    // Followup: Normal Mapping Without Precomputed Tangents [http://www.thetenthplanet.de/archives/1180]
+    vec3  N           = objNormalEs;
+    vec3  T           = in_data.tv;
+    vec3  B           = in_data.bv;
+    float invmax      = inversesqrt(max(dot(T, T), dot(B, B)));
+    mat3  tbnMat      = mat3(T * invmax, B * invmax, N * invmax);
+   
+    vec3  texDir3D     = normalize( inverse( tbnMat ) * objPosEs );
+    float cosDir       = texDir3D.z;
+    vec3  newTexCoords = Parallax( texDir3D, cosDir, texCoords.stp );
+
+    // TODO $$$ calcualte depth by adding length( texDir3D.xy / texDir3D.z ) * newTexCoords.z
+
+    vec2  range_vec  = step(vec2(0.0), newTexCoords.st) * step(newTexCoords.st, vec2(1.0));
+    float range_test = range_vec.x * range_vec.y;
+    //if ( texCoords.p > 0.0 && (range_test == 0.0 || newTexCoords.z > 1.0))
+    if ( texCoords.p > 0.0 && range_test == 0.0)
+      discard;
+    //if ( cosDir > 0.0 )
+    //  discard;
+
+    texCoords.st       = newTexCoords.xy;
+    
+    vec4  normalVec    = CalculateNormal( texCoords.st ); 
+    vec3  nvMappedEs   = normalize( tbnMat * normalVec.xyz );
+
+    //vec3 color = vertCol;
+    vec3 color = texture( u_texture, texCoords.st ).rgb;
+
+    // ambient part
+    vec3 lightCol = u_ambient * color;
+
+    // diffuse part
+    vec3  normalV = normalize( nvMappedEs );
+    vec3  lightV  = normalize( -u_lightDir );
+    float NdotL   = max( 0.0, dot( normalV, lightV ) );
+    lightCol     += NdotL * u_diffuse * color;
+    
+    // specular part
+    vec3  eyeV      = normalize( -objPosEs );
+    vec3  halfV     = normalize( eyeV + lightV );
+    float NdotH     = max( 0.0, dot( normalV, halfV ) );
+    float kSpecular = ( u_shininess + 2.0 ) * pow( NdotH, u_shininess ) / ( 2.0 * 3.14159265 );
+    lightCol       += kSpecular * u_specular * color;
+
+    fragColor = vec4( lightCol.rgb, 1.0 );
+
+    // debug
+    float gray = dot(lightCol.rgb, vec3(0.2126, 0.7152, 0.0722));
+    fragColor = vec4( vec3( step(0.0, cosDir), gray, step(0.0, -cosDir) ), 1.0 );
+}
