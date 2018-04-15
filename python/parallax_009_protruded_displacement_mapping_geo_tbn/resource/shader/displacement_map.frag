@@ -91,8 +91,7 @@ vec3 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
     int   numBinarySteps = int( clamp( quality * 10.0, 1.0, 7.0 ) );
     
     // intersection direction and start height
-    vec2  texDir         = texDir3D.xy / abs(texDir3D.z); // (z is negative) the direction vector points downwards int tangent-space
-    vec2  texStep        = texDir;
+    vec2  texStep        = texDir3D.xy / abs(texDir3D.z); // (z is negative) the direction vector points downwards int tangent-space
     float base_height    = texCoord.p;
 
     // intersection direction: -1 for downwards or 1 for upwards
@@ -106,7 +105,8 @@ vec3 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
     float back_face      = step(0.0, -inverse_dir); 
 
     // start texture coordinates
-    vec2  texC           = texCoord.st + -isect_dir * texStep.xy * base_height + back_face * texStep.xy;
+    float start_height   = -isect_dir * base_height + back_face; // back_face is either 1.0 or 0.0  
+    vec2  texC           = texCoord.st + start_height * texStep.xy;
 
     // change of the height per step
     float bumpHeightStep = isect_dir / numSteps;
@@ -136,10 +136,10 @@ vec3 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
     bestBumpHeight += bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / abs(bumpHeightStep), 0.0, 1.0 );
 
     // set displaced texture coordiante and intersection height
+    texC      += isect_dir * bestBumpHeight * texStep.xy;
     mapHeight  = bestBumpHeight;
-    texC      += isect_dir * mapHeight * texStep;
    
-    return vec3( texC.xy, mapHeight );
+    return vec3(texC.xy, mapHeight);
 }
 
 void main()
