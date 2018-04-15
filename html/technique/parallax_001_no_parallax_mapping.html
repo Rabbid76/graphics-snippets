@@ -58,6 +58,7 @@ void main()
 
     vec3 fac_nv = sign(dot(v_view_nv, -v_view_pos)) * normalize(v_view_nv);
 
+    //vec3 color = v_col;
     vec3 color = texture2D( u_texture, v_uv.st ).rgb;
 
     // ambient part

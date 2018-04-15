@@ -42,7 +42,7 @@ vec4 CalculateNormal( in vec2 texCoords )
     return vec4( normalize( tempNV ), height );
 #else
     vec2 texOffs = 1.0 / textureSize( u_displacement_map, 0 ).xy;
-    vec2 scale   = u_displacement_scale / texOffs;
+    vec2 scale   = 1.0 / texOffs;
 #if NORMAL_MAP_QUALITY > 1
     float hx[9];
     hx[0] = texture( u_displacement_map, texCoords.st + texOffs * vec2(-1.0, -1.0) ).r;
@@ -206,10 +206,10 @@ float intersect_cone_exact(in vec2 dp, in vec3 ds)
 }
 
 // Parallax Occlusion Mapping in GLSL [http://sunandblackcat.com/tipFullView.php?topicid=28]
-vec3 ConeStep( in vec3 texDir3D, in vec2 texCoord )
+vec3 ConeStep( in float frontFace, in vec3 texDir3D, in vec2 texCoord )
 {   
   float mapHeight;
-  float maxBumpHeight = u_displacement_scale;
+  float maxBumpHeight = 1.0;
   vec2  quality_range = u_parallax_quality;
   if ( maxBumpHeight > 0.0 && texDir3D.z < 0.9994 )
   {
@@ -267,25 +267,28 @@ void main()
     //mat3  tbnMat       = mat3( sign( texDet ) * tangentEs, cross( normalEs, tangentEs ), normalEs );
 
     // Followup: Normal Mapping Without Precomputed Tangents [http://www.thetenthplanet.de/archives/1180]
-    vec3  N           = normalEs;
+    vec3  N           = normalize( objNormalEs );
     vec3  dp1         = dFdx( objPosEs );
     vec3  dp2         = dFdy( objPosEs );
     vec2  duv1        = dFdx( texCoords );
     vec2  duv2        = dFdy( texCoords );
-    vec3  dp2perp     = cross(dp2, normalEs); 
-    vec3  dp1perp     = cross(normalEs, dp1);
+    vec3  dp2perp     = cross(dp2, N); 
+    vec3  dp1perp     = cross(N, dp1);
     vec3  T           = dp2perp * duv1.x + dp1perp * duv2.x;
     vec3  B           = dp2perp * duv1.y + dp1perp * duv2.y;   
     float invmax      = inversesqrt(max(dot(T, T), dot(B, B)));
-    mat3  tbnMat      = mat3(T * invmax, B * invmax, N);
+    mat3  tbnMat      = mat3(T * invmax, B * invmax, N * u_displacement_scale);
    
     vec3  texDir3D     = normalize( inverse( tbnMat ) * objPosEs );
-    vec3  newTexCoords = ConeStep( texDir3D, texCoords.st );
+    float frontFace    = gl_FrontFacing ? 1.0 : -1.0; // TODO $$$ sign(dot(N,objPosEs));
+    vec3  newTexCoords = ConeStep( frontFace, texDir3D, texCoords.st );
     texCoords.st       = newTexCoords.xy;
+    
     vec4  normalVec    = CalculateNormal( texCoords ); 
+    tbnMat[2].xyz      = (gl_FrontFacing ? 1.0 : -1.0) * N / u_displacement_scale;
     vec3  nvMappedEs   = normalize( tbnMat * normalVec.xyz );
 
-    //vec3 color = vertCol;
+    //vec3 color = in_data.col;
     vec3 color = texture( u_texture, texCoords.st ).rgb;
 
     // ambient part

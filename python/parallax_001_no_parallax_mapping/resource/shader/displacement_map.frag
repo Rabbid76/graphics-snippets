@@ -35,7 +35,7 @@ void main()
     vec2  texCoords    = in_data.uv.st;
     vec3  normalEs     = ( gl_FrontFacing ? 1.0 : -1.0 ) * normalize( objNormalEs );
     
-    //vec3 color = vertCol;
+    //vec3 color = in_data.col;
     vec3 color = texture( u_texture, texCoords.st ).rgb;
 
     // ambient part

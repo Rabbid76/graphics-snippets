@@ -148,7 +148,7 @@ void main()
     tbnMat[2].xyz      = (gl_FrontFacing ? 1.0 : -1.0) * N / u_displacement_scale;
     vec3  nvMappedEs   = normalize( tbnMat * normalVec.xyz );
 
-    //vec3 color = vertCol;
+    //vec3 color = in_data.col;
     vec3 color = texture( u_texture, texCoords.st ).rgb;
 
     // ambient part

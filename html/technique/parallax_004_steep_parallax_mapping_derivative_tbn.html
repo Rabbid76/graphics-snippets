@@ -180,6 +180,7 @@ void main()
     tbnMat[2]           = face_sign * N / u_displacement_scale;
     vec3  nvMappedEs    = normalize( tbnMat * normalVec.xyz );
     
+    //vec3  color         = v_col;
     vec3  color         = texture2D( u_texture, texCoords.st ).rgb;
 
     // ambient part
