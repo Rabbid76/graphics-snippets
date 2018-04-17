@@ -1,5 +1,5 @@
 
-# Normal, Parallax and Relief mapping
+# Normal, Parallax and Relief mapping (under construction)
 
 
 Textured cube<br/>
@@ -26,6 +26,8 @@ Cone Step Mapping<br/>
 [![no_parallax](image/parallax_mapping/parallax_006_cone_step_mapping_derivative_tbn_1.png)][6]
 [![no_parallax](image/parallax_mapping/parallax_006_cone_step_mapping_derivative_tbn_2.png)][6]
 
+
+Compare the differnt techniques in an **[Example][7]**
 
 <br/><hr/>
 ## Displacement map (Height map)
@@ -514,3 +516,4 @@ This algorithm should well fit with cone step mapping.
   [4]: https://rabbid76.github.io/graphics-snippets/html/technique/parallax_004_steep_parallax_mapping_derivative_tbn.html
   [5]: https://rabbid76.github.io/graphics-snippets/html/technique/parallax_005_parallax_occlusion_mapping_derivative_tbn.html
   [6]: https://rabbid76.github.io/graphics-snippets/html/technique/parallax_006_cone_step_mapping_derivative_tbn.html
+  [7]: https://rabbid76.github.io/graphics-snippets/html/technique/parallax_mapping.html

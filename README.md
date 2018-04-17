@@ -22,6 +22,8 @@
 
 [Blinn-Phong reflection model](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/light_blinn_phong.md)
 
+[Normal, Parallax and Relief mapping (under construction)](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/normal_parallax_relief.md)
+
 
 <br/>
 
