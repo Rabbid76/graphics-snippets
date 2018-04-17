@@ -21,15 +21,15 @@ uniform vec4 u_clipPlane;
 
 void main()
 {
-    mat4 mv        = u_viewMat44 * u_modelMat44;
-    v_col          = inCol;
-    v_uv           = inUV;
-    v_view_nv      = normalize(mat3(mv) * inNV);
-    vec4 viewPos   = mv * vec4( inPos, 1.0 );
-    v_view_pos     = viewPos.xyz;
-    gl_Position    = u_projectionMat44 * viewPos;
-    vec4 modelPos  = u_modelMat44 * vec4( inPos, 1.0 );
-    vec4 clipPlane = vec4(normalize(u_clipPlane.xyz), u_clipPlane.w);
+    mat4 mv         = u_viewMat44 * u_modelMat44;
+    v_col           = inCol;
+    v_uv            = inUV;
+    v_view_nv       = normalize(mat3(mv) * inNV);
+    vec4 viewPos    = mv * vec4( inPos, 1.0 );
+    v_view_pos      = viewPos.xyz;
+    gl_Position     = u_projectionMat44 * viewPos;
+    vec4 modelPos   = u_modelMat44 * vec4( inPos, 1.0 );
+    vec4 clipPlane  = vec4(normalize(u_clipPlane.xyz), u_clipPlane.w);
     clip_distance  = dot(modelPos, clipPlane);
 }
 </script>
@@ -290,7 +290,7 @@ void main()
         vec4  normalVec = CalculateNormal( texCoords );
         tbnMat[2]       = parallax_sign * N;
         nvMappedEs      = normalize( tbnMat * normalVec.xyz ); 
-    }   
+    }
     
     //vec3  color         = v_col;
     vec3  color         = texture2D( u_texture, texCoords.st ).rgb;
@@ -664,8 +664,10 @@ html, body {
                     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, linear ? gl.LINEAR : gl.NEAREST);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, linear ? gl.LINEAR : gl.NEAREST);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+                var wrap = gl.CLAMP_TO_EDGE;
+                //var wrap = gl.REPEAT;
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap);
                 if (texture.unit == height_map_unit)
                     height_map_size = [texture.image.width, texture.image.height];
                 return texture;
