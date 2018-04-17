@@ -145,7 +145,7 @@ void main()
     vec3  texDir3D      = normalize( mat3_inverse( tbnMat ) * v_view_pos );
     //vec2  texCoordOffst = parallaxScale * mapHeight * texDir3D.xy / texDir3D.z;
     vec2  texCoordOffst = parallaxScale * mapHeight * texDir3D.xy;
-    vec2  newTexCoords  = texCoords.st + texCoordOffst.xy;
+    vec2  newTexCoords  = texCoords.st + u_displacement_scale * texCoordOffst.xy;
     texCoords.st        = newTexCoords.xy;
 
     vec4 normalVec      = CalculateNormal( v_uv );

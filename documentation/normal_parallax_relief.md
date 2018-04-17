@@ -141,23 +141,24 @@ TODO
         vec3  normalEs     = ( gl_FrontFacing ? 1.0 : -1.0 ) * normalize( objNormalEs );
         
         // (co-)tangent space
-        vec3  N           = normalEs;
-        vec3  dp1         = dFdx( objPosEs );
-        vec3  dp2         = dFdy( objPosEs );
-        vec2  duv1        = dFdx( texCoords );
-        vec2  duv2        = dFdy( texCoords );
-        vec3  dp2perp     = cross(dp2, normalEs); 
-        vec3  dp1perp     = cross(normalEs, dp1);
-        vec3  T           = dp2perp * duv1.x + dp1perp * duv2.x;
-        vec3  B           = dp2perp * duv1.y + dp1perp * duv2.y;   
-        float invmax      = inversesqrt(max(dot(T, T), dot(B, B)));
-        mat3  tbnMat      = mat3(T * invmax, B * invmax, N);
+        vec3  N            = normalize( objNormalEs );
+        vec3  dp1          = dFdx( objPosEs );
+        vec3  dp2          = dFdy( objPosEs );
+        vec2  duv1         = dFdx( texCoords );
+        vec2  duv2         = dFdy( texCoords );
+        vec3  dp2perp      = cross(dp2, N); 
+        vec3  dp1perp      = cross(N, dp1);
+        vec3  T            = dp2perp * duv1.x + dp1perp * duv2.x;
+        vec3  B            = dp2perp * duv1.y + dp1perp * duv2.y;   
+        float invmax       = inversesqrt(max(dot(T, T), dot(B, B)));
+        mat3  tbnMat       = mat3(T * invmax, B * invmax, N * u_displacement_scale);
       
         // parallax mapping
         vec3  texDir3D     = normalize( inverse( tbnMat ) * objPosEs );
-        vec3  newTexCoords = NoParallax( texDir3D, texCoords.st );
+        vec3  newTexCoords = abs(u_displacement_scale) < 0.001 ? vec3(texCoords.st, 0.0) : NoParallax( texDir3D, texCoords.st );
         texCoords.st       = newTexCoords.xy;
         vec4  normalVec    = CalculateNormal( texCoords ); 
+        tbnMat[2].xyz     *= (gl_FrontFacing ? 1.0 : -1.0) * N / u_displacement_scale;
         vec3  nvMappedEs   = normalize( tbnMat * normalVec.xyz );
 
         // texture color
@@ -188,9 +189,10 @@ TODO
 
     vec3 Parallax( in vec3 texDir3D, in vec2 texCoord )
     {
-        float parallaxScale = 0.05;
+        float parallaxScale = 0.1;
         float mapHeight     = CalculateHeight( texCoord.st );
-        vec2  texCoordOffst = parallaxScale * mapHeight * texDir3D.xy / texDir3D.z;
+        //vec2  texCoordOffst = parallaxScale * mapHeight * texDir3D.xy / texDir3D.z;
+        vec2  texCoordOffst = -parallaxScale * mapHeight * texDir3D.xy;
         return vec3(texCoord.xy + texCoordOffst.xy, mapHeight);
     }
 
@@ -217,35 +219,31 @@ The absolute distance changes proportionally with the reciprocal scaling factor 
 
     vec3 Parallax( in vec3 texDir3D, in vec2 texCoord )
     {   
-        float mapHeight;
-        float maxBumpHeight = u_displacement_scale;
-        vec2  quality_range = u_parallax_quality;
-        if ( maxBumpHeight > 0.0 && texDir3D.z < 0.9994 )
+        vec2  quality_range   = u_parallax_quality;
+        float quality         = mix( quality_range.x, quality_range.y, 1.0 - pow(abs(normalize(texDir3D).z),2.0) );
+        float numSteps        = clamp( quality * 50.0, 1.0, 50.0 );
+        int   numBinarySteps  = int( clamp( quality * 10.0, 1.0, 7.0 ) );
+        
+        float surf_sign       = frontFace;
+        float back_face       = step(0.0, -surf_sign); 
+        vec2  texStep         = surf_sign * texDir3D.xy / abs(texDir3D.z);
+        vec2  texC            = texCoord.st + surf_sign * texStep + back_face * texStep.xy; 
+        float mapHeight       = 1.0;
+        float bestBumpHeight  = mapHeight;
+        float bumpHeightStep  = 1.0 / numSteps;
+        
+        for ( int i = 0; i < int( numSteps ); ++ i )
         {
-            float quality         = mix( quality_range.x, quality_range.y , gl_FragCoord.z * gl_FragCoord.z );
-            float numSteps        = clamp( quality * mix( 5.0, 10.0 * clamp( 1.0 + 30.0 * maxBumpHeight, 1.0, 4.0 ), 1.0 - abs(texDir3D.z) ), 1.0, 50.0 );
-            int   numBinarySteps  = int( clamp( quality * 5.1, 1.0, 7.0 ) );
-            vec2  texDir          = -texDir3D.xy / texDir3D.z;
-            //texCoord.xy          += texDir * maxBumpHeight / 2.0;
-            texCoord.xy          += texDir * maxBumpHeight;
-            vec2  texStep         = texDir * maxBumpHeight;
-            float bumpHeightStep  = 1.0 / numSteps;
-            mapHeight             = 1.0;
-            float bestBumpHeight  = 1.0;
-            for ( int i = 0; i < int( numSteps ); ++ i )
-            {
-                mapHeight = CalculateHeight( texCoord.xy - bestBumpHeight * texStep.xy );
-                if ( mapHeight >= bestBumpHeight )
-                    break;
-                bestBumpHeight -= bumpHeightStep;
-            }
-            bestBumpHeight += bumpHeightStep * (1.0 - clamp( ( bestBumpHeight - mapHeight ) / bumpHeightStep, 0.0, 1.0 ));
-            mapHeight       = bestBumpHeight;
-            texCoord       -= mapHeight * texStep;
+            mapHeight = back_face + surf_sign * CalculateHeight( texC.xy - bestBumpHeight * texStep.xy );
+            if ( mapHeight >= bestBumpHeight )
+                break;
+            bestBumpHeight -= bumpHeightStep;   
         }
-        else 
-            mapHeight = CalculateHeight( texCoord.xy );
-        return vec3( texCoord.xy, mapHeight );
+        bestBumpHeight -= bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / bumpHeightStep, 0.0, 1.0 );
+        mapHeight       = bestBumpHeight;
+        texC           -= mapHeight * texStep;
+            
+        return vec3( texC.xy, mapHeight );
     }
 
 
@@ -254,43 +252,39 @@ The absolute distance changes proportionally with the reciprocal scaling factor 
 
     vec3 ParallaxOcclusion( in vec3 texDir3D, in vec2 texCoord )
     {   
-        float mapHeight;
-        float maxBumpHeight = u_displacement_scale;
-        vec2  quality_range = u_parallax_quality;
-        if ( maxBumpHeight > 0.0 && texDir3D.z < 0.9994 )
+        vec2  quality_range   = u_parallax_quality;
+        float quality         = mix( quality_range.x, quality_range.y, 1.0 - pow(abs(normalize(texDir3D).z),2.0) );
+        float numSteps        = clamp( quality * 50.0, 1.0, 50.0 );
+        int   numBinarySteps  = int( clamp( quality * 10.0, 1.0, 7.0 ) );
+        
+        float surf_sign       = frontFace;
+        float back_face       = step(0.0, -surf_sign); 
+        vec2  texStep         = surf_sign * texDir3D.xy / abs(texDir3D.z); // (z is negative) the direction vector points downwards int tangent-space
+        vec2  texC            = texCoord.st + surf_sign * texStep + back_face * texStep.xy; 
+        float mapHeight       = 1.0;
+        float bestBumpHeight  = mapHeight;
+        float bumpHeightStep  = 1.0 / numSteps;
+
+        for ( int i = 0; i < int( numSteps ); ++ i )
         {
-            float quality         = mix( quality_range.x, quality_range.y , gl_FragCoord.z * gl_FragCoord.z );
-            float numSteps        = clamp( quality * mix( 5.0, 10.0 * clamp( 1.0 + 30.0 * maxBumpHeight, 1.0, 4.0 ), 1.0 - abs(texDir3D.z) ), 1.0, 50.0 );
-            int   numBinarySteps  = int( clamp( quality * 5.1, 1.0, 7.0 ) );
-            vec2  texDir          = -texDir3D.xy / texDir3D.z;
-            //texCoord.xy          += texDir * maxBumpHeight / 2.0;
-            texCoord.xy          += texDir * maxBumpHeight;
-            vec2  texStep         = texDir * maxBumpHeight;
-            float bumpHeightStep  = 1.0 / numSteps;
-            mapHeight             = 1.0;
-            float bestBumpHeight  = 1.0;
-            for ( int i = 0; i < int( numSteps ); ++ i )
-            {
-                mapHeight = CalculateHeight( texCoord.xy - bestBumpHeight * texStep.xy );
-                if ( mapHeight >= bestBumpHeight )
-                    break;
-                bestBumpHeight -= bumpHeightStep;
-            }
-            bestBumpHeight += bumpHeightStep;
-            for ( int i = 0; i < numBinarySteps; ++ i )
-            {
-                bumpHeightStep *= 0.5;
-                bestBumpHeight -= bumpHeightStep;
-                mapHeight       = CalculateHeight( texCoord.xy - bestBumpHeight * texStep.xy );
-                bestBumpHeight += ( bestBumpHeight < mapHeight ) ? bumpHeightStep : 0.0;
-            }
-            bestBumpHeight -= bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / bumpHeightStep, 0.0, 1.0 );
-            mapHeight       = bestBumpHeight;
-            texCoord       -= mapHeight * texStep;
+            mapHeight = back_face + surf_sign * CalculateHeight( texC.xy - bestBumpHeight * texStep.xy );
+            if ( mapHeight >= bestBumpHeight )
+                break;
+            bestBumpHeight -= bumpHeightStep;   
         }
-        else 
-            mapHeight = CalculateHeight( texCoord.xy );
-        return vec3( texCoord.xy, mapHeight );
+        bestBumpHeight += bumpHeightStep;
+        for ( int i = 0; i < numBinarySteps; ++ i )
+        {
+            bumpHeightStep *= 0.5;
+            bestBumpHeight -= bumpHeightStep;
+            mapHeight       = back_face + surf_sign * CalculateHeight( texC.xy - bestBumpHeight * texStep.xy );
+            bestBumpHeight += ( bestBumpHeight < mapHeight ) ? bumpHeightStep : 0.0;
+        }
+        bestBumpHeight -= bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / bumpHeightStep, 0.0, 1.0 );
+        mapHeight       = bestBumpHeight;
+        texC           -= mapHeight * texStep;
+            
+        return vec3( texC.xy, mapHeight );
     }
 
 
@@ -323,41 +317,39 @@ The absolute distance changes proportionally with the reciprocal scaling factor 
 
     vec3 ConeStep( in vec3 texDir3D, in vec2 texCoord )
     {   
-        float mapHeight;
-        float maxBumpHeight = u_displacement_scale;
+        float maxBumpHeight = 1.0;
         vec2  quality_range = u_parallax_quality;
-        if ( maxBumpHeight > 0.0 && texDir3D.z < 0.9994 )
+    
+        vec2 R = normalize(vec2(length(texDir3D.xy), texDir3D.z)); 
+        vec2 P = R * maxBumpHeight / texDir3D.z; 
+
+        vec2 tex_size = textureSize( u_displacement_map, 0 ).xy;
+        vec2 min_tex_step = normalize(texDir3D.xy) / tex_size;
+        float min_step = length(min_tex_step) * 1.0/R.x;
+
+        float t = 0.0;
+        const int max_no_of_steps = 30;
+        for ( int i = 0; i < max_no_of_steps; ++ i )
         {
-            vec2 R = normalize(vec2(length(texDir3D.xy), texDir3D.z)); 
-            vec2 P = R * maxBumpHeight / texDir3D.z; 
+            vec3 sample_pt = vec3(texCoord.xy, maxBumpHeight) + texDir3D * t;
 
-            vec2 tex_size = textureSize( u_displacement_map, 0 ).xy;
-            vec2 min_tex_step = normalize(texDir3D.xy) / tex_size;
-            float min_step = length(min_tex_step) * 1.0/R.x;
+            vec2 h_and_c = GetHeightAndCone( sample_pt.xy );
+            float h = h_and_c.x * maxBumpHeight;
+            float c = h_and_c.y * h_and_c.y / maxBumpHeight;
+
+            vec2 C = P + R * t;
+            if ( C.y <= h )
+            break;
             
-            float t = 0.0;
-            const int max_no_of_steps = 10;
-            for ( int i = 0; i < max_no_of_steps; ++ i )
-            {
-                vec3 sample_pt = vec3(texCoord.xy, maxBumpHeight) + texDir3D * t;
-
-                vec2 h_and_c = GetHeightAndCone( sample_pt.xy );
-                float h = h_and_c.x * maxBumpHeight;
-                float c = h_and_c.y * h_and_c.y / maxBumpHeight;
-
-                vec2 C = P + R * t;
-                if ( C.y <= h )
-                    break;
-                
-                vec2 Q = vec2(C.x, h);
-                vec2 S = normalize(vec2(c, 1.0));
-                float new_t = dot(Q-P, vec2(S.y, -S.x)) / dot(R, vec2(S.y, -S.x));
-                t = max(t+min_step, new_t);
-            }
-            texCoord.xy = texCoord.xy + texDir3D.xy * t;
+            vec2 Q = vec2(C.x, h);
+            vec2 S = normalize(vec2(c, 1.0));
+            float new_t = dot(Q-P, vec2(S.y, -S.x)) / dot(R, vec2(S.y, -S.x));
+            t = max(t+min_step, new_t);
         }
-        mapHeight = GetHeightAndCone( texCoord.xy ).x;
-        return vec3( texCoord.xy, mapHeight );
+        
+        vec2  texC = texCoord.xy + texDir3D.xy * t;
+        float mapHeight = GetHeightAndCone( texCoord.xy ).x;
+        return vec3( texC.xy, mapHeight );
     }
 
 ### Cone Step Map generation

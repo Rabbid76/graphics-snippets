@@ -236,7 +236,7 @@ void main()
    
     vec3  texDir3D     = normalize( inverse( tbnMat ) * objPosEs );
     float frontFace    = gl_FrontFacing ? 1.0 : -1.0; // TODO $$$ sign(dot(N,objPosEs));
-    vec3  newTexCoords = Parallax( frontFace, texDir3D, texCoords.stp );
+    vec3  newTexCoords = abs(u_displacement_scale) < 0.001 ? vec3(texCoords.st, 0.0) : Parallax( frontFace, texDir3D, texCoords.stp );
 
     // TODO $$$ calcualte depth by adding length( texDir3D.xy / texDir3D.z ) * newTexCoords.z
 

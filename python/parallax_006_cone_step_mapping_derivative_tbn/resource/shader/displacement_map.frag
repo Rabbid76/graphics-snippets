@@ -208,11 +208,9 @@ float intersect_cone_exact(in vec2 dp, in vec3 ds)
 // Parallax Occlusion Mapping in GLSL [http://sunandblackcat.com/tipFullView.php?topicid=28]
 vec3 ConeStep( in float frontFace, in vec3 texDir3D, in vec2 texCoord )
 {   
-  float mapHeight;
-  float maxBumpHeight = 1.0;
-  vec2  quality_range = u_parallax_quality;
-  if ( maxBumpHeight > 0.0 && texDir3D.z < 0.9994 )
-  {
+    float maxBumpHeight = 1.0;
+    vec2  quality_range = u_parallax_quality;
+  
     // [Determinante](https://de.wikipedia.org/wiki/Determinante)
     // A x B = A.x * B.y - A.y * B.x = dot(A, vec2(B.y,-B.x)) = det(mat2(A,B))
 
@@ -223,30 +221,30 @@ vec3 ConeStep( in float frontFace, in vec3 texDir3D, in vec2 texCoord )
     vec2 tex_size = textureSize( u_displacement_map, 0 ).xy;
     vec2 min_tex_step = normalize(texDir3D.xy) / tex_size;
     float min_step = length(min_tex_step) * 1.0/R.x;
-    
+
     float t = 0.0;
     const int max_no_of_steps = 30;
     for ( int i = 0; i < max_no_of_steps; ++ i )
     {
-      vec3 sample_pt = vec3(texCoord.xy, maxBumpHeight) + texDir3D * t;
+        vec3 sample_pt = vec3(texCoord.xy, maxBumpHeight) + texDir3D * t;
 
-      vec2 h_and_c = GetHeightAndCone( sample_pt.xy );
-      float h = h_and_c.x * maxBumpHeight;
-      float c = h_and_c.y * h_and_c.y / maxBumpHeight;
+        vec2 h_and_c = GetHeightAndCone( sample_pt.xy );
+        float h = h_and_c.x * maxBumpHeight;
+        float c = h_and_c.y * h_and_c.y / maxBumpHeight;
 
-      vec2 C = P + R * t;
-      if ( C.y <= h )
+        vec2 C = P + R * t;
+        if ( C.y <= h )
         break;
-      
-      vec2 Q = vec2(C.x, h);
-      vec2 S = normalize(vec2(c, 1.0));
-      float new_t = dot(Q-P, vec2(S.y, -S.x)) / dot(R, vec2(S.y, -S.x));
-      t = max(t+min_step, new_t);
+        
+        vec2 Q = vec2(C.x, h);
+        vec2 S = normalize(vec2(c, 1.0));
+        float new_t = dot(Q-P, vec2(S.y, -S.x)) / dot(R, vec2(S.y, -S.x));
+        t = max(t+min_step, new_t);
     }
-    texCoord.xy = texCoord.xy + texDir3D.xy * t;
-  }
-  mapHeight = GetHeightAndCone( texCoord.xy ).x;
-  return vec3( texCoord.xy, mapHeight );
+    
+    vec2  texC = texCoord.xy + texDir3D.xy * t;
+    float mapHeight = GetHeightAndCone( texCoord.xy ).x;
+    return vec3( texC.xy, mapHeight );
 }
 
 void main()
@@ -281,7 +279,7 @@ void main()
    
     vec3  texDir3D     = normalize( inverse( tbnMat ) * objPosEs );
     float frontFace    = gl_FrontFacing ? 1.0 : -1.0; // TODO $$$ sign(dot(N,objPosEs));
-    vec3  newTexCoords = ConeStep( frontFace, texDir3D, texCoords.st );
+    vec3  newTexCoords = abs(u_displacement_scale) < 0.001 ? vec3(texCoords.st, 0.0) : ConeStep( frontFace, texDir3D, texCoords.st );
     texCoords.st       = newTexCoords.xy;
     
     vec4  normalVec    = CalculateNormal( texCoords ); 

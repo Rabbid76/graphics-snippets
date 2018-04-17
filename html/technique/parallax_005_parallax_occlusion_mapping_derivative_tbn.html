@@ -182,14 +182,14 @@ void main()
     mat3  tbnMat        = mat3(T * invmax, B * invmax, N * u_displacement_scale);
 
     vec3  texDir3D      = normalize( mat3_inverse( tbnMat ) * v_view_pos );
-    vec3  newTexCoords  = ParallaxOcclusion( face_sign, texDir3D, texCoords.st );
+    vec3  newTexCoords  = abs(u_displacement_scale) < 0.001 ? vec3(texCoords.st, 0.0) : ParallaxOcclusion( face_sign, texDir3D, texCoords.st );
     texCoords.st        = newTexCoords.xy;
     
     vec4  normalVec     = CalculateNormal( texCoords );
     tbnMat[2]           = face_sign * N / u_displacement_scale;
     vec3  nvMappedEs    = normalize( tbnMat * normalVec.xyz );
     
-    //vec3  color         = v_col;
+    //vec3  color       = v_col;
     vec3  color         = texture2D( u_texture, texCoords.st ).rgb;
 
     // ambient part
@@ -245,6 +245,10 @@ html, body {
                 <td> <font color=#CCF>dispalcement</font> </td>
                 <td> <input type="range" id="displacement" min="0" max="100" value="50" onchange="changeEventHandler(event);" /></td>
             </tr>
+            <tr>
+                <td> <font color=#CCF>quality</font> </td>
+                <td> <input type="range" id="quality" min="0" max="100" value="50" onchange="changeEventHandler(event);" /></td>
+            </tr>
         </table>
     </form>
 </div>
@@ -280,6 +284,7 @@ html, body {
                     //readInput = false;
                     clip = (document.getElementById("clip").value - 50) / 50;
                     displacement = document.getElementById("displacement").value / 400;
+                    quality = document.getElementById("quality").value / 100;
                     document.getElementById("fps_val").innerHTML = getFPS(deltaMS).toFixed(1);
                 }
 
@@ -297,7 +302,7 @@ html, body {
                 ShaderProgram.SetUniformI1(progDraw, "u_displacement_map", height_map_unit);
                 ShaderProgram.SetUniformF2(progDraw, "u_displacement_map_size", height_map_size);
                 ShaderProgram.SetUniformF1(progDraw, "u_displacement_scale", displacement);
-                ShaderProgram.SetUniformF2(progDraw, "u_parallax_quality", [2.0, 1.0]);
+                ShaderProgram.SetUniformF2(progDraw, "u_parallax_quality", [quality, 1.0]);
                 ShaderProgram.SetUniformF3(progDraw, "u_lightDir", [-1.0, -0.5, -2.0]);
                 ShaderProgram.SetUniformF1(progDraw, "u_ambient", 0.2);
                 ShaderProgram.SetUniformF1(progDraw, "u_diffuse", 0.8);

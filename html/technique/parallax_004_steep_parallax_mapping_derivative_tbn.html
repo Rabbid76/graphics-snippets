@@ -173,7 +173,7 @@ void main()
     mat3  tbnMat        = mat3(T * invmax, B * invmax, N * u_displacement_scale);
 
     vec3  texDir3D      = normalize( mat3_inverse( tbnMat ) * v_view_pos );
-    vec3  newTexCoords  = SteepParallax( face_sign, texDir3D, texCoords.st );
+    vec3  newTexCoords  = abs(u_displacement_scale) < 0.001 ? vec3(texCoords.st, 0.0) : SteepParallax( face_sign, texDir3D, texCoords.st );
     texCoords.st        = newTexCoords.xy;
     
     vec4  normalVec     = CalculateNormal( texCoords );
@@ -236,6 +236,10 @@ html, body {
                 <td> <font color=#CCF>dispalcement</font> </td>
                 <td> <input type="range" id="displacement" min="0" max="100" value="50" onchange="changeEventHandler(event);" /></td>
             </tr>
+            <tr>
+                <td> <font color=#CCF>quality</font> </td>
+                <td> <input type="range" id="quality" min="0" max="100" value="50" onchange="changeEventHandler(event);" /></td>
+            </tr>
         </table>
     </form>
 </div>
@@ -271,6 +275,7 @@ html, body {
                     //readInput = false;
                     clip = (document.getElementById("clip").value - 50) / 50;
                     displacement = document.getElementById("displacement").value / 400;
+                    quality = document.getElementById("quality").value / 100;
                     document.getElementById("fps_val").innerHTML = getFPS(deltaMS).toFixed(1);
                 }
 

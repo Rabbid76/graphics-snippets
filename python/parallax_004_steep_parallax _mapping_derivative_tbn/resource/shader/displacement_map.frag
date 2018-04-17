@@ -107,7 +107,6 @@ void main()
     vec3  objPosEs     = in_data.pos;
     vec3  objNormalEs  = in_data.nv;
     vec2  texCoords    = in_data.uv.st;
-    vec3  normalEs     = ( gl_FrontFacing ? 1.0 : -1.0 ) * normalize( objNormalEs );
     
     // orthonormal tangent space matrix
     //vec3  p_dx         = dFdx( objPosEs );
@@ -134,7 +133,7 @@ void main()
    
     vec3  texDir3D     = normalize( inverse( tbnMat ) * objPosEs );
     float frontFace    = gl_FrontFacing ? 1.0 : -1.0; // TODO $$$ sign(dot(N,objPosEs));
-    vec3  newTexCoords = SteepParallax( frontFace, texDir3D, texCoords.st );
+    vec3  newTexCoords = abs(u_displacement_scale) < 0.001 ? vec3(texCoords.st, 0.0) : SteepParallax( frontFace, texDir3D, texCoords.st );
     texCoords.st       = newTexCoords.xy;
     vec4  normalVec    = CalculateNormal( texCoords ); 
     tbnMat[2].xyz     *= (gl_FrontFacing ? 1.0 : -1.0) * N / u_displacement_scale;
