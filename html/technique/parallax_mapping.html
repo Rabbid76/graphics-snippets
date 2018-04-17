@@ -49,12 +49,19 @@ uniform sampler2D u_displacement_map;
 uniform vec2      u_displacement_map_size;
 uniform float     u_displacement_scale;
 uniform vec2      u_parallax_quality;
+uniform int       u_technique;
 
 uniform vec3  u_lightDir;
 uniform float u_ambient;
 uniform float u_diffuse;
 uniform float u_specular;
 uniform float u_shininess;
+
+float CalculateHeight( in vec2 texCoords )
+{
+    float height = texture2D( u_displacement_map, texCoords ).x;
+    return clamp( height, 0.0, 1.0 );
+}
 
 vec2 GetHeightAndCone( in vec2 texCoords )
 {
@@ -120,10 +127,91 @@ mat3 mat3_inverse( mat3 A )
 }
 
 
+vec3 OffsetLimiting( in float frontFace, in vec3 texDir3D, in vec2 texCoord )
+{
+    float parallaxScale = 0.1;
+    float mapHeight     = CalculateHeight( texCoord.st );
+    //vec2  texCoordOffst = parallaxScale * mapHeight * texDir3D.xy / texDir3D.z;
+    vec2  texCoordOffst = parallaxScale * mapHeight * texDir3D.xy;
+    vec2  texC          = texCoord.st + u_displacement_scale * texCoordOffst.xy;
+    return vec3( texC.xy, mapHeight );
+}
+
+
+vec3 SteepParallax( in float frontFace, in vec3 texDir3D, in vec2 texCoord )
+{
+    vec2  quality_range   = u_parallax_quality;
+    float numSteps        = clamp( quality_range.x * 50.0, 1.0, 50.0 );
+    
+    float surf_sign       = frontFace;
+    float back_face       = step(0.0, -surf_sign); 
+    vec2  texStep         = surf_sign * texDir3D.xy / abs(texDir3D.z); // (z is negative) the direction vector points downwards int tangent-space
+    vec2  texC            = texCoord.st + surf_sign * texStep + back_face * texStep.xy; 
+    float mapHeight       = 1.0;
+    float bestBumpHeight  = mapHeight;
+    float bumpHeightStep  = 1.0 / numSteps;
+
+    for ( int i = 0; i < 50; ++ i )
+    {
+        if ( i >= int( numSteps ) )
+            break;
+        mapHeight = back_face + surf_sign * CalculateHeight( texC.xy - bestBumpHeight * texStep.xy );
+        if ( mapHeight >= bestBumpHeight )
+            break;
+        bestBumpHeight -= bumpHeightStep;   
+    }
+    bestBumpHeight -= bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / bumpHeightStep, 0.0, 1.0 );
+    mapHeight       = bestBumpHeight;
+    texC           -= mapHeight * texStep;
+        
+    return vec3( texC.xy, mapHeight );
+}
+
+
+vec3 ParallaxOcclusion( in float frontFace, in vec3 texDir3D, in vec2 texCoord )
+{
+    vec2  quality_range   = u_parallax_quality;
+    int   numSteps        = int( clamp( quality_range.x * 50.0, 1.0, 50.0 ) );
+    int   numBinarySteps  = int( clamp( quality_range.y * 10.0, 1.0, 10.0 ) );
+    
+    float surf_sign       = frontFace;
+    float back_face       = step(0.0, -surf_sign); 
+    vec2  texStep         = surf_sign * texDir3D.xy / abs(texDir3D.z); // (z is negative) the direction vector points downwards int tangent-space
+    vec2  texC            = texCoord.st + surf_sign * texStep + back_face * texStep.xy; 
+    float mapHeight       = 1.0;
+    float bestBumpHeight  = mapHeight;
+    float bumpHeightStep  = 1.0 / float(numSteps);
+
+    for ( int i = 0; i < 50; ++ i )
+    {
+        if ( i >= numSteps )
+            break;
+        mapHeight = back_face + surf_sign * CalculateHeight( texC.xy - bestBumpHeight * texStep.xy );
+        if ( mapHeight >= bestBumpHeight )
+            break;
+        bestBumpHeight -= bumpHeightStep;   
+    }
+    bestBumpHeight += bumpHeightStep;
+    for ( int i = 0; i < 10; ++ i )
+    {
+        if ( i >= numBinarySteps )
+            break;
+        bumpHeightStep *= 0.5;
+        bestBumpHeight -= bumpHeightStep;
+        mapHeight       = back_face + surf_sign * CalculateHeight( texC.xy - bestBumpHeight * texStep.xy );
+        bestBumpHeight += ( bestBumpHeight < mapHeight ) ? bumpHeightStep : 0.0;
+    }
+    bestBumpHeight -= bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / bumpHeightStep, 0.0, 1.0 );
+    mapHeight       = bestBumpHeight;
+    texC           -= mapHeight * texStep;
+        
+    return vec3( texC.xy, mapHeight );
+}
+
 vec3 ConeStep( in float frontFace, in vec3 texDir3D, in vec2 texCoord )
 {
     float maxBumpHeight = 1.0;
-    vec2  quality_range = u_parallax_quality;
+    vec2  quality       = u_parallax_quality;
   
     vec2 R = normalize(vec2(length(texDir3D.xy), texDir3D.z)); 
     vec2 P = R * maxBumpHeight / texDir3D.z; 
@@ -133,9 +221,8 @@ vec3 ConeStep( in float frontFace, in vec3 texDir3D, in vec2 texCoord )
     float min_step = length(min_tex_step) * 1.0/R.x;
 
     float t = 0.0;
-    const int max_no_of_steps = 50;
-    int steps = int(quality_range.x * 50.0);
-    for ( int i = 0; i < max_no_of_steps; ++ i )
+    int steps = int(clamp( quality.x * 50.0, 1.0, 50.0 ));
+    for ( int i = 0; i < 50; ++ i )
     {
         vec3 sample_pt = vec3(texCoord.xy, maxBumpHeight) + texDir3D * t;
 
@@ -164,10 +251,12 @@ void main()
         discard;
 
     vec2  texCoords     = v_uv;    
-    float face_sign     = sign(dot(v_view_nv, -v_view_pos));      
+    float face_sign     = sign(dot(v_view_nv, -v_view_pos)); 
+    float cone_sign     = u_technique == 5 ? face_sign : 1.0;
+    float parallax_sign = u_technique != 5 ? face_sign : 1.0;     
     
     // Followup: Normal Mapping Without Precomputed Tangents [http://www.thetenthplanet.de/archives/1180]
-    vec3  N             = face_sign * normalize(v_view_nv);
+    vec3  N             = cone_sign * normalize(v_view_nv);
     vec3  dp1           = dFdx( v_view_pos );
     vec3  dp2           = dFdy( v_view_pos );
     vec2  duv1          = dFdx( v_uv );
@@ -180,12 +269,28 @@ void main()
     mat3  tbnMat        = mat3(T * invmax, B * invmax, N * u_displacement_scale);
 
     vec3  texDir3D      = normalize( mat3_inverse( tbnMat ) * v_view_pos );
-    vec3  newTexCoords  = abs(u_displacement_scale) < 0.001 ? vec3(texCoords.st, 0.0) : ConeStep( face_sign, texDir3D, texCoords.st );
+
+    vec3  newTexCoords = vec3(texCoords.st, 0.0);
+    if ( abs(u_displacement_scale) > 0.001 )
+    {
+        if ( u_technique == 2 )
+            newTexCoords = OffsetLimiting( face_sign, texDir3D, texCoords.st );
+        if ( u_technique == 3 )
+            newTexCoords = SteepParallax( face_sign, texDir3D, texCoords.st );
+        if ( u_technique == 4 )
+            newTexCoords = ParallaxOcclusion( face_sign, texDir3D, texCoords.st );
+        if ( u_technique == 5 )
+            newTexCoords = ConeStep( face_sign, texDir3D, texCoords.st );
+    } 
     texCoords.st        = newTexCoords.xy;
     
-    vec4  normalVec     = CalculateNormal( texCoords );
-    tbnMat[2]           = N;
-    vec3  nvMappedEs    = normalize( tbnMat * normalVec.xyz );
+    vec3  nvMappedEs    = N;
+    if ( u_technique > 0 )
+    {
+        vec4  normalVec = CalculateNormal( texCoords );
+        tbnMat[2]       = parallax_sign * N;
+        nvMappedEs      = normalize( tbnMat * normalVec.xyz ); 
+    }   
     
     //vec3  color         = v_col;
     vec3  color         = texture2D( u_texture, texCoords.st ).rgb;
@@ -235,6 +340,16 @@ html, body {
     <form id="gui" name="inputs">
         <table>
             <tr><td> <font color=#CCF><span id="fps_val">0</span></font> </td></tr>
+            <tr><td> <font color=#CCF>clipping</font> </td> 
+                <td> <select id="technique" value="5" onchange="changeEventHandler(event);">
+                        <option value="0">no mapping</option>
+                        <option value="1">normal mapping</option>
+                        <option value="2">offset limiting</option>
+                        <option value="3">steep parallax mapping</option>
+                        <option value="4">parallax occlusion mapping</option>
+                        <option value="5">cone step mapping</option>
+                    </select> </td>
+            </tr>
             <tr>
                 <td> <font color=#CCF>clipping</font> </td>
                 <td> <input type="range" id="clip" min="0" max="100" value="100" onchange="changeEventHandler(event);" /></td>
@@ -243,9 +358,13 @@ html, body {
                 <td> <font color=#CCF>dispalcement</font> </td>
                 <td> <input type="range" id="displacement" min="0" max="100" value="50" onchange="changeEventHandler(event);" /></td>
             </tr>
-            <tr>
-                <td> <font color=#CCF>quality</font> </td>
-                <td> <input type="range" id="quality" min="0" max="100" value="20" onchange="changeEventHandler(event);" /></td>
+            <tr id="tr_steps">
+                <td> <font color=#CCF>quality (steps) <span id="quality_val">0</span> </font> </td>
+                <td> <input type="range" id="quality" min="0" max="100" value="40" onchange="changeEventHandler(event);" /></td>
+            </tr>
+            <tr id="tr_binary_steps">
+                <td> <font color=#CCF>quality (binaray steps) <span id="quality_binary_val">0</span> </font> </td>
+                <td> <input type="range" id="quality_binary" min="0" max="100" value="50" onchange="changeEventHandler(event);" /></td>
             </tr>
         </table>
     </form>
@@ -273,18 +392,37 @@ html, body {
             var clip = 0.0;
             var displacement = 0.0;
             var quality = 0.1;
+            var quality_binary = 0.5;
             var tex_unit = 1;
             var height_map_unit = 2;
             var height_map_size = [0, 0];
+            var technique = 5;
+            var update_count = 0;
 
             function render(deltaMS) {
 
-                if (readInput) {
-                    //readInput = false;
-                    clip = (document.getElementById("clip").value - 50) / 50;
-                    displacement = document.getElementById("displacement").value / 400;
+                var fps = getFPS(deltaMS).toFixed(1);
+                clip = (document.getElementById("clip").value - 50) / 50;
+                displacement = document.getElementById("displacement").value / 400;
+                if (readInput || update_count <= 0) {
+                    readInput = false;
+                    update_count = 10;
+                    technique = document.getElementById( "technique" ).value;
                     quality = document.getElementById("quality").value / 100;
-                    document.getElementById("fps_val").innerHTML = getFPS(deltaMS).toFixed(1);
+                    document.getElementById("quality_val").innerHTML = ("0" + Math.floor(quality * 50)).substr(-2);
+                    quality_binary = document.getElementById("quality_binary").value / 100;
+                    document.getElementById("quality_binary_val").innerHTML = ("0" + Math.floor(quality_binary * 10)).substr(-2);
+                    document.getElementById("fps_val").innerHTML = fps;
+                    var elem_tr_s = document.getElementById("tr_steps");
+                    var elem_tr_b = document.getElementById("tr_binary_steps");
+                    if ( elem_tr_s )
+                        elem_tr_s.style.display = (technique < 3) ? "none" : "";
+                    if ( elem_tr_b )
+                        elem_tr_b.style.display = (technique != 4) ? "none" : "";
+                }
+                else
+                {
+                    update_count --;
                 }
 
                 Camera.create();
@@ -299,9 +437,10 @@ html, body {
                 ShaderProgram.Use(progDraw);
                 ShaderProgram.SetUniformI1(progDraw, "u_texture", tex_unit);
                 ShaderProgram.SetUniformI1(progDraw, "u_displacement_map", height_map_unit);
+                ShaderProgram.SetUniformI1(progDraw, "u_technique", technique);
                 ShaderProgram.SetUniformF2(progDraw, "u_displacement_map_size", height_map_size);
                 ShaderProgram.SetUniformF1(progDraw, "u_displacement_scale", displacement);
-                ShaderProgram.SetUniformF2(progDraw, "u_parallax_quality", [quality, quality]);
+                ShaderProgram.SetUniformF2(progDraw, "u_parallax_quality", [quality, quality_binary]);
                 ShaderProgram.SetUniformF3(progDraw, "u_lightDir", [-1.0, -0.5, -2.0]);
                 ShaderProgram.SetUniformF1(progDraw, "u_ambient", 0.2);
                 ShaderProgram.SetUniformF1(progDraw, "u_diffuse", 0.8);
@@ -334,6 +473,7 @@ html, body {
 
             function initScene() {
 
+                document.getElementById( "technique" ).value = technique;
                 canvas = document.getElementById("canvas");
                 gl = canvas.getContext("experimental-webgl");
                 //gl = canvas.getContext( "webgl2" );
