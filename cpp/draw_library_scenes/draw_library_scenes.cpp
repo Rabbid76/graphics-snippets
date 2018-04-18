@@ -452,7 +452,7 @@ void CWindow_Glfw::TextRotate( double time_ms )
 
     _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, text, text_height, text_scale_x, { 0.0f, 0.0f, -0.02f }, Color_gray() );
 
-    float angle = 10.0f * time_ms / 1000.0f;
+    float angle = 10.0f * (float)time_ms / 1000.0f;
     angle = 45.0f;
     for ( int i = 0; i < step;  ++ i )
     {
