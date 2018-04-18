@@ -5,10 +5,11 @@
 
 in TVertexData
 {
-    vec3 pos;
-    vec3 nv;
-    vec3 col;
-    vec2 uv;
+    vec3  pos;
+    vec3  nv;
+    vec3  col;
+    vec2  uv;
+    float clip;
 } in_data;
 
 out vec4 fragColor;
@@ -23,6 +24,9 @@ uniform sampler2D u_texture;
 uniform sampler2D u_displacement_map;
 uniform float     u_displacement_scale;
 uniform vec2      u_parallax_quality;
+
+uniform vec4 u_clipPlane;
+uniform mat4 u_viewMat44;
 
 #if defined(NORMAL_MAP_TEXTURE)
 uniform sampler2D u_normal_map;
@@ -138,14 +142,24 @@ void main()
     vec3  B           = dp2perp * duv1.y + dp1perp * duv2.y;   
     float invmax      = inversesqrt(max(dot(T, T), dot(B, B)));
     mat3  tbnMat      = mat3(T * invmax, B * invmax, N * u_displacement_scale);
+    mat3  inv_tbnMat  = inverse( tbnMat );
    
-    vec3  texDir3D     = normalize( inverse( tbnMat ) * objPosEs );
+    vec3  texDir3D     = normalize( inv_tbnMat * objPosEs );
     float frontFace    = gl_FrontFacing ? 1.0 : -1.0; // TODO $$$ sign(dot(N,objPosEs));
     vec3  newTexCoords = abs(u_displacement_scale) < 0.001 ? vec3(texCoords.st, 0.0) : ParallaxOcclusion( frontFace, texDir3D, texCoords.st );
+
+    float depth_displ  = length(tbnMat * (newTexCoords.z * texDir3D.xyz / abs(texDir3D.z))); 
+
+    vec4  modelPos  = inverse(u_viewMat44) * vec4(objPosEs - depth_displ * normalize(objPosEs), 1.0);
+    vec4  clipPlane = vec4(normalize(u_clipPlane.xyz), u_clipPlane.w);
+    float clip_dist = dot(modelPos, clipPlane);
+    if ( clip_dist < 0.0 )
+        discard;
+    
     texCoords.st       = newTexCoords.xy;
     vec4  normalVec    = CalculateNormal( texCoords ); 
-    tbnMat[2].xyz      = (gl_FrontFacing ? 1.0 : -1.0) * N / u_displacement_scale;
-    vec3  nvMappedEs   = normalize( tbnMat * normalVec.xyz );
+    //vec3  nvMappedEs   = normalize( transpose(inv_tbnMat) * normalVec.xyz );
+    vec3  nvMappedEs   = normalize( transpose(inv_tbnMat) * normalVec.xyz );
 
     //vec3 color = in_data.col;
     vec3 color = texture( u_texture, texCoords.st ).rgb;
