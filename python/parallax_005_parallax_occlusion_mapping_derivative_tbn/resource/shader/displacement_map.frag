@@ -27,6 +27,7 @@ uniform vec2      u_parallax_quality;
 
 uniform vec4 u_clipPlane;
 uniform mat4 u_viewMat44;
+uniform mat4 u_projectionMat44;
 
 #if defined(NORMAL_MAP_TEXTURE)
 uniform sampler2D u_normal_map;
@@ -108,8 +109,8 @@ vec3 ParallaxOcclusion( in float frontFace, in vec3 texDir3D, in vec2 texCoord )
         bestBumpHeight += ( bestBumpHeight < mapHeight ) ? bumpHeightStep : 0.0;
     }
     bestBumpHeight -= bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / bumpHeightStep, 0.0, 1.0 );
-    mapHeight       = bestBumpHeight;
-    texC           -= mapHeight * texStep;
+    texC           -= bestBumpHeight * texStep;
+    mapHeight       = surf_sign * bestBumpHeight;
         
     return vec3( texC.xy, mapHeight );
 }
@@ -148,11 +149,13 @@ void main()
     float frontFace    = gl_FrontFacing ? 1.0 : -1.0; // TODO $$$ sign(dot(N,objPosEs));
     vec3  newTexCoords = abs(u_displacement_scale) < 0.001 ? vec3(texCoords.st, 0.0) : ParallaxOcclusion( frontFace, texDir3D, texCoords.st );
 
-    float depth_displ  = length(tbnMat * (newTexCoords.z * texDir3D.xyz / abs(texDir3D.z))); 
-
-    vec4  modelPos  = inverse(u_viewMat44) * vec4(objPosEs - depth_displ * normalize(objPosEs), 1.0);
-    vec4  clipPlane = vec4(normalize(u_clipPlane.xyz), u_clipPlane.w);
-    float clip_dist = dot(modelPos, clipPlane);
+    //float depth_displ    = length(tbnMat * (newTexCoords.z * texDir3D.xyz / abs(texDir3D.z))); 
+    //vec3  view_pos_displ = objPosEs - depth_displ * normalize(objPosEs);
+    vec3  displ_vec      = tbnMat * (clamp(newTexCoords.z, 0.0, 1.0) * texDir3D.xyz / abs(texDir3D.z));
+    vec3  view_pos_displ = objPosEs - displ_vec;
+    vec4  modelPos       = inverse(u_viewMat44) * vec4(view_pos_displ, 1.0);
+    vec4  clipPlane      = vec4(normalize(u_clipPlane.xyz), u_clipPlane.w);
+    float clip_dist      = dot(modelPos, clipPlane);
     if ( clip_dist < 0.0 )
         discard;
     
@@ -181,4 +184,7 @@ void main()
     lightCol       += kSpecular * u_specular * color;
 
     fragColor = vec4( lightCol.rgb, 1.0 );
+
+    vec4 proj_pos_displ = u_projectionMat44 * vec4(view_pos_displ.xyz, 1.0);
+    gl_FragDepth = 0.5 + 0.5 * proj_pos_displ.z / proj_pos_displ.w;
 }
