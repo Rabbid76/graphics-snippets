@@ -260,12 +260,12 @@ void main()
     vec4  clipPlane      = vec4(normalize(u_clipPlane.xyz), u_clipPlane.w);
     float clip_dist      = dot(modelPos, clipPlane);
     //float clip_dist      = in_data.clip;
-    if ( clip_dist < 0.0 )
-        discard;
+    //if ( clip_dist < 0.0 )
+    //    discard;
 
     vec2  range_vec  = step(vec2(0.0), newTexCoords.st) * step(newTexCoords.st, vec2(1.0));
     float range_test = range_vec.x * range_vec.y;
-    if ( texCoords.p > 0.0 && (range_test == 0.0 || newTexCoords.z > 1.0))
+    if ( texCoords.p > 0.0 && (range_test == 0.0 || newTexCoords.z > 1.000001))
     //if ( texCoords.p > 0.0 && range_test == 0.0)
       discard;
     //if ( cosDir > 0.0 )
