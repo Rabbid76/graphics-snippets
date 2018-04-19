@@ -156,12 +156,13 @@ void main()
     vec4  modelPos       = inverse(u_viewMat44) * vec4(view_pos_displ, 1.0);
     vec4  clipPlane      = vec4(normalize(u_clipPlane.xyz), u_clipPlane.w);
     float clip_dist      = dot(modelPos, clipPlane);
+    //float clip_dist      = in_data.clip;
     if ( clip_dist < 0.0 )
         discard;
     
     texCoords.st       = newTexCoords.xy;
     vec4  normalVec    = CalculateNormal( texCoords ); 
-    //vec3  nvMappedEs   = normalize( transpose(inv_tbnMat) * normalVec.xyz );
+    //vec3  nvMappedEs   = normalize( tbnMat * normalVec.xyz );
     vec3  nvMappedEs   = normalize( transpose(inv_tbnMat) * normalVec.xyz );
 
     //vec3 color = in_data.col;

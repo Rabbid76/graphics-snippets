@@ -28,9 +28,9 @@ void main()
     vec4 viewPos    = mv * vec4( inPos, 1.0 );
     v_view_pos      = viewPos.xyz;
     gl_Position     = u_projectionMat44 * viewPos;
-    vec4 modelPos   = u_modelMat44 * vec4( inPos, 1.0 );
+    vec4 worldPos   = u_modelMat44 * vec4( inPos, 1.0 );
     vec4 clipPlane  = vec4(normalize(u_clipPlane.xyz), u_clipPlane.w);
-    clip_distance  = dot(modelPos, clipPlane);
+    clip_distance  = dot(worldPos, clipPlane);
 }
 </script>
 

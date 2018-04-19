@@ -5,12 +5,13 @@
 
 in TGeometryData
 {
-    vec3 pos;
-    vec3 nv;
-    vec3 tv;
-    vec3 bv;
-    vec3 col;
-    vec3 uvh;
+    vec3  pos;
+    vec3  nv;
+    vec3  tv;
+    vec3  bv;
+    vec3  col;
+    vec3  uvh;
+    float clip;
 } in_data;
 
 out vec4 fragColor;
@@ -26,7 +27,9 @@ uniform sampler2D u_displacement_map;
 uniform float     u_displacement_scale;
 uniform vec2      u_parallax_quality;
 
-uniform mat4      u_projectionMat44;
+uniform vec4 u_clipPlane;
+uniform mat4 u_viewMat44;
+uniform mat4 u_projectionMat44;
 
 #if defined(NORMAL_MAP_TEXTURE)
 uniform sampler2D u_normal_map;
@@ -144,6 +147,10 @@ vec3 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
 
 void main()
 {
+    float clip_dist      = in_data.clip;
+    if ( clip_dist < 0.0 )
+        discard;
+
     vec3 objPosEs    = in_data.pos;
     vec3 objNormalEs = in_data.nv;
     vec3 texCoords   = in_data.uvh.stp;

@@ -5,10 +5,11 @@
 
 in TVertexData
 {
-    vec3 pos;
-    vec3 nv;
-    vec3 col;
-    vec2 uv;
+    vec3  pos;
+    vec3  nv;
+    vec3  col;
+    vec2  uv;
+    float clip;
 } in_data;
 
 out vec4 fragColor;
@@ -23,6 +24,10 @@ uniform sampler2D u_texture;
 uniform sampler2D u_displacement_map;
 uniform float     u_displacement_scale;
 uniform vec2      u_parallax_quality;
+
+uniform vec4 u_clipPlane;
+uniform mat4 u_viewMat44;
+uniform mat4 u_projectionMat44;
 
 #if defined(NORMAL_MAP_TEXTURE)
 uniform sampler2D u_normal_map;
@@ -252,7 +257,8 @@ void main()
     vec3  objPosEs     = in_data.pos;
     vec3  objNormalEs  = in_data.nv;
     vec2  texCoords    = in_data.uv.st;
-    vec3  normalEs     = ( gl_FrontFacing ? 1.0 : -1.0 ) * normalize( objNormalEs );
+    float frontFace    = gl_FrontFacing ? 1.0 : -1.0; // TODO $$$ sign(dot(N,objPosEs));
+    //vec3  normalEs     = frontFace * normalize( objNormalEs );
     
     // orthonormal tangent space matrix
     //vec3  p_dx         = dFdx( objPosEs );
@@ -265,7 +271,7 @@ void main()
     //mat3  tbnMat       = mat3( sign( texDet ) * tangentEs, cross( normalEs, tangentEs ), normalEs );
 
     // Followup: Normal Mapping Without Precomputed Tangents [http://www.thetenthplanet.de/archives/1180]
-    vec3  N           = normalize( objNormalEs );
+    vec3  N           = frontFace * normalize( objNormalEs );
     vec3  dp1         = dFdx( objPosEs );
     vec3  dp2         = dFdy( objPosEs );
     vec2  duv1        = dFdx( texCoords );
@@ -276,15 +282,26 @@ void main()
     vec3  B           = dp2perp * duv1.y + dp1perp * duv2.y;   
     float invmax      = inversesqrt(max(dot(T, T), dot(B, B)));
     mat3  tbnMat      = mat3(T * invmax, B * invmax, N * u_displacement_scale);
+    mat3  inv_tbnMat  = inverse( tbnMat );
    
-    vec3  texDir3D     = normalize( inverse( tbnMat ) * objPosEs );
-    float frontFace    = gl_FrontFacing ? 1.0 : -1.0; // TODO $$$ sign(dot(N,objPosEs));
+    vec3  texDir3D     = normalize( inv_tbnMat * objPosEs );
     vec3  newTexCoords = abs(u_displacement_scale) < 0.001 ? vec3(texCoords.st, 0.0) : ConeStep( frontFace, texDir3D, texCoords.st );
-    texCoords.st       = newTexCoords.xy;
     
+    //float depth_displ    = length(tbnMat * (newTexCoords.z * texDir3D.xyz / abs(texDir3D.z))); 
+    //vec3  view_pos_displ = objPosEs - depth_displ * normalize(objPosEs);
+    vec3  displ_vec      = tbnMat * (clamp(newTexCoords.z, 0.0, 1.0) * texDir3D.xyz / abs(texDir3D.z));
+    vec3  view_pos_displ = objPosEs - displ_vec;
+    vec4  modelPos       = inverse(u_viewMat44) * vec4(view_pos_displ, 1.0);
+    vec4  clipPlane      = vec4(normalize(u_clipPlane.xyz), u_clipPlane.w);
+    //float clip_dist      = dot(modelPos, clipPlane);
+    float clip_dist      = in_data.clip;
+    if ( clip_dist < 0.0 )
+        discard;
+
+    texCoords.st       = newTexCoords.xy;
     vec4  normalVec    = CalculateNormal( texCoords ); 
-    tbnMat[2].xyz      = (gl_FrontFacing ? 1.0 : -1.0) * N / u_displacement_scale;
-    vec3  nvMappedEs   = normalize( tbnMat * normalVec.xyz );
+    //vec3  nvMappedEs   = normalize( tbnMat * normalVec.xyz );
+    vec3  nvMappedEs   = normalize( transpose(inv_tbnMat) * normalVec.xyz );
 
     //vec3 color = in_data.col;
     vec3 color = texture( u_texture, texCoords.st ).rgb;
@@ -306,4 +323,7 @@ void main()
     lightCol       += kSpecular * u_specular * color;
 
     fragColor = vec4( lightCol.rgb, 1.0 );
+
+    //vec4 proj_pos_displ = u_projectionMat44 * vec4(view_pos_displ.xyz, 1.0);
+    //gl_FragDepth = 0.5 + 0.5 * proj_pos_displ.z / proj_pos_displ.w;
 }

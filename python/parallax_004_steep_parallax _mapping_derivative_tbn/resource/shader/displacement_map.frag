@@ -5,10 +5,11 @@
 
 in TVertexData
 {
-    vec3 pos;
-    vec3 nv;
-    vec3 col;
-    vec2 uv;
+    vec3  pos;
+    vec3  nv;
+    vec3  col;
+    vec2  uv;
+    float clip;
 } in_data;
 
 out vec4 fragColor;
@@ -23,6 +24,10 @@ uniform sampler2D u_texture;
 uniform sampler2D u_displacement_map;
 uniform float     u_displacement_scale;
 uniform vec2      u_parallax_quality;
+
+uniform vec4 u_clipPlane;
+uniform mat4 u_viewMat44;
+uniform mat4 u_projectionMat44;
 
 #if defined(NORMAL_MAP_TEXTURE)
 uniform sampler2D u_normal_map;
@@ -96,8 +101,8 @@ vec3 SteepParallax( in float frontFace, in vec3 texDir3D, in vec2 texCoord )
         bestBumpHeight -= bumpHeightStep;   
     }
     bestBumpHeight -= bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / bumpHeightStep, 0.0, 1.0 );
-    mapHeight       = bestBumpHeight;
-    texC           -= mapHeight * texStep;
+    texC           -= bestBumpHeight * texStep;
+    mapHeight       = frontFace * clamp(bestBumpHeight, 0.0, 1.0);
         
     return vec3( texC.xy, mapHeight );
 }
@@ -130,14 +135,27 @@ void main()
     vec3  B           = dp2perp * duv1.y + dp1perp * duv2.y;   
     float invmax      = inversesqrt(max(dot(T, T), dot(B, B)));
     mat3  tbnMat      = mat3(T * invmax, B * invmax, N * u_displacement_scale);
+    mat3  inv_tbnMat  = inverse( tbnMat );
    
-    vec3  texDir3D     = normalize( inverse( tbnMat ) * objPosEs );
+    vec3  texDir3D     = normalize( inv_tbnMat * objPosEs );
     float frontFace    = gl_FrontFacing ? 1.0 : -1.0; // TODO $$$ sign(dot(N,objPosEs));
     vec3  newTexCoords = abs(u_displacement_scale) < 0.001 ? vec3(texCoords.st, 0.0) : SteepParallax( frontFace, texDir3D, texCoords.st );
+    
+    //float depth_displ    = length(tbnMat * (newTexCoords.z * texDir3D.xyz / abs(texDir3D.z))); 
+    //vec3  view_pos_displ = objPosEs - depth_displ * normalize(objPosEs);
+    vec3  displ_vec      = tbnMat * (clamp(newTexCoords.z, 0.0, 1.0) * texDir3D.xyz / abs(texDir3D.z));
+    vec3  view_pos_displ = objPosEs - displ_vec;
+    vec4  modelPos       = inverse(u_viewMat44) * vec4(view_pos_displ, 1.0);
+    vec4  clipPlane      = vec4(normalize(u_clipPlane.xyz), u_clipPlane.w);
+    float clip_dist      = dot(modelPos, clipPlane);
+    //float clip_dist      = in_data.clip;
+    if ( clip_dist < 0.0 )
+        discard;
+    
     texCoords.st       = newTexCoords.xy;
     vec4  normalVec    = CalculateNormal( texCoords ); 
-    tbnMat[2].xyz     *= (gl_FrontFacing ? 1.0 : -1.0) * N / u_displacement_scale;
-    vec3  nvMappedEs   = normalize( tbnMat * normalVec.xyz );
+    //vec3  nvMappedEs   = normalize( tbnMat * normalVec.xyz );
+    vec3  nvMappedEs   = normalize( transpose(inv_tbnMat) * normalVec.xyz );
 
     //vec3 color = in_data.col;
     vec3 color = texture( u_texture, texCoords.st ).rgb;
@@ -159,4 +177,7 @@ void main()
     lightCol       += kSpecular * u_specular * color;
 
     fragColor = vec4( lightCol.rgb, 1.0 );
+
+    vec4 proj_pos_displ = u_projectionMat44 * vec4(view_pos_displ.xyz, 1.0);
+    gl_FragDepth = 0.5 + 0.5 * proj_pos_displ.z / proj_pos_displ.w;
 }

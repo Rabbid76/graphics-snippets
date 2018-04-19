@@ -25,10 +25,10 @@ void main()
     out_data.nv    = mat3( u_viewMat44 ) * modelNV;
     out_data.col   = inCol;
     out_data.uv    = inUV;
-    vec4 modelPos  = u_modelMat44 * vec4( inPos, 1.0 );
-    vec4 viewPos   = u_viewMat44 * modelPos;
+    vec4 worldPos  = u_modelMat44 * vec4( inPos, 1.0 );
+    vec4 viewPos   = u_viewMat44 * worldPos;
     out_data.pos   = viewPos.xyz / viewPos.w;
     gl_Position    = u_projectionMat44 * viewPos;
     vec4 clipPlane = vec4(normalize(u_clipPlane.xyz), u_clipPlane.w);
-    out_data.clip  = dot(modelPos, clipPlane);
+    out_data.clip  = dot(worldPos, clipPlane);
 }

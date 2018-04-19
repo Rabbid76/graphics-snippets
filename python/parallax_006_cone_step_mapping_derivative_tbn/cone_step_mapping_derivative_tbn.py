@@ -111,6 +111,7 @@ class MyWindow(window.CameraWindow):
         #modelMat = mat.RotateX( modelMat, 60.0*math.pi/180.0 )
         #modelMat = mat.RotateY( modelMat, -10.0*math.pi/180.0 )
 
+        clip = 0.4
         progDraw.SetUniforms( {
             b"u_projectionMat44"    : self.Perspective(),
             b"u_viewMat44"          : self.LookAt(),
@@ -124,7 +125,8 @@ class MyWindow(window.CameraWindow):
             b"u_displacement_map"   : 1,
             b"u_normal_map"         : 2,
             b"u_displacement_scale" : 0.2, 
-            b"u_parallax_quality"   : [2.0, 1.0]
+            b"u_parallax_quality"   : [2.0, 1.0],
+            b"u_clipPlane"          : [-1.0, 1.0, -0.2, clip * 1.7321]
         } )
         
         # draw object

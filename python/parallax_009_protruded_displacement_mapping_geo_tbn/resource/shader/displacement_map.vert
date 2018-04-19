@@ -7,23 +7,19 @@ layout (location = 3) in vec2 inUV;
 
 out TVertexData
 {
-    vec3 pos;
-    vec3 nv;
+    vec3 world_pos;
+    vec3 world_nv;
     vec3 col;
     vec2 uv;
 } out_data;
 
-uniform mat4 u_projectionMat44;
-uniform mat4 u_viewMat44;
 uniform mat4 u_modelMat44;
 
 void main()
 {
-    mat4 mv_mat   = u_viewMat44 * u_modelMat44;
-    vec4 viewPos  = mv_mat * vec4(inPos, 1.0);
-    out_data.pos  = viewPos.xyz / viewPos.w;
-    out_data.nv   = normalize( mat3( mv_mat ) * inNV );
-    out_data.col  = inCol;
-    out_data.uv   = inUV;
-    //gl_Position = u_projectionMat44 * viewPos;
+    vec4 worldPos      = u_modelMat44 * vec4(inPos, 1.0);
+    out_data.world_pos = worldPos.xyz / worldPos.w;
+    out_data.world_nv  = normalize( mat3(u_modelMat44) * inNV );
+    out_data.col       = inCol;
+    out_data.uv        = inUV;
 }
