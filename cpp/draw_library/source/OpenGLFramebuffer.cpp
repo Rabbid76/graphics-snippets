@@ -1109,10 +1109,10 @@ const CRenderProcess::TBufferInfoCache & CRenderProcess::EvaluateInfoCache(
   info._vp_size = info._targetIsDefault ? _size : fbIt->second._size;
 
   // set the named frambuffer object
-  info._fb_obj = info._targetIsDefault ? 0 : fbIt->second._object;
+  info._fb_obj = info._targetIsDefault ? (unsigned int)pass._default_obj : fbIt->second._object;
 
   // init the buffer clear mask
-  info._clearMask = info._targetIsDefault ? ( GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT ) : 0;
+  info._clearMask = (info._targetIsDefault && pass._clear_default) ? ( GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT ) : 0;
 
   // evaluate target buffers and target buffer clearing
   bool clear_all_color = true;
@@ -1175,6 +1175,57 @@ const CRenderProcess::TBufferInfoCache & CRenderProcess::EvaluateInfoCache(
   }
 
   return it->second;
+}
+
+
+/******************************************************************//**
+* @brief   Validate the frambuffer sizes
+*
+* @author  gernot
+* @date    2018-04-19
+* @version 1.0
+**********************************************************************/
+bool CRenderProcess::ValidateSize(
+  std::array<size_t, 2> size ) //!< in: new size 
+{
+  if ( size == CurrentSize() )
+    return true;
+  return false;
+
+  /*
+  for ( auto &info : _bufferInfoMap )
+  {
+    auto passScaleIt = _passScales.find( info.first );
+    float scale      = passScaleIt != _passScales.end() ? passScaleIt->second : 1.0f;
+    
+    std::array<size_t, 2> new_size
+    {
+      (size_t)( (float)size[0] * scale + 0.5f ),
+      (size_t)( (float)size[1] * scale + 0.5f )
+    };
+
+    if ( info.second._vp_size[0] < new_size[0] || info.second._vp_size[1] < new_size[1] )
+      return false;
+   
+    if ( std::max( info.second._vp_size[0], info.second._vp_size[1] ) > std::max( new_size[0], new_size[1] )*2 )
+      return false;
+  }
+
+  for ( auto &info : _bufferInfoMap )
+  {
+    auto passScaleIt = _passScales.find( info.first );
+    float scale      = passScaleIt != _passScales.end() ? passScaleIt->second : 1.0f;
+    
+    std::array<size_t, 2> new_size
+    {
+      (size_t)( (float)size[0] * scale + 0.5f ),
+      (size_t)( (float)size[1] * scale + 0.5f )
+    };
+
+    info.second._vp_size = new_size;
+  }
+  */
+  return true;
 }
 
 
@@ -1267,6 +1318,7 @@ bool CRenderProcess::Prepare(
       glActiveTexture( std::get<0>(source) ); OPENGL_CHECK_GL_ERROR
       glBindTexture( std::get<1>(source), std::get<2>(source) ); OPENGL_CHECK_GL_ERROR
     }
+    glActiveTexture( GL_TEXTURE0 );
   }
   
   return true;
@@ -1301,6 +1353,7 @@ bool CRenderProcess::ReleasePass(
       glActiveTexture( std::get<0>(source) ); OPENGL_CHECK_GL_ERROR
       glBindTexture( std::get<1>(source), 0 ); OPENGL_CHECK_GL_ERROR
     }
+    glActiveTexture( GL_TEXTURE0 );
   }
 
   // restore the viewport size

@@ -114,6 +114,7 @@ public:
   virtual bool SpecifyPass( size_t passID, const Render::TPass &specification ) override;       //!< specify a single render pass
   virtual bool SpecifyPasses( const TPassMap &passes ) override;                                //!< specify all render passes 
   virtual bool Validate( void ) override;                                                       //!< validate the specifcations
+  virtual bool ValidateSize( std::array<size_t, 2> ) override;                                  //!< validate the frambuffer sizes
   virtual bool Create( TViewportSize size ) override;                                           //!< validate the specification and create the render passes                
   virtual void Destroy( void ) override;                                                        //!< destroy the buffer and the passes
   virtual bool Prepare( size_t passID, TPrepareProperties props ) override;                     //!< prepare a render pass

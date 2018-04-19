@@ -300,10 +300,12 @@ struct TPass
     return ( *this == B ) == false;
   }
 
-  std::vector<TSource> _sources;                     //!< source buffers
-  std::vector<TTarget> _targets;                     //!< target buffers
-  TPassDepthTest       _depth = TPassDepthTest::OFF; //!< depth test of the pass
-  TPassBlending        _blend = TPassBlending::OFF;  //!< blending function of the pass
+  std::vector<TSource> _sources;                             //!< source buffers
+  std::vector<TTarget> _targets;                             //!< target buffers
+  TPassDepthTest       _depth         = TPassDepthTest::OFF; //!< depth test of the pass
+  TPassBlending        _blend         = TPassBlending::OFF;  //!< blending function of the pass
+  size_t               _default_obj   = 0;                   //!< default fb obj
+  bool                 _clear_default = true;                //!< clear the default buffer
 };
 
 
@@ -391,6 +393,7 @@ public:
   virtual bool  IsComplete( void ) const = 0;                           //!< checks if the buffers and passes have been successfully created
   virtual void  Invalidate( void ) = 0;                                 //!< invalidate, force renew of buffers and passes
   virtual bool  Validate( void ) = 0;                                   //!< validate the specifcations
+  virtual bool  ValidateSize( std::array<size_t, 2> ) = 0;              //!< validate the frambuffer sizes
   virtual bool  Create( std::array<size_t, 2> ) = 0;                    //!< validate the specification and create the render passes 
   virtual TSize CurrentSize( void ) const = 0;                          //!< current process buffer size
   virtual void  Destroy( void ) = 0;                                    //!< detroy the buffer and the passes
