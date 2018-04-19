@@ -10,7 +10,7 @@
 #define OpenGLError_h_INCLUDED
 
 
-// preprocess defineitons
+// preprocess definitions
 
 #if !defined(__FRAMBUFFER_DEBUG_ERROR_CHECK__)
 #define __FRAMBUFFER_DEBUG_ERROR_CHECK__
