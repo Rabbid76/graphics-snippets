@@ -50,7 +50,7 @@ unsigned int CError::Check( void )
 {
   GLenum err = glGetError();
   if ( err != GL_NO_ERROR )
-    DebugWarning << "OpenGL ERROR" << err;
+    DebugWarning << "OpenGL ERROR " << err;
   return err;
 }
 
