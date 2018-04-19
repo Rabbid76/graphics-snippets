@@ -158,7 +158,7 @@ vec3 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
 */
 
 
-vec3 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
+vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
 {   
     // sample steps and quality
     vec2  quality_range  = u_parallax_quality;
@@ -214,17 +214,23 @@ vec3 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
     // set displaced texture coordiante and intersection height
     texC      += isect_dir * bestBumpHeight * texStep.xy;
     mapHeight  = bestBumpHeight;
+    
+    float mapDiff = 0.0;
+    if ( base_height == 0.0 )
+    {
+      mapDiff = frontFace * bestBumpHeight;
+    }
+    else
+    {
+      mapDiff = isect_dir * (base_height - bestBumpHeight);
+    }
    
-    return vec3(texC.xy, mapHeight);
+    return vec4(texC.xy, mapHeight, mapDiff);
 }
 
 
 void main()
 {
-    float clip_dist      = in_data.clip;
-    if ( clip_dist < 0.0 )
-        discard;
-
     vec3 objPosEs    = in_data.pos;
     vec3 objNormalEs = in_data.nv;
     vec3 texCoords   = in_data.uvh.stp;
@@ -240,12 +246,22 @@ void main()
     vec3  B           = in_data.bv;
     float invmax      = inversesqrt(max(dot(T, T), dot(B, B)));
     mat3  tbnMat      = mat3(T * invmax, B * invmax, N * invmax);
+    mat3  inv_tbnMat  = inverse( tbnMat );
    
-    vec3  texDir3D     = normalize( inverse( tbnMat ) * objPosEs );
+    vec3  texDir3D     = normalize( inv_tbnMat * objPosEs );
     float frontFace    = gl_FrontFacing ? 1.0 : -1.0; // TODO $$$ sign(dot(N,objPosEs));
-    vec3  newTexCoords = abs(u_displacement_scale) < 0.001 ? vec3(texCoords.st, 0.0) : Parallax( frontFace, texDir3D, texCoords.stp );
+    vec4  newTexCoords = abs(u_displacement_scale) < 0.001 ? vec4(texCoords.st, 0.0, 0.0) : Parallax( frontFace, texDir3D, texCoords.stp );
 
-    // TODO $$$ calcualte depth by adding length( texDir3D.xy / texDir3D.z ) * newTexCoords.z
+    //float depth_displ    = length(tbnMat * (newTexCoords.z * texDir3D.xyz / abs(texDir3D.z))); 
+    //vec3  view_pos_displ = objPosEs - depth_displ * normalize(objPosEs);
+    vec3  displ_vec      = tbnMat * (clamp(newTexCoords.w, 0.0, 1.0) * texDir3D.xyz / abs(texDir3D.z));
+    vec3  view_pos_displ = objPosEs - displ_vec;
+    vec4  modelPos       = inverse(u_viewMat44) * vec4(view_pos_displ, 1.0);
+    vec4  clipPlane      = vec4(normalize(u_clipPlane.xyz), u_clipPlane.w);
+    float clip_dist      = dot(modelPos, clipPlane);
+    //float clip_dist      = in_data.clip;
+    if ( clip_dist < 0.0 )
+        discard;
 
     vec2  range_vec  = step(vec2(0.0), newTexCoords.st) * step(newTexCoords.st, vec2(1.0));
     float range_test = range_vec.x * range_vec.y;
@@ -260,8 +276,8 @@ void main()
     texCoords.st       = newTexCoords.xy;
     
     vec4  normalVec    = CalculateNormal( texCoords.st );
-    tbnMat[2].xyz      = (gl_FrontFacing ? 1.0 : -1.0) * N / u_displacement_scale;  
-    vec3  nvMappedEs   = normalize( tbnMat * normalVec.xyz );
+    //vec3  nvMappedEs   = normalize( tbnMat * normalVec.xyz );
+    vec3  nvMappedEs   = normalize( transpose(inv_tbnMat) * normalVec.xyz );
 
     //vec3 color = in_data.col;
     vec3 color = texture( u_texture, texCoords.st ).rgb;
@@ -288,8 +304,6 @@ void main()
     //float gray = dot(lightCol.rgb, vec3(0.2126, 0.7152, 0.0722));
     //fragColor = vec4( vec3( step(0.0, -frontFace), step(0.0, texDir3D.z), step(0.0, -texDir3D.z) ) * gray, 1.0 );
 
-    //vec3 newObjPosEs = objPosEs + normalize(objPosEs) * length(tbnMat * texDir3D * newTexCoords.w) * sign(newTexCoords.w);
-    //vec3 newObjPosEs = objPosEs;
-    //vec4 objPosClip  = u_projectionMat44 * vec4(newObjPosEs.xyz, 1.0); 
-    //gl_FragDepth     = 0.5 + 0.5 * objPosClip.z/objPosClip.w;
+    vec4 proj_pos_displ = u_projectionMat44 * vec4(view_pos_displ.xyz, 1.0);
+    gl_FragDepth = 0.5 + 0.5 * proj_pos_displ.z / proj_pos_displ.w;
 }
