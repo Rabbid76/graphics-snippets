@@ -167,6 +167,7 @@ vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
     int   numBinarySteps = int( clamp( quality * 10.0, 1.0, 7.0 ) );
     
     // intersection direction and start height
+    //vec2  texStep        = texDir3D.xy / max(abs(texDir3D.z), 0.5); // (z is negative) the direction vector points downwards int tangent-space
     vec2  texStep        = texDir3D.xy / abs(texDir3D.z); // (z is negative) the direction vector points downwards int tangent-space
     float base_height    = texCoord.p;
 
