@@ -162,14 +162,14 @@ vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
 {   
     // sample steps and quality
     vec2  quality_range  = u_parallax_quality;
-    float quality        = mix( quality_range.x, quality_range.y, 1.0 - pow(abs(normalize(texDir3D).z),2.0) );
+    float quality        = mix( quality_range.x, quality_range.y, 1.0 - abs(normalize(texDir3D).z) );
     float numSteps       = clamp( quality * 50.0, 1.0, 50.0 );
-    int   numBinarySteps = int( clamp( quality * 10.0, 1.0, 7.0 ) );
+    int   numBinarySteps = int( clamp( quality * 10.0, 1.0, 10.0 ) );
     
     // intersection direction and start height
-    //vec2  texStep        = texDir3D.xy / max(abs(texDir3D.z), 0.5); // (z is negative) the direction vector points downwards int tangent-space
-    vec2  texStep        = texDir3D.xy / abs(texDir3D.z); // (z is negative) the direction vector points downwards int tangent-space
     float base_height    = texCoord.p;
+    //vec2  texStep        = texDir3D.xy / abs(texDir3D.z); // (z is negative) the direction vector points downwards int tangent-space
+    vec2  texStep        = base_height == 0 ? texDir3D.xy / abs(texDir3D.z) : texDir3D.xy / max(abs(texDir3D.z), 0.5*length(texDir3D.xy));
 
     // intersection direction: -1 for downwards or 1 for upwards
     // downwards for base triangles (back faces are inverted)
