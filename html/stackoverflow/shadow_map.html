@@ -140,22 +140,191 @@ void main()
 
 <script type="text/javascript">
 
-glArrayType = typeof Float32Array !="undefined" ? Float32Array : ( typeof WebGLFloatArray != "undefined" ? WebGLFloatArray : Array );
+function drawScene(){
 
-function IdentityMat44() {
-  var m = new glArrayType(16);
-  m[0]  = 1; m[1]  = 0; m[2]  = 0; m[3]  = 0;
-  m[4]  = 0; m[5]  = 1; m[6]  = 0; m[7]  = 0;
-  m[8]  = 0; m[9]  = 0; m[10] = 1; m[11] = 0;
-  m[12] = 0; m[13] = 0; m[14] = 0; m[15] = 1;
-  return m;
-};
+var ambient = document.getElementById( "ambient" ).value / sliderScale;
+var diffuse = document.getElementById( "diffuse" ).value / sliderScale;
+var specular = document.getElementById( "specular" ).value / sliderScale;
+var shininess = document.getElementById( "shininess" ).value;
+
+var canvas = document.getElementById( "scene-canvas" );
+
+var currentTime = Date.now();   
+var deltaMS = currentTime - startTime;
+
+var lightPos = [-3.0, 0.0, 2.0];
+var lightAnimationMat = RotateAxis( IdentityMat44(), CalcAng( currentTime, 20.0 ), 2 );
+lightPos = Transform( lightPos, lightAnimationMat );
+var lightDir = [ -lightPos[0], -lightPos[1], -lightPos[2] ];
+var light  = Camera.Create( lightPos, [0, 0, 0], [0, 0, 1], 110, [ 5.0, 5.0 ], -20.0, 20.0 );
+var camera = Camera.Create( [0, 2.5, 2], [0, 0, 0], [0, 0, 1], 110, [canvas.width, canvas.height], 0.5, 100.0 );
+
+var lightPrjMat = Camera.Ortho( light );
+var lightViewMat = Camera.LookAt( light );
+var prjMat = Camera.Perspective( camera );
+var viewMat = Camera.LookAt( camera );
+var modelMat = IdentityMat44();
+modelMat = RotateAxis( modelMat, CalcAng( currentTime, 13.0 ), 0 );
+modelMat = RotateAxis( modelMat, CalcAng( currentTime, 17.0 ), 1 );
+groundModelMat = IdentityMat44();
+var viewLightDir = TransformVec( lightDir, viewMat );
+    
+gl.viewport( 0, 0, canvas.width, canvas.height );
+gl.enable( gl.DEPTH_TEST );
+
+shadowFB.Bind( true );
+ShaderProgram.Use( progShadow );
+ShaderProgram.SetUniformM44( progShadow, "u_projectionMat44", lightPrjMat );
+ShaderProgram.SetUniformM44( progShadow, "u_viewMat44", lightViewMat );
+ShaderProgram.SetUniformM44( progShadow, "u_modelMat44", modelMat );
+ShaderProgram.SetUniformF2( progShadow, "u_depthRange", [light.near, light.far] );
+
+VertexBuffer.Draw( bufTorus );
+
+shadowFB.Release( true );
+shadowFB.BindTexture( 1 );
+ShaderProgram.Use( progDraw );
+ShaderProgram.SetUniformM44( progDraw, "u_projectionMat44", prjMat );
+ShaderProgram.SetUniformM44( progDraw, "u_viewMat44", viewMat );
+ShaderProgram.SetUniformM44( progDraw, "u_lightProjectionMat44", lightPrjMat );
+ShaderProgram.SetUniformM44( progDraw, "u_lightViewMat44", lightViewMat );
+ShaderProgram.SetUniformM44( progDraw, "u_modelMat44", modelMat );
+ShaderProgram.SetUniformI1( progDraw, "u_depthSampler", 1 );
+ShaderProgram.SetUniformF3( progDraw, "u_lightDir", viewLightDir )
+ShaderProgram.SetUniformF1( progDraw, "u_ambient", ambient )
+ShaderProgram.SetUniformF1( progDraw, "u_diffuse", diffuse )
+ShaderProgram.SetUniformF1( progDraw, "u_specular", specular )
+ShaderProgram.SetUniformF1( progDraw, "u_shininess", shininess )
+
+VertexBuffer.Draw( bufTorus );
+ShaderProgram.SetUniformM44( progDraw, "u_modelMat44", groundModelMat );
+VertexBuffer.Draw( bufGround );
+}
+
+var startTime;
+function Fract( val ) { 
+return val - Math.trunc( val );
+}
+function CalcAng( currentTime, intervall ) {
+return Fract( (currentTime - startTime) / (1000*intervall) ) * 2.0 * Math.PI;
+}
+function CalcMove( currentTime, intervall, range ) {
+var pos = self.Fract( (currentTime - startTime) / (1000*intervall) ) * 2.0
+var pos = pos < 1.0 ? pos : (2.0-pos)
+return range[0] + (range[1] - range[0]) * pos;
+}    
+function EllipticalPosition( a, b, angRag ) {
+var a_b = a * a - b * b
+var ea = (a_b <= 0) ? 0 : Math.sqrt( a_b );
+var eb = (a_b >= 0) ? 0 : Math.sqrt( -a_b );
+return [ a * Math.sin( angRag ) - ea, b * Math.cos( angRag ) - eb, 0 ];
+}
+
+var sliderScale = 100.0
+var gl;
+var progShadow;
+var progDraw;
+var shadowFB;
+var bufTorus;
+var bufGround;
+function sceneStart() {
+
+document.getElementById( "ambient" ).value = 0.2 * sliderScale;
+document.getElementById( "diffuse" ).value = 0.7 * sliderScale;
+document.getElementById( "specular" ).value = 0.5 * sliderScale;
+document.getElementById( "shininess" ).value = 8.0;
+
+var canvas = document.getElementById( "scene-canvas");
+var vp = [canvas.width, canvas.height];
+gl = canvas.getContext( "experimental-webgl" );
+if ( !gl )
+  return;
+
+  progShadow = ShaderProgram.Create( 
+  [ { source : "shadow-shader-vs", stage : gl.VERTEX_SHADER },
+    { source : "shadow-shader-fs", stage : gl.FRAGMENT_SHADER }
+  ],
+  [ "u_projectionMat44", "u_viewMat44", "u_modelMat44", 
+    "u_lightDir", "u_ambient", "u_diffuse", "u_specular", "u_shininess", ] );
+progShadow.inPos = ShaderProgram.AttributeIndex( progShadow, "inPos" );
+progShadow.inNV  = ShaderProgram.AttributeIndex( progShadow, "inNV" );
+progShadow.inCol = ShaderProgram.AttributeIndex( progShadow, "inCol" );
+if ( progShadow == 0 )
+    return;
+
+progDraw = ShaderProgram.Create( 
+  [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },
+    { source : "draw-shader-fs", stage : gl.FRAGMENT_SHADER }
+  ],
+  [ "u_projectionMat44", "u_viewMat44", "u_modelMat44", 
+    "u_lightDir", "u_ambient", "u_diffuse", "u_specular", "u_shininess", ] );
+progDraw.inPos = ShaderProgram.AttributeIndex( progDraw, "inPos" );
+progDraw.inNV  = ShaderProgram.AttributeIndex( progDraw, "inNV" );
+progDraw.inCol = ShaderProgram.AttributeIndex( progDraw, "inCol" );
+if ( progDraw == 0 )
+    return;
+
+shadowFB = FrameBuffer.Create( vp );    
+
+// create torus
+var circum_size = 32, tube_size = 32;
+var rad_circum = 1.0;
+var rad_tube = 0.5;
+var torus_pts = [];
+var torus_nv = [];
+var torus_col = [];
+var torus_inx = [];
+var col = [1, 0.5, 0.0];
+for ( var i_c = 0; i_c < circum_size; ++ i_c ) {
+    var center = [
+        Math.cos(2 * Math.PI * i_c / circum_size),
+        Math.sin(2 * Math.PI * i_c / circum_size) ]
+    for ( var i_t = 0; i_t < tube_size; ++ i_t ) {
+        var tubeX = Math.cos(2 * Math.PI * i_t / tube_size)
+        var tubeY = Math.sin(2 * Math.PI * i_t / tube_size)
+        var pt = [
+            center[0] * ( rad_circum + tubeX * rad_tube ),
+            center[1] * ( rad_circum + tubeX * rad_tube ),
+            tubeY * rad_tube ]
+        var nv = [ pt[0] - center[0] * rad_tube, pt[1] - center[1] * rad_tube, tubeY * rad_tube ]
+        torus_pts.push( pt[0], pt[1], pt[2] );
+        torus_nv.push( nv[0], nv[1], nv[2] );
+        torus_col.push( col[0], col[1], col[2] );
+        var i_cn = (i_c+1) % circum_size
+        var i_tn = (i_t+1) % tube_size
+        var i_c0 = i_c * tube_size; 
+        var i_c1 = i_cn * tube_size; 
+        torus_inx.push( i_c0+i_t, i_c0+i_tn, i_c1+i_t, i_c0+i_tn, i_c1+i_t, i_c1+i_tn )
+    }
+}
+bufTorus = VertexBuffer.Create(
+  [ { data : torus_pts, attrSize : 3, attrLoc : progDraw.inPos },
+    { data : torus_nv,  attrSize : 3, attrLoc : progDraw.inNV },
+    { data : torus_col, attrSize : 3, attrLoc : progDraw.inCol } ],
+    torus_inx
+);
+
+var g_l = 8.0;
+var g_h = -2.5;
+var g_c = [ 0.8, 0.6, 0.8 ];
+bufGround = VertexBuffer.Create( 
+    [ { data : [ -g_l, -g_l, g_h, g_l, -g_l, g_h, g_l, g_l, g_h, -g_l, g_l, g_h ], attrSize : 3, attrLoc : progDraw.inPos },
+      { data : [ 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0 ], attrSize : 3, attrLoc : progDraw.inNV },
+      { data : [ g_c[0], g_c[1], g_c[2], g_c[0], g_c[1], g_c[2], g_c[0], g_c[1], g_c[2], g_c[0], g_c[1], g_c[2] ], attrSize : 3, attrLoc : progDraw.inCol } ],
+    [ 0, 1, 2, 0, 2, 3 ]
+);
+
+startTime = Date.now();
+setInterval(drawScene, 50);
+}
+
+function IdentityMat44() { return [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]; }
 
 function RotateAxis(matA, angRad, axis) {
     var aMap = [ [1, 2], [2, 0], [0, 1] ];
     var a0 = aMap[axis][0], a1 = aMap[axis][1]; 
     var sinAng = Math.sin(angRad), cosAng = Math.cos(angRad);
-    var matB = new glArrayType(16);
+    var matB = IdentityMat44();
     for ( var i = 0; i < 16; ++ i ) matB[i] = matA[i];
     for ( var i = 0; i < 3; ++ i ) {
         matB[a0*4+i] = matA[a0*4+i] * cosAng + matA[a1*4+i] * sinAng;
@@ -385,184 +554,6 @@ FrameBuffer.Create = function( vp, texturePlan ) {
 }
 
         
-function drawScene(){
-
-    var ambient = document.getElementById( "ambient" ).value / sliderScale;
-    var diffuse = document.getElementById( "diffuse" ).value / sliderScale;
-    var specular = document.getElementById( "specular" ).value / sliderScale;
-    var shininess = document.getElementById( "shininess" ).value;
-    
-    var canvas = document.getElementById( "scene-canvas" );
-
-    var currentTime = Date.now();   
-    var deltaMS = currentTime - startTime;
-
-    var lightPos = [-3.0, 0.0, 2.0];
-    var lightAnimationMat = RotateAxis( IdentityMat44(), CalcAng( currentTime, 20.0 ), 2 );
-    lightPos = Transform( lightPos, lightAnimationMat );
-    var lightDir = [ -lightPos[0], -lightPos[1], -lightPos[2] ];
-    var light  = Camera.Create( lightPos, [0, 0, 0], [0, 0, 1], 110, [ 5.0, 5.0 ], -20.0, 20.0 );
-    var camera = Camera.Create( [0, 2.5, 2], [0, 0, 0], [0, 0, 1], 110, [canvas.width, canvas.height], 0.5, 100.0 );
-    
-    var lightPrjMat = Camera.Ortho( light );
-    var lightViewMat = Camera.LookAt( light );
-    var prjMat = Camera.Perspective( camera );
-    var viewMat = Camera.LookAt( camera );
-    var modelMat = IdentityMat44();
-    modelMat = RotateAxis( modelMat, CalcAng( currentTime, 13.0 ), 0 );
-    modelMat = RotateAxis( modelMat, CalcAng( currentTime, 17.0 ), 1 );
-    groundModelMat = IdentityMat44();
-    var viewLightDir = TransformVec( lightDir, viewMat );
-        
-    gl.viewport( 0, 0, canvas.width, canvas.height );
-    gl.enable( gl.DEPTH_TEST );
-
-    shadowFB.Bind( true );
-    ShaderProgram.Use( progShadow );
-    ShaderProgram.SetUniformM44( progShadow, "u_projectionMat44", lightPrjMat );
-    ShaderProgram.SetUniformM44( progShadow, "u_viewMat44", lightViewMat );
-    ShaderProgram.SetUniformM44( progShadow, "u_modelMat44", modelMat );
-    ShaderProgram.SetUniformF2( progShadow, "u_depthRange", [light.near, light.far] );
-
-    VertexBuffer.Draw( bufTorus );
-    
-    shadowFB.Release( true );
-    shadowFB.BindTexture( 1 );
-    ShaderProgram.Use( progDraw );
-    ShaderProgram.SetUniformM44( progDraw, "u_projectionMat44", prjMat );
-    ShaderProgram.SetUniformM44( progDraw, "u_viewMat44", viewMat );
-    ShaderProgram.SetUniformM44( progDraw, "u_lightProjectionMat44", lightPrjMat );
-    ShaderProgram.SetUniformM44( progDraw, "u_lightViewMat44", lightViewMat );
-    ShaderProgram.SetUniformM44( progDraw, "u_modelMat44", modelMat );
-    ShaderProgram.SetUniformI1( progDraw, "u_depthSampler", 1 );
-    ShaderProgram.SetUniformF3( progDraw, "u_lightDir", viewLightDir )
-    ShaderProgram.SetUniformF1( progDraw, "u_ambient", ambient )
-    ShaderProgram.SetUniformF1( progDraw, "u_diffuse", diffuse )
-    ShaderProgram.SetUniformF1( progDraw, "u_specular", specular )
-    ShaderProgram.SetUniformF1( progDraw, "u_shininess", shininess )
-    
-    VertexBuffer.Draw( bufTorus );
-    ShaderProgram.SetUniformM44( progDraw, "u_modelMat44", groundModelMat );
-    VertexBuffer.Draw( bufGround );
-}
-
-var startTime;
-function Fract( val ) { 
-    return val - Math.trunc( val );
-}
-function CalcAng( currentTime, intervall ) {
-    return Fract( (currentTime - startTime) / (1000*intervall) ) * 2.0 * Math.PI;
-}
-function CalcMove( currentTime, intervall, range ) {
-    var pos = self.Fract( (currentTime - startTime) / (1000*intervall) ) * 2.0
-    var pos = pos < 1.0 ? pos : (2.0-pos)
-    return range[0] + (range[1] - range[0]) * pos;
-}    
-function EllipticalPosition( a, b, angRag ) {
-    var a_b = a * a - b * b
-    var ea = (a_b <= 0) ? 0 : Math.sqrt( a_b );
-    var eb = (a_b >= 0) ? 0 : Math.sqrt( -a_b );
-    return [ a * Math.sin( angRag ) - ea, b * Math.cos( angRag ) - eb, 0 ];
-}
-
-var sliderScale = 100.0
-var gl;
-var progShadow;
-var progDraw;
-var shadowFB;
-var bufTorus;
-var bufGround;
-function sceneStart() {
-
-    document.getElementById( "ambient" ).value = 0.2 * sliderScale;
-    document.getElementById( "diffuse" ).value = 0.7 * sliderScale;
-    document.getElementById( "specular" ).value = 0.5 * sliderScale;
-    document.getElementById( "shininess" ).value = 8.0;
-    
-    var canvas = document.getElementById( "scene-canvas");
-    var vp = [canvas.width, canvas.height];
-    gl = canvas.getContext( "experimental-webgl" );
-    if ( !gl )
-      return;
-
-      progShadow = ShaderProgram.Create( 
-      [ { source : "shadow-shader-vs", stage : gl.VERTEX_SHADER },
-        { source : "shadow-shader-fs", stage : gl.FRAGMENT_SHADER }
-      ],
-      [ "u_projectionMat44", "u_viewMat44", "u_modelMat44", 
-        "u_lightDir", "u_ambient", "u_diffuse", "u_specular", "u_shininess", ] );
-    progShadow.inPos = ShaderProgram.AttributeIndex( progShadow, "inPos" );
-    progShadow.inNV  = ShaderProgram.AttributeIndex( progShadow, "inNV" );
-    progShadow.inCol = ShaderProgram.AttributeIndex( progShadow, "inCol" );
-    if ( progShadow == 0 )
-        return;
-
-    progDraw = ShaderProgram.Create( 
-      [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },
-        { source : "draw-shader-fs", stage : gl.FRAGMENT_SHADER }
-      ],
-      [ "u_projectionMat44", "u_viewMat44", "u_modelMat44", 
-        "u_lightDir", "u_ambient", "u_diffuse", "u_specular", "u_shininess", ] );
-    progDraw.inPos = ShaderProgram.AttributeIndex( progDraw, "inPos" );
-    progDraw.inNV  = ShaderProgram.AttributeIndex( progDraw, "inNV" );
-    progDraw.inCol = ShaderProgram.AttributeIndex( progDraw, "inCol" );
-    if ( progDraw == 0 )
-        return;
-
-    shadowFB = FrameBuffer.Create( vp );    
-
-    // create torus
-    var circum_size = 32, tube_size = 32;
-    var rad_circum = 1.0;
-    var rad_tube = 0.5;
-    var torus_pts = [];
-    var torus_nv = [];
-    var torus_col = [];
-    var torus_inx = [];
-    var col = [1, 0.5, 0.0];
-    for ( var i_c = 0; i_c < circum_size; ++ i_c ) {
-        var center = [
-            Math.cos(2 * Math.PI * i_c / circum_size),
-            Math.sin(2 * Math.PI * i_c / circum_size) ]
-        for ( var i_t = 0; i_t < tube_size; ++ i_t ) {
-            var tubeX = Math.cos(2 * Math.PI * i_t / tube_size)
-            var tubeY = Math.sin(2 * Math.PI * i_t / tube_size)
-            var pt = [
-                center[0] * ( rad_circum + tubeX * rad_tube ),
-                center[1] * ( rad_circum + tubeX * rad_tube ),
-                tubeY * rad_tube ]
-            var nv = [ pt[0] - center[0] * rad_tube, pt[1] - center[1] * rad_tube, tubeY * rad_tube ]
-            torus_pts.push( pt[0], pt[1], pt[2] );
-            torus_nv.push( nv[0], nv[1], nv[2] );
-            torus_col.push( col[0], col[1], col[2] );
-            var i_cn = (i_c+1) % circum_size
-            var i_tn = (i_t+1) % tube_size
-            var i_c0 = i_c * tube_size; 
-            var i_c1 = i_cn * tube_size; 
-            torus_inx.push( i_c0+i_t, i_c0+i_tn, i_c1+i_t, i_c0+i_tn, i_c1+i_t, i_c1+i_tn )
-        }
-    }
-    bufTorus = VertexBuffer.Create(
-      [ { data : torus_pts, attrSize : 3, attrLoc : progDraw.inPos },
-        { data : torus_nv,  attrSize : 3, attrLoc : progDraw.inNV },
-        { data : torus_col, attrSize : 3, attrLoc : progDraw.inCol } ],
-        torus_inx
-    );
-
-    var g_l = 8.0;
-    var g_h = -2.5;
-    var g_c = [ 0.8, 0.6, 0.8 ];
-    bufGround = VertexBuffer.Create( 
-        [ { data : [ -g_l, -g_l, g_h, g_l, -g_l, g_h, g_l, g_l, g_h, -g_l, g_l, g_h ], attrSize : 3, attrLoc : progDraw.inPos },
-          { data : [ 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0 ], attrSize : 3, attrLoc : progDraw.inNV },
-          { data : [ g_c[0], g_c[1], g_c[2], g_c[0], g_c[1], g_c[2], g_c[0], g_c[1], g_c[2], g_c[0], g_c[1], g_c[2] ], attrSize : 3, attrLoc : progDraw.inCol } ],
-        [ 0, 1, 2, 0, 2, 3 ]
-    );
-
-    startTime = Date.now();
-    setInterval(drawScene, 50);
-}
-
 </script>
 
 <body onload="sceneStart();">
