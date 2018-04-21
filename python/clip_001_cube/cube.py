@@ -52,9 +52,8 @@ class MyWindow(window.CameraWindow):
         glEnable( GL_CLIP_DISTANCE0 )
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT )
         progDraw.Use()
-        modelMat = mat.IdentityMat44()
-        modelMat = mat.RotateX( modelMat, self.CalcAng( 13.0 ) )
-        modelMat = mat.RotateY( modelMat, self.CalcAng( 17.0 ) )
+        modelMat = mat.IdentityMat44() 
+        modelMat = self.AutoModelMatrix()
 
         clip_dist = 0.0
         progDraw.SetUniforms( {

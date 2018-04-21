@@ -79,7 +79,20 @@ when post-multiplying with a column vector is given by
         [ 2*b*d - 2*a*c,          2*c*d + 2*a*b,         a*a -b*b - c*c + d*d ]
 
 
-### 
+### Rotate by quaternation
+
+Express [`glm::rotate`](https://glm.g-truc.net/0.9.8/api/a00232.html#ga2020c91bf61e050882b3a5c18eada700) by an quaternation:
+
+   glm::rotate( ang_rad, (ux, uy, uz))
+   
+   (ux, uy, uz): rotation axis (unit vector)
+   ang_rad:      rotation angle in radians
+
+   c = cos(ang_rad/2)
+   s = sin(ang_rad/2)
+
+   q = (c, ux*s, uy*s, uz*s)
+
 
 ## Matrix calculus
 

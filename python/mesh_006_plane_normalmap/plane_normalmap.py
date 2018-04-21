@@ -84,8 +84,9 @@ class MyWindow(window.CameraWindow):
         glEnable( GL_DEPTH_TEST )
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT )
         progDraw.Use()
-        modelMat = mat.IdentityMat44()
-        modelMat = mat.RotateX( modelMat, 60.0 * math.pi / 180.0 )
+        modelMat = mat.IdentityMat44() 
+        modelMat = self.AutoModelMatrix()
+        #modelMat = mat.RotateX( modelMat, 60.0 * math.pi / 180.0 )
         #modelMat = mat.RotateX( modelMat, self.CalcAng( 13.0 ) )
         #modelMat = mat.RotateY( modelMat, self.CalcAng( 17.0 ) )
 

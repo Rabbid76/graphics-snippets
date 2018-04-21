@@ -50,9 +50,10 @@ class MyWindow(window.CameraWindow):
         lightSourceBuffer.BindDataFloat(b'u_lightSource.dir', mat.TransformVec4([-1.0, -1.0, -5.0, 0.0], viewMat) )
     
         # set up icosahedron model matrix
-        modelMat = mat.IdentityMat44()
-        modelMat = mat.RotateX( modelMat, self.CalcAng( 13.0 ) )
-        modelMat = mat.RotateY( modelMat, self.CalcAng( 17.0 ) )
+        modelMat = mat.IdentityMat44() 
+        modelMat = self.AutoModelMatrix()
+        #modelMat = mat.RotateX( modelMat, self.CalcAng( 13.0 ) )
+        #modelMat = mat.RotateY( modelMat, self.CalcAng( 17.0 ) )
 
         # set up attributes and shader program
         glEnable( GL_DEPTH_TEST )

@@ -59,9 +59,10 @@ class MyWindow(window.CameraWindow):
         # set up attributes and shader program
         renderProcess.PrepareStage( "geometry" )
         progDraw.Use()
-        modelMat = mat.IdentityMat44()
-        modelMat = mat.RotateX( modelMat, self.CalcAng( 13.0 ) )
-        modelMat = mat.RotateY( modelMat, self.CalcAng( 17.0 ) )
+        modelMat = mat.IdentityMat44() 
+        modelMat = self.AutoModelMatrix()
+        #modelMat = mat.RotateX( modelMat, self.CalcAng( 13.0 ) )
+        #modelMat = mat.RotateY( modelMat, self.CalcAng( 17.0 ) )
 
         progDraw.SetUniforms( {
             b"u_projectionMat44" : self.Perspective(),

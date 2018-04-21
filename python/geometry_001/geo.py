@@ -52,11 +52,8 @@ class MyWindow(window.CameraWindow):
     
         # set up the model matrix
         modelMat = mat.IdentityMat44()
-        if not rotateCamera: modelMat = mat.RotateY( modelMat, self.CalcAng( 10.0 )  )
+        modelMat = self.AutoModelMatrix()
         modelMat = mat.Scale( modelMat, numpy.repeat( 4, 3 ) )
-        #modelMat = Translate( modelMat, numpy.array( [0.0, 0.0, 1.0] ) )
-        #modelMat = mat.RotateY( modelMat, self.CalcAng( 20.0 ) )
-        modelMat = mat.RotateX( modelMat, self.CalcAng( 9.0 ) )
  
         # set up attributes and shader program
         glEnable( GL_DEPTH_TEST )
