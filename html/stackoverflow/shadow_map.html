@@ -240,29 +240,25 @@ gl = canvas.getContext( "experimental-webgl" );
 if ( !gl )
   return;
 
-  progShadow = ShaderProgram.Create( 
-  [ { source : "shadow-shader-vs", stage : gl.VERTEX_SHADER },
-    { source : "shadow-shader-fs", stage : gl.FRAGMENT_SHADER }
-  ],
-  [ "u_projectionMat44", "u_viewMat44", "u_modelMat44", 
-    "u_lightDir", "u_ambient", "u_diffuse", "u_specular", "u_shininess", ] );
+progShadow = ShaderProgram.Create( 
+[ { source : "shadow-shader-vs", stage : gl.VERTEX_SHADER },
+{ source : "shadow-shader-fs", stage : gl.FRAGMENT_SHADER }
+] );
+if (!progShadow.progObj)
+    return null;
 progShadow.inPos = ShaderProgram.AttributeIndex( progShadow, "inPos" );
 progShadow.inNV  = ShaderProgram.AttributeIndex( progShadow, "inNV" );
 progShadow.inCol = ShaderProgram.AttributeIndex( progShadow, "inCol" );
-if ( progShadow == 0 )
-    return;
 
 progDraw = ShaderProgram.Create( 
   [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },
     { source : "draw-shader-fs", stage : gl.FRAGMENT_SHADER }
-  ],
-  [ "u_projectionMat44", "u_viewMat44", "u_modelMat44", 
-    "u_lightDir", "u_ambient", "u_diffuse", "u_specular", "u_shininess", ] );
+  ] );
+if (!progDraw.progObj)
+    return null;
 progDraw.inPos = ShaderProgram.AttributeIndex( progDraw, "inPos" );
 progDraw.inNV  = ShaderProgram.AttributeIndex( progDraw, "inNV" );
 progDraw.inCol = ShaderProgram.AttributeIndex( progDraw, "inCol" );
-if ( progDraw == 0 )
-    return;
 
 shadowFB = FrameBuffer.Create( vp );    
 
@@ -410,67 +406,62 @@ Camera.LookAt = function( camera ) {
 } 
 
 var ShaderProgram = {};
-ShaderProgram.Create = function( shaderList ) {
+ShaderProgram.Create = function (shaderList) {
     var shaderObjs = [];
-    for ( var i_sh = 0; i_sh < shaderList.length; ++ i_sh ) {
-        var shderObj = this.CompileShader( shaderList[i_sh].source, shaderList[i_sh].stage );
-        if ( shderObj == 0 )
+    for (var i_sh = 0; i_sh < shaderList.length; ++i_sh) {
+        var shderObj = this.CompileShader(shaderList[i_sh].source, shaderList[i_sh].stage);
+        if (shderObj == 0)
             return 0;
-        shaderObjs.push( shderObj );
+        shaderObjs.push(shderObj);
     }
-    var progObj = this.LinkProgram( shaderObjs )
-    if ( progObj != 0 ) {
-        progObj.attribIndex = {};
-        var noOfAttributes = gl.getProgramParameter( progObj, gl.ACTIVE_ATTRIBUTES );
-        for ( var i_n = 0; i_n < noOfAttributes; ++ i_n ) {
-            var name = gl.getActiveAttrib( progObj, i_n ).name;
-            progObj.attribIndex[name] = gl.getAttribLocation( progObj, name );
+    var prog = {}
+    prog.progObj = this.LinkProgram(shaderObjs)
+    if (prog.progObj) {
+        prog.attribIndex = {};
+        var noOfAttributes = gl.getProgramParameter(prog.progObj, gl.ACTIVE_ATTRIBUTES);
+        for (var i_n = 0; i_n < noOfAttributes; ++i_n) {
+            var name = gl.getActiveAttrib(prog.progObj, i_n).name;
+            prog.attribIndex[name] = gl.getAttribLocation(prog.progObj, name);
         }
-        progObj.unifomLocation = {};
-        var noOfUniforms = gl.getProgramParameter( progObj, gl.ACTIVE_UNIFORMS );
-        for ( var i_n = 0; i_n < noOfUniforms; ++ i_n ) {
-            var name = gl.getActiveUniform( progObj, i_n ).name;
-            progObj.unifomLocation[name] = gl.getUniformLocation( progObj, name );
+        prog.unifomLocation = {};
+        var noOfUniforms = gl.getProgramParameter(prog.progObj, gl.ACTIVE_UNIFORMS);
+        for (var i_n = 0; i_n < noOfUniforms; ++i_n) {
+            var name = gl.getActiveUniform(prog.progObj, i_n).name;
+            prog.unifomLocation[name] = gl.getUniformLocation(prog.progObj, name);
         }
     }
-    return progObj;
+    return prog;
 }
-ShaderProgram.AttributeIndex = function( progObj, name ) { return progObj.attribIndex[name]; } 
-ShaderProgram.UniformLocation = function( progObj, name ) { return progObj.unifomLocation[name]; } 
-ShaderProgram.Use = function( progObj ) { gl.useProgram( progObj ); } 
-ShaderProgram.SetUniformI1  = function( progObj, name, val ) { if(progObj.unifomLocation[name]) gl.uniform1i( progObj.unifomLocation[name], val ); }
-ShaderProgram.SetUniformF1  = function( progObj, name, val ) { if(progObj.unifomLocation[name]) gl.uniform1f( progObj.unifomLocation[name], val ); }
-ShaderProgram.SetUniformF2  = function( progObj, name, arr ) { if(progObj.unifomLocation[name]) gl.uniform2fv( progObj.unifomLocation[name], arr ); }
-ShaderProgram.SetUniformF3  = function( progObj, name, arr ) { if(progObj.unifomLocation[name]) gl.uniform3fv( progObj.unifomLocation[name], arr ); }
-ShaderProgram.SetUniformF4  = function( progObj, name, arr ) { if(progObj.unifomLocation[name]) gl.uniform4fv( progObj.unifomLocation[name], arr ); }
-ShaderProgram.SetUniformM33 = function( progObj, name, mat ) { if(progObj.unifomLocation[name]) gl.uniformMatrix3fv( progObj.unifomLocation[name], false, mat ); }
-ShaderProgram.SetUniformM44 = function( progObj, name, mat ) { if(progObj.unifomLocation[name]) gl.uniformMatrix4fv( progObj.unifomLocation[name], false, mat ); }
-ShaderProgram.CompileShader = function( source, shaderStage ) {
+ShaderProgram.AttributeIndex = function (prog, name) { return prog.attribIndex[name]; }
+ShaderProgram.UniformLocation = function (prog, name) { return prog.unifomLocation[name]; }
+ShaderProgram.Use = function (prog) { gl.useProgram(prog.progObj); }
+ShaderProgram.SetUniformI1 = function (prog, name, val) { if (prog.unifomLocation[name]) gl.uniform1i(prog.unifomLocation[name], val); }
+ShaderProgram.SetUniformF1 = function (prog, name, val) { if (prog.unifomLocation[name]) gl.uniform1f(prog.unifomLocation[name], val); }
+ShaderProgram.SetUniformF2 = function (prog, name, arr) { if (prog.unifomLocation[name]) gl.uniform2fv(prog.unifomLocation[name], arr); }
+ShaderProgram.SetUniformF3 = function (prog, name, arr) { if (prog.unifomLocation[name]) gl.uniform3fv(prog.unifomLocation[name], arr); }
+ShaderProgram.SetUniformF4 = function (prog, name, arr) { if (prog.unifomLocation[name]) gl.uniform4fv(prog.unifomLocation[name], arr); }
+ShaderProgram.SetUniformM33 = function (prog, name, mat) { if (prog.unifomLocation[name]) gl.uniformMatrix3fv(prog.unifomLocation[name], false, mat); }
+ShaderProgram.SetUniformM44 = function (prog, name, mat) { if (prog.unifomLocation[name]) gl.uniformMatrix4fv(prog.unifomLocation[name], false, mat); }
+ShaderProgram.CompileShader = function (source, shaderStage) {
     var shaderScript = document.getElementById(source);
-    if (shaderScript) {
-      source = "";
-      var node = shaderScript.firstChild;
-      while (node) {
-        if (node.nodeType == 3) source += node.textContent;
-        node = node.nextSibling;
-      }
-    }
-    var shaderObj = gl.createShader( shaderStage );
-    gl.shaderSource( shaderObj, source );
-    gl.compileShader( shaderObj );
-    var status = gl.getShaderParameter( shaderObj, gl.COMPILE_STATUS );
-    if ( !status ) alert(gl.getShaderInfoLog(shaderObj));
-    return status ? shaderObj : 0;
-} 
-ShaderProgram.LinkProgram = function( shaderObjs ) {
+    if (shaderScript)
+        source = shaderScript.text;
+    var shaderObj = gl.createShader(shaderStage);
+    gl.shaderSource(shaderObj, source);
+    gl.compileShader(shaderObj);
+    var status = gl.getShaderParameter(shaderObj, gl.COMPILE_STATUS);
+    if (!status) alert(gl.getShaderInfoLog(shaderObj));
+    return status ? shaderObj : null;
+}
+ShaderProgram.LinkProgram = function (shaderObjs) {
     var prog = gl.createProgram();
-    for ( var i_sh = 0; i_sh < shaderObjs.length; ++ i_sh )
-        gl.attachShader( prog, shaderObjs[i_sh] );
-    gl.linkProgram( prog );
-    status = gl.getProgramParameter( prog, gl.LINK_STATUS );
-    if ( !status ) alert("Could not initialise shaders");
-    gl.useProgram( null );
-    return status ? prog : 0;
+    for (var i_sh = 0; i_sh < shaderObjs.length; ++i_sh)
+        gl.attachShader(prog, shaderObjs[i_sh]);
+    gl.linkProgram(prog);
+    status = gl.getProgramParameter(prog, gl.LINK_STATUS);
+    if (!status) alert("Could not initialise shaders");
+    gl.useProgram(null);
+    return status ? prog : null;
 }
 
 var VertexBuffer = {};
