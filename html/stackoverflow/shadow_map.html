@@ -138,7 +138,53 @@ void main()
 }
 </script>
 
+<style>
+
+html,body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    overflow: hidden;
+}
+
+#gui {
+    position : absolute;
+    top : 0;
+    left : 0;
+}
+
+#ref-link {
+    position : absolute;
+    bottom : 0;
+    left : 0;
+}
+    
+</style>
+
+<body>
+
+<div><form id="gui" name="inputs"><table>
+    <tr> <td> <font color= #CCF>ambient</font> </td> 
+            <td> <input type="range" id="ambient" min="0" max="100" value="0"/></td> </tr>
+    <tr> <td> <font color= #CCF>diffuse</font> </td> 
+            <td> <input type="range" id="diffuse" min="0" max="100" value="0"/></td> </tr>
+    <tr> <td> <font color= #CCF>specular</font> </td> 
+            <td> <input type="range" id="specular" min="0" max="100" value="0"/></td> </tr>
+    <tr> <td> <font color= #CCF>shininess</font> </td> 
+            <td> <input type="range" id="shininess" min="0" max="100" value="0"/></td> </tr>
+</table></form></div>
+
+<div id="ref-link">
+    <a href="https://stackoverflow.com/questions/46122584/opengl-es3-shadow-map-problems/46123519#46123519"> 
+    OpenGL ES3 Shadow map problems
+    </a>
+</div>
+
+<canvas id="scene-canvas" style="border: none;" width="512" height="512"></canvas>
+
 <script type="text/javascript">
+
+(function loadscene() {
 
 function drawScene(){
 
@@ -227,7 +273,7 @@ var progDraw;
 var shadowFB;
 var bufTorus;
 var bufGround;
-function sceneStart() {
+function initScene() {
 
 document.getElementById( "ambient" ).value = 0.2 * sliderScale;
 document.getElementById( "diffuse" ).value = 0.7 * sliderScale;
@@ -544,28 +590,10 @@ FrameBuffer.Create = function( vp, texturePlan ) {
     return fb;
 }
 
-        
+initScene();
+  
+})();
+   
 </script>
 
-<body onload="sceneStart();">
-    <div style="margin-left: 520px;">
-        <div style="float: right; width: 100%; background-color: #CCF;">
-            <form name="inputs">
-                <table>
-                    <tr> <td> ambient </td> 
-                         <td> <input type="range" id="ambient" min="0" max="100" value="0"/></td> </tr>
-                    <tr> <td> diffuse </td> 
-                         <td> <input type="range" id="diffuse" min="0" max="100" value="0"/></td> </tr>
-                    <tr> <td> specular </td> 
-                         <td> <input type="range" id="specular" min="0" max="100" value="0"/></td> </tr>
-                    <tr> <td> shininess </td> 
-                         <td> <input type="range" id="shininess" min="0" max="100" value="0"/></td> </tr>
-                </table>
-            </form>
-        </div>
-        <div style="float: right; width: 520px; margin-left: -520px;">
-            <canvas id="scene-canvas" style="border: none;" width="512" height="512"></canvas>
-        </div>
-        <div style="clear: both;"></div>
-    </div>
 </body>
