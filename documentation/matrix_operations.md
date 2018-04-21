@@ -93,21 +93,21 @@ Noice, that the [Fixed Function Pipeline](https://www.khronos.org/opengl/wiki/Fi
 
 <br/>
 
-In OpenGL there is one matrix stack for each matrix mode (See [**`glMatrixMode`**][4]). The matrix modes are `GL_MODELVIEW`, `GL_PROJECTION`, and `GL_TEXTURE`.
+In OpenGL there is one matrix stack for each matrix mode (See [`glMatrixMode`][4]). The matrix modes are `GL_MODELVIEW`, `GL_PROJECTION`, and `GL_TEXTURE`.
 
-Multiplication: See the documentation of [**`glMultMatrix`**][5]:
+Multiplication: See the documentation of [`glMultMatrix`][5]:
 
 > `glMultMatrix` multiplies the current matrix with the one specified using `m`, and replaces the current matrix with the product.
 
-Translation: See the documentation of [**`glTranslate`**][6]:
+Translation: See the documentation of [`glTranslate`][6]:
 
 > `glTranslate` produces a translation by `x y z` . The current matrix (see `glMatrixMode`) is multiplied by this translation matrix, with the product replacing the current matrix.
 
-Rotation: See the documentation of [**`glRotate`**][7]:
+Rotation: See the documentation of [`glRotate`][7]:
 
 > `glRotate` produces a rotation of angle degrees around the vector `x y z` . The current matrix (see `glMatrixMode`) is multiplied by a rotation matrix with the product replacing the current matrix.
 
-Scaling: See the documentation of [**`glScale`**][8]:
+Scaling: See the documentation of [`glScale`][8]:
 
 > `glScale`produces a nonuniform scaling along the `x`, `y`, and `z` axes. The three parameters indicate the desired scale factor along each of the three axes.
 The current matrix (see `glMatrixMode`) is multiplied by this scale matrix.
@@ -218,7 +218,7 @@ Move the arm to its final position  (to the left)
 
 C++:
 
-    void glTranslatef( GLfloat x, GLfloat y, GLfloat z )
+    void Translate( GLfloat m[], GLfloat x, GLfloat y, GLfloat z )
     {
         float translation[]{
             1.0f, 0.0f, 0.0f, 0.0f,
@@ -226,7 +226,7 @@ C++:
             0.0f, 0.0f, 1.0f, 0.0f,
             x,    y,    z,    1.0f };
 
-        multiplyMatrix(&modelViewMatrix[0], translation, &modelViewMatrix[0]);
+        multiplyMatrix(&m[0], translation, &m[0]);
     }
 
 Python:
@@ -236,16 +236,16 @@ Python:
         for i in range(0, 4): matB[3,i] = matA[0,i] * trans[0] + matA[1,i] * trans[1] + matA[2,i] * trans[2] + matA[3,i] 
         return matB
 
-Note, this would be what [`glm::translate`][6] does.
+Note, this would be what [`glm::translate`](https://glm.g-truc.net/0.9.8/api/a00232.html#ga838c4505ef7f254ed05117b1ac9691fb) does.
 
-    glm::mat4 translation = glm::translate(glm::mat4(), glm::vec3(0.5, 0.0, 0.0));
+    glm::mat4 translation = glm::translate(glm::mat4(), glm::vec3(0.5f, 0.0f, 0.0f));
 
 
 ### Matrix rotation
 
 C++:
 
-    void glRotatef( GLfloat angle, GLfloat x, GLfloat y, GLfloat z )
+    void Rotate( GLfloat m[], GLfloat angle, GLfloat x, GLfloat y, GLfloat z )
     {
         float radians = angle * M_PI/180;
         float c = cos(radians);
@@ -257,7 +257,7 @@ C++:
            z*x*(1.0f-c)-y*s  z*y*(1.0f-c)+x*s, z*z*(1.0f-c)+c,   0.0f,
            0.0f,             0.0f,             0.0f,             1.0f };
 
-        multiplyMatrix(&rotationMatrix[0], rotation, &rotationMatrix[0]);
+        multiplyMatrix(&m[0], rotation, &m[0]);
     }  
 
 Python:
@@ -269,14 +269,18 @@ Python:
         return numpy.matrix( [
             [x*x*(1-c)+c,   x*y*(1-c)-z*s, x*z*(1-c)+y*s, 0],
             [y*x*(1-c)+z*s, y*y*(1-c)+c,   y*z*(1-c)-x*s, 0],
-            [z*x*(1-c)-y*s  z*y*(1-c)+x*s, z*z*(1-c)+c,   0],
+            [z*x*(1-c)-y*s, z*y*(1-c)+x*s, z*z*(1-c)+c,   0],
             [0,             0,             0,             1] ] )
+
+Note, this would be what [`glm::rotate`](https://glm.g-truc.net/0.9.8/api/a00232.html#ga2020c91bf61e050882b3a5c18eada700) does.
+
+    glm::mat4 rotation = glm::rotate(glm::mat4(), angRad, glm::vec3(1.0f, 0.0f, 0.0f));
 
 ### Matrix scaling
 
 C++:
 
-    void glScalef( GLfloat x, GLfloat y, GLfloat z )
+    void Scalef( GLfloat m[], GLfloat x, GLfloat y, GLfloat z )
     {
         float scaling[]{
             x,    0.0f, 0.0f, 0.0f,
@@ -284,7 +288,7 @@ C++:
             0.0f, 0.0f, z,    0.0f,
             0.0f, 0.0f, 0.0f, 1.0f };
 
-        multiplyMatrix(&modelViewMatrix[0], scaling, &modelViewMatrix[0]);
+        multiplyMatrix(&m[0], scaling, &m[0]);
     }
 
 Python:
@@ -295,6 +299,9 @@ Python:
             for i1 in range(0, 4): matB[i0,i1] = matA[i0,i1] * s[i0] 
         return matB
 
+Note, this would be what [`glm::scale`](https://glm.g-truc.net/0.9.8/api/a00232.html#ga1972d4a66a2e92637c8aaee598417a71) does.
+
+    glm::mat4 scaling = glm::scale(glm::mat4(), glm::vec3(1.0f, 2.0f, 1.0f));
 
 ### Matrix multiplication (concatenation)
 
@@ -422,7 +429,7 @@ Thus, multiplying a vector from the left to a matrix corresponds to multiplying 
 
 <br/>
 
-**This means**:
+<b>This means</b>:
 
 If a matrix is defined like this:
 
