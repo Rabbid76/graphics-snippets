@@ -187,6 +187,17 @@ html,body {
 
 (function loadscene() {
 
+var sliderScale = 100.0
+var gl;
+var progShadow;
+var progDraw;
+var shadowFB;
+var bufTorus;
+var bufGround;
+var canvas;
+var vp_size;
+var fb_size;
+
 function render(deltaMS){
 
 var ambient = document.getElementById( "ambient" ).value / sliderScale;
@@ -201,7 +212,7 @@ var lightAnimationMat = RotateAxis( IdentityMat44(), CalcAng( deltaMS, 20.0 ), 2
 lightPos = Transform( lightPos, lightAnimationMat );
 var lightDir = [ -lightPos[0], -lightPos[1], -lightPos[2] ];
 var light  = Camera.Create( lightPos, [0, 0, 0], [0, 0, 1], 110, [ 5.0, 5.0 ], -20.0, 20.0 );
-var camera = Camera.Create( [0, 2.5, 2], [0, 0, 0], [0, 0, 1], 110, [canvas.width, canvas.height], 0.5, 100.0 );
+var camera = Camera.Create( [0, 2.5, 2], [0, 0, 0], [0, 0, 1], 110, [vp_size[0], vp_size[1]], 0.5, 100.0 );
 
 var lightPrjMat = Camera.Ortho( light );
 var lightViewMat = Camera.LookAt( light );
@@ -213,7 +224,7 @@ modelMat = RotateAxis( modelMat, CalcAng( deltaMS, 17.0 ), 1 );
 groundModelMat = IdentityMat44();
 var viewLightDir = TransformVec( lightDir, viewMat );
     
-gl.viewport( 0, 0, canvas.width, canvas.height );
+gl.viewport( 0, 0, fb_size[0], fb_size[1] );
 gl.enable( gl.DEPTH_TEST );
 
 shadowFB.Bind( true );
@@ -225,6 +236,7 @@ ShaderProgram.SetUniformF2( progShadow, "u_depthRange", [light.near, light.far] 
 
 VertexBuffer.Draw( bufTorus );
 
+gl.viewport( 0, 0, vp_size[0], vp_size[1] );
 shadowFB.Release( true );
 shadowFB.BindTexture( 1 );
 ShaderProgram.Use( progDraw );
@@ -247,25 +259,22 @@ VertexBuffer.Draw( bufGround );
 requestAnimationFrame(render);
 }
 
-function resize() {
-    //vp_size = [gl.drawingBufferWidth, gl.drawingBufferHeight];
-    //vp_size = [window.innerWidth, window.innerHeight]
-    
-    
-    canvas.width = vp_size[0];
-    canvas.height = vp_size[1];
-    shadowFB = FrameBuffer.Create( vp_size ); 
+function nearestPow2( aSize ){
+  return Math.pow( 2, Math.round( Math.log( aSize ) / Math.log( 2 ) ) ); 
 }
 
-var sliderScale = 100.0
-var gl;
-var progShadow;
-var progDraw;
-var shadowFB;
-var bufTorus;
-var bufGround;
-var canvas;
-var vp_size;
+function resize() {
+    //vp_size = [gl.drawingBufferWidth, gl.drawingBufferHeight];
+    vp_size = [window.innerWidth, window.innerHeight]
+    canvas.width = vp_size[0];
+    canvas.height = vp_size[1];
+
+    var size = Math.max(256, Math.max(vp_size[0], vp_size[1]));
+    size = nearestPow2(size/2);
+    fb_size = [size, size]
+    shadowFB = FrameBuffer.Create( fb_size ); 
+}
+
 function initScene() {
 
 document.getElementById( "ambient" ).value = 0.2 * sliderScale;
