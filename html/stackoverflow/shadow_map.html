@@ -180,13 +180,14 @@ html,body {
     </a>
 </div>
 
-<canvas id="scene-canvas" style="border: none;" width="100%" height="100%"></canvas>
+<!--canvas id="scene-canvas" style="border: none;" width="100%" height="100%"></canvas-->
+<canvas id="scene-canvas" style="border: none;" width="512" height="512"></canvas>
 
 <script type="text/javascript">
 
 (function loadscene() {
 
-function drawScene(){
+function render(deltaMS){
 
 var ambient = document.getElementById( "ambient" ).value / sliderScale;
 var diffuse = document.getElementById( "diffuse" ).value / sliderScale;
@@ -195,11 +196,8 @@ var shininess = document.getElementById( "shininess" ).value;
 
 canvas = document.getElementById( "scene-canvas" );
 
-var currentTime = Date.now();   
-var deltaMS = currentTime - startTime;
-
 var lightPos = [-3.0, 0.0, 2.0];
-var lightAnimationMat = RotateAxis( IdentityMat44(), CalcAng( currentTime, 20.0 ), 2 );
+var lightAnimationMat = RotateAxis( IdentityMat44(), CalcAng( deltaMS, 20.0 ), 2 );
 lightPos = Transform( lightPos, lightAnimationMat );
 var lightDir = [ -lightPos[0], -lightPos[1], -lightPos[2] ];
 var light  = Camera.Create( lightPos, [0, 0, 0], [0, 0, 1], 110, [ 5.0, 5.0 ], -20.0, 20.0 );
@@ -210,8 +208,8 @@ var lightViewMat = Camera.LookAt( light );
 var prjMat = Camera.Perspective( camera );
 var viewMat = Camera.LookAt( camera );
 var modelMat = IdentityMat44();
-modelMat = RotateAxis( modelMat, CalcAng( currentTime, 13.0 ), 0 );
-modelMat = RotateAxis( modelMat, CalcAng( currentTime, 17.0 ), 1 );
+modelMat = RotateAxis( modelMat, CalcAng( deltaMS, 13.0 ), 0 );
+modelMat = RotateAxis( modelMat, CalcAng( deltaMS, 17.0 ), 1 );
 groundModelMat = IdentityMat44();
 var viewLightDir = TransformVec( lightDir, viewMat );
     
@@ -245,13 +243,18 @@ ShaderProgram.SetUniformF1( progDraw, "u_shininess", shininess )
 VertexBuffer.Draw( bufTorus );
 ShaderProgram.SetUniformM44( progDraw, "u_modelMat44", groundModelMat );
 VertexBuffer.Draw( bufGround );
+
+requestAnimationFrame(render);
 }
 
 function resize() {
     //vp_size = [gl.drawingBufferWidth, gl.drawingBufferHeight];
-    vp_size = [window.innerWidth, window.innerHeight]
+    //vp_size = [window.innerWidth, window.innerHeight]
+    
+    
     canvas.width = vp_size[0];
     canvas.height = vp_size[1];
+    shadowFB = FrameBuffer.Create( vp_size ); 
 }
 
 var sliderScale = 100.0
@@ -295,8 +298,6 @@ if (!progDraw.progObj)
 progDraw.inPos = ShaderProgram.AttributeIndex( progDraw, "inPos" );
 progDraw.inNV  = ShaderProgram.AttributeIndex( progDraw, "inNV" );
 progDraw.inCol = ShaderProgram.AttributeIndex( progDraw, "inCol" );
-
-shadowFB = FrameBuffer.Create( vp_size );    
 
 // create torus
 var circum_size = 32, tube_size = 32;
@@ -346,28 +347,17 @@ bufGround = VertexBuffer.Create(
     [ 0, 1, 2, 0, 2, 3 ]
 );
 
-startTime = Date.now();
+window.onresize = resize;
 resize();
-setInterval(drawScene, 50);
+requestAnimationFrame(render);
 }
 
 var startTime;
 function Fract( val ) { 
-return val - Math.trunc( val );
+    return val - Math.trunc( val );
 }
-function CalcAng( currentTime, intervall ) {
-return Fract( (currentTime - startTime) / (1000*intervall) ) * 2.0 * Math.PI;
-}
-function CalcMove( currentTime, intervall, range ) {
-var pos = self.Fract( (currentTime - startTime) / (1000*intervall) ) * 2.0
-var pos = pos < 1.0 ? pos : (2.0-pos)
-return range[0] + (range[1] - range[0]) * pos;
-}    
-function EllipticalPosition( a, b, angRag ) {
-var a_b = a * a - b * b
-var ea = (a_b <= 0) ? 0 : Math.sqrt( a_b );
-var eb = (a_b >= 0) ? 0 : Math.sqrt( -a_b );
-return [ a * Math.sin( angRag ) - ea, b * Math.cos( angRag ) - eb, 0 ];
+function CalcAng( deltaTime, intervall ) {
+    return Fract( deltaTime / (1000*intervall) ) * 2.0 * Math.PI;
 }
 
 function IdentityMat44() { return [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]; }
