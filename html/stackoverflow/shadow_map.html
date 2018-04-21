@@ -180,7 +180,7 @@ html,body {
     </a>
 </div>
 
-<canvas id="scene-canvas" style="border: none;" width="512" height="512"></canvas>
+<canvas id="scene-canvas" style="border: none;" width="100%" height="100%"></canvas>
 
 <script type="text/javascript">
 
@@ -193,7 +193,7 @@ var diffuse = document.getElementById( "diffuse" ).value / sliderScale;
 var specular = document.getElementById( "specular" ).value / sliderScale;
 var shininess = document.getElementById( "shininess" ).value;
 
-var canvas = document.getElementById( "scene-canvas" );
+canvas = document.getElementById( "scene-canvas" );
 
 var currentTime = Date.now();   
 var deltaMS = currentTime - startTime;
@@ -247,23 +247,11 @@ ShaderProgram.SetUniformM44( progDraw, "u_modelMat44", groundModelMat );
 VertexBuffer.Draw( bufGround );
 }
 
-var startTime;
-function Fract( val ) { 
-return val - Math.trunc( val );
-}
-function CalcAng( currentTime, intervall ) {
-return Fract( (currentTime - startTime) / (1000*intervall) ) * 2.0 * Math.PI;
-}
-function CalcMove( currentTime, intervall, range ) {
-var pos = self.Fract( (currentTime - startTime) / (1000*intervall) ) * 2.0
-var pos = pos < 1.0 ? pos : (2.0-pos)
-return range[0] + (range[1] - range[0]) * pos;
-}    
-function EllipticalPosition( a, b, angRag ) {
-var a_b = a * a - b * b
-var ea = (a_b <= 0) ? 0 : Math.sqrt( a_b );
-var eb = (a_b >= 0) ? 0 : Math.sqrt( -a_b );
-return [ a * Math.sin( angRag ) - ea, b * Math.cos( angRag ) - eb, 0 ];
+function resize() {
+    //vp_size = [gl.drawingBufferWidth, gl.drawingBufferHeight];
+    vp_size = [window.innerWidth, window.innerHeight]
+    canvas.width = vp_size[0];
+    canvas.height = vp_size[1];
 }
 
 var sliderScale = 100.0
@@ -273,6 +261,8 @@ var progDraw;
 var shadowFB;
 var bufTorus;
 var bufGround;
+var canvas;
+var vp_size;
 function initScene() {
 
 document.getElementById( "ambient" ).value = 0.2 * sliderScale;
@@ -280,8 +270,8 @@ document.getElementById( "diffuse" ).value = 0.7 * sliderScale;
 document.getElementById( "specular" ).value = 0.5 * sliderScale;
 document.getElementById( "shininess" ).value = 8.0;
 
-var canvas = document.getElementById( "scene-canvas");
-var vp = [canvas.width, canvas.height];
+canvas = document.getElementById( "scene-canvas");
+vp_size = [canvas.width, canvas.height];
 gl = canvas.getContext( "experimental-webgl" );
 if ( !gl )
   return;
@@ -306,7 +296,7 @@ progDraw.inPos = ShaderProgram.AttributeIndex( progDraw, "inPos" );
 progDraw.inNV  = ShaderProgram.AttributeIndex( progDraw, "inNV" );
 progDraw.inCol = ShaderProgram.AttributeIndex( progDraw, "inCol" );
 
-shadowFB = FrameBuffer.Create( vp );    
+shadowFB = FrameBuffer.Create( vp_size );    
 
 // create torus
 var circum_size = 32, tube_size = 32;
@@ -357,7 +347,27 @@ bufGround = VertexBuffer.Create(
 );
 
 startTime = Date.now();
+resize();
 setInterval(drawScene, 50);
+}
+
+var startTime;
+function Fract( val ) { 
+return val - Math.trunc( val );
+}
+function CalcAng( currentTime, intervall ) {
+return Fract( (currentTime - startTime) / (1000*intervall) ) * 2.0 * Math.PI;
+}
+function CalcMove( currentTime, intervall, range ) {
+var pos = self.Fract( (currentTime - startTime) / (1000*intervall) ) * 2.0
+var pos = pos < 1.0 ? pos : (2.0-pos)
+return range[0] + (range[1] - range[0]) * pos;
+}    
+function EllipticalPosition( a, b, angRag ) {
+var a_b = a * a - b * b
+var ea = (a_b <= 0) ? 0 : Math.sqrt( a_b );
+var eb = (a_b >= 0) ? 0 : Math.sqrt( -a_b );
+return [ a * Math.sin( angRag ) - ea, b * Math.cos( angRag ) - eb, 0 ];
 }
 
 function IdentityMat44() { return [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]; }
