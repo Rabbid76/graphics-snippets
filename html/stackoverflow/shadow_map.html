@@ -426,24 +426,24 @@ Camera.Ortho = function( camera ) {
     var f_n = camera.far - camera.near;
     var w = camera.vp[0];
     var h = camera.vp[1];
-    var m = IdentityMat44();
-    m[0]  = 2 / w; m[1]  = 0;     m[2]  =  0;        m[3]  = 0;
-    m[4]  = 0;     m[5]  = 2 / h; m[6]  =  0;        m[7]  = 0;
-    m[8]  = 0;     m[9]  = 0;     m[10] = -2 / f_n;  m[11] = 0;
-    m[12] = 0;     m[13] = 0;     m[14] = -fn / f_n; m[15] = 1;
-    return m;
+    return [
+        2/w, 0,   0,       0,
+        0,   2/h, 0,       0,
+        0,   0,   -2/f_n,  0,
+        0,   0,   -fn/f_n, 1 ];
 }
 Camera.Perspective = function( camera ) {
-    var fn = camera.far + camera.near;
-    var f_n = camera.far - camera.near;
+    var n = camera.near;
+    var f = camera.far;
+    var fn = f + n;
+    var f_n = f - n;
     var r = camera.vp[0] / camera.vp[1];
     var t = 1 / Math.tan( Math.PI * camera.fov_y / 360 );
-    var m = IdentityMat44();
-    m[0]  = t/r; m[1]  = 0; m[2]  =  0;                              m[3]  = 0;
-    m[4]  = 0;   m[5]  = t; m[6]  =  0;                              m[7]  = 0;
-    m[8]  = 0;   m[9]  = 0; m[10] = -fn / f_n;                       m[11] = -1;
-    m[12] = 0;   m[13] = 0; m[14] = -2 * camera.far * camera.near / f_n; m[15] =  0;
-    return m;
+    return [
+        t/r, 0, 0,          0,
+        0,   t, 0,          0,
+        0,   0, -fn/f_n,   -1,
+        0,   0, -2*f*n/f_n, 0 ];
 }
 Camera.LookAt = function( camera ) {
     var mz = Normalize( [ camera.pos[0]-camera.target[0], camera.pos[1]-camera.target[1], camera.pos[2]-camera.target[2] ] );
@@ -452,12 +452,7 @@ Camera.LookAt = function( camera ) {
     var tx = Dot( mx, camera.pos );
     var ty = Dot( my, camera.pos );
     var tz = Dot( [-mz[0], -mz[1], -mz[2]], camera.pos ); 
-    var m = IdentityMat44();
-    m[0]  = mx[0]; m[1]  = my[0]; m[2]  = mz[0]; m[3]  = 0;
-    m[4]  = mx[1]; m[5]  = my[1]; m[6]  = mz[1]; m[7]  = 0;
-    m[8]  = mx[2]; m[9]  = my[2]; m[10] = mz[2]; m[11] = 0;
-    m[12] = tx;    m[13] = ty;    m[14] = tz;    m[15] = 1; 
-    return m;
+    return [mx[0], my[0], mz[0], 0, mx[1], my[1], mz[1], 0, mx[2], my[2], mz[2], 0, tx, ty, tz, 1]; 
 } 
 
 var ShaderProgram = {};
