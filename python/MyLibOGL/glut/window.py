@@ -75,7 +75,7 @@ class Window:
         self.__mouse_drag_time   = 0                   # current drag time
         self.__mouse_start       = (0, 0)              # start of mouse draging operation
         self.__auto_rotate       = True                # auto ratate on or of
-        self.__auto_spinn        = False               # auto spinn
+        self.__auto_spin        = False               # auto spinn
         self.__model_mat         = mat.IdentityMat44() # persistent model matrix
         self.__current_model_mat = mat.IdentityMat44() # current model matrix
 
@@ -86,7 +86,7 @@ class Window:
         glutIdleFunc( self.__Draw__ )
 
     def OrbitMatrix( self ):
-        if self.__mouse_drag or (self.__auto_rotate and self.__auto_spinn):
+        if self.__mouse_drag or (self.__auto_rotate and self.__auto_spin):
             return mat.Multiply(self.__current_orbit_mat, self.__orbit_mat)
         return self.__orbit_mat
 
@@ -107,8 +107,10 @@ class Window:
         self.__vpsize      = ( glutGet( GLUT_WINDOW_WIDTH ), glutGet( GLUT_WINDOW_HEIGHT ) )
         
         self.__current_model_mat = mat.IdentityMat44()
-        if self.__auto_rotate:
-            if self.__auto_spinn:
+        if self.__mouse_drag:
+            self.__current_orbit_mat = mat.Rotate(mat.IdentityMat44(), self.__mouse_drag_angle, self.__mouse_drag_axis)
+        elif self.__auto_rotate:
+            if self.__auto_spin:
                 if self.__mouse_drag_time > 0:
                     angle = self.__mouse_drag_angle * (self.__currentTime - self.__rotateStartTime) / self.__mouse_drag_time
                     self.__current_orbit_mat = mat.Rotate(mat.IdentityMat44(), angle, self.__mouse_drag_axis)
@@ -146,7 +148,6 @@ class Window:
             self.__mouse_drag_angle = math.pi*len
             self.__mouse_drag_axis = (dy/len, 0, -dx/len)
             self.__mouse_drag_time = time() - self.__dragStartTime
-            self.__current_orbit_mat = mat.Rotate(mat.IdentityMat44(), self.__mouse_drag_angle, self.__mouse_drag_axis)
         return
 
     def __MousePassiveMotion__(self, x, y ): 
@@ -157,18 +158,20 @@ class Window:
         new_drag = drag
         new_auto = auto if not new_drag else False
         new_spin = spin if new_auto else False
-        change = self.__mouse_drag != new_drag or self.__auto_rotate != new_auto or self.__auto_spinn != new_spin 
+        change = self.__mouse_drag != new_drag or self.__auto_rotate != new_auto or self.__auto_spin != new_spin 
         if not change:
           return
 
         if new_drag and not self.__mouse_drag:
             self.__dragStartTime = time() 
+            self.__mouse_drag_angle = 0
+            self.__mouse_drag_time = 0
         if new_auto and not self.__auto_rotate:
             self.__rotateStartTime = time()
         
         self.__mouse_drag = new_drag 
         self.__auto_rotate = new_auto  
-        self.__auto_spinn = new_spin
+        self.__auto_spin = new_spin
 
         self.__orbit_mat = mat.Multiply(self.__current_orbit_mat, self.__orbit_mat)
         self.__current_orbit_mat = mat.IdentityMat44()

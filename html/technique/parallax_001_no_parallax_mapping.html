@@ -286,7 +286,7 @@ function CalcAng(deltaTime, intervall) {
     return Fract(deltaTime / (1000 * intervall)) * 2.0 * Math.PI;
 }
 function CalcMove(deltaTime, intervall, range) {
-    var pos = self.Fract(deltaTime / (1000 * intervall)) * 2.0
+    var pos = Fract(deltaTime / (1000 * intervall)) * 2.0
     var pos = pos < 1.0 ? pos : (2.0 - pos)
     return range[0] + (range[1] - range[0]) * pos;
 }
@@ -347,7 +347,7 @@ this.vp = vp;
 this.near = near;
 this.far = far;
 this.orbit_mat = this.current_orbit_mat = this.model_mat = this.current_model_mat = IdentityMat44();
-this.mouse_drag = this.auto_spinn = false;
+this.mouse_drag = this.auto_spin = false;
 this.auto_rotate = true;
 this.mouse_start = [0, 0];
 this.mouse_drag_axis = [0, 0, 0];
@@ -391,7 +391,7 @@ this.Orbit = function() {
     return Multiply(this.LookAt(), this.OrbitMatrix());
 }; 
 this.OrbitMatrix = function() {
-    return this.mouse_drag ? Multiply(this.current_orbit_mat, this.orbit_mat) : this.orbit_mat;
+    return (this.mouse_drag || (this.auto_rotate && this.auto_spin)) ? Multiply(this.current_orbit_mat, this.orbit_mat) : this.orbit_mat;
 };
 this.AutoModelMatrix = function() {
     return this.auto_rotate ? Multiply(this.current_model_mat, this.model_mat) : this.model_mat;
@@ -401,8 +401,10 @@ this.Update = function(vp_size) {
         this.vp = vp_size;
     var current_T = this.Time();
     this.current_model_mat = IdentityMat44()
-    if (this.auto_rotate) {
-        if (this.auto_spinn ) {
+    if (this.mouse_drag) {
+        this.current_orbit_mat = Rotate(IdentityMat44(), this.mouse_drag_angle, this.mouse_drag_axis);
+    } else if (this.auto_rotate) {
+        if (this.auto_spin ) {
             if (this.mouse_drag_time > 0 ) {
                 var angle = this.mouse_drag_angle * (current_T - this.rotate_start_T) / this.mouse_drag_time;
                 this.current_orbit_mat = Rotate(IdentityMat44(), angle, this.mouse_drag_axis);
@@ -419,21 +421,59 @@ this.ChangeMotionMode = function(drag, spin, auto ) {
     var new_drag = drag;
     var new_auto = new_drag ? false : auto;
     var new_spin = new_auto ? spin : false;
-    change = this.mouse_drag != new_drag || this.auto_rotate != new_auto || this.auto_spinn != new_spin; 
+    change = this.mouse_drag != new_drag || this.auto_rotate != new_auto || this.auto_spin != new_spin; 
     if (!change)
         return;
-    if (new_drag && !this.mouse_drag)
+    if (new_drag && !this.mouse_drag) {
         this.drag_start_T = this.Time();
-    if (!new_auto && !this.auto_rotate)
+        this.mouse_drag_angle = 0.0;
+        this.mouse_drag_time = 0;
+    }
+    if (new_auto && !this.auto_rotate)
         this.rotate_start_T = this.Time();
     this.mouse_drag = new_drag; 
     this.auto_rotate = new_auto;  
-    this.self.auto_spinn = new_spin;
+    this.auto_spin = new_spin;
     this.orbit_mat = Multiply(this.current_orbit_mat, this.orbit_mat);
     this.current_orbit_mat = IdentityMat44();
     this.model_mat = Multiply(this.current_model_mat, this.model_mat);
     this.current_model_mat = IdentityMat44();
 };
+this.OnMouseDown = function( event ) {
+    var rect = gl.canvas.getBoundingClientRect();
+    if ( event.clientX < rect.left || event.clientX > rect.right ) return;
+    if ( event.clientY < rect.top || event.clientY > rect.bottom ) return;
+    if (event.button == 0) { // left button
+        this.mouse_start = [event.clientX, event.clientY]; 
+        this.ChangeMotionMode( true, false, false );
+    }
+};
+this.OnMouseUp = function( event ) {
+    if (event.button == 0) { // left button
+        this.ChangeMotionMode( false, true, true );
+    } else if (event.button == 1) {// middle button
+        this.ChangeMotionMode( false, false, !this.auto_rotate );
+    }
+};
+this.OnMouseMove = function( event ) {
+    var dx = (event.clientX-this.mouse_start[0]) / this.vp[0];
+    var dy = (event.clientY-this.mouse_start[1]) / this.vp[1];
+    var len = Math.sqrt(dx*dx + dy*dy);
+    if (this.mouse_drag && len > 0) {
+        this.mouse_drag_angle = Math.PI*len;
+        this.mouse_drag_axis = [dy/len, 0, -dx/len];
+        this.mouse_drag_time = this.Time() - this.drag_start_T;
+    }
+};
+
+this.domElement = document;
+var cam = this;
+//this.domElement.addEventListener( 'contextmenu', function ( event ) { event.preventDefault(); }, false );
+this.domElement.addEventListener( 'mousedown', function(e) { cam.OnMouseDown(event) }, false );
+this.domElement.addEventListener( 'mouseup', function(e) { cam.OnMouseUp(e) }, false );
+this.domElement.addEventListener( 'mousemove', function(e) { cam.OnMouseMove(e) }, false );
+//this.domElement.addEventListener( 'mousewheel', hid_events.onMouseWheel, false );
+//this.domElement.addEventListener( 'DOMMouseScroll', hid_events.onMouseWheel, false ); // firefox
 }
 
             var Texture = {};
