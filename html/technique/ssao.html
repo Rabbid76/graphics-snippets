@@ -216,15 +216,39 @@ void main()
 }
 </script>
 
+<body onload="sceneStart();">
+
+<style>
+html, body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    overflow: hidden;
+}
+#gui {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+#ref-link {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+}
+</style>
+
+<div><form id="gui" name="inputs">
+<table>
+    <tr> <td> <font color=#40f040>radius</font> </td> 
+            <td> <input type="range" id="radius" min="0" max="100" value="30"/></td></tr>
+    <tr> <td> <font color=#40f040>blur</font> </td> 
+            <td> <input type="checkbox" id="blur" value="1" /></td></tr>
+</table>
+</form></div>
+
+<canvas id="glow-canvas" style="border: none;" width="512" height="512"></canvas>
+
 <script type="text/javascript">
-
-glArrayType = typeof Float32Array !="undefined" ? Float32Array : ( typeof WebGLFloatArray != "undefined" ? WebGLFloatArray : Array );
-
-function IdentityMat44() {
-  var a=new glArrayType(16);
-  a[0]=1;a[1]=0;a[2]=0;a[3]=0;a[4]=0;a[5]=1;a[6]=0;a[7]=0;a[8]=0;a[9]=0;a[10]=1;a[11]=0;a[12]=0;a[13]=0;a[14]=0;a[15]=1;
-  return a;
-};
 
 vec4_add = function( a, b ) { return [ a[0]+b[0], a[1]+b[1], a[2]+b[2], a[3]+b[3] ]; }
 vec4_sub = function( a, b ) { return [ a[0]-b[0], a[1]-b[1], a[2]-b[2], a[3]-b[3] ]; }
@@ -289,12 +313,31 @@ function InverseMat44( m ) {
     return res;
 }
 
+function Fract(val) {
+    return val - Math.trunc(val);
+}
+function CalcAng(deltaTime, intervall) {
+    return Fract(deltaTime / (1000 * intervall)) * 2.0 * Math.PI;
+}
+function CalcMove(deltaTime, intervall, range) {
+    var pos = Fract(deltaTime / (1000 * intervall)) * 2.0
+    var pos = pos < 1.0 ? pos : (2.0 - pos)
+    return range[0] + (range[1] - range[0]) * pos;
+}
+function EllipticalPosition(a, b, angRag) {
+    var a_b = a * a - b * b
+    var ea = (a_b <= 0) ? 0 : Math.sqrt(a_b);
+    var eb = (a_b >= 0) ? 0 : Math.sqrt(-a_b);
+    return [a * Math.sin(angRag) - ea, b * Math.cos(angRag) - eb, 0];
+}
+
+function IdentityMat44() { return [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]; }
+
 function RotateAxis(matA, angRad, axis) {
     var aMap = [ [1, 2], [2, 0], [0, 1] ];
     var a0 = aMap[axis][0], a1 = aMap[axis][1]; 
     var sinAng = Math.sin(angRad), cosAng = Math.cos(angRad);
-    var matB = new glArrayType(16);
-    for ( var i = 0; i < 16; ++ i ) matB[i] = matA[i];
+    var matB = matA.slice(0);
     for ( var i = 0; i < 3; ++ i ) {
         matB[a0*4+i] = matA[a0*4+i] * cosAng + matA[a1*4+i] * sinAng;
         matB[a1*4+i] = matA[a0*4+i] * -sinAng + matA[a1*4+i] * cosAng;
@@ -302,49 +345,170 @@ function RotateAxis(matA, angRad, axis) {
     return matB;
 }
 
-function Cross( a, b ) { return [ a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0], 0.0 ]; }
-function Dot( a, b ) { return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; }
-function Normalize( v ) {
-    var len = Math.sqrt( v[0] * v[0] + v[1] * v[1] + v[2] * v[2] );
-    return [ v[0] / len, v[1] / len, v[2] / len ];
+function Rotate(matA, angRad, axis) {
+    var s = Math.sin(angRad), c = Math.cos(angRad);
+    var x = axis[0], y = axis[1], z = axis[2]; 
+    matB = [
+        x*x*(1-c)+c,   x*y*(1-c)-z*s, x*z*(1-c)+y*s, 0,
+        y*x*(1-c)+z*s, y*y*(1-c)+c,   y*z*(1-c)-x*s, 0,
+        z*x*(1-c)-y*s, z*y*(1-c)+x*s, z*z*(1-c)+c,   0,
+        0,             0,             0,             1 ];
+    return Multiply(matA, matB);
+}    
+
+function Multiply(matA, matB) {
+    matC = IdentityMat44();
+    for (var i0=0; i0<4; ++i0 )
+        for (var i1=0; i1<4; ++i1 )
+            matC[i0*4+i1] = matB[i0*4+0] * matA[0*4+i1] + matB[i0*4+1] * matA[1*4+i1] + matB[i0*4+2] * matA[2*4+i1] + matB[i0*4+3] * matA[3*4+i1]  
+    return matC;
 }
 
-var Camera = {};
-Camera.create = function() {
-    this.pos    = [0, 3, 0.0];
-    this.target = [0, 0, 0];
-    this.up     = [0, 0, 1];
-    this.fov_y  = 80;
-    this.vp     = [800, 600];
-    this.near   = 0.5;
-    this.far    = 100.0;
+function Cross(a, b) { return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0], 0.0]; }
+function Dot(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
+function Normalize(v) {
+    var len = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+    return [v[0] / len, v[1] / len, v[2] / len];
 }
-Camera.Perspective = function() {
+
+Camera = function( pos, target, up, fov_y, vp, near, far ) {
+this.Time = function() { return Date.now(); }
+this.pos = pos;
+this.target = target;
+this.up = up;
+this.fov_y = fov_y;
+this.vp = vp;
+this.near = near;
+this.far = far;
+this.orbit_mat = this.current_orbit_mat = this.model_mat = this.current_model_mat = IdentityMat44();
+this.mouse_drag = this.auto_spin = false;
+this.auto_rotate = true;
+this.mouse_start = [0, 0];
+this.mouse_drag_axis = [0, 0, 0];
+this.mouse_drag_angle = 0;
+this.mouse_drag_time = 0;
+this.drag_start_T = this.rotate_start_T = this.Time();
+this.Ortho = function() {
     var fn = this.far + this.near;
     var f_n = this.far - this.near;
+    var w = this.vp[0];
+    var h = this.vp[1];
+    return [
+        2/w, 0,   0,       0,
+        0,   2/h, 0,       0,
+        0,   0,   -2/f_n,  0,
+        0,   0,   -fn/f_n, 1 ];
+};  
+this.Perspective = function() {
+    var n = this.near;
+    var f = this.far;
+    var fn = f + n;
+    var f_n = f - n;
     var r = this.vp[0] / this.vp[1];
     var t = 1 / Math.tan( Math.PI * this.fov_y / 360 );
-    var m = IdentityMat44();
-    m[0]  = t/r; m[1]  = 0; m[2]  =  0;                              m[3]  = 0;
-    m[4]  = 0;   m[5]  = t; m[6]  =  0;                              m[7]  = 0;
-    m[8]  = 0;   m[9]  = 0; m[10] = -fn / f_n;                       m[11] = -1;
-    m[12] = 0;   m[13] = 0; m[14] = -2 * this.far * this.near / f_n; m[15] =  0;
-    return m;
-}
-Camera.LookAt = function() {
+    return [
+        t/r, 0, 0,          0,
+        0,   t, 0,          0,
+        0,   0, -fn/f_n,   -1,
+        0,   0, -2*f*n/f_n, 0 ];
+}; 
+this.LookAt = function() {
     var mz = Normalize( [ this.pos[0]-this.target[0], this.pos[1]-this.target[1], this.pos[2]-this.target[2] ] );
     var mx = Normalize( Cross( this.up, mz ) );
     var my = Normalize( Cross( mz, mx ) );
     var tx = Dot( mx, this.pos );
     var ty = Dot( my, this.pos );
     var tz = Dot( [-mz[0], -mz[1], -mz[2]], this.pos ); 
-    var m = IdentityMat44();
-    m[0]  = mx[0]; m[1]  = my[0]; m[2]  = mz[0]; m[3]  = 0;
-    m[4]  = mx[1]; m[5]  = my[1]; m[6]  = mz[1]; m[7]  = 0;
-    m[8]  = mx[2]; m[9]  = my[2]; m[10] = mz[2]; m[11] = 0;
-    m[12] = tx;    m[13] = ty;    m[14] = tz;    m[15] = 1; 
-    return m;
-} 
+    return [mx[0], my[0], mz[0], 0, mx[1], my[1], mz[1], 0, mx[2], my[2], mz[2], 0, tx, ty, tz, 1]; 
+};
+this.Orbit = function() {
+    return Multiply(this.LookAt(), this.OrbitMatrix());
+}; 
+this.OrbitMatrix = function() {
+    return (this.mouse_drag || (this.auto_rotate && this.auto_spin)) ? Multiply(this.current_orbit_mat, this.orbit_mat) : this.orbit_mat;
+};
+this.AutoModelMatrix = function() {
+    return this.auto_rotate ? Multiply(this.current_model_mat, this.model_mat) : this.model_mat;
+};
+this.Update = function(vp_size) {
+    if (vp_size)
+        this.vp = vp_size;
+    var current_T = this.Time();
+    this.current_model_mat = IdentityMat44()
+    if (this.mouse_drag) {
+        this.current_orbit_mat = Rotate(IdentityMat44(), this.mouse_drag_angle, this.mouse_drag_axis);
+    } else if (this.auto_rotate) {
+        if (this.auto_spin ) {
+            if (this.mouse_drag_time > 0 ) {
+                var angle = this.mouse_drag_angle * (current_T - this.rotate_start_T) / this.mouse_drag_time;
+                this.current_orbit_mat = Rotate(IdentityMat44(), angle, this.mouse_drag_axis);
+            }
+        } else {
+            var auto_angle_x = Fract( (current_T - this.rotate_start_T) / 13000.0 ) * 2.0 * Math.PI;
+            var auto_angle_y = Fract( (current_T - this.rotate_start_T) / 17000.0 ) * 2.0 * Math.PI;
+            this.current_model_mat = RotateAxis( this.current_model_mat, auto_angle_x, 0 );
+            this.current_model_mat = RotateAxis( this.current_model_mat, auto_angle_y, 1 );
+        }
+    }
+};
+this.ChangeMotionMode = function(drag, spin, auto ) {
+    var new_drag = drag;
+    var new_auto = new_drag ? false : auto;
+    var new_spin = new_auto ? spin : false;
+    change = this.mouse_drag != new_drag || this.auto_rotate != new_auto || this.auto_spin != new_spin; 
+    if (!change)
+        return;
+    if (new_drag && !this.mouse_drag) {
+        this.drag_start_T = this.Time();
+        this.mouse_drag_angle = 0.0;
+        this.mouse_drag_time = 0;
+    }
+    if (new_auto && !this.auto_rotate)
+        this.rotate_start_T = this.Time();
+    this.mouse_drag = new_drag; 
+    this.auto_rotate = new_auto;  
+    this.auto_spin = new_spin;
+    this.orbit_mat = Multiply(this.current_orbit_mat, this.orbit_mat);
+    this.current_orbit_mat = IdentityMat44();
+    this.model_mat = Multiply(this.current_model_mat, this.model_mat);
+    this.current_model_mat = IdentityMat44();
+};
+this.OnMouseDown = function( event ) {
+    var rect = gl.canvas.getBoundingClientRect();
+    if ( event.clientX < rect.left || event.clientX > rect.right ) return;
+    if ( event.clientY < rect.top || event.clientY > rect.bottom ) return;
+    if (event.button == 0) { // left button
+        this.mouse_start = [event.clientX, event.clientY]; 
+        this.ChangeMotionMode( true, false, false );
+    }
+};
+this.OnMouseUp = function( event ) {
+    if (event.button == 0) { // left button
+        this.ChangeMotionMode( false, true, true );
+    } else if (event.button == 1) {// middle button
+        this.ChangeMotionMode( false, false, !this.auto_rotate );
+    }
+};
+this.OnMouseMove = function( event ) {
+    var dx = (event.clientX-this.mouse_start[0]) / this.vp[0];
+    var dy = (event.clientY-this.mouse_start[1]) / this.vp[1];
+    var len = Math.sqrt(dx*dx + dy*dy);
+    if (this.mouse_drag && len > 0) {
+        this.mouse_drag_angle = Math.PI*len;
+        this.mouse_drag_axis = [dy/len, 0, -dx/len];
+        this.mouse_drag_time = this.Time() - this.drag_start_T;
+    }
+};
+
+this.domElement = document;
+var cam = this;
+//this.domElement.addEventListener( 'contextmenu', function ( event ) { event.preventDefault(); }, false );
+this.domElement.addEventListener( 'mousedown', function(e) { cam.OnMouseDown(event) }, false );
+this.domElement.addEventListener( 'mouseup', function(e) { cam.OnMouseUp(e) }, false );
+this.domElement.addEventListener( 'mousemove', function(e) { cam.OnMouseMove(e) }, false );
+//this.domElement.addEventListener( 'mousewheel', hid_events.onMouseWheel, false );
+//this.domElement.addEventListener( 'DOMMouseScroll', hid_events.onMouseWheel, false ); // firefox
+}
 
 var ShaderProgram = {};
 ShaderProgram.Create = function( shaderList ) {
@@ -552,6 +716,7 @@ var texUnitNormal = 2;
 var texUnitBlurX = 3;
 var texUnitSSAOKErnel = 4;
 var texUnitSSAONoise = 5;
+var camera;
 function drawScene(){
 
     var shininess = 10.0;
@@ -560,16 +725,16 @@ function drawScene(){
     var blurVal = blur ? 1 : 0 
     
     var canvas = document.getElementById( "glow-canvas" );
-    Camera.create();
-    Camera.vp = [canvas.width, canvas.height];
     var currentTime = Date.now();   
     var deltaMS = currentTime - startTime;
+    vp_size = [canvas.width, canvas.height];
+    camera.Update( vp_size );
         
     gl.viewport( 0, 0, canvas.width, canvas.height );
     gl.enable( gl.DEPTH_TEST );
     gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
 
-    var prjMat = Camera.Perspective();
+    var prjMat = camera.Perspective();
     var invPrjMat = InverseMat44( prjMat );
 
     // 0: write depth to frame buffer
@@ -584,13 +749,13 @@ function drawScene(){
         // set up depth draw shader
         ShaderProgram.Use( passProg );
         ShaderProgram.SetUniformM44( passProg, "u_projectionMat44", prjMat );
-        var viewMat = Camera.LookAt();
-        //viewMat = RotateAxis( viewMat, -60.0 * Math.PI / 180.0, 0 );
-        //viewMat = RotateAxis( viewMat, -30.0 * Math.PI / 180.0, 1 );
-        viewMat = RotateAxis( viewMat, CalcAng( currentTime, 13.0 ), 0 );
-        viewMat = RotateAxis( viewMat, CalcAng( currentTime, 17.0 ), 1 );
-        ShaderProgram.SetUniformM44( passProg, "u_modelViewMat44", viewMat );
-        ShaderProgram.SetUniformF2( passProg,  "u_depthRange", [ Camera.near, Camera.far ] );
+        var viewMat = camera.Orbit();
+        var modelMat = IdentityMat44();
+        modelMat = camera.AutoModelMatrix();
+        //modelMat = RotateAxis( modelMat, -60.0 * Math.PI / 180.0, 0 );
+        //modelMat = RotateAxis( modelMat, -30.0 * Math.PI / 180.0, 1 );
+        ShaderProgram.SetUniformM44( passProg, "u_modelViewMat44", Multiply(viewMat, modelMat) );
+        ShaderProgram.SetUniformF2( passProg,  "u_depthRange", [ camera.near, camera.far ] );
         
         // draw scene
         for( var objI = 0; objI < 2; ++ objI )
@@ -659,11 +824,13 @@ var bufCube = {};
 var bufTorus = {}
 var bufSSAOQuad = {};
 var bufQuad = {};
+var vp_size;
 function sceneStart() {
 
     document.getElementById( "blur" ).checked = true;
     var canvas = document.getElementById( "glow-canvas");
-    var vp = [canvas.width, canvas.height];
+    vp_size = [canvas.width, canvas.height];
+    var vp = vp_size;
     gl = canvas.getContext( "experimental-webgl" );
     if ( !gl )
       return;
@@ -794,26 +961,10 @@ function sceneStart() {
     );
 
     startTime = Date.now();
+    camera = new Camera( [0, 2.5, 0.0], [0, 0, 0], [0, 0, 1], 90, vp_size, 0.5, 100 );
     setInterval(drawScene, 50);
 }
 
 </script>
 
-<body onload="sceneStart();">
-    <div style="margin-left: 520px;">
-        <div style="float: right; width: 100%; background-color: #CCF;">
-            <form name="inputs">
-                <table>
-                    <tr> <td> radius </td> 
-                         <td> <input type="range" id="radius" min="0" max="100" value="30"/></td></tr>
-                    <tr> <td> blur </td> 
-                         <td> <input type="checkbox" id="blur" value="1" /></td></tr>
-                </table>
-            </form>
-        </div>
-        <div style="float: right; width: 520px; margin-left: -520px;">
-            <canvas id="glow-canvas" style="border: none;" width="512" height="512"></canvas>
-        </div>
-        <div style="clear: both;"></div>
-    </div>
 </body>

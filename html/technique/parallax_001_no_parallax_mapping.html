@@ -163,7 +163,7 @@ function render(deltaMS) {
     ShaderProgram.SetUniformF1(progDraw, "u_shininess", 10.0);
     ShaderProgram.SetUniformM44(progDraw, "u_projectionMat44", camera.Perspective());
     ShaderProgram.SetUniformM44(progDraw, "u_viewMat44", camera.Orbit());
-    var modelMat = IdentityMat44()
+    var modelMat = IdentityMat44();
     modelMat = camera.AutoModelMatrix();
     //modelMat = RotateAxis( modelMat, 0.3, 0 );
     //modelMat = RotateAxis( modelMat, 0.8, 0 );
