@@ -102,7 +102,8 @@ vec3 SteepParallax( in float frontFace, in vec3 texDir3D, in vec2 texCoord )
     }
     bestBumpHeight -= bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / bumpHeightStep, 0.0, 1.0 );
     texC           -= bestBumpHeight * texStep;
-    mapHeight       = surf_sign * clamp(bestBumpHeight, 0.0, 1.0);
+    //mapHeight       = clamp(bestBumpHeight, 0.0, 1.0);
+    mapHeight       = clamp(bestBumpHeight, 0.0, 1.0) - back_face;
         
     return vec3( texC.xy, mapHeight );
 }
@@ -179,5 +180,8 @@ void main()
     fragColor = vec4( lightCol.rgb, 1.0 );
 
     vec4 proj_pos_displ = u_projectionMat44 * vec4(view_pos_displ.xyz, 1.0);
-    gl_FragDepth = 0.5 + 0.5 * proj_pos_displ.z / proj_pos_displ.w;
+    float depth = 0.5 + 0.5 * proj_pos_displ.z / proj_pos_displ.w;
+    gl_FragDepth = depth;
+
+    //fragColor = vec4( vec3(1.0-depth), 1.0 );
 }
