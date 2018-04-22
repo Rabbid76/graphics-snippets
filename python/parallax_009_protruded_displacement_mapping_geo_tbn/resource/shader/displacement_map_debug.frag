@@ -169,7 +169,6 @@ void main()
     vec3  objNormalEs = in_data.nv;
     vec3  texCoords   = in_data.uvh.stp;
     float frontFace   = gl_FrontFacing ? 1.0 : -1.0; // TODO $$$ sign(dot(N,objPosEs));
-    vec3  normalEs    = frontFace * normalize( objNormalEs );
     
     //vec3  tangentEs    = normalize( tangentVec - normalEs * dot(tangentVec, normalEs ) );
     //mat3  tbnMat       = mat3( tangentEs, binormalSign * cross( normalEs, tangentEs ), normalEs );
@@ -232,12 +231,15 @@ void main()
     float kSpecular = ( u_shininess + 2.0 ) * pow( NdotH, u_shininess ) / ( 2.0 * 3.14159265 );
     lightCol       += kSpecular * u_specular * color;
 
-    fragColor = vec4( lightCol.rgb, 1.0 );
+    //fragColor = vec4( lightCol.rgb, 1.0 );
 
     // debug
     //float gray = dot(lightCol.rgb, vec3(0.2126, 0.7152, 0.0722));
     //fragColor = vec4( vec3( step(0.0, -frontFace), step(0.0, texDir3D.z), step(0.0, -texDir3D.z) ) * gray, 1.0 );
 
     vec4 proj_pos_displ = u_projectionMat44 * vec4(view_pos_displ.xyz, 1.0);
-    gl_FragDepth = 0.5 + 0.5 * proj_pos_displ.z / proj_pos_displ.w;
+    float depth = 0.5 + 0.5 * proj_pos_displ.z / proj_pos_displ.w;
+    gl_FragDepth = depth;
+
+    fragColor = vec4( vec3(1.0-depth), 1.0 );
 }

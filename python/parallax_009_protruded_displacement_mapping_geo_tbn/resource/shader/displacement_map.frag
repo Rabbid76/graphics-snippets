@@ -101,11 +101,11 @@ vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
     // intersection direction: -1 for downwards or 1 for upwards
     // downwards for base triangles (back faces are inverted)
     // upwards for upwards intersection of silhouettes
-    float isect_dir      = base_height == 0.0 ? -1.0 : sign(texDir3D.z);
+    float isect_dir      = base_height < 0.0001 ? -1.0 : sign(texDir3D.z);
 
     // inverse height map: -1 for inverse height map or 1 if not inverse
     // height maps of back faces base triangles are inverted
-    float inverse_dir    = base_height > 0.01 ? 1.0 : frontFace;
+    float inverse_dir    = base_height >= 0.0001 ? 1.0 : frontFace;
     float back_face      = step(0.0, -inverse_dir); 
 
     // start texture coordinates
@@ -143,25 +143,17 @@ vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
     texC      += isect_dir * bestBumpHeight * texStep.xy;
     mapHeight  = bestBumpHeight;
     
-    float mapDiff = 0.0;
-    if ( base_height == 0.0 )
-    {
-      mapDiff = frontFace * bestBumpHeight;
-    }
-    else
-    {
-      mapDiff = isect_dir * (base_height - bestBumpHeight);
-    }
+    float mapDiff = -isect_dir * (inverse_dir * bestBumpHeight - base_height);
    
     return vec4(texC.xy, mapHeight, mapDiff);
 }
 
 void main()
 {
-    vec3 objPosEs    = in_data.pos;
-    vec3 objNormalEs = in_data.nv;
-    vec3 texCoords   = in_data.uvh.stp;
-    vec3 normalEs    = ( gl_FrontFacing ? 1.0 : -1.0 ) * normalize( objNormalEs );
+    vec3  objPosEs    = in_data.pos;
+    vec3  objNormalEs = in_data.nv;
+    vec3  texCoords   = in_data.uvh.stp;
+    float frontFace   = gl_FrontFacing ? 1.0 : -1.0; // TODO $$$ sign(dot(N,objPosEs));
     
     //vec3  tangentEs    = normalize( tangentVec - normalEs * dot(tangentVec, normalEs ) );
     //mat3  tbnMat       = mat3( tangentEs, binormalSign * cross( normalEs, tangentEs ), normalEs );
@@ -176,12 +168,11 @@ void main()
     mat3  inv_tbnMat  = inverse( tbnMat );
    
     vec3  texDir3D     = normalize( inv_tbnMat * objPosEs );
-    float frontFace    = gl_FrontFacing ? 1.0 : -1.0; // TODO $$$ sign(dot(N,objPosEs));
     vec4  newTexCoords = abs(u_displacement_scale) < 0.001 ? vec4(texCoords.st, 0.0, 0.0) : Parallax( frontFace, texDir3D, texCoords.stp );
 
     //float depth_displ    = length(tbnMat * (newTexCoords.z * texDir3D.xyz / abs(texDir3D.z))); 
     //vec3  view_pos_displ = objPosEs - depth_displ * normalize(objPosEs);
-    vec3  displ_vec      = tbnMat * (clamp(newTexCoords.w, 0.0, 1.0) * texDir3D.xyz / abs(texDir3D.z));
+    vec3  displ_vec      = tbnMat * (newTexCoords.w * texDir3D.xyz / abs(texDir3D.z));
     vec3  view_pos_displ = objPosEs - displ_vec;
     vec4  modelPos       = inverse(u_viewMat44) * vec4(view_pos_displ, 1.0);
     vec4  clipPlane      = vec4(normalize(u_clipPlane.xyz), u_clipPlane.w);
@@ -204,7 +195,7 @@ void main()
     
     vec4  normalVec    = CalculateNormal( texCoords.st );
     //vec3  nvMappedEs   = normalize( tbnMat * normalVec.xyz );
-    vec3  nvMappedEs   = normalize( transpose(inv_tbnMat) * normalVec.xyz );
+    vec3  nvMappedEs   = (texCoords.p > 0.0 ? 1.0 : frontFace) * normalize( transpose(inv_tbnMat) * normalVec.xyz );
 
     //vec3 color = in_data.col;
     vec3 color = texture( u_texture, texCoords.st ).rgb;
