@@ -161,8 +161,8 @@ function render(deltaMS) {
     ShaderProgram.SetUniformF1(progDraw, "u_diffuse", 0.8);
     ShaderProgram.SetUniformF1(progDraw, "u_specular", 0.8);
     ShaderProgram.SetUniformF1(progDraw, "u_shininess", 10.0);
-    ShaderProgram.SetUniformM44(progDraw, "u_projectionMat44", Camera.Perspective(camera));
-    ShaderProgram.SetUniformM44(progDraw, "u_viewMat44", Camera.LookAt(camera));
+    ShaderProgram.SetUniformM44(progDraw, "u_projectionMat44", camera.Perspective());
+    ShaderProgram.SetUniformM44(progDraw, "u_viewMat44", camera.LookAt());
     var modelMat = IdentityMat44()
     //modelMat = RotateAxis( modelMat, 0.3, 0 );
     //modelMat = RotateAxis( modelMat, 0.8, 0 );
@@ -250,7 +250,7 @@ function initScene() {
 
     window.onresize = resize;
     resize();
-    camera = Camera.Create( [0, 2.5, 0.0], [0, 0, 0], [0, 0, 1], 90, vp_size, 0.5, 100 );
+    camera = new Camera( [0, 2.5, 0.0], [0, 0, 0], [0, 0, 1], 90, vp_size, 0.5, 100 );
     requestAnimationFrame(render);
 }
 
@@ -320,51 +320,48 @@ function Normalize(v) {
     return [v[0] / len, v[1] / len, v[2] / len];
 }
 
-var Camera = {};
-Camera.Create = function( pos, target, up, fov_y, vp, near, far ) {
-    var camera = {};
-    camera.pos    = pos;
-    camera.target = target;
-    camera.up     = up;
-    camera.fov_y  = fov_y;
-    camera.vp     = vp;
-    camera.near   = near;
-    camera.far    = far;
-    return camera;
-}
-Camera.Ortho = function( camera ) {
-    var fn = camera.far + camera.near;
-    var f_n = camera.far - camera.near;
-    var w = camera.vp[0];
-    var h = camera.vp[1];
+Camera = function( pos, target, up, fov_y, vp, near, far ) {
+this.pos = pos;
+this.target = target;
+this.up = up;
+this.fov_y = fov_y;
+this.vp = vp;
+this.near = near;
+this.far = far;
+this.Ortho = function() {
+    var fn = this.far + this.near;
+    var f_n = this.far - this.near;
+    var w = this.vp[0];
+    var h = this.vp[1];
     return [
         2/w, 0,   0,       0,
         0,   2/h, 0,       0,
         0,   0,   -2/f_n,  0,
         0,   0,   -fn/f_n, 1 ];
-}
-Camera.Perspective = function( camera ) {
-    var n = camera.near;
-    var f = camera.far;
+};  
+this.Perspective = function() {
+    var n = this.near;
+    var f = this.far;
     var fn = f + n;
     var f_n = f - n;
-    var r = camera.vp[0] / camera.vp[1];
-    var t = 1 / Math.tan( Math.PI * camera.fov_y / 360 );
+    var r = this.vp[0] / this.vp[1];
+    var t = 1 / Math.tan( Math.PI * this.fov_y / 360 );
     return [
         t/r, 0, 0,          0,
         0,   t, 0,          0,
         0,   0, -fn/f_n,   -1,
         0,   0, -2*f*n/f_n, 0 ];
-}
-Camera.LookAt = function( camera ) {
-    var mz = Normalize( [ camera.pos[0]-camera.target[0], camera.pos[1]-camera.target[1], camera.pos[2]-camera.target[2] ] );
-    var mx = Normalize( Cross( camera.up, mz ) );
+}; 
+this.LookAt = function() {
+    var mz = Normalize( [ this.pos[0]-this.target[0], this.pos[1]-this.target[1], this.pos[2]-this.target[2] ] );
+    var mx = Normalize( Cross( this.up, mz ) );
     var my = Normalize( Cross( mz, mx ) );
-    var tx = Dot( mx, camera.pos );
-    var ty = Dot( my, camera.pos );
-    var tz = Dot( [-mz[0], -mz[1], -mz[2]], camera.pos ); 
+    var tx = Dot( mx, this.pos );
+    var ty = Dot( my, this.pos );
+    var tz = Dot( [-mz[0], -mz[1], -mz[2]], this.pos ); 
     return [mx[0], my[0], mz[0], 0, mx[1], my[1], mz[1], 0, mx[2], my[2], mz[2], 0, tx, ty, tz, 1]; 
-} 
+};  
+}
 
             var Texture = {};
             Texture.HandleLoadedTexture2D = function (texture, flipY) {
