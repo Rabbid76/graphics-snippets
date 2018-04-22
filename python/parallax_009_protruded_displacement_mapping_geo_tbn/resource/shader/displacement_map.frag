@@ -105,7 +105,7 @@ vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
 
     // inverse height map: -1 for inverse height map or 1 if not inverse
     // height maps of back faces base triangles are inverted
-    float inverse_dir    = base_height >= 0.0001 ? 1.0 : frontFace;
+    float inverse_dir    = base_height > 0.0001 ? 1.0 : frontFace;
     float back_face      = step(0.0, -inverse_dir); 
 
     // start texture coordinates
@@ -142,7 +142,6 @@ vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
     // set displaced texture coordiante and intersection height
     texC      += isect_dir * bestBumpHeight * texStep.xy;
     mapHeight  = bestBumpHeight;
-    
     float mapDiff = -isect_dir * (inverse_dir * bestBumpHeight - base_height);
    
     return vec4(texC.xy, mapHeight, mapDiff);
@@ -150,7 +149,7 @@ vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
 
 void main()
 {
-    vec3  objPosEs    = in_data.pos;
+     vec3  objPosEs    = in_data.pos;
     vec3  objNormalEs = in_data.nv;
     vec3  texCoords   = in_data.uvh.stp;
     float frontFace   = gl_FrontFacing ? 1.0 : -1.0; // TODO $$$ sign(dot(N,objPosEs));
@@ -172,7 +171,7 @@ void main()
 
     //float depth_displ    = length(tbnMat * (newTexCoords.z * texDir3D.xyz / abs(texDir3D.z))); 
     //vec3  view_pos_displ = objPosEs - depth_displ * normalize(objPosEs);
-    vec3  displ_vec      = tbnMat * (newTexCoords.w * texDir3D.xyz / abs(texDir3D.z));
+    vec3  displ_vec      = tbnMat * (newTexCoords.w/invmax * texDir3D.xyz / abs(texDir3D.z));
     vec3  view_pos_displ = objPosEs - displ_vec;
     vec4  modelPos       = inverse(u_viewMat44) * vec4(view_pos_displ, 1.0);
     vec4  clipPlane      = vec4(normalize(u_clipPlane.xyz), u_clipPlane.w);
@@ -195,7 +194,7 @@ void main()
     
     vec4  normalVec    = CalculateNormal( texCoords.st );
     //vec3  nvMappedEs   = normalize( tbnMat * normalVec.xyz );
-    vec3  nvMappedEs   = (texCoords.p > 0.0 ? 1.0 : frontFace) * normalize( transpose(inv_tbnMat) * normalVec.xyz );
+    vec3  nvMappedEs   = (texCoords.p > 0.0 ? 1.0 : frontFace) * normalize( transpose(inv_tbnMat) * normalVec.xyz ); // TODO $$$ evaluate `invmax`?
 
     //vec3 color = in_data.col;
     vec3 color = texture( u_texture, texCoords.st ).rgb;
@@ -218,6 +217,4 @@ void main()
 
     fragColor = vec4( lightCol.rgb, 1.0 );
 
-    vec4 proj_pos_displ = u_projectionMat44 * vec4(view_pos_displ.xyz, 1.0);
-    gl_FragDepth = 0.5 + 0.5 * proj_pos_displ.z / proj_pos_displ.w;
 }

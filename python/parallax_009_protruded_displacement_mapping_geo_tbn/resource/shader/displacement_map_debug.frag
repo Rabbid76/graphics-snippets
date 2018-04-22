@@ -144,12 +144,13 @@ vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
     texC      += isect_dir * bestBumpHeight * texStep.xy;
     mapHeight  = bestBumpHeight;
     
+    /*
     float mapDiff = 0.0;
     if ( base_height < 0.0001 )
     {
       mapDiff = frontFace * bestBumpHeight;
     }
-    else if (isect_dir > 0.0)
+    else if (texDir3D.z > 0.0)
     {
       mapDiff = base_height - bestBumpHeight;
     }
@@ -157,7 +158,8 @@ vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
     {
       mapDiff = bestBumpHeight - base_height;
     }
-    //float mapDiff = -isect_dir * (inverse_dir * bestBumpHeight - base_height);
+    */
+    float mapDiff = -isect_dir * (inverse_dir * bestBumpHeight - base_height);
    
     return vec4(texC.xy, mapHeight, mapDiff);
 }
@@ -187,7 +189,7 @@ void main()
 
     //float depth_displ    = length(tbnMat * (newTexCoords.z * texDir3D.xyz / abs(texDir3D.z))); 
     //vec3  view_pos_displ = objPosEs - depth_displ * normalize(objPosEs);
-    vec3  displ_vec      = tbnMat * (newTexCoords.w * texDir3D.xyz / abs(texDir3D.z));
+    vec3  displ_vec      = tbnMat * (newTexCoords.w/invmax * texDir3D.xyz / abs(texDir3D.z));
     vec3  view_pos_displ = objPosEs - displ_vec;
     vec4  modelPos       = inverse(u_viewMat44) * vec4(view_pos_displ, 1.0);
     vec4  clipPlane      = vec4(normalize(u_clipPlane.xyz), u_clipPlane.w);
@@ -210,7 +212,7 @@ void main()
     
     vec4  normalVec    = CalculateNormal( texCoords.st );
     //vec3  nvMappedEs   = normalize( tbnMat * normalVec.xyz );
-    vec3  nvMappedEs   = (texCoords.p > 0.0 ? 1.0 : frontFace) * normalize( transpose(inv_tbnMat) * normalVec.xyz );
+    vec3  nvMappedEs   = (texCoords.p > 0.0 ? 1.0 : frontFace) * normalize( transpose(inv_tbnMat) * normalVec.xyz ); // TODO $$$ evaluate `invmax`?
 
     //vec3 color = in_data.col;
     vec3 color = texture( u_texture, texCoords.st ).rgb;
@@ -231,15 +233,16 @@ void main()
     float kSpecular = ( u_shininess + 2.0 ) * pow( NdotH, u_shininess ) / ( 2.0 * 3.14159265 );
     lightCol       += kSpecular * u_specular * color;
 
-    //fragColor = vec4( lightCol.rgb, 1.0 );
+    fragColor = vec4( lightCol.rgb, 1.0 );
 
     // debug
-    //float gray = dot(lightCol.rgb, vec3(0.2126, 0.7152, 0.0722));
+    float gray = dot(lightCol.rgb, vec3(0.2126, 0.7152, 0.0722));
     //fragColor = vec4( vec3( step(0.0, -frontFace), step(0.0, texDir3D.z), step(0.0, -texDir3D.z) ) * gray, 1.0 );
+    //fragColor = vec4( vec3( step(0.0001, texCoords.p), step(0.0, texDir3D.z), step(texCoords.p, 0.0001) ) * gray, 1.0 );
 
     vec4 proj_pos_displ = u_projectionMat44 * vec4(view_pos_displ.xyz, 1.0);
     float depth = 0.5 + 0.5 * proj_pos_displ.z / proj_pos_displ.w;
     gl_FragDepth = depth;
 
-    fragColor = vec4( vec3(1.0-depth), 1.0 );
+    //fragColor = vec4( vec3(1.0-depth), 1.0 );
 }
