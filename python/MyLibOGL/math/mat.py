@@ -39,14 +39,14 @@ def RotateZ(matA, angRad): return RotateHlp(matA, angRad, 0, 1)
 def RotateView(matA, angRad): return RotateZ(RotateY(RotateX(matA, angRad[0]), angRad[1]), angRad[2])
 
 def Rotate(matA, angRad, axis):
-    matB = numpy.copy(matA)
     s, c = math.sin(angRad), math.cos(angRad)
     x, y, z = axis[0], axis[1], axis[2] 
-    return numpy.matrix( [
+    matB = numpy.matrix( [
         [x*x*(1-c)+c,   x*y*(1-c)-z*s, x*z*(1-c)+y*s, 0],
         [y*x*(1-c)+z*s, y*y*(1-c)+c,   y*z*(1-c)-x*s, 0],
         [z*x*(1-c)-y*s, z*y*(1-c)+x*s, z*z*(1-c)+c,   0],
-        [0,             0,             0,             1] ] )    
+        [0,             0,             0,             1] ] )
+    return Multiply(matA, matB)    
 
 def Multiply(matA, matB):
     matC = numpy.copy(matA)

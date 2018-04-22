@@ -73,7 +73,7 @@ class Window:
         self.__mouse_drag_axis   = (1, 0, 0)           # current drag axis
         self.__mouse_drag_angle  = 0                   # current drag distance
         self.__mouse_drag_time   = 0                   # current drag time
-        self.__mouse_start       = []                  # start of mouse draging operation
+        self.__mouse_start       = (0, 0)              # start of mouse draging operation
         self.__auto_rotate       = True                # auto ratate on or of
         self.__auto_spinn        = False               # auto spinn
         self.__model_mat         = mat.IdentityMat44() # persistent model matrix
