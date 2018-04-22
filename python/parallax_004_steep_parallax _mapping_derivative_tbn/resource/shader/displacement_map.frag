@@ -102,7 +102,7 @@ vec3 SteepParallax( in float frontFace, in vec3 texDir3D, in vec2 texCoord )
     }
     bestBumpHeight -= bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / bumpHeightStep, 0.0, 1.0 );
     texC           -= bestBumpHeight * texStep;
-    mapHeight       = frontFace * clamp(bestBumpHeight, 0.0, 1.0);
+    mapHeight       = surf_sign * clamp(bestBumpHeight, 0.0, 1.0);
         
     return vec3( texC.xy, mapHeight );
 }
@@ -143,7 +143,7 @@ void main()
     
     //float depth_displ    = length(tbnMat * (newTexCoords.z * texDir3D.xyz / abs(texDir3D.z))); 
     //vec3  view_pos_displ = objPosEs - depth_displ * normalize(objPosEs);
-    vec3  displ_vec      = tbnMat * (clamp(newTexCoords.z, 0.0, 1.0) * texDir3D.xyz / abs(texDir3D.z));
+    vec3  displ_vec      = tbnMat * (newTexCoords.z * texDir3D.xyz / abs(texDir3D.z));
     vec3  view_pos_displ = objPosEs - displ_vec;
     vec4  modelPos       = inverse(u_viewMat44) * vec4(view_pos_displ, 1.0);
     vec4  clipPlane      = vec4(normalize(u_clipPlane.xyz), u_clipPlane.w);
