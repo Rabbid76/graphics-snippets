@@ -249,6 +249,13 @@ The absolute distance changes proportionally with the reciprocal scaling factor 
     }
 
 
+**Reference**
+
+Steep Parallax Mapping - 2005<br/>
+[http://graphics.cs.brown.edu/games/SteepParallax/]
+[http://graphics.cs.brown.edu/games/SteepParallax/mcguire-steepparallax.pdf]
+
+
 <br/><hr/>
 ## Prallax Occlusion Mapping
 
@@ -292,7 +299,14 @@ The absolute distance changes proportionally with the reciprocal scaling factor 
 
 **Reference**
 
-[Parallax Occlusion Mapping in GLSL](http://sunandblackcat.com/tipFullView.php?topicid=28)<br/>
+Parallax Occlusion Mapping in GLSL<br/>
+[http://sunandblackcat.com/tipFullView.php?topicid=28]
+
+Parallax Occlusion in Direct3D 11<br/>
+[http://www.d3dcoder.net/Data/Resources/ParallaxOcclusion.pdf]
+
+Parallax Occlusion Mapping with approximate shadows; Henrik Bäcklund and Niklas Neijman<br/>
+[http://henrikbacklund.se/Reports/Parallax%20Occlusion%20Mapping.pdf]
 
 
 <br/><hr/>
@@ -461,9 +475,14 @@ Combined Height map and Cone map (red: height map, green : cone map)<br/>
 
 **Reference**
 
-[Cone Step Mapping: An Iterative Ray-Heightfield Intersection Algorithm, Jonathan "LoneSock" Dummer](http://www.lonesock.net/files/ConeStepMapping.pdf)<br/>
-[Relaxed Cone Stepping for Relief Mapping; GPU Gems 3; Fabio Policarpo, Manuel M. Oliveira](https://pdfs.semanticscholar.org/e52f/c7648691b9472c60ae17bfb316bb244c5978.pdf)<br/>
-[Anisotropic Cone Mapping; Yu-Jen Chen and Yung-Yu Chuang - National Taiwan University](https://www.csie.ntu.edu.tw/~cyy/publications/papers/apsipa2009.pdf)<br/>
+Cone Step Mapping: An Iterative Ray-Heightfield Intersection Algorithm, Jonathan "LoneSock" Dummer<br/>
+[http://www.lonesock.net/files/ConeStepMapping.pdf]
+
+Relaxed Cone Stepping for Relief Mapping; GPU Gems 3; Fabio Policarpo, Manuel M. Oliveira<br/>
+[https://pdfs.semanticscholar.org/e52f/c7648691b9472c60ae17bfb316bb244c5978.pdf]
+
+Anisotropic Cone Mapping; Yu-Jen Chen and Yung-Yu Chuang - National Taiwan University<br/>
+[https://www.csie.ntu.edu.tw/~cyy/publications/papers/apsipa2009.pdf]
 
 
 <br/><hr/>
@@ -472,8 +491,10 @@ Combined Height map and Cone map (red: height map, green : cone map)<br/>
 
 **Reference**
 
-[Protruded displacement mapping for image-based urban representation](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/12/Generalized_Displacement_Maps.pdf)<br/>
-[Silhouette Management for Protruded Displacement Mapping](https://www.researchgate.net/profile/Byounghyun_Yoo/publication/234830509_Silhouette_management_for_protruded_displacement_mapping/links/0c9605264737dd1797000000/Silhouette-management-for-protruded-displacement-mapping.pdf)<br/>
+Protruded displacement mapping for image-based urban representation<br/>
+[https://www.microsoft.com/en-us/research/wp-content/uploads/2016/12/Generalized_Displacement_Maps.pdf]
+
+Silhouette Management for Protruded Displacement Mapping<br/>[https://www.researchgate.net/profile/Byounghyun_Yoo/publication/234830509_Silhouette_management_for_protruded_displacement_mapping/links/0c9605264737dd1797000000/Silhouette-management-for-protruded-displacement-mapping.pdf]
 
 
 <br/><hr/>
@@ -482,19 +503,125 @@ Combined Height map and Cone map (red: height map, green : cone map)<br/>
 
 **References**
 
-[Generalized Displacement Maps; Eurographics Symposium on Rendering (2004)](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/12/Generalized_Displacement_Maps.pdf)<br/>
-[Per Pixel Displacement Mapping - Generalized Displacement Mapping; Enrico Leonhardt](https://www.inf.tu-dresden.de/content/institutes/smt/cg/teaching/seminars/HauptseminarWS0506/public/Enrico%20Leonhardt/GDM.pdf)<br/>
+Generalized Displacement Maps; Eurographics Symposium on Rendering (2004)<br/>
+[https://www.microsoft.com/en-us/research/wp-content/uploads/2016/12/Generalized_Displacement_Maps.pdf]
+
+Per Pixel Displacement Mapping - Generalized Displacement Mapping; Enrico Leonhardt<br/>[https://www.inf.tu-dresden.de/content/institutes/smt/cg/teaching/seminars/HauptseminarWS0506/public/Enrico%20Leonhardt/GDM.pdf]
+
+Prism Parallax Occlusion Mapping with Accurate Silhouett Generation<br/>
+[http://developer.amd.com/wordpress/media/2012/10/Dachsbacher-Tatarchuk-Prism_Parallax_Occlusion_Mapping_with_Accurate_Silhouette_Generation%28SI3D07%29.pdf]
 
 
 <br/><hr/>
-## Inverse Displacement Mapping
+## Inverse Displacement Mapping - Relief mapping
 
 
 **References**
 
-[A Prism-Free Method for Silhouette Rendering in Inverse Displacement Mapping; Pacific Graphics 2008](http://www.cs.nthu.edu.tw/~chunfa/PG08_1258.pdf)<br/>
-[Displacement Mapping on the GPU - State of the Art](http://sirkan.iit.bme.hu/~szirmay/egdisfinal3.pdf)<br/>
-[Generalized Displacement Maps; Eurographics Symposium on Rendering (2004)](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/12/Generalized_Displacement_Maps.pdf)<br/>
+A Prism-Free Method for Silhouette Rendering in Inverse Displacement Mapping; Pacific Graphics 2008; Ying-Chieh Chen and Chun-Fa Chang<br/>
+[http://www.cs.nthu.edu.tw/~chunfa/PG08_1258.pdf]
+
+An Efficient Representation for Surface Details; Manuel M. Oliveira and Fabio Policarpo <br/>
+[http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.161.2450&rep=rep1&type=pdf]
+
+Displacement Mapping on the GPU - State of the Art; László Szirmay-Kalos, Tamás Umenhoffer<br/>
+[http://sirkan.iit.bme.hu/~szirmay/egdisfinal3.pdf]
+
+Real-Time Relief Mapping on Arbitrary Polygonal Surfaces; Fabio Policarpo, Manuel M. Oliveira, Joao L. D. Comba<br/>
+[https://www.cs.purdue.edu/cgvlab/courses/434/434_Spring_2013/lectures/References/DepthImagesForRenderingSurfaceDetail.pdf]
+
+Relief Mapping of Non-Height-Field Surface Details<br/>
+[http://www.inf.ufrgs.br/~oliveira/pubs_files/Policarpo_Oliveira_RTM_multilayer_I3D2006.pdf]
+
+
+<br/><hr/>
+## Directional distance maps
+
+**References**
+
+Accurate and Efficient Rendering of Detail using Directional Distance Maps<br/>
+[http://www.cs.unc.edu/~ravishm/ICVGIP_2012/docs/mesostructure.pdf]
+
+
+<br/><hr/>
+## Impostors
+
+**References**
+
+True Impostors; Eric Risser; University of Central Florida<br/>
+[http://www.ericrisser.com/stuff/TrueImpostors.pdf]
+
+
+<br/><hr/>
+## Mesostructure
+
+**References**
+
+A hybrid rugosity mesostructure (HRM) for rendering fine haptic detail; Víctor Theoktisto Marta Fairén Isabel Navazo<br/>
+[https://upcommons.upc.edu/bitstream/handle/2117/86150/R09-5.pdf?sequence=1&isAllowed=y]
+
+
+## Related
+
+**References**
+
+Different Mapping Techniques for Realistic Surfaces<br/>
+[http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.458.9190&rep=rep1&type=pdf]
+
+Displacement Mapping; Studienarbeit Ruth-Maria Recker; Institut fur Computervisualistik Arbeitsgruppe Computergraphik<br/>
+[https://www.uni-koblenz.de/~cg/Studienarbeiten/SA_Recker.pdf]
+
+Efficient Self-Shadowed Radiosity Normal Mapping; Chris Green<br/>
+[http://www.valvesoftware.com/publications/2007/SIGGRAPH2007_EfficientSelfShadowedRadiosityNormalMapping.pdf]
+
+Fast Soft Self-Shadowing on Dynamic Height Fields; John Snyder and Derek Nowrouzezahrai<br/>
+[http://www.cim.mcgill.ca/~derek/files/hfvisib.pdf]
+
+Fast Visualization of Complex 3D Models Using Displacement Mapping<br/>
+[https://www.comp.nus.edu.sg/~lowkl/publications/lutk_gi2009.pdf]
+
+Faster Relief Mapping Using the Secant Method<br/>
+[https://www.researchgate.net/publication/220494102_Faster_Relief_Mapping_Using_the_Secant_Method]
+
+Frequency Domain Normal Map Filtering; Charles Han Bo Sun Ravi Ramamoorthi Eitan Grinspun; Columbia University<br/>
+[http://www.cs.columbia.edu/cg/normalmap/normalmap.pdf]
+
+Gloss and Normal Map Acquisition of Mesostructures Using Gray Codes; Yannick Francken, Tom Cuypers, Tom Mertens, and Philippe Bekaert<br/>
+[https://pdfs.semanticscholar.org/494e/64f78c0c1f1d1332708f5b390ed65c38b8db.pdf]
+
+Nvidia GPU Gems 2 Chapter 8 - Per-Pixel Displacement Mapping with Distance Functions<br/>
+[http://download.nvidia.com/developer/GPU_Gems_2/GPU_Gems2_ch08.pdf]
+
+Interactive Landscape Visualization Using GPU Ray Casting; Stephan Mantler and Stefan Jeschke; VRVis Research Center Vienna University of Technology<br/>
+[https://www.cg.tuwien.ac.at/research/publications/2006/Mantler-06-landscape/Mantler-06-landscape-paper.pdf]
+
+Interactive Rendering of Meso-structure Surface Details using Semi-transparent 3D Textures; Jean-Francois Dufort Luc Leblanc Pierre Poulin<br/>
+[http://www.iro.umontreal.ca/~dufortjf/vmv2005.pdf]
+
+Relief Texture Mapping; Dissertation by Manuel Menezes de Oliveira Neto<br/>
+[http://www.inf.ufrgs.br/~oliveira/pubs_files/Oliveira_Dissertation_low_res.pdf]
+
+On-GPU ray traced terrain<br/>
+[https://kentie.net/article/terrain/ass2_doc_1.pdf]
+
+Relief mapping for urban and natural environments rendering<br/>
+[https://bib.irb.hr/datoteka/515699.GVS_34_1037.pdf]
+
+Rendering Geometry with Relief Textures<br/>
+[http://www.inf.ufrgs.br/~oliveira/pubs_files/Policarpo_Oliveira_RTM_multilayer_I3D2006.pdf]
+
+Review of Displacement MApping Techniques and Optimizations<br/>
+[http://www.diva-portal.org/smash/get/diva2:831762/FULLTEXT01.pdf]
+
+Scalable Height Field Self-Shadowing<br/>
+[http://ns1.wili.cc/research/hfshadow/hfshadow.pdf]
+
+Survey of Texture Mapping Techniques for Representing and Rendering Volumetric Mesostructure<br/>
+[http://opus.bath.ac.uk/44666/1/Published_version.pdf]
+
+View-Dependent Displacement Mapping<br/>
+[https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/vdm.pdf]
+
 
 <br/><hr/>
 # TODO
