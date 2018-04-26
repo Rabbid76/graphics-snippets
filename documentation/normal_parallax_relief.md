@@ -305,7 +305,7 @@ Parallax Occlusion Mapping in GLSL<br/>
 Parallax Occlusion in Direct3D 11<br/>
 [http://www.d3dcoder.net/Data/Resources/ParallaxOcclusion.pdf]
 
-Parallax Occlusion Mapping with approximate shadows; Henrik Bäcklund and Niklas Neijman<br/>
+Parallax Occlusion Mapping with approximate shadows; Henrik Backlund and Niklas Neijman<br/>
 [http://henrikbacklund.se/Reports/Parallax%20Occlusion%20Mapping.pdf]
 
 
@@ -524,7 +524,7 @@ A Prism-Free Method for Silhouette Rendering in Inverse Displacement Mapping; Pa
 An Efficient Representation for Surface Details; Manuel M. Oliveira and Fabio Policarpo <br/>
 [http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.161.2450&rep=rep1&type=pdf]
 
-Displacement Mapping on the GPU - State of the Art; László Szirmay-Kalos, Tamás Umenhoffer<br/>
+Displacement Mapping on the GPU - State of the Art; Laszlo Szirmay-Kalos, Tamas Umenhoffer<br/>
 [http://sirkan.iit.bme.hu/~szirmay/egdisfinal3.pdf]
 
 Real-Time Relief Mapping on Arbitrary Polygonal Surfaces; Fabio Policarpo, Manuel M. Oliveira, Joao L. D. Comba<br/>
@@ -557,7 +557,7 @@ True Impostors; Eric Risser; University of Central Florida<br/>
 
 **References**
 
-A hybrid rugosity mesostructure (HRM) for rendering fine haptic detail; Víctor Theoktisto Marta Fairén Isabel Navazo<br/>
+A hybrid rugosity mesostructure (HRM) for rendering fine haptic detail; Victor Theoktisto Marta Fairen Isabel Navazo<br/>
 [https://upcommons.upc.edu/bitstream/handle/2117/86150/R09-5.pdf?sequence=1&isAllowed=y]
 
 
