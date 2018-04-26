@@ -119,9 +119,12 @@ vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
     // sample steps, starting before the target point (dependent on the maximum height)
     float mapHeight      = 1.0;
     float bestBumpHeight = isect_dir > 0.0 ? base_height : 1.0;
+
+    
+
     for ( int i = 0; i < int( numSteps ); ++ i )
     {
-        mapHeight = back_face + inverse_dir * CalculateHeight( texC.xy + isect_dir * bestBumpHeight * texStep.xy );
+        mapHeight = CalculateHeight( texC.xy + isect_dir * bestBumpHeight * texStep.xy );
         if ( mapHeight >= bestBumpHeight || bestBumpHeight > 1.0 )
             break;
         bestBumpHeight += bumpHeightStep;   
@@ -133,7 +136,7 @@ vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
     {
         bumpHeightStep *= 0.5;
         bestBumpHeight += bumpHeightStep;
-        mapHeight       = back_face + inverse_dir * CalculateHeight( texC.xy + isect_dir * bestBumpHeight * texStep.xy );
+        mapHeight       = CalculateHeight( texC.xy + isect_dir * bestBumpHeight * texStep.xy );
         bestBumpHeight -= ( bestBumpHeight < mapHeight ) ? bumpHeightStep : 0.0;
     }
 
@@ -144,21 +147,6 @@ vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
     texC      += isect_dir * bestBumpHeight * texStep.xy;
     mapHeight  = bestBumpHeight;
     
-    /*
-    float mapDiff = 0.0;
-    if ( base_height < 0.0001 )
-    {
-      mapDiff = frontFace * bestBumpHeight;
-    }
-    else if (texDir3D.z > 0.0)
-    {
-      mapDiff = base_height - bestBumpHeight;
-    }
-    else
-    {
-      mapDiff = bestBumpHeight - base_height;
-    }
-    */
     float mapDiff = -isect_dir * (inverse_dir * bestBumpHeight - base_height);
    
     return vec4(texC.xy, mapHeight, mapDiff);
@@ -195,8 +183,8 @@ void main()
     vec4  clipPlane      = vec4(normalize(u_clipPlane.xyz), u_clipPlane.w);
     float clip_dist      = dot(modelPos, clipPlane);
     //float clip_dist      = in_data.clip;
-    if ( clip_dist < 0.0 )
-        discard;
+    //if ( clip_dist < 0.0 )
+    //    discard;
 
     vec2  range_vec  = step(vec2(0.0), newTexCoords.st) * step(newTexCoords.st, vec2(1.0));
     float range_test = range_vec.x * range_vec.y;
