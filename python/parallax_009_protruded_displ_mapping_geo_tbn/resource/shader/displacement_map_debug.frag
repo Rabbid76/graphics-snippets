@@ -125,12 +125,14 @@ vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
 
 #if defined(CONE_STEP_MAPPING)
 
+    //vec3 sample_start_pt = vec3(isect_dir * startBumpHeight * texStep.xy, startBumpHeight);
+
     // [Determinante](https://de.wikipedia.org/wiki/Determinante)
     // A x B = A.x * B.y - A.y * B.x = dot(A, vec2(B.y,-B.x)) = det(mat2(A,B))
 
     // [How do you detect where two line segments intersect?](https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect)
     vec2 R = normalize(vec2(length(texDir3D.xy), texDir3D.z)); 
-    vec2 P = R * maxBumpHeight / texDir3D.z; 
+    vec2 P = vec2(isect_dir * startBumpHeight * length(texStep.xy), startBumpHeight); 
 
     vec2  tex_size     = textureSize(u_displacement_map, 0).xy;
     vec2  min_tex_step = normalize(texDir3D.xy) / tex_size;
@@ -147,23 +149,23 @@ vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
         float c = h_and_c.y * h_and_c.y / maxBumpHeight;
 
         vec2 C = P + R * t;
-        //if ( C.y <= h )
-        //    break;
+        if ( C.y <= h )
+            break;
         //bestBumpHeight = h;
 
         vec2 Q = vec2(C.x, h);
         vec2 S = normalize(vec2(c, 1.0));
         float new_t = dot(Q-P, vec2(S.y, -S.x)) / dot(R, vec2(S.y, -S.x));
-        //t = max(t+min_step, new_t);
+        t = max(t+min_step, new_t);
 
-        mapHeight = h;
-        if ( mapHeight >= bestBumpHeight || bestBumpHeight > 1.0 )
-            break;
-        bestBumpHeight += bumpHeightStep;   
+        //mapHeight = h;
+        //if ( mapHeight >= bestBumpHeight || bestBumpHeight > 1.0 )
+        //    break;
+        //bestBumpHeight += bumpHeightStep;   
     } 
 
     // final linear interpolation between the last to heights 
-    bestBumpHeight += bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / abs(bumpHeightStep), 0.0, 1.0 );
+    //bestBumpHeight += bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / abs(bumpHeightStep), 0.0, 1.0 );
 
     // set displaced texture coordiante and intersection height
     //texC      += isect_dir * bestBumpHeight * texStep.xy;
