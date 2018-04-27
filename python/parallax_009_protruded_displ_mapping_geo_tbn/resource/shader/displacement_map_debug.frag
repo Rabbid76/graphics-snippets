@@ -154,34 +154,26 @@ vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
         float h = h_and_c.x * maxBumpHeight;
         float c = h_and_c.y * h_and_c.y / maxBumpHeight;
 
+        mapHeight = h;
         vec2 C = P + R * t;
         if ( C.y <= h )
             break;
         if ( C.y > maxBumpHeight )
             discard;
-        //bestBumpHeight = h;
-
+        
         vec2 Q = vec2(C.x, h);
         vec2 S = normalize(vec2(c, 1.0));
         float new_t = dot(Q-P, vec2(S.y, -S.x)) / dot(R, vec2(S.y, -S.x));
-        t = max(t+min_step, new_t);
-
-        //mapHeight = h;
-        //if ( mapHeight >= bestBumpHeight || bestBumpHeight > 1.0 )
-        //    break;
-        //bestBumpHeight += bumpHeightStep;   
+        t = max(t+min_step, new_t); 
     } 
 
     // final linear interpolation between the last to heights 
     //bestBumpHeight += bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / abs(bumpHeightStep), 0.0, 1.0 );
 
     // set displaced texture coordiante and intersection height
-    //texC      += isect_dir * bestBumpHeight * texStep.xy;
-    mapHeight  = bestBumpHeight;
-
     texC = texC + isect_dir * bestBumpHeight * texStep.xy + texDir3D.xy * t;
     //mapHeight = GetHeightAndCone( texC.xy ).x;
-
+    
 #else
 
     float bestBumpHeight = startBumpHeight;
@@ -216,18 +208,18 @@ vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
     float mapDiff = 0.0;
     if ( base_height < 0.0001 )
     {
-      mapDiff = frontFace * bestBumpHeight;
+      mapDiff = frontFace * mapHeight;
     }
     else if (texDir3D.z > 0.0)
     {
-      mapDiff = base_height - bestBumpHeight;
+      mapDiff = base_height - mapHeight;
     }
     else
     {
-      mapDiff = bestBumpHeight - base_height;
+      mapDiff = mapHeight - base_height;
     }
     */
-    float mapDiff = -isect_dir * (inverse_dir * bestBumpHeight - base_height);
+    float mapDiff = -isect_dir * (inverse_dir * mapHeight - base_height);
    
     return vec4(texC.xy, mapHeight, mapDiff);
 }
