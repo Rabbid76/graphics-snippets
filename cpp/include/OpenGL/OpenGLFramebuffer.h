@@ -95,6 +95,8 @@ public:
   CRenderProcess( void );
   virtual ~CRenderProcess();
 
+  const TTextureMap & Textures( void ) const { return _textures; };
+
   virtual const TBufferMap & Buffers( void ) const { return _buffers; };
   virtual const TPassMap   & Passes( void )  const { return _passes; };
 

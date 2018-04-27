@@ -228,11 +228,22 @@ in vec3 vertPos;
 
 out vec4 fragColor;
 
+vec4 PackDepth( in float depth )
+{
+    depth *= (256.0*256.0*256.0 - 1.0) / (256.0*256.0*256.0);
+    vec4 encode = fract( depth * vec4(1.0, 256.0, 256.0*256.0, 256.0*256.0*256.0) );
+    return vec4( encode.xyz - encode.yzw / 256.0, encode.w ) + 1.0/512.0;
+}
+
 void main()
 {
     vec2 texCoord = vertPos.xy * 0.5 + 0.5;
-    vec4 vertCol = vec4(texCoord, 0.0, 1.0);
+
+    float depth = texCoord.x;
+    vec4 vertCol = PackDepth(depth);
+    
     fragColor = vertCol;
+    gl_FragDepth = depth;
 }
 )";
 
@@ -272,6 +283,9 @@ size_t c_mesh_screenspace;
 
 size_t c_prog_draw;
 size_t c_prog_screenspace;
+
+const size_t c_depth_ID  = 0;
+const size_t c_color_ID  = 1;
 
 GLuint vao;
 
@@ -327,9 +341,6 @@ void CWindow_Glfw::InitScene( void )
     glEnableVertexAttribArray( 1 );
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
     glBindVertexArray( 0 );
-
-    const size_t c_depth_ID  = 0;
-    const size_t c_color_ID  = 1;
   
     Render::IRenderProcess::TBufferMap buffers;
     Render::IRenderProcess::TPassMap passes;
@@ -411,4 +422,58 @@ void CWindow_Glfw::Render( double time_ms )
 
     _prgrams[c_prog_screenspace]->Release();
     _process->Release();
+
+    OpenGL::CRenderProcess *process = dynamic_cast<OpenGL::CRenderProcess*>( _process.get() );
+    const OpenGL::CRenderProcess::TTextureObject &depth_tex = process->Textures().find(c_depth_ID)->second;
+    const OpenGL::CRenderProcess::TTextureObject &color_tex = process->Textures().find(c_color_ID)->second;
+
+    glPixelStorei( GL_PACK_ALIGNMENT, 1 );
+    glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
+
+    glActiveTexture( GL_TEXTURE0 );
+    glBindTexture( GL_TEXTURE_2D, depth_tex._object );
+    std::vector<float> dc( _vpSize[0] * _vpSize[1] );
+    glGetTexImage( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, GL_FLOAT, dc.data() );
+
+    glBindTexture( GL_TEXTURE_2D, color_tex._object );
+    std::vector<std::array<float, 4>> c_rgba( _vpSize[0] * _vpSize[1] );
+    glGetTexImage( GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, c_rgba.data() );
+
+    std::vector<float> dp( _vpSize[0] * _vpSize[1] );
+    for ( size_t y = 0; y < _vpSize[1]; ++ y )
+    {
+      for ( size_t x = 0; x < _vpSize[0]; ++ x )
+      {
+        size_t i = y * _vpSize[0] + x;
+
+        std::array<float, 4> &zc = c_rgba[i];
+        float depth = zc[0] + zc[1]/256.0f + zc[2]/(256.0f*256.0f) + zc[3]/(256.0f*256.0f*256.0f);
+        depth = depth * (255.0f/256.0f) * (256.0f*256.0f*256.0f) / (256.0f*256.0f*256.0f-1.0f);
+      
+        dp[i] = depth;
+      }
+    }
+
+    /*
+
+    Why deviates in opengl the gl_FragCoord.z from the depth buffer one?
+    [https://stackoverflow.com/questions/50048047/why-deviates-in-opengl-the-gl-fragcoord-z-from-the-depth-buffer-one/50048448#50048448]
+
+    I investigated my code and I found out, that there was a linear increasing deviation,
+    which started with 0.0 when the depth is 0.0 and increased to 1/256 for depth of 1.0.
+    I'm still not sure where my thought went wrong, but since the deviation was linear it was easy to fix (see the change to the answer).
+    In my test the maximum deviation was about 0.0000000596.
+    
+    */
+
+    float average = 0.0f;
+    std::vector<float> delta( _vpSize[0]*_vpSize[1] );
+    for ( size_t i = 0; i <_vpSize[0]*_vpSize[1]; ++ i )
+    {
+      delta[i] = fabs(dc[i] - dp[i]);
+      average += delta[i];
+    }
+    float maxdelta = *std::max_element( delta.begin(), delta.end() );
+    float mindelta = *std::min_element( delta.begin(), delta.end() );
+    average = average / (float)(_vpSize[0]*_vpSize[1]);
 }
