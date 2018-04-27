@@ -211,14 +211,11 @@ std::string sh_vert = R"(
 #version 460 core
 
 layout (location = 0) in vec3 inPos;
-layout (location = 1) in vec4 inColor;
 
 out vec3 vertPos;
-out vec4 vertCol;
 
 void main()
 {
-    vertCol     = inColor;
 		vertPos     = inPos;
 		gl_Position = vec4(inPos, 1.0);
 }
@@ -228,12 +225,13 @@ std::string sh_frag = R"(
 #version 460 core
 
 in vec3 vertPos;
-in vec4 vertCol;
 
 out vec4 fragColor;
 
 void main()
 {
+    vec2 texCoord = vertPos.xy * 0.5 + 0.5;
+    vec4 vertCol = vec4(texCoord, 0.0, 1.0);
     fragColor = vertCol;
 }
 )";
@@ -266,7 +264,7 @@ void main()
 {
     vec2 texCoord = vertPos.xy * 0.5 + 0.5;
     vec4 vertCol = texture(u_samplerColor, texCoord);
-    fragColor = vertCol.ggga;
+    fragColor = vertCol;
 }
 )";
 
@@ -385,6 +383,8 @@ void CWindow_Glfw::InitScene( void )
 
 void CWindow_Glfw::Render( double time_ms )
 {
+    auto & draw_scree_space = _drawBuffers[c_mesh_screenspace];
+  
     if ( _process->IsValid() )
     {
       if ( _process->Create( { (size_t)_vpSize[0], (size_t)_vpSize[1] } ) == false )
@@ -397,9 +397,8 @@ void CWindow_Glfw::Render( double time_ms )
     _process->Prepare( 0 );
     _prgrams[c_prog_draw]->Use();
     
-    glBindVertexArray( vao );
-    glDrawArrays( GL_TRIANGLES, 0, 3 );
-    glBindVertexArray( 0 );
+    draw_scree_space->DrawAllElements( Render::TPrimitive::triangles, true );
+    draw_scree_space->Release();
 
     _prgrams[c_prog_draw]->Release();
     _process->Release();
@@ -407,7 +406,6 @@ void CWindow_Glfw::Render( double time_ms )
     _process->Prepare( 1 );
     _prgrams[c_prog_screenspace]->Use();
 
-    auto & draw_scree_space = _drawBuffers[c_mesh_screenspace];
     draw_scree_space->DrawAllElements( Render::TPrimitive::triangles, true );
     draw_scree_space->Release();
 
