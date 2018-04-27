@@ -149,6 +149,12 @@ vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
         vec2 C = P + R * t;
         //if ( C.y <= h )
         //    break;
+        //bestBumpHeight = h;
+
+        vec2 Q = vec2(C.x, h);
+        vec2 S = normalize(vec2(c, 1.0));
+        float new_t = dot(Q-P, vec2(S.y, -S.x)) / dot(R, vec2(S.y, -S.x));
+        //t = max(t+min_step, new_t);
 
         mapHeight = h;
         if ( mapHeight >= bestBumpHeight || bestBumpHeight > 1.0 )
