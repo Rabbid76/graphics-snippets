@@ -125,11 +125,11 @@ vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
 
 #if defined(CONE_STEP_MAPPING)
 
-    //if ( base_height > 0.0001 && frontFace > 0.0 )
-    //{
-    //    texStep = vec2(0.0);
-    //    startBumpHeight = base_height;
-    //}
+    if ( base_height > 0.0001 && frontFace > 0.0 && isect_dir < 0.0 )
+    {
+        //texStep = vec2(0.0);
+        //startBumpHeight = base_height;
+    }
 
     //vec3 sample_start_pt = vec3(isect_dir * startBumpHeight * texStep.xy, startBumpHeight);
 
@@ -145,10 +145,9 @@ vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
     float min_step     = length(min_tex_step) * 1.0/R.x;
 
     float t = 0.0;
-    float bestBumpHeight = startBumpHeight;
     for ( int i = 0; i < int( numSteps ); ++ i )
     {
-        vec3 sample_pt = vec3(texC.xy + isect_dir * bestBumpHeight * texStep.xy, startBumpHeight) + texDir3D * t;
+        vec3 sample_pt = vec3(texC.xy + isect_dir * startBumpHeight * texStep.xy, startBumpHeight) + texDir3D * t;
 
         vec2 h_and_c = GetHeightAndCone( sample_pt.xy );
         float h = h_and_c.x * maxBumpHeight;
@@ -167,11 +166,8 @@ vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
         t = max(t+min_step, new_t); 
     } 
 
-    // final linear interpolation between the last to heights 
-    //bestBumpHeight += bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / abs(bumpHeightStep), 0.0, 1.0 );
-
     // set displaced texture coordiante and intersection height
-    texC = texC + isect_dir * bestBumpHeight * texStep.xy + texDir3D.xy * t;
+    texC = texC + isect_dir * startBumpHeight * texStep.xy + texDir3D.xy * t;
     //mapHeight = GetHeightAndCone( texC.xy ).x;
     
 #else
