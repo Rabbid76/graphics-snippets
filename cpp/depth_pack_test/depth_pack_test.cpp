@@ -228,9 +228,11 @@ in vec3 vertPos;
 
 out vec4 fragColor;
 
+uniform vec2 u_vp_size;
+
 vec4 PackDepth( in float depth )
 {
-    depth *= (256.0*256.0*256.0 - 1.0) / (256.0*256.0*256.0);
+    depth *= (256.0*256.0*256.0-1.0) / (256.0*256.0*256.0);
     vec4 encode = fract( depth * vec4(1.0, 256.0, 256.0*256.0, 256.0*256.0*256.0) );
     return vec4( encode.xyz - encode.yzw / 256.0, encode.w ) + 1.0/512.0;
 }
@@ -239,7 +241,11 @@ void main()
 {
     vec2 texCoord = vertPos.xy * 0.5 + 0.5;
 
-    float depth = texCoord.x;
+    float i = (gl_FragCoord.x - 0.5) + (gl_FragCoord.y - 0.5) * u_vp_size.x;
+
+    float depth = i / (u_vp_size.y * u_vp_size.x - 1.0);
+    //float depth = texCoord.x;
+    
     vec4 vertCol = PackDepth(depth);
     
     fragColor = vertCol;
@@ -407,6 +413,7 @@ void CWindow_Glfw::Render( double time_ms )
 
     _process->Prepare( 0 );
     _prgrams[c_prog_draw]->Use();
+    _prgrams[c_prog_draw]->SetUniformF2( "u_vp_size", { (float)_vpSize[0], (float)_vpSize[1] } );
     
     draw_scree_space->DrawAllElements( Render::TPrimitive::triangles, true );
     draw_scree_space->Release();
@@ -473,7 +480,11 @@ void CWindow_Glfw::Render( double time_ms )
       delta[i] = fabs(dc[i] - dp[i]);
       average += delta[i];
     }
-    float maxdelta = *std::max_element( delta.begin(), delta.end() );
+    size_t i_max = std::max_element( delta.begin(), delta.end() ) - delta.begin();
+    float dc_max = dc[i_max];
+    std::array<float, 4> c_rgb_max = c_rgba[i_max];
+    float dp_max = dp[i_max];
+    float maxdelta = delta[i_max];
     float mindelta = *std::min_element( delta.begin(), delta.end() );
     average = average / (float)(_vpSize[0]*_vpSize[1]);
 }
