@@ -3,7 +3,7 @@
 //#define NORMAL_MAP_TEXTURE
 #define NORMAL_MAP_QUALITY 1
 
-#define CONE_STEP_MAPPING
+//#define CONE_STEP_MAPPING
 
 in TGeometryData
 {
@@ -125,13 +125,18 @@ vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
 
 #if defined(CONE_STEP_MAPPING)
 
+    /*
     if ( base_height > 0.0001 && frontFace > 0.0 && isect_dir < 0.0 )
     {
         texStep         = vec2(0.0);
         startBumpHeight = base_height;
         texC            = texCoord.st;
-        isect_dir       = 1.0; 
+        //isect_dir       = 1.0; 
+        inverse_dir = -1.0;
     }
+    */
+    //if ( base_height > 0.0001 && frontFace > 0.0 && isect_dir < 0.0 )
+    //    discard;
 
     //vec3 sample_start_pt = vec3(isect_dir * startBumpHeight * texStep.xy, startBumpHeight);
 
@@ -147,6 +152,7 @@ vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
     float min_step     = length(min_tex_step) * 1.0/R.x;
 
     float t = 0.0;
+    numSteps = 30.0;
     for ( int i = 0; i < int( numSteps ); ++ i )
     {
         vec3 sample_pt = vec3(texC.xy + isect_dir * startBumpHeight * texStep.xy, startBumpHeight) + texDir3D * t;
