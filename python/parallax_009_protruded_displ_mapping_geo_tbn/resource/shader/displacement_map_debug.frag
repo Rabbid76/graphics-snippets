@@ -3,7 +3,7 @@
 //#define NORMAL_MAP_TEXTURE
 #define NORMAL_MAP_QUALITY 1
 
-//#define CONE_STEP_MAPPING
+#define CONE_STEP_MAPPING
 
 in TGeometryData
 {
@@ -126,7 +126,10 @@ vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
 #if defined(CONE_STEP_MAPPING)
 
     //if ( base_height > 0.0001 && frontFace > 0.0 )
-    //  texStep = vec2(0.0);
+    //{
+    //    texStep = vec2(0.0);
+    //    startBumpHeight = base_height;
+    //}
 
     //vec3 sample_start_pt = vec3(isect_dir * startBumpHeight * texStep.xy, startBumpHeight);
 
@@ -136,7 +139,7 @@ vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
     // [How do you detect where two line segments intersect?](https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect)
     vec2 R = normalize(vec2(length(texDir3D.xy), texDir3D.z)); 
     vec2 P = vec2(isect_dir * startBumpHeight * length(texStep.xy), startBumpHeight); 
-
+    
     vec2  tex_size     = textureSize(u_displacement_map, 0).xy;
     vec2  min_tex_step = normalize(texDir3D.xy) / tex_size;
     float min_step     = length(min_tex_step) * 1.0/R.x;
@@ -154,6 +157,8 @@ vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
         vec2 C = P + R * t;
         if ( C.y <= h )
             break;
+        if ( C.y > maxBumpHeight )
+            discard;
         //bestBumpHeight = h;
 
         vec2 Q = vec2(C.x, h);
@@ -301,10 +306,15 @@ void main()
     // debug
     float gray = dot(lightCol.rgb, vec3(0.2126, 0.7152, 0.0722));
     //fragColor = vec4( vec3( step(0.0, -frontFace), step(0.0, texDir3D.z), step(0.0, -texDir3D.z) ) * gray, 1.0 );
-    //fragColor = vec4( vec3( step(0.0001, texCoords.p), step(0.0, texDir3D.z), step(texCoords.p, 0.0001) ) * gray, 1.0 );
+    //fragColor = vec4( vec3( step(0.0001, texCoords.p) * step(0.0, texDir3D.z), step(0.0001, texCoords.p) * step(0.0, -texDir3D.z), step(texCoords.p, 0.0001) ) * gray, 1.0 );
+    //fragColor = vec4( vec3( step(0.0001, texCoords.p) * step(0.0, texDir3D.z), step(0.0001, texCoords.p) * step(0.0, -texDir3D.z), step(texCoords.p, 0.0001) ) * gray, 1.0 ) * step(0.0, frontFace);
 
     vec4 proj_pos_displ = u_projectionMat44 * vec4(view_pos_displ.xyz, 1.0);
     float depth = 0.5 + 0.5 * proj_pos_displ.z / proj_pos_displ.w;
+
+    //if (texCoords.p > 0.0)
+    //    depth -= 0.0001;
+
     gl_FragDepth = depth;
 
     //fragColor = vec4( vec3(1.0-depth), 1.0 );
