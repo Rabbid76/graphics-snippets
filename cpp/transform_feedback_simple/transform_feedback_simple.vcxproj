@@ -115,7 +115,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>GLEW_STATIC;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.\;$(SolutionDir)include\OpenGL;$(SolutionDir)$(GlmDir);$(SolutionDir)glew\include;$(SolutionDir)$(GlfwDir)include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\;$(SolutionDir)include\render;$(SolutionDir)include\OpenGL;$(SolutionDir)$(GlmDir);$(SolutionDir)glew\include;$(SolutionDir)$(GlfwDir)include</AdditionalIncludeDirectories>
       <CallingConvention>StdCall</CallingConvention>
     </ClCompile>
     <Link>
@@ -168,7 +168,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>GLEW_STATIC;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.\;$(SolutionDir)include\OpenGL;$(SolutionDir)$(GlmDir);$(SolutionDir)glew\include;$(SolutionDir)$(GlfwDir)include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\;$(SolutionDir)include\render;$(SolutionDir)include\OpenGL;$(SolutionDir)$(GlmDir);$(SolutionDir)glew\include;$(SolutionDir)$(GlfwDir)include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
