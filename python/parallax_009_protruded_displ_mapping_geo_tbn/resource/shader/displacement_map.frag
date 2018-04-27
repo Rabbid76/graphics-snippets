@@ -96,7 +96,7 @@ vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
     // intersection direction and start height
     float base_height    = texCoord.p;
     //vec2  texStep        = texDir3D.xy / abs(texDir3D.z); // (z is negative) the direction vector points downwards int tangent-space
-    vec2  texStep        = base_height == 0 ? texDir3D.xy / abs(texDir3D.z) : texDir3D.xy / max(abs(texDir3D.z), 0.5*length(texDir3D.xy));
+    vec2  texStep        = base_height < 0.0001 ? texDir3D.xy / abs(texDir3D.z) : texDir3D.xy / max(abs(texDir3D.z), 0.5*length(texDir3D.xy));
 
     // intersection direction: -1 for downwards or 1 for upwards
     // downwards for base triangles (back faces are inverted)

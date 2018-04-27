@@ -87,135 +87,69 @@ vec4 CalculateNormal( in vec2 texCoords )
 
 vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
 {   
-    float maxBumpHeight  = 1.0;
-    
     // sample steps and quality
     vec2  quality_range  = u_parallax_quality;
     float quality        = mix( quality_range.x, quality_range.y, 1.0 - abs(normalize(texDir3D).z) );
     float numSteps       = clamp( quality * 50.0, 1.0, 50.0 );
-    //int   numBinarySteps = int( clamp( quality * 10.0, 1.0, 10.0 ) );
+    int   numBinarySteps = int( clamp( quality * 10.0, 1.0, 10.0 ) );
     
-    // [How do you detect where two line segments intersect?](https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect)
-    vec2 R = normalize(vec2(length(texDir3D.xy), texDir3D.z)); 
-    vec2 P = R * maxBumpHeight / texDir3D.z; 
-
-    vec2  tex_size     = textureSize( u_displacement_map, 0 ).xy;
-    vec2  min_tex_step = normalize(texDir3D.xy) / tex_size;
-    float min_step     = length(min_tex_step) * 1.0/R.x;
-
     // intersection direction and start height
-    float base_height  = texCoord.p;
+    float base_height    = texCoord.p;
     //vec2  texStep        = texDir3D.xy / abs(texDir3D.z); // (z is negative) the direction vector points downwards int tangent-space
-    vec2  texStep        = base_height == 0 ? texDir3D.xy / abs(texDir3D.z) : texDir3D.xy / max(abs(texDir3D.z), 0.5*length(texDir3D.xy));
-    
+    vec2  texStep        = base_height < 0.0001 ? texDir3D.xy / abs(texDir3D.z) : texDir3D.xy / max(abs(texDir3D.z), 0.5*length(texDir3D.xy));
+
     // intersection direction: -1 for downwards or 1 for upwards
     // downwards for base triangles (back faces are inverted)
     // upwards for upwards intersection of silhouettes
-    float isect_dir    = base_height < 0.0001 ? -1.0 : sign(texDir3D.z);
-    //if ( isect_dir > 0.0 )
-    //    texStep = vec2(0.0);
+    float isect_dir      = base_height < 0.0001 ? -1.0 : sign(texDir3D.z);
+
+    // inverse height map: -1 for inverse height map or 1 if not inverse
+    // height maps of back faces base triangles are inverted
+    float inverse_dir    = base_height > 0.0001 ? 1.0 : frontFace;
+    float back_face      = step(0.0, -inverse_dir); 
+
+    // start texture coordinates
+    float start_height   = -isect_dir * base_height + back_face; // back_face is either 1.0 or 0.0  
+    vec2  texC           = texCoord.st + start_height * texStep.xy;
 
     // change of the height per step
     float bumpHeightStep = isect_dir / numSteps;
 
     // sample steps, starting before the target point (dependent on the maximum height)
-    float startBumpHeight = isect_dir > 0.0 ? base_height : maxBumpHeight;
-
-    // start texture coordinates
-    float start_height   = -isect_dir * base_height;
-    vec2  texC           = texCoord.st - isect_dir * base_height * texStep.xy + isect_dir * startBumpHeight * texStep.xy;
-
-    if ( base_height < 0.0001 )
+    float mapHeight      = 1.0;
+    float bestBumpHeight = isect_dir > 0.0 ? base_height : 1.0;
+    for ( int i = 0; i < int( numSteps ); ++ i )
     {
-        texC = texCoord.st - texStep.xy * maxBumpHeight;
-    }
-    else if ( isect_dir < 0.0 ) 
-    {
-        texC = texCoord.st - texStep.xy * (1.0-base_height);
-        //texC = texCoord.st;
-    }
-    else
-    {
-        texC = texCoord.st;
-        startBumpHeight = base_height;
-        //discard;
-    }
-
-    float t = 0.0;
-    const int max_no_of_steps = 30;
-    for ( int i = 0; i < max_no_of_steps; ++ i )
-    {
-        vec3 sample_pt = vec3(texC.xy, startBumpHeight) + texDir3D * t;
-
-        vec2 h_and_c = GetHeightAndCone( sample_pt.xy );
-        float h = h_and_c.x * maxBumpHeight;
-        float c = h_and_c.y * h_and_c.y / maxBumpHeight;
-
-        vec2 C = P + R * t;
-        if ( (isect_dir > 0.0) ? (C.y < h || C.y > maxBumpHeight) : (C.y < h) )
+        mapHeight = back_face + inverse_dir * CalculateHeight( texC.xy + isect_dir * bestBumpHeight * texStep.xy );
+        if ( mapHeight >= bestBumpHeight || bestBumpHeight > 1.0 )
             break;
-        
-        vec2 Q = vec2(C.x, h);
-        vec2 S = normalize(vec2(c, 1.0));
-        float new_t = dot(Q-P, vec2(S.y, -S.x)) / dot(R, vec2(S.y, -S.x));
-        t = max(t+min_step, new_t);
+        bestBumpHeight += bumpHeightStep;   
+    } 
+
+    // binary steps, starting at the previous sample point 
+    bestBumpHeight -= bumpHeightStep;
+    for ( int i = 0; i < numBinarySteps; ++ i )
+    {
+        bumpHeightStep *= 0.5;
+        bestBumpHeight += bumpHeightStep;
+        mapHeight       = back_face + inverse_dir * CalculateHeight( texC.xy + isect_dir * bestBumpHeight * texStep.xy );
+        bestBumpHeight -= ( bestBumpHeight < mapHeight ) ? bumpHeightStep : 0.0;
     }
 
-    texC = texC.xy + texDir3D.xy * t;
-    float mapHeight = GetHeightAndCone( texC.xy ).x;
+    // final linear interpolation between the last to heights 
+    bestBumpHeight += bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / abs(bumpHeightStep), 0.0, 1.0 );
 
-    float mapDiff = -isect_dir * (mapHeight - base_height);
-
+    // set displaced texture coordiante and intersection height
+    texC      += isect_dir * bestBumpHeight * texStep.xy;
+    mapHeight  = bestBumpHeight;
+    float mapDiff = -isect_dir * (inverse_dir * bestBumpHeight - base_height);
+   
     return vec4(texC.xy, mapHeight, mapDiff);
 }
 
-
-// Parallax Occlusion Mapping in GLSL [http://sunandblackcat.com/tipFullView.php?topicid=28]
-vec3 ConeStep( in float frontFace, in vec3 texDir3D, in vec2 texCoord )
-{   
-    float maxBumpHeight = 1.0;
-    vec2  quality_range = u_parallax_quality;
-  
-    // [Determinante](https://de.wikipedia.org/wiki/Determinante)
-    // A x B = A.x * B.y - A.y * B.x = dot(A, vec2(B.y,-B.x)) = det(mat2(A,B))
-
-    // [How do you detect where two line segments intersect?](https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect)
-    vec2 R = normalize(vec2(length(texDir3D.xy), texDir3D.z)); 
-    vec2 P = R * maxBumpHeight / texDir3D.z; 
-
-    vec2 tex_size = textureSize( u_displacement_map, 0 ).xy;
-    vec2 min_tex_step = normalize(texDir3D.xy) / tex_size;
-    float min_step = length(min_tex_step) * 1.0/R.x;
-
-    float t = 0.0;
-    const int max_no_of_steps = 30;
-    for ( int i = 0; i < max_no_of_steps; ++ i )
-    {
-        vec3 sample_pt = vec3(texCoord.xy, maxBumpHeight) + texDir3D * t;
-
-        vec2 h_and_c = GetHeightAndCone( sample_pt.xy );
-        float h = h_and_c.x * maxBumpHeight;
-        float c = h_and_c.y * h_and_c.y / maxBumpHeight;
-
-        vec2 C = P + R * t;
-        if ( C.y <= h )
-        break;
-        
-        vec2 Q = vec2(C.x, h);
-        vec2 S = normalize(vec2(c, 1.0));
-        float new_t = dot(Q-P, vec2(S.y, -S.x)) / dot(R, vec2(S.y, -S.x));
-        t = max(t+min_step, new_t);
-    }
-    
-    vec2  texC = texCoord.xy + texDir3D.xy * t;
-    float mapHeight = GetHeightAndCone( texC.xy ).x - step(frontFace, 0.0);
-    return vec3( texC.xy, mapHeight );
-}
-
-
 void main()
 {
-    vec3  objPosEs    = in_data.pos;
+     vec3  objPosEs    = in_data.pos;
     vec3  objNormalEs = in_data.nv;
     vec3  texCoords   = in_data.uvh.stp;
     float frontFace   = gl_FrontFacing ? 1.0 : -1.0; // TODO $$$ sign(dot(N,objPosEs));
@@ -225,7 +159,7 @@ void main()
 
     // tangent space
     // Followup: Normal Mapping Without Precomputed Tangents [http://www.thetenthplanet.de/archives/1180]
-    vec3  N           = /*frontFace **/ objNormalEs;
+    vec3  N           = objNormalEs;
     vec3  T           = in_data.tv;
     vec3  B           = in_data.bv;
     float invmax      = inversesqrt(max(dot(T, T), dot(B, B)));

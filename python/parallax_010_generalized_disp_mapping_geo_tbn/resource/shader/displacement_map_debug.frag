@@ -3,6 +3,8 @@
 //#define NORMAL_MAP_TEXTURE
 #define NORMAL_MAP_QUALITY 1
 
+#define CONE_STEP_MAPPING
+
 in TGeometryData
 {
     vec3  pos;
@@ -97,7 +99,7 @@ vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
     // intersection direction and start height
     float base_height    = texCoord.p;
     //vec2  texStep        = texDir3D.xy / abs(texDir3D.z); // (z is negative) the direction vector points downwards int tangent-space
-    vec2  texStep        = base_height == 0 ? texDir3D.xy / abs(texDir3D.z) : texDir3D.xy / max(abs(texDir3D.z), 0.5*length(texDir3D.xy));
+    vec2  texStep        = base_height < 0.0001 ? texDir3D.xy / abs(texDir3D.z) : texDir3D.xy / max(abs(texDir3D.z), 0.5*length(texDir3D.xy));
 
     // intersection direction: -1 for downwards or 1 for upwards
     // downwards for base triangles (back faces are inverted)
@@ -117,14 +119,70 @@ vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
     float bumpHeightStep = isect_dir / numSteps;
 
     // sample steps, starting before the target point (dependent on the maximum height)
-    float mapHeight      = 1.0;
-    float bestBumpHeight = isect_dir > 0.0 ? base_height : 1.0;
+    float maxBumpHeight   = 1.0;
+    float mapHeight       = 1.0;
+    float startBumpHeight = isect_dir > 0.0 ? base_height : maxBumpHeight;
 
-    
+#if defined(CONE_STEP_MAPPING)
 
+    //if ( base_height > 0.0001 && frontFace > 0.0 )
+    //  texStep = vec2(0.0);
+
+    //vec3 sample_start_pt = vec3(isect_dir * startBumpHeight * texStep.xy, startBumpHeight);
+
+    // [Determinante](https://de.wikipedia.org/wiki/Determinante)
+    // A x B = A.x * B.y - A.y * B.x = dot(A, vec2(B.y,-B.x)) = det(mat2(A,B))
+
+    // [How do you detect where two line segments intersect?](https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect)
+    vec2 R = normalize(vec2(length(texDir3D.xy), texDir3D.z)); 
+    vec2 P = vec2(isect_dir * startBumpHeight * length(texStep.xy), startBumpHeight); 
+
+    vec2  tex_size     = textureSize(u_displacement_map, 0).xy;
+    vec2  min_tex_step = normalize(texDir3D.xy) / tex_size;
+    float min_step     = length(min_tex_step) * 1.0/R.x;
+
+    float t = 0.0;
+    float bestBumpHeight = startBumpHeight;
     for ( int i = 0; i < int( numSteps ); ++ i )
     {
-        mapHeight = CalculateHeight( texC.xy + isect_dir * bestBumpHeight * texStep.xy );
+        vec3 sample_pt = vec3(texC.xy + isect_dir * bestBumpHeight * texStep.xy, startBumpHeight) + texDir3D * t;
+
+        vec2 h_and_c = GetHeightAndCone( sample_pt.xy );
+        float h = h_and_c.x * maxBumpHeight;
+        float c = h_and_c.y * h_and_c.y / maxBumpHeight;
+
+        vec2 C = P + R * t;
+        if ( C.y <= h )
+            break;
+        //bestBumpHeight = h;
+
+        vec2 Q = vec2(C.x, h);
+        vec2 S = normalize(vec2(c, 1.0));
+        float new_t = dot(Q-P, vec2(S.y, -S.x)) / dot(R, vec2(S.y, -S.x));
+        t = max(t+min_step, new_t);
+
+        //mapHeight = h;
+        //if ( mapHeight >= bestBumpHeight || bestBumpHeight > 1.0 )
+        //    break;
+        //bestBumpHeight += bumpHeightStep;   
+    } 
+
+    // final linear interpolation between the last to heights 
+    //bestBumpHeight += bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / abs(bumpHeightStep), 0.0, 1.0 );
+
+    // set displaced texture coordiante and intersection height
+    //texC      += isect_dir * bestBumpHeight * texStep.xy;
+    mapHeight  = bestBumpHeight;
+
+    texC = texC + isect_dir * bestBumpHeight * texStep.xy + texDir3D.xy * t;
+    //mapHeight = GetHeightAndCone( texC.xy ).x;
+
+#else
+
+    float bestBumpHeight = startBumpHeight;
+    for ( int i = 0; i < int( numSteps ); ++ i )
+    {
+        mapHeight = back_face + inverse_dir * CalculateHeight( texC.xy + isect_dir * bestBumpHeight * texStep.xy );
         if ( mapHeight >= bestBumpHeight || bestBumpHeight > 1.0 )
             break;
         bestBumpHeight += bumpHeightStep;   
@@ -136,7 +194,7 @@ vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
     {
         bumpHeightStep *= 0.5;
         bestBumpHeight += bumpHeightStep;
-        mapHeight       = CalculateHeight( texC.xy + isect_dir * bestBumpHeight * texStep.xy );
+        mapHeight       = back_face + inverse_dir * CalculateHeight( texC.xy + isect_dir * bestBumpHeight * texStep.xy );
         bestBumpHeight -= ( bestBumpHeight < mapHeight ) ? bumpHeightStep : 0.0;
     }
 
@@ -146,7 +204,24 @@ vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
     // set displaced texture coordiante and intersection height
     texC      += isect_dir * bestBumpHeight * texStep.xy;
     mapHeight  = bestBumpHeight;
+
+#endif
     
+    /*
+    float mapDiff = 0.0;
+    if ( base_height < 0.0001 )
+    {
+      mapDiff = frontFace * bestBumpHeight;
+    }
+    else if (texDir3D.z > 0.0)
+    {
+      mapDiff = base_height - bestBumpHeight;
+    }
+    else
+    {
+      mapDiff = bestBumpHeight - base_height;
+    }
+    */
     float mapDiff = -isect_dir * (inverse_dir * bestBumpHeight - base_height);
    
     return vec4(texC.xy, mapHeight, mapDiff);
