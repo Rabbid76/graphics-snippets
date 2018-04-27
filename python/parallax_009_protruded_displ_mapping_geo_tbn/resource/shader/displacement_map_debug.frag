@@ -119,12 +119,11 @@ vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
     float bumpHeightStep = isect_dir / numSteps;
 
     // sample steps, starting before the target point (dependent on the maximum height)
-    float mapHeight      = 1.0;
-    float startBumpHeight = isect_dir > 0.0 ? base_height : 1.0;
+    float maxBumpHeight   = 1.0;
+    float mapHeight       = 1.0;
+    float startBumpHeight = isect_dir > 0.0 ? base_height : maxBumpHeight;
 
 #if defined(CONE_STEP_MAPPING)
-
-    float maxBumpHeight = 1.0;
 
     // [Determinante](https://de.wikipedia.org/wiki/Determinante)
     // A x B = A.x * B.y - A.y * B.x = dot(A, vec2(B.y,-B.x)) = det(mat2(A,B))
@@ -137,10 +136,21 @@ vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
     vec2  min_tex_step = normalize(texDir3D.xy) / tex_size;
     float min_step     = length(min_tex_step) * 1.0/R.x;
 
+    float t = 0.0;
     float bestBumpHeight = startBumpHeight;
     for ( int i = 0; i < int( numSteps ); ++ i )
     {
-        mapHeight = CalculateHeight( texC.xy + isect_dir * bestBumpHeight * texStep.xy );
+        vec3 sample_pt = vec3(texC.xy + isect_dir * bestBumpHeight * texStep.xy, startBumpHeight) + texDir3D * t;
+
+        vec2 h_and_c = GetHeightAndCone( sample_pt.xy );
+        float h = h_and_c.x * maxBumpHeight;
+        float c = h_and_c.y * h_and_c.y / maxBumpHeight;
+
+        vec2 C = P + R * t;
+        //if ( C.y <= h )
+        //    break;
+
+        mapHeight = h;
         if ( mapHeight >= bestBumpHeight || bestBumpHeight > 1.0 )
             break;
         bestBumpHeight += bumpHeightStep;   
@@ -150,8 +160,11 @@ vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
     bestBumpHeight += bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / abs(bumpHeightStep), 0.0, 1.0 );
 
     // set displaced texture coordiante and intersection height
-    texC      += isect_dir * bestBumpHeight * texStep.xy;
+    //texC      += isect_dir * bestBumpHeight * texStep.xy;
     mapHeight  = bestBumpHeight;
+
+    texC = texC + isect_dir * bestBumpHeight * texStep.xy + texDir3D.xy * t;
+    //mapHeight = GetHeightAndCone( texC.xy ).x;
 
 #else
 
@@ -234,8 +247,8 @@ void main()
     vec4  clipPlane      = vec4(normalize(u_clipPlane.xyz), u_clipPlane.w);
     float clip_dist      = dot(modelPos, clipPlane);
     //float clip_dist      = in_data.clip;
-    if ( clip_dist < 0.0 )
-        discard;
+    //if ( clip_dist < 0.0 )
+    //    discard;
 
     vec2  range_vec  = step(vec2(0.0), newTexCoords.st) * step(newTexCoords.st, vec2(1.0));
     float range_test = range_vec.x * range_vec.y;

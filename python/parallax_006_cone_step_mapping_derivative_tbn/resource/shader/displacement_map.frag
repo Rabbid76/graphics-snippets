@@ -239,7 +239,7 @@ vec3 ConeStep( in float frontFace, in vec3 texDir3D, in vec2 texCoord )
 
         vec2 C = P + R * t;
         if ( C.y <= h )
-        break;
+            break;
         
         vec2 Q = vec2(C.x, h);
         vec2 S = normalize(vec2(c, 1.0));
