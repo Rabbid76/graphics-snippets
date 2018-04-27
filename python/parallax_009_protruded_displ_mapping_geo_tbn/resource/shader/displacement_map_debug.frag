@@ -122,7 +122,20 @@ vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
     float mapHeight      = 1.0;
     float startBumpHeight = isect_dir > 0.0 ? base_height : 1.0;
 
-#if defined(NORMAL_MAP_TEXTURE)
+#if defined(CONE_STEP_MAPPING)
+
+    float maxBumpHeight = 1.0;
+
+    // [Determinante](https://de.wikipedia.org/wiki/Determinante)
+    // A x B = A.x * B.y - A.y * B.x = dot(A, vec2(B.y,-B.x)) = det(mat2(A,B))
+
+    // [How do you detect where two line segments intersect?](https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect)
+    vec2 R = normalize(vec2(length(texDir3D.xy), texDir3D.z)); 
+    vec2 P = R * maxBumpHeight / texDir3D.z; 
+
+    vec2  tex_size     = textureSize(u_displacement_map, 0).xy;
+    vec2  min_tex_step = normalize(texDir3D.xy) / tex_size;
+    float min_step     = length(min_tex_step) * 1.0/R.x;
 
     float bestBumpHeight = startBumpHeight;
     for ( int i = 0; i < int( numSteps ); ++ i )
