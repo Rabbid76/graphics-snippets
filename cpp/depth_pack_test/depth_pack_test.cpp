@@ -232,8 +232,8 @@ uniform vec2 u_vp_size;
 
 vec4 PackDepth( in float depth )
 {
-    depth *= (256.0*256.0*256.0-1.0) / (256.0*256.0*256.0);
-    vec4 encode = fract( depth * vec4(1.0, 256.0, 256.0*256.0, 256.0*256.0*256.0) );
+    float depth_val = depth * (256.0*256.0*256.0-1.0) / (256.0*256.0*256.0);
+    vec4 encode = fract( depth_val * vec4(1.0, 256.0, 256.0*256.0, 256.0*256.0*256.0) );
     return vec4( encode.xyz - encode.yzw / 256.0, encode.w ) + 1.0/512.0;
 }
 
@@ -243,7 +243,7 @@ void main()
 
     float i = (gl_FragCoord.x - 0.5) + (gl_FragCoord.y - 0.5) * u_vp_size.x;
 
-    float depth = i / (u_vp_size.y * u_vp_size.x - 1.0);
+    float depth = i / (u_vp_size.y * u_vp_size.x);
     //float depth = texCoord.x;
     
     vec4 vertCol = PackDepth(depth);
