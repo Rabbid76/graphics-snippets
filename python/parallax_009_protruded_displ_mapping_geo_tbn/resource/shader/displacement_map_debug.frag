@@ -127,9 +127,10 @@ vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
 
     if ( base_height > 0.0001 && frontFace > 0.0 && isect_dir < 0.0 )
     {
-        //texStep         = vec2(0.0);
-        //startBumpHeight = base_height;
-        //texC            = texCoord.st; 
+        texStep         = vec2(0.0);
+        startBumpHeight = base_height;
+        texC            = texCoord.st;
+        isect_dir       = 1.0; 
     }
 
     //vec3 sample_start_pt = vec3(isect_dir * startBumpHeight * texStep.xy, startBumpHeight);
