@@ -223,9 +223,9 @@ vec3 ConeStep( in float frontFace, in vec3 texDir3D, in vec2 texCoord )
     vec2 R = normalize(vec2(length(texDir3D.xy), texDir3D.z)); 
     vec2 P = R * maxBumpHeight / texDir3D.z; 
 
-    vec2 tex_size = textureSize( u_displacement_map, 0 ).xy;
-    vec2 min_tex_step = normalize(texDir3D.xy) / tex_size;
-    float min_step = length(min_tex_step) * 1.0/R.x;
+    vec2  tex_size     = textureSize(u_displacement_map, 0).xy;
+    vec2  min_tex_step = normalize(texDir3D.xy) / tex_size;
+    float min_step     = length(min_tex_step) * 1.0/R.x;
 
     float t = 0.0;
     const int max_no_of_steps = 30;

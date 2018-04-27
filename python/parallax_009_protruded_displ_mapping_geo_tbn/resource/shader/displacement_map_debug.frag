@@ -3,6 +3,8 @@
 //#define NORMAL_MAP_TEXTURE
 #define NORMAL_MAP_QUALITY 1
 
+#define CONE_STEP_MAPPING
+
 in TGeometryData
 {
     vec3  pos;
@@ -118,7 +120,29 @@ vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
 
     // sample steps, starting before the target point (dependent on the maximum height)
     float mapHeight      = 1.0;
-    float bestBumpHeight = isect_dir > 0.0 ? base_height : 1.0;
+    float startBumpHeight = isect_dir > 0.0 ? base_height : 1.0;
+
+#if defined(NORMAL_MAP_TEXTURE)
+
+    float bestBumpHeight = startBumpHeight;
+    for ( int i = 0; i < int( numSteps ); ++ i )
+    {
+        mapHeight = CalculateHeight( texC.xy + isect_dir * bestBumpHeight * texStep.xy );
+        if ( mapHeight >= bestBumpHeight || bestBumpHeight > 1.0 )
+            break;
+        bestBumpHeight += bumpHeightStep;   
+    } 
+
+    // final linear interpolation between the last to heights 
+    bestBumpHeight += bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / abs(bumpHeightStep), 0.0, 1.0 );
+
+    // set displaced texture coordiante and intersection height
+    texC      += isect_dir * bestBumpHeight * texStep.xy;
+    mapHeight  = bestBumpHeight;
+
+#else
+
+    float bestBumpHeight = startBumpHeight;
     for ( int i = 0; i < int( numSteps ); ++ i )
     {
         mapHeight = back_face + inverse_dir * CalculateHeight( texC.xy + isect_dir * bestBumpHeight * texStep.xy );
@@ -143,6 +167,8 @@ vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
     // set displaced texture coordiante and intersection height
     texC      += isect_dir * bestBumpHeight * texStep.xy;
     mapHeight  = bestBumpHeight;
+
+#endif
     
     /*
     float mapDiff = 0.0;

@@ -244,8 +244,8 @@ void main()
     float i = (gl_FragCoord.x - 0.5) + (gl_FragCoord.y - 0.5) * u_vp_size.x;
 
     float depth = i / (u_vp_size.y * u_vp_size.x);
-    //float depth = texCoord.x;
-    
+    //float depth = texCoord.x;    
+
     vec4 vertCol = PackDepth(depth);
     
     fragColor = vertCol;
