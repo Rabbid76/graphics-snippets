@@ -86,9 +86,18 @@ vec4 CalculateNormal( in vec2 texCoords )
 #endif 
 }
 
-vec3 Parallax( in float frontFace, in vec3 texCoord, in vec3 tbnP0, in vec3 tbnP1 )
+vec3 Parallax( in float frontFace, in vec3 texCoord, in vec3 tbnP0, in vec3 tbnP1, in vec3 tbnDir )
 {   
-    vec3 texDir3D = normalize(tbnP1 - tbnP0);
+    //vec3 texC0 = tbnP0 * ((tbnP0.z > 1.0) ? (1.0/tbnP0.z) : (tbnP0.z < 0.0 ? (1.0-tbnP0.z/(tbnP0.z-texCoord.z)) : 1.0));
+    //vec3 texC1 = tbnP1 * ((tbnP1.z > 1.0) ? (1.0/tbnP1.z) : (tbnP1.z < 0.0 ? (1.0-tbnP1.z/(tbnP1.z-texCoord.z)) : 1.0));
+    //vec3 texC0 = tbnP0.z < 0.0 ? tbnDir*abs(texCoord.z/tbnDir.z) : (tbnP0.z > 1.0 ? tbnDir/tbnDir.z : tbnP0);
+    //vec3 texC1 = tbnP1.z < 0.0 ? tbnDir*abs(texCoord.z/tbnDir.z) : (tbnP1.z > 1.0 ? tbnDir/tbnDir.z : tbnP1);
+    vec3 texC0 = tbnP0;
+    vec3 texC1 = tbnP1;
+    texC0 += vec3(texCoord.xy, 0.0);
+    texC1 += vec3(texCoord.xy, 0.0);
+
+    vec3 texDir3D = normalize(texC1 - texC0);
 
     // sample steps and quality
     vec2  quality_range  = u_parallax_quality;
@@ -174,10 +183,10 @@ void main()
     for ( int i=0; i<3; ++i )
     {
         float d = in_data.d[i];
-        //if (d < -0.1)
-        //  d0 = max(d0, d);
-        //if (d > 0.1)
-        //  d1 = min(d1, d);
+        if (d < -0.000001 && d1 > -0.000001)
+          d0 = max(d0, d);
+        if (d > 0.000001 && d0 < 0.000001)
+          d1 = min(d1, d);
     }
 
     // intersection points
@@ -189,7 +198,8 @@ void main()
     //vec3  texDir3D     = normalize( inv_tbnMat * objPosEs );
     vec3  tbnP0        = inv_tbnMat * P0;
     vec3  tbnP1        = inv_tbnMat * P1;
-    vec3  newTexCoords = abs(u_displacement_scale) < 0.001 ? vec3(texCoords.st, 0.0) : Parallax( frontFace, texCoords.stp, tbnP0, tbnP1 );
+    vec3  tbnDir       = normalize(inv_tbnMat * objPosEs);
+    vec3  newTexCoords = abs(u_displacement_scale) < 0.001 ? vec3(texCoords.st, 0.0) : Parallax( frontFace, texCoords.stp, tbnP0, tbnP1, tbnDir );
     vec3  displ_vec    = tbnMat * (newTexCoords.stp-texCoords.stp)/invmax;
     
     vec3  view_pos_displ = objPosEs + displ_vec;
