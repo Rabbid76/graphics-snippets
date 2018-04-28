@@ -88,7 +88,7 @@ vec4 CalculateNormal( in vec2 texCoords )
 }
 
 
-vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
+vec3 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
 {   
     // sample steps and quality
     vec2  quality_range  = u_parallax_quality;
@@ -208,24 +208,7 @@ vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
 
 #endif
     
-    /*
-    float mapDiff = 0.0;
-    if ( base_height < 0.0001 )
-    {
-      mapDiff = frontFace * mapHeight;
-    }
-    else if (texDir3D.z > 0.0)
-    {
-      mapDiff = base_height - mapHeight;
-    }
-    else
-    {
-      mapDiff = mapHeight - base_height;
-    }
-    */
-    float mapDiff = -isect_dir * (inverse_dir * mapHeight - base_height);
-   
-    return vec4(texC.xy, mapHeight, mapDiff);
+    return vec3(texC.xy, mapHeight);
 }
 
 
@@ -249,12 +232,10 @@ void main()
     mat3  inv_tbnMat  = inverse( tbnMat );
    
     vec3  texDir3D     = normalize( inv_tbnMat * objPosEs );
-    vec4  newTexCoords = abs(u_displacement_scale) < 0.001 ? vec4(texCoords.st, 0.0, 0.0) : Parallax( frontFace, texDir3D, texCoords.stp );
+    vec3  newTexCoords = abs(u_displacement_scale) < 0.001 ? vec3(texCoords.st, 0.0) : Parallax( frontFace, texDir3D, texCoords.stp );
+    vec3  displ_vec    = tbnMat * (newTexCoords.stp-texCoords.stp)/invmax;
 
-    //float depth_displ    = length(tbnMat * (newTexCoords.z * texDir3D.xyz / abs(texDir3D.z))); 
-    //vec3  view_pos_displ = objPosEs - depth_displ * normalize(objPosEs);
-    vec3  displ_vec      = tbnMat * (newTexCoords.w/invmax * texDir3D.xyz / abs(texDir3D.z));
-    vec3  view_pos_displ = objPosEs - displ_vec;
+    vec3  view_pos_displ = objPosEs + displ_vec;
     vec4  modelPos       = inverse(u_viewMat44) * vec4(view_pos_displ, 1.0);
     vec4  clipPlane      = vec4(normalize(u_clipPlane.xyz), u_clipPlane.w);
     float clip_dist      = dot(modelPos, clipPlane);
