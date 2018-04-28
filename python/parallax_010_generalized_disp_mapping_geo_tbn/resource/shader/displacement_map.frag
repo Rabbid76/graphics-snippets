@@ -86,14 +86,12 @@ vec4 CalculateNormal( in vec2 texCoords )
 #endif 
 }
 
-vec3 Parallax( in float frontFace, in vec3 texCoord, in vec3 tbnP0, in vec3 tbnP1, in vec3 tbnDir )
+vec3 Parallax( in float frontFace, in vec3 texCoord, in vec3 tbnP0, in vec3 tbnP1 )
 {   
-    //vec3 texC0 = tbnP0 * ((tbnP0.z > 1.0) ? (1.0/tbnP0.z) : (tbnP0.z < 0.0 ? (1.0-tbnP0.z/(tbnP0.z-texCoord.z)) : 1.0));
-    //vec3 texC1 = tbnP1 * ((tbnP1.z > 1.0) ? (1.0/tbnP1.z) : (tbnP1.z < 0.0 ? (1.0-tbnP1.z/(tbnP1.z-texCoord.z)) : 1.0));
-    //vec3 texC0 = tbnP0.z < 0.0 ? tbnDir*abs(texCoord.z/tbnDir.z) : (tbnP0.z > 1.0 ? tbnDir/tbnDir.z : tbnP0);
-    //vec3 texC1 = tbnP1.z < 0.0 ? tbnDir*abs(texCoord.z/tbnDir.z) : (tbnP1.z > 1.0 ? tbnDir/tbnDir.z : tbnP1);
-    vec3 texC0 = tbnP0;
-    vec3 texC1 = tbnP1;
+    vec3 texC0 = tbnP0.z > 1.0 && tbnP1.z < 1.0 ? tbnP0/tbnP0.z : tbnP0;
+    vec3 texC1 = tbnP1.z < 0.0 && tbnP0.z > 0.0 ? tbnP1*(1.0-tbnP1.z/(tbnP1.z-texCoord.z)) : tbnP1;
+    texC1 = texC1.z > 1.0 && texC0.z < 1.0 ? texC1/texC1.z : texC1;
+    texC0 = texC0.z < 0.0 && texC1.z > 0.0 ? texC0*(1.0-texC0.z/(texC0.z-texCoord.z)) : texC0;
     texC0 += vec3(texCoord.xy, 0.0);
     texC1 += vec3(texCoord.xy, 0.0);
 
@@ -192,14 +190,13 @@ void main()
     // intersection points
     float df = length( objPosEs );
     vec3  V  = objPosEs / df;
-    vec3  P0 = V * (df + d0);
-    vec3  P1 = V * (df + d1);
+    vec3  P0 = V * d0;
+    vec3  P1 = V * d1;
    
     //vec3  texDir3D     = normalize( inv_tbnMat * objPosEs );
     vec3  tbnP0        = inv_tbnMat * P0;
     vec3  tbnP1        = inv_tbnMat * P1;
-    vec3  tbnDir       = normalize(inv_tbnMat * objPosEs);
-    vec3  newTexCoords = abs(u_displacement_scale) < 0.001 ? vec3(texCoords.st, 0.0) : Parallax( frontFace, texCoords.stp, tbnP0, tbnP1, tbnDir );
+    vec3  newTexCoords = abs(u_displacement_scale) < 0.001 ? vec3(texCoords.st, 0.0) : Parallax( frontFace, texCoords.stp, tbnP0, tbnP1 );
     vec3  displ_vec    = tbnMat * (newTexCoords.stp-texCoords.stp)/invmax;
     
     vec3  view_pos_displ = objPosEs + displ_vec;
