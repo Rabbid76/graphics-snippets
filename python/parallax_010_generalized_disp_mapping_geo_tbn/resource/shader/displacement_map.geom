@@ -78,10 +78,15 @@ void main()
 
     
     // distance to opposite planes
+    float d[3];
+    float d_up[3];
     float d_opp[3];
     float d_opp_up[3];
     for ( int i0=0; i0 < 3; ++i0 )
     {
+      d[i0]    = length(view_pos[i0].xyz);
+      d_up[i0] = length(view_pos_up[i0].xyz);
+
       int i1 = (i0+1) % 3; 
       int i2 = (i0+2) % 3; 
       vec3 edge    = view_pos[i2].xyz - view_pos[i1].xyz;
@@ -126,7 +131,7 @@ void main()
         outData.pos  = view_pos[i];
         outData.col  = inData[i].col;
         outData.uvh  = vec3(inData[i].uv, 0.0);
-        outData.d    = vec3( i==0 ? d_opp[i] : 0.0, i==1 ? d_opp[i] : 0.0, i==2 ? d_opp[i] : 0.0 );
+        outData.d    = vec3( i==0 ? d_opp[i] : d[i], i==1 ? d_opp[i] : d[i], i==2 ? d_opp[i] : d[i] );
         outData.clip = dot(vec4(inData[i].world_pos, 1.0), clipPlane);
         gl_Position  = u_projectionMat44 * vec4( outData.pos, 1.0 );
         EmitVertex();
@@ -143,7 +148,7 @@ void main()
         outData.pos  = view_pos[i];
         outData.col  = inData[i].col;
         outData.uvh  = vec3(inData[i].uv, 0.0);
-        outData.d    = vec3( i==0 ? d_opp[i] : 0.0, i==1 ? d_opp[i] : 0.0, i==2 ? d_opp[i] : 0.0 );
+        outData.d    = vec3( i==0 ? d_opp[i] : d[i], i==1 ? d_opp[i] : d[i], i==2 ? d_opp[i] : d[i] );
         outData.clip = dot(vec4(inData[i].world_pos, 1.0), clipPlane);
         gl_Position  = u_projectionMat44 * vec4( outData.pos, 1.0 );
         EmitVertex();
@@ -154,7 +159,7 @@ void main()
         outData.pos  = view_pos[i2];
         outData.col  = inData[i2].col;
         outData.uvh  = vec3(inData[i2].uv, 0.0);
-        outData.d    = vec3( i2==0 ? d_opp[i2] : 0.0, i2==1 ? d_opp[i2] : 0.0, i2==2 ? d_opp[i2] : 0.0 );
+        outData.d    = vec3( i2==0 ? d_opp[i2] : d[i2], i2==1 ? d_opp[i2] : d[i2], i2==2 ? d_opp[i2] : d[i2] );
         outData.clip = dot(vec4(inData[i2].world_pos, 1.0), clipPlane);
         gl_Position  = u_projectionMat44 * vec4( outData.pos, 1.0 );
         EmitVertex();
@@ -165,7 +170,7 @@ void main()
         outData.pos  = view_pos_up[i];
         outData.col  = inData[i].col;
         outData.uvh  = vec3(inData[i].uv, 1.0);
-        outData.d    = vec3( i==0 ? d_opp_up[i] : 0.0, i==1 ? d_opp_up[i] : 0.0, i==2 ? d_opp_up[i] : 0.0 );
+        outData.d    = vec3( i==0 ? d_opp_up[i] : d_up[i], i==1 ? d_opp_up[i] : d_up[i], i==2 ? d_opp_up[i] : d_up[i] );
         outData.clip = dot(vec4(world_pos_up[i], 1.0), clipPlane);
         gl_Position  = u_projectionMat44 * vec4( outData.pos, 1.0 );
         EmitVertex();
@@ -176,7 +181,7 @@ void main()
         outData.pos  = view_pos_up[i2];
         outData.col  = inData[i2].col;
         outData.uvh  = vec3(inData[i2].uv, 1.0);
-        outData.d    = vec3( i2==0 ? d_opp_up[i2] : 0.0, i2==1 ? d_opp_up[i2] : 0.0, i2==2 ? d_opp_up[i2] : 0.0 );
+        outData.d    = vec3( i2==0 ? d_opp_up[i2] : d_up[i2], i2==1 ? d_opp_up[i2] : d_up[i2], i2==2 ? d_opp_up[i2] : d_up[i2] );
         outData.clip = dot(vec4(world_pos_up[i2], 1.0), clipPlane);
         gl_Position  = u_projectionMat44 * vec4( outData.pos, 1.0 );
         EmitVertex();
