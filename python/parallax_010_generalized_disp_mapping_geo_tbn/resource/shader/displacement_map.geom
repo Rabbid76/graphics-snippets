@@ -53,6 +53,7 @@ void main()
         view_nv[i]     = normalize(mat3(u_viewMat44) * inData[i].world_nv);
         view_pos[i]    = viewPos.xyz / viewPos.w;
         view_pos_up[i] = view_pos[i] + view_nv[i] * u_displacement_scale;
+        //view_pos_up[i] = (u_viewMat44 * vec4(world_pos_up[i], 1.0)).xyz;
     }
 
     // tangent space
@@ -85,7 +86,7 @@ void main()
       int i2 = (i0+2) % 3; 
       vec3 edge    = view_pos[i2].xyz - view_pos[i1].xyz;
       vec3 edge_up = view_pos_up[i2].xyz - view_pos_up[i1].xyz;
-      vec3 up      = view_nv[i0].xyz + view_nv[i1].xyz;
+      vec3 up      = view_nv[i1].xyz + view_nv[i2].xyz;
 
       // intersect the view ray trough a corner point of the prism (with triangular base)
       // with the opposite side face of the prism
@@ -98,25 +99,21 @@ void main()
       // N  : norma vector of the plane
       // d  :: distance from R0 to the intersection with the plane along D
       
-      vec3  R0      = view_pos[i0].xyz;
+      //vec3  R0      = vec3(view_pos[i0].xy, 0.0); // for orthographic projection
       //vec3  D       = vec3(0.0, 0.0, -1.0); // for orthographic projection
+      vec3  R0      = vec3(0.0); // for persepctive projection
       vec3  D       = normalize(view_pos[i0].xyz); // for persepctive projection
-      vec3  N       = cross(edge, up);
+      vec3  N       = normalize(cross(edge, up));
       vec3  P0      = view_pos[i1].xyz;
       d_opp[i0]     = dot(P0 - R0, N) / dot(D, N);
 
-      vec3  R0_up   = view_pos_up[i0].xyz; 
-      vec3  N_up    = cross(edge_up, up);
+      //vec3  R0_up   = vec2(view_pos_up[i0].xyz, 0.0); // for orthographic projection
       //vec3  D_up  = vec3(0.0, 0.0, -1.0); // for orthographic projection
+      vec3  R0_up   = vec3(0.0); // for persepctive projection 
       vec3  D_up    = normalize(view_pos_up[i0].xyz); // for persepctive projection
+      vec3  N_up    = normalize(cross(edge_up, up));
       vec3  P0_up   = view_pos_up[i1].xyz;
       d_opp_up[i0]  = dot(P0_up - R0_up, N_up) / dot(D_up, N_up);
-    }
-
-    // distance to edge
-    for ( int i=0; i < 3; ++i )
-    {
-      // X  =  R0 + D * dot(PA - R0, N) / dot(D, N)
     }
 
     vec4 clipPlane = vec4(normalize(u_clipPlane.xyz), u_clipPlane.w);

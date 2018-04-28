@@ -86,57 +86,41 @@ vec4 CalculateNormal( in vec2 texCoords )
 #endif 
 }
 
-vec3 Parallax( in float frontFace, in vec3 texCoord, in vec3 tbnP0, in vec3 tbnP1 )
+vec3 Parallax( in float frontFace, in vec3 texCoord, in vec3 tbnP0, in vec3 tbnP1, in vec3 tbnDir )
 {   
-    vec3 texC0 = tbnP0.z > 1.0 && tbnP1.z < 1.0 ? tbnP0/tbnP0.z : tbnP0;
-    vec3 texC1 = tbnP1.z < 0.0 && tbnP0.z > 0.0 ? tbnP1*(1.0-tbnP1.z/(tbnP1.z-texCoord.z)) : tbnP1;
-    texC1 = texC1.z > 1.0 && texC0.z < 1.0 ? texC1/texC1.z : texC1;
-    texC0 = texC0.z < 0.0 && texC1.z > 0.0 ? texC0*(1.0-texC0.z/(texC0.z-texCoord.z)) : texC0;
-    vec3 texDir = texC1 - texC0;
+    vec3 maxC0 = vec3( tbnDir.xy/tbnDir.z * (1.0-texCoord.p), 1.0);
+    vec3 texC0 = tbnP0.z > 1.0 && tbnP1.z < 1.0 ? maxC0 : tbnP0;
+    vec3 texC1 = tbnP1.z < 0.0 && tbnP0.z > 0.0 ? vec3(tbnP1.xy * (1.0-tbnP1.z/(tbnP1.z-texCoord.z)), 0.0) : tbnP1;
+    texC1 = texC1.z > 1.0 && texC0.z < 1.0 ? maxC0 : texC1;
+    texC0 = texC0.z < 0.0 && texC1.z > 0.0 ? vec3(tbnP0.xy * (1.0-tbnP0.z/(tbnP0.z-texCoord.z)), 0.0) : texC0;
+    if ( texCoord.p < 0.0001 )
+    {
+        //texC1 = vec3(0.0);
+        //texC0 = tbnDir/tbnDir.z;
+    }    
     texC0 += vec3(texCoord.xy, 0.0);
-
-    vec3 texDir3D = normalize(texDir);
+    texC1 += vec3(texCoord.xy, 0.0);
 
     // sample steps and quality
     vec2  quality_range  = u_parallax_quality;
-    float quality        = mix( quality_range.x, quality_range.y, 1.0 - abs(normalize(texDir3D).z) );
+    float quality        = mix( quality_range.x, quality_range.y, 1.0 - abs(normalize(tbnDir).z) );
     float numSteps       = clamp( quality * 50.0, 1.0, 50.0 );
     int   numBinarySteps = int( clamp( quality * 10.0, 1.0, 10.0 ) );
     
-    // intersection direction and start height
-    float base_height    = texCoord.p;
-    //vec2  texStep        = texDir3D.xy / abs(texDir3D.z); // (z is negative) the direction vector points downwards int tangent-space
-    vec2  texStep        = base_height < 0.0001 ? texDir3D.xy / abs(texDir3D.z) : texDir3D.xy / max(abs(texDir3D.z), 0.5*length(texDir3D.xy));
-
-    // intersection direction: -1 for downwards or 1 for upwards
-    // downwards for base triangles (back faces are inverted)
-    // upwards for upwards intersection of silhouettes
-    float isect_dir      = base_height < 0.0001 ? -1.0 : sign(texDir3D.z);
-
-    // inverse height map: -1 for inverse height map or 1 if not inverse
-    // height maps of back faces base triangles are inverted
-    float inverse_dir    = base_height > 0.0001 ? 1.0 : frontFace;
-    float back_face      = step(0.0, -inverse_dir); 
-
-    // start texture coordinates
-    float start_height   = -isect_dir * base_height + back_face; // back_face is either 1.0 or 0.0  
-    vec2  texC           = texCoord.st + start_height * texStep.xy;
-
-    // change of the height per step
-    float bumpHeightStep = isect_dir / numSteps;
-
-    // sample steps, starting before the target point (dependent on the maximum height)
-    float mapHeight      = 1.0;
-    float bestBumpHeight = isect_dir > 0.0 ? base_height : 1.0;
+    numSteps = 30.0;
+    float bestBumpHeight = texC0.z;
+    float mapHeight = bestBumpHeight;
+    float bumpHeightStep = (texC1.z-texC0.z)/numSteps;
     for ( int i = 0; i < int( numSteps ); ++ i )
     {
-        mapHeight = back_face + inverse_dir * CalculateHeight( texC.xy + isect_dir * bestBumpHeight * texStep.xy );
+        mapHeight = CalculateHeight( mix(texC1.xy, texC0.xy, (bestBumpHeight-texC1.z)/(texC0.z-texC1.z)) );
         if ( mapHeight >= bestBumpHeight || bestBumpHeight > 1.0 )
             break;
         bestBumpHeight += bumpHeightStep;   
     } 
 
     // binary steps, starting at the previous sample point 
+    /*
     bestBumpHeight -= bumpHeightStep;
     for ( int i = 0; i < numBinarySteps; ++ i )
     {
@@ -145,12 +129,13 @@ vec3 Parallax( in float frontFace, in vec3 texCoord, in vec3 tbnP0, in vec3 tbnP
         mapHeight       = back_face + inverse_dir * CalculateHeight( texC.xy + isect_dir * bestBumpHeight * texStep.xy );
         bestBumpHeight -= ( bestBumpHeight < mapHeight ) ? bumpHeightStep : 0.0;
     }
+    */
 
     // final linear interpolation between the last to heights 
-    bestBumpHeight += bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / abs(bumpHeightStep), 0.0, 1.0 );
+    //bestBumpHeight += bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / abs(bumpHeightStep), 0.0, 1.0 );
 
     // set displaced texture coordiante and intersection height
-    texC      += isect_dir * bestBumpHeight * texStep.xy;
+    vec2 texC  = mix(texC1.xy, texC0.xy, (bestBumpHeight-texC1.z)/(texC0.z-texC1.z));
     mapHeight  = bestBumpHeight;
     
     return vec3(texC.xy, mapHeight);
@@ -176,11 +161,12 @@ void main()
     mat3  inv_tbnMat  = inverse( tbnMat );
 
     // distances to the sides of the prism
-    float d0 = min(min(in_data.d.x, in_data.d.y), in_data.d.z);
-    float d1 = max(max(in_data.d.x, in_data.d.y), in_data.d.z);
+    float df = length( objPosEs );
+    float d0 = min(min(in_data.d.x, in_data.d.y), in_data.d.z)-df;
+    float d1 = max(max(in_data.d.x, in_data.d.y), in_data.d.z)-df;
     for ( int i=0; i<3; ++i )
     {
-        float d = in_data.d[i];
+        float d = in_data.d[i]-df;
         if (d < -0.000001 && d1 > -0.000001)
           d0 = max(d0, d);
         if (d > 0.000001 && d0 < 0.000001)
@@ -188,7 +174,6 @@ void main()
     }
 
     // intersection points
-    float df = length( objPosEs );
     vec3  V  = objPosEs / df;
     vec3  P0 = V * d0;
     vec3  P1 = V * d1;
@@ -196,7 +181,8 @@ void main()
     //vec3  texDir3D     = normalize( inv_tbnMat * objPosEs );
     vec3  tbnP0        = inv_tbnMat * P0;
     vec3  tbnP1        = inv_tbnMat * P1;
-    vec3  newTexCoords = abs(u_displacement_scale) < 0.001 ? vec3(texCoords.st, 0.0) : Parallax( frontFace, texCoords.stp, tbnP0, tbnP1 );
+    vec3  tbnDir       = normalize(inv_tbnMat * objPosEs);
+    vec3  newTexCoords = abs(u_displacement_scale) < 0.001 ? vec3(texCoords.st, 0.0) : Parallax( frontFace, texCoords.stp, tbnP0, tbnP1, tbnDir );
     vec3  displ_vec    = tbnMat * (newTexCoords.stp-texCoords.stp)/invmax;
     
     vec3  view_pos_displ = objPosEs + displ_vec;
@@ -243,4 +229,5 @@ void main()
     lightCol       += kSpecular * u_specular * color;
 
     fragColor = vec4( lightCol.rgb, 1.0 );
+    //fragColor = vec4( vec3(-d0), 1.0 );
 }
