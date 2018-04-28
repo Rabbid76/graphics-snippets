@@ -86,8 +86,10 @@ vec4 CalculateNormal( in vec2 texCoords )
 #endif 
 }
 
-vec3 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
+vec3 Parallax( in float frontFace, in vec3 texCoord, in vec3 tbnP0, in vec3 tbnP1 )
 {   
+    vec3 texDir3D = normalize(tbnP1 - tbnP0);
+
     // sample steps and quality
     vec2  quality_range  = u_parallax_quality;
     float quality        = mix( quality_range.x, quality_range.y, 1.0 - abs(normalize(texDir3D).z) );
@@ -167,25 +169,27 @@ void main()
     mat3  inv_tbnMat  = inverse( tbnMat );
 
     // distances to the sides of the prism
-    float d0 = 0.0;
-    float d1 = 0.0;
+    float d0 = min(min(in_data.d.x, in_data.d.y), in_data.d.z);
+    float d1 = max(max(in_data.d.x, in_data.d.y), in_data.d.z);
     for ( int i=0; i<3; ++i )
     {
         float d = in_data.d[i];
-        if (d < -0.000001 )
-          d0 = d0 < -0.000001 ? max(d0, d) : d;
-        if ( d > 0.000001 )
-          d1 = d1 > 0.000001 ? min(d0, d) : d;
+        //if (d < -0.1)
+        //  d0 = max(d0, d);
+        //if (d > 0.1)
+        //  d1 = min(d1, d);
     }
 
     // intersection points
     float df = length( objPosEs );
-    vec3  V  = objPosEs / d0;
+    vec3  V  = objPosEs / df;
     vec3  P0 = V * (df + d0);
     vec3  P1 = V * (df + d1);
    
-    vec3  texDir3D     = normalize( inv_tbnMat * objPosEs );
-    vec3  newTexCoords = abs(u_displacement_scale) < 0.001 ? vec3(texCoords.st, 0.0) : Parallax( frontFace, texDir3D, texCoords.stp );
+    //vec3  texDir3D     = normalize( inv_tbnMat * objPosEs );
+    vec3  tbnP0        = inv_tbnMat * P0;
+    vec3  tbnP1        = inv_tbnMat * P1;
+    vec3  newTexCoords = abs(u_displacement_scale) < 0.001 ? vec3(texCoords.st, 0.0) : Parallax( frontFace, texCoords.stp, tbnP0, tbnP1 );
     vec3  displ_vec    = tbnMat * (newTexCoords.stp-texCoords.stp)/invmax;
     
     vec3  view_pos_displ = objPosEs + displ_vec;
@@ -232,5 +236,4 @@ void main()
     lightCol       += kSpecular * u_specular * color;
 
     fragColor = vec4( lightCol.rgb, 1.0 );
-
 }

@@ -286,6 +286,7 @@ void main()
     //fragColor = vec4( vec3( step(0.0, -frontFace), step(0.0, texDir3D.z), step(0.0, -texDir3D.z) ) * gray, 1.0 );
     //fragColor = vec4( vec3( step(0.0001, texCoords.p) * step(0.0, texDir3D.z), step(0.0001, texCoords.p) * step(0.0, -texDir3D.z), step(texCoords.p, 0.0001) ) * gray, 1.0 );
     //fragColor = vec4( vec3( step(0.0001, texCoords.p) * step(0.0, texDir3D.z), step(0.0001, texCoords.p) * step(0.0, -texDir3D.z), step(texCoords.p, 0.0001) ) * gray, 1.0 ) * step(0.0, frontFace);
+    //fragColor = vec4( abs(in_data.d), 1.0 );
 
     vec4 proj_pos_displ = u_projectionMat44 * vec4(view_pos_displ.xyz, 1.0);
     float depth = 0.5 + 0.5 * proj_pos_displ.z / proj_pos_displ.w;

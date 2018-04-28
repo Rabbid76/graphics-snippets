@@ -82,7 +82,7 @@ void main()
     for ( int i0=0; i0 < 3; ++i0 )
     {
       int i1 = (i0+1) % 3; 
-      int i2 = (i0+1) % 3; 
+      int i2 = (i0+2) % 3; 
       vec3 edge    = view_pos[i2].xyz - view_pos[i1].xyz;
       vec3 edge_up = view_pos_up[i2].xyz - view_pos_up[i1].xyz;
       vec3 up      = view_nv[i0].xyz + view_nv[i1].xyz;
