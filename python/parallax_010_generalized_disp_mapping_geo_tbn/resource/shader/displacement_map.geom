@@ -19,6 +19,7 @@ out TGeometryData
     vec3  bv;
     vec3  col;
     vec3  uvh;
+    vec3  d;
     float clip;
 } outData;
 
@@ -74,6 +75,44 @@ void main()
         bv[i] = dp2perp * duv1.y + dp1perp * duv2.y;
     }
 
+    
+    // distance to opposite planes
+    float d_opp[3];
+    float d_opp_up[3];
+    for ( int i0=0; i0 < 3; ++i0 )
+    {
+      int i1 = (i0+1) % 3; 
+      int i2 = (i0+1) % 3; 
+      vec3 edge    = view_pos[i2].xyz - view_pos[i1].xyz;
+      vec3 edge_up = view_pos_up[i2].xyz - view_pos_up[i1].xyz;
+      vec3 up      = view_nv[i0].xyz + view_nv[i1].xyz;
+
+      // intersect the view ray trough a corner point of the prism (with triangular base)
+      // with the opposite side face of the prism
+      //
+      // d = dot(P0 - R0, N) / dot(D, N)
+      //
+      // R0 : point on the ray
+      // D  : direction of the ray
+      // P0 : point on the plane
+      // N  : norma vector of the plane
+      // d  :: distance from R0 to the intersection with the plane along D
+      
+      vec3  R0      = view_pos[i0].xyz;
+      //vec3  D       = vec3(0.0, 0.0, -1.0); // for orthographic projection
+      vec3  D       = normalize(view_pos[i0].xyz); // for persepctive projection
+      vec3  N       = cross(edge, up);
+      vec3  P0      = view_pos[i1].xyz;
+      d_opp[i0]     = dot(P0 - R0, N) / dot(D, N);
+
+      vec3  R0_up   = view_pos_up[i0].xyz; 
+      vec3  N_up    = cross(edge_up, up);
+      //vec3  D_up  = vec3(0.0, 0.0, -1.0); // for orthographic projection
+      vec3  D_up    = normalize(view_pos_up[i0].xyz); // for persepctive projection
+      vec3  P0_up   = view_pos_up[i1].xyz;
+      d_opp_up[i0]  = dot(P0_up - R0_up, N_up) / dot(D_up, N_up);
+    }
+
     // distance to edge
     for ( int i=0; i < 3; ++i )
     {
@@ -90,6 +129,7 @@ void main()
         outData.pos  = view_pos[i];
         outData.col  = inData[i].col;
         outData.uvh  = vec3(inData[i].uv, 0.0);
+        outData.d    = vec3( i==0 ? d_opp[i] : 0.0, i==1 ? d_opp[i] : 0.0, i==2 ? d_opp[i] : 0.0 );
         outData.clip = dot(vec4(inData[i].world_pos, 1.0), clipPlane);
         gl_Position  = u_projectionMat44 * vec4( outData.pos, 1.0 );
         EmitVertex();
@@ -106,6 +146,7 @@ void main()
         outData.pos  = view_pos[i];
         outData.col  = inData[i].col;
         outData.uvh  = vec3(inData[i].uv, 0.0);
+        outData.d    = vec3( i==0 ? d_opp[i] : 0.0, i==1 ? d_opp[i] : 0.0, i==2 ? d_opp[i] : 0.0 );
         outData.clip = dot(vec4(inData[i].world_pos, 1.0), clipPlane);
         gl_Position  = u_projectionMat44 * vec4( outData.pos, 1.0 );
         EmitVertex();
@@ -116,6 +157,7 @@ void main()
         outData.pos  = view_pos[i2];
         outData.col  = inData[i2].col;
         outData.uvh  = vec3(inData[i2].uv, 0.0);
+        outData.d    = vec3( i2==0 ? d_opp[i2] : 0.0, i2==1 ? d_opp[i2] : 0.0, i2==2 ? d_opp[i2] : 0.0 );
         outData.clip = dot(vec4(inData[i2].world_pos, 1.0), clipPlane);
         gl_Position  = u_projectionMat44 * vec4( outData.pos, 1.0 );
         EmitVertex();
@@ -126,6 +168,7 @@ void main()
         outData.pos  = view_pos_up[i];
         outData.col  = inData[i].col;
         outData.uvh  = vec3(inData[i].uv, 1.0);
+        outData.d    = vec3( i==0 ? d_opp_up[i] : 0.0, i==1 ? d_opp_up[i] : 0.0, i==2 ? d_opp_up[i] : 0.0 );
         outData.clip = dot(vec4(world_pos_up[i], 1.0), clipPlane);
         gl_Position  = u_projectionMat44 * vec4( outData.pos, 1.0 );
         EmitVertex();
@@ -136,6 +179,7 @@ void main()
         outData.pos  = view_pos_up[i2];
         outData.col  = inData[i2].col;
         outData.uvh  = vec3(inData[i2].uv, 1.0);
+        outData.d    = vec3( i2==0 ? d_opp_up[i2] : 0.0, i2==1 ? d_opp_up[i2] : 0.0, i2==2 ? d_opp_up[i2] : 0.0 );
         outData.clip = dot(vec4(world_pos_up[i2], 1.0), clipPlane);
         gl_Position  = u_projectionMat44 * vec4( outData.pos, 1.0 );
         EmitVertex();

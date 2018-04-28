@@ -13,6 +13,7 @@ in TGeometryData
     vec3  bv;
     vec3  col;
     vec3  uvh;
+    vec3  d;
     float clip;
 } in_data;
 

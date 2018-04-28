@@ -11,6 +11,7 @@ in TGeometryData
     vec3  bv;
     vec3  col;
     vec3  uvh;
+    vec3  d;
     float clip;
 } in_data;
 
@@ -149,7 +150,7 @@ vec4 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
 
 void main()
 {
-     vec3  objPosEs    = in_data.pos;
+    vec3  objPosEs    = in_data.pos;
     vec3  objNormalEs = in_data.nv;
     vec3  texCoords   = in_data.uvh.stp;
     float frontFace   = gl_FrontFacing ? 1.0 : -1.0; // TODO $$$ sign(dot(N,objPosEs));
@@ -165,6 +166,24 @@ void main()
     float invmax      = inversesqrt(max(dot(T, T), dot(B, B)));
     mat3  tbnMat      = mat3(T * invmax, B * invmax, N * invmax);
     mat3  inv_tbnMat  = inverse( tbnMat );
+
+    // distances to the sides of the prism
+    float d0 = 0.0;
+    float d1 = 0.0;
+    for ( int i=0; i<3; ++i )
+    {
+        float d = in_data.d[i];
+        if (d < -0.000001 )
+          d0 = d0 < -0.000001 ? max(d0, d) : d;
+        if ( d > 0.000001 )
+          d1 = d1 > 0.000001 ? min(d0, d) : d;
+    }
+
+    // intersection points
+    float df = length( objPosEs );
+    vec3  V  = objPosEs / d0;
+    vec3  P0 = V * (df + d0);
+    vec3  P1 = V * (df + d1);
    
     vec3  texDir3D     = normalize( inv_tbnMat * objPosEs );
     vec4  newTexCoords = abs(u_displacement_scale) < 0.001 ? vec4(texCoords.st, 0.0, 0.0) : Parallax( frontFace, texDir3D, texCoords.stp );
