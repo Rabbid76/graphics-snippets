@@ -92,10 +92,10 @@ vec3 Parallax( in float frontFace, in vec3 texCoord, in vec3 tbnP0, in vec3 tbnP
     vec3 texC1 = tbnP1.z < 0.0 && tbnP0.z > 0.0 ? tbnP1*(1.0-tbnP1.z/(tbnP1.z-texCoord.z)) : tbnP1;
     texC1 = texC1.z > 1.0 && texC0.z < 1.0 ? texC1/texC1.z : texC1;
     texC0 = texC0.z < 0.0 && texC1.z > 0.0 ? texC0*(1.0-texC0.z/(texC0.z-texCoord.z)) : texC0;
+    vec3 texDir = texC1 - texC0;
     texC0 += vec3(texCoord.xy, 0.0);
-    texC1 += vec3(texCoord.xy, 0.0);
 
-    vec3 texDir3D = normalize(texC1 - texC0);
+    vec3 texDir3D = normalize(texDir);
 
     // sample steps and quality
     vec2  quality_range  = u_parallax_quality;
