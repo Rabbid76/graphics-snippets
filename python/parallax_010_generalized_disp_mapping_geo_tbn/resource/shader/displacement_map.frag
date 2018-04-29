@@ -11,7 +11,7 @@ in TGeometryData
     vec3  bv;
     vec3  col;
     vec3  uvh;
-    vec3  d;
+    vec4  d;
     float clip;
 } in_data;
 
@@ -88,6 +88,7 @@ vec4 CalculateNormal( in vec2 texCoords )
 
 vec3 Parallax( in float frontFace, in vec3 texCoord, in vec3 tbnP0, in vec3 tbnP1, in vec3 tbnDir )
 {   
+   /*
     vec3 maxC0 = vec3( tbnDir.xy/tbnDir.z * (1.0-texCoord.p), 1.0);
     vec3 texC0 = tbnP0.z > 1.0 && tbnP1.z < 1.0 ? maxC0 : tbnP0;
     vec3 texC1 = tbnP1.z < 0.0 && tbnP0.z > 0.0 ? vec3(tbnP1.xy * (1.0-tbnP1.z/(tbnP1.z-texCoord.z)), 0.0) : tbnP1;
@@ -97,9 +98,14 @@ vec3 Parallax( in float frontFace, in vec3 texCoord, in vec3 tbnP0, in vec3 tbnP
     {
         //texC1 = vec3(0.0);
         //texC0 = tbnDir/tbnDir.z;
-    }    
-    texC0 += vec3(texCoord.xy, 0.0);
-    texC1 += vec3(texCoord.xy, 0.0);
+    }
+    */
+    
+    
+    vec3 texC0 = tbnP0;
+    vec3 texC1 = tbnP1;  
+    texC0 += texCoord.xyz;
+    texC1 += texCoord.xyz;
 
     // sample steps and quality
     vec2  quality_range  = u_parallax_quality;
@@ -162,15 +168,25 @@ void main()
 
     // distances to the sides of the prism
     float df = length( objPosEs );
-    float d0 = min(min(in_data.d.x, in_data.d.y), in_data.d.z)-df;
-    float d1 = max(max(in_data.d.x, in_data.d.y), in_data.d.z)-df;
-    for ( int i=0; i<3; ++i )
+    float d0;
+    float d1;
+    if ( texCoords.p < 0.0001 )
     {
-        float d = in_data.d[i]-df;
-        if (d < -0.000001 && d1 > -0.000001)
-          d0 = max(d0, d);
-        if (d > 0.000001 && d0 < 0.000001)
-          d1 = min(d1, d);
+        if ( frontFace > 0.0 )
+        {
+            d1 = 0.0;
+            d0 = min(min(in_data.d.x, in_data.d.y), in_data.d.z)*0.9 - df; // TODO $$$ * 0.9
+        }
+        else
+        {
+            d0 = 0.0;
+            d1 = max(max(in_data.d.x, in_data.d.y), in_data.d.z) - df;
+        }
+    }
+    else
+    {
+        d0 = min(in_data.d.x, in_data.d.y) - df;
+        d1 = max(in_data.d.x, in_data.d.y) - df;
     }
 
     // intersection points
@@ -182,6 +198,18 @@ void main()
     vec3  tbnP0        = inv_tbnMat * P0;
     vec3  tbnP1        = inv_tbnMat * P1;
     vec3  tbnDir       = normalize(inv_tbnMat * objPosEs);
+    vec3  tbnTopMax    = tbnDir / tbnDir.z;
+
+    if ( texCoords.p < 0.0001 )
+    {
+        if ( frontFace > 0.0 )
+        {
+            tbnP1 = vec3(0.0);
+            if ( length(tbnTopMax) < length(tbnP0) )
+                tbnP0 = tbnTopMax;
+        } 
+    }
+
     vec3  newTexCoords = abs(u_displacement_scale) < 0.001 ? vec3(texCoords.st, 0.0) : Parallax( frontFace, texCoords.stp, tbnP0, tbnP1, tbnDir );
     vec3  displ_vec    = tbnMat * (newTexCoords.stp-texCoords.stp)/invmax;
     
@@ -195,9 +223,9 @@ void main()
 
     vec2  range_vec  = step(vec2(0.0), newTexCoords.st) * step(newTexCoords.st, vec2(1.0));
     float range_test = range_vec.x * range_vec.y;
-    if ( texCoords.p > 0.0 && (range_test == 0.0 || newTexCoords.z > 1.000001))
+    //if ( texCoords.p > 0.0 && (range_test == 0.0 || newTexCoords.z > 1.000001))
     //if ( texCoords.p > 0.0 && range_test == 0.0)
-      discard;
+    //  discard;
     //if ( cosDir > 0.0 )
     //  discard;
 
@@ -229,5 +257,23 @@ void main()
     lightCol       += kSpecular * u_specular * color;
 
     fragColor = vec4( lightCol.rgb, 1.0 );
-    //fragColor = vec4( vec3(-d0), 1.0 );
+
+#define DEBUG_FRONT_SILHOUETTES
+//#define DEBUG_BACK_SILHOUETTES
+
+#if defined(DEBUG_FRONT_SILHOUETTES)
+    if ( texCoords.p < 0.0001 )
+        discard;
+    if ( in_data.d.z < 0.0 )
+        discard;
+    fragColor = vec4(vec2(in_data.d.xy-df), in_data.d.z, 1.0);
+#endif
+
+#if defined(DEBUG_BACK_SILHOUETTES)
+    if ( texCoords.p < 0.0001 )
+        discard;
+    if ( in_data.d.z > 0.0 )
+        discard;
+    fragColor = vec4(vec2(df-in_data.d.xy), -in_data.d.z, 1.0);
+#endif
 }
