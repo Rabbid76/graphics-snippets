@@ -88,9 +88,9 @@ vec4 CalculateNormal( in vec2 texCoords )
 vec3 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
 {   
     // geometry situation
-    float base_height  = texCoord.p;                             // intersection level (height) on the silhouette (side of prism geometry)
-    bool  is_sihouette = texCoord.p > 0.0001;                    // fragment is on a potential silhouette (side of prism geometry)
-    float isect_dir    = is_sihouette ? sign(texDir3D.z) : -1.0; // intersection direction: -1 for downwards or 1 for upwards
+    float base_height  = texCoord.p;                       // intersection level (height) on the silhouette (side of prism geometry)
+    bool  is_sihouette = texCoord.p > 0.0001;              // fragment is on a potential silhouette (side of prism geometry)
+    bool  is_up_isect  = is_sihouette && texDir3D.z > 0.0; // upwards intersection on potential silhouette (side of prism geometry)
 
     // sample distance
     //vec3 texDist = texDir3D / abs(texDir3D.z); // (z is negative) the direction vector points downwards int tangent-space
@@ -104,11 +104,13 @@ vec3 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
 
     // sample steps, starting before the target point (dependent on the maximum height)
     float maxBumpHeight   = 1.0;
-    float startBumpHeight = isect_dir > 0.0 ? base_height : maxBumpHeight;
+    float startBumpHeight = is_up_isect ? base_height : maxBumpHeight;
+    float delta_height0   = is_up_isect ? base_height : base_height;
+    float delta_height1   = is_up_isect ? 0.0 : (base_height - maxBumpHeight);
     
     // start and end of samples
-    vec3 texC0 = (back_face - isect_dir * base_height) * texStep;                               // sample end - bottom of prism 
-    vec3 texC1 = (back_face - isect_dir * base_height + isect_dir * startBumpHeight) * texStep; // sample start - top of prism  
+    vec3 texC0 = (back_face + delta_height0) * texStep; // sample end - bottom of prism 
+    vec3 texC1 = (back_face + delta_height1) * texStep; // sample start - top of prism  
     texC0 += texCoord.xyz;
     texC1 += texCoord.xyz;
 
@@ -119,7 +121,7 @@ vec3 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
     int   numBinarySteps = int( clamp( quality * 10.0, 1.0, 10.0 ) );
 
     // change of the height per step
-    float bumpHeightStep = isect_dir / numSteps;
+    float bumpHeightStep = inverse_dir * (texC0.z-texC1.z) / numSteps;
 
     float bestBumpHeight = startBumpHeight;
     float mapHeight      = 1.0;
