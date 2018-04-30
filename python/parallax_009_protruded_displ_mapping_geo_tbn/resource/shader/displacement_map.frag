@@ -92,6 +92,11 @@ vec3 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
     bool  is_sihouette = texCoord.p > 0.00001;             // fragment is on a potential silhouette (side of prism geometry)
     bool  is_up_isect  = is_sihouette && texDir3D.z > 0.0; // upwards intersection on potential silhouette (side of prism geometry)
 
+    // sample start and end height (level)
+    float maxBumpHeight   = 1.0;
+    float delta_height0   = is_up_isect ? 1.05*(1.0-base_height) : base_height; // TODO $$$ 1.05 ??? 
+    float delta_height1   = is_up_isect ? 0.0 : (base_height - maxBumpHeight);
+
     // sample distance
     //vec3 texDist = texDir3D / abs(texDir3D.z); // (z is negative) the direction vector points downwards int tangent-space
     vec3 texDist = is_sihouette == false ? texDir3D / abs(texDir3D.z) : texDir3D / max(abs(texDir3D.z), 0.5*length(texDir3D.xy));
@@ -102,11 +107,6 @@ vec3 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
     float inverse_dir    = is_sihouette ? 1.0 : frontFace;
     float back_face      = step(0.0, -inverse_dir); 
 
-    // sample steps, starting before the target point (dependent on the maximum height)
-    float maxBumpHeight   = 1.0;
-    float delta_height0   = is_up_isect ? 1.05*(1.0-base_height) : base_height; // TODO $$$ 1.05 ??? 
-    float delta_height1   = is_up_isect ? 0.0 : (base_height - maxBumpHeight);
-    
     // start and end of samples
     vec3 texC0 = texCoord.xyz + (back_face + delta_height0) * texStep; // sample end - bottom of prism 
     vec3 texC1 = texCoord.xyz + (back_face + delta_height1) * texStep; // sample start - top of prism  
@@ -229,7 +229,7 @@ void main()
 
     gl_FragDepth = depth;
 
-//#define DEBUG_DEPTH
+ //#define DEBUG_DEPTH
 
 #if defined(DEBUG_DEPTH)
     fragColor = vec4( vec3(1.0-depth), 1.0 );
