@@ -87,46 +87,42 @@ vec4 CalculateNormal( in vec2 texCoords )
 
 vec3 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
 {   
+    // geometry situation
+    float base_height  = texCoord.p;                             // intersection level (height) on the silhouette (side of prism geometry)
+    bool  is_sihouette = texCoord.p > 0.0001;                    // fragment is on a potential silhouette (side of prism geometry)
+    float isect_dir    = is_sihouette ? sign(texDir3D.z) : -1.0; // intersection direction: -1 for downwards or 1 for upwards
+
+    // sample distance
+    //vec3 texDist = texDir3D / abs(texDir3D.z); // (z is negative) the direction vector points downwards int tangent-space
+    vec3 texDist = is_sihouette == false ? texDir3D / abs(texDir3D.z) : texDir3D / max(abs(texDir3D.z), 0.5*length(texDir3D.xy));
+    vec3 texStep = vec3(texDist.xy, sign(texDir3D.z));
+
+    // inverse height map: -1 for inverse height map or 1 if not inverse
+    // height maps of back faces base triangles are inverted
+    float inverse_dir    = is_sihouette ? 1.0 : frontFace;
+    float back_face      = step(0.0, -inverse_dir); 
+
+    // sample steps, starting before the target point (dependent on the maximum height)
+    float maxBumpHeight   = 1.0;
+    float startBumpHeight = isect_dir > 0.0 ? base_height : maxBumpHeight;
+    
+    // start and end of samples
+    vec3 texC0 = (back_face - isect_dir * base_height) * texStep;                               // sample end - bottom of prism 
+    vec3 texC1 = (back_face - isect_dir * base_height + isect_dir * startBumpHeight) * texStep; // sample start - top of prism  
+    texC0 += texCoord.xyz;
+    texC1 += texCoord.xyz;
+
     // sample steps and quality
     vec2  quality_range  = u_parallax_quality;
     float quality        = mix( quality_range.x, quality_range.y, 1.0 - abs(normalize(texDir3D).z) );
     float numSteps       = clamp( quality * 50.0, 1.0, 50.0 );
     int   numBinarySteps = int( clamp( quality * 10.0, 1.0, 10.0 ) );
-    
-    // intersection direction and start height
-    float base_height = texCoord.p;
-    //vec3 texDist = texDir3D / abs(texDir3D.z); // (z is negative) the direction vector points downwards int tangent-space
-    vec3 texDist = base_height < 0.0001 ? texDir3D / abs(texDir3D.z) : texDir3D / max(abs(texDir3D.z), 0.5*length(texDir3D.xy));
-    vec3 texStep = vec3(texDist.xy, sign(texDir3D.z));
-
-    // intersection direction: -1 for downwards or 1 for upwards
-    // downwards for base triangles (back faces are inverted)
-    // upwards for upwards intersection of silhouettes
-    float isect_dir      = base_height < 0.0001 ? -1.0 : sign(texDir3D.z);
-
-    // inverse height map: -1 for inverse height map or 1 if not inverse
-    // height maps of back faces base triangles are inverted
-    float inverse_dir    = base_height > 0.0001 ? 1.0 : frontFace;
-    float back_face      = step(0.0, -inverse_dir); 
-
-    // start texture coordinates
-    float start_height   = -isect_dir * base_height + back_face; // back_face is either 1.0 or 0.0  
 
     // change of the height per step
     float bumpHeightStep = isect_dir / numSteps;
 
-    // sample steps, starting before the target point (dependent on the maximum height)
-    float maxBumpHeight   = 1.0;
-    float mapHeight       = 1.0;
-    float startBumpHeight = isect_dir > 0.0 ? base_height : maxBumpHeight;
-    
-    // start and end of samples
-    vec3 texC0 = start_height * texStep;                                         // sample end - bottom of prism 
-    vec3 texC1 = start_height * texStep + isect_dir * startBumpHeight * texStep; // sample start - top of prism  
-    texC0 += texCoord.xyz;
-    texC1 += texCoord.xyz;
-
     float bestBumpHeight = startBumpHeight;
+    float mapHeight      = 1.0;
     for ( int i = 0; i < int( numSteps ); ++ i )
     {
         mapHeight = back_face + inverse_dir * CalculateHeight( mix(texC0.xy, texC1.xy, (bestBumpHeight-texC0.z)/(texC1.z-texC0.z)) );
@@ -186,8 +182,8 @@ void main()
 
     texCoords.st       = newTexCoords.xy;
 
-//#define DEBUG_CLIP
-//#define DEBUG_CLIP_DISPLACED
+#define DEBUG_CLIP
+#define DEBUG_CLIP_DISPLACED
 
 #if defined (DEBUG_CLIP)
     vec4  modelPos       = inverse(u_viewMat44) * vec4(view_pos_displ, 1.0);
