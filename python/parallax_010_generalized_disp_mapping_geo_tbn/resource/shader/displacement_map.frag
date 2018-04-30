@@ -211,7 +211,7 @@ void main()
         if ( frontFace > 0.0 )
         {
             tbnP1 = vec3(0.0);
-            if ( length(tbnTopMax) < length(tbnP0) )
+            if ( d0 > 0.00001 || length(tbnTopMax) < length(tbnP0) )
                 tbnP0 = tbnTopMax;
         } 
         else
@@ -223,13 +223,13 @@ void main()
         {
             //tbnP0 = vec3(0.0);
             tbnP0 = (1.0-texCoords.p) * tbnTopMax;
-            if ( d1 > -0.00001 || length(tbnTopMax)*texCoords.p < length(tbnP1) )
+            //if ( d1 < -0.00001 || length(tbnTopMax)*texCoords.p < length(tbnP1) )
                 tbnP1 = -texCoords.p * tbnTopMax; 
         }
         else
         {
             tbnP1 = vec3(0.0);
-            if ( d0 < 0.00001 || length(tbnTopMax)*(1.0-texCoords.p) < length(tbnP0) )
+            if ( d0 > 0.00001 || length(tbnTopMax)*(1.0-texCoords.p) < length(tbnP0) )
                 tbnP0 = (1.0-texCoords.p) * tbnTopMax;
         }
     }
