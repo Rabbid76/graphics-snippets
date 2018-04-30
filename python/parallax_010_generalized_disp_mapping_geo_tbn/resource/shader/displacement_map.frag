@@ -107,10 +107,12 @@ vec3 Parallax( in float frontFace, in vec3 texCoord, in vec3 tbnP0, in vec3 tbnP
     texC0 += texCoord.xyz;
     texC1 += texCoord.xyz;
 
+    bool sihouette = texCoord.p > 0.00001;
+
     // sample steps and quality
     vec2  quality_range  = u_parallax_quality;
     float quality        = mix( quality_range.x, quality_range.y, 1.0 - abs(normalize(tbnDir).z) );
-    float numSteps       = clamp( quality * 50.0, 1.0, 50.0 );
+    float numSteps       = clamp( quality * 50.0, 2.0, 50.0 );
     int   numBinarySteps = int( clamp( quality * 10.0, 1.0, 10.0 ) );
     
     numSteps = 30.0;
@@ -121,24 +123,26 @@ vec3 Parallax( in float frontFace, in vec3 texCoord, in vec3 tbnP0, in vec3 tbnP
     {
         mapHeight = CalculateHeight( mix(texC1.xy, texC0.xy, (bestBumpHeight-texC1.z)/(texC0.z-texC1.z)) );
         if ( mapHeight >= bestBumpHeight || bestBumpHeight > 1.0 )
+        {
+            if (sihouette && i==0)
+                discard;
             break;
-        bestBumpHeight += bumpHeightStep;   
+        }
+        bestBumpHeight += bumpHeightStep;
     } 
 
     // binary steps, starting at the previous sample point 
-    /*
     bestBumpHeight -= bumpHeightStep;
     for ( int i = 0; i < numBinarySteps; ++ i )
     {
         bumpHeightStep *= 0.5;
         bestBumpHeight += bumpHeightStep;
-        mapHeight       = back_face + inverse_dir * CalculateHeight( texC.xy + isect_dir * bestBumpHeight * texStep.xy );
+        mapHeight       = CalculateHeight( mix(texC1.xy, texC0.xy, (bestBumpHeight-texC1.z)/(texC0.z-texC1.z)) );
         bestBumpHeight -= ( bestBumpHeight < mapHeight ) ? bumpHeightStep : 0.0;
     }
-    */
 
     // final linear interpolation between the last to heights 
-    //bestBumpHeight += bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / abs(bumpHeightStep), 0.0, 1.0 );
+    bestBumpHeight += bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / abs(bumpHeightStep), 0.0, 1.0 );
 
     // set displaced texture coordiante and intersection height
     vec2 texC  = mix(texC1.xy, texC0.xy, (bestBumpHeight-texC1.z)/(texC0.z-texC1.z));
@@ -167,15 +171,17 @@ void main()
     mat3  inv_tbnMat  = inverse( tbnMat );
 
     // distances to the sides of the prism
+    bool  sihouette        = texCoords.p > 0.0001;
+    bool  silhouette_front = in_data.d.z > 0.0;
     float df = length( objPosEs );
     float d0;
     float d1;
-    if ( texCoords.p < 0.0001 )
+    if ( sihouette == false )
     {
         if ( frontFace > 0.0 )
         {
             d1 = 0.0;
-            d0 = min(min(in_data.d.x, in_data.d.y), in_data.d.z)*0.9 - df; // TODO $$$ * 0.9
+            d0 = min(min(in_data.d.x, in_data.d.y), in_data.d.z) - df; // TODO $$$ * 0.9
         }
         else
         {
@@ -200,7 +206,7 @@ void main()
     vec3  tbnDir       = normalize(inv_tbnMat * objPosEs);
     vec3  tbnTopMax    = tbnDir / tbnDir.z;
 
-    if ( texCoords.p < 0.0001 )
+    if ( sihouette == false )
     {
         if ( frontFace > 0.0 )
         {
@@ -208,9 +214,48 @@ void main()
             if ( length(tbnTopMax) < length(tbnP0) )
                 tbnP0 = tbnTopMax;
         } 
+        else
+            discard; // TODO $$$
+    }
+    else 
+    {
+        if ( silhouette_front )
+        {
+            //tbnP0 = vec3(0.0);
+            tbnP0 = (1.0-texCoords.p) * tbnTopMax;
+            if ( d1 > -0.00001 || length(tbnTopMax)*texCoords.p < length(tbnP1) )
+                tbnP1 = -texCoords.p * tbnTopMax; 
+        }
+        else
+        {
+            tbnP1 = vec3(0.0);
+            if ( d0 < 0.00001 || length(tbnTopMax)*(1.0-texCoords.p) < length(tbnP0) )
+                tbnP0 = (1.0-texCoords.p) * tbnTopMax;
+        }
     }
 
     vec3  newTexCoords = abs(u_displacement_scale) < 0.001 ? vec3(texCoords.st, 0.0) : Parallax( frontFace, texCoords.stp, tbnP0, tbnP1, tbnDir );
+    if ( sihouette )
+    {
+        
+        if ( silhouette_front )
+        {
+            if ( newTexCoords.z > 1.000001 )
+                discard;
+            vec2 tex_range = tbnP1.xy; 
+            float range_dist = dot(tex_range, newTexCoords.xy - texCoords.xy );
+            if ( range_dist < 0.0 || range_dist > 1.0 )
+                discard;
+        }
+        else
+        {
+            vec2 tex_range = tbnP0.xy; 
+            float range_dist = dot(tex_range, newTexCoords.xy - texCoords.xy );
+            if ( range_dist < 0.0 || range_dist > 1.0 )
+                discard;
+        }
+    }
+
     vec3  displ_vec    = tbnMat * (newTexCoords.stp-texCoords.stp)/invmax;
     
     vec3  view_pos_displ = objPosEs + displ_vec;
@@ -225,8 +270,6 @@ void main()
     float range_test = range_vec.x * range_vec.y;
     //if ( texCoords.p > 0.0 && (range_test == 0.0 || newTexCoords.z > 1.000001))
     //if ( texCoords.p > 0.0 && range_test == 0.0)
-    //  discard;
-    //if ( cosDir > 0.0 )
     //  discard;
 
     // discard by test against 3 clip planes (riangle prism), similar clip distance 
@@ -258,8 +301,14 @@ void main()
 
     fragColor = vec4( lightCol.rgb, 1.0 );
 
-#define DEBUG_FRONT_SILHOUETTES
+    vec4 proj_pos_displ = u_projectionMat44 * vec4(view_pos_displ.xyz, 1.0);
+    float depth = 0.5 + 0.5 * proj_pos_displ.z / proj_pos_displ.w;
+
+    gl_FragDepth = depth;
+
+//#define DEBUG_FRONT_SILHOUETTES
 //#define DEBUG_BACK_SILHOUETTES
+//#define DEBUG_DEPTH
 
 #if defined(DEBUG_FRONT_SILHOUETTES)
     if ( texCoords.p < 0.0001 )
@@ -267,6 +316,7 @@ void main()
     if ( in_data.d.z < 0.0 )
         discard;
     fragColor = vec4(vec2(in_data.d.xy-df), in_data.d.z, 1.0);
+    //fragColor = vec4(vec2(d1), in_data.d.z, 1.0);
 #endif
 
 #if defined(DEBUG_BACK_SILHOUETTES)
@@ -275,5 +325,10 @@ void main()
     if ( in_data.d.z > 0.0 )
         discard;
     fragColor = vec4(vec2(df-in_data.d.xy), -in_data.d.z, 1.0);
+    //fragColor = vec4(vec2(-d0), -in_data.d.z, 1.0);
+#endif
+
+#if defined(DEBUG_DEPTH)
+    fragColor = vec4( vec3(1.0-depth), 1.0 );
 #endif
 }
