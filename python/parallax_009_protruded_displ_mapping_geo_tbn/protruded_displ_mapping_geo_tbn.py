@@ -128,7 +128,7 @@ class MyWindow(window.CameraWindow):
             b"u_texture"            : 0,
             b"u_displacement_map"   : 1,
             b"u_normal_map"         : 2,
-            b"u_displacement_scale" : 0.5, 
+            b"u_displacement_scale" : 0.25, 
             b"u_parallax_quality"   : [0.5, 1.0],
             b"u_clipPlane"          : [-1.0, 1.0, -0.2, clip * 1.7321]
         } )
