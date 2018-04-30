@@ -88,47 +88,43 @@ vec4 CalculateNormal( in vec2 texCoords )
 
 vec3 Parallax( in float frontFace, in vec3 texCoord, in vec3 tbnP0, in vec3 tbnP1, in vec3 tbnDir )
 {   
-   /*
-    vec3 maxC0 = vec3( tbnDir.xy/tbnDir.z * (1.0-texCoord.p), 1.0);
-    vec3 texC0 = tbnP0.z > 1.0 && tbnP1.z < 1.0 ? maxC0 : tbnP0;
-    vec3 texC1 = tbnP1.z < 0.0 && tbnP0.z > 0.0 ? vec3(tbnP1.xy * (1.0-tbnP1.z/(tbnP1.z-texCoord.z)), 0.0) : tbnP1;
-    texC1 = texC1.z > 1.0 && texC0.z < 1.0 ? maxC0 : texC1;
-    texC0 = texC0.z < 0.0 && texC1.z > 0.0 ? vec3(tbnP0.xy * (1.0-tbnP0.z/(tbnP0.z-texCoord.z)), 0.0) : texC0;
-    if ( texCoord.p < 0.0001 )
-    {
-        //texC1 = vec3(0.0);
-        //texC0 = tbnDir/tbnDir.z;
-    }
-    */
-    
-    
-    vec3 texC0 = tbnP0;
-    vec3 texC1 = tbnP1;  
-    texC0 += texCoord.xyz;
-    texC1 += texCoord.xyz;
-
-    bool sihouette = texCoord.p > 0.00001;
-
-    // sample steps and quality
+   // sample steps and quality
     vec2  quality_range  = u_parallax_quality;
     float quality        = mix( quality_range.x, quality_range.y, 1.0 - abs(normalize(tbnDir).z) );
-    float numSteps       = clamp( quality * 50.0, 2.0, 50.0 );
+    float numSteps       = clamp( quality * 50.0, 1.0, 50.0 );
     int   numBinarySteps = int( clamp( quality * 10.0, 1.0, 10.0 ) );
     
-    numSteps = 30.0;
-    float bestBumpHeight = texC0.z;
-    float mapHeight = bestBumpHeight;
-    float bumpHeightStep = (texC1.z-texC0.z)/numSteps;
+    // intersection direction and start height
+    float base_height    = texCoord.p;
+    //vec2  texStep        = tbnDir.xy / abs(tbnDir.z); // (z is negative) the direction vector points downwards int tangent-space
+    vec2  texStep        = base_height < 0.0001 ? tbnDir.xy / abs(tbnDir.z) : tbnDir.xy / max(abs(tbnDir.z), 0.5*length(tbnDir.xy));
+
+    // intersection direction: -1 for downwards or 1 for upwards
+    // downwards for base triangles (back faces are inverted)
+    // upwards for upwards intersection of silhouettes
+    float isect_dir      = base_height < 0.0001 ? -1.0 : sign(tbnDir.z);
+
+    // inverse height map: -1 for inverse height map or 1 if not inverse
+    // height maps of back faces base triangles are inverted
+    float inverse_dir    = base_height > 0.0001 ? 1.0 : frontFace;
+    float back_face      = step(0.0, -inverse_dir); 
+
+    // start texture coordinates
+    float start_height   = -isect_dir * base_height + back_face; // back_face is either 1.0 or 0.0  
+    vec2  texC           = texCoord.st + start_height * texStep.xy;
+
+    // change of the height per step
+    float bumpHeightStep = isect_dir / numSteps;
+
+    // sample steps, starting before the target point (dependent on the maximum height)
+    float mapHeight      = 1.0;
+    float bestBumpHeight = isect_dir > 0.0 ? base_height : 1.0;
     for ( int i = 0; i < int( numSteps ); ++ i )
     {
-        mapHeight = CalculateHeight( mix(texC1.xy, texC0.xy, (bestBumpHeight-texC1.z)/(texC0.z-texC1.z)) );
+        mapHeight = back_face + inverse_dir * CalculateHeight( texC.xy + isect_dir * bestBumpHeight * texStep.xy );
         if ( mapHeight >= bestBumpHeight || bestBumpHeight > 1.0 )
-        {
-            if (sihouette && i==0)
-                discard;
             break;
-        }
-        bestBumpHeight += bumpHeightStep;
+        bestBumpHeight += bumpHeightStep;   
     } 
 
     // binary steps, starting at the previous sample point 
@@ -137,7 +133,7 @@ vec3 Parallax( in float frontFace, in vec3 texCoord, in vec3 tbnP0, in vec3 tbnP
     {
         bumpHeightStep *= 0.5;
         bestBumpHeight += bumpHeightStep;
-        mapHeight       = CalculateHeight( mix(texC1.xy, texC0.xy, (bestBumpHeight-texC1.z)/(texC0.z-texC1.z)) );
+        mapHeight       = back_face + inverse_dir * CalculateHeight( texC.xy + isect_dir * bestBumpHeight * texStep.xy );
         bestBumpHeight -= ( bestBumpHeight < mapHeight ) ? bumpHeightStep : 0.0;
     }
 
@@ -145,7 +141,7 @@ vec3 Parallax( in float frontFace, in vec3 texCoord, in vec3 tbnP0, in vec3 tbnP
     bestBumpHeight += bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / abs(bumpHeightStep), 0.0, 1.0 );
 
     // set displaced texture coordiante and intersection height
-    vec2 texC  = mix(texC1.xy, texC0.xy, (bestBumpHeight-texC1.z)/(texC0.z-texC1.z));
+    texC      += isect_dir * bestBumpHeight * texStep.xy;
     mapHeight  = bestBumpHeight;
     
     return vec3(texC.xy, mapHeight);
@@ -200,64 +196,14 @@ void main()
     vec3  P0 = V * d0;
     vec3  P1 = V * d1;
    
-    //vec3  texDir3D     = normalize( inv_tbnMat * objPosEs );
     vec3  tbnP0        = inv_tbnMat * P0;
     vec3  tbnP1        = inv_tbnMat * P1;
     vec3  tbnDir       = normalize(inv_tbnMat * objPosEs);
     vec3  tbnTopMax    = tbnDir / tbnDir.z;
 
-    if ( sihouette == false )
-    {
-        if ( frontFace > 0.0 )
-        {
-            tbnP1 = vec3(0.0);
-            if ( d0 > 0.00001 || length(tbnTopMax) < length(tbnP0) )
-                tbnP0 = tbnTopMax;
-        } 
-        else
-            discard; // TODO $$$
-    }
-    else 
-    {
-        if ( silhouette_front )
-        {
-            //tbnP0 = vec3(0.0);
-            tbnP0 = (1.0-texCoords.p) * tbnTopMax;
-            //if ( d1 < -0.00001 || length(tbnTopMax)*texCoords.p < length(tbnP1) )
-                tbnP1 = -texCoords.p * tbnTopMax; 
-        }
-        else
-        {
-            tbnP1 = vec3(0.0);
-            if ( d0 > 0.00001 || length(tbnTopMax)*(1.0-texCoords.p) < length(tbnP0) )
-                tbnP0 = (1.0-texCoords.p) * tbnTopMax;
-        }
-    }
-
     vec3  newTexCoords = abs(u_displacement_scale) < 0.001 ? vec3(texCoords.st, 0.0) : Parallax( frontFace, texCoords.stp, tbnP0, tbnP1, tbnDir );
-    if ( sihouette )
-    {
-        
-        if ( silhouette_front )
-        {
-            if ( newTexCoords.z > 1.000001 )
-                discard;
-            vec2 tex_range = tbnP1.xy; 
-            float range_dist = dot(tex_range, newTexCoords.xy - texCoords.xy );
-            if ( range_dist < 0.0 || range_dist > 1.0 )
-                discard;
-        }
-        else
-        {
-            vec2 tex_range = tbnP0.xy; 
-            float range_dist = dot(tex_range, newTexCoords.xy - texCoords.xy );
-            if ( range_dist < 0.0 || range_dist > 1.0 )
-                discard;
-        }
-    }
-
     vec3  displ_vec    = tbnMat * (newTexCoords.stp-texCoords.stp)/invmax;
-    
+
     vec3  view_pos_displ = objPosEs + displ_vec;
     vec4  modelPos       = inverse(u_viewMat44) * vec4(view_pos_displ, 1.0);
     vec4  clipPlane      = vec4(normalize(u_clipPlane.xyz), u_clipPlane.w);
@@ -268,11 +214,8 @@ void main()
 
     vec2  range_vec  = step(vec2(0.0), newTexCoords.st) * step(newTexCoords.st, vec2(1.0));
     float range_test = range_vec.x * range_vec.y;
-    //if ( texCoords.p > 0.0 && (range_test == 0.0 || newTexCoords.z > 1.000001))
-    //if ( texCoords.p > 0.0 && range_test == 0.0)
-    //  discard;
-
-    // discard by test against 3 clip planes (riangle prism), similar clip distance 
+    if ( texCoords.p > 0.0 && (range_test == 0.0 || newTexCoords.z > 1.000001))
+      discard;
 
     texCoords.st       = newTexCoords.xy;
     

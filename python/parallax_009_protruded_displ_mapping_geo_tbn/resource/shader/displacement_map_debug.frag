@@ -246,12 +246,7 @@ void main()
     vec2  range_vec  = step(vec2(0.0), newTexCoords.st) * step(newTexCoords.st, vec2(1.0));
     float range_test = range_vec.x * range_vec.y;
     if ( texCoords.p > 0.0 && (range_test == 0.0 || newTexCoords.z > 1.000001))
-    //if ( texCoords.p > 0.0 && range_test == 0.0)
       discard;
-    //if ( cosDir > 0.0 )
-    //  discard;
-
-    // discard by test against 3 clip planes (riangle prism), similar clip distance 
 
     texCoords.st       = newTexCoords.xy;
     
@@ -280,12 +275,6 @@ void main()
 
     fragColor = vec4( lightCol.rgb, 1.0 );
 
-    // debug
-    float gray = dot(lightCol.rgb, vec3(0.2126, 0.7152, 0.0722));
-    //fragColor = vec4( vec3( step(0.0, -frontFace), step(0.0, texDir3D.z), step(0.0, -texDir3D.z) ) * gray, 1.0 );
-    //fragColor = vec4( vec3( step(0.0001, texCoords.p) * step(0.0, texDir3D.z), step(0.0001, texCoords.p) * step(0.0, -texDir3D.z), step(texCoords.p, 0.0001) ) * gray, 1.0 );
-    //fragColor = vec4( vec3( step(0.0001, texCoords.p) * step(0.0, texDir3D.z), step(0.0001, texCoords.p) * step(0.0, -texDir3D.z), step(texCoords.p, 0.0001) ) * gray, 1.0 ) * step(0.0, frontFace);
-
     vec4 proj_pos_displ = u_projectionMat44 * vec4(view_pos_displ.xyz, 1.0);
     float depth = 0.5 + 0.5 * proj_pos_displ.z / proj_pos_displ.w;
 
@@ -294,5 +283,17 @@ void main()
 
     gl_FragDepth = depth;
 
-    //fragColor = vec4( vec3(1.0-depth), 1.0 );
+//#define DEBUG_GEOMETRY
+//#define DEBUG_DEPTH
+
+#if defined(DEBUG_GEOMETRY)
+    float gray = dot(lightCol.rgb, vec3(0.2126, 0.7152, 0.0722));
+    //fragColor = vec4( vec3( step(0.0, -frontFace), step(0.0, texDir3D.z), step(0.0, -texDir3D.z) ) * gray, 1.0 );
+    fragColor = vec4( vec3( step(0.0001, texCoords.p) * step(0.0, texDir3D.z), step(0.0001, texCoords.p) * step(0.0, -texDir3D.z), step(texCoords.p, 0.0001) ) * gray, 1.0 );
+    //fragColor = vec4( vec3( step(0.0001, texCoords.p) * step(0.0, texDir3D.z), step(0.0001, texCoords.p) * step(0.0, -texDir3D.z), step(texCoords.p, 0.0001) ) * gray, 1.0 ) * step(0.0, frontFace);
+#endif
+
+#if defined(DEBUG_DEPTH)
+    fragColor = vec4( vec3(1.0-depth), 1.0 );
+#endif
 }

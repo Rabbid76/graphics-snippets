@@ -180,12 +180,7 @@ void main()
     vec2  range_vec  = step(vec2(0.0), newTexCoords.st) * step(newTexCoords.st, vec2(1.0));
     float range_test = range_vec.x * range_vec.y;
     if ( texCoords.p > 0.0 && (range_test == 0.0 || newTexCoords.z > 1.000001))
-    //if ( texCoords.p > 0.0 && range_test == 0.0)
       discard;
-    //if ( cosDir > 0.0 )
-    //  discard;
-
-    // discard by test against 3 clip planes (riangle prism), similar clip distance 
 
     texCoords.st       = newTexCoords.xy;
     
@@ -214,4 +209,14 @@ void main()
 
     fragColor = vec4( lightCol.rgb, 1.0 );
 
+    vec4 proj_pos_displ = u_projectionMat44 * vec4(view_pos_displ.xyz, 1.0);
+    float depth = 0.5 + 0.5 * proj_pos_displ.z / proj_pos_displ.w;
+
+    gl_FragDepth = depth;
+
+//#define DEBUG_DEPTH
+
+#if defined(DEBUG_DEPTH)
+    fragColor = vec4( vec3(1.0-depth), 1.0 );
+#endif
 }
