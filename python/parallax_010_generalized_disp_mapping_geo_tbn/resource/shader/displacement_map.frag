@@ -114,7 +114,7 @@ vec3 Parallax( in float frontFace, in vec3 texCoord, in vec3 tbnP0, in vec3 tbnP
     vec2  texC           = texCoord.st + start_height * texStep.xy;
 
     // change of the height per step
-    float bumpHeightStep = isect_dir / numSteps;
+    float bumpHeightStep = isect_dir / (numSteps-1.0);
 
     // sample steps, starting before the target point (dependent on the maximum height)
     float mapHeight      = 1.0;
@@ -127,18 +127,21 @@ vec3 Parallax( in float frontFace, in vec3 texCoord, in vec3 tbnP0, in vec3 tbnP
         bestBumpHeight += bumpHeightStep;   
     } 
 
-    // binary steps, starting at the previous sample point 
-    bestBumpHeight -= bumpHeightStep;
-    for ( int i = 0; i < numBinarySteps; ++ i )
+    if ( base_height < 0.0001 || bestBumpHeight >= 0.0 ) // if not a silhouett 
     {
-        bumpHeightStep *= 0.5;
-        bestBumpHeight += bumpHeightStep;
-        mapHeight       = back_face + inverse_dir * CalculateHeight( texC.xy + isect_dir * bestBumpHeight * texStep.xy );
-        bestBumpHeight -= ( bestBumpHeight < mapHeight ) ? bumpHeightStep : 0.0;
-    }
+        // binary steps, starting at the previous sample point 
+        bestBumpHeight -= bumpHeightStep;
+        for ( int i = 0; i < numBinarySteps; ++ i )
+        {
+            bumpHeightStep *= 0.5;
+            bestBumpHeight += bumpHeightStep;
+            mapHeight       = back_face + inverse_dir * CalculateHeight( texC.xy + isect_dir * bestBumpHeight * texStep.xy );
+            bestBumpHeight -= ( bestBumpHeight < mapHeight ) ? bumpHeightStep : 0.0;
+        }
 
-    // final linear interpolation between the last to heights 
-    bestBumpHeight += bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / abs(bumpHeightStep), 0.0, 1.0 );
+        // final linear interpolation between the last to heights 
+        bestBumpHeight += bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / abs(bumpHeightStep), 0.0, 1.0 );
+    }
 
     // set displaced texture coordiante and intersection height
     texC      += isect_dir * bestBumpHeight * texStep.xy;
@@ -202,7 +205,19 @@ void main()
     vec3  tbnTopMax    = tbnDir / tbnDir.z;
 
     vec3  newTexCoords = abs(u_displacement_scale) < 0.001 ? vec3(texCoords.st, 0.0) : Parallax( frontFace, texCoords.stp, tbnP0, tbnP1, tbnDir );
-    vec3  displ_vec    = tbnMat * (newTexCoords.stp-texCoords.stp)/invmax;
+    vec3  tex_offst    = newTexCoords.stp-texCoords.stp;
+    
+    // slihouett discard (clipping)
+    if ( sihouette )
+    {
+        if ( newTexCoords.z > 1.000001 ||                // clip at top plane of the prism
+             newTexCoords.z < 0.0 ||                    // clip at bottom plane of the prism
+             dot(tex_offst, tbnDir)*in_data.d.z < 0.0 ) // clip back side faces at the back and clip front side faces at the front
+            discard;
+    }
+    
+    vec3  displ_vec    = tbnMat * tex_offst/invmax;
+    texCoords.st       = newTexCoords.xy;
 
     vec3  view_pos_displ = objPosEs + displ_vec;
     vec4  modelPos       = inverse(u_viewMat44) * vec4(view_pos_displ, 1.0);
@@ -211,13 +226,6 @@ void main()
     //float clip_dist      = in_data.clip;
     //if ( clip_dist < 0.0 )
     //    discard;
-
-    vec2  range_vec  = step(vec2(0.0), newTexCoords.st) * step(newTexCoords.st, vec2(1.0));
-    float range_test = range_vec.x * range_vec.y;
-    if ( texCoords.p > 0.0 && (range_test == 0.0 || newTexCoords.z > 1.000001))
-      discard;
-
-    texCoords.st       = newTexCoords.xy;
     
     vec4  normalVec    = CalculateNormal( texCoords.st );
     //vec3  nvMappedEs   = normalize( tbnMat * normalVec.xyz );
