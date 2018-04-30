@@ -51,7 +51,7 @@ vec2 GetHeightAndCone( in vec2 texCoords )
 vec4 CalculateNormal( in vec2 texCoords )
 {
 #if defined(NORMAL_MAP_TEXTURE)
-    float height = GetHeight( texCoords );
+    float height = CalculateHeight( texCoords );
     vec3  tempNV = texture( u_normal_map, texCoords ).xyz * 2.0 / 1.0;
     return vec4( normalize( tempNV ), height );
 #else
@@ -95,9 +95,10 @@ vec3 Parallax( in float frontFace, in vec3 texCoord, in vec3 tbnP0, in vec3 tbnP
     int   numBinarySteps = int( clamp( quality * 10.0, 1.0, 10.0 ) );
     
     // intersection direction and start height
-    float base_height    = texCoord.p;
-    //vec2  texStep        = tbnDir.xy / abs(tbnDir.z); // (z is negative) the direction vector points downwards int tangent-space
-    vec2  texStep        = base_height < 0.0001 ? tbnDir.xy / abs(tbnDir.z) : tbnDir.xy / max(abs(tbnDir.z), 0.5*length(tbnDir.xy));
+    float base_height = texCoord.p;
+    //vec3 texDist = tbnDir / abs(tbnDir.z); // (z is negative) the direction vector points downwards int tangent-space
+    vec3 texDist = base_height < 0.0001 ? tbnDir / abs(tbnDir.z) : tbnDir / max(abs(tbnDir.z), 0.5*length(tbnDir.xy));
+    vec3 texStep = vec3(texDist.xy, sign(tbnDir.z));
 
     // intersection direction: -1 for downwards or 1 for upwards
     // downwards for base triangles (back faces are inverted)
@@ -111,17 +112,25 @@ vec3 Parallax( in float frontFace, in vec3 texCoord, in vec3 tbnP0, in vec3 tbnP
 
     // start texture coordinates
     float start_height   = -isect_dir * base_height + back_face; // back_face is either 1.0 or 0.0  
-    vec2  texC           = texCoord.st + start_height * texStep.xy;
-
+    
     // change of the height per step
     float bumpHeightStep = isect_dir / (numSteps-1.0);
 
     // sample steps, starting before the target point (dependent on the maximum height)
-    float mapHeight      = 1.0;
-    float bestBumpHeight = isect_dir > 0.0 ? base_height : 1.0;
+    float maxBumpHeight   = 1.0;
+    float mapHeight       = 1.0;
+    float startBumpHeight = isect_dir > 0.0 ? base_height : maxBumpHeight;
+
+    // start and end of samples
+    vec3 texC0 = start_height * texStep;                                         // sample end - bottom of prism 
+    vec3 texC1 = start_height * texStep + isect_dir * startBumpHeight * texStep; // sample start - top of prism  
+    texC0 += texCoord.xyz;
+    texC1 += texCoord.xyz;
+
+    float bestBumpHeight = startBumpHeight;
     for ( int i = 0; i < int( numSteps ); ++ i )
     {
-        mapHeight = back_face + inverse_dir * CalculateHeight( texC.xy + isect_dir * bestBumpHeight * texStep.xy );
+        mapHeight = back_face + inverse_dir * CalculateHeight( mix(texC0.xy, texC1.xy, (bestBumpHeight-texC0.z)/(texC1.z-texC0.z)) );
         if ( mapHeight >= bestBumpHeight || bestBumpHeight > 1.0 )
             break;
         bestBumpHeight += bumpHeightStep;   
@@ -135,7 +144,7 @@ vec3 Parallax( in float frontFace, in vec3 texCoord, in vec3 tbnP0, in vec3 tbnP
         {
             bumpHeightStep *= 0.5;
             bestBumpHeight += bumpHeightStep;
-            mapHeight       = back_face + inverse_dir * CalculateHeight( texC.xy + isect_dir * bestBumpHeight * texStep.xy );
+            mapHeight       = back_face + inverse_dir * CalculateHeight( mix(texC0.xy, texC1.xy, (bestBumpHeight-texC0.z)/(texC1.z-texC0.z)) );
             bestBumpHeight -= ( bestBumpHeight < mapHeight ) ? bumpHeightStep : 0.0;
         }
 
@@ -144,7 +153,7 @@ vec3 Parallax( in float frontFace, in vec3 texCoord, in vec3 tbnP0, in vec3 tbnP
     }
 
     // set displaced texture coordiante and intersection height
-    texC      += isect_dir * bestBumpHeight * texStep.xy;
+    vec2 texC  = mix(texC0.xy, texC1.xy, (bestBumpHeight-texC0.z)/(texC1.z-texC0.z));
     mapHeight  = bestBumpHeight;
     
     return vec3(texC.xy, mapHeight);
@@ -216,16 +225,24 @@ void main()
             discard;
     }
     
-    vec3  displ_vec    = tbnMat * tex_offst/invmax;
-    texCoords.st       = newTexCoords.xy;
-
+    vec3  displ_vec      = tbnMat * tex_offst/invmax;
     vec3  view_pos_displ = objPosEs + displ_vec;
+    texCoords.st         = newTexCoords.xy;
+
+//#define DEBUG_CLIP
+//#define DEBUG_CLIP_DISPLACED
+
+#if defined (DEBUG_CLIP)
     vec4  modelPos       = inverse(u_viewMat44) * vec4(view_pos_displ, 1.0);
     vec4  clipPlane      = vec4(normalize(u_clipPlane.xyz), u_clipPlane.w);
+#if defined (DEBUG_CLIP_DISPLACED)
     float clip_dist      = dot(modelPos, clipPlane);
-    //float clip_dist      = in_data.clip;
-    //if ( clip_dist < 0.0 )
-    //    discard;
+#else
+    float clip_dist      = in_data.clip;
+#endif
+    if ( clip_dist < 0.0 )
+        discard;
+#endif
     
     vec4  normalVec    = CalculateNormal( texCoords.st );
     //vec3  nvMappedEs   = normalize( tbnMat * normalVec.xyz );

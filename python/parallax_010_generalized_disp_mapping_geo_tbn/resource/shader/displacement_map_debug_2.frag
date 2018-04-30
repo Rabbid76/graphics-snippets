@@ -51,7 +51,7 @@ vec2 GetHeightAndCone( in vec2 texCoords )
 vec4 CalculateNormal( in vec2 texCoords )
 {
 #if defined(NORMAL_MAP_TEXTURE)
-    float height = GetHeight( texCoords );
+    float height = CalculateHeight( texCoords );
     vec3  tempNV = texture( u_normal_map, texCoords ).xyz * 2.0 / 1.0;
     return vec4( normalize( tempNV ), height );
 #else
@@ -256,15 +256,8 @@ void main()
         }
     }
 
-    vec3  displ_vec    = tbnMat * (newTexCoords.stp-texCoords.stp)/invmax;
-    
+    vec3  displ_vec      = tbnMat * (newTexCoords.stp-texCoords.stp)/invmax;
     vec3  view_pos_displ = objPosEs + displ_vec;
-    vec4  modelPos       = inverse(u_viewMat44) * vec4(view_pos_displ, 1.0);
-    vec4  clipPlane      = vec4(normalize(u_clipPlane.xyz), u_clipPlane.w);
-    float clip_dist      = dot(modelPos, clipPlane);
-    //float clip_dist      = in_data.clip;
-    //if ( clip_dist < 0.0 )
-    //    discard;
 
     vec2  range_vec  = step(vec2(0.0), newTexCoords.st) * step(newTexCoords.st, vec2(1.0));
     float range_test = range_vec.x * range_vec.y;
@@ -275,6 +268,21 @@ void main()
     // discard by test against 3 clip planes (riangle prism), similar clip distance 
 
     texCoords.st       = newTexCoords.xy;
+
+//#define DEBUG_CLIP
+//#define DEBUG_CLIP_DISPLACED
+
+#if defined (DEBUG_CLIP)
+    vec4  modelPos       = inverse(u_viewMat44) * vec4(view_pos_displ, 1.0);
+    vec4  clipPlane      = vec4(normalize(u_clipPlane.xyz), u_clipPlane.w);
+#if defined (DEBUG_CLIP_DISPLACED)
+    float clip_dist      = dot(modelPos, clipPlane);
+#else
+    float clip_dist      = in_data.clip;
+#endif
+    if ( clip_dist < 0.0 )
+        discard;
+#endif
     
     vec4  normalVec    = CalculateNormal( texCoords.st );
     //vec3  nvMappedEs   = normalize( tbnMat * normalVec.xyz );
