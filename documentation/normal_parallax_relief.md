@@ -18,7 +18,7 @@ Parallax Occlusion Mapping<br/>
 [![no_parallax](image/parallax_mapping/parallax_004_parallax_occlusion_mapping_derivative_tbn_1.png)][4]
 [![no_parallax](image/parallax_mapping/parallax_004_parallax_occlusion_mapping_derivative_tbn_2.png)][4]
 
-Releif Parallax Mapping<br/>
+Relief Parallax Mapping<br/>
 [![no_parallax](image/parallax_mapping/parallax_005_parallax_relief_mapping_derivative_tbn_1.png)][5]
 [![no_parallax](image/parallax_mapping/parallax_005_parallax_relief_mapping_derivative_tbn_2.png)][5]
 

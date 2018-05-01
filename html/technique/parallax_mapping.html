@@ -138,7 +138,7 @@ vec3 OffsetLimiting( in float frontFace, in vec3 texDir3D, in vec2 texCoord )
 }
 
 
-vec3 SteepParallax( in float frontFace, in vec3 texDir3D, in vec2 texCoord )
+vec3 ParallaxOcclusion( in float frontFace, in vec3 texDir3D, in vec2 texCoord )
 {
     vec2  quality_range   = u_parallax_quality;
     float numSteps        = clamp( quality_range.x * 50.0, 1.0, 50.0 );
@@ -168,7 +168,7 @@ vec3 SteepParallax( in float frontFace, in vec3 texDir3D, in vec2 texCoord )
 }
 
 
-vec3 ParallaxOcclusion( in float frontFace, in vec3 texDir3D, in vec2 texCoord )
+vec3 ReliefParallax( in float frontFace, in vec3 texDir3D, in vec2 texCoord )
 {
     vec2  quality_range   = u_parallax_quality;
     int   numSteps        = int( clamp( quality_range.x * 50.0, 1.0, 50.0 ) );
@@ -276,9 +276,9 @@ void main()
         if ( u_technique == 2 )
             newTexCoords = OffsetLimiting( face_sign, texDir3D, texCoords.st );
         if ( u_technique == 3 )
-            newTexCoords = SteepParallax( face_sign, texDir3D, texCoords.st );
-        if ( u_technique == 4 )
             newTexCoords = ParallaxOcclusion( face_sign, texDir3D, texCoords.st );
+        if ( u_technique == 4 )
+            newTexCoords = ReliefParallax( face_sign, texDir3D, texCoords.st );
         if ( u_technique == 5 )
             newTexCoords = ConeStep( face_sign, texDir3D, texCoords.st );
     } 
@@ -345,8 +345,8 @@ html, body {
                         <option value="0">no mapping</option>
                         <option value="1">normal mapping</option>
                         <option value="2">offset limiting</option>
-                        <option value="3">steep parallax mapping</option>
-                        <option value="4">parallax occlusion mapping</option>
+                        <option value="3">parallax occlusion mapping</option>
+                        <option value="4">relief parallax mapping</option>
                         <option value="5">cone step mapping</option>
                     </select> </td>
             </tr>
