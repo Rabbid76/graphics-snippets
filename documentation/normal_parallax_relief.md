@@ -196,7 +196,7 @@ The code listing above is a general coding for displacement mapping. The differe
 ## Offset Limiting
 
 Offset limiting is one of the simplest parallax techniques. An addtional 3D effect is achieved by adding an offset to the texture coordiantes, which dependent on the height (value from the heightmap) of the texel and optional the angle of incidence of the line of sight to the (fragment) surface. The strength of the effect is controlled by a scale value.
-TThis technique can not represent direction dependent self-concealment, but it is very performant, since it can be calculated in an single operation step.
+This technique can not represent direction dependent self-concealment, but it is very performant, since it can be calculated in an single operation step.
 
     vec3 Parallax( in vec3 texDir3D, in vec2 texCoord )
     {
@@ -573,6 +573,7 @@ A hybrid rugosity mesostructure (HRM) for rendering fine haptic detail; Victor T
 [https://upcommons.upc.edu/bitstream/handle/2117/86150/R09-5.pdf?sequence=1&isAllowed=y]
 
 
+<br/><hr/>
 ## Related
 
 **References**
