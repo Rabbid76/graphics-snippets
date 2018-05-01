@@ -310,13 +310,16 @@ int main(int argc, char** argv)
           int truth_texture_unit = 2;
           unsigned int tobj;
           glGenTextures(1, &tobj);
-          glActiveTexture( GL_TEXTURE0 + truth_texture_unit );
+          glActiveTexture( GL_TEXTURE0 );
           glBindTexture(GL_TEXTURE_2D, tobj);
           glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
           glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
           glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
           glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
           glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, cx, cy, 0, GL_RGBA, GL_UNSIGNED_BYTE, cone_map_truth.data());
+
+          glBindTexture( GL_TEXTURE0, 0 );
+          glBindTextureUnit( truth_texture_unit, tobj );
         }
 
         int trace_level = 1;
@@ -342,12 +345,13 @@ int main(int argc, char** argv)
         int texture_unit = 1;
         unsigned int tobj;
         glGenTextures(1, &tobj);
-        glActiveTexture( GL_TEXTURE0 + texture_unit );
+        glActiveTexture( GL_TEXTURE0 );
         glBindTexture(GL_TEXTURE_2D, tobj);
         glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
         glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
         glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
         glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+
         if ( use_compute_shader)
         {
           glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
@@ -369,6 +373,9 @@ int main(int argc, char** argv)
         }
 
         stbi_image_free( img );
+
+        glBindTexture( GL_TEXTURE0, 0 );
+        glBindTextureUnit( texture_unit, tobj );
     }
 
     g_prog->Use();
