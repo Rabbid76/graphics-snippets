@@ -106,14 +106,18 @@ vec3 Parallax( in float frontFace, in vec3 tbnDir, in vec3 texCoord )
     vec3 texDist = is_sihouette == false ? tbnDir / abs(tbnDir.z) : tbnDir / max(abs(tbnDir.z), 0.5*length(tbnDir.xy));
     vec3 texStep = vec3(texDist.xy, sign(tbnDir.z));
 
+#if defined(CONE_STEP_MAPPING)
+    float back_face = 0.0;
+#else
     // inverse height map: -1 for inverse height map or 1 if not inverse
     // height maps of back faces base triangles are inverted
     float inverse_dir    = is_sihouette ? 1.0 : frontFace;
     float back_face      = step(0.0, -inverse_dir); 
+#endif
 
     // start and end of samples
-    vec3 texC0 = texCoord.xyz + (back_face + delta_height0) * texStep; // sample end - bottom of prism 
-    vec3 texC1 = texCoord.xyz + (back_face + delta_height1) * texStep; // sample start - top of prism  
+    vec3 texC0 = texCoord.xyz + back_face * vec3(texStep.xy, 0.0) + delta_height0 * texStep; // sample end - bottom of prism 
+    vec3 texC1 = texCoord.xyz + back_face * vec3(texStep.xy, 0.0) + delta_height1 * texStep; // sample start - top of prism   
 
     // sample steps and quality
     vec2  quality_range  = u_parallax_quality;
@@ -167,7 +171,7 @@ vec3 Parallax( in float frontFace, in vec3 tbnDir, in vec3 texCoord )
 #else
 
     // change of the height per step
-    float bumpHeightStep = inverse_dir * (texC0.z-texC1.z) / numSteps;
+    float bumpHeightStep = (texC0.z-texC1.z) / (numSteps-1.0);
 
     float bestBumpHeight = texC1.z;
     float mapHeight      = 1.0;
@@ -210,14 +214,16 @@ void main()
     vec3  objPosEs    = in_data.pos;
     vec3  objNormalEs = in_data.nv;
     vec3  texCoords   = in_data.uvh.stp;
-    float frontFace   = gl_FrontFacing ? 1.0 : -1.0; // TODO $$$ sign(dot(N,objPosEs));
+    float frontFace   = (texCoords.p > 0.0) ? 1.0 : (gl_FrontFacing ? 1.0 : -1.0); // TODO $$$ sign(dot(N,objPosEs));
     
     //vec3  tangentEs    = normalize( tangentVec - normalEs * dot(tangentVec, normalEs ) );
     //mat3  tbnMat       = mat3( tangentEs, binormalSign * cross( normalEs, tangentEs ), normalEs );
 
     // tangent space
     // Followup: Normal Mapping Without Precomputed Tangents [http://www.thetenthplanet.de/archives/1180]
-    vec3  N           = objNormalEs;
+    //   If backface, then the normal vector is downwards the (co-)tangent space.
+    //   In this case the normal has to be mirrored to make the parallax algorithm prpper work.
+    vec3  N           = frontFace * objNormalEs;  
     vec3  T           = in_data.tv;
     vec3  B           = in_data.bv;
     float invmax      = inversesqrt(max(dot(T, T), dot(B, B)));
@@ -232,17 +238,14 @@ void main()
     vec2  range_vec  = step(vec2(0.0), newTexCoords.st) * step(newTexCoords.st, vec2(1.0));
     float range_test = range_vec.x * range_vec.y;
     if ( texCoords.p > 0.0 && (range_test == 0.0 || newTexCoords.z > 1.000001))
-    //if ( texCoords.p > 0.0 && range_test == 0.0)
       discard;
-    //if ( cosDir > 0.0 )
-    //  discard;
 
     // discard by test against 3 clip planes (riangle prism), similar clip distance 
 
     texCoords.st       = newTexCoords.xy;
 
-//#define DEBUG_CLIP
-//#define DEBUG_CLIP_DISPLACED
+#define DEBUG_CLIP
+#define DEBUG_CLIP_DISPLACED
 
 #if defined (DEBUG_CLIP)
     vec4  modelPos       = inverse(u_viewMat44) * vec4(view_pos_displ, 1.0);
@@ -256,9 +259,13 @@ void main()
         discard;
 #endif
     
-    vec4  normalVec    = CalculateNormal( texCoords.st );
-    //vec3  nvMappedEs   = normalize( tbnMat * normalVec.xyz );
-    vec3  nvMappedEs   = (texCoords.p > 0.0 ? 1.0 : frontFace) * normalize( transpose(inv_tbnMat) * normalVec.xyz ); // TODO $$$ evaluate `invmax`?
+    vec4  normalVec = CalculateNormal( texCoords.st );
+#if !defined(CONE_STEP_MAPPING)
+    // If back face, then the height map has been inverted (except cone step map). This causes that the normalvector has to be adapted.
+    normalVec.xy *= frontFace;
+#endif
+    //vec3  nvMappedEs = normalize( tbnMat * normalVec.xyz );
+    vec3  nvMappedEs = normalize( transpose(inv_tbnMat) * normalVec.xyz ); // TODO $$$ evaluate `invmax`?
 
     //vec3 color = in_data.col;
     vec3 color = texture( u_texture, texCoords.st ).rgb;
