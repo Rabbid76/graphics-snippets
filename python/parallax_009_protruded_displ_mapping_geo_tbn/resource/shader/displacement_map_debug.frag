@@ -95,6 +95,11 @@ vec3 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
     bool  is_sihouette = texCoord.p > 0.00001;             // fragment is on a potential silhouette (side of prism geometry)
     bool  is_up_isect  = is_sihouette && texDir3D.z > 0.0; // upwards intersection on potential silhouette (side of prism geometry)
 
+    // sample start and end height (level)
+    float maxBumpHeight   = 1.0;
+    float delta_height0   = is_up_isect ? 1.05*(1.0-base_height) : base_height; // TODO $$$ 1.05 ??? 
+    float delta_height1   = is_up_isect ? 0.0 : (base_height - maxBumpHeight);
+
     // sample distance
     //vec3 texDist = texDir3D / abs(texDir3D.z); // (z is negative) the direction vector points downwards int tangent-space
     vec3 texDist = is_sihouette == false ? texDir3D / abs(texDir3D.z) : texDir3D / max(abs(texDir3D.z), 0.5*length(texDir3D.xy));
@@ -105,6 +110,10 @@ vec3 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
     float inverse_dir    = is_sihouette ? 1.0 : frontFace;
     float back_face      = step(0.0, -inverse_dir); 
 
+    // start and end of samples
+    vec3 texC0 = texCoord.xyz + (back_face + delta_height0) * texStep; // sample end - bottom of prism 
+    vec3 texC1 = texCoord.xyz + (back_face + delta_height1) * texStep; // sample start - top of prism  
+
     // sample steps and quality
     vec2  quality_range  = u_parallax_quality;
     float quality        = mix( quality_range.x, quality_range.y, 1.0 - abs(normalize(texDir3D).z) );
@@ -113,28 +122,11 @@ vec3 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
 
 #if defined(CONE_STEP_MAPPING)
 
-    float isect_dir      = base_height < 0.0001 ? -1.0 : sign(texDir3D.z);
-    float start_height   = -isect_dir * base_height + back_face; // back_face is either 1.0 or 0.0
-    float maxBumpHeight   = 1.0;
-    float startBumpHeight = isect_dir > 0.0 ? base_height : maxBumpHeight;
-    
-    /*
-    // sample start and end height (level)
-    float maxBumpHeight   = 1.0;
-    float delta_height0   = is_up_isect ? 1.05*(1.0-base_height) : base_height; // TODO $$$ 1.05 ??? 
-    float delta_height1   = is_up_isect ? 0.0 : (base_height - maxBumpHeight);
-    */
-
-    // start and end of samples
-    float delta_height1 = start_height + isect_dir * startBumpHeight;
-    float delta_height0 = delta_height1 + 1.0;                                                           
-
-    // start and end of samples
-    vec3 texC0 = texCoord.xyz + (back_face + delta_height0) * texStep; // sample end - bottom of prism 
-    vec3 texC1 = texCoord.xyz + (back_face + delta_height1) * texStep; // sample start - top of prism  
-
     // [Determinante](https://de.wikipedia.org/wiki/Determinante)
     // A x B = A.x * B.y - A.y * B.x = dot(A, vec2(B.y,-B.x)) = det(mat2(A,B))
+
+    float isect_dir       = base_height < 0.0001 ? -1.0 : sign(texDir3D.z);
+    float startBumpHeight = isect_dir > 0.0 ? base_height : maxBumpHeight;
 
     // [How do you detect where two line segments intersect?](https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect)
     vec2 R = normalize(vec2(length(texDir3D.xy), texDir3D.z)); 
@@ -172,15 +164,6 @@ vec3 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
     vec2 texC = mix(texC0.xy, texC1.xy, 1.0-t);
     
 #else
-
-    // sample start and end height (level)
-    float maxBumpHeight   = 1.0;
-    float delta_height0   = is_up_isect ? 1.05*(1.0-base_height) : base_height; // TODO $$$ 1.05 ??? 
-    float delta_height1   = is_up_isect ? 0.0 : (base_height - maxBumpHeight);
-
-    // start and end of samples
-    vec3 texC0 = texCoord.xyz + (back_face + delta_height0) * texStep; // sample end - bottom of prism 
-    vec3 texC1 = texCoord.xyz + (back_face + delta_height1) * texStep; // sample start - top of prism  
 
     // change of the height per step
     float bumpHeightStep = inverse_dir * (texC0.z-texC1.z) / numSteps;
