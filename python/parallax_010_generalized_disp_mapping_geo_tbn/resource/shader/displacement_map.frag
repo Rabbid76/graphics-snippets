@@ -158,12 +158,12 @@ void main()
     mat3  inv_tbnMat  = inverse( tbnMat );
 
     // distances to the sides of the prism
-    bool  sihouette        = texCoords.p > 0.0001;
+    bool  is_silhouette    = texCoords.p > 0.0001;
     bool  silhouette_front = in_data.d.z > 0.0;
     float df = length( objPosEs );
     float d0;
     float d1;
-    if ( sihouette == false )
+    if ( is_silhouette == false )
     {
         if ( frontFace > 0.0 )
         {
@@ -178,8 +178,8 @@ void main()
     }
     else
     {
-        d0 = min(in_data.d.x, in_data.d.y) - df;
-        d1 = max(in_data.d.x, in_data.d.y) - df;
+        d1 = min(in_data.d.x, in_data.d.y) - df;
+        d0 = max(in_data.d.x, in_data.d.y) - df;
     }
 
     // intersection points
@@ -193,9 +193,8 @@ void main()
     vec3  tbnTopMax    = tbnDir / tbnDir.z;
 
     // geometry situation
-    float base_height  = texCoords.p;                    // intersection level (height) on the silhouette (side of prism geometry)
-    bool  is_sihouette = texCoords.p > 0.00001;          // fragment is on a potential silhouette (side of prism geometry)
-    bool  is_up_isect  = is_sihouette && tbnDir.z > 0.0; // upwards intersection on potential silhouette (side of prism geometry)
+    float base_height  = texCoords.p;                     // intersection level (height) on the silhouette (side of prism geometry)
+    bool  is_up_isect  = is_silhouette && tbnDir.z > 0.0; // upwards intersection on potential silhouette (side of prism geometry)
 
     // sample start and end height (level)
     float delta_height0 = is_up_isect ? 1.05*(1.0-base_height) : base_height; // TODO $$$ 1.05 ??? 
@@ -203,22 +202,35 @@ void main()
 
     // sample distance
     //vec3 texDist = tbnDir / abs(tbnDir.z); // (z is negative) the direction vector points downwards int tangent-space
-    vec3 texDist = is_sihouette == false ? tbnDir / abs(tbnDir.z) : tbnDir / max(abs(tbnDir.z), 0.5*length(tbnDir.xy));
+    vec3 texDist = is_silhouette == false ? tbnDir / abs(tbnDir.z) : tbnDir / max(abs(tbnDir.z), 0.5*length(tbnDir.xy));
     vec3 tbnStep = vec3(texDist.xy, sign(tbnDir.z));
 
     // start and end of samples
     tbnP0 = delta_height0 * tbnStep; // sample end - bottom of prism 
     tbnP1 = delta_height1 * tbnStep; // sample start - top of prism 
+    if ( is_silhouette )
+    {
+        if ( silhouette_front )
+        {
+            tbnP1 = vec3(0.0);
+        }
+        else
+        {
+            tbnP0 = vec3(0.0);
+        }
+    }
 
     vec3  newTexCoords = abs(u_displacement_scale) < 0.001 ? vec3(texCoords.st, 0.0) : Parallax( frontFace, texCoords.stp, tbnP0, tbnP1, tbnStep );
     vec3  tex_offst    = newTexCoords.stp-texCoords.stp;
     
     // slihouett discard (clipping)
-    if ( sihouette )
+    if ( is_silhouette )
     {
         if ( newTexCoords.z > 1.000001 ||                // clip at top plane of the prism
              newTexCoords.z < 0.0 ||                    // clip at bottom plane of the prism
              dot(tex_offst, tbnDir)*in_data.d.z < 0.0 ) // clip back side faces at the back and clip front side faces at the front
+            discard;
+        if ( silhouette_front == false && is_up_isect )
             discard;
     }
     

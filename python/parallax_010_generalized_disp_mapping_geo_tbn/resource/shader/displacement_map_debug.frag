@@ -218,9 +218,10 @@ void main()
     vec3  tbnDir       = normalize( inv_tbnMat * objPosEs );
 
     // geometry situation
-    float base_height  = texCoords.p;                    // intersection level (height) on the silhouette (side of prism geometry)
-    bool  is_sihouette = texCoords.p > 0.00001;          // fragment is on a potential silhouette (side of prism geometry)
-    bool  is_up_isect  = is_sihouette && tbnDir.z > 0.0; // upwards intersection on potential silhouette (side of prism geometry)
+    float base_height      = texCoords.p;                     // intersection level (height) on the silhouette (side of prism geometry)
+    bool  is_silhouette    = texCoords.p > 0.00001;           // fragment is on a potential silhouette (side of prism geometry)
+    bool  is_up_isect      = is_silhouette && tbnDir.z > 0.0; // upwards intersection on potential silhouette (side of prism geometry)
+    bool  silhouette_front = in_data.d.z > 0.0;
 
     // sample start and end height (level)
     float delta_height0 = is_up_isect ? 1.05*(1.0-base_height) : base_height; // TODO $$$ 1.05 ??? 
@@ -228,12 +229,20 @@ void main()
 
     // sample distance
     //vec3 texDist = tbnDir / abs(tbnDir.z); // (z is negative) the direction vector points downwards int tangent-space
-    vec3 texDist = is_sihouette == false ? tbnDir / abs(tbnDir.z) : tbnDir / max(abs(tbnDir.z), 0.5*length(tbnDir.xy));
+    vec3 texDist = is_silhouette == false ? tbnDir / abs(tbnDir.z) : tbnDir / max(abs(tbnDir.z), 0.5*length(tbnDir.xy));
     vec3 tbnStep = vec3(texDist.xy, sign(tbnDir.z));
 
     // start and end of samples
     vec3 tbnP0 = delta_height0 * tbnStep; // sample end - bottom of prism 
     vec3 tbnP1 = delta_height1 * tbnStep; // sample start - top of prism 
+    if ( is_silhouette )
+    {
+        if ( silhouette_front )
+            tbnP1 = vec3(0.0);
+        //else
+        //    tbnP0 = vec3(0.0);
+    }
+
 
     vec3  newTexCoords   = abs(u_displacement_scale) < 0.001 ? vec3(texCoords.st, 0.0) : Parallax( frontFace, texCoords.stp, tbnP0, tbnP1, tbnStep );
     vec3  displ_vec      = tbnMat * (newTexCoords.stp-texCoords.stp)/invmax;
