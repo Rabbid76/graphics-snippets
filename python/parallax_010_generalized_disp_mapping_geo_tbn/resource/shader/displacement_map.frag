@@ -88,46 +88,41 @@ vec4 CalculateNormal( in vec2 texCoords )
 
 vec3 Parallax( in float frontFace, in vec3 texCoord, in vec3 tbnP0, in vec3 tbnP1, in vec3 tbnDir )
 {   
-   // sample steps and quality
+    // geometry situation
+    float base_height  = texCoord.p;                       // intersection level (height) on the silhouette (side of prism geometry)
+    bool  is_sihouette = texCoord.p > 0.00001;             // fragment is on a potential silhouette (side of prism geometry)
+    bool  is_up_isect  = is_sihouette && tbnDir.z > 0.0; // upwards intersection on potential silhouette (side of prism geometry)
+
+    // sample start and end height (level)
+    float maxBumpHeight   = 1.0;
+    float delta_height0   = is_up_isect ? 1.05*(1.0-base_height) : base_height; // TODO $$$ 1.05 ??? 
+    float delta_height1   = is_up_isect ? 0.0 : (base_height - maxBumpHeight);
+
+    // sample distance
+    //vec3 texDist = tbnDir / abs(tbnDir.z); // (z is negative) the direction vector points downwards int tangent-space
+    vec3 texDist = is_sihouette == false ? tbnDir / abs(tbnDir.z) : tbnDir / max(abs(tbnDir.z), 0.5*length(tbnDir.xy));
+    vec3 texStep = vec3(texDist.xy, sign(tbnDir.z));
+
+    // inverse height map: -1 for inverse height map or 1 if not inverse
+    // height maps of back faces base triangles are inverted
+    float inverse_dir    = is_sihouette ? 1.0 : frontFace;
+    float back_face      = step(0.0, -inverse_dir); 
+
+    // start and end of samples
+    vec3 texC0 = texCoord.xyz + (back_face + delta_height0) * texStep; // sample end - bottom of prism 
+    vec3 texC1 = texCoord.xyz + (back_face + delta_height1) * texStep; // sample start - top of prism  
+
+    // sample steps and quality
     vec2  quality_range  = u_parallax_quality;
     float quality        = mix( quality_range.x, quality_range.y, 1.0 - abs(normalize(tbnDir).z) );
     float numSteps       = clamp( quality * 50.0, 1.0, 50.0 );
     int   numBinarySteps = int( clamp( quality * 10.0, 1.0, 10.0 ) );
-    
-    // intersection direction and start height
-    float base_height = texCoord.p;
-    //vec3 texDist = tbnDir / abs(tbnDir.z); // (z is negative) the direction vector points downwards int tangent-space
-    vec3 texDist = base_height < 0.0001 ? tbnDir / abs(tbnDir.z) : tbnDir / max(abs(tbnDir.z), 0.5*length(tbnDir.xy));
-    vec3 texStep = vec3(texDist.xy, sign(tbnDir.z));
 
-    // intersection direction: -1 for downwards or 1 for upwards
-    // downwards for base triangles (back faces are inverted)
-    // upwards for upwards intersection of silhouettes
-    float isect_dir      = base_height < 0.0001 ? -1.0 : sign(tbnDir.z);
-
-    // inverse height map: -1 for inverse height map or 1 if not inverse
-    // height maps of back faces base triangles are inverted
-    float inverse_dir    = base_height > 0.0001 ? 1.0 : frontFace;
-    float back_face      = step(0.0, -inverse_dir); 
-
-    // start texture coordinates
-    float start_height   = -isect_dir * base_height + back_face; // back_face is either 1.0 or 0.0  
-    
     // change of the height per step
-    float bumpHeightStep = isect_dir / (numSteps-1.0);
+    float bumpHeightStep = inverse_dir * (texC0.z-texC1.z) / (numSteps-1.0);
 
-    // sample steps, starting before the target point (dependent on the maximum height)
-    float maxBumpHeight   = 1.0;
-    float mapHeight       = 1.0;
-    float startBumpHeight = isect_dir > 0.0 ? base_height : maxBumpHeight;
-
-    // start and end of samples
-    vec3 texC0 = start_height * texStep;                                         // sample end - bottom of prism 
-    vec3 texC1 = start_height * texStep + isect_dir * startBumpHeight * texStep; // sample start - top of prism  
-    texC0 += texCoord.xyz;
-    texC1 += texCoord.xyz;
-
-    float bestBumpHeight = startBumpHeight;
+    float bestBumpHeight = texC1.z;
+    float mapHeight      = 1.0;
     for ( int i = 0; i < int( numSteps ); ++ i )
     {
         mapHeight = back_face + inverse_dir * CalculateHeight( mix(texC0.xy, texC1.xy, (bestBumpHeight-texC0.z)/(texC1.z-texC0.z)) );
