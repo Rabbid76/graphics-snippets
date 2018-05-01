@@ -3,7 +3,7 @@
 //#define NORMAL_MAP_TEXTURE
 #define NORMAL_MAP_QUALITY 1
 
-//#define CONE_STEP_MAPPING
+#define CONE_STEP_MAPPING
 
 in TGeometryData
 {
@@ -90,55 +90,48 @@ vec4 CalculateNormal( in vec2 texCoords )
 
 vec3 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
 {   
+    // geometry situation
+    float base_height  = texCoord.p;                       // intersection level (height) on the silhouette (side of prism geometry)
+    bool  is_sihouette = texCoord.p > 0.00001;             // fragment is on a potential silhouette (side of prism geometry)
+    bool  is_up_isect  = is_sihouette && texDir3D.z > 0.0; // upwards intersection on potential silhouette (side of prism geometry)
+
+    // sample distance
+    //vec3 texDist = texDir3D / abs(texDir3D.z); // (z is negative) the direction vector points downwards int tangent-space
+    vec3 texDist = is_sihouette == false ? texDir3D / abs(texDir3D.z) : texDir3D / max(abs(texDir3D.z), 0.5*length(texDir3D.xy));
+    vec3 texStep = vec3(texDist.xy, sign(texDir3D.z));
+
+    // inverse height map: -1 for inverse height map or 1 if not inverse
+    // height maps of back faces base triangles are inverted
+    float inverse_dir    = is_sihouette ? 1.0 : frontFace;
+    float back_face      = step(0.0, -inverse_dir); 
+
     // sample steps and quality
     vec2  quality_range  = u_parallax_quality;
     float quality        = mix( quality_range.x, quality_range.y, 1.0 - abs(normalize(texDir3D).z) );
     float numSteps       = clamp( quality * 50.0, 1.0, 50.0 );
     int   numBinarySteps = int( clamp( quality * 10.0, 1.0, 10.0 ) );
-    
-    // intersection direction and start height
-    float base_height = texCoord.p;
-    //vec3 texDist = texDir3D / abs(texDir3D.z); // (z is negative) the direction vector points downwards int tangent-space
-    vec3 texDist = base_height < 0.0001 ? texDir3D / abs(texDir3D.z) : texDir3D / max(abs(texDir3D.z), 0.5*length(texDir3D.xy));
-    vec3 texStep = vec3(texDist.xy, sign(texDir3D.z));
-
-    // intersection direction: -1 for downwards or 1 for upwards
-    // downwards for base triangles (back faces are inverted)
-    // upwards for upwards intersection of silhouettes
-    float isect_dir      = base_height < 0.0001 ? -1.0 : sign(texDir3D.z);
-
-    // inverse height map: -1 for inverse height map or 1 if not inverse
-    // height maps of back faces base triangles are inverted
-    float inverse_dir    = base_height > 0.0001 ? 1.0 : frontFace;
-    float back_face      = step(0.0, -inverse_dir); 
-
-    // start texture coordinates
-    float start_height   = -isect_dir * base_height + back_face; // back_face is either 1.0 or 0.0  
-
-    // change of the height per step
-    float bumpHeightStep = isect_dir / numSteps;
-
-    // sample steps, starting before the target point (dependent on the maximum height)
-    float maxBumpHeight   = 1.0;
-    float mapHeight       = 1.0;
-    float startBumpHeight = isect_dir > 0.0 ? base_height : maxBumpHeight;
 
 #if defined(CONE_STEP_MAPPING)
 
+    float isect_dir      = base_height < 0.0001 ? -1.0 : sign(texDir3D.z);
+    float start_height   = -isect_dir * base_height + back_face; // back_face is either 1.0 or 0.0
+    float maxBumpHeight   = 1.0;
+    float startBumpHeight = isect_dir > 0.0 ? base_height : maxBumpHeight;
+    
     /*
-    if ( base_height > 0.0001 && frontFace > 0.0 && isect_dir < 0.0 )
-    {
-        texStep         = vec2(0.0);
-        startBumpHeight = base_height;
-        texC            = texCoord.st;
-        //isect_dir       = 1.0; 
-        inverse_dir = -1.0;
-    }
+    // sample start and end height (level)
+    float maxBumpHeight   = 1.0;
+    float delta_height0   = is_up_isect ? 1.05*(1.0-base_height) : base_height; // TODO $$$ 1.05 ??? 
+    float delta_height1   = is_up_isect ? 0.0 : (base_height - maxBumpHeight);
     */
-    //if ( base_height > 0.0001 && frontFace > 0.0 && isect_dir < 0.0 )
-    //    discard;
 
-    //vec3 sample_start_pt = vec3(isect_dir * startBumpHeight * texStep.xy, startBumpHeight);
+    // start and end of samples
+    float delta_height1 = start_height + isect_dir * startBumpHeight;
+    float delta_height0 = delta_height1 + 1.0;                                                           
+
+    // start and end of samples
+    vec3 texC0 = texCoord.xyz + (back_face + delta_height0) * texStep; // sample end - bottom of prism 
+    vec3 texC1 = texCoord.xyz + (back_face + delta_height1) * texStep; // sample start - top of prism  
 
     // [Determinante](https://de.wikipedia.org/wiki/Determinante)
     // A x B = A.x * B.y - A.y * B.x = dot(A, vec2(B.y,-B.x)) = det(mat2(A,B))
@@ -151,13 +144,7 @@ vec3 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
     vec2  min_tex_step = normalize(texDir3D.xy) / tex_size;
     float min_step     = length(min_tex_step) * 1.0/R.x;
 
-    // start and end of samples
-    vec3 texC1 = start_height * texStep + isect_dir * vec3(startBumpHeight * texStep.xy, startBumpHeight); // sample start - top of prism  
-    //vec3 texC0 = texC1 + texDir3D;                                                                         // sample end - bottom of prism 
-    vec3 texC0 = texC1 + texDir3D/abs(texDir3D.z);                                                                          // sample end - bottom of prism 
-    texC0 += texCoord.xyz;
-    texC1 += texCoord.xyz;
-
+    float mapHeight = texC1.z;
     float t = 0.0;
     numSteps = 30.0;
     for ( int i = 0; i < int( numSteps ); ++ i )
@@ -186,13 +173,20 @@ vec3 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
     
 #else
 
-    // start and end of samples
-    vec3 texC0 = start_height * texStep;                                         // sample end - bottom of prism 
-    vec3 texC1 = start_height * texStep + isect_dir * startBumpHeight * texStep; // sample start - top of prism  
-    texC0 += texCoord.xyz;
-    texC1 += texCoord.xyz;
+    // sample start and end height (level)
+    float maxBumpHeight   = 1.0;
+    float delta_height0   = is_up_isect ? 1.05*(1.0-base_height) : base_height; // TODO $$$ 1.05 ??? 
+    float delta_height1   = is_up_isect ? 0.0 : (base_height - maxBumpHeight);
 
-    float bestBumpHeight = startBumpHeight;
+    // start and end of samples
+    vec3 texC0 = texCoord.xyz + (back_face + delta_height0) * texStep; // sample end - bottom of prism 
+    vec3 texC1 = texCoord.xyz + (back_face + delta_height1) * texStep; // sample start - top of prism  
+
+    // change of the height per step
+    float bumpHeightStep = inverse_dir * (texC0.z-texC1.z) / numSteps;
+
+    float bestBumpHeight = texC1.z;
+    float mapHeight      = 1.0;
     for ( int i = 0; i < int( numSteps ); ++ i )
     {
         mapHeight = back_face + inverse_dir * CalculateHeight( mix(texC0.xy, texC1.xy, (bestBumpHeight-texC0.z)/(texC1.z-texC0.z)) );
@@ -201,18 +195,21 @@ vec3 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
         bestBumpHeight += bumpHeightStep;   
     } 
 
-    // binary steps, starting at the previous sample point 
-    bestBumpHeight -= bumpHeightStep;
-    for ( int i = 0; i < numBinarySteps; ++ i )
+    if ( is_sihouette == false || bestBumpHeight < 1.0 )
     {
-        bumpHeightStep *= 0.5;
-        bestBumpHeight += bumpHeightStep;
-        mapHeight       = back_face + inverse_dir * CalculateHeight( mix(texC0.xy, texC1.xy, (bestBumpHeight-texC0.z)/(texC1.z-texC0.z))  );
-        bestBumpHeight -= ( bestBumpHeight < mapHeight ) ? bumpHeightStep : 0.0;
-    }
+        // binary steps, starting at the previous sample point 
+        bestBumpHeight -= bumpHeightStep;
+        for ( int i = 0; i < numBinarySteps; ++ i )
+        {
+            bumpHeightStep *= 0.5;
+            bestBumpHeight += bumpHeightStep;
+            mapHeight       = back_face + inverse_dir * CalculateHeight( mix(texC0.xy, texC1.xy, (bestBumpHeight-texC0.z)/(texC1.z-texC0.z))  );
+            bestBumpHeight -= ( bestBumpHeight < mapHeight ) ? bumpHeightStep : 0.0;
+        }
 
-    // final linear interpolation between the last to heights 
-    bestBumpHeight += bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / abs(bumpHeightStep), 0.0, 1.0 );
+        // final linear interpolation between the last to heights 
+        bestBumpHeight += bumpHeightStep * clamp( ( bestBumpHeight - mapHeight ) / abs(bumpHeightStep), 0.0, 1.0 );
+    }
 
     // set displaced texture coordiante and intersection height
     vec2 texC  = mix(texC0.xy, texC1.xy, (bestBumpHeight-texC0.z)/(texC1.z-texC0.z));
@@ -255,8 +252,8 @@ void main()
 
     texCoords.st       = newTexCoords.xy;
 
-//#define DEBUG_CLIP
-//#define DEBUG_CLIP_DISPLACED
+#define DEBUG_CLIP
+#define DEBUG_CLIP_DISPLACED
 
 #if defined (DEBUG_CLIP)
     vec4  modelPos       = inverse(u_viewMat44) * vec4(view_pos_displ, 1.0);

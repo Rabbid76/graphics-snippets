@@ -120,7 +120,7 @@ vec3 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
     // change of the height per step
     float bumpHeightStep = inverse_dir * (texC0.z-texC1.z) / numSteps;
 
-    float bestBumpHeight = is_up_isect ? base_height : maxBumpHeight;
+    float bestBumpHeight = texC1.z;
     float mapHeight      = 1.0;
     for ( int i = 0; i < int( numSteps ); ++ i )
     {
