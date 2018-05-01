@@ -14,13 +14,13 @@ Offset Limiting<br/>
 [![no_parallax](image/parallax_mapping/parallax_003_offset_limiting_1.png)][3]
 [![no_parallax](image/parallax_mapping/parallax_003_offset_limiting_2.png)][3]
 
-Steep Parallax Mapping<br/>
-[![no_parallax](image/parallax_mapping/parallax_004_steep_parallax_mapping_derivative_tbn_1.png)][4]
-[![no_parallax](image/parallax_mapping/parallax_004_steep_parallax_mapping_derivative_tbn_2.png)][4]
-
 Parallax Occlusion Mapping<br/>
-[![no_parallax](image/parallax_mapping/parallax_005_parallax_occlusion_mapping_derivative_tbn_1.png)][5]
-[![no_parallax](image/parallax_mapping/parallax_005_parallax_occlusion_mapping_derivative_tbn_2.png)][5]
+[![no_parallax](image/parallax_mapping/parallax_004_parallax_occlusion_mapping_derivative_tbn_1.png)][4]
+[![no_parallax](image/parallax_mapping/parallax_004_parallax_occlusion_mapping_derivative_tbn_2.png)][4]
+
+Releif Parallax Mapping<br/>
+[![no_parallax](image/parallax_mapping/parallax_005_parallax_relief_mapping_derivative_tbn_1.png)][5]
+[![no_parallax](image/parallax_mapping/parallax_005_parallax_relief_mapping_derivative_tbn_2.png)][5]
 
 Cone Step Mapping<br/>
 [![no_parallax](image/parallax_mapping/parallax_006_cone_step_mapping_derivative_tbn_1.png)][6]
@@ -30,20 +30,22 @@ Cone Step Mapping<br/>
 Compare the differnt techniques in an **[Example][7]**
 
 <br/><hr/>
-## Displacement map (Height map)
+## Displacement map (Heightmap)
 
-Height map<br/>
-![height map](../resource/texture/example_1_heightmap.bmp)
+Heightmap<br/>
+![heightmap](../resource/texture/example_1_heightmap.bmp)
 
-TODO
+A heightmap for height field is a raster image which stores the normalized height values of the texels corresponding to a texture. The height values can be used to manipulate the normal vectors of the fragments to visualize bumps and dents. It can even be used to used to displace the fragment, in this case the heightmap is also named displacement map.
 
 
 <br/><hr/>
 ## Normal map
 
-TODO
+A normal map is a raster image which stores the normal vectors corresponding to the pixels of a texture, which are caused by bumps and dents. The x, y,and z component of the normal vector is either encoded in 3 color channels or the x and y component are encoded in 2 color channel and the z component is assumed to be 1.0. While in the first case, the normal vector can be stored "normalized" and represent the full space. In the second case the normal vector has to be reconstructed and normalized after texture lookup and is limited to a upside down pyramid, but make use of less memory. The slope of the pyramid depends on how the x and y axis are scaled and if the values are stored linear or non linear (e.g. quadratic).
 
-### Normal vector from height map 
+### Normal vector from heightmap
+
+In the following are presented glsl functions, which can directly calculate the normal vector from neighboring height values of a height map.
 
 **High performance, low quality**
 
@@ -101,6 +103,8 @@ TODO
 
 <br/><hr/>
 ## Normal Mapping
+
+At normal mapping the normal of the fragment is replaced by the normal vector of the normal map (or claculated normal vector from the haght map), which is tranformed form (co-)tangentspace to view space. This normal vector is used for the light calculations per fragment and causes a good representation of bumps and dents of surfaces with a height displacement a limited range. The algorithm fails at large and sudden changes in the displacement, but is a very performant approach.
 
     in TVertexData
     {
@@ -185,9 +189,14 @@ TODO
         fragColor = vec4( lightCol.rgb, 1.0 );
     }
 
+The code listing above is a general coding for displacement mapping. The different techniques can be applied to the algorithm by changing the function `Parallax`. Further algorithms presented on this page are base on it and only provide different implementation for the `Parallax` function.
+
 
 <br/><hr/>
-## Steep Prallax Mapping
+## Offset Limiting
+
+Offset limiting is one of the simplest parallax techniques. An addtional 3D effect is achieved by adding an offset to the texture coordiantes, which dependent on the height (value from the heightmap) of the texel and optional the angle of incidence of the line of sight to the (fragment) surface. The strength of the effect is controlled by a scale value.
+TThis technique can not represent direction dependent self-concealment, but it is very performant, since it can be calculated in an single operation step.
 
     vec3 Parallax( in vec3 texDir3D, in vec2 texCoord )
     {
@@ -201,13 +210,13 @@ TODO
 
 
 <br/><hr/>
-## Steep Prallax Mapping
+## Steep Prallax Mapping and Prallax Occlusion Mapping
 
-The idea of advanced parallax algorithms like "Steep Parallax Mapping", is to displace the fragments of a surface by the corresponding heights from height map along its normal vectors.
+The idea of advanced parallax algorithms like "Steep Parallax Mapping", is to displace the fragments of a surface by the corresponding heights from heightmap along the normal vector of the surface (interpolated normal vector of the fragment or normal vector of the primitive face).
 
 At "Steep Parallax Mapping" the line of sight is transfomed to the (co-)tangent space, this is the reference system, where the uv-coordinates of a texture form the xy-plane and the z-axis points out of the texture.
 
-Along the projection of the line of sight onto the texture, the heights of the height map define a 2 dimensional curve.
+Along the projection of the line of sight onto the texture, the heights of the heightmap define a 2 dimensional curve.
 
 The *Steep Parallax* algorithm is used to identify a texel in the texture, by testing sample points along the line of sight.
 A texel is found when the normal distance of a sample point to the surface, is less than or equal to the *height* of the texel below the point.
@@ -215,9 +224,10 @@ A texel is found when the normal distance of a sample point to the surface, is l
 ![steep parallax](image/steep_prallax_1.png)
 
 In this calculation, the scaling of the texture does not have to be taken into account since the texture coordinates and the height of the texture are scaled in equal space. 
-This is different when calculating the depth (e.g. depth-dependent shadow).
-The change in depth is the absolute distance between the intersection of the line of sight with the surface and the identified sampling point on the line of sight.
-The absolute distance changes proportionally with the reciprocal scaling factor of the texture.
+
+To find the change of the depth, the displacement along the line of sight has to transformed from tangent space, back to the view space. The change of the depth is the absolute distance between the intersection of the line of sight with the surface and the identified sampling point on the line of sight.
+
+At Parallax Occlusion Mapping the result is improved by a single interpolation between the heights of the last two samples.
 
     vec3 Parallax( in vec3 texDir3D, in vec2 texCoord )
     {   
@@ -257,9 +267,11 @@ Steep Parallax Mapping - 2005<br/>
 
 
 <br/><hr/>
-## Prallax Occlusion Mapping
+## Relief Parallax Mapping
 
-    vec3 ParallaxOcclusion( in vec3 texDir3D, in vec2 texCoord )
+At Relief Parallax mapping the result of Steep parallax mapping is improved, calculating some binary steps, that approximate the actual height of the intersection. 
+
+    vec3 Parallax( in vec3 texDir3D, in vec2 texCoord )
     {   
         vec2  quality_range   = u_parallax_quality;
         float quality         = mix( quality_range.x, quality_range.y, 1.0 - pow(abs(normalize(texDir3D).z),2.0) );
@@ -317,9 +329,9 @@ Parallax Occlusion Mapping with approximate shadows; Henrik Backlund and Niklas 
     P  ... start of sampling - in (co-)tangent space
     R  ... Line of Sight - normalized direction in (co-)tangent space
 
-    Tx ... Sample point in the height map texture - in (co-)tangent space
-    h  ... height of the height filed - stored in the height map texture
-    c  ... gradient of the cone (cone equation: x = c * y) - stored in the height map texture
+    Tx ... Sample point in the heightmap texture - in (co-)tangent space
+    h  ... height of the height filed - stored in the heightmap texture
+    c  ... gradient of the cone (cone equation: x = c * y) - stored in the heightmap texture
 
     Q  =  (Tx.x, h) 
     S  =  normalize( (c, 1) )
@@ -370,8 +382,8 @@ Parallax Occlusion Mapping with approximate shadows; Henrik Backlund and Niklas 
 
 ### Cone Step Map generation
 
-The following compute shader can either create a cone map from an height map, or it can turn a height map into a cone map.
-In both cases the floating point height in range [0, 1] has to be stored in the first (red) channel of either the height map texture or respectively the cone map image.
+The following compute shader can either create a cone map from an heightmap, or it can turn a heightmap into a cone map.
+In both cases the floating point height in range [0, 1] has to be stored in the first (red) channel of either the heightmap texture or respectively the cone map image.
 The cone map is stored in the second (green) channel. 
 
     #version 430
@@ -386,10 +398,10 @@ The cone map is stored in the second (green) channel.
     //layout(binding = 1) writeonly uniform image2D img_output;
     layout(rgba8, binding = 1) writeonly uniform image2D cone_map_image;
 
-    // height map source texture
+    // heightmap source texture
     layout(binding = 2) uniform sampler2D u_height_map;
 
-    // read height from height map
+    // read height from heightmap
     float get_height(in ivec2 coord)
     {
         return texelFetch(u_height_map, coord, 0).x;
@@ -470,7 +482,7 @@ The cone map is stored in the second (green) channel.
 Cone map only<br/>
 ![cone map](../resource/texture/example_1_conemap_only.bmp)
 
-Combined Height map and Cone map (red: height map, green : cone map)<br/>
+Combined Heightmap and Cone map (red: heightmap, green : cone map)<br/>
 ![cone map](../resource/texture/example_1_conemap.bmp)
 
 **Reference**
@@ -628,7 +640,7 @@ View-Dependent Displacement Mapping<br/>
 
 ## Reliefmepping with geometry shader
 
-Reliefmapping on a prism, which is defined by the contur o the triangle primitive  and the minimum and maximum height of the height map.
+Reliefmapping on a prism, which is defined by the contur o the triangle primitive  and the minimum and maximum height of the heightmap.
 A ray from the view postion to each of the 6 cormers of the prism can be defined. 
 The maximum distance for sampling the ray and sarching intersections with the height field, can be limited by 4 planes.
 The first 2 lanes ar given by the minimum and maximum haight of the height field. If the ray goes out of this bounds, the sampling can be canceled. No intersection with the height field is found and the view ray hits the prism outside of the silhouette of the height field.
@@ -640,7 +652,7 @@ This algorithm should well fit with cone step mapping.
   [1]: https://rabbid76.github.io/graphics-snippets/html/technique/parallax_001_no_parallax_mapping.html
   [2]: https://rabbid76.github.io/graphics-snippets/html/technique/parallax_002_normal_mapping.html
   [3]: https://rabbid76.github.io/graphics-snippets/html/technique/parallax_003_offset_limiting.html
-  [4]: https://rabbid76.github.io/graphics-snippets/html/technique/parallax_004_steep_parallax_mapping_derivative_tbn.html
-  [5]: https://rabbid76.github.io/graphics-snippets/html/technique/parallax_005_parallax_occlusion_mapping_derivative_tbn.html
+  [4]: https://rabbid76.github.io/graphics-snippets/html/technique/parallax_004_parallax_occlusion_mapping_derivative_tbn.html
+  [5]: https://rabbid76.github.io/graphics-snippets/html/technique/parallax_005_parallax_relief_mapping_derivative_tbn.html
   [6]: https://rabbid76.github.io/graphics-snippets/html/technique/parallax_006_cone_step_mapping_derivative_tbn.html
   [7]: https://rabbid76.github.io/graphics-snippets/html/technique/parallax_mapping.html
