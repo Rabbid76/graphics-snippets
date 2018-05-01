@@ -88,12 +88,12 @@ vec4 CalculateNormal( in vec2 texCoords )
 }
 
 
-vec3 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
+vec3 Parallax( in float frontFace, in vec3 tbnDir, in vec3 texCoord )
 {   
     // geometry situation
     float base_height  = texCoord.p;                       // intersection level (height) on the silhouette (side of prism geometry)
     bool  is_sihouette = texCoord.p > 0.00001;             // fragment is on a potential silhouette (side of prism geometry)
-    bool  is_up_isect  = is_sihouette && texDir3D.z > 0.0; // upwards intersection on potential silhouette (side of prism geometry)
+    bool  is_up_isect  = is_sihouette && tbnDir.z > 0.0; // upwards intersection on potential silhouette (side of prism geometry)
 
     // sample start and end height (level)
     float maxBumpHeight   = 1.0;
@@ -101,9 +101,9 @@ vec3 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
     float delta_height1   = is_up_isect ? 0.0 : (base_height - maxBumpHeight);
 
     // sample distance
-    //vec3 texDist = texDir3D / abs(texDir3D.z); // (z is negative) the direction vector points downwards int tangent-space
-    vec3 texDist = is_sihouette == false ? texDir3D / abs(texDir3D.z) : texDir3D / max(abs(texDir3D.z), 0.5*length(texDir3D.xy));
-    vec3 texStep = vec3(texDist.xy, sign(texDir3D.z));
+    //vec3 texDist = tbnDir / abs(tbnDir.z); // (z is negative) the direction vector points downwards int tangent-space
+    vec3 texDist = is_sihouette == false ? tbnDir / abs(tbnDir.z) : tbnDir / max(abs(tbnDir.z), 0.5*length(tbnDir.xy));
+    vec3 texStep = vec3(texDist.xy, sign(tbnDir.z));
 
     // inverse height map: -1 for inverse height map or 1 if not inverse
     // height maps of back faces base triangles are inverted
@@ -116,7 +116,7 @@ vec3 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
 
     // sample steps and quality
     vec2  quality_range  = u_parallax_quality;
-    float quality        = mix( quality_range.x, quality_range.y, 1.0 - abs(normalize(texDir3D).z) );
+    float quality        = mix( quality_range.x, quality_range.y, 1.0 - abs(normalize(tbnDir).z) );
     float numSteps       = clamp( quality * 50.0, 1.0, 50.0 );
     int   numBinarySteps = int( clamp( quality * 10.0, 1.0, 10.0 ) );
 
@@ -125,15 +125,15 @@ vec3 Parallax( in float frontFace, in vec3 texDir3D, in vec3 texCoord )
     // [Determinante](https://de.wikipedia.org/wiki/Determinante)
     // A x B = A.x * B.y - A.y * B.x = dot(A, vec2(B.y,-B.x)) = det(mat2(A,B))
 
-    float isect_dir       = base_height < 0.0001 ? -1.0 : sign(texDir3D.z);
+    float isect_dir       = base_height < 0.0001 ? -1.0 : sign(tbnDir.z);
     float startBumpHeight = isect_dir > 0.0 ? base_height : maxBumpHeight;
 
     // [How do you detect where two line segments intersect?](https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect)
-    vec2 R = normalize(vec2(length(texDir3D.xy), texDir3D.z)); 
-    vec2 P = vec2(isect_dir * startBumpHeight * length(texStep.xy), startBumpHeight); 
+    vec2 R = normalize(vec2(length(tbnDir.xy), tbnDir.z)); 
+    vec2 P = vec2(length(texStep.xy), 1.0) * texC1.z; 
     
     vec2  tex_size     = textureSize(u_displacement_map, 0).xy;
-    vec2  min_tex_step = normalize(texDir3D.xy) / tex_size;
+    vec2  min_tex_step = normalize(tbnDir.xy) / tex_size;
     float min_step     = length(min_tex_step) * 1.0/R.x;
 
     float mapHeight = texC1.z;
@@ -223,8 +223,8 @@ void main()
     mat3  tbnMat      = mat3(T * invmax, B * invmax, N * invmax);
     mat3  inv_tbnMat  = inverse( tbnMat );
    
-    vec3  texDir3D     = normalize( inv_tbnMat * objPosEs );
-    vec3  newTexCoords = abs(u_displacement_scale) < 0.001 ? vec3(texCoords.st, 0.0) : Parallax( frontFace, texDir3D, texCoords.stp );
+    vec3  tbnDir     = normalize( inv_tbnMat * objPosEs );
+    vec3  newTexCoords = abs(u_displacement_scale) < 0.001 ? vec3(texCoords.st, 0.0) : Parallax( frontFace, tbnDir, texCoords.stp );
     vec3  displ_vec    = tbnMat * (newTexCoords.stp-texCoords.stp)/invmax;
     vec3  view_pos_displ = objPosEs + displ_vec;
 
@@ -288,9 +288,9 @@ void main()
 
 #if defined(DEBUG_GEOMETRY)
     float gray = dot(lightCol.rgb, vec3(0.2126, 0.7152, 0.0722));
-    //fragColor = vec4( vec3( step(0.0, -frontFace), step(0.0, texDir3D.z), step(0.0, -texDir3D.z) ) * gray, 1.0 );
-    fragColor = vec4( vec3( step(0.0001, texCoords.p) * step(0.0, texDir3D.z), step(0.0001, texCoords.p) * step(0.0, -texDir3D.z), step(texCoords.p, 0.0001) ) * gray, 1.0 );
-    //fragColor = vec4( vec3( step(0.0001, texCoords.p) * step(0.0, texDir3D.z), step(0.0001, texCoords.p) * step(0.0, -texDir3D.z), step(texCoords.p, 0.0001) ) * gray, 1.0 ) * step(0.0, frontFace);
+    //fragColor = vec4( vec3( step(0.0, -frontFace), step(0.0, tbnDir.z), step(0.0, -tbnDir.z) ) * gray, 1.0 );
+    fragColor = vec4( vec3( step(0.0001, texCoords.p) * step(0.0, tbnDir.z), step(0.0001, texCoords.p) * step(0.0, -tbnDir.z), step(texCoords.p, 0.0001) ) * gray, 1.0 );
+    //fragColor = vec4( vec3( step(0.0001, texCoords.p) * step(0.0, tbnDir.z), step(0.0001, texCoords.p) * step(0.0, -tbnDir.z), step(texCoords.p, 0.0001) ) * gray, 1.0 ) * step(0.0, frontFace);
 #endif
 
 #if defined(DEBUG_DEPTH)
