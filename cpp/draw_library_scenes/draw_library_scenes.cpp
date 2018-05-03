@@ -100,7 +100,7 @@ private:
     float  _aspect = 1.0;
     float  _scale_x = 1.0;
     float  _scale_y = 1.0;
-    TScene _scene   = e_text_rotate;
+    TScene _scene   = e_cone_step;
 
     Render::TPoint2 BL( void ) const { return{ -_scale_x, -_scale_y}; }
     Render::TPoint2 TL( void ) const { return{  _scale_x, -_scale_y}; }
@@ -203,7 +203,7 @@ void CWindow_Glfw::Init( int width, int height, bool doubleBuffer )
     static float        c_scale     = 1.0f;
     static bool         c_fxaa      = false;
     static unsigned int c_samples   = 16;
-    static bool         c_frameless = true;
+    static bool         c_frameless = false;
 
     _doubleBuffer = doubleBuffer;
 
