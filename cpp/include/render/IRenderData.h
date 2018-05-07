@@ -127,7 +127,7 @@ using TSurfaceTable = std::vector<TSurface>; //!< table of the vertex attributes
 **********************************************************************/
 struct TMaterialSimple
 {
-  TColor8 _diffuse;  //!< diffuse material color
+  TColor8 _color_diffuse;  //!< diffuse material color
 };
 
 using TMaterialSimpleTable = std::vector<TMaterialSimple>; //!< table of the simple materials
@@ -149,10 +149,64 @@ using TMaterialSimpleTable = std::vector<TMaterialSimple>; //!< table of the sim
 struct TMaterial 
   : public TMaterialSimple
 {
-  TColor8 _specular; //!< specular material color
+  //! The general material (base-)color and its brightness is stored in the `_diffuse` attribute of the base class `TMaterialSimple`  
+  //! The opacity ("inverse" transparency) is stored in the alpha channel of the `_diffuse` attribute of the base class `TMaterialSimple` 
+
+  //! RGB: transparent tint color; ALPHA: strength of transparent tint
+  //!     color = _color_diffuse.rgb * (1.0 - _color_transparent.a) + _color_transparent.rgb * _color_transparent.a
+  TColor8 _color_transparent;
+
+  //! RGB: reflection tint color; ALPHA: strength of reflection tint
+  //!     color = _color_diffuse.rgb * (1.0 - _color_reflection.a) + _color_reflection.rgb * _color_reflection.a
+  TColor8 _color_reflection;
+
+  //! RGB: specular tint color; ALPHA: strength of specular tint
+  //!     color = _color_diffuse.rgb * (1.0 - _color_specular.a) + _color_specular.rgb * _color_specular.a
+  TColor8 _color_specular;
+
+  t_byte _refractive_index; //!< refractive index: [0, 255] -> [0.5, 1.5]
+  t_byte _absorption;       //!< absorption: [0, 255] -> [0.0, 100%]
+  t_byte _reflection;       //!< reflection: [0, 255] -> [0.0, 100%]
+
+
+  /*
+  float m_roughness       = 0.5f;
+  float m_specular_f0     = 0.1f; //!< secular (enhanced microfacet) or fresnel-0 (simple microfacet)
+  float m_specular_ov     = 1.0f; //!< overexposed specular scale (1.0 = default and not overexposed)
+  float m_specular_tint   = 0.8f;
+  float m_metallic        = 0.0f;
+  float m_subsurface      = 0.0f;
+  float m_anisotropic     = 0.0f;
+  float m_diffuse         = 0.5f; //! diffuse correction (additional lambertian diffuse)
+  float m_sheen           = 0.0f;
+  float m_sheen_tint      = 0.0f;
+  float m_clearcoat       = 0.0f;
+  float m_clearcoat_gloss = 0.0f;
+  */
+ 
+  //! Shine
+  // TODO $$$ ...
   
-  // TODO $$$
-  // ...
+  //! Reflexion
+  // TODO $$$ ...
+
+  //! Texture
+  // TODO $$$ ...
+
+  //! Blue screen
+  // TODO $$$ ...
+
+  //! Bump map
+  // TODO $$$ ...
+
+  //! Lights
+  // TODO $$$ ...
+
+  //! Shadow
+  // TODO $$$ ...
+
+  //! Shader
+  // TODO $$$ ...
 };
 
 using TMaterialTable = std::vector<TMaterial>; //!< table of the standard materials
