@@ -164,31 +164,29 @@ struct TMaterial
   //!     color = _color_diffuse.rgb * (1.0 - _color_specular.a) + _color_specular.rgb * _color_specular.a
   TColor8 _color_specular;
 
-  t_byte _refractive_index; //!< refractive index: [0, 255] -> [0.5, 1.5]
-  t_byte _absorption;       //!< absorption: [0, 255] -> [0.0, 100%]
-  t_byte _reflection;       //!< reflection: [0, 255] -> [0.0, 100%]
+  //! RGB: emission tint; ALPHA: strength of emission tint
+  //!     color = _color_diffuse.rgb * (1.0 - _color_emission.a) + _color_emission.rgb * _color_emission.a
+  TColor8 _color_emission;
 
+  t_fp   _specular;            //!< shininess (inverse roughness)
+                               
+  t_byte _refractive_index;    //!< refractive index: [0, 255] -> [0.5, 1.5]
+  t_byte _absorption;          //!< absorption: [0, 255] -> [0%, 100%]
+  t_byte _reflection;          //!< reflection: [0, 255] -> [0%, 100%]
+  t_byte _reflection_size;     //!< [0, 255] -> [0%, 100%]
+  t_byte _reflection_strength; //!< [0, 255] -> [0%, 100%]
+  t_byte _emisson;             //!< [0, 255] -> [0%, 100%]
 
-  /*
-  float m_roughness       = 0.5f;
-  float m_specular_f0     = 0.1f; //!< secular (enhanced microfacet) or fresnel-0 (simple microfacet)
-  float m_specular_ov     = 1.0f; //!< overexposed specular scale (1.0 = default and not overexposed)
-  float m_specular_tint   = 0.8f;
-  float m_metallic        = 0.0f;
-  float m_subsurface      = 0.0f;
-  float m_anisotropic     = 0.0f;
-  float m_diffuse         = 0.5f; //! diffuse correction (additional lambertian diffuse)
-  float m_sheen           = 0.0f;
-  float m_sheen_tint      = 0.0f;
-  float m_clearcoat       = 0.0f;
-  float m_clearcoat_gloss = 0.0f;
-  */
- 
-  //! Shine
-  // TODO $$$ ...
+  t_byte _diffuse;             //!< reflection: [0, 255] -> [0%, 100%]         
+  t_byte _roughness;           //!< roughness: [0, 255] -> [0%, 100%]
+  t_byte _metallic;            //!< metallic: [0, 255] -> [0%, 100%]        
+  t_byte _subsurface;          //!< subsurface scattering: [0, 255] -> [0%, 100%]      
+  t_byte _anisotropic;         //!< anisotropic: [0, 255] -> [0%, 100%]     
+  t_byte _sheen;               //!< sheen: [0, 255] -> [0%, 100%]           
+  t_byte _sheen_tint;          //!< sheen tint: [0, 255] -> [0%, 100%]      
+  t_byte _clearcoat;           //!< clearcoat: [0, 255] -> [0%, 100%]       
+  t_byte _clearcoat_gloss;     //!< clearcoat gloss: [0, 255] -> [0%, 100%]
   
-  //! Reflexion
-  // TODO $$$ ...
 
   //! Texture
   // TODO $$$ ...
@@ -197,9 +195,6 @@ struct TMaterial
   // TODO $$$ ...
 
   //! Bump map
-  // TODO $$$ ...
-
-  //! Lights
   // TODO $$$ ...
 
   //! Shadow
