@@ -75,6 +75,9 @@
     <ClInclude Include="..\include\OpenGL\OpenGLError.h">
       <Filter>OpenGL</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\render\IGraphicsDebug.h">
+      <Filter>render</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

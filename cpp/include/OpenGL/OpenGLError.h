@@ -10,10 +10,16 @@
 #define OpenGLError_h_INCLUDED
 
 
+// includes
+
+#include <IGraphicsDebug.h>
+
+#include <functional> 
+
 // preprocess definitions
 
 #if !defined(__FRAMBUFFER_DEBUG_ERROR_CHECK__)
-#define __FRAMBUFFER_DEBUG_ERROR_CHECK__
+//#define __FRAMBUFFER_DEBUG_ERROR_CHECK__
 #endif
 
 #if defined(_DEBUG) && defined(__FRAMBUFFER_DEBUG_ERROR_CHECK__)
@@ -40,6 +46,56 @@ public:
   unsigned int Check( void );
 };
 
+
+//*********************************************************************
+// CDebug
+//*********************************************************************
+
+
+/******************************************************************//**
+* \brief   OpenGL debug call back
+* 
+* Debug Output
+* [https://www.khronos.org/opengl/wiki/Debug_Output]
+* 
+* \author  gernot
+* \date    2018-05-10
+* \version 1.0
+**********************************************************************/
+class CDebug
+  : public Render::IDebug
+{
+public:
+
+  typedef void (*TDebugProcPtr)(unsigned int source, unsigned int type, unsigned int id, unsigned int severity, int length, const char* message, const void* userParam);
+  using TDebugCBSinganture = std::remove_pointer< TDebugProcPtr >::type;
+
+
+  CDebug( void );
+  virtual ~CDebug( void );
+
+  virtual bool IsValid( void ) const override { return _valid; }
+  virtual bool IsActive( void ) const override { return _active; }
+  virtual bool IsSynchronous( void ) const override { return _synchronous; }
+
+  virtual bool Init( void ) override;                 //!< init the debug output
+  virtual void Destroy( void ) override;              //!< destroy all internal objects and cleanup
+  virtual bool Activate( bool synchronous ) override; //!< activate the debug output
+  virtual bool Deactivate( void ) override;           //!< decativate the debug output
+
+private:
+
+  void EnableOutput( bool enable ) const;
+  void EnableSynchronous( bool enable ) const;
+
+  // debug callback fucntion
+  static void DebugCallback( unsigned int source, unsigned int type, unsigned int id, unsigned int severity, int length, const char* message, const void* userParam );
+  void DebugCallback( unsigned int source, unsigned int type, unsigned int id, unsigned int severity, int length, const char* message );
+
+  bool     _valid       = false; //!< valid and intilized
+  bool     _active      = false; //!< debug output is valid
+  bool     _synchronous = false; //!< debug output is synchronous
+};
 
 }  // OpenGL
 

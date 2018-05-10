@@ -1,13 +1,13 @@
 /******************************************************************//**
-* @brief   Generic interface for rendering text.
+* @brief   Generic interface for debuging graphics output.
 *
 * @author  gernot
 * @date    2018-02-06
 * @version 1.0
 **********************************************************************/
 #pragma once
-#ifndef IFont_h_INCLUDED
-#define IFont_h_INCLUDED
+#ifndef IGraphicsDebug_h_INCLUDED
+#define IGraphicsDebug_h_INCLUDED
 
 
 // includes
@@ -19,7 +19,7 @@
 * @brief   Namespace for renderer.
 *
 * @author  gernot
-* @date    2018-03-17
+* @date    2018-05-10
 * @version 1.0
 **********************************************************************/
 namespace Render
@@ -32,26 +32,30 @@ namespace Render
 
 
 /******************************************************************//**
-* @brief   Generic interface for rendering text with a font.
+* @brief   Generic interface for debuging graphics output.
 *
 * @author  gernot
 * @date    2018-03-17
 * @version 1.0
 **********************************************************************/
-class IFont
+class IDebug
 {
 public: 
 
-  virtual ~IFont() = default;
+  virtual ~IDebug() = default;
 
-  virtual void Destroy( void ) = 0; //!< destroy all internal objects and cleanup
-  virtual bool Load( void ) = 0;    //!< load the glyphs
+  virtual bool IsValid( void ) const = 0;        //!< is valide
+  virtual bool IsActive( void ) const = 0;       //!< is active
+  virtual bool IsSynchronous( void ) const = 0;  //!< is synchronous output
 
-  //! calculates box of a string in relation to its height (maximum height of the font from the bottom to the top)
-  virtual bool CalculateTextSize( const char *str, float height, float &box_x, float &box_btm, float &box_top ) = 0;
+  virtual bool Init( void ) = 0;                 //!< init the debug output
+  virtual void Destroy( void ) = 0;              //!< destroy all internal objects and cleanup
+  virtual bool Activate( bool synchronous ) = 0; //!< activate the debug output
+  virtual bool Deactivate( void ) = 0;           //!< decativate the debug output
+  
 };
 
 
 } // Render
 
-#endif // IFont_h_INCLUDED
+#endif // ITexture_h_INCLUDED

@@ -30,6 +30,7 @@
 #include <OpenGL_Matrix_Camera.h>
 #include <OpenGL_SimpleShaderProgram.h>
 #include <OpenGLBasicDraw.h>
+#include <OpenGLError.h>
 
 
 // [Switching Between windowed and full screen in OpenGL/GLFW 3.2](https://stackoverflow.com/questions/47402766/switching-between-windowed-and-full-screen-in-opengl-glfw-3-2/47462358#47462358)
@@ -96,7 +97,8 @@ private:
     std::chrono::high_resolution_clock::time_point _start_time;
     std::chrono::high_resolution_clock::time_point _current_time;
 
-    std::unique_ptr<Render::IDraw> _draw;
+    std::unique_ptr<Render::IDebug> _debug;
+    std::unique_ptr<Render::IDraw>  _draw;
     float  _aspect = 1.0;
     float  _scale_x = 1.0;
     float  _scale_y = 1.0;
@@ -132,6 +134,7 @@ public:
     virtual ~CWindow_Glfw();
 
     void Init( int width, int height, bool doubleBuffer );
+    void InitDebug( void );
     static void CallbackResize(GLFWwindow* window, int cx, int cy);
     void MainLoop( void );
 };
@@ -151,6 +154,7 @@ int main(int argc, char** argv)
     glewExperimental = true;
     if ( glewInit() != GLEW_OK )
         throw std::runtime_error( "error initializing glew" );
+    window.InitDebug();
 
     std::cout << glGetString( GL_VENDOR ) << std::endl;
     std::cout << glGetString( GL_RENDERER ) << std::endl;
@@ -185,6 +189,9 @@ int main(int argc, char** argv)
 
 CWindow_Glfw::~CWindow_Glfw()
 {
+  _draw.reset( nullptr );
+  _debug.reset( nullptr );
+
   if ( _wnd != nullptr)
     glfwDestroyWindow( _wnd );
   glfwTerminate();
@@ -252,6 +259,16 @@ void CWindow_Glfw::Init( int width, int height, bool doubleBuffer )
     _updateViewport = true;
 
     _draw = std::make_unique<OpenGL::CBasicDraw>( c_core, c_samples, c_scale, c_fxaa );
+}
+
+void CWindow_Glfw::InitDebug( void ) // has to be done afer glew init!
+{
+ #if defined(_DEBUG)
+    static bool synchromous = true;
+    _debug = std::make_unique<OpenGL::CDebug>();
+    _debug->Init();
+    _debug->Activate( synchromous );
+#endif
 }
 
 void CWindow_Glfw::Resize( int cx, int cy )
@@ -367,6 +384,7 @@ void CWindow_Glfw::TestScene( double time_ms )
     // TODO $$$ post effects (cell (toon), sketch, gamma, hdr) - book of shaders
     // TOOO $$$ meshs
     // TODO $$$ input polyline
+    // TODO $$$ An Efficient Way to Draw Approximate Circles in OpenGL [http://slabode.exofire.net/circle_draw.shtml]
     // TODO $$$ draw arcs, curves (nurbs, spline) by tessellation shader
     // TODO $$$ glLineWidth( > 1.0 ) is deprecated in core profile
     // TODO $$$ orbit controll

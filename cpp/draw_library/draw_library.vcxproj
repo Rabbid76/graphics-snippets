@@ -175,6 +175,7 @@
     <ClInclude Include="..\include\render\IBuffer.h" />
     <ClInclude Include="..\include\render\IDraw.h" />
     <ClInclude Include="..\include\render\IDrawType.h" />
+    <ClInclude Include="..\include\render\IGraphicsDebug.h" />
     <ClInclude Include="..\include\render\ILight.h" />
     <ClInclude Include="..\include\render\IProgram.h" />
     <ClInclude Include="..\include\render\IRenderData.h" />
