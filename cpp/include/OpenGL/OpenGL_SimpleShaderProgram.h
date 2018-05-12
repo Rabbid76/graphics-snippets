@@ -203,7 +203,7 @@ public:
       std::cout << nameMap.find(shaderStage)->second.data() << "shader code:" << std::endl << sourceCode << std::endl << std::endl;
     
     auto shaderObj = glCreateShader( shaderStage );
-    const char *srcCodePtr = sourceCode.data();
+    const char *srcCodePtr = sourceCode.c_str();
     glShaderSource( shaderObj, 1, &srcCodePtr, nullptr );
     glCompileShader( shaderObj );
     GLint status;

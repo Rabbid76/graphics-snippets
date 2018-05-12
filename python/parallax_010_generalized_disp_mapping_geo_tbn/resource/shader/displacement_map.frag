@@ -55,7 +55,7 @@ vec4 CalculateNormal( in vec2 texCoords )
     vec3  tempNV = texture( u_normal_map, texCoords ).xyz * 2.0 / 1.0;
     return vec4( normalize( tempNV ), height );
 #else
-    vec2 texOffs = 1.0 / textureSize( u_displacement_map, 0 ).xy;
+    vec2 texOffs = 1.0 / vec2(textureSize( u_displacement_map, 0 ).xy);
     vec2 scale   = 1.0 / texOffs;
 #if NORMAL_MAP_QUALITY > 1
     float hx[9];

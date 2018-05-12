@@ -3,6 +3,23 @@
 
 In a rendering, each mesh of the scene usually is transformed by the model matrix, the view matrix and the projection matrix. Finall the projected scene is mapped to the viewport.
 
+The projection, view and model matrix interact together to present the objects (meshes) of a scene on the viewport.
+The model matrix defines the position orientation and scale of a single object (mesh) in the worldspace of the scene.
+The view matrix defines the position and viewing direction of the observer (viewer) within the scene.
+The projection matrix defines the area (volume) with respect to the observer (viewer) projected onto the viewport.
+
+At orthographic projection, this area (volume) is defined by 6 distances (left, right, bottom, top, near and far) to the viewer's position.
+If the left, bottom and near distance are negative and the right, top and far distance are positive (as in normalized device space), this can be imagined as box around the viewer.
+All the objects (meshes) which are in the space (volume) are "visible" on the viewport. All the objects (meshes) which are out (or partly out) of this space are clipped at the borders of the volume.
+This means at orthographic projection, the objects "behind" the viewer are possibly "visible". This may seem unnatural, but this is how orthographic projection works.
+
+At perspective projection the view space (volume) is defined by a frustum (a truncated pyramid), where the top of the pyramid is the viewer's position.
+The direction of view (line of sight) and the near and the far distance define the planes which truncated the pyramid to a frustum (the direction of view is the normal vector of this planes). 
+The left, right, bottom, top discance define the distance from the intersection of the line of sight and the near plane, with the side faces of the frustum (in the near plane).
+
+One of the most common mistakes, when an object is not visible on the viewport (screen is all "black"), is that the mesh is not within the view volume which is defined by the projection and view matrix.
+
+
 ## Coordiante Systems
 
 ### Model coordinates (Object coordinates)
