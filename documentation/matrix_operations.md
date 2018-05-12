@@ -320,7 +320,7 @@ C++:
     {
         float C[16];
         for ( int k = 0; k < 4; ++ k ) {
-            for ( int l = 0; l < 4; ++ l ) {
+            for ( int j = 0; j < 4; ++ j ) {
                 C[k*4+j] =
                     A[0*4+j] * B[k*4+0] +
                     A[1*4+j] * B[k*4+1] +

@@ -16,6 +16,7 @@ This means at orthographic projection, the objects "behind" the viewer are possi
 At perspective projection the view space (volume) is defined by a frustum (a truncated pyramid), where the top of the pyramid is the viewer's position.
 The direction of view (line of sight) and the near and the far distance define the planes which truncated the pyramid to a frustum (the direction of view is the normal vector of this planes). 
 The left, right, bottom, top discance define the distance from the intersection of the line of sight and the near plane, with the side faces of the frustum (in the near plane).
+This causes that the scene looks like, as it would be seen from of a pinhole camera.
 
 One of the most common mistakes, when an object is not visible on the viewport (screen is all "black"), is that the mesh is not within the view volume which is defined by the projection and view matrix.
 
