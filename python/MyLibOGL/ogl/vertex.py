@@ -265,7 +265,7 @@ class DrawBuffer:
             glEnableClientState( GL_VERTEX_ARRAY )
 
         # define an array of normals
-        elif attr_id == CLIENT_GL_NORMAL_ARRAYVERTEX:
+        elif attr_id == CLIENT_NORMAL:
             glNormalPointer( GL_FLOAT, stride, None if stride == 0 else attr_offs ) 
             glEnableClientState( GL_NORMAL_ARRAY ) 
 
