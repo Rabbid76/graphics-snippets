@@ -134,7 +134,7 @@ bool CDebug::Init( void )
 
   if ( glDebugMessageCallback != nullptr )
     glDebugMessageCallback( &CDebug::DebugCallback, this );
-
+  _valid = true;
 
   // In Debug Contexts, debug output starts enabled.
   // In non-debug contexts, the OpenGL implementation may not generate messages even if debug output is enabled.
