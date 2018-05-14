@@ -296,7 +296,7 @@ int main(int argc, char** argv)
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
 
     std::string path = dir + "../resource/texture/example_1_heightmap.bmp";
-    path = "C:/source/graphics-snippets/resource/texture/example_1_heightmap.bmp";
+    //path = "C:/source/graphics-snippets/resource/texture/example_1_heightmap.bmp";
     int cx, cy, ch;
     stbi_uc *img = stbi_load( path.c_str(), &cx, &cy, &ch, 3 );
     if ( img != nullptr )
@@ -484,6 +484,11 @@ void ComputeShader(
   OPENGL_CHECK_GL_ERROR
 
   glUseProgram( shader_obj );
+
+  // not necessary because of binding=1
+  //GLint image_loc = glGetUniformLocation( shader_obj, "cone_map_image" );
+  //glUniform1i( image_loc, 1 );
+  
   glDispatchCompute((GLuint)cx, (GLuint)cy, 1); 
   OPENGL_CHECK_GL_ERROR
     
