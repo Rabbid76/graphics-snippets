@@ -78,6 +78,9 @@
     <ClInclude Include="..\include\render\IGraphicsDebug.h">
       <Filter>render</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\render\IResource.h">
+      <Filter>render</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
