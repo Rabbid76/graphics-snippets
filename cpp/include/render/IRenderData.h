@@ -152,40 +152,40 @@ struct TMaterial
   //! The general material (base-)color and its brightness is stored in the `_diffuse` attribute of the base class `TMaterialSimple`  
   //! The opacity ("inverse" transparency) is stored in the alpha channel of the `_diffuse` attribute of the base class `TMaterialSimple` 
 
-  //! RGB: transparent tint color; ALPHA: strength of transparent tint
+  //! RGB: transparent tint (absorption) color; ALPHA: strength of transparent tint
   //!     color = _color_diffuse.rgb * (1.0 - _color_transparent.a) + _color_transparent.rgb * _color_transparent.a
   TColor8 _color_transparent;
-
-  //! RGB: reflection tint color; ALPHA: strength of reflection tint
-  //!     color = _color_diffuse.rgb * (1.0 - _color_reflection.a) + _color_reflection.rgb * _color_reflection.a
-  TColor8 _color_reflection;
 
   //! RGB: specular tint color; ALPHA: strength of specular tint
   //!     color = _color_diffuse.rgb * (1.0 - _color_specular.a) + _color_specular.rgb * _color_specular.a
   TColor8 _color_specular;
 
-  //! RGB: emission tint; ALPHA: strength of emission tint
-  //!     color = _color_diffuse.rgb * (1.0 - _color_emission.a) + _color_emission.rgb * _color_emission.a
+  //! RGB: reflection tint color; ALPHA: strength of reflection tint
+  //!     color = _color_diffuse.rgb * (1.0 - _color_reflection.a) + _color_reflection.rgb * _color_reflection.a
+  TColor8 _color_reflection;
+
+  //! RGB: emission tint (glow) color; ALPHA: 1.0
+  //!     color = _color_emission.rgb * 1.0  (strength of emiison tint is not yet implemented)
   TColor8 _color_emission;
 
-  t_fp   _specular;            //!< shininess (inverse roughness)
+  t_fp   _specular;               //!< specular: [0.0, 5.0] -> [0%, 500%]     
                                
-  t_byte _refractive_index;    //!< refractive index: [0, 255] -> [0.5, 1.5]
-  t_byte _absorption;          //!< absorption: [0, 255] -> [0%, 100%]
-  t_byte _reflection;          //!< reflection: [0, 255] -> [0%, 100%]
-  t_byte _reflection_size;     //!< [0, 255] -> [0%, 100%]
-  t_byte _reflection_strength; //!< [0, 255] -> [0%, 100%]
-  t_byte _emisson;             //!< [0, 255] -> [0%, 100%]
+  t_byte _refractive_index;       //!< refractive index: [0, 255] -> [0.5, 1.5]
+  t_byte _absorption;             //!< absorption: [0, 255] -> [0%, 100%]
+  t_byte _reflection;             //!< reflection (mirror): [0, 255] -> [0%, 100%]
+  t_byte _reflection_strength;    //!< reflection glow strenght (expansion): [0, 255] -> [0%, 100%]
+  t_byte _reflection_sensitivity; //!< reflection sensitivity (strength and size): [0, 255] -> [0%, 100%]
+  t_byte _emisson;                //!< emisson (glow) stength [0, 255] -> [0%, 100%]
 
-  t_byte _diffuse;             //!< reflection: [0, 255] -> [0%, 100%]         
-  t_byte _roughness;           //!< roughness: [0, 255] -> [0%, 100%]
-  t_byte _metallic;            //!< metallic: [0, 255] -> [0%, 100%]        
-  t_byte _subsurface;          //!< subsurface scattering: [0, 255] -> [0%, 100%]      
-  t_byte _anisotropic;         //!< anisotropic: [0, 255] -> [0%, 100%]     
-  t_byte _sheen;               //!< sheen: [0, 255] -> [0%, 100%]           
-  t_byte _sheen_tint;          //!< sheen tint: [0, 255] -> [0%, 100%]      
-  t_byte _clearcoat;           //!< clearcoat: [0, 255] -> [0%, 100%]       
-  t_byte _clearcoat_gloss;     //!< clearcoat gloss: [0, 255] -> [0%, 100%]
+  t_byte _diffuse;                //!< reflection: [0, 255] -> [0%, 100%]                 
+  t_byte _roughness;              //!< roughness: [0, 255] -> [0%, 100%]
+  t_byte _metallic;               //!< metallic: [0, 255] -> [0%, 100%]        
+  t_byte _subsurface;             //!< subsurface scattering: [0, 255] -> [0%, 100%]      
+  t_byte _anisotropic;            //!< anisotropic: [0, 255] -> [0%, 100%]     
+  t_byte _sheen;                  //!< sheen: [0, 255] -> [0%, 100%]           
+  t_byte _sheen_tint;             //!< sheen tint: [0, 255] -> [0%, 100%]      
+  t_byte _clearcoat;              //!< clearcoat: [0, 255] -> [0%, 100%]       
+  t_byte _clearcoat_gloss;        //!< clearcoat gloss: [0, 255] -> [0%, 100%]
   
 
   //! Texture
