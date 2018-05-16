@@ -119,7 +119,7 @@ using TSurfaceTable = std::vector<TSurface>; //!< table of the vertex attributes
 //---------------------------------------------------------------------
 
 /*XEOMETRIC********************************************************//**
-* @brief   Render material data.
+* @brief   Color material data.
 *
 * @author  gernot76
 * @date    2018-02-06
@@ -133,10 +133,77 @@ struct TMaterialSimple
 using TMaterialSimpleTable = std::vector<TMaterialSimple>; //!< table of the simple materials
 
 
+//---------------------------------------------------------------------
+// Texture properties
+//---------------------------------------------------------------------
+
+
+enum class TTextureKind : t_byte
+{
+  off,                    //!< not used (no texture)
+  diffuse,                //!< color texture
+  grayscale,              //!< grayscale texture
+  displacement_map,       //!< displacment map; 1 channel (red)
+  normal_map,             //!< normal map; 3 channels (RGB)
+  noraml_displacment_map, //!< normal map; 3 channels (RGB) + displacment map; 1 channel (alpha)
+  displacment_cone_map    //!< displacment map; 1 channel (red) + cone map; 1 channel (green) 
+};
+
+enum class TTextureFilter : t_byte
+{
+  off,        //!< no filter
+  bilinear,   //!< linear interpolation
+  trilinear,  //!< mipmaps (linear interpolation)
+  anisotropic //!< anisotropic (linear mapmaps and commonly hardware dependnet)
+};
+
+enum class TTextureWrap : t_byte
+{
+  clamp,                //!< clamp texture to edge
+  mirror,               //!< mirror and clamp texture to edge
+  repeat,               //!< tile texture
+  repeat_mirror,        //!< tile texture; even tiles are mirrored
+};
+
+
+/*XEOMETRIC********************************************************//**
+* @brief   Properties of a 2D texture.
+*
+* @author  gernot76
+* @date    2018-02-06
+* @version 1.0
+**********************************************************************/
+struct TTexture2DProperties 
+{
+  TTextureKind   _type;   //!< kind of the textue (0 = no texture)
+  TTextureFilter _filter; //!< filtering
+  TTextureWrap   _wrap_s; //!< wrapping along the x (s, u) axis 
+  TTextureWrap   _wrap_t; //!< wrapping along the y (t, v) axis
+  TVec3          _scale;  //!< uv scale + displacement scale
+  TVec2          _offset; //!< uv offset
+  t_fp           _rotate; //!< roation angle (z axis) radians counterclockwise
+};
+
 
 //---------------------------------------------------------------------
 // Standard material
 //---------------------------------------------------------------------
+
+
+enum class TMaterialProperty
+{
+  across_objects,    //!< object acrossing material
+  reflexion_enable,  //!< activate reflexion
+  reflexion_random,  //!< random reflexion distribution
+  shadow_cast,       //!< the object casts a shadow
+  shadow_receive,    //!< the object receives shadows
+  shadow_shade_only, //!< shadowing only
+
+  // ...
+  
+  NUMBER_OF
+};
+using TMaterialProperties = std::bitset<(int)TMaterialProperty::NUMBER_OF>;
 
 
 /*XEOMETRIC********************************************************//**
@@ -146,11 +213,19 @@ using TMaterialSimpleTable = std::vector<TMaterialSimple>; //!< table of the sim
 * @date    2018-02-06
 * @version 1.0
 **********************************************************************/
-struct TMaterial 
-  : public TMaterialSimple
+struct TMaterial
 {
-  //! The general material (base-)color and its brightness is stored in the `_diffuse` attribute of the base class `TMaterialSimple`  
-  //! The opacity ("inverse" transparency) is stored in the alpha channel of the `_diffuse` attribute of the base class `TMaterialSimple` 
+  template <TMaterialProperty P>
+  TMaterial & set( bool flag ) { _properties.set((int)P, flag); return *this; }
+
+  template <TMaterialProperty P>
+  bool test( bool flag ) const { return _properties.test((int)P); }
+
+  //! general properties
+  TMaterialProperties _properties;
+
+  //! RGB: general material (base-)color and its brightness; ALPHA: opacity ("inverse" transparency)
+  TColor8 _color_diffuse;
 
   //! RGB: transparent tint (absorption) color; ALPHA: strength of transparent tint
   //!     color = _color_diffuse.rgb * (1.0 - _color_transparent.a) + _color_transparent.rgb * _color_transparent.a
@@ -173,8 +248,8 @@ struct TMaterial
   t_byte _refractive_index;       //!< refractive index: [0, 255] -> [0.5, 1.5]
   t_byte _absorption;             //!< absorption: [0, 255] -> [0%, 100%]
   t_byte _reflection;             //!< reflection (mirror): [0, 255] -> [0%, 100%]
-  t_byte _reflection_strength;    //!< reflection glow strenght (expansion): [0, 255] -> [0%, 100%]
-  t_byte _reflection_sensitivity; //!< reflection sensitivity (strength and size): [0, 255] -> [0%, 100%]
+  t_byte _reflexion_strength;     //!< reflexion glow strenght (expansion): [0, 255] -> [0%, 100%]
+  t_byte _reflexion_sensitivity;  //!< reflexion sensitivity (strength and size): [0, 255] -> [0%, 100%]
   t_byte _emisson;                //!< emisson (glow) stength [0, 255] -> [0%, 100%]
 
   t_byte _diffuse;                //!< reflection: [0, 255] -> [0%, 100%]                 
@@ -187,17 +262,16 @@ struct TMaterial
   t_byte _clearcoat;              //!< clearcoat: [0, 255] -> [0%, 100%]       
   t_byte _clearcoat_gloss;        //!< clearcoat gloss: [0, 255] -> [0%, 100%]
   
+  TTexture2DProperties _param_diffuse; //!< parameters for the diffuse textue
+  TTexture2DProperties _param_bump;    //!< parameters for the "bump" textue
 
   //! Texture
-  // TODO $$$ ...
-
-  //! Blue screen
   // TODO $$$ ...
 
   //! Bump map
   // TODO $$$ ...
 
-  //! Shadow
+  //! Blue screen
   // TODO $$$ ...
 
   //! Shader
