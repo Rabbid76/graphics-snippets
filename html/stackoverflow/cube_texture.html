@@ -114,6 +114,10 @@ html,body {
       gl.enable( gl.DEPTH_TEST );
       gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
       gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+      
+      gl.frontFace(gl.CCW)
+      gl.cullFace(gl.BACK)
+      gl.enable(gl.CULL_FACE)
 
       // set up draw shader
       ShaderProgram.Use( progDraw );
@@ -126,7 +130,8 @@ html,body {
       ShaderProgram.SetUniformM44( progDraw, "u_modelMat44", modelMat );
       
       // draw scene
-      VertexBuffer.Draw( bufCube );
+      //VertexBuffer.Draw( bufCube );
+      VertexBuffer.Draw( bufCube2 );
 
       requestAnimationFrame(render);
   }
@@ -197,7 +202,50 @@ html,body {
         { data : cubeTexData, attrSize : 2, attrLoc : progDraw.inUV },
         { data : cubeColData, attrSize : 3, attrLoc : progDraw.inCol } ],
         cubeInxData );
+      bufCube.primitve_type = gl.TRIANGLES;
 
+        var cubePosData2 = [
+            -1,  1,  1,
+             1,  1,  1,
+            -1, -1,  1,
+             1, -1,  1,
+            -1, -1, -1,
+             1, -1, -1,
+            -1,  1, -1, 
+             1,  1, -1,
+            -1,  1, -1,
+            -1, -1, -1,
+             1, -1, -1,
+             1, -1,  1 ];
+        
+        var cubeTexData2 = [
+            0,  0,
+            1,  0,
+            0,  1,
+            1,  1,
+            0,  0,
+            1,  0,
+            0,  1,
+            1,  1,
+            1,  0,
+            1,  1,
+            0,  1,
+            0,  0 ];
+
+        cubeInxData2 = [
+            8, 9, 0, 2, 1,  3, 
+            3, 2, 5, 4, 7,  6, 
+            6, 0, 7, 1, 10, 11];
+
+      bufCube2 = VertexBuffer.Create(
+      [ { data : cubePosData2, attrSize : 3, attrLoc : progDraw.inPos },
+        { data : cubePosData2, attrSize : 3, attrLoc : progDraw.inNV },
+        { data : cubeTexData2, attrSize : 2, attrLoc : progDraw.inUV },
+        { data : cubePosData2, attrSize : 3, attrLoc : progDraw.inCol } ],
+        cubeInxData2 );
+      bufCube2.primitve_type = gl.TRIANGLE_STRIP;
+    
+                 
       Texture.LoadTexture2D( tex_unit, "https://raw.githubusercontent.com/Rabbid76/graphics-snippets/master/resource/texture/supermario.jpg" );
         
       window.onresize = resize;
@@ -402,7 +450,7 @@ html,body {
           gl.enableVertexAttribArray( bufObj.attr[i].loc );
       }
       gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufObj.inx );
-      gl.drawElements( gl.TRIANGLES, bufObj.inxLen, gl.UNSIGNED_SHORT, 0 );
+      gl.drawElements( bufObj.primitve_type, bufObj.inxLen, gl.UNSIGNED_SHORT, 0 );
       for ( var i = 0; i < bufObj.buf.length; ++ i )
          gl.disableVertexAttribArray( bufObj.attr[i].loc );
       gl.bindBuffer( gl.ARRAY_BUFFER, null );
