@@ -177,6 +177,7 @@
     <ClInclude Include="..\include\render\IDrawType.h" />
     <ClInclude Include="..\include\render\IGraphicsDebug.h" />
     <ClInclude Include="..\include\render\ILight.h" />
+    <ClInclude Include="..\include\render\IMeshData.h" />
     <ClInclude Include="..\include\render\IProgram.h" />
     <ClInclude Include="..\include\render\IRenderData.h" />
     <ClInclude Include="..\include\render\IRenderPass.h" />

@@ -1,5 +1,20 @@
 
-# Uniforms and Attributes
+# Resources and Program
+
+## Program
+
+### Compile
+
+### Link
+
+Things like uniforms, attributes etc. are program resources. The locations of active resources are finally determined when linking the program.
+Of course the user can specify the location. In modern OpenGL this can be done by [Layout Qualifier](https://www.khronos.org/opengl/wiki/Layout_Qualifier_(GLSL)).
+In earlier version a generic vertex attribute can be associated to an attribute name by [`glBindAttribLocation`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glBindAttribLocation.xhtml),
+before linking the program. The location information is considered when the program is get linked.<br/>
+But resource informations, like the attribute location ([`glGetAttribLocation`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGetAttribLocation.xhtml)), can only be queried, if the program was successfully linked. The linking of the program "finalize" the program, to be introspective and to be used.<br/>
+The "hint" that there is a named attribute associated to a location, does not make an active resource. The active resource is set in the during the link process. 
+
+
 
 ## Aktive and inactive uniform variables
 

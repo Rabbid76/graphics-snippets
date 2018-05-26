@@ -611,6 +611,11 @@ e.g.
     glEnd()
 
 
+See [OpenGL 3.0 API Specification; 2.6.3 GL Commands within Begin/End; page 24](https://www.khronos.org/registry/OpenGL/specs/gl/glspec30.pdf)<br/>
+or [OpenGL 4.6 API Compatibility Profile Specification; 10.7.5 Commands Allowed Between Begin and End; page 433](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.compatibility.pdf):
+
+>The only GL commands that are allowed within any Begin/End pairs are the commands for specifying vertex coordinates, vertex colors, normal coordinates, texture coordinates, generic vertex attributes, and fog coordinates ...
+
 <br/><hr/>
 
 ## Vertex attributes with integral data types

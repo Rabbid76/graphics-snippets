@@ -81,6 +81,9 @@
     <ClInclude Include="..\include\render\IResource.h">
       <Filter>render</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\render\IMeshData.h">
+      <Filter>render</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
