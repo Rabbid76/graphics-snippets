@@ -1,18 +1,22 @@
 /******************************************************************//**
-* \brief   Generic interface for mesh data array access.
+* \brief   Obj-File loader implementation.
+*
+* [https://de.wikipedia.org/wiki/Wavefront_OBJ]
+* [https://en.wikipedia.org/wiki/Wavefront_.obj_file]
+* [https://www.cs.utah.edu/~boulos/cs3505/obj_spec.pdf]
 * 
 * \author  gernot
 * \date    2017-11-20
 * \version 1.0
 **********************************************************************/
 #pragma once
-#ifndef IMeshData_h_INCLUDED
-#define IMeshData_h_INCLUDED
+#ifndef RenderUtil_ObjLoader_h_INCLUDED
+#define RenderUtil_ObjLoader_h_INCLUDED
 
 
 // includes
 
-#include <IDrawType.h>
+#include <IMeshLoader.h>
 
 
 /******************************************************************//**
@@ -28,13 +32,14 @@ namespace Render
 
 
 /******************************************************************//**
-* \brief   Generic interface for mesh data.
+* \brief   Implementation of obj-file loader.
 * 
 * \author  gernot
 * \date    2018-05-29
 * \version 1.0
 **********************************************************************/
-class IMeshData
+class CObjFileLoader
+  : public IMeshFile
 {
 public:
 
@@ -44,4 +49,4 @@ public:
 
 } // Render
 
-#endif // IMeshData_h_INCLUDED
+#endif // RenderUtil_ObjLoader_h_INCLUDED

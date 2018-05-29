@@ -13,6 +13,9 @@
     <Filter Include="OpenGL_source">
       <UniqueIdentifier>{3a9c0572-bee7-434d-a8b7-775da00096a2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="util">
+      <UniqueIdentifier>{7c14b819-bcb9-47ff-bd74-397a7101fd3a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -84,6 +87,15 @@
     <ClInclude Include="..\include\render\IMeshData.h">
       <Filter>render</Filter>
     </ClInclude>
+    <ClInclude Include="IMeshFactory.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="IMeshLoader.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\util\RenderUtil_ObjLoader.h">
+      <Filter>util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -106,6 +118,9 @@
     </ClCompile>
     <ClCompile Include="source\OpenGLError.cpp">
       <Filter>OpenGL_source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\util\RenderUtil_ObjLoader.cpp">
+      <Filter>util</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
