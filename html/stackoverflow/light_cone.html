@@ -160,6 +160,12 @@ void main()
     }
 </script>
 
+<style>
+html,body { margin: 0; overflow: hidden; }
+#gui { position : absolute; top : 0; left : 0; }
+#ref-link { position : absolute; bottom : 0; left : 0; }  
+</style>
+
 <script type="text/javascript">
 
 glArrayType = typeof Float32Array !="undefined" ? Float32Array : ( typeof WebGLFloatArray != "undefined" ? WebGLFloatArray : Array );
@@ -540,6 +546,10 @@ function sceneStart() {
 }
 
 </script>
+
+<a id="ref-link" href="https://stackoverflow.com/questions/45783444/glsl-spotlight-projection-volume/45796941#45796941">
+GLSL spotlight projection volume
+</a>
 
 <body onload="sceneStart();">
     <div id="div-main" style="margin-left: 520px;">
