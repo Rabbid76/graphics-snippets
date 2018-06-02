@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<svg version="1.2" baseProfile="tiny" width="50.25mm" height="50.85mm" viewBox="2000 1983 5025 5085" preserveAspectRatio="xMidYMid" fill-rule="evenodd" stroke-width="28.222" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve">
+ <defs>
+  <font id="EmbeddedFont_1" horiz-adv-x="2048">
+   <font-face font-family="Corbel embedded" units-per-em="2048" font-weight="normal" font-style="normal" ascent="1931" descent="556"/>
+   <missing-glyph horiz-adv-x="2048" d="M 0,0 L 2047,0 2047,2047 0,2047 0,0 Z"/>
+   <glyph unicode="1" horiz-adv-x="769" d="M 451,143 L 451,785 90,672 90,816 472,950 606,950 606,143 868,143 868,0 132,0 132,143 451,143 Z"/>
+   <glyph unicode="0" horiz-adv-x="875" d="M 800,474 C 800,531 794,583 781,629 768,674 749,713 726,745 702,776 673,801 640,818 606,835 568,843 526,843 484,843 446,835 413,818 379,801 350,776 326,745 302,713 284,674 271,629 258,583 252,531 252,474 252,417 259,366 272,321 285,275 303,236 327,205 350,174 379,150 413,133 447,116 485,107 527,107 569,107 607,116 641,133 674,150 703,174 727,205 750,236 768,275 781,321 794,366 800,417 800,474 Z M 962,474 C 962,403 952,338 933,277 913,216 884,163 847,118 810,73 764,38 711,13 657,-12 596,-25 527,-25 456,-25 394,-12 340,13 285,38 240,73 203,118 166,163 138,216 119,277 100,338 90,403 90,474 90,545 100,612 120,673 139,734 168,787 205,832 242,877 288,912 342,937 396,962 457,975 526,975 596,975 658,962 713,937 767,912 813,877 850,832 887,787 915,734 934,673 953,612 962,545 962,474 Z"/>
+   <glyph unicode="," horiz-adv-x="345" d="M 187,218 L 377,218 210,-390 20,-390 187,218 Z"/>
+   <glyph unicode=")" horiz-adv-x="424" d="M 349,519 C 349,608 341,691 326,767 311,843 290,913 265,976 240,1039 210,1097 177,1148 143,1199 108,1244 72,1283 L 157,1363 C 176,1347 197,1326 222,1299 247,1272 272,1239 298,1202 323,1164 349,1121 374,1074 400,1026 423,974 443,917 463,860 480,798 492,732 505,665 511,594 511,519 511,444 505,374 492,307 480,240 463,179 443,122 423,65 400,12 374,-35 349,-83 323,-126 298,-163 272,-201 247,-233 222,-260 197,-287 176,-309 157,-325 L 72,-245 C 108,-206 143,-160 177,-109 210,-58 240,-1 265,62 290,125 311,195 326,271 341,347 349,430 349,519 Z"/>
+   <glyph unicode="(" horiz-adv-x="424" d="M 272,519 C 272,430 280,347 295,271 310,195 331,125 356,62 381,-1 411,-58 445,-109 478,-160 513,-206 549,-245 L 464,-325 C 445,-309 424,-287 399,-260 374,-233 349,-201 324,-163 298,-126 272,-83 247,-35 221,12 198,65 178,122 158,179 141,240 129,307 116,374 110,444 110,519 110,594 116,665 129,732 141,798 158,860 178,917 198,974 221,1026 247,1074 272,1121 298,1164 324,1202 349,1239 374,1272 399,1299 424,1326 445,1347 464,1363 L 549,1283 C 513,1244 478,1199 445,1148 411,1097 381,1039 356,976 331,913 310,843 295,767 280,691 272,608 272,519 Z"/>
+   <glyph unicode=" " horiz-adv-x="397"/>
+  </font>
+ </defs>
+ <defs>
+  <font id="EmbeddedFont_2" horiz-adv-x="2048">
+   <font-face font-family="Corbel embedded" units-per-em="2048" font-weight="bold" font-style="normal" ascent="1931" descent="556"/>
+   <missing-glyph horiz-adv-x="2048" d="M 0,0 L 2047,0 2047,2047 0,2047 0,0 Z"/>
+   <glyph unicode="V" horiz-adv-x="1271" d="M 656,327 C 681,400 699,452 710,483 721,514 744,577 779,673 L 1027,1338 1286,1338 763,0 543,0 20,1338 281,1338 529,673 C 564,577 588,514 599,483 610,452 627,400 652,327 L 656,327 Z"/>
+   <glyph unicode="U" horiz-adv-x="1139" d="M 714,-25 C 644,-25 581,-18 525,-4 469,9 420,29 377,55 334,80 298,112 268,149 238,186 214,227 196,274 181,311 171,353 165,398 158,443 155,494 155,550 L 155,1338 400,1338 400,572 C 400,477 411,403 434,350 459,291 496,248 545,222 594,195 651,182 717,182 783,182 840,195 889,222 938,248 975,291 1000,350 1023,403 1034,477 1034,572 L 1034,1338 1279,1338 1279,550 C 1279,494 1276,443 1270,398 1263,353 1253,311 1238,274 1220,227 1196,186 1166,149 1135,112 1098,80 1055,55 1011,29 961,9 904,-4 847,-18 784,-25 714,-25 Z"/>
+  </font>
+ </defs>
+ <g visibility="visible" id="Slide_1">
+  <g>
+   <defs>
+    <linearGradient id="Gradient_1" gradientUnits="userSpaceOnUse" x1="3004" y1="1997" x2="6996" y2="6003">
+     <stop offset="0.3" stop-color="rgb(238,238,238)"/>
+     <stop offset="1" stop-color="rgb(153,153,153)"/>
+    </linearGradient>
+   </defs>
+   <path fill="url(#Gradient_1)" stroke="rgb(0,0,0)" id="Drawing_1_0" stroke-width="35" stroke-linejoin="round" d="M 5000,6000 L 3000,6000 3000,2000 7000,2000 7000,6000 5000,6000 Z"/>
+   <rect fill="none" stroke="none" x="3000" y="2000" width="4001" height="4001"/>
+  </g>
+  <g id="Drawing_2">
+   <rect fill="none" stroke="none" x="4600" y="6300" width="799" height="768"/>
+   <g fill="rgb(204,0,0)" stroke="none" font-family="Corbel embedded" font-size="423" font-style="normal" font-weight="700">
+    <text x="4850" y="6827">U</text>
+   </g>
+  </g>
+  <g id="Drawing_3">
+   <rect fill="none" stroke="none" x="2000" y="3500" width="774" height="768"/>
+   <g fill="rgb(0,153,0)" stroke="none" font-family="Corbel embedded" font-size="423" font-style="normal" font-weight="700">
+    <text x="2250" y="4027">V</text>
+   </g>
+  </g>
+  <g>
+   <path fill="none" stroke="rgb(204,0,0)" id="Drawing_4_0" stroke-width="53" stroke-linejoin="round" d="M 3000,6300 L 4610,6300"/>
+   <path fill="rgb(204,0,0)" stroke="none" id="Drawing_4_1" d="M 4632,6410 L 4610,6440 5000,6300 4610,6161 4631,6189 4648,6222 4659,6259 4664,6298 4660,6338 4649,6376 4632,6410 Z"/>
+  </g>
+  <g>
+   <path fill="none" stroke="rgb(0,153,0)" id="Drawing_5_0" stroke-width="53" stroke-linejoin="round" d="M 2700,6000 L 2700,4390"/>
+   <path fill="rgb(0,153,0)" stroke="none" id="Drawing_5_1" d="M 2810,4368 L 2840,4390 2700,4000 2561,4390 2589,4369 2622,4352 2659,4341 2698,4336 2738,4340 2776,4351 2810,4368 Z"/>
+  </g>
+  <g id="Drawing_6">
+   <rect fill="none" stroke="none" x="3000" y="2000" width="1358" height="768"/>
+   <g fill="rgb(0,0,0)" stroke="none" font-family="Corbel embedded" font-size="423" font-style="normal" font-weight="400">
+    <text x="3250" y="2527">
+     <tspan x="3250 3377 3593 3703 3788 3978">(0, 1)</tspan></text>
+   </g>
+  </g>
+  <g id="Drawing_7">
+   <rect fill="none" stroke="none" x="5643" y="2000" width="1333" height="768"/>
+   <g fill="rgb(0,0,0)" stroke="none" font-family="Corbel embedded" font-size="423" font-style="normal" font-weight="400">
+    <text x="5893" y="2527">
+     <tspan x="5893 6020 6211 6321 6405 6596">(1, 1)</tspan></text>
+   </g>
+  </g>
+  <g id="Drawing_8">
+   <rect fill="none" stroke="none" x="3000" y="5233" width="1384" height="768"/>
+   <g fill="rgb(0,0,0)" stroke="none" font-family="Corbel embedded" font-size="423" font-style="normal" font-weight="400">
+    <text x="3250" y="5760">
+     <tspan x="3250 3377 3593 3703 3788 4004">(0, 0)</tspan></text>
+   </g>
+  </g>
+  <g id="Drawing_9">
+   <rect fill="none" stroke="none" x="5668" y="5233" width="1358" height="768"/>
+   <g fill="rgb(0,0,0)" stroke="none" font-family="Corbel embedded" font-size="423" font-style="normal" font-weight="400">
+    <text x="5918" y="5760">
+     <tspan x="5918 6045 6236 6346 6430 6646">(1, 0)</tspan></text>
+   </g>
+  </g>
+ </g>
+</svg>
