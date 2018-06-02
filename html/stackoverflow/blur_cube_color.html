@@ -95,6 +95,27 @@ void main()
 }
 </script>
 
+<style>
+
+html,body {
+    margin: 0;
+    overflow: hidden;
+}
+
+#gui {
+    position : absolute;
+    top : 0;
+    left : 0;
+}
+
+#ref-link {
+    position : absolute;
+    bottom : 0;
+    left : 0;
+}
+    
+</style>
+
 <script type="text/javascript">
 
 glArrayType = typeof Float32Array !="undefined" ? Float32Array : ( typeof WebGLFloatArray != "undefined" ? WebGLFloatArray : Array );
@@ -450,6 +471,10 @@ function sceneStart() {
 </script>
 
 <body onload="sceneStart();">
+    <a id="ref-link" href="https://stackoverflow.com/questions/44779142/opengl-es-2-0-gaussian-blur-on-triangle/45238087#45238087">
+    OpenGL es 2.0 Gaussian blur on triangle
+    </a>
+
     <div style="margin-left: 520px;">
         <div style="float: right; width: 100%; background-color: #CCF;">
             <form name="inputs">

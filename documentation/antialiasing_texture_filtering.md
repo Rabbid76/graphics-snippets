@@ -1,8 +1,14 @@
 
 # TODO
 
--[Removing moire patterns produced by GLSL shaders](https://stackoverflow.com/questions/34523682/removing-moire-patterns-produced-by-glsl-shaders)<br/>
--[GridMaterial.](https://github.com/AnalyticalGraphicsInc/cesium/blob/1.16/Source/Shaders/Materials/GridMaterial.glsl#L17-L34)
+[GridMaterial.](https://github.com/AnalyticalGraphicsInc/cesium/blob/1.16/Source/Shaders/Materials/GridMaterial.glsl#L17-L34)
+
+## Removing moire patterns produced by GLSL shaders
+
+[Removing moire patterns produced by GLSL shaders](https://stackoverflow.com/questions/34523682/removing-moire-patterns-produced-by-glsl-shaders)
+
+Issue: [file:///C:/source/rabbid76workbench/dox/ogl/antialiasing/moire_patterns_question.html]
+Solution: [file:///C:/source/rabbid76workbench/dox/ogl/antialiasing/moire_patterns_answer.html]
 
 
 <br/><hr/>
