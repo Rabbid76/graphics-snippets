@@ -346,7 +346,6 @@ resize();
 requestAnimationFrame(render);
 }
 
-var startTime;
 function Fract( val ) { 
     return val - Math.trunc( val );
 }
@@ -360,8 +359,7 @@ function RotateAxis(matA, angRad, axis) {
     var aMap = [ [1, 2], [2, 0], [0, 1] ];
     var a0 = aMap[axis][0], a1 = aMap[axis][1]; 
     var sinAng = Math.sin(angRad), cosAng = Math.cos(angRad);
-    var matB = IdentityMat44();
-    for ( var i = 0; i < 16; ++ i ) matB[i] = matA[i];
+    var matB = matA.slice(0);
     for ( var i = 0; i < 3; ++ i ) {
         matB[a0*4+i] = matA[a0*4+i] * cosAng + matA[a1*4+i] * sinAng;
         matB[a1*4+i] = matA[a0*4+i] * -sinAng + matA[a1*4+i] * cosAng;
