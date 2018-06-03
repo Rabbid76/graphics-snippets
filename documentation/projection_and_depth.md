@@ -311,19 +311,40 @@ To convert form the depth of the depth buffer to the original Z-coordinate, the 
     n = near, f = far
 
     z_eye = depth * (f-n) + n;
+
+    z_linear = z_eye
    
 *Perspective Projection*
 
     n = near, f = far
 
-    z_ndc = 2.0 * depth - 1.0;
-    z_eye = 2.0 * n * f / (f + n - z_ndc * (f - n));
+    z_ndc = 2 * depth - 1.0;
+    z_eye = 2 * n * f / (f + n - z_ndc * (f - n));
 
 If the perspective projection matrix is known this can be done as follows:
 
     A = prj_mat[2][2]
     B = prj_mat[3][2]
     z_eye = B / (A + z_ndc)
+
+*Perspective Projection - Linearized depth*
+
+Convert the depth value or the normalized device z component to a linear value in the range [0.0, 1.0] where 0.0 is near and 1.0 is far.
+
+[How To Linearize the Depth Value](http://www.ozone3d.net/blogs/lab/20090206/how-to-linearize-the-depth-value/)<br/>
+[Linear Depth](http://dev.theomader.com/linear-depth/)<br/>
+[From linear -> non-linear depth values](https://www.gamedev.net/forums/topic/658957-depth-buffer-from-linear-non-linear-depth-values/)<br/>
+
+   z_linear = (z_eye - n) / (f - n)
+
+Very good approximation for small near values: 
+
+   z_linear = 2 * n / (f + n - z_ndc * (f - n)) - n) / (f-n)
+
+Exact calculation:
+
+   z_linear = (2 * n * f / (f + n - z_ndc * (f - n)) - n) / (f-n)
+
 
 <br/>
 The realtion between the projected area in view space and the Z coordinate of the view space is linear. It dpends on the field of view angle and the aspect ratio.
