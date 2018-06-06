@@ -102,7 +102,7 @@ private:
     float  _aspect = 1.0;
     float  _scale_x = 1.0;
     float  _scale_y = 1.0;
-    TScene _scene   = e_cone_step;
+    TScene _scene   = e_NDC;
 
     Render::TPoint2 BL( void ) const { return{ -_scale_x, -_scale_y}; }
     Render::TPoint2 TL( void ) const { return{  _scale_x, -_scale_y}; }
@@ -908,7 +908,7 @@ void CWindow_Glfw::NDC( double time_ms )
   camera._pos    = { 3.0f, 1.5f, 3.8f };
   camera._target = { 0.0f, 0.0f, 0.0f };
   camera._up     = { 0.0f, 1.0f, 0.0f };
-  camera._fov_y  = 80.0f;
+  camera._fov_y  = 60.0f;
   Render::TMat44 prj = camera.Perspective();
   Render::TMat44 view = camera.LookAt();
 
@@ -925,14 +925,14 @@ void CWindow_Glfw::NDC( double time_ms )
 
   _draw->DrawArrow( 3, {0.0f, 0.0f, 0.0f, axis_len, 0.0f, 0.0f }, Color_red_2(), 3, arr_size, false, true );
   _draw->DrawArrow( 3, {0.0f, 0.0f, 0.0f, 0.0f, axis_len, 0.0f }, Color_green_2(), 3, arr_size, false, true );
-  _draw->DrawArrow( 3, {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, axis_len }, Color_blue_2(), 3, arr_size, false, true );
+  _draw->DrawArrow( 3, {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -axis_len }, Color_blue_2(), 3, arr_size, false, true );
 
   _draw->ActivateOpaque();
   _draw->ClearDepth();
   
   _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "X", 7, axis_text_height, axis_text_scale_y, 0.0f, { axis_len, 0.0f, 0.0f }, Color_red_2() );
   _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "Y", 1, axis_text_height, axis_text_scale_y, 0.0f, { 0.0f, axis_len, 0.0f }, Color_green_2() );
-  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "Z", 3, axis_text_height, axis_text_scale_y, 0.0f, { 0.0f, 0.0f, axis_len }, Color_blue_2() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "Z", 1, axis_text_height, axis_text_scale_y, 0.0f, { 0.0f, 0.0f, -axis_len }, Color_blue_2() );
 
   static float text_height  = 0.05f;
   static float text_scale_y = 1.0f;
