@@ -335,15 +335,15 @@ Convert the depth value or the normalized device z component to a linear value i
 [Linear Depth](http://dev.theomader.com/linear-depth/)<br/>
 [From linear -> non-linear depth values](https://www.gamedev.net/forums/topic/658957-depth-buffer-from-linear-non-linear-depth-values/)<br/>
 
-   z_linear = (z_eye - n) / (f - n)
+    z_linear = (z_eye - n) / (f - n)
 
 Very good approximation for small near values: 
 
-   z_linear = 2 * n / (f + n - z_ndc * (f - n)) - n) / (f-n)
+    z_linear = 2 * n / (f + n - z_ndc * (f - n)) - n) / (f-n)
 
 Exact calculation:
 
-   z_linear = (2 * n * f / (f + n - z_ndc * (f - n)) - n) / (f-n)
+    z_linear = (2 * n * f / (f + n - z_ndc * (f - n)) - n) / (f-n)
 
 
 <br/>
