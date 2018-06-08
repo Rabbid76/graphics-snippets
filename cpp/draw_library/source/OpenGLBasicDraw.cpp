@@ -1822,6 +1822,50 @@ bool CBasicDraw::DrawText2D(
 //---------------------------------------------------------------------
 
 
+class TTextureInternal
+  : public Render::ITexture
+{
+public:
+
+  TTextureInternal( void )
+  {
+    glGenTextures( 1, &_texture_obj );
+  }
+
+  virtual ~TTextureInternal()
+  {
+    if ( _texture_obj != 0 )
+      glDeleteTextures( 1, &_texture_obj );
+  }
+
+  virtual bool Bind( size_t binding_point ) override
+  {
+    glActiveTexture( (GLenum)(GL_TEXTURE0 + binding_point) );
+    glBindTexture( GL_TEXTURE_2D, _texture_obj );
+    return true;
+  }
+
+  virtual bool Release( size_t binding_point ) override
+  {
+    // Bind the default texture to the texture unit.
+    // In common there should be no necessity of this and there should not be any reason to do this.
+    glActiveTexture( (GLenum)(GL_TEXTURE0 + binding_point) );
+    glBindTexture( GL_TEXTURE_2D, 0 );
+    if ( binding_point > 0 )
+      glActiveTexture( 0 );
+    return true;
+  }
+
+  unsigned int _texture_obj = 0;
+};
+
+/******************************************************************//**
+* \brief   freetype glyph metrics
+* 
+* \author  gernot
+* \date    2018-06-08
+* \version 1.0
+**********************************************************************/
 struct TFreetypeGlyph
 {
   FT_Glyph_Metrics           _metrics { 0 }; //!< glyph metrics
@@ -1889,9 +1933,7 @@ CFreetypeTexturedFont::~CFreetypeTexturedFont()
 void CFreetypeTexturedFont::Destroy( void )
 {
   _font.reset( nullptr );
-
-  glDeleteTextures( 1, &_texture_obj );
-  _texture_obj = 0;
+  _font_texture.reset( nullptr );
 
   // ...
 }
@@ -1990,10 +2032,10 @@ bool CFreetypeTexturedFont::Load( void )
 
   // create texture
 
+  _font_texture = std::make_unique<TTextureInternal>();
+  _font_texture->Bind( 0 );
+  
   glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
-  glActiveTexture( GL_TEXTURE0 );
-  glGenTextures( 1, &_texture_obj );
-  glBindTexture( GL_TEXTURE_2D, _texture_obj );
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
@@ -2010,8 +2052,9 @@ bool CFreetypeTexturedFont::Load( void )
 
     glTexSubImage2D(GL_TEXTURE_2D, 0, glyph_data._x, glyph_data._y, glyph_data._cx, glyph_data._cy, GL_RGBA, GL_UNSIGNED_BYTE, glyph_data._image.data() );
   }
-  glBindTexture( GL_TEXTURE_2D, 0 );
   glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
+
+  _font_texture->Release( 0 );
 
   _valid = true;
   return _valid;
@@ -2085,7 +2128,7 @@ bool CFreetypeTexturedFont::DrawText(
   if ( debug_test )
     DebugFontTexture( buffer_provider, textur_binding_id );
 
-  if ( _font == nullptr )
+  if ( _font == nullptr  || _font_texture == nullptr )
     return false;
 
   int min_c = _font->_min_char;
@@ -2158,8 +2201,7 @@ bool CFreetypeTexturedFont::DrawText(
   buffer.UpdateVB( 0, sizeof(float), vertex_attributes.size(), vertex_attributes.data() );
   
   // bind glyph texture 
-  glActiveTexture( (GLenum)(GL_TEXTURE0 + textur_binding_id) );
-  glBindTexture( GL_TEXTURE_2D, _texture_obj );
+  _font_texture->Bind( textur_binding_id );
 
   // draw_buffer
   size_t no_of_vertices = vertex_attributes.size() / 5; // 5 because of x y z u v
@@ -2167,7 +2209,7 @@ bool CFreetypeTexturedFont::DrawText(
   buffer.Release();
 
   // unbind glyph texture
-  glBindTexture( GL_TEXTURE_2D, 0 );
+  _font_texture->Release( textur_binding_id );
 
   return true;
 }
@@ -2184,7 +2226,7 @@ void CFreetypeTexturedFont::DebugFontTexture(
   Render::IDrawBufferPrivider &buffer_provider,     //!< in: draw library
   size_t                       textur_binding_id ) //!< in: texture unit index
 {
-  if ( _font == nullptr )
+  if ( _font == nullptr || _font_texture == nullptr )
     return;
 
   int min_c = _font->_min_char;
@@ -2215,8 +2257,7 @@ void CFreetypeTexturedFont::DebugFontTexture(
   buffer.UpdateVB( 0, sizeof(float), vertex_attributes.size(), vertex_attributes.data() );
   
   // bind glyph texture 
-  glActiveTexture( (GLenum)(GL_TEXTURE0 + textur_binding_id) );
-  glBindTexture( GL_TEXTURE_2D, _texture_obj );
+  _font_texture->Bind( textur_binding_id );
 
   // draw_buffer
   size_t no_of_vertices = vertex_attributes.size() / 5; // 5 because of x y z u v
@@ -2224,7 +2265,7 @@ void CFreetypeTexturedFont::DebugFontTexture(
   buffer.Release();
 
   // unbind glyph texture
-  glBindTexture( GL_TEXTURE_2D, 0 );
+  _font_texture->Release( textur_binding_id );
 }
 
 } // OpenGL

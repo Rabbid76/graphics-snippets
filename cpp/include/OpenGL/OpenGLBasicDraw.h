@@ -17,6 +17,7 @@
 #include <IDraw.h>
 #include <IBuffer.h>
 #include <IRenderPass.h>
+#include <ITexture.h>
 #include <IFont.h>
 
 // OpenGL
@@ -232,6 +233,7 @@ public:
   // TODO $$$ ITextureLoder
   // TODO $$$ ITextureGPULoader
 
+  using TTexturePtr = Render::TTexturePtr;
   using TFontPtr = std::unique_ptr<TFreetypeTFont>;
 
   CFreetypeTexturedFont( const char *font_filename, int min_char );
@@ -251,10 +253,10 @@ private:
   void DebugFontTexture( Render::IDrawBufferPrivider &buffer_provider, size_t textur_binding_id );
 
   std::string  _font_filename;
-  int          _min_char    = 32;
+  int          _min_char      = 32;
   TFontPtr     _font;
-  bool         _valid       = true;
-  unsigned int _texture_obj = 0; // TODO $$$ ITexture
+  bool         _valid         = true;
+  TTexturePtr  _font_texture;
 };
 
 
