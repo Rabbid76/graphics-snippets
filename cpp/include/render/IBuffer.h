@@ -25,6 +25,9 @@ namespace Render
 {
 
 
+class IDrawBuffer;
+
+
 /******************************************************************//**
 * \brief   Usage of drawing buffer.
 * 
@@ -37,6 +40,23 @@ enum class TDrawBufferUsage
   static_draw,  //!< set up data once and draw repeatly
   dynamic_draw, //!< change the data sometimes
   stream_draw,  //!< set up data and draw once
+};
+
+
+/******************************************************************//**
+* \brief   Generic provider for generic draw buffers.
+* 
+* \author  gernot
+* \date    2018-06-08
+* \version 1.0
+**********************************************************************/
+class IDrawBufferPrivider
+{
+public:
+
+  virtual IDrawBuffer * NewDrawBuffer( TDrawBufferUsage usage ) = 0;
+  virtual IDrawBuffer & DrawBuffer( void ) = 0;
+  virtual IDrawBuffer & DrawBuffer( const void *key, bool &cached ) = 0;
 };
 
 

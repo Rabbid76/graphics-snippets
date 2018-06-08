@@ -1793,8 +1793,8 @@ bool CBasicDraw::DrawText2D(
     OPENGL_CHECK_GL_ERROR
   }
 
-  // TODO $$$ generalise
-  bool ret = freetypeFont->DrawText( *this, text, height, width_scale, pos );
+  // draw the text
+  bool ret = freetypeFont->DrawText( *this, 0, text, height, width_scale, pos );
 
   // reset blending
   if ( set_depth_and_belnding )
@@ -2074,15 +2074,16 @@ bool CFreetypeTexturedFont::CalculateTextSize(
 * \version 1.0
 **********************************************************************/
 bool CFreetypeTexturedFont::DrawText( 
-  CBasicDraw            &draw,        //!< in: draw library
-  const char            *str,         //!< in: the text
-  float                  height,      //!< in: the maximum height of the text from the bottom to the top 
-  float                  width_scale, //!< in: scale of the text in the y direction
-  const Render::TPoint3 &pos )        //!< in: the reference position
+  Render::IDrawBufferPrivider &buffer_provider,   //!< in: draw library
+  size_t                       textur_binding_id, //!< in: texture unit index
+  const char                  *str,               //!< in: the text
+  float                        height,            //!< in: the maximum height of the text from the bottom to the top 
+  float                        width_scale,       //!< in: scale of the text in the y direction
+  const Render::TPoint3       &pos )              //!< in: the reference position
 {
   static bool debug_test = false;
   if ( debug_test )
-    DebugFontTexture( draw );
+    DebugFontTexture( buffer_provider, textur_binding_id );
 
   if ( _font == nullptr )
     return false;
@@ -2152,12 +2153,12 @@ bool CFreetypeTexturedFont::DrawText(
   const std::vector<char> bufferdescr = Render::IDrawBuffer::VADescription( va_id );
 
   // create buffer
-  Render::IDrawBuffer &buffer = draw.DrawBuffer();
+  Render::IDrawBuffer &buffer = buffer_provider.DrawBuffer();
   buffer.SpecifyVA( bufferdescr.size(), bufferdescr.data() );
   buffer.UpdateVB( 0, sizeof(float), vertex_attributes.size(), vertex_attributes.data() );
   
   // bind glyph texture 
-  glActiveTexture( GL_TEXTURE0 );
+  glActiveTexture( (GLenum)(GL_TEXTURE0 + textur_binding_id) );
   glBindTexture( GL_TEXTURE_2D, _texture_obj );
 
   // draw_buffer
@@ -2180,7 +2181,8 @@ bool CFreetypeTexturedFont::DrawText(
 * \version 1.0
 **********************************************************************/
 void CFreetypeTexturedFont::DebugFontTexture( 
-  CBasicDraw &draw ) //!< in: draw library
+  Render::IDrawBufferPrivider &buffer_provider,     //!< in: draw library
+  size_t                       textur_binding_id ) //!< in: texture unit index
 {
   if ( _font == nullptr )
     return;
@@ -2208,12 +2210,12 @@ void CFreetypeTexturedFont::DebugFontTexture(
   const std::vector<char> bufferdescr = Render::IDrawBuffer::VADescription( va_id );
 
   // create buffer
-  Render::IDrawBuffer &buffer = draw.DrawBuffer();
+  Render::IDrawBuffer &buffer = buffer_provider.DrawBuffer();
   buffer.SpecifyVA( bufferdescr.size(), bufferdescr.data() );
   buffer.UpdateVB( 0, sizeof(float), vertex_attributes.size(), vertex_attributes.data() );
   
   // bind glyph texture 
-  glActiveTexture( GL_TEXTURE0 );
+  glActiveTexture( (GLenum)(GL_TEXTURE0 + textur_binding_id) );
   glBindTexture( GL_TEXTURE_2D, _texture_obj );
 
   // draw_buffer

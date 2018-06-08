@@ -13,6 +13,7 @@
 // includes
 
 #include <IDrawType.h>
+#include <IBuffer.h>
 
 
 /******************************************************************//**
@@ -49,6 +50,9 @@ public:
 
   //! calculates box of a string in relation to its height (maximum height of the font from the bottom to the top)
   virtual bool CalculateTextSize( const char *str, float height, float &box_x, float &box_btm, float &box_top ) = 0;
+
+  //! render a texture based text
+  virtual bool DrawText( IDrawBufferPrivider &buffer_provider, size_t textur_binding_id, const char *str, float height, float width_scale, const Render::TPoint3 &pos ) = 0; 
 };
 
 

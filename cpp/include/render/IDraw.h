@@ -97,7 +97,7 @@ public:
   virtual bool  ActivateOpaque( void ) = 0;                    //!< activate rendering to the opaque buffer
   virtual bool  ActivateTransparent( void ) = 0;               //!< activate rendering to the transparent buffer
   virtual bool  Finish( void ) = 0;                            //!< finish the rendering
-  virtual bool  ClearDepth( void ) = 0;                        //!< interim clear of the depth buffer
+  virtual bool  ClearDepth( void ) = 0;                        //!< interim clearing  of the depth buffer
   
   bool DrawConvexPolygon( size_t size, const TBuffer &corrds, const TColor &color )
   {

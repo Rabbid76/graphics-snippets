@@ -53,6 +53,7 @@ namespace OpenGL
 **********************************************************************/
 class CBasicDraw
   : public Render::IDraw
+  , public Render::IDrawBufferPrivider
 {
 
   // TODO $$$ unifrom blocks (model, view, projection)
@@ -94,9 +95,9 @@ public:
   CBasicDraw( bool core_mode, unsigned int samples, float scale, bool fxaa );
   virtual ~CBasicDraw();
 
-  virtual Render::IDrawBuffer * NewDrawBuffer( Render::TDrawBufferUsage usage );
-  virtual Render::IDrawBuffer & DrawBuffer( void );
-  virtual Render::IDrawBuffer & DrawBuffer( const void *key, bool &cached );
+  virtual Render::IDrawBuffer * NewDrawBuffer( Render::TDrawBufferUsage usage ) override;
+  virtual Render::IDrawBuffer & DrawBuffer( void ) override;
+  virtual Render::IDrawBuffer & DrawBuffer( const void *key, bool &cached ) override;
 
   virtual const TMat44 & Projection( void ) const override { return _uniforms._projection; } //!< get the projection matrix
   virtual const TMat44 & View( void )       const override { return _uniforms._view; }       //!< get the view matrix
@@ -225,6 +226,8 @@ class CFreetypeTexturedFont
 {
 public:
 
+  //TODO $$$ separate file !
+
   using TFontPtr = std::unique_ptr<TFreetypeTFont>;
 
   CFreetypeTexturedFont( const char *font_filename, int min_char );
@@ -236,11 +239,12 @@ public:
   //! calculates box of a string in relation to its height (maximum height of the font from the bottom to the top)
   virtual bool CalculateTextSize( const char *str, float height, float &box_x, float &box_btm, float &box_top ) override;
 
-  bool DrawText( CBasicDraw &draw, const char *str, float height, float width_scale, const Render::TPoint3 &pos ); //! render a text, TODO generalise
+  //! render a texture based text
+  virtual bool DrawText( Render::IDrawBufferPrivider &buffer_provider, size_t textur_binding_id, const char *str, float height, float width_scale, const Render::TPoint3 &pos ) override;
 
 private:
 
-  void DebugFontTexture( CBasicDraw &draw );
+  void DebugFontTexture( Render::IDrawBufferPrivider &buffer_provider, size_t textur_binding_id );
 
   std::string  _font_filename;
   int          _min_char    = 32;
