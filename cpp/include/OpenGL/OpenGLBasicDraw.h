@@ -226,7 +226,11 @@ class CFreetypeTexturedFont
 {
 public:
 
-  //TODO $$$ separate file !
+  // TODO $$$ separate file !
+  // TODO $$$ IGPUTextureObject
+  // TODO $$$ ITexture
+  // TODO $$$ ITextureLoder
+  // TODO $$$ ITextureGPULoader
 
   using TFontPtr = std::unique_ptr<TFreetypeTFont>;
 

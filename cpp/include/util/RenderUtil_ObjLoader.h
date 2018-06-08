@@ -16,7 +16,7 @@
 
 // includes
 
-#include <IMeshLoader.h>
+#include <IMesh.h>
 
 
 /******************************************************************//**
@@ -39,7 +39,7 @@ namespace Render
 * \version 1.0
 **********************************************************************/
 class CObjFileLoader
-  : public IMeshFile
+  : public IMeshResource
 {
 public:
 

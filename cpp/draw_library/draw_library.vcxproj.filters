@@ -84,17 +84,11 @@
     <ClInclude Include="..\include\render\IResource.h">
       <Filter>render</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\render\IMeshData.h">
-      <Filter>render</Filter>
-    </ClInclude>
-    <ClInclude Include="IMeshFactory.h">
-      <Filter>render</Filter>
-    </ClInclude>
-    <ClInclude Include="IMeshLoader.h">
-      <Filter>render</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\util\RenderUtil_ObjLoader.h">
       <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\render\IMesh.h">
+      <Filter>render</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
