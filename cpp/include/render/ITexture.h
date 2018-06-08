@@ -87,7 +87,8 @@ enum class TTrasformation
 };
 
 
-using TTextureSize = std::array<size_t, 3>;
+using TTexturePoint = std::array<size_t, 3>;
+using TTextureSize  = std::array<size_t, 3>;
 
 //---------------------------------------------------------------------
 // ITexture
@@ -167,7 +168,10 @@ public:
 
   virtual ~ITextureLoader() = default;
 
-  virtual TTexturePtr NewTexture(IImageResource &image, TTrasformation transform, TTextureFormat internalformat) = 0;
+  // TODO $$$ CreateTexture no data / buffe only
+  virtual TTexturePtr CreateTexture(IImageResource &image, TTrasformation transform, TTextureFormat internalformat) = 0;
+
+  virtual bool LoadToTexture(IImageResource &image, ITexture &texture, TTexturePoint &pos, size_t layer) = 0;
 
 };
 

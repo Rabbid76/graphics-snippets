@@ -1898,6 +1898,35 @@ struct TFreetypeTFont
 
 
 /******************************************************************//**
+* \brief   
+* 
+* \author  gerno
+* \date    2018-06-08
+* \version 1.0
+**********************************************************************/
+class TGlyphImage
+  : public Render::IImageResource
+{
+public:
+
+  TGlyphImage( const TFreetypeGlyph &glyph )
+    : _glyph( glyph )
+  {}
+
+  virtual Render::TTextureType Type( void )   const override { return Render::TTextureType::T2D; }
+  virtual Render::TImageFormat Format( void ) const override { return Render::TImageFormat::RGBA8; }
+  virtual Render::TTextureSize Size( void )   const override { return {_glyph._cx, _glyph._cy, 0}; }
+  virtual size_t               Layers( void ) const override { return 1; }
+  virtual size_t               BPL( void )    const override { return 4*_glyph._cx; }
+  virtual const void *         DataPtr()      const override { return _glyph._image.data(); }                                 
+
+private:
+
+  const TFreetypeGlyph &_glyph;
+};
+
+
+/******************************************************************//**
 * @brief   ctor.
 *
 * @author  gernot
@@ -2035,7 +2064,6 @@ bool CFreetypeTexturedFont::Load( void )
   _font_texture = std::make_unique<TTextureInternal>();
   _font_texture->Bind( 0 );
   
-  glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
@@ -2044,15 +2072,17 @@ bool CFreetypeTexturedFont::Load( void )
 
   // load glyohs and copy glyphs to texture
 
+  //glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
   for ( int i = data._min_char; i < data._max_char; ++ i )
   {
     TFreetypeGlyph &glyph_data = data._glyphs[i-data._min_char];
     if ( glyph_data._cx == 0 || glyph_data._cy == 0 )
       continue;
 
+    TGlyphImage image( glyph_data );
     glTexSubImage2D(GL_TEXTURE_2D, 0, glyph_data._x, glyph_data._y, glyph_data._cx, glyph_data._cy, GL_RGBA, GL_UNSIGNED_BYTE, glyph_data._image.data() );
   }
-  glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
+  //glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
 
   _font_texture->Release( 0 );
 
