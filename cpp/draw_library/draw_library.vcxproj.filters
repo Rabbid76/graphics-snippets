@@ -90,6 +90,9 @@
     <ClInclude Include="..\include\render\IMesh.h">
       <Filter>render</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\OpenGL\OpenGLTextureLoader.h">
+      <Filter>OpenGL</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -115,6 +118,9 @@
     </ClCompile>
     <ClCompile Include="..\source\util\RenderUtil_ObjLoader.cpp">
       <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="source\OpenGLTextureLoader.cpp">
+      <Filter>OpenGL_source</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

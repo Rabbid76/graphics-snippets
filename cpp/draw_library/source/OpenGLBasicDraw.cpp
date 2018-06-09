@@ -16,6 +16,7 @@
 #include <OpenGLBasicDraw.h>
 #include <OpenGLVertexBuffer.h>
 #include <OpenGLFrameBuffer.h>
+#include <OpenGLTextureLoader.h>
 
 // OpenGL wrapper
 
@@ -871,7 +872,8 @@ bool CBasicDraw::LoadFont(
   try
   {
     newFont = new CFreetypeTexturedFont( font_finename.c_str(), min_char );
-    newFont->Load();
+    CTextureLoader loader;
+    newFont->Load( loader );
     _fonts[font_id].reset( newFont );
   }
   catch (...)
@@ -1822,43 +1824,6 @@ bool CBasicDraw::DrawText2D(
 //---------------------------------------------------------------------
 
 
-class TTextureInternal
-  : public Render::ITexture
-{
-public:
-
-  TTextureInternal( void )
-  {
-    glGenTextures( 1, &_texture_obj );
-  }
-
-  virtual ~TTextureInternal()
-  {
-    if ( _texture_obj != 0 )
-      glDeleteTextures( 1, &_texture_obj );
-  }
-
-  virtual bool Bind( size_t binding_point ) override
-  {
-    glActiveTexture( (GLenum)(GL_TEXTURE0 + binding_point) );
-    glBindTexture( GL_TEXTURE_2D, _texture_obj );
-    return true;
-  }
-
-  virtual bool Release( size_t binding_point ) override
-  {
-    // Bind the default texture to the texture unit.
-    // In common there should be no necessity of this and there should not be any reason to do this.
-    glActiveTexture( (GLenum)(GL_TEXTURE0 + binding_point) );
-    glBindTexture( GL_TEXTURE_2D, 0 );
-    if ( binding_point > 0 )
-      glActiveTexture( 0 );
-    return true;
-  }
-
-  unsigned int _texture_obj = 0;
-};
-
 /******************************************************************//**
 * \brief   freetype glyph metrics
 * 
@@ -1975,7 +1940,8 @@ void CFreetypeTexturedFont::Destroy( void )
 * @date    2018-03-18
 * @version 1.0
 **********************************************************************/
-bool CFreetypeTexturedFont::Load( void )
+bool CFreetypeTexturedFont::Load( 
+  Render::ITextureLoader &loader ) //!< in: texter loader implementation
 {
   if ( _font != nullptr )
     return _valid;
@@ -2061,18 +2027,12 @@ bool CFreetypeTexturedFont::Load( void )
 
   // create texture
 
-  _font_texture = std::make_unique<TTextureInternal>();
-  _font_texture->Bind( 0 );
-  
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-  glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, data._width, data._max_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0 ); 
+   Render::TTextureSize size{ data._width, data._max_height, 1 };
+  _font_texture = loader.CreateTexture(size, 0, Render::T2D_RGBA_clamped_trilinear);
 
-  // load glyohs and copy glyphs to texture
 
-  //glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
+  // load glyphs and copy glyphs to texture
+
   for ( int i = data._min_char; i < data._max_char; ++ i )
   {
     TFreetypeGlyph &glyph_data = data._glyphs[i-data._min_char];
@@ -2080,9 +2040,9 @@ bool CFreetypeTexturedFont::Load( void )
       continue;
 
     TGlyphImage image( glyph_data );
-    glTexSubImage2D(GL_TEXTURE_2D, 0, glyph_data._x, glyph_data._y, glyph_data._cx, glyph_data._cy, GL_RGBA, GL_UNSIGNED_BYTE, glyph_data._image.data() );
+    Render::TTexturePoint pos{ glyph_data._x, glyph_data._y, 0 };
+    loader.LoadToTexture( image, *_font_texture, pos, 0 );
   }
-  //glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
 
   _font_texture->Release( 0 );
 

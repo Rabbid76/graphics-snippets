@@ -13,7 +13,6 @@
 // includes
 
 #include <IDrawType.h>
-#include <IBuffer.h>
 
 
 /******************************************************************//**
@@ -25,6 +24,10 @@
 **********************************************************************/
 namespace Render
 {
+
+
+class ITextureLoader;
+class IDrawBufferPrivider;
 
 
 //---------------------------------------------------------------------
@@ -45,8 +48,8 @@ public:
 
   virtual ~IFont() = default;
 
-  virtual void Destroy( void ) = 0; //!< destroy all internal objects and cleanup
-  virtual bool Load( void ) = 0;    //!< load the glyphs
+  virtual void Destroy( void ) = 0;                        //!< destroy all internal objects and cleanup
+  virtual bool Load( Render::ITextureLoader &loader ) = 0; //!< load the glyphs
 
   //! calculates box of a string in relation to its height (maximum height of the font from the bottom to the top)
   virtual bool CalculateTextSize( const char *str, float height, float &box_x, float &box_btm, float &box_top ) = 0;

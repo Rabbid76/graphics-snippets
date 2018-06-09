@@ -90,6 +90,39 @@ enum class TTrasformation
 using TTexturePoint = std::array<size_t, 3>;
 using TTextureSize  = std::array<size_t, 3>;
 
+
+/******************************************************************//**
+* \brief   Texture wrap parameter
+* 
+* \author  gernot
+* \date    2018-06-09
+* \version 1.0
+**********************************************************************/
+enum class TTextureWrap
+{
+  clamp,
+  tiled,
+  mirror
+};
+
+using TTextureWraps = std::array<TTextureWrap, 3>;
+
+
+/******************************************************************//**
+* \brief   
+* 
+* \author  gerno
+* \date    2018-06-09
+* \version 1.0
+**********************************************************************/
+enum class TTextureFilter
+{
+  NON,
+  bilinear,
+  trilinear
+};
+
+
 //---------------------------------------------------------------------
 // ITexture
 //---------------------------------------------------------------------
@@ -155,6 +188,41 @@ using TTexturePtr = std::unique_ptr<ITexture>;
 
 
 /******************************************************************//**
+* \brief   Texture setup parameters.
+* 
+* \author  gernot
+* \date    2018-06-09
+* \version 1.0
+**********************************************************************/
+struct TTextureParameters
+{
+  TTextureType   _type{ TTextureType::T2D };
+  TTextureFormat _format{ TTextureFormat::RGBA8 };
+  TTextureWraps  _wrap{ TTextureWrap::clamp, TTextureWrap::clamp, TTextureWrap::clamp };
+  TTextureFilter _filter{ TTextureFilter::trilinear };
+  int            _max_mipmap{ 1000 };
+};
+
+
+/******************************************************************//**
+* \brief   Predfined texture kinds
+* 
+* Note, the enum constant is used as an index for a paramter table.
+* 
+* \author  gernot
+* \date    2018-06-09
+* \version 1.0
+**********************************************************************/
+enum TStandardTextureKind
+{
+  T2D_RGBA_tiled_nofilter    = 0,
+  T2D_RGBA_tiled_trilinear   = 1,
+  T2D_RGBA_clamped_nofilter  = 2,
+  T2D_RGBA_clamped_trilinear = 3,
+};
+
+
+/******************************************************************//**
 * @brief Generic interface for lading a render texture from a
 * resource.
 *
@@ -168,11 +236,47 @@ public:
 
   virtual ~ITextureLoader() = default;
 
-  // TODO $$$ CreateTexture no data / buffe only
-  virtual TTexturePtr CreateTexture(IImageResource &image, TTrasformation transform, TTextureFormat internalformat) = 0;
+  //! create a new but empty texture
+  TTexturePtr CreateTexture(const TTextureSize &size, size_t layers, TStandardTextureKind kind)
+  {
+    return CreateTexture(size, layers, Parameters(kind));
+  }
+  
+  //! create a new but empty texture
+  virtual TTexturePtr CreateTexture(const TTextureSize &size, size_t layers, const TTextureParameters &param) = 0;
 
+  //! create a new texture from an image resource
+  TTexturePtr CreateTexture(IImageResource &image, TTrasformation transform, const TTextureSize &size, size_t layers, TStandardTextureKind kind)
+  {
+    return CreateTexture( image, transform, size, layers, Parameters(kind) );
+  }
+       
+  //! create a new texture from an image resource
+  virtual TTexturePtr CreateTexture(IImageResource &image, TTrasformation transform, const TTextureSize &size, size_t layers, const TTextureParameters &param) = 0;
+
+  //! load image data to texture
   virtual bool LoadToTexture(IImageResource &image, ITexture &texture, TTexturePoint &pos, size_t layer) = 0;
 
+
+  static const TTextureParameters & Parameters( TStandardTextureKind id )
+  {
+    static const TTextureParameters param_table[] = {
+
+      // T2D_RGBA_tiled_nofilter
+      TTextureParameters{ { TTextureType::T2D }, { TTextureFormat::RGBA8 }, { TTextureWrap::tiled, TTextureWrap::tiled, TTextureWrap::tiled }, { TTextureFilter::NON }, { 0 } },
+
+      // T2D_RGBA_tiled_trilinear
+      TTextureParameters{ { TTextureType::T2D }, { TTextureFormat::RGBA8 }, { TTextureWrap::tiled, TTextureWrap::tiled, TTextureWrap::tiled }, { TTextureFilter::trilinear }, { 1000 } },
+
+      // T2D_RGBA_clamped_nofilter
+      TTextureParameters{ { TTextureType::T2D }, { TTextureFormat::RGBA8 }, { TTextureWrap::clamp, TTextureWrap::clamp, TTextureWrap::clamp }, { TTextureFilter::NON }, { 0 } },
+
+      // T2D_RGBA_clamped_trilinear
+      TTextureParameters{ { TTextureType::T2D }, { TTextureFormat::RGBA8 }, { TTextureWrap::clamp, TTextureWrap::clamp, TTextureWrap::clamp }, { TTextureFilter::trilinear }, { 1000 } },
+    };
+
+    return param_table[(int)id];
+  }
 };
 
 
