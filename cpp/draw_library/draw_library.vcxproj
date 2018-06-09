@@ -185,11 +185,13 @@
     <ClInclude Include="..\include\render\IFont.h" />
     <ClInclude Include="..\include\render\IResource.h" />
     <ClInclude Include="..\include\render\ITexture.h" />
+    <ClInclude Include="..\include\util\RenderUtil_FreetypeFont.h" />
     <ClInclude Include="..\include\util\RenderUtil_ObjLoader.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\source\util\RenderUtil_FreetypeFont.cpp" />
     <ClCompile Include="..\source\util\RenderUtil_ObjLoader.cpp" />
     <ClCompile Include="source\OpenGLBasicDraw.cpp" />
     <ClCompile Include="source\OpenGLError.cpp" />

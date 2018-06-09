@@ -93,6 +93,9 @@
     <ClInclude Include="..\include\OpenGL\OpenGLTextureLoader.h">
       <Filter>OpenGL</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\util\RenderUtil_FreetypeFont.h">
+      <Filter>util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -121,6 +124,9 @@
     </ClCompile>
     <ClCompile Include="source\OpenGLTextureLoader.cpp">
       <Filter>OpenGL_source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\util\RenderUtil_FreetypeFont.cpp">
+      <Filter>util</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
