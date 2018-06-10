@@ -301,10 +301,24 @@ bool CTextureLoader::SetTextureParameter(
   if ( parameter.Is3DType() )
     glTexParameteri( target, GL_TEXTURE_WRAP_T, wrap[2] );
   
-  // TODO $$$ glTexParameteri( target, GL_TEXTURE_MIN_FILTER, minifying );
-  glTexParameteri( target, GL_TEXTURE_MIN_FILTER, magnification );
+  glTexParameteri( target, GL_TEXTURE_MIN_FILTER, minifying );
+  //glTexParameteri( target, GL_TEXTURE_MIN_FILTER, magnification );
   glTexParameteri( target, GL_TEXTURE_MAG_FILTER, magnification );
 
+  // generate mipmaps
+  if ( parameter._max_mipmap > 1 )
+  {
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0 );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, (GLint)parameter._max_mipmap );
+
+    // [`EXT_texture_filter_anisotropic`](https://www.khronos.org/registry/OpenGL/extensions/EXT/EXT_texture_filter_anisotropic.txt)
+    GLint max_anisotropic = std::min((GLint)_max_anisotripic_filter, (GLint)parameter._anisotropic);
+    if ( max_anisotropic > 1 )
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, max_anisotropic); 
+
+    //! [`glGenerateMipmap`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGenerateMipmap.xhtml)
+    glGenerateMipmap( GL_TEXTURE_2D );
+  }
 
   // TODO $$$ mipamps and anisotropic texture filter
 

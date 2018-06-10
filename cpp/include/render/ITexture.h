@@ -223,9 +223,11 @@ using TTexturePtr = std::unique_ptr<ITexture>;
 enum TStandardTextureKind
 {
   T2D_RGBA_tiled_nofilter    = 0,
-  T2D_RGBA_tiled_trilinear   = 1,
-  T2D_RGBA_clamped_nofilter  = 2,
-  T2D_RGBA_clamped_trilinear = 3,
+  T2D_RGBA_tiled_bilinear    = 1,
+  T2D_RGBA_tiled_trilinear   = 2,
+  T2D_RGBA_clamped_nofilter  = 3,
+  T2D_RGBA_clamped_bilinear  = 4, //!< Recommended for texture fonts. Note texture fonts may disappear with trilinear filtering and huge minification.
+  T2D_RGBA_clamped_trilinear = 5,
 };
 
 
@@ -272,12 +274,18 @@ public:
       // T2D_RGBA_tiled_nofilter
       TTextureParameters{ { TTextureType::T2D }, { TTextureFormat::RGBA8 }, { TTextureWrap::tiled, TTextureWrap::tiled, TTextureWrap::tiled }, { TTextureFilter::NON }, { 0 }, { 0 } },
 
+      // T2D_RGBA_tiled_bilinear
+      TTextureParameters{ { TTextureType::T2D }, { TTextureFormat::RGBA8 }, { TTextureWrap::tiled, TTextureWrap::tiled, TTextureWrap::tiled }, { TTextureFilter::bilinear }, { 0 }, { 0 } },
+   
       // T2D_RGBA_tiled_trilinear
       TTextureParameters{ { TTextureType::T2D }, { TTextureFormat::RGBA8 }, { TTextureWrap::tiled, TTextureWrap::tiled, TTextureWrap::tiled }, { TTextureFilter::trilinear }, { 1000 }, { 16 } },
 
       // T2D_RGBA_clamped_nofilter
       TTextureParameters{ { TTextureType::T2D }, { TTextureFormat::RGBA8 }, { TTextureWrap::clamp, TTextureWrap::clamp, TTextureWrap::clamp }, { TTextureFilter::NON }, { 0 }, { 0 } },
 
+      // T2D_RGBA_clamped_bilinear
+      TTextureParameters{ { TTextureType::T2D }, { TTextureFormat::RGBA8 }, { TTextureWrap::clamp, TTextureWrap::clamp, TTextureWrap::clamp }, { TTextureFilter::bilinear }, { 0 }, { 0 } },
+    
       // T2D_RGBA_clamped_trilinear
       TTextureParameters{ { TTextureType::T2D }, { TTextureFormat::RGBA8 }, { TTextureWrap::clamp, TTextureWrap::clamp, TTextureWrap::clamp }, { TTextureFilter::trilinear }, { 1000 }, { 16 } },
     };
