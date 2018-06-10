@@ -164,6 +164,23 @@ public:
 
 
 /******************************************************************//**
+* \brief   Texture setup parameters.
+* 
+* \author  gernot
+* \date    2018-06-09
+* \version 1.0
+**********************************************************************/
+struct TTextureParameters
+{
+  TTextureType   _type{ TTextureType::T2D };
+  TTextureFormat _format{ TTextureFormat::RGBA8 };
+  TTextureWraps  _wrap{ TTextureWrap::clamp, TTextureWrap::clamp, TTextureWrap::clamp };
+  TTextureFilter _filter{ TTextureFilter::trilinear };
+  int            _max_mipmap{ 1000 };
+};
+
+
+/******************************************************************//**
 * @brief Generic interface for a render texture.
 *
 * Implementations of this interface should use
@@ -180,28 +197,13 @@ public:
 
   virtual ~ITexture() = default;
 
+  virtual TTextureType Type( void ) const = 0;
+
   virtual bool Bind( size_t binding_point ) = 0;
   virtual bool Release( size_t binding_point ) = 0;
 };
 
 using TTexturePtr = std::unique_ptr<ITexture>;
-
-
-/******************************************************************//**
-* \brief   Texture setup parameters.
-* 
-* \author  gernot
-* \date    2018-06-09
-* \version 1.0
-**********************************************************************/
-struct TTextureParameters
-{
-  TTextureType   _type{ TTextureType::T2D };
-  TTextureFormat _format{ TTextureFormat::RGBA8 };
-  TTextureWraps  _wrap{ TTextureWrap::clamp, TTextureWrap::clamp, TTextureWrap::clamp };
-  TTextureFilter _filter{ TTextureFilter::trilinear };
-  int            _max_mipmap{ 1000 };
-};
 
 
 /******************************************************************//**

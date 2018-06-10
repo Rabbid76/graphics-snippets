@@ -49,9 +49,11 @@ public:
   //! load image data to texture
   virtual bool LoadToTexture(Render::IImageResource &image, Render::ITexture &texture, Render::TTexturePoint &pos, size_t layer) override;
 
-private:
 
+  //! map texture type to OpenGL target type
   static unsigned int TargetType( Render::TTextureType type );
+
+private:
 
   size_t _loader_binding_point = 0;
 };

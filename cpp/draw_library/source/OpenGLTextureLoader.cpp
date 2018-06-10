@@ -26,7 +26,8 @@
 
 #include <algorithm> 
 #include <unordered_map>
-#include <assert.h>
+#include <iostream>
+
 
 // preprocessor
 
@@ -40,6 +41,11 @@
 
 #ifndef DebugWarning
 #define DebugWarning std::cout
+#endif
+
+#ifndef ASSERT
+#include <assert.h>
+#define ASSERT assert
 #endif
 
 
@@ -71,7 +77,8 @@ class CTextureInternal
 {
 public:
 
-  CTextureInternal( void )
+  CTextureInternal( Render::TTextureType type )
+    : _type( type )
   {
     glGenTextures( 1, &_texture_obj );
   }
@@ -82,29 +89,35 @@ public:
       glDeleteTextures( 1, &_texture_obj );
   }
 
+  virtual Render::TTextureType Type( void ) const override { return _type; }
+
+
   virtual bool Bind( size_t binding_point ) override
   {
-    // TODO $$$
+    GLenum target = CTextureLoader::TargetType( _type );
 
     glActiveTexture( (GLenum)(GL_TEXTURE0 + binding_point) );
-    glBindTexture( GL_TEXTURE_2D, _texture_obj );
+    glBindTexture( target, _texture_obj );
     return true;
   }
 
   virtual bool Release( size_t binding_point ) override
   {
-    // TODO $$$
+    GLenum target = CTextureLoader::TargetType( _type );
 
     // Bind the default texture to the texture unit.
     // In common there should be no necessity of this and there should not be any reason to do this.
     glActiveTexture( (GLenum)(GL_TEXTURE0 + binding_point) );
-    glBindTexture( GL_TEXTURE_2D, 0 );
+    glBindTexture( target, 0 );
     if ( binding_point > 0 )
       glActiveTexture( 0 );
     return true;
   }
 
-  unsigned int _texture_obj = 0;
+private:
+
+  unsigned int         _texture_obj{ 0 };
+  Render::TTextureType _type{ Render::TTextureType::T2D };
 };
 
 
@@ -167,7 +180,7 @@ unsigned int CTextureLoader::TargetType(
   };
 
   auto it = target_map.find(type);
-  assert(it != target_map.end());
+  ASSERT(it != target_map.end());
   return it != target_map.end() ? it->second : GL_TEXTURE_2D;
 }
 
@@ -184,17 +197,23 @@ Render::TTexturePtr CTextureLoader::CreateTexture(
   size_t                            layers, //!< in: number of layers
   const Render::TTextureParameters &param ) //!< in: texture properties
 {
+  GLenum target = TargetType( param._type );
+  if ( target != GL_TEXTURE_2D )
+  {
+    DebugWarning << "creating texture with target " << target << "is not yet implemented";
+    return nullptr;
+  }
 
   // TODO $$$
 
-  Render::TTexturePtr texture = std::make_unique<CTextureInternal>();
+  Render::TTexturePtr texture = std::make_unique<CTextureInternal>( param._type );
   texture->Bind( _loader_binding_point );
 
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-  glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, (GLsizei)size[0], (GLsizei)size[1], 0, GL_RGBA, GL_UNSIGNED_BYTE, 0 ); 
+  glTexParameteri( target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+  glTexParameteri( target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+  glTexParameteri( target, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+  glTexParameteri( target, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+  glTexImage2D( target, 0, GL_RGBA, (GLsizei)size[0], (GLsizei)size[1], 0, GL_RGBA, GL_UNSIGNED_BYTE, 0 ); 
 
   // TODO $$$
 
@@ -216,7 +235,15 @@ Render::TTexturePtr CTextureLoader::CreateTexture(
   size_t                            layers,    //!< in: number of layers
   const Render::TTextureParameters &param )    //!< in: texture properties
 {
+  GLenum target = TargetType( param._type );
+  if ( target != GL_TEXTURE_2D )
+  {
+    DebugWarning << "creating texture with target " << target << "is not yet implemented";
+    return nullptr;
+  }
 
+  // TODO $$$
+  DebugWarning << "creating texture from image resource is not yet implemented";
   // TODO $$$
 
   return nullptr;
@@ -236,6 +263,13 @@ bool CTextureLoader::LoadToTexture(
   Render::TTexturePoint  &pos,     //!< in: target position
   size_t                  layer )  //!< in: target layer
 {
+  GLenum target = TargetType( texture.Type() );
+  if ( target != GL_TEXTURE_2D )
+  {
+    DebugWarning << "loading texture with target " << target << "is not yet implemented";
+    return false;
+  }
+
   // TODO $$$
 
   //glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
