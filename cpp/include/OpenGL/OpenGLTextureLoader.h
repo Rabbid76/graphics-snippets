@@ -51,6 +51,8 @@ public:
 
 private:
 
+  static unsigned int TargetType( Render::TTextureType type );
+
   size_t _loader_binding_point = 0;
 };
 

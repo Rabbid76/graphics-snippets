@@ -25,6 +25,8 @@
 // stl
 
 #include <algorithm> 
+#include <unordered_map>
+#include <assert.h>
 
 // preprocessor
 
@@ -143,6 +145,31 @@ CTextureLoader::CTextureLoader(
 **********************************************************************/
 CTextureLoader::~CTextureLoader()
 {}
+
+
+/******************************************************************//**
+* \brief Map render texture type to OpenGL target enumerator constant  
+* 
+* \author  gernot
+* \date    2018-06-10
+* \version 1.0
+**********************************************************************/
+unsigned int CTextureLoader::TargetType( 
+  Render::TTextureType type ) //!< in: texture type
+{
+  const  std::unordered_map< Render::TTextureType, GLenum > target_map
+  {
+    { Render::TTextureType::T1D,       GL_TEXTURE_1D },
+    { Render::TTextureType::T2D,       GL_TEXTURE_2D },
+    { Render::TTextureType::T3D,       GL_TEXTURE_3D },
+    { Render::TTextureType::TCUBE,     GL_TEXTURE_CUBE_MAP }, 
+    { Render::TTextureType::T2D_ARRAY, GL_TEXTURE_2D_ARRAY } 
+  };
+
+  auto it = target_map.find(type);
+  assert(it != target_map.end());
+  return it != target_map.end() ? it->second : GL_TEXTURE_2D;
+}
 
 
 /******************************************************************//**
