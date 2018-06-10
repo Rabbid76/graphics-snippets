@@ -47,6 +47,10 @@
 namespace OpenGL
 {
 
+std::set<std::string> CBasicDraw::_ogl_extensins;
+int                   CBasicDraw::_max_anistropic_texture_filter = 0;
+
+
 /******************************************************************//**
 * \class OpenGL::CBasicDraw  
 *
@@ -902,6 +906,26 @@ bool CBasicDraw::Init( void )
 {
   if ( _initialized )
     return true;
+
+  // get names of opengl extensions
+  GLint no_of_extensions = 0;
+  glGetIntegerv(GL_NUM_EXTENSIONS, &no_of_extensions);
+  for ( int i = 0; i < no_of_extensions; ++i )
+  {
+    std::string ext_name = reinterpret_cast<const char*>( glGetStringi( GL_EXTENSIONS, i ) );
+    _ogl_extensins.insert( ext_name );
+  }
+
+  // check for anisotropic texture filter extension
+  // `EXT_texture_filter_anisotropic`
+  // [https://www.khronos.org/registry/OpenGL/extensions/EXT/EXT_texture_filter_anisotropic.txt]
+  if ( _ogl_extensins.find( "GL_EXT_texture_filter_anisotropic" ) != _ogl_extensins.end() )
+  {
+    int max_anisotropic = 0;
+    glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &max_anisotropic);
+    _max_anistropic_texture_filter = max_anisotropic > 0 ? max_anisotropic : 0;
+  }
+  CTextureLoader::SetMaxAnisotropicFilter( (size_t)_max_anistropic_texture_filter );
 
   // specify render process
   SpecifyRenderProcess();

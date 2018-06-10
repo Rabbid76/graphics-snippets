@@ -102,7 +102,7 @@ enum class TTextureWrap
 {
   clamp,
   tiled,
-  mirror
+  tiled_mirrored
 };
 
 using TTextureWraps = std::array<TTextureWrap, 3>;
@@ -177,6 +177,11 @@ struct TTextureParameters
   TTextureWraps  _wrap{ TTextureWrap::clamp, TTextureWrap::clamp, TTextureWrap::clamp };
   TTextureFilter _filter{ TTextureFilter::trilinear };
   int            _max_mipmap{ 1000 };
+  int            _anisotropic{ 16 };
+
+  bool Is1DType( void ) const { return _type == TTextureType::T1D; }
+  bool Is2DType( void ) const { return _type == TTextureType::T2D || _type == TTextureType::T2D_ARRAY || _type == TTextureType::TCUBE; }
+  bool Is3DType( void ) const { return _type == TTextureType::T3D; }
 };
 
 
@@ -265,16 +270,16 @@ public:
     static const TTextureParameters param_table[] = {
 
       // T2D_RGBA_tiled_nofilter
-      TTextureParameters{ { TTextureType::T2D }, { TTextureFormat::RGBA8 }, { TTextureWrap::tiled, TTextureWrap::tiled, TTextureWrap::tiled }, { TTextureFilter::NON }, { 0 } },
+      TTextureParameters{ { TTextureType::T2D }, { TTextureFormat::RGBA8 }, { TTextureWrap::tiled, TTextureWrap::tiled, TTextureWrap::tiled }, { TTextureFilter::NON }, { 0 }, { 0 } },
 
       // T2D_RGBA_tiled_trilinear
-      TTextureParameters{ { TTextureType::T2D }, { TTextureFormat::RGBA8 }, { TTextureWrap::tiled, TTextureWrap::tiled, TTextureWrap::tiled }, { TTextureFilter::trilinear }, { 1000 } },
+      TTextureParameters{ { TTextureType::T2D }, { TTextureFormat::RGBA8 }, { TTextureWrap::tiled, TTextureWrap::tiled, TTextureWrap::tiled }, { TTextureFilter::trilinear }, { 1000 }, { 16 } },
 
       // T2D_RGBA_clamped_nofilter
-      TTextureParameters{ { TTextureType::T2D }, { TTextureFormat::RGBA8 }, { TTextureWrap::clamp, TTextureWrap::clamp, TTextureWrap::clamp }, { TTextureFilter::NON }, { 0 } },
+      TTextureParameters{ { TTextureType::T2D }, { TTextureFormat::RGBA8 }, { TTextureWrap::clamp, TTextureWrap::clamp, TTextureWrap::clamp }, { TTextureFilter::NON }, { 0 }, { 0 } },
 
       // T2D_RGBA_clamped_trilinear
-      TTextureParameters{ { TTextureType::T2D }, { TTextureFormat::RGBA8 }, { TTextureWrap::clamp, TTextureWrap::clamp, TTextureWrap::clamp }, { TTextureFilter::trilinear }, { 1000 } },
+      TTextureParameters{ { TTextureType::T2D }, { TTextureFormat::RGBA8 }, { TTextureWrap::clamp, TTextureWrap::clamp, TTextureWrap::clamp }, { TTextureFilter::trilinear }, { 1000 }, { 16 } },
     };
 
     return param_table[(int)id];

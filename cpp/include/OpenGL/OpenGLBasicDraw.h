@@ -29,6 +29,8 @@
 // stl
 
 #include <memory>
+#include <set>
+#include <string>
 
 
 // calss declarations
@@ -171,6 +173,9 @@ private:
   bool SetModelUniform( const float *model );
   bool SetModelUniform( const TVec3 &scale, const TVec3 &p0, const TVec3 &px, const TVec3 &xz_plane );
   void DrawScereenspace( void );
+
+  static std::set<std::string> _ogl_extensins;
+  static int                   _max_anistropic_texture_filter;
 
   bool                                _initialized    = false;
   bool                                _drawing        = false;
