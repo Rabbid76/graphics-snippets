@@ -172,7 +172,7 @@ CTextureLoader::~CTextureLoader()
 unsigned int CTextureLoader::TargetType( 
   Render::TTextureType type ) //!< in: texture type
 {
-  const  std::unordered_map< Render::TTextureType, GLenum > target_map
+  static const std::unordered_map< Render::TTextureType, GLenum > target_map
   {
     { Render::TTextureType::T1D,       GL_TEXTURE_1D },
     { Render::TTextureType::T2D,       GL_TEXTURE_2D },
@@ -201,7 +201,7 @@ unsigned int CTextureLoader::Minifying(
   Render::TTextureFilter filter,            //!< in: filter
   int                    max_mipmap_level ) //!< in: maximum mip map level
 {
-  const  std::unordered_map< Render::TTextureFilter, std::array<GLenum, 2> > filter_map
+  static const std::unordered_map< Render::TTextureFilter, std::array<GLenum, 2> > filter_map
   {
     { Render::TTextureFilter::NON,       { GL_NEAREST, GL_NEAREST_MIPMAP_NEAREST } },
     { Render::TTextureFilter::bilinear,  { GL_LINEAR,  GL_LINEAR_MIPMAP_NEAREST  } },
@@ -241,7 +241,7 @@ unsigned int CTextureLoader::Magnification(
 unsigned int CTextureLoader::Wrap( 
   const Render::TTextureWrap &wrap ) //!< in: texture wrap parameter
 {
-  const  std::unordered_map< Render::TTextureWrap, GLenum > wrap_map
+  static const std::unordered_map< Render::TTextureWrap, GLenum > wrap_map
   {
     { Render::TTextureWrap::clamp,          GL_CLAMP_TO_EDGE   },
     { Render::TTextureWrap::tiled,          GL_REPEAT          },

@@ -148,13 +148,14 @@ using TMaterialSimpleTable = std::vector<TMaterialSimple>; //!< table of the sim
 **********************************************************************/
 struct TMaterialTextureProperties 
 {
-  TImageKind     _type;   //!< kind of the textue (0 = no texture)
-  TTextureFilter _filter; //!< filtering
-  TTextureWrap   _wrap_s; //!< wrapping along the x (s, u) axis 
-  TTextureWrap   _wrap_t; //!< wrapping along the y (t, v) axis
-  TVec3          _scale;  //!< uv scale + displacement scale
-  TVec2          _offset; //!< uv offset
-  t_fp           _rotate; //!< roation angle (z axis) radians counterclockwise
+  TImageKind     _type;        //!< kind of the textue (0 = no texture)
+  TTextureFilter _filter;      //!< filtering
+  TTextureWrap   _wrap_s;      //!< wrapping along the x (s, u) axis 
+  TTextureWrap   _wrap_t;      //!< wrapping along the y (t, v) axis
+  TVec3          _scale;       //!< uv scale + displacement scale
+  TVec2          _offset;      //!< uv offset
+  t_fp           _rotate;      //!< roation angle (z axis) radians counterclockwise
+  TIndexData     _texture_ref; //!< reference to the texture (index in the material texture table)
 };
 
 
@@ -251,7 +252,8 @@ struct TMaterial
   // TODO $$$ ...
 };
 
-using TMaterialTable = std::vector<TMaterial>; //!< table of the standard materials
+using TMaterialTable = std::vector<TMaterial>;                       //!< table of the standard materials
+using TTextureTable  = std::vector<std::shared_ptr<IImageResource>>; //!< table of the textures for the standard materials 
 
 
 
@@ -338,6 +340,7 @@ struct TRenderData
   TSurfaceTable        _surfaces;       //!< index and surface 
   TMaterialSimpleTable _materialSimple; //!< simple material data
   TMaterialTable       _material;       //!< material data
+  TTextureTable        _textures;       //!< texture data
 };
 
 }; // Render

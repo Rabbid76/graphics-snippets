@@ -103,8 +103,10 @@ enum class TTextureType : t_byte
 **********************************************************************/
 enum class TImageFormat
 {
-  RGB8,   //!< 3 color channels; 1 byte (unsigned)
-  RGBA8,  //!< 3 color channels and 1 alpha channel; 1 byte (unsigned) 
+  UNKNOWN, //!< unsupported image format
+  GRAY8,   //!< 1 color channel; 1 byte (unsigned)
+  RGB8,    //!< 3 color channels; 1 byte (unsigned)
+  RGBA8,   //!< 3 color channels and 1 alpha channel; 1 byte (unsigned) 
 };
 
 
@@ -158,12 +160,12 @@ class IImageResource
 {
 public:
 
-  virtual TTextureType Type( void )   const = 0; //!< type of the texture 1D, 2D, 3D
-  virtual TImageFormat Format( void ) const = 0; //!< format of one texel or voxel
-  virtual TTextureSize Size( void )   const = 0; //!< size for up to 3 dimensions
-  virtual size_t       Layers( void ) const = 0; //!< number of layers
-  virtual size_t       BPL( void )    const = 0; //!< number of byts of a single line of the image
-  virtual const void * DataPtr()      const = 0; //!< pointer to the native image data
+  virtual TTextureType Type( void )    const = 0; //!< type of the texture 1D, 2D, 3D
+  virtual TImageFormat Format( void )  const = 0; //!< format of one texel or voxel
+  virtual TTextureSize Size( void )    const = 0; //!< size for up to 3 dimensions
+  virtual size_t       Layers( void )  const = 0; //!< number of layers
+  virtual size_t       BPL( void )     const = 0; //!< number of byts of a single line of the image
+  virtual const void * DataPtr( void ) const = 0; //!< pointer to the native image data
 };
 
 
@@ -303,22 +305,22 @@ public:
     static const TTextureParameters param_table[] = {
 
       // T2D_RGBA_tiled_nofilter
-      TTextureParameters( TTextureType::T2D, TTextureFormat::RGBA8, { TTextureWrap::tiled, TTextureWrap::tiled, TTextureWrap::tiled }, TTextureFilter::NON, 0, 0 ),
+      TTextureParameters{ TTextureType::T2D, TTextureFormat::RGBA8, { TTextureWrap::tiled, TTextureWrap::tiled, TTextureWrap::tiled }, TTextureFilter::NON, 0, 0 },
 
       // T2D_RGBA_tiled_bilinear
-      TTextureParameters( TTextureType::T2D, TTextureFormat::RGBA8, { TTextureWrap::tiled, TTextureWrap::tiled, TTextureWrap::tiled }, TTextureFilter::bilinear, 0, 0 ),
+      TTextureParameters{ TTextureType::T2D, TTextureFormat::RGBA8, { TTextureWrap::tiled, TTextureWrap::tiled, TTextureWrap::tiled }, TTextureFilter::bilinear, 0, 0 },
    
       // T2D_RGBA_tiled_trilinear
-      TTextureParameters( TTextureType::T2D, TTextureFormat::RGBA8, { TTextureWrap::tiled, TTextureWrap::tiled, TTextureWrap::tiled }, TTextureFilter::trilinear, 1000, 16 ),
+      TTextureParameters{ TTextureType::T2D, TTextureFormat::RGBA8, { TTextureWrap::tiled, TTextureWrap::tiled, TTextureWrap::tiled }, TTextureFilter::trilinear, 1000, 16 },
 
       // T2D_RGBA_clamped_nofilter
-      TTextureParameters( TTextureType::T2D, TTextureFormat::RGBA8, { TTextureWrap::clamp, TTextureWrap::clamp, TTextureWrap::clamp }, TTextureFilter::NON, 0, 0 ),
+      TTextureParameters{ TTextureType::T2D, TTextureFormat::RGBA8, { TTextureWrap::clamp, TTextureWrap::clamp, TTextureWrap::clamp }, TTextureFilter::NON, 0, 0 },
 
       // T2D_RGBA_clamped_bilinear
-      TTextureParameters( TTextureType::T2D, TTextureFormat::RGBA8, { TTextureWrap::clamp, TTextureWrap::clamp, TTextureWrap::clamp }, TTextureFilter::bilinear, 0, 0 ),
+      TTextureParameters{ TTextureType::T2D, TTextureFormat::RGBA8, { TTextureWrap::clamp, TTextureWrap::clamp, TTextureWrap::clamp }, TTextureFilter::bilinear, 0, 0 },
     
       // T2D_RGBA_clamped_trilinear
-      TTextureParameters( TTextureType::T2D, TTextureFormat::RGBA8, { TTextureWrap::clamp, TTextureWrap::clamp, TTextureWrap::clamp }, TTextureFilter::trilinear, 1000, 16 ),
+      TTextureParameters{ TTextureType::T2D, TTextureFormat::RGBA8, { TTextureWrap::clamp, TTextureWrap::clamp, TTextureWrap::clamp }, TTextureFilter::trilinear, 1000, 16 },
     };
 
     return param_table[(int)id];
