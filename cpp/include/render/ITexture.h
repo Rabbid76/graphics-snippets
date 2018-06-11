@@ -27,13 +27,64 @@ namespace Render
 
 
 /******************************************************************//**
+* \brief Kind of the resource image content.  
+* 
+* \author  gernot
+* \date    2018-06-09
+* \version 1.0
+**********************************************************************/
+enum class TImageKind : t_byte
+{
+  NON,                    //!< not used (no texture)
+  diffuse,                //!< color texture
+  grayscale,              //!< grayscale texture
+  displacement_map,       //!< displacment map; 1 channel (red)
+  normal_map,             //!< normal map; 3 channels (RGB)
+  noraml_displacment_map, //!< normal map; 3 channels (RGB) + displacment map; 1 channel (alpha)
+  displacment_cone_map    //!< displacment map; 1 channel (red) + cone map; 1 channel (green) 
+};
+
+
+/******************************************************************//**
+* \brief   
+* 
+* \author  gernot
+* \date    2018-06-09
+* \version 1.0
+**********************************************************************/
+enum class TTextureFilter : t_byte
+{
+  NON,        //!< no filter
+  bilinear,   //!< linear interpolation
+  trilinear   //!< mipmaps (linear interpolation)
+};
+
+
+/******************************************************************//**
+* \brief   Texture wrap parameter
+* 
+* \author  gernot
+* \date    2018-06-09
+* \version 1.0
+**********************************************************************/
+enum class TTextureWrap : t_byte
+{
+  clamp,           //!< clamp texture to edge
+  mirrored,        //!< mirror and clamp texture to edge
+  tiled,           //!< tile texture
+  tiled_mirrored,  //!< tile texture; even tiles are mirrored
+};
+using TTextureWraps = std::array<TTextureWrap, 3>;
+
+
+/******************************************************************//**
 * \brief   Type of the texture 1D, 2D, 3D
 * 
 * \author  gernot
 * \date    2018-06-08
 * \version 1.0
 **********************************************************************/
-enum class TTextureType
+enum class TTextureType : t_byte
 {
   T1D,       //!< 1 dimensional texture
   T2D,       //!< 2 dimensional texture
@@ -53,7 +104,7 @@ enum class TTextureType
 enum class TImageFormat
 {
   RGB8,   //!< 3 color channels; 1 byte (unsigned)
-  RGBA8,  //!< 3 colro channels and 1 alpha channel; 1 byte (unsigned) 
+  RGBA8,  //!< 3 color channels and 1 alpha channel; 1 byte (unsigned) 
 };
 
 
@@ -89,38 +140,6 @@ enum class TTrasformation
 
 using TTexturePoint = std::array<size_t, 3>;
 using TTextureSize  = std::array<size_t, 3>;
-
-
-/******************************************************************//**
-* \brief   Texture wrap parameter
-* 
-* \author  gernot
-* \date    2018-06-09
-* \version 1.0
-**********************************************************************/
-enum class TTextureWrap
-{
-  clamp,
-  tiled,
-  tiled_mirrored
-};
-
-using TTextureWraps = std::array<TTextureWrap, 3>;
-
-
-/******************************************************************//**
-* \brief   
-* 
-* \author  gerno
-* \date    2018-06-09
-* \version 1.0
-**********************************************************************/
-enum class TTextureFilter
-{
-  NON,
-  bilinear,
-  trilinear
-};
 
 
 //---------------------------------------------------------------------
@@ -222,12 +241,12 @@ using TTexturePtr = std::unique_ptr<ITexture>;
 **********************************************************************/
 enum TStandardTextureKind
 {
-  T2D_RGBA_tiled_nofilter    = 0,
-  T2D_RGBA_tiled_bilinear    = 1,
-  T2D_RGBA_tiled_trilinear   = 2,
-  T2D_RGBA_clamped_nofilter  = 3,
-  T2D_RGBA_clamped_bilinear  = 4, //!< Recommended for texture fonts. Note texture fonts may disappear with trilinear filtering and huge minification.
-  T2D_RGBA_clamped_trilinear = 5,
+  T2D_RGBA_tiled_nofilter      = 0,
+  T2D_RGBA_tiled_bilinear      = 1,
+  T2D_RGBA_tiled_trilinear     = 2,
+  T2D_RGBA_clamped_nofilter    = 3,
+  T2D_RGBA_clamped_bilinear    = 4, //!< Recommended for texture fonts. Note texture fonts may disappear with trilinear filtering and huge minification.
+  T2D_RGBA_clamped_trilinear   = 5
 };
 
 

@@ -15,6 +15,7 @@
 
 #include <IDrawType.h>
 #include <ILight.h>
+#include <ITexture.h>
 
 #include <vector>
 #include <array>
@@ -138,34 +139,6 @@ using TMaterialSimpleTable = std::vector<TMaterialSimple>; //!< table of the sim
 //---------------------------------------------------------------------
 
 
-enum class TTextureKind : t_byte
-{
-  off,                    //!< not used (no texture)
-  diffuse,                //!< color texture
-  grayscale,              //!< grayscale texture
-  displacement_map,       //!< displacment map; 1 channel (red)
-  normal_map,             //!< normal map; 3 channels (RGB)
-  noraml_displacment_map, //!< normal map; 3 channels (RGB) + displacment map; 1 channel (alpha)
-  displacment_cone_map    //!< displacment map; 1 channel (red) + cone map; 1 channel (green) 
-};
-
-enum class TTextureFilter : t_byte
-{
-  off,        //!< no filter
-  bilinear,   //!< linear interpolation
-  trilinear,  //!< mipmaps (linear interpolation)
-  anisotropic //!< anisotropic (linear mapmaps and commonly hardware dependnet)
-};
-
-enum class TTextureWrap : t_byte
-{
-  clamp,                //!< clamp texture to edge
-  mirror,               //!< mirror and clamp texture to edge
-  repeat,               //!< tile texture
-  repeat_mirror,        //!< tile texture; even tiles are mirrored
-};
-
-
 /*XEOMETRIC********************************************************//**
 * @brief   Properties of a 2D texture.
 *
@@ -173,9 +146,9 @@ enum class TTextureWrap : t_byte
 * @date    2018-02-06
 * @version 1.0
 **********************************************************************/
-struct TTexture2DProperties 
+struct TMaterialTextureProperties 
 {
-  TTextureKind   _type;   //!< kind of the textue (0 = no texture)
+  TImageKind     _type;   //!< kind of the textue (0 = no texture)
   TTextureFilter _filter; //!< filtering
   TTextureWrap   _wrap_s; //!< wrapping along the x (s, u) axis 
   TTextureWrap   _wrap_t; //!< wrapping along the y (t, v) axis
@@ -222,48 +195,48 @@ struct TMaterial
   bool test( bool flag ) const { return _properties.test((int)P); }
 
   //! general properties
-  TMaterialProperties _properties;
+  TMaterialProperties        _properties;
 
   //! RGB: general material (base-)color and its brightness; ALPHA: opacity ("inverse" transparency)
-  TColor8 _color_diffuse;
+  TColor8                    _color_diffuse;
 
   //! RGB: transparent tint (absorption) color; ALPHA: strength of transparent tint
   //!     color = _color_diffuse.rgb * (1.0 - _color_transparent.a) + _color_transparent.rgb * _color_transparent.a
-  TColor8 _color_transparent;
+  TColor8                    _color_transparent;
 
   //! RGB: specular tint color; ALPHA: strength of specular tint
   //!     color = _color_diffuse.rgb * (1.0 - _color_specular.a) + _color_specular.rgb * _color_specular.a
-  TColor8 _color_specular;
+  TColor8                    _color_specular;
 
   //! RGB: reflection tint color; ALPHA: strength of reflection tint
   //!     color = _color_diffuse.rgb * (1.0 - _color_reflection.a) + _color_reflection.rgb * _color_reflection.a
-  TColor8 _color_reflection;
+  TColor8                    _color_reflection;
 
   //! RGB: emission tint (glow) color; ALPHA: 1.0
   //!     color = _color_emission.rgb * 1.0  (strength of emiison tint is not yet implemented)
-  TColor8 _color_emission;
+  TColor8                    _color_emission;
 
-  t_fp   _specular;               //!< specular: [0.0, 5.0] -> [0%, 500%]     
+  t_fp                       _specular;               //!< specular: [0.0, 5.0] -> [0%, 500%]     
                                
-  t_byte _refractive_index;       //!< refractive index: [0, 255] -> [0.5, 1.5]
-  t_byte _absorption;             //!< absorption: [0, 255] -> [0%, 100%]
-  t_byte _reflection;             //!< reflection (mirror): [0, 255] -> [0%, 100%]
-  t_byte _reflexion_strength;     //!< reflexion glow strenght (expansion): [0, 255] -> [0%, 100%]
-  t_byte _reflexion_sensitivity;  //!< reflexion sensitivity (strength and size): [0, 255] -> [0%, 100%]
-  t_byte _emisson;                //!< emisson (glow) stength [0, 255] -> [0%, 100%]
-
-  t_byte _diffuse;                //!< reflection: [0, 255] -> [0%, 100%]                 
-  t_byte _roughness;              //!< roughness: [0, 255] -> [0%, 100%]
-  t_byte _metallic;               //!< metallic: [0, 255] -> [0%, 100%]        
-  t_byte _subsurface;             //!< subsurface scattering: [0, 255] -> [0%, 100%]      
-  t_byte _anisotropic;            //!< anisotropic: [0, 255] -> [0%, 100%]     
-  t_byte _sheen;                  //!< sheen: [0, 255] -> [0%, 100%]           
-  t_byte _sheen_tint;             //!< sheen tint: [0, 255] -> [0%, 100%]      
-  t_byte _clearcoat;              //!< clearcoat: [0, 255] -> [0%, 100%]       
-  t_byte _clearcoat_gloss;        //!< clearcoat gloss: [0, 255] -> [0%, 100%]
+  t_byte                     _refractive_index;       //!< refractive index: [0, 255] -> [0.5, 1.5]
+  t_byte                     _absorption;             //!< absorption: [0, 255] -> [0%, 100%]
+  t_byte                     _reflection;             //!< reflection (mirror): [0, 255] -> [0%, 100%]
+  t_byte                     _reflexion_strength;     //!< reflexion glow strenght (expansion): [0, 255] -> [0%, 100%]
+  t_byte                     _reflexion_sensitivity;  //!< reflexion sensitivity (strength and size): [0, 255] -> [0%, 100%]
+  t_byte                     _emisson;                //!< emisson (glow) stength [0, 255] -> [0%, 100%]
+                             
+  t_byte                     _diffuse;                //!< reflection: [0, 255] -> [0%, 100%]                 
+  t_byte                     _roughness;              //!< roughness: [0, 255] -> [0%, 100%]
+  t_byte                     _metallic;               //!< metallic: [0, 255] -> [0%, 100%]        
+  t_byte                     _subsurface;             //!< subsurface scattering: [0, 255] -> [0%, 100%]      
+  t_byte                     _anisotropic;            //!< anisotropic: [0, 255] -> [0%, 100%]     
+  t_byte                     _sheen;                  //!< sheen: [0, 255] -> [0%, 100%]           
+  t_byte                     _sheen_tint;             //!< sheen tint: [0, 255] -> [0%, 100%]      
+  t_byte                     _clearcoat;              //!< clearcoat: [0, 255] -> [0%, 100%]       
+  t_byte                     _clearcoat_gloss;        //!< clearcoat gloss: [0, 255] -> [0%, 100%]
   
-  TTexture2DProperties _param_diffuse; //!< parameters for the diffuse textue
-  TTexture2DProperties _param_bump;    //!< parameters for the "bump" textue
+  TMaterialTextureProperties _param_diffuse;          //!< parameters for the diffuse textue
+  TMaterialTextureProperties _param_bump;             //!< parameters for the "bump" textue
 
   //! Texture
   // TODO $$$ ...

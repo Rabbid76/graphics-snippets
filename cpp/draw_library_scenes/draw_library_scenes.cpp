@@ -33,34 +33,57 @@
 #include <OpenGLError.h>
 
 
+enum TScene
+{
+  e_default,
+
+  // transformation
+  e_text_rotate,
+
+  // intersection
+  e_isect_line_line,
+  e_isect_line_plane,
+  e_isect_plane_cone,
+      
+  // depth, model, view, projection, clip space, ndc and viewport
+  e_viewport_coordsys,
+  e_model,
+  e_world,
+  e_view,
+  e_projection,
+  e_NDC,
+
+  // parallax
+  e_cone_step
+};
+
+
+static TScene _scene = e_default;
+
+//#define RENDER_BITMAP
+
+#if !defined(RENDER_BITMAP)
+static int          c_window_cx = 600;
+static int          c_window_cy = 450;
+static bool         c_frameless = false;
+#else
+static int          c_window_cx = 400;
+static int          c_window_cy = 300;
+static bool         c_frameless = true;
+#endif
+
+static bool         c_core      = true;
+static float        c_scale     = 1.0f;
+static bool         c_fxaa      = false;
+static unsigned int c_samples   = 16;
+
+
+
+
 // [Switching Between windowed and full screen in OpenGL/GLFW 3.2](https://stackoverflow.com/questions/47402766/switching-between-windowed-and-full-screen-in-opengl-glfw-3-2/47462358#47462358)
 class CWindow_Glfw
 {
 private:
-
-    enum TScene
-    {
-      e_default,
-
-      // transformation
-      e_text_rotate,
-
-      // intersection
-      e_isect_line_line,
-      e_isect_line_plane,
-      e_isect_plane_cone,
-      
-      // depth, model, view, projection, clip space, ndc and viewport
-      e_viewport_coordsys,
-      e_model,
-      e_world,
-      e_view,
-      e_projection,
-      e_NDC,
-
-      // parallax
-      e_cone_step
-    };
 
     std::array< int, 2 > _wndPos         {0, 0};
     std::array< int, 2 > _wndSize        {0, 0};
@@ -145,10 +168,8 @@ int main(int argc, char** argv)
         throw std::runtime_error( "error initializing glfw" );
 
     // create OpenGL window and make OpenGL context current (`glfwInit` has to be done before).
-    static int cx = 400; // 600
-    static int cy = 300; // 450
     CWindow_Glfw window;
-    window.Init( cx, cy, true );
+    window.Init( c_window_cx, c_window_cy, true );
 
     // OpenGL context needs to be current for `glewInit`
     glewExperimental = true;
@@ -206,12 +227,6 @@ void CWindow_Glfw::CallbackResize(GLFWwindow* window, int cx, int cy)
 
 void CWindow_Glfw::Init( int width, int height, bool doubleBuffer )
 {
-    static bool         c_core      = true;
-    static float        c_scale     = 1.0f;
-    static bool         c_fxaa      = false;
-    static unsigned int c_samples   = 16;
-    static bool         c_frameless = false;
-
     _doubleBuffer = doubleBuffer;
 
     // [GLFW Window guide; Window creation hints](http://www.glfw.org/docs/latest/window_guide.html#window_hints_values)
