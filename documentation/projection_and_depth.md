@@ -200,8 +200,8 @@ In general, the depth (`gl_FragCoord.z` and `gl_FragDepth`) is calculated as fol
 <br/><hr/>
 ## Orthographic Projection
 
-At Orthographic Projection the coordinates in the eye space are linearly mapped to normalized device coordinates and the clip sapce coordinates are equal the normalized device coordiantes, because the `w` component is 1 (for a carthesian coordinate).
-The value for left, right, bottom, top, near and far define a box. All the geometry which is inside the volume of the box is "visible" on the viewport.
+At Orthographic Projection the coordinates in the view space are linearly mapped to clip space coordinates and the clip space coordinates are equal to the normalized device coordinates, because the `w` component is 1 (for a cartesian input coordinate).<br/>
+The values for left, right, bottom, top, near and far define a box. All the geometry which is inside the volume of the box is "visible" on the viewport. 
 
 ![Orthographic Projection](image/OrthographicProjection.png)
 
