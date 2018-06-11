@@ -158,7 +158,7 @@ class ShaderProgram:
         if self.__printShader == PrintShaderCode.ALWAYS or ((not result) and self.__printShader == PrintShaderCode.ON_ERROR):
             print( '\n%s shader code:' % nameMap.get( shaderStage, '' ) )
             print( sourceCode )
-        if not (result):
+        if not result:
             print( glGetShaderInfoLog( shaderObj ) )
             sys.exit()
         return shaderObj
@@ -177,8 +177,7 @@ class ShaderProgram:
             varyings_pp = ctypes.cast(ctypes.pointer(buff), ctypes.POINTER(ctypes.POINTER(c_char)))
             glTransformFeedbackVaryings(self.__prog, no_of_tf_varyings, varyings_pp, self.__transform_feedback)  
         glLinkProgram( self.__prog )
-        result = glGetProgramiv( self.__prog, GL_LINK_STATUS )
-        if not ( result ):
+        if not glGetProgramiv( self.__prog, GL_LINK_STATUS ):
             print( 'link error:' )
             print( glGetProgramInfoLog( self.__prog ) )
             sys.exit()
