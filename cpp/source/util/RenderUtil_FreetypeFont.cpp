@@ -326,7 +326,7 @@ bool CFreetypeTexturedFont::CalculateTextSize(
 * \version 1.0
 **********************************************************************/
 bool CFreetypeTexturedFont::DrawText( 
-  Render::IDrawBufferPrivider &buffer_provider,   //!< in: draw library
+  Render::IDrawBufferProvider &buffer_provider,   //!< in: draw library
   size_t                       textur_binding_id, //!< in: texture unit index
   const char                  *str,               //!< in: the text
   float                        height,            //!< in: the maximum height of the text from the bottom to the top 
@@ -432,7 +432,7 @@ bool CFreetypeTexturedFont::DrawText(
 * \version 1.0
 **********************************************************************/
 void CFreetypeTexturedFont::DebugFontTexture( 
-  Render::IDrawBufferPrivider &buffer_provider,     //!< in: draw library
+  Render::IDrawBufferProvider &buffer_provider,     //!< in: draw library
   size_t                       textur_binding_id ) //!< in: texture unit index
 {
   if ( _font == nullptr || _font_texture == nullptr )

@@ -56,7 +56,7 @@ namespace OpenGL
 **********************************************************************/
 class CBasicDraw
   : public Render::IDraw
-  , public Render::IDrawBufferPrivider
+  , public Render::IDrawBufferProvider
 {
 
   // TODO $$$ unifrom blocks (model, view, projection)

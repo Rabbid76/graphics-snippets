@@ -191,6 +191,18 @@ public:
 **********************************************************************/
 struct TTextureParameters
 {
+  TTextureParameters() = default;
+  TTextureParameters( const TTextureParameters & ) = default;
+
+  TTextureParameters( TTextureType type, TTextureFormat format, TTextureWraps wrap, TTextureFilter filter, int max_mipmap, int anisotropic )
+    : _type( type )
+    , _format( format )
+    , _wrap( wrap )
+    , _filter( filter )
+    , _max_mipmap( max_mipmap )
+    , _anisotropic( anisotropic )
+  {}
+
   TTextureType   _type{ TTextureType::T2D };
   TTextureFormat _format{ TTextureFormat::RGBA8 };
   TTextureWraps  _wrap{ TTextureWrap::clamp, TTextureWrap::clamp, TTextureWrap::clamp };
@@ -291,22 +303,22 @@ public:
     static const TTextureParameters param_table[] = {
 
       // T2D_RGBA_tiled_nofilter
-      TTextureParameters{ { TTextureType::T2D }, { TTextureFormat::RGBA8 }, { TTextureWrap::tiled, TTextureWrap::tiled, TTextureWrap::tiled }, { TTextureFilter::NON }, { 0 }, { 0 } },
+      TTextureParameters( TTextureType::T2D, TTextureFormat::RGBA8, { TTextureWrap::tiled, TTextureWrap::tiled, TTextureWrap::tiled }, TTextureFilter::NON, 0, 0 ),
 
       // T2D_RGBA_tiled_bilinear
-      TTextureParameters{ { TTextureType::T2D }, { TTextureFormat::RGBA8 }, { TTextureWrap::tiled, TTextureWrap::tiled, TTextureWrap::tiled }, { TTextureFilter::bilinear }, { 0 }, { 0 } },
+      TTextureParameters( TTextureType::T2D, TTextureFormat::RGBA8, { TTextureWrap::tiled, TTextureWrap::tiled, TTextureWrap::tiled }, TTextureFilter::bilinear, 0, 0 ),
    
       // T2D_RGBA_tiled_trilinear
-      TTextureParameters{ { TTextureType::T2D }, { TTextureFormat::RGBA8 }, { TTextureWrap::tiled, TTextureWrap::tiled, TTextureWrap::tiled }, { TTextureFilter::trilinear }, { 1000 }, { 16 } },
+      TTextureParameters( TTextureType::T2D, TTextureFormat::RGBA8, { TTextureWrap::tiled, TTextureWrap::tiled, TTextureWrap::tiled }, TTextureFilter::trilinear, 1000, 16 ),
 
       // T2D_RGBA_clamped_nofilter
-      TTextureParameters{ { TTextureType::T2D }, { TTextureFormat::RGBA8 }, { TTextureWrap::clamp, TTextureWrap::clamp, TTextureWrap::clamp }, { TTextureFilter::NON }, { 0 }, { 0 } },
+      TTextureParameters( TTextureType::T2D, TTextureFormat::RGBA8, { TTextureWrap::clamp, TTextureWrap::clamp, TTextureWrap::clamp }, TTextureFilter::NON, 0, 0 ),
 
       // T2D_RGBA_clamped_bilinear
-      TTextureParameters{ { TTextureType::T2D }, { TTextureFormat::RGBA8 }, { TTextureWrap::clamp, TTextureWrap::clamp, TTextureWrap::clamp }, { TTextureFilter::bilinear }, { 0 }, { 0 } },
+      TTextureParameters( TTextureType::T2D, TTextureFormat::RGBA8, { TTextureWrap::clamp, TTextureWrap::clamp, TTextureWrap::clamp }, TTextureFilter::bilinear, 0, 0 ),
     
       // T2D_RGBA_clamped_trilinear
-      TTextureParameters{ { TTextureType::T2D }, { TTextureFormat::RGBA8 }, { TTextureWrap::clamp, TTextureWrap::clamp, TTextureWrap::clamp }, { TTextureFilter::trilinear }, { 1000 }, { 16 } },
+      TTextureParameters( TTextureType::T2D, TTextureFormat::RGBA8, { TTextureWrap::clamp, TTextureWrap::clamp, TTextureWrap::clamp }, TTextureFilter::trilinear, 1000, 16 ),
     };
 
     return param_table[(int)id];

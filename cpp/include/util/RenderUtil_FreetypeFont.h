@@ -60,11 +60,11 @@ public:
   virtual bool CalculateTextSize( const char *str, float height, float &box_x, float &box_btm, float &box_top ) override;
 
   //! render a texture based text
-  virtual bool DrawText( Render::IDrawBufferPrivider &buffer_provider, size_t textur_binding_id, const char *str, float height, float width_scale, const Render::TPoint3 &pos ) override;
+  virtual bool DrawText( Render::IDrawBufferProvider &buffer_provider, size_t textur_binding_id, const char *str, float height, float width_scale, const Render::TPoint3 &pos ) override;
 
 private:
 
-  void DebugFontTexture( Render::IDrawBufferPrivider &buffer_provider, size_t textur_binding_id );
+  void DebugFontTexture( Render::IDrawBufferProvider &buffer_provider, size_t textur_binding_id );
 
   std::string  _font_filename;
   int          _min_char      = 32;

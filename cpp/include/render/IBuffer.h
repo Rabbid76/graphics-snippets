@@ -50,7 +50,7 @@ enum class TDrawBufferUsage
 * \date    2018-06-08
 * \version 1.0
 **********************************************************************/
-class IDrawBufferPrivider
+class IDrawBufferProvider
 {
 public:
 
