@@ -320,8 +320,6 @@ bool CTextureLoader::SetTextureParameter(
     glGenerateMipmap( GL_TEXTURE_2D );
   }
 
-  // TODO $$$ mipamps and anisotropic texture filter
-
   return true;
 }
 
