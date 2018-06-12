@@ -246,8 +246,10 @@ bool CFreetypeTexturedFont::Load(
 
   // create texture
 
-   Render::TTextureSize size{ data._width, data._max_height, 1 };
-  _font_texture = loader.CreateTexture(size, 0, Render::T2D_RGBA_clamped_bilinear);
+  Render::TTextureSize size{ data._width, data._max_height, 1 };
+  Render::TStandardTextureKind std_kind = Render::T2D_RGBA_clamped_bilinear;
+  //Render::TStandardTextureKind std_kind = Render::T2D_RGBA_clamped_trilinear; // may cause disappearing of text at huge minification
+  _font_texture = loader.CreateTexture(size, 0, std_kind); 
 
 
   // load glyphs and copy glyphs to texture

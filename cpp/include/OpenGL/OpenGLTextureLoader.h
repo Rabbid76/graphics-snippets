@@ -22,6 +22,9 @@
 namespace OpenGL
 {
 
+class CTextureInternal;
+
+
 //*********************************************************************
 // CTextureLoader
 //*********************************************************************
@@ -36,11 +39,13 @@ namespace OpenGL
 class CTextureLoader
   : public Render::ITextureLoader
 {
+  friend class CTextureInternal;
+
 public: 
 
-  CTextureLoader( void );                        //!< default constructor
-  CTextureLoader( size_t loader_binding_point ); //!< constructor
-  virtual ~CTextureLoader();                     //!< destructor
+  CTextureLoader( void );                     //!< default constructor
+  CTextureLoader( size_t loader_binding_id ); //!< constructor
+  virtual ~CTextureLoader();                  //!< destructor
 
   //! enable anisotropic filter
   static void SetMaxAnisotropicFilter( size_t max_anisotripic_filter ) { _max_anisotripic_filter = max_anisotripic_filter; }
@@ -58,6 +63,9 @@ public:
   //! map texture type to OpenGL target type enumerator constant
   static unsigned int TargetType( Render::TTextureType type );
 
+  //! map texture format to OpenGL internal format
+  static unsigned int InternalFormat( Render::TTextureFormat format );
+
   //! map filter type to OpenGL minifying filter enumerator constant
   static unsigned int Minifying( Render::TTextureFilter filter, int max_mipmap_level );
 
@@ -71,13 +79,32 @@ public:
   static std::array<unsigned int, 3> Wrap( const Render::TTextureParameters &parameter );
 
   //! Apply OpenGL texture paramter to current texture object
-  static bool SetTextureParameter( const Render::TTextureParameters &parameter );
+  static bool SetTextureParameter( unsigned int texture_object, const Render::TTextureParameters &parameter );
+
+  //! Generate mipmap according to the parameters
+  static bool GenerateMipmaps( unsigned int texture_object, const Render::TTextureParameters &parameter );
 
 private:
 
-  static size_t _max_anisotripic_filter;
+  //! evaluate OpenGL version capabilities
+  static void EvaluateCapabilities( void );
 
-  size_t _loader_binding_point = 0;
+  //! bind a texture to a texture unit
+  static bool BindTexture( unsigned int target, unsigned int texture_object, size_t binding_id );
+
+  //! bind a texture to a texture unit
+  static bool SetTextureParameterI( unsigned int target, unsigned int texture_object, unsigned int parameter, int value );
+
+  //! true: OpenGL version capabilities have been evaluated and dependencies have been stated
+  static bool _capabilities_evaluated; 
+  
+  //!< true: use direct state access; depends on OpenGL version
+  static bool _dsa;
+
+  //! maximum allowed anisotropic filter
+  static size_t _max_anisotripic_filter; 
+
+  size_t _loader_binding_id = 0;
 };
 
 } // OpenGL

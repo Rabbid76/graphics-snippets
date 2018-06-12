@@ -121,6 +121,8 @@ enum class TImageFormat
 **********************************************************************/
 enum class TTextureFormat
 {
+  R8,          //!< 1 color channel; 1 byte; [0.0, 1.0]
+  RG8,         //!< 1 color channel; 1 byte; [0.0, 1.0]
   RGB8,        //!< 3 color channels; 1 byte; [0.0, 1.0]
   RGBA8,       //!< 3 color channels and 1 alpha channel; 1 byte;  [0.0, 1.0] 
   RGB8_SNORM,  //!< 3 color channels; 1 byte  [-0.0, 1.0]
@@ -236,6 +238,8 @@ class ITexture
 public:
 
   virtual ~ITexture() = default;
+
+  virtual size_t ObjectHandle( void ) const = 0;
 
   virtual TTextureType Type( void ) const = 0;
 

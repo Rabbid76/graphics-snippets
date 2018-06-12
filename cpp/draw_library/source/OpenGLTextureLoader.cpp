@@ -89,29 +89,20 @@ public:
       glDeleteTextures( 1, &_texture_obj );
   }
 
+  size_t ObjectHandle( void ) const override { return _texture_obj; }
+
   virtual Render::TTextureType Type( void ) const override { return _type; }
 
-
-  virtual bool Bind( size_t binding_point ) override
+  virtual bool Bind( size_t binding_id ) override
   {
     GLenum target = CTextureLoader::TargetType( _type );
-
-    glActiveTexture( (GLenum)(GL_TEXTURE0 + binding_point) );
-    glBindTexture( target, _texture_obj );
-    return true;
+    return CTextureLoader::BindTexture( target, _texture_obj, binding_id );
   }
 
-  virtual bool Release( size_t binding_point ) override
+  virtual bool Release( size_t binding_id ) override
   {
     GLenum target = CTextureLoader::TargetType( _type );
-
-    // Bind the default texture to the texture unit.
-    // In common there should be no necessity of this and there should not be any reason to do this.
-    glActiveTexture( (GLenum)(GL_TEXTURE0 + binding_point) );
-    glBindTexture( target, 0 );
-    if ( binding_point > 0 )
-      glActiveTexture( 0 );
-    return true;
+    return CTextureLoader::BindTexture( target, 0, binding_id );
   }
 
 private:
@@ -125,6 +116,8 @@ private:
 // CTextureLoader
 //*********************************************************************
 
+bool   CTextureLoader::_capabilities_evaluated = false;
+bool   CTextureLoader::_dsa = false;
 size_t CTextureLoader::_max_anisotripic_filter = 0;
 
 
@@ -147,8 +140,10 @@ CTextureLoader::CTextureLoader( void )
 * \version 1.0
 **********************************************************************/
 CTextureLoader::CTextureLoader( 
-  size_t loader_binding_point ) //!< in: default binding point for loading textures
-{}
+  size_t loader_binding_id ) //!< in: default binding point for loading textures
+{
+  EvaluateCapabilities();
+}
   
 
 /******************************************************************//**
@@ -159,7 +154,94 @@ CTextureLoader::CTextureLoader(
 * \version 1.0
 **********************************************************************/
 CTextureLoader::~CTextureLoader()
-{}
+{
+  EvaluateCapabilities();
+}
+
+
+/******************************************************************//**
+* \brief Evaluate OpenGL version capabilities.  
+* 
+* \author  gernot
+* \date    2018-06-12
+* \version 1.0
+**********************************************************************/
+void CTextureLoader::EvaluateCapabilities( void )
+{
+  if ( _capabilities_evaluated == true )
+    return;
+
+  _dsa = true;
+  if ( glBindTextureUnit == nullptr )
+    _dsa = false;
+  if ( glTextureParameteri == nullptr )
+    _dsa = false;
+  if ( glTextureStorage2D == nullptr )
+    _dsa = false;
+  if ( glGenerateTextureMipmap == nullptr )
+    _dsa = false;
+  _dsa == false; // TODO $$$
+
+  _capabilities_evaluated = true;
+}
+
+ 
+/******************************************************************//**
+* \brief Bind a texture to a texture unit. 
+* 
+* \author  gernot
+* \date    2018-06-12
+* \version 1.0
+**********************************************************************/
+bool CTextureLoader::BindTexture( 
+  unsigned int target,         //!< I - in: target for conventional (old) interface
+  unsigned int texture_object, //!< I - in: named texture object for direct state access
+  size_t       binding_id )    //!< I - in: texture unit
+{
+  if ( _dsa )
+  {
+    glBindTextureUnit((GLuint)binding_id, texture_object);
+  }
+  else if ( glActiveTexture != nullptr )
+  {
+    // Bind the default texture to the texture unit.
+    // In common there should be no necessity of this and there should not be any reason to do this.
+    glActiveTexture( (GLenum)(GL_TEXTURE0 + binding_id) );
+    glBindTexture( target, texture_object );
+    if ( binding_id != 0 && texture_object == 0 )
+      glActiveTexture( GL_TEXTURE0 );
+  }
+  else
+  {
+    glBindTexture( target, texture_object );
+  }
+  return true;
+}
+
+
+/******************************************************************//**
+* \brief Bind a texture to a texture unit.  
+* 
+* \author  gernot
+* \date    2018-06-12
+* \version 1.0
+**********************************************************************/
+bool CTextureLoader::SetTextureParameterI( 
+  unsigned int target,         //!< in: target for conventional (old) interface 
+  unsigned int texture_object, //!< in: named texture object for direct state access 
+  unsigned int parameter,      //!< in: the named parameter
+  int          value )         //!< in: the new value
+{
+  if ( _dsa )
+  {
+    glTextureParameteri( texture_object, parameter, value );
+  }
+  else
+  {
+    glTexParameteri( target, parameter, value );
+  }
+  return true;
+}
 
 
 /******************************************************************//**
@@ -184,6 +266,33 @@ unsigned int CTextureLoader::TargetType(
   auto it = target_map.find(type);
   ASSERT(it != target_map.end());
   return it != target_map.end() ? it->second : GL_TEXTURE_2D;
+}
+
+
+/******************************************************************//**
+* \brief Map texture format to OpenGL internal format enumerator
+* constant. 
+* 
+* \author  gernot
+* \date    2018-06-12
+* \version 1.0
+**********************************************************************/
+unsigned int CTextureLoader::InternalFormat( 
+  Render::TTextureFormat format ) //!< in: requested texture format
+{
+  static const std::unordered_map< Render::TTextureFormat, GLenum > internal_foramt_map
+  {
+    { Render::TTextureFormat::R8,          GL_R8          },
+    { Render::TTextureFormat::RG8,         GL_RG8         },
+    { Render::TTextureFormat::RGB8,        GL_RGB8        }, 
+    { Render::TTextureFormat::RGBA8,       GL_RGBA8       },
+    { Render::TTextureFormat::RGB8_SNORM,  GL_RGB8_SNORM  },
+    { Render::TTextureFormat::RGB16_SNORM, GL_RGBA8_SNORM } 
+  };
+
+  auto it = internal_foramt_map.find(format);
+  ASSERT(it != internal_foramt_map.end());
+  return it != internal_foramt_map.end() ? it->second : GL_RGBA8;
 }
 
 
@@ -286,7 +395,8 @@ std::array<unsigned int, 3> CTextureLoader::Wrap(
 * \version 1.0
 **********************************************************************/
 bool CTextureLoader::SetTextureParameter( 
-  const Render::TTextureParameters &parameter )  //!< in: texture parameter
+  unsigned int                      texture_object, //!< in: named texture object for direct state access
+  const Render::TTextureParameters &parameter )     //!< in: texture parameter
 {
   GLenum target = TargetType( parameter._type );
 
@@ -295,28 +405,55 @@ bool CTextureLoader::SetTextureParameter(
 
   auto wrap = CTextureLoader::Wrap( parameter );
 
-  glTexParameteri( target, GL_TEXTURE_WRAP_S, wrap[0] );
-  if ( parameter.Is2DType() || parameter.Is3DType() )
-    glTexParameteri( target, GL_TEXTURE_WRAP_T, wrap[1] );
-  if ( parameter.Is3DType() )
-    glTexParameteri( target, GL_TEXTURE_WRAP_T, wrap[2] );
-  
-  glTexParameteri( target, GL_TEXTURE_MIN_FILTER, minifying );
-  //glTexParameteri( target, GL_TEXTURE_MIN_FILTER, magnification );
-  glTexParameteri( target, GL_TEXTURE_MAG_FILTER, magnification );
+  //glTextureParameteri()
 
-  // generate mipmaps
+  SetTextureParameterI( target, texture_object, GL_TEXTURE_WRAP_S, wrap[0] );
+  if ( parameter.Is2DType() || parameter.Is3DType() )
+    SetTextureParameterI( target, texture_object, GL_TEXTURE_WRAP_T, wrap[1] );
+  if ( parameter.Is3DType() )
+    SetTextureParameterI( target, texture_object, GL_TEXTURE_WRAP_T, wrap[2] );
+  
+  SetTextureParameterI( target, texture_object, GL_TEXTURE_MIN_FILTER, minifying );
+  SetTextureParameterI( target, texture_object, GL_TEXTURE_MAG_FILTER, magnification );
+
+  // set mipmaps parameters
   if ( parameter._max_mipmap > 1 )
   {
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0 );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, (GLint)parameter._max_mipmap );
+    SetTextureParameterI( target, texture_object, GL_TEXTURE_BASE_LEVEL, 0 );
+    SetTextureParameterI( target, texture_object, GL_TEXTURE_MAX_LEVEL, (GLint)parameter._max_mipmap );
 
     // [`EXT_texture_filter_anisotropic`](https://www.khronos.org/registry/OpenGL/extensions/EXT/EXT_texture_filter_anisotropic.txt)
     GLint max_anisotropic = std::min((GLint)_max_anisotripic_filter, (GLint)parameter._anisotropic);
     if ( max_anisotropic > 1 )
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, max_anisotropic); 
+      SetTextureParameterI( target, texture_object, GL_TEXTURE_MAX_ANISOTROPY_EXT, max_anisotropic); 
+  }
 
-    //! [`glGenerateMipmap`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGenerateMipmap.xhtml)
+  return true;
+}
+
+ 
+/******************************************************************//**
+* \brief Generate mipmap according to the parameters.
+* 
+* \author  gernot
+* \date    2018-06-12
+* \version 1.0
+**********************************************************************/
+bool CTextureLoader::GenerateMipmaps( 
+  unsigned int                      texture_object, //!< in: named texture object for direct state access
+  const Render::TTextureParameters &parameter )     //!< in: texture parameter
+{
+  if ( parameter._max_mipmap <= 1 )
+    return false;
+
+  //! [`glGenerateMipmap`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGenerateMipmap.xhtml)
+
+  if ( _dsa )
+  {
+    glGenerateTextureMipmap( texture_object );
+  }
+  else
+  {
     glGenerateMipmap( GL_TEXTURE_2D );
   }
 
@@ -343,18 +480,56 @@ Render::TTexturePtr CTextureLoader::CreateTexture(
     return nullptr;
   }
 
-
-
-  // TODO $$$
-
+  // create and bind texture
   Render::TTexturePtr texture = std::make_unique<CTextureInternal>( parameter._type );
-  texture->Bind( _loader_binding_point );
+  if ( _dsa == false )
+    texture->Bind( _loader_binding_id );
 
-  glTexImage2D( target, 0, GL_RGBA, (GLsizei)size[0], (GLsizei)size[1], 0, GL_RGBA, GL_UNSIGNED_BYTE, 0 );
+  // calculate texture levels
+  GLint levels = 1;
+  if ( parameter._max_mipmap > 1 )
+  {
+    size_t n = std::max( size[0], size[1] );
+    double p = std::ceil(std::log2( (double)n ));
+    levels   = (GLint)p;
+  }
 
-  SetTextureParameter( parameter ); 
+  // load texture image
+  GLenum internal_format = InternalFormat( parameter._format );
+  if ( _dsa )
+  {
+    glTextureStorage2D( (GLuint)texture->ObjectHandle(), 1, internal_format, (GLsizei)size[0], (GLsizei)size[1] );
+  }
+  else if ( glTexStorage2D != nullptr )
+  {
+    // for texture level size and allocation see
+    // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexStorage2D.xhtml
+    glTexStorage2D( target, levels, internal_format, (GLsizei)size[0], (GLsizei)size[1] );
+  }
+  else
+  {
+    static const std::unordered_map< Render::TTextureFormat, std::tuple<GLenum, GLenum> > compatible_foramt_map
+    {
+      { Render::TTextureFormat::R8,          { GL_RED,  GL_BYTE  } },
+      { Render::TTextureFormat::RG8,         { GL_RG,   GL_BYTE  } },
+      { Render::TTextureFormat::RGB8,        { GL_RGB,  GL_BYTE  } }, 
+      { Render::TTextureFormat::RGBA8,       { GL_RGBA, GL_BYTE  } },
+      { Render::TTextureFormat::RGB8_SNORM,  { GL_RGB,  GL_FLOAT } },
+      { Render::TTextureFormat::RGB16_SNORM, { GL_RGBA, GL_FLOAT } } 
+    };
 
-  // TODO $$$
+    auto it = compatible_foramt_map.find(parameter._format);
+    ASSERT( it != compatible_foramt_map.end() );
+    GLenum format = it != compatible_foramt_map.end() ? std::get<0>( it->second ) : GL_RGBA;
+    GLenum type   = it != compatible_foramt_map.end() ? std::get<1>( it->second ) : GL_BYTE;
+    glTexImage2D( target, 0, GL_RGBA, (GLsizei)size[0], (GLsizei)size[1], 0, format, type, nullptr );
+  }
+
+  // set the texture paramters
+  SetTextureParameter( (GLuint)texture->ObjectHandle(), parameter );
+
+  // genrate the mipmaps
+  GenerateMipmaps( (GLuint)texture->ObjectHandle(), parameter );
 
   return texture;
 }
@@ -388,13 +563,19 @@ Render::TTexturePtr CTextureLoader::CreateTexture(
   // TODO $$$
 
   Render::TTexturePtr texture = std::make_unique<CTextureInternal>( parameter._type );
-  texture->Bind( _loader_binding_point );
+  texture->Bind( _loader_binding_id );
 
   // TODO $$$
 
-  SetTextureParameter( parameter );
+  // GL_BGR, GL_BGRA
 
   // TODO $$$
+
+  SetTextureParameter( (GLuint)texture->ObjectHandle(), parameter ); 
+  GenerateMipmaps( (GLuint)texture->ObjectHandle(), parameter );
+
+  // TODO $$$
+
 
   return nullptr;
 }
