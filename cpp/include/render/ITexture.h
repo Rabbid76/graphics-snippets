@@ -106,7 +106,9 @@ enum class TImageFormat
   UNKNOWN, //!< unsupported image format
   GRAY8,   //!< 1 color channel; 1 byte (unsigned)
   RGB8,    //!< 3 color channels; 1 byte (unsigned)
+  BGR8,    //!< 3 color channels; 1 byte (unsigned)
   RGBA8,   //!< 3 color channels and 1 alpha channel; 1 byte (unsigned) 
+  BGRA8,   //!< 3 color channels and 1 alpha channel; 1 byte (unsigned) 
 };
 
 
