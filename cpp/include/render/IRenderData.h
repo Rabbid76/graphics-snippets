@@ -94,6 +94,7 @@ enum class TSurfaceProperty
 };
 using TSurfaceProperties = std::bitset<static_cast<size_t>(TSurfaceProperty::NO_OF)>;
 
+
 /*XEOMETRIC********************************************************//**
 * @brief   Primitives, representation properties and reference to the
 *          representation parameters of a surface.
