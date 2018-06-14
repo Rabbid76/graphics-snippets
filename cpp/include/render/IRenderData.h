@@ -240,12 +240,6 @@ struct TMaterial
   TMaterialTextureProperties _param_diffuse;          //!< parameters for the diffuse textue
   TMaterialTextureProperties _param_bump;             //!< parameters for the "bump" textue
 
-  //! Texture
-  // TODO $$$ ...
-
-  //! Bump map
-  // TODO $$$ ...
-
   //! Blue screen
   // TODO $$$ ...
 
