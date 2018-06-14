@@ -312,9 +312,9 @@ struct TCamera
 **********************************************************************/
 struct TSceneData
 {
-  TVec3 _min;             //!< minimum of AABB of the scene
-  TVec3 _max;             //!< maximum of AABB of the scene
-  t_fp  _size_paramerter; //!< a value thet represents one meter in the scene
+  TVec3 _min;            //!< minimum of AABB of the scene
+  TVec3 _max;            //!< maximum of AABB of the scene
+  t_fp  _size_parameter; //!< a value thet represents one meter in the scene
 };
 
 
