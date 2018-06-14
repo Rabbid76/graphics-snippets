@@ -94,7 +94,6 @@ enum class TSurfaceProperty
 };
 using TSurfaceProperties = std::bitset<static_cast<size_t>(TSurfaceProperty::NO_OF)>;
 
-
 /*XEOMETRIC********************************************************//**
 * @brief   Primitives, representation properties and reference to the
 *          representation parameters of a surface.
@@ -313,8 +312,9 @@ struct TCamera
 **********************************************************************/
 struct TSceneData
 {
-  TVec3 _min; //!< minimum of AABB of the scene
-  TVec3 _max; //!< maximum of AABB of the scene
+  TVec3 _min;             //!< minimum of AABB of the scene
+  TVec3 _max;             //!< maximum of AABB of the scene
+  t_fp  _size_paramerter; //!< a value thet represents one meter in the scene
 };
 
 
