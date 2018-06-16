@@ -57,7 +57,7 @@ void main()
 }
 </script>
 
-<script id="blurX-shader-fs" type="x-shader/x-fragment">
+<script id="blur-shader-fs" type="x-shader/x-fragment">
 precision mediump float;
 
 varying vec2 pos;
@@ -65,13 +65,14 @@ varying vec2 pos;
 uniform sampler2D u_texture;
 uniform vec2      u_textureSize;
 uniform float     u_sigma;
+uniform float     u_radius;
 uniform vec2      u_dir;
 
 float CalcGauss( float x, float sigma )
 {
     if ( sigma <= 0.0 )
         return 0.0;
-	return exp( -(x*x) / (2.0 * sigma) ) / (2.0 * 3.14157 * sigma);
+  return exp( -(x*x) / (2.0 * sigma) ) / (2.0 * 3.14157 * sigma);
 }
 
 void main()
@@ -85,9 +86,9 @@ void main()
         float weight = CalcGauss( float(i) / 32.0, u_sigma * 0.5 );
         if ( weight < 1.0/255.0 )
             break;
-        texCol    = texture2D( u_texture, texC + step * float(i) );
+        texCol    = texture2D( u_texture, texC + u_radius * step * float(i) );
         gaussCol += vec4( texCol.rgb * weight, weight );
-        texCol    = texture2D( u_texture, texC - step * float(i) );
+        texCol    = texture2D( u_texture, texC - u_radius * step * float(i) );
         gaussCol += vec4( texCol.rgb * weight, weight );
     }
     gaussCol.rgb = clamp( gaussCol.rgb / gaussCol.w, 0.0, 1.0 );
@@ -96,42 +97,269 @@ void main()
 </script>
 
 <style>
-
-html,body {
-    margin: 0;
-    overflow: hidden;
-}
-
-#gui {
-    position : absolute;
-    top : 0;
-    left : 0;
-}
-
-#ref-link {
-    position : absolute;
-    bottom : 0;
-    left : 0;
-}
-    
+html,body { margin: 0; overflow: hidden; }
+#gui { position : absolute; top : 0; left : 0; }
+#ref-link { position : absolute; bottom : 0; left : 0; }  
 </style>
+
+<body>
+  
+<div>
+<form id="gui" name="inputs">
+    <table>
+        <tr> <td> <font color= #CCF>radius</font> </td> 
+                <td> <input type="range" id="radius" min="1" max="1000" value="1000" onchange="changeEventHandler(event);"/></td> </tr>
+        <tr> <td> <font color= #CCF>blur</font> </td> 
+                <td> <input type="range" id="sigma" min="1" max="100" value="5" onchange="changeEventHandler(event);"/></td> </tr>
+    </table>
+</form>
+</div>
+
+<div id="ref-link">
+<a href="https://stackoverflow.com/questions/8166384/how-to-get-a-glow-shader-effect-in-opengl-es-2-0/45043547#45043547"> 
+  How to get a ?Glow? shader effect in OpenGL ES 2.0? 
+</a>
+<br/>
+<a href="https://stackoverflow.com/questions/50882953/glsl-gaussian-blur-artifact-issue/50885727#50885727"> 
+GLSL - Gaussian Blur Artifact Issue
+</a>
+</div>
+
+<canvas id="canvas" style="border: none;"></canvas>
 
 <script type="text/javascript">
 
-glArrayType = typeof Float32Array !="undefined" ? Float32Array : ( typeof WebGLFloatArray != "undefined" ? WebGLFloatArray : Array );
+var readInput = true;
+function changeEventHandler(event){
+readInput = true;
+}
+
+(function loadscene() {
+
+var resize, gl, progDraw, progBlur, vp_size, blurFB;
+var bufCube = {};
+var bufQuad = {};
+var shininess = 10.0;
+var glow = 10.0;
+var sigma = 0.8;
+var radius = 1.0;
+
+function render(delteMS){
+
+    if ( readInput ) {
+        //readInput = false;
+        var sliderScale = 100;
+        sigma     = document.getElementById( "sigma" ).value / sliderScale;
+        radius    = document.getElementById( "radius" ).value / sliderScale;
+    }
+
+    Camera.create();
+    Camera.vp = vp_size;
+        
+    gl.enable( gl.DEPTH_TEST );
+    gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
+    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+
+    // set up framebuffer
+    gl.bindFramebuffer( gl.FRAMEBUFFER, blurFB[0] );
+    gl.viewport( 0, 0, blurFB[0].width, blurFB[0].height );
+    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+
+    // set up draw shader
+    ShaderProgram.Use( progDraw.prog );
+    ShaderProgram.SetUniformM44( progDraw.prog, "u_projectionMat44", Camera.Perspective() );
+    var viewMat = Camera.LookAt();
+    viewMat = RotateAxis( viewMat, CalcAng( delteMS, 13.0 ), 0 );
+    viewMat = RotateAxis( viewMat, CalcAng( delteMS, 17.0 ), 1 );
+    ShaderProgram.SetUniformM44( progDraw.prog, "u_modelViewMat44", viewMat );
+    ShaderProgram.SetUniformF1( progDraw.prog, "u_shininess", shininess );
+    
+    // draw scene
+    VertexBuffer.Draw( bufCube );
+
+    // set blur-X framebuffer and bind frambuffer texture
+    gl.bindFramebuffer( gl.FRAMEBUFFER, blurFB[1] );
+    gl.viewport( 0, 0, blurFB[1].width, blurFB[1].height );
+    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+    var texUnit = 1;
+    gl.activeTexture( gl.TEXTURE0 + texUnit );
+    gl.bindTexture( gl.TEXTURE_2D, blurFB[0].color0_texture );
+
+    // set up blur-X shader
+    ShaderProgram.Use( progBlur.prog );
+    ShaderProgram.SetUniformI1( progBlur.prog, "u_texture", texUnit )
+    ShaderProgram.SetUniformF2( progBlur.prog, "u_textureSize", vp_size );
+    ShaderProgram.SetUniformF1( progBlur.prog, "u_sigma", sigma )
+    ShaderProgram.SetUniformF1( progBlur.prog, "u_radius", radius )
+    ShaderProgram.SetUniformF2( progBlur.prog, "u_dir", [1.0, 0.0] )
+
+    // draw full screen space
+    gl.enableVertexAttribArray( progBlur.inPos );
+    gl.bindBuffer( gl.ARRAY_BUFFER, bufQuad.pos );
+    gl.vertexAttribPointer( progBlur.inPos, 2, gl.FLOAT, false, 0, 0 ); 
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufQuad.inx );
+    gl.drawElements( gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0 );
+    gl.disableVertexAttribArray( progBlur.inPos );
+
+    // reset framebuffer and bind frambuffer texture
+    gl.bindFramebuffer( gl.FRAMEBUFFER, null );
+    gl.viewport( 0, 0, vp_size[0], vp_size[1] );
+    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+    texUnit = 2;
+    gl.activeTexture( gl.TEXTURE0 + texUnit );
+    gl.bindTexture( gl.TEXTURE_2D, blurFB[1].color0_texture );
+
+    // set up pst process shader
+    ShaderProgram.SetUniformI1( progBlur.prog, "u_texture", texUnit )
+    ShaderProgram.SetUniformF1( progBlur.prog, "u_radius", radius )
+    ShaderProgram.SetUniformF2( progBlur.prog, "u_dir", [0.0, 1.0] )
+
+    // draw full screen space
+    gl.enableVertexAttribArray( progBlur.inPos );
+    gl.bindBuffer( gl.ARRAY_BUFFER, bufQuad.pos );
+    gl.vertexAttribPointer( progBlur.inPos, 2, gl.FLOAT, false, 0, 0 ); 
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufQuad.inx );
+    gl.drawElements( gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0 );
+    gl.disableVertexAttribArray( progBlur.inPos );
+
+    requestAnimationFrame(render);
+}
+
+function resize() {
+    //vp_size = [gl.drawingBufferWidth, gl.drawingBufferHeight];
+    vp_size = [window.innerWidth, window.innerHeight]
+    //vp_size = [256, 256]
+    canvas.width = vp_size[0];
+    canvas.height = vp_size[1];
+
+    var fbsize = Math.max(vp_size[0], vp_size[1]);
+    fbsize = 1 << 31 - Math.clz32(fbsize); // nearest power of 2
+
+    blurFB = [];
+    for ( var i = 0; i < 2; ++ i ) {
+        fb = gl.createFramebuffer();
+        fb.width = fbsize;
+        fb.height = fbsize;
+        gl.bindFramebuffer( gl.FRAMEBUFFER, fb );
+        fb.color0_texture = gl.createTexture();
+        gl.bindTexture( gl.TEXTURE_2D, fb.color0_texture );
+        gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST );
+        gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST );
+        gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, fb.width, fb.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null );
+        fb.renderbuffer = gl.createRenderbuffer();
+        gl.bindRenderbuffer( gl.RENDERBUFFER, fb.renderbuffer );
+        gl.renderbufferStorage( gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, fb.width, fb.height );
+        gl.framebufferTexture2D( gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, fb.color0_texture, 0 );
+        gl.framebufferRenderbuffer( gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, fb.renderbuffer );
+        gl.bindTexture( gl.TEXTURE_2D, null );
+        gl.bindRenderbuffer( gl.RENDERBUFFER, null );
+        gl.bindFramebuffer( gl.FRAMEBUFFER, null );
+        blurFB.push( fb );
+    }
+}
+
+function initScene() {
+
+    canvas = document.getElementById( "canvas");
+    gl = canvas.getContext( "experimental-webgl" );
+    if ( !gl )
+        return null;
+
+    progDraw = {}
+    progDraw.prog = ShaderProgram.Create( 
+    [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },
+        { source : "draw-shader-fs", stage : gl.FRAGMENT_SHADER }
+    ] );
+    if ( !progDraw.prog )
+        return null;
+    progDraw.inPos = gl.getAttribLocation( progDraw.prog, "inPos" );
+    progDraw.inNV  = gl.getAttribLocation( progDraw.prog, "inNV" );
+    progDraw.inCol = gl.getAttribLocation( progDraw.prog, "inCol" );
+
+    progBlur = {}
+    progBlur.prog = ShaderProgram.Create( 
+    [ { source : "post-shader-vs", stage : gl.VERTEX_SHADER },
+        { source : "blur-shader-fs", stage : gl.FRAGMENT_SHADER }
+    ] );
+    progBlur.inPos = gl.getAttribLocation( progBlur.prog, "inPos" );
+    if ( !progBlur.prog )
+        return;    
+    
+    // create cube
+    var cubePos = [
+    -1.0, -1.0,  1.0,  1.0, -1.0,  1.0,  1.0,  1.0,  1.0, -1.0,  1.0,  1.0,
+    -1.0, -1.0, -1.0,  1.0, -1.0, -1.0,  1.0,  1.0, -1.0, -1.0,  1.0, -1.0 ];
+    var cubeCol = [ 1.0, 0.0, 0.0, 1.0, 0.5, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 ];
+    var cubeHlpInx = [ 0, 1, 2, 3, 1, 5, 6, 2, 5, 4, 7, 6, 4, 0, 3, 7, 3, 2, 6, 7, 1, 0, 4, 5 ];  
+    var cubePosData = [];
+    for ( var i = 0; i < cubeHlpInx.length; ++ i ) {
+    cubePosData.push( cubePos[cubeHlpInx[i]*3], cubePos[cubeHlpInx[i]*3+1], cubePos[cubeHlpInx[i]*3+2] );
+    }
+    var cubeNVData = [];
+    for ( var i1 = 0; i1 < cubeHlpInx.length; i1 += 4 ) {
+    var nv = [0, 0, 0];
+    for ( i2 = 0; i2 < 4; ++ i2 ) {
+        var i = i1 + i2;
+        nv[0] += cubePosData[i*3]; nv[1] += cubePosData[i*3+1]; nv[2] += cubePosData[i*3+2];
+    }
+    for ( i2 = 0; i2 < 4; ++ i2 )
+    cubeNVData.push( nv[0], nv[1], nv[2] );
+    }
+    var cubeColData = [];
+    for ( var is = 0; is < 6; ++ is ) {
+    for ( var ip = 0; ip < 4; ++ ip ) {
+        cubeColData.push( cubeCol[is*3], cubeCol[is*3+1], cubeCol[is*3+2] ); 
+    }
+    }
+    var cubeInxData = [];
+    for ( var i = 0; i < cubeHlpInx.length; i += 4 ) {
+    cubeInxData.push( i, i+1, i+2, i, i+2, i+3 );   
+    }
+    bufCube = VertexBuffer.Create(
+    [ { data : cubePosData, attrSize : 3, attrLoc : progDraw.inPos },
+    { data : cubeNVData,  attrSize : 3, attrLoc : progDraw.inNV },
+    { data : cubeColData, attrSize : 3, attrLoc : progDraw.inCol } ],
+    cubeInxData );
+
+    bufQuad.pos = gl.createBuffer();
+    gl.bindBuffer( gl.ARRAY_BUFFER, bufQuad.pos );
+    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( [ -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0 ] ), gl.STATIC_DRAW );
+    bufQuad.inx = gl.createBuffer();
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufQuad.inx );
+    gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( [ 0, 1, 2, 0, 2, 3 ] ), gl.STATIC_DRAW );  
+    
+    window.onresize = resize;
+    resize();
+    requestAnimationFrame(render);
+}
+
+function Fract( val ) { 
+    return val - Math.trunc( val );
+}
+function CalcAng( deltaTime, intervall ) {
+    return Fract( deltaTime / (1000*intervall) ) * 2.0 * Math.PI;
+}
+function CalcMove( deltaTime, intervall, range ) {
+    var pos = self.Fract( deltaTime / (1000*intervall) ) * 2.0
+    var pos = pos < 1.0 ? pos : (2.0-pos)
+    return range[0] + (range[1] - range[0]) * pos;
+}    
+function EllipticalPosition( a, b, angRag ) {
+    var a_b = a * a - b * b
+    var ea = (a_b <= 0) ? 0 : Math.sqrt( a_b );
+    var eb = (a_b >= 0) ? 0 : Math.sqrt( -a_b );
+    return [ a * Math.sin( angRag ) - ea, b * Math.cos( angRag ) - eb, 0 ];
+}
 
 function IdentityMat44() {
-  var a=new glArrayType(16);
-  a[0]=1;a[1]=0;a[2]=0;a[3]=0;a[4]=0;a[5]=1;a[6]=0;a[7]=0;a[8]=0;a[9]=0;a[10]=1;a[11]=0;a[12]=0;a[13]=0;a[14]=0;a[15]=1;
-  return a;
+    return [ 1, 0, 0, 0,    0, 1, 0, 0,    0, 0, 1, 0,    0, 0, 0, 1 ];
 };
 
 function RotateAxis(matA, angRad, axis) {
     var aMap = [ [1, 2], [2, 0], [0, 1] ];
     var a0 = aMap[axis][0], a1 = aMap[axis][1]; 
     var sinAng = Math.sin(angRad), cosAng = Math.cos(angRad);
-    var matB = new glArrayType(16);
-    for ( var i = 0; i < 16; ++ i ) matB[i] = matA[i];
+    var matB = matA.slice(0);
     for ( var i = 0; i < 3; ++ i ) {
         matB[a0*4+i] = matA[a0*4+i] * cosAng + matA[a1*4+i] * sinAng;
         matB[a1*4+i] = matA[a0*4+i] * -sinAng + matA[a1*4+i] * cosAng;
@@ -221,20 +449,14 @@ ShaderProgram.SetUniformM33 = function( progObj, name, mat ) { if(progObj.unifom
 ShaderProgram.SetUniformM44 = function( progObj, name, mat ) { if(progObj.unifomLocation[name]) gl.uniformMatrix4fv( progObj.unifomLocation[name], false, mat ); }
 ShaderProgram.CompileShader = function( source, shaderStage ) {
     var shaderScript = document.getElementById(source);
-    if (shaderScript) {
-      source = "";
-      var node = shaderScript.firstChild;
-      while (node) {
-        if (node.nodeType == 3) source += node.textContent;
-        node = node.nextSibling;
-      }
-    }
+    if (shaderScript)
+    source = shaderScript.text;
     var shaderObj = gl.createShader( shaderStage );
     gl.shaderSource( shaderObj, source );
     gl.compileShader( shaderObj );
     var status = gl.getShaderParameter( shaderObj, gl.COMPILE_STATUS );
     if ( !status ) alert(gl.getShaderInfoLog(shaderObj));
-    return status ? shaderObj : 0;
+    return status ? shaderObj : null;
 } 
 ShaderProgram.LinkProgram = function( shaderObjs ) {
     var prog = gl.createProgram();
@@ -244,249 +466,45 @@ ShaderProgram.LinkProgram = function( shaderObjs ) {
     status = gl.getProgramParameter( prog, gl.LINK_STATUS );
     if ( !status ) alert("Could not initialise shaders");
     gl.useProgram( null );
-    return status ? prog : 0;
+    return status ? prog : null;
 }
 
-var progDraw; 
-var progBlur;
-function drawScene(){
-
-    var shininess = 10.0;
-    var sigma = document.getElementById( "sigma" ).value / sliderScale;
-    
-    var canvas = document.getElementById( "glow-canvas" );
-    Camera.create();
-    Camera.vp = [canvas.width, canvas.height];
-    var currentTime = Date.now();   
-    var deltaMS = currentTime - startTime;
-        
-    gl.viewport( 0, 0, canvas.width, canvas.height );
-    gl.enable( gl.DEPTH_TEST );
-    gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
-
-    // set up framebuffer
-    gl.bindFramebuffer( gl.FRAMEBUFFER, blurFB[0] );
-    gl.framebufferTexture2D( gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, blurFB[0].color0_texture, 0 );
-    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
-    
-    // set up draw shader
-    ShaderProgram.Use( progDraw );
-    ShaderProgram.SetUniformM44( progDraw, "u_projectionMat44", Camera.Perspective() );
-    var viewMat = Camera.LookAt();
-    viewMat = RotateAxis( viewMat, CalcAng( currentTime, 13.0 ), 0 );
-    viewMat = RotateAxis( viewMat, CalcAng( currentTime, 17.0 ), 1 );
-    ShaderProgram.SetUniformM44( progDraw, "u_modelViewMat44", viewMat );
-    ShaderProgram.SetUniformF1( progDraw, "u_shininess", shininess );
-    
-    // draw scene
-    gl.enableVertexAttribArray( progDraw.inPos );
-    gl.enableVertexAttribArray( progDraw.inNV );
-    gl.enableVertexAttribArray( progDraw.inCol );
-    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.pos );
-    gl.vertexAttribPointer( progDraw.inPos, 3, gl.FLOAT, false, 0, 0 );
-    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.nv );
-    gl.vertexAttribPointer( progDraw.inNV, 3, gl.FLOAT, false, 0, 0 ); 
-    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.col );
-    gl.vertexAttribPointer( progDraw.inCol, 3, gl.FLOAT, false, 0, 0 );
+var VertexBuffer = {};
+VertexBuffer.Create = function( attributes, indices ) {
+    var buffer = {};
+    buffer.buf = [];
+    buffer.attr = []
+    for ( var i = 0; i < attributes.length; ++ i ) {
+        buffer.buf.push( gl.createBuffer() );
+        buffer.attr.push( { size : attributes[i].attrSize, loc : attributes[i].attrLoc } );
+        gl.bindBuffer( gl.ARRAY_BUFFER, buffer.buf[i] );
+        gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( attributes[i].data ), gl.STATIC_DRAW );
+    }
+    buffer.inx = gl.createBuffer();
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, buffer.inx );
+    gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( indices ), gl.STATIC_DRAW );
+    buffer.inxLen = indices.length;
+    gl.bindBuffer( gl.ARRAY_BUFFER, null );
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, null );
+    return buffer;
+}
+VertexBuffer.Draw = function( bufObj ) {
+for ( var i = 0; i < bufObj.buf.length; ++ i ) {
+        gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.buf[i] );
+        gl.vertexAttribPointer( bufObj.attr[i].loc, bufObj.attr[i].size, gl.FLOAT, false, 0, 0 );
+        gl.enableVertexAttribArray( bufObj.attr[i].loc );
+    }
     gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufObj.inx );
     gl.drawElements( gl.TRIANGLES, bufObj.inxLen, gl.UNSIGNED_SHORT, 0 );
-    gl.disableVertexAttribArray( bufObj.pos );
-    gl.disableVertexAttribArray( bufObj.nv );
-    gl.disableVertexAttribArray( bufObj.col );
-
-    // set blur-X framebuffer and bind frambuffer texture
-    gl.framebufferTexture2D( gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, null, 0 );
-    gl.bindFramebuffer( gl.FRAMEBUFFER, blurFB[1] );
-    gl.framebufferTexture2D( gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, blurFB[1].color0_texture, 0 );
-    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
-    var texUnit = 1;
-    gl.activeTexture( gl.TEXTURE0 + texUnit );
-    gl.bindTexture( gl.TEXTURE_2D, blurFB[0].color0_texture );
-
-    // set up blur-X shader
-    ShaderProgram.Use( progBlur );
-    ShaderProgram.SetUniformI1( progBlur, "u_texture", texUnit )
-    ShaderProgram.SetUniformF2( progBlur, "u_textureSize", [ fb.width, fb.height ] );
-    ShaderProgram.SetUniformF1( progBlur, "u_sigma", sigma )
-    ShaderProgram.SetUniformF2( progBlur, "u_dir", [1.0, 0.0] )
-    
-    // draw full screen space
-    gl.enableVertexAttribArray( progBlur.inPos );
-    gl.bindBuffer( gl.ARRAY_BUFFER, bufQuad.pos );
-    gl.vertexAttribPointer( progBlur.inPos, 2, gl.FLOAT, false, 0, 0 ); 
-    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufQuad.inx );
-    gl.drawElements( gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0 );
-    gl.disableVertexAttribArray( progBlur.pos );
-
-    // reset framebuffer and bind frambuffer texture
-    gl.framebufferTexture2D( gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, null, 0 );
-    gl.bindFramebuffer( gl.FRAMEBUFFER, null );
-    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
-    texUnit = 2;
-    gl.activeTexture( gl.TEXTURE0 + texUnit );
-    gl.bindTexture( gl.TEXTURE_2D, blurFB[1].color0_texture );
-
-    // set up pst process shader
-    ShaderProgram.SetUniformI1( progBlur, "u_texture", texUnit )
-    ShaderProgram.SetUniformF2( progBlur, "u_textureSize", [ fb.width, fb.height ] );
-    ShaderProgram.SetUniformF1( progBlur, "u_sigma", sigma );
-    ShaderProgram.SetUniformF2( progBlur, "u_dir", [0.0, 1.0] )
-    
-    // draw full screen space
-    gl.enableVertexAttribArray( progBlur.inPos );
-    gl.bindBuffer( gl.ARRAY_BUFFER, bufQuad.pos );
-    gl.vertexAttribPointer( progBlur.inPos, 2, gl.FLOAT, false, 0, 0 ); 
-    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufQuad.inx );
-    gl.drawElements( gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0 );
-    gl.disableVertexAttribArray( progBlur.pos );
+    for ( var i = 0; i < bufObj.buf.length; ++ i )
+        gl.disableVertexAttribArray( bufObj.attr[i].loc );
+    gl.bindBuffer( gl.ARRAY_BUFFER, null );
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, null );
 }
 
-var startTime;
-function Fract( val ) { 
-    return val - Math.trunc( val );
-}
-function CalcAng( currentTime, intervall ) {
-    return Fract( (currentTime - startTime) / (1000*intervall) ) * 2.0 * Math.PI;
-}
-function CalcMove( currentTime, intervall, range ) {
-    var pos = self.Fract( (currentTime - startTime) / (1000*intervall) ) * 2.0
-    var pos = pos < 1.0 ? pos : (2.0-pos)
-    return range[0] + (range[1] - range[0]) * pos;
-}    
-function EllipticalPosition( a, b, angRag ) {
-    var a_b = a * a - b * b
-    var ea = (a_b <= 0) ? 0 : Math.sqrt( a_b );
-    var eb = (a_b >= 0) ? 0 : Math.sqrt( -a_b );
-    return [ a * Math.sin( angRag ) - ea, b * Math.cos( angRag ) - eb, 0 ];
-}
+initScene();
 
-var sliderScale = 100.0
-var gl;
-var progDraw;
-var progPost;
-var bufObj = {};
-var bufQuad = {};
-function sceneStart() {
-
-    var canvas = document.getElementById( "glow-canvas");
-    var vp = [canvas.width, canvas.height];
-    gl = canvas.getContext( "experimental-webgl" );
-    if ( !gl )
-      return;
-
-    progDraw = ShaderProgram.Create( 
-      [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },
-        { source : "draw-shader-fs", stage : gl.FRAGMENT_SHADER }
-      ] );
-    progDraw.inPos = ShaderProgram.AttributeIndex( progDraw, "inPos" );
-    progDraw.inNV  = ShaderProgram.AttributeIndex( progDraw, "inNV" );
-    progDraw.inCol = ShaderProgram.AttributeIndex( progDraw, "inCol" );
-    if ( progDraw == 0 )
-        return;
-
-    progBlur = ShaderProgram.Create( 
-      [ { source : "post-shader-vs", stage : gl.VERTEX_SHADER },
-        { source : "blurX-shader-fs", stage : gl.FRAGMENT_SHADER }
-      ] );
-    progBlur.inPos = ShaderProgram.AttributeIndex( progBlur, "inPos" );
-    if ( progBlur == 0 )
-        return;    
-
-    blurFB = [];
-    for ( var i = 0; i < 2; ++ i ) {
-      fb = gl.createFramebuffer();
-      fb.width = vp[0];
-      fb.height = vp[1];
-      gl.bindFramebuffer( gl.FRAMEBUFFER, fb );
-      fb.color0_texture = gl.createTexture();
-      gl.bindTexture( gl.TEXTURE_2D, fb.color0_texture );
-      gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST );
-      gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST );
-      gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, fb.width, fb.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null );
-      fb.renderbuffer = gl.createRenderbuffer();
-      gl.bindRenderbuffer( gl.RENDERBUFFER, fb.renderbuffer );
-      gl.renderbufferStorage( gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, fb.width, fb.height );
-      gl.framebufferTexture2D( gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, fb.color0_texture, 0 );
-      gl.framebufferRenderbuffer( gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, fb.renderbuffer );
-      gl.bindTexture( gl.TEXTURE_2D, null );
-      gl.bindRenderbuffer( gl.RENDERBUFFER, null );
-      gl.bindFramebuffer( gl.FRAMEBUFFER, null );
-      blurFB.push( fb );
-    }
-
-    var cubePos = [
-        -1.0, -1.0,  1.0,  1.0, -1.0,  1.0,  1.0,  1.0,  1.0, -1.0,  1.0,  1.0,
-        -1.0, -1.0, -1.0,  1.0, -1.0, -1.0,  1.0,  1.0, -1.0, -1.0,  1.0, -1.0 ];
-    var cubeCol = [ 1.0, 0.0, 0.0, 1.0, 0.5, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 ];
-    var cubeHlpInx = [ 0, 1, 2, 3, 1, 5, 6, 2, 5, 4, 7, 6, 4, 0, 3, 7, 3, 2, 6, 7, 1, 0, 4, 5 ]; 
-    var cubePosData = [];
-    for ( var i = 0; i < cubeHlpInx.length; ++ i ) {
-        cubePosData.push( cubePos[cubeHlpInx[i]*3], cubePos[cubeHlpInx[i]*3+1], cubePos[cubeHlpInx[i]*3+2] );
-    }
-    var cubeNVData = [];
-    for ( var i1 = 0; i1 < cubeHlpInx.length; i1 += 4 ) {
-        var nv = [0, 0, 0];
-        for ( i2 = 0; i2 < 4; ++ i2 ) {
-            var i = i1 + i2;
-            nv[0] += cubePosData[i*3]; nv[1] += cubePosData[i*3+1]; nv[2] += cubePosData[i*3+2];
-        }
-        for ( i2 = 0; i2 < 4; ++ i2 )
-          cubeNVData.push( nv[0], nv[1], nv[2] );
-    }
-    var cubeColData = [];
-    for ( var is = 0; is < 6; ++ is ) {
-        for ( var ip = 0; ip < 4; ++ ip ) {
-           cubeColData.push( cubeCol[is*3], cubeCol[is*3+1], cubeCol[is*3+2] ); 
-        }
-    }
-    var inxData = [];
-    for ( var i = 0; i < cubeHlpInx.length; i += 4 ) {
-        inxData.push( i, i+1, i+2, i, i+2, i+3 );
-    }
-    bufObj.pos = gl.createBuffer();
-    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.pos );
-    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( cubePosData ), gl.STATIC_DRAW );
-    bufObj.nv = gl.createBuffer();
-    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.nv );
-    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( cubeNVData ), gl.STATIC_DRAW );
-    bufObj.col = gl.createBuffer();
-    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.col );
-    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( cubeColData ), gl.STATIC_DRAW );
-    bufObj.inx = gl.createBuffer();
-    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufObj.inx );
-    gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( inxData ), gl.STATIC_DRAW );
-    bufObj.inxLen = inxData.length;
-
-    bufQuad.pos = gl.createBuffer();
-    gl.bindBuffer( gl.ARRAY_BUFFER, bufQuad.pos );
-    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( [ -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0 ] ), gl.STATIC_DRAW );
-    bufQuad.inx = gl.createBuffer();
-    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufQuad.inx );
-    gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( [ 0, 1, 2, 0, 2, 3 ] ), gl.STATIC_DRAW );
-
-    startTime = Date.now();
-    setInterval(drawScene, 50);
-}
-
+})();
 </script>
 
-<body onload="sceneStart();">
-    <a id="ref-link" href="https://stackoverflow.com/questions/44779142/opengl-es-2-0-gaussian-blur-on-triangle/45238087#45238087">
-    OpenGL es 2.0 Gaussian blur on triangle
-    </a>
-
-    <div style="margin-left: 520px;">
-        <div style="float: right; width: 100%; background-color: #CCF;">
-            <form name="inputs">
-                <table>
-                    <tr> <td> blur </td> 
-                         <td> <input type="range" id="sigma" min="0" max="100" value="50"/></td> </tr>
-                </table>
-            </form>
-        </div>
-        <div style="float: right; width: 520px; margin-left: -520px;">
-            <canvas id="glow-canvas" style="border: none;" width="512" height="512"></canvas>
-        </div>
-        <div style="clear: both;"></div>
-    </div>
 </body>
