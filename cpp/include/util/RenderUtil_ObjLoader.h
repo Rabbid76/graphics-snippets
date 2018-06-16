@@ -38,8 +38,9 @@ namespace Render
 * \date    2018-05-29
 * \version 1.0
 **********************************************************************/
+  template<typename T_INDEX, typename T_DATA>
 class CObjFileLoader
-  : public IMeshResource
+  : public IMeshResource<T_INDEX, T_DATA>
 {
 public:
 
