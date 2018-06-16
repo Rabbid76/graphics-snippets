@@ -14,11 +14,11 @@
 
 // render
 
-#include <IDraw.h>
-#include <IBuffer.h>
-#include <IRenderPass.h>
-#include <ITexture.h>
-#include <IFont.h>
+#include <Render_IDraw.h>
+#include <Render_IBuffer.h>
+#include <Render_IRenderPass.h>
+#include <Render_ITexture.h>
+#include <Render_IFont.h>
 
 // OpenGL
 

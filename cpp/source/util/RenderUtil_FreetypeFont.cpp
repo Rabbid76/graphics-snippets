@@ -11,7 +11,7 @@
 // includes
 
 #include <RenderUtil_FreetypeFont.h>
-#include <IBuffer.h>
+#include <Render_IBuffer.h>
 
 
 // freetype

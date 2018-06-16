@@ -24,24 +24,6 @@
     <ClInclude Include="targetver.h">
       <Filter>library</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\render\IBuffer.h">
-      <Filter>render</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\render\IDrawType.h">
-      <Filter>render</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\render\ILight.h">
-      <Filter>render</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\render\IProgram.h">
-      <Filter>render</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\render\IRenderData.h">
-      <Filter>render</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\render\IRenderPass.h">
-      <Filter>render</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\OpenGL\OpenGL_Matrix_Camera.h">
       <Filter>OpenGL</Filter>
     </ClInclude>
@@ -63,38 +45,59 @@
     <ClInclude Include="..\include\OpenGL\OpenGLVertexBufferCompatibility.h">
       <Filter>OpenGL</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\render\IDraw.h">
-      <Filter>render</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\OpenGL\OpenGLBasicDraw.h">
       <Filter>OpenGL</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\render\ITexture.h">
-      <Filter>render</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\render\IFont.h">
-      <Filter>render</Filter>
     </ClInclude>
     <ClInclude Include="..\include\OpenGL\OpenGLError.h">
       <Filter>OpenGL</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\render\IGraphicsDebug.h">
-      <Filter>render</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\render\IResource.h">
-      <Filter>render</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\util\RenderUtil_ObjLoader.h">
       <Filter>util</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\render\IMesh.h">
-      <Filter>render</Filter>
     </ClInclude>
     <ClInclude Include="..\include\OpenGL\OpenGLTextureLoader.h">
       <Filter>OpenGL</Filter>
     </ClInclude>
     <ClInclude Include="..\include\util\RenderUtil_FreetypeFont.h">
       <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\render\Render_IBuffer.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\render\Render_IDraw.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\render\Render_IDrawType.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\render\Render_IFont.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\render\Render_IGraphicsDebug.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\render\Render_ILight.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\render\Render_IMesh.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\render\Render_IProgram.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\render\Render_IRender.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\render\Render_IRenderPass.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\render\Render_IResource.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\render\Render_ITexture.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\render\IRenderContext.h">
+      <Filter>render</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

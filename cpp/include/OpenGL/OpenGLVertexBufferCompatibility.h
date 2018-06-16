@@ -21,7 +21,7 @@
 
 // includes
 
-#include <IBuffer.h>
+#include <Render_IBuffer.h>
 #include <OpenGLFixedFunctionPipelineTypes.h>
 #include <OpenGLVertexBuffer.h>
 

@@ -12,7 +12,7 @@
 
 // includes
 
-#include <IGraphicsDebug.h>
+#include <Render_IGraphicsDebug.h>
 
 #include <functional> 
 
