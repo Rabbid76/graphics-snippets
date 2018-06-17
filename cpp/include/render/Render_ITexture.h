@@ -164,6 +164,8 @@ class IImageResource
 {
 public:
 
+  virtual ~IImageResource() = default;
+
   virtual TTextureType Type( void )    const = 0; //!< type of the texture 1D, 2D, 3D
   virtual TImageFormat Format( void )  const = 0; //!< format of one texel or voxel
   virtual TTextureSize Size( void )    const = 0; //!< size for up to 3 dimensions
@@ -184,6 +186,7 @@ class IImageResourceLoader
 {
 public:
 
+  virtual ~IImageResourceLoader() = default;
 
 };
 

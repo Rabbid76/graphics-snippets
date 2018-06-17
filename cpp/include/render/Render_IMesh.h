@@ -49,6 +49,8 @@ public:
 
   using const_iterator = const T_DATA *;
 
+  virtual ~IAttributeData() = default;
+
   virtual int            tuple_size( void ) const = 0;  //!< number of the components of an attrbute 1, 2, 3 or 4 
   virtual int            stride( void ) const = 0;      //!< number of elements (`T_DATA`) from one attrbute to the next attribute
   virtual int            offset( void ) const = 0;      //!< index of elements (`T_DATA`) where the first attribute starts in the array
@@ -71,6 +73,8 @@ public:
   using TVector    = std::array<T_DATA, V_TUPLE_SIZE>; 
   using TAttrbutes = std::vector<TVector>;
 
+  virtual ~TAttributeVector() = default;
+
   TAttrbutes       AV( void )       { return _va; } //!< access to raw attribute vector
   const TAttrbutes AV( void ) const { return _va; } //!< access to raw attribute vector
 
@@ -81,6 +85,29 @@ public:
   virtual const T_DATA * data( void )       const override { return reinterpret_cast<const T_DATA *>(_av.data()); }
 
   TAttrbutes _av;
+};
+
+template<typename T_DATA>
+class TAttributeVectorN
+  : public IAttributeData<T_DATA>
+{
+public:
+
+  using TAttrbutes = std::vector<T_DATA>;
+
+  virtual ~TAttributeVectorN() = default;
+
+  TAttrbutes       AV( void )       { return _va; } //!< access to raw attribute vector
+  const TAttrbutes AV( void ) const { return _va; } //!< access to raw attribute vector
+
+  virtual int            tuple_size( void ) const override { return _tuple_size; }
+  virtual int            stride( void )     const override { return _tuple_size; }
+  virtual int            offset( void )     const override { return 0; }
+  virtual size_t         size( void )       const override { return _av.size(); }
+  virtual const T_DATA * data( void )       const override { return _av.data(); }
+
+  TAttrbutes _av;
+  int        _tuple_size;
 };
 
 
@@ -97,6 +124,8 @@ class IIndexData
 public:
 
   using const_iterator = const T_INDEX *;
+
+  virtual ~IIndexData() = default;
 
   virtual size_t          size( void ) const = 0; //!< number of indices 
   virtual const T_INDEX * data( void ) const = 0; //!< pointer to the raw index data
@@ -115,11 +144,51 @@ public:
   using TFace    = std::array<T_INDEX, V_PRIMITIVE_SIZE>; 
   using TIndices = std::vector<TFace>;
 
+  virtual ~TIndexVector() = default;
+
   TIndices       IV( void )       { return _iv; } //!< access to raw index vector
   const TIndices IV( void ) const { return _iv; } //!< access to raw index vector
 
   virtual size_t          size( void ) const override { return _iv.size() * V_PRIMITIVE_SIZE; }
   virtual const T_INDEX * data( void ) const override { return reinterpret_cast<const T_INDEX *>(_iv.data()); }
+
+  TIndices _iv;
+};
+
+template<typename T_INDEX>
+class TIndexVector<T_INDEX, 1>
+  : public IIndexData<T_INDEX>
+{
+public:
+
+  using TIndices = std::vector<T_INDEX>;
+
+  virtual ~TIndexVector() = default;
+
+  TIndices       IV( void )       { return _iv; } //!< access to raw index vector
+  const TIndices IV( void ) const { return _iv; } //!< access to raw index vector
+
+  virtual size_t          size( void ) const override { return _iv.size(); }
+  virtual const T_INDEX * data( void ) const override { return _iv.data(); }
+
+  TIndices _iv;
+};
+
+template<typename T_INDEX>
+class TIndexVectorN
+  : public IIndexData<T_INDEX>
+{
+public:
+
+  using TIndices = std::vector<T_INDEX>;
+
+  virtual ~TIndexVectorN() = default;
+
+  TIndices       IV( void )       { return _iv; } //!< access to raw index vector
+  const TIndices IV( void ) const { return _iv; } //!< access to raw index vector
+
+  virtual size_t          size( void ) const override { return _iv.size(); }
+  virtual const T_INDEX * data( void ) const override { return _iv.data(); }
 
   TIndices _iv;
 };
@@ -165,6 +234,12 @@ enum class TMeshFaceSizeKind
   encoded_size     //!< The size of the faces is encoded in the index array, the size is specified at the start of each primitive.
 };
 
+//!< specifies the general packing of the attributes
+enum class TMeshAttributePack
+{
+  separated_tightly, //!< the attributes are tightly packed to separated buffers
+  record_stride      //!< the vevrtex and its attributes are pacjed to a tuple recored and stroed in one buffer
+};
 
 /******************************************************************//**
 * \brief   Generic interface for mesh data.
@@ -178,33 +253,35 @@ class IMeshData
 {
 public:
 
-  using TIndex         = T_INDEX;
-  using TAttributeData = Render::IAttributeData<T_DATA>;
-  using TIndexData     = Render::IIndexData<T_INDEX>;
+  using TIndex              = T_INDEX;
+  using TAttributeContainer = Render::IAttributeData<T_DATA>;
+  using TIndexContainer     = Render::IIndexData<T_INDEX>;
 
-  virtual TMeshFaceType           FaceType( void ) const = 0;            //!< Type of primitives
-  virtual TMeshFaceSizeKind       FaceSizeKind( void ) const = 0;        //!< Specifies how the size of a single primtive is defined 
-  virtual TMeshIndexKind          IndexKind( void ) const = 0;           //!< Specifies whether the attributes have separated, common or no indices.
-                                                                         //!< If the attributes have no indices, then all the attributes are consecutively sorted according to the faces in the attribute arrays.
+  virtual ~IMeshData() = default;
 
-  virtual const TAttributeData  & Vertices( void ) const = 0;            //!< Container for the vertex coordiantes
+  virtual TMeshFaceType                FaceType( void ) const = 0;            //!< Type of primitives
+  virtual TMeshFaceSizeKind            FaceSizeKind( void ) const = 0;        //!< Specifies how the size of a single primtive is defined 
+  virtual TMeshIndexKind               IndexKind( void ) const = 0;           //!< Specifies whether the attributes have separated, common or no indices.
+                                                                              //!< If the attributes have no indices, then all the attributes are consecutively sorted according to the faces in the attribute arrays.
+  virtual TMeshAttributePack           Pack( void ) const = 0;                //!< specifies the buffer packing
+  virtual const TAttributeContainer  & Vertices( void ) const = 0;            //!< Container for the vertex coordiantes
   
-  virtual const TIndexData      * Indices( void ) const = 0;             //!< Container for the common indices or vertex indices
-  virtual TIndex                  FaceSize( void ) const = 0;            //!< Size of a single primitive (0, if the primitives hacve different sizes)
-  virtual const TIndexData      * FaceSizes( void ) const = 0;           //!< Array of face sizes
-  virtual TIndex                  FaceRestart( void ) const = 0;         //!< Primitive restart marker
+  virtual const TIndexContainer      * Indices( void ) const = 0;             //!< Container for the common indices or vertex indices
+  virtual TIndex                       FaceSize( void ) const = 0;            //!< Size of a single primitive (0, if the primitives hacve different sizes)
+  virtual const TIndexContainer      * FaceSizes( void ) const = 0;           //!< Array of face sizes
+  virtual TIndex                       FaceRestart( void ) const = 0;         //!< Primitive restart marker
 
-  virtual TMeshNormalKind         NormalKind( void ) const = 0;          //!< Specifies whether there are face, vertex or both kind of normals.
-  virtual const TAttributeData  * FaceNormals( void ) const = 0;         //!< Container for the vertex normals
-  virtual const TIndexData      * FaceNormalIndices( void ) const = 0;   //!< Container for the separated indices of the vertex normals
-  virtual const TAttributeData  * Normals( void ) const = 0;             //!< Container for face normals
-  virtual const TIndexData      * NormalIndices( void ) const = 0;       //!< Container for the separated indices of the face normals
+  virtual TMeshNormalKind              NormalKind( void ) const = 0;          //!< Specifies whether there are face, vertex or both kind of normals.
+  virtual const TAttributeContainer  * FaceNormals( void ) const = 0;         //!< Container for the vertex normals
+  virtual const TIndexContainer      * FaceNormalIndices( void ) const = 0;   //!< Container for the separated indices of the vertex normals
+  virtual const TAttributeContainer  * Normals( void ) const = 0;             //!< Container for face normals
+  virtual const TIndexContainer      * NormalIndices( void ) const = 0;       //!< Container for the separated indices of the face normals
   
-  virtual const TAttributeData  * TextureCoordinates( void ) const = 0;  //!< Container for the texture coordiantes
-  virtual const TIndexData      * TextureCoordIndices( void ) const = 0; //!< Container for the separated indices of the texture coordiantes
+  virtual const TAttributeContainer  * TextureCoordinates( void ) const = 0;  //!< Container for the texture coordiantes
+  virtual const TIndexContainer      * TextureCoordIndices( void ) const = 0; //!< Container for the separated indices of the texture coordiantes
   
-  virtual const TAttributeData  * Colors( void ) const = 0;              //!< Container for the color attributes
-  virtual const TIndexData      * ColorIndices( void ) const = 0;        //!< Container for the separated indices of the color attributes
+  virtual const TAttributeContainer  * Colors( void ) const = 0;              //!< Container for the color attributes
+  virtual const TIndexContainer      * ColorIndices( void ) const = 0;        //!< Container for the separated indices of the color attributes
 
   bool ValidFaceNormals( void ) const { auto kind = NormalKind(); return kind == TNormalKind::face || kind == TNormalKind::both; }
   bool ValidNormals( void )     const { auto kind = NormalKind(); return kind == TNormalKind::vertex || kind == TNormalKind::both; }
@@ -235,7 +312,9 @@ public:
   using TMesh = IMeshData<T_DATA, T_INDEX>;
   using TUniqueMesh = TMeshPtr<T_DATA, T_INDEX>;
 
-  virtual TUniqueMesh Transform( const TMesh &mesh, TMeshIndexKind mesh_kind, bool triangles ) const = 0;
+  virtual ~IMeshFormatTransformer() = default;
+
+  virtual TUniqueMesh Transform( const TMesh &mesh, TMeshIndexKind mesh_kind, TMeshAttributePack pack, bool triangles ) const = 0;
 
   // TODO $$$
   //virtual TUniqueMesh TransformFaceNormalsToVertexNormals( const TMesh &mesh ) = 0;
@@ -263,6 +342,8 @@ class IMeshNormalGenerator
 {
 public:
 
+  virtual ~IMeshNormalGenerator() = default;
+
   // TODO $$$
 };
 
@@ -285,6 +366,8 @@ class IMeshUVGenerator
 {
 public:
 
+  virtual ~IMeshUVGenerator() = default;
+
   // TODO $$$
 };
 
@@ -306,6 +389,8 @@ class IMeshTessellator
 {
 public:
 
+  virtual ~IMeshTessellator() = default;
+
   // TODO $$$
 };
 
@@ -326,6 +411,8 @@ template<typename T_DATA, typename T_INDEX>
 class IMeshFactory
 {
 public:
+
+  virtual ~IMeshFactory() = default;
 
   // virtual const bool Generate( IMeshData &mesh ) = 0; // read data from file a store data to mesh 
 };
@@ -352,7 +439,12 @@ class IMeshResource
 {
 public:
 
-  // virtual const bool Load( IMeshData &mesh ) = 0; // read data from file a store data to mesh 
+  using TMesh = IMeshData<T_DATA, T_INDEX>;
+  using TUniqueMesh = TMeshPtr<T_DATA, T_INDEX>;
+
+  virtual ~IMeshResource() = default;
+
+  virtual TUniqueMesh Load( void ) const = 0; // read data from file a store data to mesh 
 };
 
 

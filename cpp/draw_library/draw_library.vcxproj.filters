@@ -122,13 +122,13 @@
     <ClCompile Include="source\OpenGLError.cpp">
       <Filter>OpenGL_source</Filter>
     </ClCompile>
-    <ClCompile Include="..\source\util\RenderUtil_ObjLoader.cpp">
-      <Filter>util</Filter>
-    </ClCompile>
     <ClCompile Include="source\OpenGLTextureLoader.cpp">
       <Filter>OpenGL_source</Filter>
     </ClCompile>
     <ClCompile Include="..\source\util\RenderUtil_FreetypeFont.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\util\RenderUtil_ObjLoader.cpp">
       <Filter>util</Filter>
     </ClCompile>
   </ItemGroup>

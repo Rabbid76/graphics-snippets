@@ -29,8 +29,5 @@ namespace Render
 
 
 
-// ObjFileDef.h
-
-
 } // Render
 
