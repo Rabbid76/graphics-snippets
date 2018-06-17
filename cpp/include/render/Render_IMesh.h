@@ -107,7 +107,7 @@ public:
   virtual const T_DATA * data( void )       const override { return _av.data(); }
 
   TAttrbutes _av;
-  int        _tuple_size;
+  int        _tuple_size = 0;
 };
 
 

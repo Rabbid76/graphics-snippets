@@ -18,6 +18,9 @@
 
 #include <Render_IMesh.h>
 
+#include <string>
+#include <iostream>
+
 
 // preprocessor definitions
 
@@ -75,10 +78,12 @@ template<typename T_DATA, typename T_INDEX>
 class CObjFileMesh
   : public IMeshData<T_DATA, T_INDEX>
 {                                
-  friend class CObjFileLoader<T_INDEX, T_DATA>;
+  friend class CObjFileLoader<T_DATA, T_INDEX>;
 
 public: 
 
+  using TValue      = T_DATA;
+  using TIndex      = T_INDEX;
   using TFaces      = TIndexVectorN<T_INDEX>;
   using TAttributes = TAttributeVectorN<T_DATA>;
   using TAttributes = TAttributeVectorN<T_DATA>;
@@ -98,7 +103,7 @@ public:
 
   virtual const TAttributes & Vertices( void ) const override { return _v; } 
   virtual const TFaces      * Indices( void )  const override { return &_f0; }
-  virtual T_INDEX             FaceSize( void ) const override { return _face_size; }
+  virtual TIndex              FaceSize( void ) const override { return _face_size; }
 
   virtual Render::TMeshNormalKind NormalKind( void ) const override
   { 
@@ -128,7 +133,7 @@ public:
   virtual Render::TMeshFaceSizeKind   FaceSizeKind( void )      const override { return Render::TMeshFaceSizeKind::constant; } 
   virtual Render::TMeshAttributePack  Pack( void )              const override { return Render::TMeshAttributePack::separated_tightly; }
   virtual const TFaces              * FaceSizes( void )         const override { return nullptr; }
-  virtual T_INDEX                     FaceRestart( void )       const override { return 0; }
+  virtual TIndex                      FaceRestart( void )       const override { return 0; }
   virtual const TAttributes         * FaceNormals( void )       const override { return nullptr; }
   virtual const TFaces              * FaceNormalIndices( void ) const override { return nullptr; }
   virtual const TAttributes         * Colors( void )            const override { return nullptr; }
@@ -157,8 +162,8 @@ private:
 * \date    2018-06-17
 * \version 1.0
 **********************************************************************/
-template<typename T_INDEX, typename T_DATA>
-CObjFileLoader<T_INDEX, T_DATA>::CObjFileLoader( 
+template<typename T_DATA, typename T_INDEX>
+CObjFileLoader<T_DATA, T_INDEX>::CObjFileLoader( 
   const std::string &file_name ) //!< I - filename
   : _file_name( file_name )
 {}
@@ -171,8 +176,8 @@ CObjFileLoader<T_INDEX, T_DATA>::CObjFileLoader(
 * \date    2018-06-17
 * \version 1.0
 **********************************************************************/
-template<typename T_INDEX, typename T_DATA>
-CObjFileLoader<T_INDEX, T_DATA>::~CObjFileLoader()
+template<typename T_DATA, typename T_INDEX>
+CObjFileLoader<T_DATA, T_INDEX>::~CObjFileLoader()
 {}
 
   
@@ -183,14 +188,118 @@ CObjFileLoader<T_INDEX, T_DATA>::~CObjFileLoader()
 * \date    2018-06-17
 * \version 1.0
 **********************************************************************/
-template<typename T_INDEX, typename T_DATA>
-typename CObjFileLoader<T_INDEX, T_DATA>::TUniqueMesh CObjFileLoader<T_INDEX, T_DATA>::Load( void ) const 
+template<typename T_DATA, typename T_INDEX>
+typename CObjFileLoader<T_DATA, T_INDEX>::TUniqueMesh CObjFileLoader<T_DATA, T_INDEX>::Load( void ) const 
 {
   if ( _file_name.empty() )
     return nullptr;
+  std::ifstream obj_stream( _file_name, std::ios::in );
+  if( !obj_stream )
+    return nullptr;
 
-  std::unique_ptr<CObjFileMesh<T_INDEX, T_DATA>> mesh_ptr = std::make_unique<CObjFileMesh<T_INDEX, T_DATA>>();
+  std::unique_ptr<CObjFileMesh<T_DATA, T_INDEX>> mesh_ptr = std::make_unique<CObjFileMesh<T_DATA, T_INDEX>>();
 
+  // parse the file, line by line
+  static const std::string white_space = " \t\n\r";
+  std::string token;
+  std::string indices;
+  std::string index;
+  T_DATA value;
+  CObjFileMesh<T_DATA, T_INDEX> &m = *mesh_ptr.get();
+  for( std::string line; std::getline( obj_stream, line ); )
+  {
+    // find first non whispce characterr in line
+    size_t start = line.find_first_not_of( white_space );
+    if ( start == std::string::npos )
+      continue;
+
+    // read the first token
+    std::istringstream line_stream( line.substr(start) );
+    line_stream.exceptions( 0 );
+    line_stream >> token;
+    
+    // ignore comment lines
+    if ( token[0] == '#' )
+      continue;
+
+    // read the line
+    if ( token == "v" )
+    {
+      // read vertex coordinate
+      while ( line_stream >> value )
+        m._v._av.push_back( value );
+      if ( m._v._tuple_size == 0 )
+        m._v._tuple_size = (int)m._v._av.size();
+    }
+    else if ( token == "vt" )
+    {
+      // read normal_vectors 
+      while ( line_stream >> value )
+        m._vt._av.push_back( value );
+      if ( m._vt._tuple_size == 0 )
+        m._vt._tuple_size = (int)m._vt._av.size();
+    }
+    else if ( token == "vn" )
+    {
+      // read normal_vectors 
+      while ( line_stream >> value )
+        m._vn._av.push_back( value );
+      if ( m._vn._tuple_size == 0 )
+        m._vn._tuple_size = (int)m._vn._av.size();
+    }
+    else if ( token == "f" )
+    {
+      // read faces
+      while( line_stream >> indices )
+      {
+        // TODO $$$ use `std::vector< std::vector<T_INDEX> > _f` and use `std::istringstream` and `std::getline` ???
+        //
+        //     std::istringstream index_stream( indices );
+        //     for( int i=0; std::getline( obj_stream, index ); ++i )
+        //         _f[i].push_back(index);
+
+        // parse indices
+        auto slash1 = indices.find("/");
+        if( slash1 == std::string::npos )
+        {
+          m._f0._iv.push_back( std::stoi(indices.c_str(), nullptr, 10)-1 );
+        }
+        else
+        {
+          m._f0._iv.push_back( std::stoi(indices.substr(0, slash1), nullptr, 10)-1 );
+
+          auto slash2 = indices.find("/", slash1+1 );
+          if ( slash2 == std::string::npos ) 
+          {
+            if ( slash1+1 < indices.length() ) 
+              m._f1._iv.push_back( std::stoi(indices.substr(slash1+1), nullptr, 10)-1 );
+          }
+          else
+          {
+            if ( slash2 > slash1+1 )
+              m._f1._iv.push_back( std::stoi(indices.substr(slash1+1, slash2-slash1-1), nullptr, 10)-1 );
+            if ( slash2+1 < indices.length() )
+              m._f2._iv.push_back( std::stoi(indices.substr(slash2+1), nullptr, 10)-1 );
+          }
+        }
+      }
+      if ( m._face_size == 0 )
+        m._face_size = (int)m._f0._iv.size();
+    }
+  }
+
+  // set index pointers
+  if ( m._vt._tuple_size > 0 )
+  {
+    m._f_vt = m._f1.empty() ? nullptr : &m._f1;
+    if ( m._vn._tuple_size > 0 )
+      m._f_vn = m._f2.empty() ? nullptr : &m._f2;
+  }
+  else if ( m._vn._tuple_size > 0 )
+  {
+    m._f_vn = m._f1.empty() ? nullptr : &m._f1;
+  }
+  
   // TODO $$$
 
   return nullptr;
