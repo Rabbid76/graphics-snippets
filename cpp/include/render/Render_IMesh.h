@@ -314,13 +314,20 @@ public:
 
   virtual ~IMeshFormatTransformer() = default;
 
-  virtual TUniqueMesh Transform( const TMesh &mesh, TMeshIndexKind mesh_kind, TMeshAttributePack pack, bool triangles ) const = 0;
+  virtual TUniqueMesh Transform( const TMesh &mesh ) const = 0;
 
-  // TODO $$$
-  //virtual TUniqueMesh TransformFaceNormalsToVertexNormals( const TMesh &mesh ) = 0;
-  //virtual TUniqueMesh TransformMultiIndexToSingleIndex( const TMesh &mesh ) = 0;  //! if the attributes have different indices, the transform the attributes to arrays with common indices.
-  //virtual TUniqueMesh TransformIndexBufferToArrayBuffer( const TMesh &mesh ) = 0; //! get rid of all indices- transform to an attribute array, where all vertices of the faces are in consecutive order. 
- 
+  virtual bool Transform( TUniqueMesh &mesh ) const 
+  {
+    if ( mesh == nullptr )
+      return false;
+
+    TUniqueMesh new_mesh = Transform( *mesh.get() );
+    if ( new_mesh == nullptr )
+      return false;
+
+    mesh = std::move(new_mesh);
+    return true;
+  }
 };
 
 
