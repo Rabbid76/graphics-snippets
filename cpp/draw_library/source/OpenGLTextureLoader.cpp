@@ -180,7 +180,7 @@ void CTextureLoader::EvaluateCapabilities( void )
     _dsa = false;
   if ( glGenerateTextureMipmap == nullptr )
     _dsa = false;
-  _dsa == false; // TODO $$$
+  _dsa = false; // TODO $$$
 
   _capabilities_evaluated = true;
 }

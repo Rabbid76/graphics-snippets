@@ -288,6 +288,12 @@ typename CObjFileLoader<T_DATA, T_INDEX>::TUniqueMesh CObjFileLoader<T_DATA, T_I
     }
   }
 
+  // clear identically index lists
+  if ( m._f0._iv == m._f1._iv )
+    m._f1._iv.clear();
+  if ( m._f0._iv == m._f2._iv )
+    m._f2._iv.clear();
+
   // set index pointers
   if ( m._vt._tuple_size > 0 )
   {
@@ -300,9 +306,7 @@ typename CObjFileLoader<T_DATA, T_INDEX>::TUniqueMesh CObjFileLoader<T_DATA, T_I
     m._f_vn = m._f1.empty() ? nullptr : &m._f1;
   }
   
-  // TODO $$$
-
-  return nullptr;
+  return mesh_ptr;
 }
 
 
