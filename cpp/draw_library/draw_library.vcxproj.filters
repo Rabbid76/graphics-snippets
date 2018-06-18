@@ -99,6 +99,9 @@
     <ClInclude Include="..\include\render\IRenderContext.h">
       <Filter>render</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\util\RenderUtil_MeshContainer.h">
+      <Filter>util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
