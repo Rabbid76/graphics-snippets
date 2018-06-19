@@ -204,15 +204,9 @@ typename CObjFileLoader<T_DATA, T_INDEX>::TUniqueMesh CObjFileLoader<T_DATA, T_I
 
   // set index pointers
   if ( m._vt._tuple_size > 0 )
-  {
     m._f_vt = m._f1.empty() ? nullptr : &m._f1;
-    if ( m._vn._tuple_size > 0 )
-      m._f_vn = m._f2.empty() ? nullptr : &m._f2;
-  }
-  else if ( m._vn._tuple_size > 0 )
-  {
-    m._f_vn = m._f1.empty() ? nullptr : &m._f1;
-  }
+  if ( m._vn._tuple_size > 0 )
+    m._f_vn = m._f2.empty() ? nullptr : &m._f2;
   
   return mesh_ptr;
 }
