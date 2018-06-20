@@ -39,6 +39,7 @@ enum class TLightProperty
   cast_shadow,     //!< the light source casts shadows
   radius_cutoff,   //!< the light source has a cut off at maximum influence radius (only for finite light sources)
   auto_radius,     //!< the maximum influence radius cut off is automatically calculated by the light intensity and the attenuation
+  sun,             //!< the light is a sun light
   // ...
   NO_OF
 };
