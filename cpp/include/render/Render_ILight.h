@@ -67,9 +67,9 @@ struct TLight
       std::tie( l._ambient, l._diffuse, l._specular, l._position, l._attenuation, l._cone_attenuation, l._direction, l._light_cone, l._maximum_radius, l._properties );
   }
 
-  TColor8          _ambient;           //!< ambinet light color
-  TColor8          _diffuse;           //!< diffuse light color
-  TColor8          _specular;          //!< specular light color
+  TColor8          _ambient;           //!< ambinet light color; the brightness of the light is encoded to the alpha channel
+  TColor8          _diffuse;           //!< diffuse light color; the brightness of the light is encoded to the alpha channel
+  TColor8          _specular;          //!< specular light color; the brightness of the light is encoded to the alpha channel
   TPoint4          _position;          //!< position of the light source (homoguenus coordinate); can be infinite (w=0.0)
   //t_fp             _attenuation_value; //!< a value in the range [0, 1], which represents the attenuation of a light source
   TVec3            _attenuation;       //!< constant, linear and quadratic attenuation of the light source by its distance
