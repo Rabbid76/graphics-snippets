@@ -21,6 +21,7 @@
 
 #include <string>
 #include <iostream>
+#include <fstream>
 
 
 // preprocessor definitions
