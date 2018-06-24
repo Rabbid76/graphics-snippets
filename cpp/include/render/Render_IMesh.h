@@ -305,8 +305,33 @@ public:
 
   virtual ~IMeshCache( void ) = default;
 
-  virtual IMeshData<T_DATA, T_INDEX> & New( IMeshPtr<T_DATA, T_INDEX> &&mesh ) = 0;
-  //virtual IMeshData<T_DATA, T_INDEX> * Get( TMeshPtr<T_DATA, T_INDEX> &&mesh ) = 0;
+  // add a mesh to the cache, without any key
+  virtual IMeshData<T_DATA, T_INDEX> & Add( IMeshPtr<T_DATA, T_INDEX> &&mesh ) = 0;
+
+  // manages meshes by an identifier and associates a time stamp to the mesh
+  virtual IMeshData<T_DATA, T_INDEX> * Get( size_t key, time_t &time_stamp ) = 0;
+  virtual IMeshData<T_DATA, T_INDEX> * AddOrReplace( size_t key, time_t time_stamp, IMeshPtr<T_DATA, T_INDEX> &&mesh ) = 0;
+
+  virtual IMeshData<T_DATA, T_INDEX> * Add( size_t key, time_t time_stamp, IMeshPtr<T_DATA, T_INDEX> &&mesh )
+  {
+    time_t cached_time;
+    if ( Get( key, cached_time ) != nullptr && cached_time >= time_stamp )
+      return nullptr;
+    return AddOrReplace( key, time_stamp, std::move(mesh) );
+  }
+
+  // manages meshes by a name and associates a time stamp to the mesh
+  virtual IMeshData<T_DATA, T_INDEX> * Get( const std::string &name, time_t &time_stamp ) = 0;
+  virtual IMeshData<T_DATA, T_INDEX> * AddOrReplace( const std::string &name, time_t time_stamp, IMeshPtr<T_DATA, T_INDEX> &&mesh ) = 0;
+
+  virtual IMeshData<T_DATA, T_INDEX> * Add( const std::string &name, time_t time_stamp, IMeshPtr<T_DATA, T_INDEX> &&mesh )
+  {
+    time_t cached_time;
+    if ( Get( name, cached_time ) != nullptr && cached_time >= time_stamp )
+      return nullptr;
+    return AddOrReplace( name, time_stamp, std::move(mesh) );
+  }
+  
 };
 
 
