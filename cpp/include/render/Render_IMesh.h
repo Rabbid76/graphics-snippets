@@ -288,7 +288,26 @@ public:
 };
 
 template<typename T_DATA, typename T_INDEX>
-using TMeshPtr = std::unique_ptr<IMeshData<T_DATA, T_INDEX>>;
+using IMeshPtr = std::unique_ptr<IMeshData<T_DATA, T_INDEX>>;
+
+
+/******************************************************************//**
+* \brief   Generic interface for mesh data chache.
+* 
+* \author  gernot
+* \date    2018-05-29
+* \version 1.0
+**********************************************************************/
+template<typename T_DATA, typename T_INDEX>
+class IMeshCache
+{
+public: 
+
+  virtual ~IMeshCache( void ) = default;
+
+  virtual IMeshData<T_DATA, T_INDEX> & New( IMeshPtr<T_DATA, T_INDEX> &&mesh ) = 0;
+  //virtual IMeshData<T_DATA, T_INDEX> * Get( TMeshPtr<T_DATA, T_INDEX> &&mesh ) = 0;
+};
 
 
 
@@ -310,7 +329,7 @@ class IMeshFormatTransformer
 public:
 
   using TMesh = IMeshData<T_DATA, T_INDEX>;
-  using TUniqueMesh = TMeshPtr<T_DATA, T_INDEX>;
+  using TUniqueMesh = IMeshPtr<T_DATA, T_INDEX>;
 
   virtual ~IMeshFormatTransformer() = default;
 
@@ -447,7 +466,7 @@ class IMeshResource
 public:
 
   using TMesh = IMeshData<T_DATA, T_INDEX>;
-  using TUniqueMesh = TMeshPtr<T_DATA, T_INDEX>;
+  using TUniqueMesh = IMeshPtr<T_DATA, T_INDEX>;
 
   virtual ~IMeshResource() = default;
 

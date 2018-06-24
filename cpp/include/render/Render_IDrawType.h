@@ -29,6 +29,16 @@ namespace Render
 using t_byte = unsigned char; //!< general unsigned  8bit data type (C++ 17 `std::byte`)
 using t_fp   = float;         //!< general floating point data type
 
+inline t_byte MixProperty( t_byte a, t_byte b, t_fp w )
+{
+  return (t_byte)( a * ( 1.0f - w ) + b * w );
+}
+
+inline t_fp MixProperty( t_fp a, t_fp b, t_fp w )
+{
+  return a * ( 1.0f - w ) + b * w ;
+}
+
 
 //! point data types
 using TPoint2 = std::array< t_fp, 2 >;
@@ -75,6 +85,29 @@ inline TColor8 toColor8( const TColor &col8 )
     static_cast<t_byte>(col8[3] * static_cast<t_fp>(255.0)),
   };
 };
+
+//! mix 2 floating point colors
+inline TColor MixColor( const TColor &a, const TColor &b, t_fp w )
+{
+  return TColor{
+    MixProperty(a[0], b[0], w),
+    MixProperty(a[1], b[1], w),
+    MixProperty(a[2], b[2], w),
+    MixProperty(a[3], b[3], w)
+  };
+}
+
+//! mix 2 byte colors
+inline TColor8 MixColor( const TColor8 &a, const TColor8 &b, t_fp w )
+{
+  return TColor8{
+    MixProperty(a[0], b[0], w),
+    MixProperty(a[1], b[1], w),
+    MixProperty(a[2], b[2], w),
+    MixProperty(a[3], b[3], w)
+  };
+}
+
 
 //! get the identity matrix
 inline constexpr TMat44 Identity( void )

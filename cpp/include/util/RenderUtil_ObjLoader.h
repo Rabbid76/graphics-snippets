@@ -51,7 +51,7 @@ class CObjFileLoader
 {
 public:
 
-  using TUniqueMesh = TMeshPtr<T_INDEX, T_DATA>;
+  using TUniqueMesh = IMeshPtr<T_INDEX, T_DATA>;
 
   CObjFileLoader( const std::string &file_name );
   virtual ~CObjFileLoader();
