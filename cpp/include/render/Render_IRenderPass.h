@@ -156,7 +156,7 @@ struct TBuffer
   {
     e_linear,  //!< linear filter
     e_extern,  //!< extern texture
-    e_cubemap, //!< the extern target texture is a side of a cubemap
+    e_cubemap, //!< the extern target texture is a cubmap or a side of a cubemap
     //...
     e_NO_OF  //!< number of buffer properties
   };
@@ -229,7 +229,7 @@ struct TBuffer
   unsigned int    _multisamples = 0;                  //!< multisamples
   TProperties     _flag;                              //!< buffer properties
   unsigned int    _extern_object = 0;                 //!< extern buffer object
-  int             _cubemap_side_index = -1;           //!< side index of the cube map side
+  int             _cubemap_side_index = -1;           //!< if >= 0 && < 6, then the side index of the cube map; else the entire cubemap
 };
 
 

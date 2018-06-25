@@ -369,9 +369,7 @@ unsigned int CRenderProcess::CubemapSide(
   
   if ( index >= 0 && index < 6 )
     return side_enum[index]; 
-
-  DebugWarning << "illegal cubemap side index" << index;
-  return GL_TEXTURE_CUBE_MAP_POSITIVE_X;
+  return GL_TEXTURE_CUBE_MAP;
 }
 
 
@@ -923,7 +921,10 @@ void CRenderProcess::AttachFrambufferTextureBuffer(
   }
   else if ( _textures[target._bufferID]._cubemap )
   {
-    glFramebufferTexture2D( GL_FRAMEBUFFER, attachType, CubemapSide( _textures[target._bufferID]._cubemap_side ), _textures[target._bufferID]._object, 0 );
+    if ( _textures[target._bufferID]._cubemap_side >= 0 && _textures[target._bufferID]._cubemap_side < 6 )
+      glFramebufferTexture2D( GL_FRAMEBUFFER, attachType, CubemapSide( _textures[target._bufferID]._cubemap_side ), _textures[target._bufferID]._object, 0 );
+    else
+      glFramebufferTexture( GL_FRAMEBUFFER, attachType,  _textures[target._bufferID]._object, 0 );
     OPENGL_CHECK_GL_ERROR
   }
   else
