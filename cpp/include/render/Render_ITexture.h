@@ -14,6 +14,8 @@
 
 #include <Render_IDrawType.h>
 
+#include <memory>
+
 
 /******************************************************************//**
 * @brief   Namespace for renderer.
