@@ -349,6 +349,33 @@ std::array<unsigned int, 3> CRenderProcess::InternalFormat(
 
 
 /******************************************************************//**
+* \brief Get the side name enumerator of a cubemap side.
+* 
+* \author  gernot
+* \date    2018-06-26
+* \version 1.0
+**********************************************************************/
+unsigned int CRenderProcess::CubemapSide( 
+  int index ) //!< index of the side
+{
+  static const GLenum side_enum[]{
+    GL_TEXTURE_CUBE_MAP_POSITIVE_X,
+    GL_TEXTURE_CUBE_MAP_NEGATIVE_X,
+    GL_TEXTURE_CUBE_MAP_POSITIVE_Y,
+    GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,
+    GL_TEXTURE_CUBE_MAP_POSITIVE_Z,
+    GL_TEXTURE_CUBE_MAP_NEGATIVE_Z
+  };
+  
+  if ( index >= 0 && index < 6 )
+    return side_enum[index]; 
+
+  DebugWarning << "illegal cubemap side index" << index;
+  return GL_TEXTURE_CUBE_MAP_POSITIVE_X;
+}
+
+
+/******************************************************************//**
 * \brief   Clear all render buffer specifications.
 * 
 * \author  gernot
@@ -679,8 +706,10 @@ void CRenderProcess::UpdateTexture(
   newTexture._linear       = specification._flag.test( Render::TBuffer::e_linear );
 
   // set the the extern textue object
-  newTexture._extern = false; // TODO $$$ extern textures
-  newTexture._object = 0;     // TODO $$$ newTexture._extern ? specification_extern_object : 0;
+  newTexture._extern       = specification._flag.test( Render::TBuffer::e_extern );
+  newTexture._object       = newTexture._extern ? specification._extern_object : 0;
+  newTexture._cubemap      = newTexture._extern ? specification._flag.test( Render::TBuffer::e_cubemap ) : 0;
+  newTexture._cubemap_side = newTexture._cubemap ? specification._cubemap_side_index : 0;
 
   // find the existing texture object 
   auto texIt = _textures.find( bufferID );
@@ -890,6 +919,12 @@ void CRenderProcess::AttachFrambufferTextureBuffer(
   else if ( IsMultisampled( _textures[target._bufferID]._multisamples ) )
   {
     glFramebufferTexture2D( GL_FRAMEBUFFER, attachType, GL_TEXTURE_2D_MULTISAMPLE, _textures[target._bufferID]._object, 0 );
+    OPENGL_CHECK_GL_ERROR
+  }
+  else if ( _textures[target._bufferID]._cubemap )
+  {
+    glFramebufferTexture2D( GL_FRAMEBUFFER, attachType, CubemapSide( _textures[target._bufferID]._cubemap_side ), _textures[target._bufferID]._object, 0 );
+    OPENGL_CHECK_GL_ERROR
   }
   else
   {
@@ -897,13 +932,6 @@ void CRenderProcess::AttachFrambufferTextureBuffer(
     OPENGL_CHECK_GL_ERROR
   }
   // TODO $$$ _textures[target._bufferID]._layers == 1 : glFramebufferTexture3D ???
-      
-  // TODO cubemaps: 
-  //   GL_TEXTURE_CUBE_MAP_POSITIVE_X, GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 
-  //   GL_TEXTURE_CUBE_MAP_POSITIVE_Y, GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,
-  //   GL_TEXTURE_CUBE_MAP_POSITIVE_Z, GL_TEXTURE_CUBE_MAP_NEGATIVE_Z
-  //   e.g.: glFramebufferTexture2D( GL_FRAMEBUFFER, attachType, GL_TEXTURE_CUBE_MAP_POSITIVE_X, _textures[target._bufferID]._object, 0 );
-
 }
 
 
@@ -1170,6 +1198,8 @@ const CRenderProcess::TBufferInfoCache & CRenderProcess::EvaluateInfoCache(
       info._sourceTextures.emplace_back( GL_TEXTURE0 + (unsigned int)source._binding, GL_TEXTURE_2D_ARRAY, texture._object );
     else if ( IsMultisampled( texture._multisamples ) )
       info._sourceTextures.emplace_back( GL_TEXTURE0 + (unsigned int)source._binding, GL_TEXTURE_2D_MULTISAMPLE, texture._object );
+    else if ( texture._cubemap )
+      info._sourceTextures.emplace_back( GL_TEXTURE0 + (unsigned int)source._binding, CubemapSide(texture._cubemap_side), texture._object );
     else
       info._sourceTextures.emplace_back( GL_TEXTURE0 + (unsigned int)source._binding, GL_TEXTURE_2D, texture._object );
   }

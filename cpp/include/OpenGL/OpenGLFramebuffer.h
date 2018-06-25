@@ -64,6 +64,8 @@ public:
     unsigned int                _multisamples; //!< number of texture layers
     bool                        _linear;       //!< linear texture buffer filter
     bool                        _extern;       //!< extern texture; a texture which is not maneged in this class, but was handed over for use
+    bool                        _cubemap;      //!< the extern target texture is a side of a cubemap
+    int                         _cubemap_side; //!< the side index of the cubemap side
   };
   using TTextureMap = std::map<size_t, TTextureObject>;
 
@@ -101,6 +103,7 @@ public:
   virtual const TPassMap   & Passes( void )  const { return _passes; };
 
   static std::array<unsigned int, 3> InternalFormat( Render::TBufferType buffer, Render::TBufferDataType format );
+  static unsigned int CubemapSide( int index );
 
   virtual bool          IsValid( void )     const override { return _valid; }
   virtual bool          IsComplete( void )  const override { return _complete; }
@@ -134,7 +137,7 @@ private:
 
   bool IsLayered(      unsigned int layers )       const { return layers > 1; }
   bool IsMultisampled( unsigned int multisamples ) const { return multisamples > 1; }
-
+  
   void Destruct( void );
   void DeleteUnnecessaryTextures( void );
   void DeleteUnnecessaryFrambuffers( void );

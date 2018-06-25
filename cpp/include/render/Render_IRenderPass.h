@@ -154,8 +154,9 @@ struct TBuffer
 {
   enum TProperty
   {
-    e_cubemap, //!< buffer has to be cleared
     e_linear,  //!< linear filter
+    e_extern,  //!< extern texture
+    e_cubemap, //!< the extern target texture is a side of a cubemap
     //...
     e_NO_OF  //!< number of buffer properties
   };
@@ -213,12 +214,22 @@ struct TBuffer
     _flag.set( e_linear, linear );
   }
 
+  void SetExternBufferObject( unsigned int object, bool cubemap, int cubemap_side )
+  {
+    _flag.set( e_extern,   true );
+    _flag.set( e_cubemap, cubemap );
+    _extern_object      = object;
+    _cubemap_side_index = cubemap ? cubemap_side : -1;
+  }
+
   TBufferType     _type   = TBufferType::DEFAULT;     //!< type of the buffer
   TBufferDataType _format = TBufferDataType::DEFAULT; //!< internal format of the buffer
   unsigned int    _layers = 0;                        //!< number of the texture layers
   float           _scale  = 1.0f;                     //!< buffer size scale (down scale or up scale)
   unsigned int    _multisamples = 0;                  //!< multisamples
   TProperties     _flag;                              //!< buffer properties
+  unsigned int    _extern_object = 0;                 //!< extern buffer object
+  int             _cubemap_side_index = -1;           //!< side index of the cube map side
 };
 
 
