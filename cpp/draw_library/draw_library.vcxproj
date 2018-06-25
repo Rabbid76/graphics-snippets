@@ -193,15 +193,15 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\source\OpenGL\OpenGLBasicDraw.cpp" />
+    <ClCompile Include="..\source\OpenGL\OpenGLError.cpp" />
+    <ClCompile Include="..\source\OpenGL\OpenGLFramebuffer.cpp" />
+    <ClCompile Include="..\source\OpenGL\OpenGLTextureLoader.cpp" />
+    <ClCompile Include="..\source\OpenGL\OpenGLVertexBuffer.cpp" />
+    <ClCompile Include="..\source\OpenGL\OpenGLVertexBufferCompatibility.cpp" />
+    <ClCompile Include="..\source\OpenGL\OpenGLVertexBuffer_2_0.cpp" />
     <ClCompile Include="..\source\util\RenderUtil_FreetypeFont.cpp" />
     <ClCompile Include="..\source\util\RenderUtil_ObjLoader.cpp" />
-    <ClCompile Include="source\OpenGLBasicDraw.cpp" />
-    <ClCompile Include="source\OpenGLError.cpp" />
-    <ClCompile Include="source\OpenGLFramebuffer.cpp" />
-    <ClCompile Include="source\OpenGLTextureLoader.cpp" />
-    <ClCompile Include="source\OpenGLVertexBuffer.cpp" />
-    <ClCompile Include="source\OpenGLVertexBufferCompatibility.cpp" />
-    <ClCompile Include="source\OpenGLVertexBuffer_2_0.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

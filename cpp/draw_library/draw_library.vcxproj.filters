@@ -107,32 +107,32 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>library</Filter>
     </ClCompile>
-    <ClCompile Include="source\OpenGLFramebuffer.cpp">
-      <Filter>OpenGL_source</Filter>
-    </ClCompile>
-    <ClCompile Include="source\OpenGLVertexBuffer.cpp">
-      <Filter>OpenGL_source</Filter>
-    </ClCompile>
-    <ClCompile Include="source\OpenGLVertexBuffer_2_0.cpp">
-      <Filter>OpenGL_source</Filter>
-    </ClCompile>
-    <ClCompile Include="source\OpenGLVertexBufferCompatibility.cpp">
-      <Filter>OpenGL_source</Filter>
-    </ClCompile>
-    <ClCompile Include="source\OpenGLBasicDraw.cpp">
-      <Filter>OpenGL_source</Filter>
-    </ClCompile>
-    <ClCompile Include="source\OpenGLError.cpp">
-      <Filter>OpenGL_source</Filter>
-    </ClCompile>
-    <ClCompile Include="source\OpenGLTextureLoader.cpp">
-      <Filter>OpenGL_source</Filter>
-    </ClCompile>
     <ClCompile Include="..\source\util\RenderUtil_FreetypeFont.cpp">
       <Filter>util</Filter>
     </ClCompile>
     <ClCompile Include="..\source\util\RenderUtil_ObjLoader.cpp">
       <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\OpenGL\OpenGLBasicDraw.cpp">
+      <Filter>OpenGL_source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\OpenGL\OpenGLError.cpp">
+      <Filter>OpenGL_source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\OpenGL\OpenGLFramebuffer.cpp">
+      <Filter>OpenGL_source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\OpenGL\OpenGLTextureLoader.cpp">
+      <Filter>OpenGL_source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\OpenGL\OpenGLVertexBuffer.cpp">
+      <Filter>OpenGL_source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\OpenGL\OpenGLVertexBuffer_2_0.cpp">
+      <Filter>OpenGL_source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\OpenGL\OpenGLVertexBufferCompatibility.cpp">
+      <Filter>OpenGL_source</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
