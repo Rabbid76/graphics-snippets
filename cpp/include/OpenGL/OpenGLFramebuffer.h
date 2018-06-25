@@ -123,6 +123,7 @@ public:
   virtual bool Bind( size_t passID, bool read, bool draw ) override;                            //!< binds the named famebuffer
   virtual bool ReleasePass( size_t passID ) override;                                           //!< relase the render pass
   virtual bool Release( void ) override;                                                        //!< relase the current render pass
+  virtual bool GetBufferObject( size_t bufferID, unsigned int &obj ) override;                  //!< get the implementation object for a buffer
   virtual bool GetPassObject( size_t passID, unsigned int &obj ) override;                      //!< get the implementation object for a pass
 
   virtual bool SetupDepthTest( Render::TPassDepthTest depth );  //!< set up the depth test

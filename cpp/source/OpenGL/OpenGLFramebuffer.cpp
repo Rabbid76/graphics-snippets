@@ -1386,6 +1386,30 @@ bool CRenderProcess::Release( void )
 
 
 /******************************************************************//**
+* @brief   Get the implementation object for a buffer.
+*
+* @author  gernot
+* @date    2018-06-26
+* @version 1.0
+**********************************************************************/
+bool CRenderProcess::GetBufferObject(
+  size_t        bufferID, //!< in: the name of the buffer
+  unsigned int &obj )   //!< out: the GPU frambuffer object
+{
+   if ( IsValid() == false || _complete == false )
+    return false;
+
+  // check if the buffer is valid
+  auto textureIt = _textures.find( bufferID );
+  if ( textureIt == _textures.end() )
+    return false;
+
+  obj = textureIt->second._object;
+  return obj != 0;
+}
+
+
+/******************************************************************//**
 * @brief   Get the implementation object for a pass
 *
 * @author  gernot
@@ -1403,7 +1427,6 @@ bool CRenderProcess::GetPassObject(
   auto passIt = _passes.find( passID );
   if ( passIt == _passes.end() )
     return false;
-  _currentPass = passID;
   Render::TPass &pass = passIt->second;
 
   // Update information for target buffer binding, target buffer clearing and source texture binding

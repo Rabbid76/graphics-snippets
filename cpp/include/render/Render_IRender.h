@@ -15,6 +15,7 @@
 #include <Render_IDrawType.h>
 #include <Render_ITexture.h>
 #include <Render_IBuffer.h>
+#include <Render_IRenderPass.h>
 
 
 // type declarations
@@ -40,7 +41,7 @@ namespace Render
 **********************************************************************/
 class IProvider
   : public IDrawBufferProvider
-  // TODO $$$
+  , public IRenderProcessProvider
 {
 };
 

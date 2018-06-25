@@ -32,6 +32,36 @@ namespace Render
 {
 
 
+class IRenderProcess;
+
+
+
+//---------------------------------------------------------------------
+// IRenderProcessProvider
+//---------------------------------------------------------------------
+
+
+/******************************************************************//**
+* \brief   Generic provider for generic draw buffers.
+* 
+* \author  gernot
+* \date    2018-06-08
+* \version 1.0
+**********************************************************************/
+class IRenderProcessProvider
+{
+public:
+
+  virtual Render::IRenderProcess * NewRenderProcess( void ) = 0;
+};
+
+
+
+//---------------------------------------------------------------------
+// IRenderProcess
+//---------------------------------------------------------------------
+
+
 /******************************************************************//**
 * \brief   Type of a render pass target
 * 
@@ -309,12 +339,6 @@ struct TPass
 };
 
 
-
-//*********************************************************************
-// IContextManager
-//*********************************************************************
-
-
 /******************************************************************//**
 * \brief   Generic interface for render pass specification and managment.
 * 
@@ -389,19 +413,20 @@ public:
   }
 
  
-  virtual bool  IsValid( void ) const = 0;                              //!< checks if the specifications have been successfully validated
-  virtual bool  IsComplete( void ) const = 0;                           //!< checks if the buffers and passes have been successfully created
-  virtual void  Invalidate( void ) = 0;                                 //!< invalidate, force renew of buffers and passes
-  virtual bool  Validate( void ) = 0;                                   //!< validate the specifcations
-  virtual bool  ValidateSize( std::array<size_t, 2> ) = 0;              //!< validate the frambuffer sizes
-  virtual bool  Create( std::array<size_t, 2> ) = 0;                    //!< validate the specification and create the render passes 
-  virtual TSize CurrentSize( void ) const = 0;                          //!< current process buffer size
-  virtual void  Destroy( void ) = 0;                                    //!< detroy the buffer and the passes
-  virtual bool  Prepare( size_t passID, TPrepareProperties props ) = 0; //!< prepare a render pass
-  virtual bool  Bind( size_t passID, bool read, bool draw ) = 0;        //!< binds the named famebuffer for drawing
-  virtual bool  ReleasePass( size_t passID ) = 0;                       //!< relase the render pass
-  virtual bool  Release( void ) = 0;                                    //!< relase the current render pass
-  virtual bool  GetPassObject( size_t passID, unsigned int &obj ) = 0;  //!< get the implementation object for a pass
+  virtual bool  IsValid( void ) const = 0;                                 //!< checks if the specifications have been successfully validated
+  virtual bool  IsComplete( void ) const = 0;                              //!< checks if the buffers and passes have been successfully created
+  virtual void  Invalidate( void ) = 0;                                    //!< invalidate, force renew of buffers and passes
+  virtual bool  Validate( void ) = 0;                                      //!< validate the specifcations
+  virtual bool  ValidateSize( std::array<size_t, 2> ) = 0;                 //!< validate the frambuffer sizes
+  virtual bool  Create( std::array<size_t, 2> ) = 0;                       //!< validate the specification and create the render passes 
+  virtual TSize CurrentSize( void ) const = 0;                             //!< current process buffer size
+  virtual void  Destroy( void ) = 0;                                       //!< detroy the buffer and the passes
+  virtual bool  Prepare( size_t passID, TPrepareProperties props ) = 0;    //!< prepare a render pass
+  virtual bool  Bind( size_t passID, bool read, bool draw ) = 0;           //!< binds the named famebuffer for drawing
+  virtual bool  ReleasePass( size_t passID ) = 0;                          //!< relase the render pass
+  virtual bool  Release( void ) = 0;                                       //!< relase the current render pass
+  virtual bool  GetBufferObject( size_t bufferID, unsigned int &obj ) = 0; //!< get the implementation object for a buffer
+  virtual bool  GetPassObject( size_t passID, unsigned int &obj ) = 0;     //!< get the implementation object for a pass
  
   bool Prepare( size_t passID )
   {
