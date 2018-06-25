@@ -723,7 +723,10 @@ void CRenderProcess::UpdateTexture(
     }
     
     // update texture information
-    texIt->second = newTexture;
+    if ( texIt != _textures.end() )
+      texIt->second = newTexture;
+    else
+      _textures[bufferID] = newTexture;
     return;
   }
 
