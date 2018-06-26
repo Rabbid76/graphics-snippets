@@ -706,8 +706,8 @@ void CRenderProcess::UpdateTexture(
   // set the the extern textue object
   newTexture._extern       = specification._flag.test( Render::TBuffer::e_extern );
   newTexture._object       = newTexture._extern ? specification._extern_object : 0;
-  newTexture._cubemap      = newTexture._extern ? specification._flag.test( Render::TBuffer::e_cubemap ) : 0;
-  newTexture._cubemap_side = newTexture._cubemap ? specification._cubemap_side_index : 0;
+  newTexture._cubemap      = specification._flag.test( Render::TBuffer::e_cubemap );
+  newTexture._cubemap_side = newTexture._extern && newTexture._cubemap ? specification._cubemap_side_index : -1;
 
   // find the existing texture object 
   auto texIt = _textures.find( bufferID );
@@ -715,7 +715,7 @@ void CRenderProcess::UpdateTexture(
   // if the texture is an extern texture, then it is sufficient to update the texture format information
   if ( newTexture._extern )
   {
-    // delte the "old" texture if it was not an external texture
+    // delete the "old" texture if it was not an external texture
     if ( texIt != _textures.end() && texIt->second._extern == false )
     {
       glDeleteTextures( 1, &texIt->second._object );
@@ -751,6 +751,7 @@ void CRenderProcess::UpdateTexture(
   // setup the texture size and the format
   bool is_layered      = IsLayered( newTexture._layers );
   bool is_multisampled = IsMultisampled( newTexture._multisamples );
+  bool is_cubemap      = newTexture._cubemap; 
   GLenum target_texture = 0;
   if ( is_layered )
   {
@@ -766,6 +767,21 @@ void CRenderProcess::UpdateTexture(
     glBindTexture( target_texture, newTexture._object ); OPENGL_CHECK_GL_ERROR
     glTexImage2DMultisample( target_texture, newTexture._multisamples, (GLint)newTexture._format[0],
       (GLsizei)newTexture._size[0], (GLsizei)newTexture._size[1], GL_FALSE ); OPENGL_CHECK_GL_ERROR
+  }
+  else if ( is_cubemap )
+  {
+    if ( newTexture._cubemap_side >= 0 )
+      DebugWarning << "a single cubmap side can't be created" << (int)newTexture._cubemap_side;
+    target_texture = GL_TEXTURE_CUBE_MAP;
+    glBindTexture( target_texture, newTexture._object ); OPENGL_CHECK_GL_ERROR
+
+    for ( int sideInx = 0; sideInx < 6; sideInx ++ )
+    {
+      GLenum side_target = CubemapSide( sideInx );
+      glTexImage2D( side_target, 0, (GLint)newTexture._format[0],
+        (GLsizei)newTexture._size[0], (GLsizei)newTexture._size[1],
+        0, (GLenum)newTexture._format[1], (GLenum)newTexture._format[2], nullptr ); OPENGL_CHECK_GL_ERROR
+    }
   }
   else 
   {

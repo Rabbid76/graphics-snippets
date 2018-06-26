@@ -216,10 +216,10 @@ struct TBuffer
 
   void SetExternBufferObject( unsigned int object, bool cubemap, int cubemap_side )
   {
-    _flag.set( e_extern,   true );
+    _flag.set( e_extern,  object > 0 );
     _flag.set( e_cubemap, cubemap );
-    _extern_object      = object;
-    _cubemap_side_index = cubemap ? cubemap_side : -1;
+    _extern_object      = _flag.test( e_extern ) ? object : 0;
+    _cubemap_side_index = _flag.test( e_extern ) && _flag.test( e_cubemap ) ? cubemap_side : -1;
   }
 
   TBufferType     _type   = TBufferType::DEFAULT;     //!< type of the buffer
