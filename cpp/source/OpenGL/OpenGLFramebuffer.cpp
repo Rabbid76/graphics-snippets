@@ -663,7 +663,7 @@ bool CRenderProcess::Validate( void )
   }
 
   // for each buffer
-  bool is_layered = _buffers.empty() ? false : _buffers[0]._layers > 0;
+  bool is_layered = _buffers.empty() ? false : _buffers.begin()->second._layers > 0;
   for ( auto buffer : _buffers )
   {
     size_t         bufferID     = buffer.first;  //!< name of the buffer
