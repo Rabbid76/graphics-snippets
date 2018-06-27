@@ -623,6 +623,7 @@ or [OpenGL 4.6 API Compatibility Profile Specification; 10.7.5 Commands Allowed 
 For vertex attributes with an integral data it has to be used [**`glVertexAttribIPointer`**](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glVertexAttribPointer.xhtml) (focus on the **`I`**), to define an array of generic vertex attribute data.
 
 See the [OpenGL ES specification - Chapter 10.3 Vertex Arrays](https://www.khronos.org/registry/OpenGL/specs/es/3.2/es_spec_3.2.pdf) which clearly says:
+See [OpenGL 4.6 API Compatibility Profile Specification; 10.2. CURRENT VERTEX ATTRIBUTE VALUES; page m389](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.compatibility.pdf)<br/>
 
 > When values for a vertex shader attribute variable are sourced from an enabled generic vertex attribute array,
 > the array must be specified by a command compatible with the data type of the variable. 
