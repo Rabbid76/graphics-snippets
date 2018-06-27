@@ -43,6 +43,9 @@ class IProvider
   : public IDrawBufferProvider
   , public IRenderProcessProvider
 {
+public:
+
+  virtual ~IProvider() = default;
 };
 
 

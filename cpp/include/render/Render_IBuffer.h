@@ -60,6 +60,8 @@ class IDrawBufferProvider
 {
 public:
 
+  virtual ~IDrawBufferProvider() = default;
+
   virtual IDrawBuffer * NewDrawBuffer( TDrawBufferUsage usage ) = 0;
   virtual IDrawBuffer & DrawBuffer( void ) = 0;
   virtual IDrawBuffer & DrawBuffer( const void *key, bool &cached ) = 0;

@@ -52,6 +52,8 @@ class IRenderProcessProvider
 {
 public:
 
+  virtual ~IRenderProcessProvider() = default;
+
   virtual Render::IRenderProcess * NewRenderProcess( void ) = 0;
 };
 
