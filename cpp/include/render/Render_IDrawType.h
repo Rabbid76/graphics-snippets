@@ -26,12 +26,18 @@
 namespace Render
 {
 
-using t_byte = unsigned char; //!< general unsigned  8bit data type (C++ 17 `std::byte`)
-using t_fp   = float;         //!< general floating point data type
+using t_byte  = unsigned char; //!< general unsigned  8bit data type (C++ 17 `std::byte`)
+using t_sbyte = char;          //!< general signed 8bit data
+using t_fp    = float;         //!< general floating point data type
 
 inline t_byte MixProperty( t_byte a, t_byte b, t_fp w )
 {
   return (t_byte)( a * ( 1.0f - w ) + b * w );
+}
+
+inline t_byte MixProperty( t_sbyte a, t_sbyte b, t_fp w )
+{
+  return (t_sbyte)( a * ( 1.0f - w ) + b * w );
 }
 
 inline t_fp MixProperty( t_fp a, t_fp b, t_fp w )
