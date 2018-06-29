@@ -367,14 +367,13 @@ int main(int argc, char** argv)
     glGenTextures(1, &tobj);
     glActiveTexture( GL_TEXTURE0 + texture_unit );
     glBindTexture(GL_TEXTURE_2D, tobj);
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-    //glPixelStorei( GL_UNPACK_ALIGNMENT, 1 ); RGBA is always aliged 4
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, cx, cy, 0, GL_RGBA, GL_UNSIGNED_BYTE, test_img.data());
-    //glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
-    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, cx, cy, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, cx, cy, 0, GL_RGBA, GL_UNSIGNED_BYTE, test_img.data());
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, cx, cy, 0, GL_RGBA, GL_FLOAT, NULL);
+    OPENGL_CHECK_GL_ERROR
 
     glBindImageTexture(0, tobj, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F); 
     OPENGL_CHECK_GL_ERROR
