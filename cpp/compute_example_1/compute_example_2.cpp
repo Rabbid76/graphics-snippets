@@ -87,25 +87,20 @@ void main()
 
 
 // test compute shader
-std::string sh_test_compute = R"(
-#version 460
-
-layout(local_size_x = 1, local_size_y = 1) in;
-layout(rgba32f, binding = 0) uniform image2D img_output;
-
-void main() {
+const char *csSrc[] = {
+    
+  "#version 440",
   
-   // get index in global work group i.e x,y position
-  ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
-  
-  float u = float(pixel_coords.x) / 512.0;
-  float v = float(pixel_coords.y) / 512.0; 
-  vec4 pixel = vec4(u, v, (1.0-u)*(1.0-v), 1.0);
-  
-  // output to a specific pixel in the image
-  imageStore(img_output, pixel_coords, pixel);
-}
-)";
+  R"(
+  layout (binding = 0, rgba32f) uniform image2D destTex;
+  layout (local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+ 
+  void main() {
+           
+      ivec2 storePos = ivec2(gl_GlobalInvocationID.xy);
+      imageStore(destTex, storePos, vec4(0.0,0.0,1.0,1.0));
+  })"
+};
 
 
 // compute shader
@@ -276,19 +271,53 @@ int main(int argc, char** argv)
       { sh_frag, GL_FRAGMENT_SHADER }
     } ) );
 
-    static int compute_id = 2;
+    static int compute_id = 0;
     std::string sh_compute;
     switch (compute_id)
     {
       default:
-      case 0: sh_compute = sh_test_compute; break;
+      case 0: sh_compute = csSrc[0]; break;
       case 1: sh_compute = sh_compute_1; break;
       case 2: sh_compute = sh_compute_2; break;
     }
+    /*
     g_compute_prog.reset( new OpenGL::ShaderProgram(
     {
       { sh_compute.c_str(), GL_COMPUTE_SHADER }
     } ) );
+    */
+
+    GLuint cshader = glCreateShader( GL_COMPUTE_SHADER );
+    glShaderSource(cshader, 2, csSrc, NULL);
+    glCompileShader(cshader);
+    GLint compile_status;
+    glGetShaderiv( cshader, GL_COMPILE_STATUS, &compile_status );
+    if ( compile_status == GL_FALSE )
+    {
+        GLint maxLen;
+	      glGetShaderiv( cshader, GL_INFO_LOG_LENGTH, &maxLen );
+        std::vector< char >log( maxLen );
+		    GLsizei len;
+		    glGetShaderInfoLog( cshader, maxLen, &len, log.data() );
+		    std::cout << "compile error:" << std::endl << log.data() << std::endl;
+        throw std::runtime_error( "compile error" );
+    }  
+
+    GLuint cshaderprogram = glCreateProgram();
+    glAttachShader(cshaderprogram, cshader);
+    glLinkProgram(cshaderprogram);
+    GLint link_status;
+    glGetProgramiv( cshaderprogram, GL_LINK_STATUS, &link_status );
+    if ( link_status == GL_FALSE )
+    {
+        GLint maxLen;
+	      glGetProgramiv( cshaderprogram, GL_INFO_LOG_LENGTH, &maxLen );
+        std::vector< char >log( maxLen );
+		    GLsizei len;
+		    glGetProgramInfoLog( cshaderprogram, maxLen, &len, log.data() );
+		    std::cout  << "link error:" << std::endl << log.data() << std::endl;
+        throw std::runtime_error( "link error" );
+    }
 
     static const std::vector<float> varray
     { 
@@ -350,8 +379,9 @@ int main(int argc, char** argv)
     glBindImageTexture(0, tobj, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F); 
     OPENGL_CHECK_GL_ERROR
 
-    // launch compute shaders!
-    g_compute_prog->Use();
+      // launch compute shaders!
+      glUseProgram( cshaderprogram );
+    //g_compute_prog->Use();
     glDispatchCompute((GLuint)cx, (GLuint)cy, 1); 
     OPENGL_CHECK_GL_ERROR
     

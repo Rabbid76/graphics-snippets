@@ -12,11 +12,11 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>source</Filter>
     </ClCompile>
-    <ClCompile Include="compute_example_1.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="..\draw_library\source\OpenGLError.cpp">
+    <ClCompile Include="..\source\OpenGL\OpenGLError.cpp">
       <Filter>OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="compute_example_2.cpp">
+      <Filter>source</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -19,8 +19,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\draw_library\source\OpenGLError.cpp" />
-    <ClCompile Include="compute_example_1.cpp" />
+    <ClCompile Include="..\source\OpenGL\OpenGLError.cpp" />
+    <ClCompile Include="compute_example_2.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
