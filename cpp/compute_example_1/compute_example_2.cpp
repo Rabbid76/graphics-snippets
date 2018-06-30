@@ -87,82 +87,46 @@ void main()
 
 
 // test compute shader
-const char *csSrc[] = {
+const char *csSrc_1[] = {
     
   "#version 440",
   
   R"(
-  layout (binding = 0, rgba32f) uniform image2D destTex;
   layout (local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+
+  layout (binding = 0, rgba32f) uniform image2D destTex;
+  layout (binding = 0) uniform sampler2D sourceTex;
  
   void main() {
            
-      ivec2 storePos = ivec2(gl_GlobalInvocationID.xy);
-      imageStore(destTex, storePos, vec4(0.0,0.0,1.0,1.0));
+      ivec2 pos = ivec2(gl_GlobalInvocationID.xy); 
+
+      vec4 texel =  texelFetch(sourceTex, pos, 0);
+
+      imageStore(destTex, pos, texel);
   })"
 };
 
-
-// compute shader
-std::string sh_compute_1 = R"(
-#version 460
-
-layout(local_size_x = 1, local_size_y = 1) in;
-layout(rgba32f, binding = 0) uniform image2D img_output;
-
-void main() {
+const char *csSrc_2[] = {
+    
+  "#version 440",
   
-  // get index in global work group i.e x,y position
-  ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
+  R"(
+  layout (local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+
+  layout (binding = 0, rgba32f) uniform image2D destTex;
+  layout (binding = 1, rgba32f) uniform image2D sourceTex;
   
-  // http://antongerdelan.net/opengl/compute.html
+  void main() {
+           
+      ivec2 pos = ivec2(gl_GlobalInvocationID.xy);  
 
-  vec4 pixel = vec4(0.5, 0.3, 0.0, 1.0); 
+      vec4 texel = imageLoad(sourceTex, pos);
 
-  float max_x  = 5.0;
-  float max_y  = 5.0;
-  ivec2 dims   = imageSize(img_output); // fetch image dimensions
-  float x      = (float(pixel_coords.x * 2 - dims.x) / dims.x);
-  float y      = (float(pixel_coords.y * 2 - dims.y) / dims.y);
-  vec3  ray_o  = vec3(x * max_x, y * max_y, 0.0);
-  vec3  ray_d  = vec3(0.0, 0.0, -1.0); // ortho
-
-  vec3  sphere_c = vec3(0.0, 0.0, -10.0);
-  float sphere_r = 1.0;
-
-  vec3  omc   = ray_o - sphere_c;
-  float b     = dot(ray_d, omc);
-  float c     = dot(omc, omc) - sphere_r * sphere_r;
-  float bsqmc = b * b - c;
-  // hit one or both sides
-  if (bsqmc >= 0.0) {
-    pixel = vec4(0.4, 0.4, 1.0, 1.0);
-  }
-
-  // output to a specific pixel in the image
-  imageStore(img_output, pixel_coords, pixel);
-}
-)";
-
-// compute shader
-std::string sh_compute_2 = R"(
-#version 460
-
-layout (local_size_x = 16, local_size_y = 16) in;
-layout(rgba32f, binding = 0) uniform image2D destTex;
-
-//uniform float roll;
-
-void main() {
-  const float roll = 0.0;
-
-  // http://wili.cc/blog/opengl-cs.html
-  ivec2 storePos   = ivec2(gl_GlobalInvocationID.xy);
-  float localCoef  = length(vec2(ivec2(gl_LocalInvocationID.xy)-8)/8.0);
-  float globalCoef = sin(float(gl_WorkGroupID.x+gl_WorkGroupID.y)*0.1 + roll)*0.5;
-  imageStore(destTex, storePos, vec4(1.0-globalCoef*localCoef, 0.0, 0.0, 0.0));
-}
-)";
+      texel = vec4(1.0) - texel;
+      imageStore(destTex, pos, texel);
+  })"
+};
 
 
 std::unique_ptr<OpenGL::ShaderProgram> g_compute_prog;
@@ -232,6 +196,27 @@ int main(int argc, char** argv)
     if ( contex_mask & GL_CONTEXT_FLAG_DEBUG_BIT  )
       std::cout << ", debug";
     std::cout << std::endl;
+
+    std::string path = dir + "../resource/texture/example_1_heightmap.bmp";
+    //path = "C:/source/graphics-snippets/resource/texture/example_1_heightmap.bmp";
+    int icx, icy, ich;
+    stbi_uc *img = stbi_load( path.c_str(), &icx, &icy, &ich, 3 );
+
+    unsigned int src_tobj;
+    glGenTextures(1, &src_tobj);
+    glActiveTexture( GL_TEXTURE0 );
+    glBindTexture(GL_TEXTURE_2D, src_tobj);
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+
+    glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, icx, icy, 0, GL_RGB, GL_UNSIGNED_BYTE, img);
+    glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
+
+    glBindTexture( GL_TEXTURE0, 0 );
+   
     
     // extensions
     //std::cout << glGetStringi( GL_EXTENSIONS, ... ) << std::endl;
@@ -271,24 +256,10 @@ int main(int argc, char** argv)
       { sh_frag, GL_FRAGMENT_SHADER }
     } ) );
 
-    static int compute_id = 0;
-    std::string sh_compute;
-    switch (compute_id)
-    {
-      default:
-      case 0: sh_compute = csSrc[0]; break;
-      case 1: sh_compute = sh_compute_1; break;
-      case 2: sh_compute = sh_compute_2; break;
-    }
-    /*
-    g_compute_prog.reset( new OpenGL::ShaderProgram(
-    {
-      { sh_compute.c_str(), GL_COMPUTE_SHADER }
-    } ) );
-    */
 
     GLuint cshader = glCreateShader( GL_COMPUTE_SHADER );
-    glShaderSource(cshader, 2, csSrc, NULL);
+    //glShaderSource(cshader, 2, csSrc_1, NULL);
+    glShaderSource(cshader, 2, csSrc_2, NULL);
     glCompileShader(cshader);
     GLint compile_status;
     glGetShaderiv( cshader, GL_COMPILE_STATUS, &compile_status );
@@ -378,6 +349,9 @@ int main(int argc, char** argv)
     glBindImageTexture(0, tobj, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F); 
     OPENGL_CHECK_GL_ERROR
 
+    //glBindTextureUnit( 0, src_tobj );
+    glBindImageTexture(1, src_tobj, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
+
       // launch compute shaders!
       glUseProgram( cshaderprogram );
     //g_compute_prog->Use();
@@ -387,6 +361,7 @@ int main(int argc, char** argv)
     // make sure writing to image has finished before read
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT); // alternative: GL_ALL_BARRIER_BITS
     //glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+    //glMemoryBarrier(GL_ALL_BARRIER_BITS);
     OPENGL_CHECK_GL_ERROR
     
     g_draw_prog->Use();

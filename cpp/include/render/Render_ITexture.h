@@ -175,6 +175,7 @@ public:
   virtual size_t       BPL( void )     const = 0; //!< number of byts of a single line of the image
   virtual const void * DataPtr( void ) const = 0; //!< pointer to the native image data
 };
+using IImageResourcePtr = std::unique_ptr<IImageResource>;
 
 
 /******************************************************************//**
