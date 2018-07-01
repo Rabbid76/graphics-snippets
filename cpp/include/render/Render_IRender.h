@@ -42,6 +42,7 @@ namespace Render
 class IProvider
   : public IDrawBufferProvider
   , public IRenderProcessProvider
+  , public ITextureLoaderProvider
 {
 public:
 

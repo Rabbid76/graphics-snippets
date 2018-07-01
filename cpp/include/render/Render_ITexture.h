@@ -27,6 +27,9 @@
 namespace Render
 {
 
+class ITextureLoader;
+using ITextureLoaderPtr = std::unique_ptr<ITextureLoader>;
+
 
 /******************************************************************//**
 * \brief Kind of the resource image content.  
@@ -150,8 +153,9 @@ using TTexturePoint = std::array<size_t, 3>;
 using TTextureSize  = std::array<size_t, 3>;
 
 
+
 //---------------------------------------------------------------------
-// ITexture
+// IImageResource
 //---------------------------------------------------------------------
 
 
@@ -178,6 +182,12 @@ public:
 using IImageResourcePtr = std::unique_ptr<IImageResource>;
 
 
+
+//---------------------------------------------------------------------
+// IImageResourceLoader
+//---------------------------------------------------------------------
+
+
 /******************************************************************//**
 * @brief   Generic interface for loading an image from a resource.
 *
@@ -192,6 +202,35 @@ public:
   virtual ~IImageResourceLoader() = default;
 
 };
+
+
+//---------------------------------------------------------------------
+// ITextureLoaderProvider
+//---------------------------------------------------------------------
+
+
+/******************************************************************//**
+* \brief   Generic provider for generic texture loaders.
+* 
+* \author  gernot
+* \date    2018-06-08
+* \version 1.0
+**********************************************************************/
+class ITextureLoaderProvider
+{
+public:
+
+  virtual ~ITextureLoaderProvider() = default;
+
+  virtual ITextureLoaderPtr NewTextureLoader( void ) = 0;
+};
+
+
+
+//---------------------------------------------------------------------
+// ITexture
+//---------------------------------------------------------------------
+
 
 
 /******************************************************************//**
@@ -253,7 +292,13 @@ public:
   virtual bool Release( size_t binding_point ) = 0;
 };
 
-using TTexturePtr = std::unique_ptr<ITexture>;
+using ITexturePtr = std::unique_ptr<ITexture>;
+
+
+
+//---------------------------------------------------------------------
+// ITextureLoader
+//---------------------------------------------------------------------
 
 
 /******************************************************************//**
@@ -291,25 +336,38 @@ public:
   virtual ~ITextureLoader() = default;
 
   //! create a new but empty texture
-  TTexturePtr CreateTexture(const TTextureSize &size, size_t layers, TStandardTextureKind kind)
+  ITexturePtr CreateTexture( const TTextureSize &size, size_t layers, TStandardTextureKind kind )
   {
     return CreateTexture(size, layers, Parameters(kind));
   }
   
   //! create a new but empty texture
-  virtual TTexturePtr CreateTexture(const TTextureSize &size, size_t layers, const TTextureParameters &param) = 0;
+  virtual ITexturePtr CreateTexture( const TTextureSize &size, size_t layers, const TTextureParameters &param ) = 0;
+
 
   //! create a new texture from an image resource
-  TTexturePtr CreateTexture(IImageResource &image, TTrasformation transform, const TTextureSize &size, size_t layers, TStandardTextureKind kind)
+  ITexturePtr CreateTexture( const IImageResource &image, TStandardTextureKind kind)
+  {
+    return CreateTexture( image, TTrasformation::NON, image.Size(), image.Layers(), Parameters(kind) );
+  }
+
+  //! create a new texture from an image resource
+  ITexturePtr CreateTexture( const IImageResource &image, TTrasformation transform, TStandardTextureKind kind )
+  {
+    return CreateTexture( image, transform, image.Size(), image.Layers(), Parameters(kind) );
+  }
+
+  //! create a new texture from an image resource
+  ITexturePtr CreateTexture( const IImageResource &image, TTrasformation transform, const TTextureSize &size, size_t layers, TStandardTextureKind kind )
   {
     return CreateTexture( image, transform, size, layers, Parameters(kind) );
   }
        
   //! create a new texture from an image resource
-  virtual TTexturePtr CreateTexture(IImageResource &image, TTrasformation transform, const TTextureSize &size, size_t layers, const TTextureParameters &param) = 0;
+  virtual ITexturePtr CreateTexture( const IImageResource &image, TTrasformation transform, const TTextureSize &size, size_t layers, const TTextureParameters &param ) = 0;
 
   //! load image data to texture
-  virtual bool LoadToTexture(IImageResource &image, ITexture &texture, TTexturePoint &pos, size_t layer) = 0;
+  virtual bool LoadToTexture( const IImageResource &image, ITexture &texture, const TTexturePoint &pos, size_t layer ) = 0;
 
 
   static const TTextureParameters & Parameters( TStandardTextureKind id )
@@ -338,7 +396,6 @@ public:
     return param_table[(int)id];
   }
 };
-
 
 
 } // Render

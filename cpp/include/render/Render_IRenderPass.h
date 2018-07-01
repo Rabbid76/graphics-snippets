@@ -33,6 +33,7 @@ namespace Render
 
 
 class IRenderProcess;
+using IRenderProcessPtr = std::unique_ptr<IRenderProcess>;
 
 
 
@@ -54,7 +55,7 @@ public:
 
   virtual ~IRenderProcessProvider() = default;
 
-  virtual Render::IRenderProcess * NewRenderProcess( void ) = 0;
+  virtual IRenderProcessPtr NewRenderProcess( void ) = 0;
 };
 
 

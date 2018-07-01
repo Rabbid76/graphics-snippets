@@ -51,13 +51,13 @@ public:
   static void SetMaxAnisotropicFilter( size_t max_anisotripic_filter ) { _max_anisotripic_filter = max_anisotripic_filter; }
 
   //! create a new but empty texture
-  virtual Render::TTexturePtr CreateTexture(const Render::TTextureSize &size, size_t layers, const Render::TTextureParameters &parameter) override;
+  virtual Render::ITexturePtr CreateTexture(const Render::TTextureSize &size, size_t layers, const Render::TTextureParameters &parameter) override;
 
   //! create a new texture from an image resource
-  virtual Render::TTexturePtr CreateTexture(Render::IImageResource &image, Render::TTrasformation transform, const Render::TTextureSize &size, size_t layers, const Render::TTextureParameters &parameter) override;
+  virtual Render::ITexturePtr CreateTexture(const Render::IImageResource &image, Render::TTrasformation transform, const Render::TTextureSize &size, size_t layers, const Render::TTextureParameters &parameter) override;
 
   //! load image data to texture
-  virtual bool LoadToTexture(Render::IImageResource &image, Render::ITexture &texture, Render::TTexturePoint &pos, size_t layer) override;
+  virtual bool LoadToTexture(const Render::IImageResource &image, Render::ITexture &texture, const Render::TTexturePoint &pos, size_t layer) override;
 
 
   //! map texture type to OpenGL target type enumerator constant

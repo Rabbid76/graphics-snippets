@@ -19,6 +19,7 @@
 #include <Render_IRenderPass.h>
 #include <Render_ITexture.h>
 #include <Render_IFont.h>
+#include <Render_IRender.h>
 
 // OpenGL
 
@@ -56,7 +57,7 @@ namespace OpenGL
 **********************************************************************/
 class CBasicDraw
   : public Render::IDraw
-  , public Render::IDrawBufferProvider
+  , public Render::IProvider
 {
 
   // TODO $$$ unifrom blocks (model, view, projection)
@@ -98,9 +99,11 @@ public:
   CBasicDraw( bool core_mode, unsigned int samples, float scale, bool fxaa );
   virtual ~CBasicDraw();
 
-  virtual Render::IDrawBuffer * NewDrawBuffer( Render::TDrawBufferUsage usage ) override;
-  virtual Render::IDrawBuffer & DrawBuffer( void ) override;
-  virtual Render::IDrawBuffer & DrawBuffer( const void *key, bool &cached ) override;
+  virtual Render::IDrawBufferPtr      NewDrawBuffer( Render::TDrawBufferUsage usage ) override;
+  virtual Render::IDrawBuffer       & DrawBuffer( void ) override;
+  virtual Render::IDrawBuffer       & DrawBuffer( const void *key, bool &cached ) override;
+  virtual Render::IRenderProcessPtr   NewRenderProcess( void ) override;
+  virtual Render::ITextureLoaderPtr   NewTextureLoader( void ) override;
 
   virtual const TMat44 & Projection( void ) const override { return _uniforms._projection; } //!< get the projection matrix
   virtual const TMat44 & View( void )       const override { return _uniforms._view; }       //!< get the view matrix
@@ -177,32 +180,32 @@ private:
   static std::set<std::string> _ogl_extensins;
   static int                   _max_anistropic_texture_filter;
 
-  bool                                _initialized    = false;
-  bool                                _drawing        = false;
-  bool                                _unifroms_valid = false;
-  bool                                _core_mode      = true;
-  bool                                _fxaa           = false;
-  unsigned int                        _samples        = 0;
-  float                               _fb_scale       = 1.0f;
-  size_t                              _current_pass   = 0;
-  TProgramPtr                         _current_prog   = nullptr;
-  const size_t                        _max_buffers    = 8;
-  size_t                              _nextBufferI    = 0;
-  std::array<const void*, 8>          _buffer_keys    { nullptr };
-  std::array<Render::IDrawBuffer*, 8> _draw_buffers   { nullptr };
-  TSize                               _vp_size        { 0 };
-  Render::TColor                      _bg_color       { 0.0f };
-  TUniforms                           _uniforms;
-  TProcess                            _process;
-  TProgram                            _opaque_prog;
-  TProgram                            _opaque_line_prog;
-  TProgram                            _transp_prog;
-  TProgram                            _transp_line_prog;
-  TProgram                            _mixcol_prog;
-  TProgram                            _finish_prog;
-  TFontMap                            _fonts;
-  unsigned int                        _color_texture  = 0; // TODO $$$ ITexture
-  unsigned int                        _uniform_ssbo   = 0; // TODO $$$ IUniform?
+  bool                                  _initialized    = false;
+  bool                                  _drawing        = false;
+  bool                                  _unifroms_valid = false;
+  bool                                  _core_mode      = true;
+  bool                                  _fxaa           = false;
+  unsigned int                          _samples        = 0;
+  float                                 _fb_scale       = 1.0f;
+  size_t                                _current_pass   = 0;
+  TProgramPtr                           _current_prog   = nullptr;
+  const size_t                          _max_buffers    = 8;
+  size_t                                _nextBufferI    = 0;
+  std::array<const void*, 8>            _buffer_keys    { nullptr };
+  std::array<Render::IDrawBufferPtr, 8> _draw_buffers   { nullptr };
+  TSize                                 _vp_size        { 0 };
+  Render::TColor                        _bg_color       { 0.0f };
+  TUniforms                             _uniforms;
+  TProcess                              _process;
+  TProgram                              _opaque_prog;
+  TProgram                              _opaque_line_prog;
+  TProgram                              _transp_prog;
+  TProgram                              _transp_line_prog;
+  TProgram                              _mixcol_prog;
+  TProgram                              _finish_prog;
+  TFontMap                              _fonts;
+  unsigned int                          _color_texture  = 0; // TODO $$$ ITexture
+  unsigned int                          _uniform_ssbo   = 0; // TODO $$$ IUniform?
 
   const size_t c_opaque_pass = 1; //!< pass for opque drawing
   const size_t c_tranp_pass  = 2; //!< pass for tranparent drawing

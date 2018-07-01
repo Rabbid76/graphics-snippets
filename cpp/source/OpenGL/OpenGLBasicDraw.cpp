@@ -755,7 +755,7 @@ Render::IDrawBuffer & CBasicDraw::DrawBuffer(
       if ( _nextBufferI == inx )
         _nextBufferI = _nextBufferI < _max_buffers - 1 ? _nextBufferI + 1 : 0;
       
-      Render::IDrawBuffer *foundBuffer = _draw_buffers[inx];
+      auto foundBuffer = _draw_buffers[inx].get();
       cached = true;
       return *foundBuffer;
     }
@@ -763,10 +763,10 @@ Render::IDrawBuffer & CBasicDraw::DrawBuffer(
 
   // ensure the buffer object is allocated
   if ( _draw_buffers[_nextBufferI] == nullptr )
-    _draw_buffers[_nextBufferI]= NewDrawBuffer( Render::TDrawBufferUsage::stream_draw );
+    _draw_buffers[_nextBufferI] = NewDrawBuffer( Render::TDrawBufferUsage::stream_draw );
   
   // get buffer object
-  Render::IDrawBuffer *currentBuffer = _draw_buffers[_nextBufferI];
+  auto currentBuffer = _draw_buffers[_nextBufferI].get();
   _buffer_keys[_nextBufferI] = key;
   _nextBufferI = _nextBufferI < _max_buffers - 1 ? _nextBufferI + 1 : 0;
 
@@ -782,10 +782,36 @@ Render::IDrawBuffer & CBasicDraw::DrawBuffer(
 * \date    2017-11-26
 * \version 1.0
 **********************************************************************/
-Render::IDrawBuffer * CBasicDraw::NewDrawBuffer( 
+Render::IDrawBufferPtr CBasicDraw::NewDrawBuffer( 
   Render::TDrawBufferUsage usage ) //!< I - usage of draw buffer : static_draw, dynamic_draw or stream_draw
 {
-  return new OpenGL::CDrawBuffer( usage, 1024 ); 
+  return std::make_unique<OpenGL::CDrawBuffer>( usage, 1024 ); 
+}
+
+
+/******************************************************************//**
+* \brief Create a new and empty render process.
+* 
+* \author  gernot
+* \date    2018-07-02
+* \version 1.0
+**********************************************************************/
+Render::IRenderProcessPtr CBasicDraw::NewRenderProcess( void )
+{
+  return std::make_unique<OpenGL::CRenderProcess>();
+}
+
+
+/******************************************************************//**
+* \brief Provides a textur loader.
+* 
+* \author  gernot
+* \date    2018-07-02
+* \version 1.0
+**********************************************************************/
+Render::ITextureLoaderPtr CBasicDraw::NewTextureLoader( void )
+{
+  return std::make_unique<CTextureLoader>();
 }
 
 
@@ -806,10 +832,8 @@ void CBasicDraw::Destroy( void )
   _mixcol_prog.reset( nullptr );
 
   for ( auto & buffer : _draw_buffers )
-  {
-    delete buffer;
-    buffer = nullptr;
-  }
+    buffer.reset( nullptr );
+
   for ( auto & key : _buffer_keys )
     key = nullptr;
   _nextBufferI = 0;
@@ -879,8 +903,8 @@ bool CBasicDraw::LoadFont(
   try
   {
     newFont = new Render::CFreetypeTexturedFont( font_finename.c_str(), min_char );
-    CTextureLoader loader;
-    newFont->Load( loader );
+    auto loader = NewTextureLoader();
+    newFont->Load( *loader.get() );
     _fonts[font_id].reset( newFont );
   }
   catch (...)
@@ -1073,7 +1097,7 @@ bool CBasicDraw::SpecifyRenderProcess( void )
   if ( _vp_size[0] == 0 || _vp_size[1] == 0 )
     return false;
   if ( _process == nullptr )
-    _process = std::make_unique<OpenGL::CRenderProcess>();
+    _process = NewRenderProcess();
   if ( _process->IsValid() && _process->IsComplete() && _process->CurrentSize() == _vp_size )
     return true;
 

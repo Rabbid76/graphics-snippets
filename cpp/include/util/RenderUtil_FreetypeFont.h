@@ -47,7 +47,7 @@ class CFreetypeTexturedFont
 {
 public:
 
-  using TTexturePtr = Render::TTexturePtr;
+  using TTexturePtr = Render::ITexturePtr;
   using TFontPtr = std::unique_ptr<TFreetypeTFont>;
 
   CFreetypeTexturedFont( const char *font_filename, int min_char );

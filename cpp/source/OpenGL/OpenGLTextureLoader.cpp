@@ -468,7 +468,7 @@ bool CTextureLoader::GenerateMipmaps(
 * \date    2018-06-09
 * \version 1.0
 **********************************************************************/
-Render::TTexturePtr CTextureLoader::CreateTexture(
+Render::ITexturePtr CTextureLoader::CreateTexture(
   const Render::TTextureSize       &size,       //!< in: texture size
   size_t                            layers,     //!< in: number of layers
   const Render::TTextureParameters &parameter ) //!< in: texture properties
@@ -481,7 +481,7 @@ Render::TTexturePtr CTextureLoader::CreateTexture(
   }
 
   // create and bind texture
-  Render::TTexturePtr texture = std::make_unique<CTextureInternal>( parameter._type );
+  Render::ITexturePtr texture = std::make_unique<CTextureInternal>( parameter._type );
   if ( _dsa == false )
     texture->Bind( _loader_binding_id );
 
@@ -542,8 +542,8 @@ Render::TTexturePtr CTextureLoader::CreateTexture(
 * \date    2018-06-09
 * \version 1.0
 **********************************************************************/
-Render::TTexturePtr CTextureLoader::CreateTexture(
-  Render::IImageResource           &image,      //!< in: source image resource
+Render::ITexturePtr CTextureLoader::CreateTexture(
+  const Render::IImageResource     &image,      //!< in: source image resource
   Render::TTrasformation            transform,  //!< in: special transformtion algorithm
   const Render::TTextureSize       &size,       //!< in: texture size
   size_t                            layers,     //!< in: number of layers
@@ -556,13 +556,31 @@ Render::TTexturePtr CTextureLoader::CreateTexture(
     return nullptr;
   }
 
+  if ( image.Size() == size && transform == Render::TTrasformation::NON )
+  {
+    Render::TTextureParameters create_parameter = parameter;
+    create_parameter._max_mipmap = 0;
+    create_parameter._anisotropic = 0;
+    if ( create_parameter._filter == Render::TTextureFilter::trilinear )
+      create_parameter._filter = Render::TTextureFilter::bilinear;
+
+    auto texture = CreateTexture( size, layers, create_parameter );
+
+    if ( LoadToTexture( image, *texture.get(), { 0, 0, 0 }, 0 ) == false )
+      return nullptr;
+
+    // TODO $$$ generate mipmaps according to  `parameter`
+
+    return texture;
+  }
+
   // TODO $$$
   DebugWarning << "creating texture from image resource is not yet implemented";
   // TODO $$$
 
   // TODO $$$
 
-  Render::TTexturePtr texture = std::make_unique<CTextureInternal>( parameter._type );
+  Render::ITexturePtr texture = std::make_unique<CTextureInternal>( parameter._type );
   texture->Bind( _loader_binding_id );
 
   // TODO $$$
@@ -589,10 +607,10 @@ Render::TTexturePtr CTextureLoader::CreateTexture(
 * \version 1.0
 **********************************************************************/
 bool CTextureLoader::LoadToTexture(
-  Render::IImageResource &image,   //!< in: source image resource
-  Render::ITexture       &texture, //!< in: target texture 
-  Render::TTexturePoint  &pos,     //!< in: target position
-  size_t                  layer )  //!< in: target layer
+  const Render::IImageResource &image,   //!< in: source image resource
+  Render::ITexture             &texture, //!< in: target texture 
+  const Render::TTexturePoint  &pos,     //!< in: target position
+  size_t                        layer )  //!< in: target layer
 {
   GLenum target = TargetType( texture.Type() );
   if ( target != GL_TEXTURE_2D )
@@ -611,7 +629,7 @@ bool CTextureLoader::LoadToTexture(
 
   // TODO $$$
 
-  return false;
+  return true;
 }
 
 } // OpenGL
