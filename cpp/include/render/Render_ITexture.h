@@ -352,6 +352,12 @@ public:
   }
 
   //! create a new texture from an image resource
+  ITexturePtr CreateTexture( const IImageResource &image, const TTextureParameters &param)
+  {
+    return CreateTexture( image, TTrasformation::NON, image.Size(), image.Layers(), param );
+  }
+
+  //! create a new texture from an image resource
   ITexturePtr CreateTexture( const IImageResource &image, TTrasformation transform, TStandardTextureKind kind )
   {
     return CreateTexture( image, transform, image.Size(), image.Layers(), Parameters(kind) );

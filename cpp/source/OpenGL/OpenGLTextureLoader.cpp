@@ -118,7 +118,6 @@ private:
 
 bool   CTextureLoader::_capabilities_evaluated = false;
 bool   CTextureLoader::_dsa = false;
-size_t CTextureLoader::_max_anisotripic_filter = 0;
 
 
 /******************************************************************//**
@@ -141,6 +140,7 @@ CTextureLoader::CTextureLoader( void )
 **********************************************************************/
 CTextureLoader::CTextureLoader( 
   size_t loader_binding_id ) //!< in: default binding point for loading textures
+  : _loader_binding_id( loader_binding_id )
 {
   EvaluateCapabilities();
 }
@@ -277,6 +277,32 @@ unsigned int CTextureLoader::TargetType(
 * \date    2018-06-12
 * \version 1.0
 **********************************************************************/
+unsigned int CTextureLoader::ImageFormat( 
+  Render::TImageFormat format ) //!< in: requested image format
+{
+  static const std::unordered_map< Render::TImageFormat, GLenum > image_foramt_map
+  {
+    { Render::TImageFormat::GRAY8, GL_RED  },
+    { Render::TImageFormat::RGB8,  GL_RGB  },
+    { Render::TImageFormat::BGR8,  GL_BGR  }, 
+    { Render::TImageFormat::RGBA8, GL_RGBA },
+    { Render::TImageFormat::BGRA8, GL_BGRA }
+  };
+
+  auto it = image_foramt_map.find(format);
+  ASSERT(it != image_foramt_map.end());
+  return it != image_foramt_map.end() ? it->second : GL_RGBA;
+}
+
+
+/******************************************************************//**
+* \brief Map texture format to OpenGL internal format enumerator
+* constant. 
+* 
+* \author  gernot
+* \date    2018-06-12
+* \version 1.0
+**********************************************************************/
 unsigned int CTextureLoader::InternalFormat( 
   Render::TTextureFormat format ) //!< in: requested texture format
 {
@@ -395,8 +421,9 @@ std::array<unsigned int, 3> CTextureLoader::Wrap(
 * \version 1.0
 **********************************************************************/
 bool CTextureLoader::SetTextureParameter( 
-  unsigned int                      texture_object, //!< in: named texture object for direct state access
-  const Render::TTextureParameters &parameter )     //!< in: texture parameter
+  unsigned int                      texture_object,           //!< in: named texture object for direct state access
+  const Render::TTextureParameters &parameter,                //!< in: texture parameter
+  int                               max_anisotropic_samples ) //!< in: maximum samples for anisotropic texture filtering
 {
   GLenum target = TargetType( parameter._type );
 
@@ -423,7 +450,7 @@ bool CTextureLoader::SetTextureParameter(
     SetTextureParameterI( target, texture_object, GL_TEXTURE_MAX_LEVEL, (GLint)parameter._max_mipmap );
 
     // [`EXT_texture_filter_anisotropic`](https://www.khronos.org/registry/OpenGL/extensions/EXT/EXT_texture_filter_anisotropic.txt)
-    GLint max_anisotropic = std::min((GLint)_max_anisotripic_filter, (GLint)parameter._anisotropic);
+    GLint max_anisotropic = std::min((GLint)max_anisotropic_samples, (GLint)parameter._anisotropic);
     if ( max_anisotropic > 1 )
       SetTextureParameterI( target, texture_object, GL_TEXTURE_MAX_ANISOTROPY_EXT, max_anisotropic); 
   }
@@ -435,6 +462,19 @@ bool CTextureLoader::SetTextureParameter(
 /******************************************************************//**
 * \brief Generate mipmap according to the parameters.
 * 
+* cf [OpenGL core specification 4.6 - Chapter 8.14.3](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf)
+* 
+* `TEXTURE_MIN_FILTER` values `NEAREST_MIPMAP_NEAREST`, `NEAREST_MIPMAP_LINEAR`,
+* `LINEAR_MIPMAP_NEAREST`, and `LINEAR_MIPMAP_LINEAR`, each require the use of a mipmap.
+* Rectangle textures do not support mipmapping (it is an error to specify a minification
+* filter that requires mipmapping). A mipmap is an ordered set of arrays representing
+* the same image; each array has a resolution lower than the previous one.
+* If the texture image of level levelbase has dimensions \f$ w_s \cdot h_s \cdot d_s \f$,
+* then there are \f$ \lfloor log_2\left( \mathrm{maxsize} \right)\rfloor + 1\f$  levels
+* in the mipmap, where \f$ \mathrm{maxsize} = \max\left( w_s, h_s\right)\f$.
+*
+* See further: [Common Mistakes - Automatic mipmap generation](https://www.khronos.org/opengl/wiki/Common_Mistakes#Automatic_mipmap_generation)
+*
 * \author  gernot
 * \date    2018-06-12
 * \version 1.0
@@ -526,7 +566,7 @@ Render::ITexturePtr CTextureLoader::CreateTexture(
   }
 
   // set the texture paramters
-  SetTextureParameter( (GLuint)texture->ObjectHandle(), parameter );
+  SetTextureParameter( (GLuint)texture->ObjectHandle(), parameter, MaxAnisotropicFilter() );
 
   // genrate the mipmaps
   GenerateMipmaps( (GLuint)texture->ObjectHandle(), parameter );
@@ -589,7 +629,7 @@ Render::ITexturePtr CTextureLoader::CreateTexture(
 
   // TODO $$$
 
-  SetTextureParameter( (GLuint)texture->ObjectHandle(), parameter ); 
+  SetTextureParameter( (GLuint)texture->ObjectHandle(), parameter, MaxAnisotropicFilter() ); 
   GenerateMipmaps( (GLuint)texture->ObjectHandle(), parameter );
 
   // TODO $$$
@@ -623,7 +663,9 @@ bool CTextureLoader::LoadToTexture(
 
   //glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
 
-  glTexSubImage2D(GL_TEXTURE_2D, 0, (GLsizei)pos[0], (GLsizei)pos[1], (GLsizei)image.Size()[0], (GLsizei)image.Size()[1], GL_RGBA, GL_UNSIGNED_BYTE, image.DataPtr() );
+  GLenum format = ImageFormat( image.Format() );
+  GLenum type   = GL_UNSIGNED_BYTE; // TODO $$$ ImageType(???)
+  glTexSubImage2D(GL_TEXTURE_2D, 0, (GLsizei)pos[0], (GLsizei)pos[1], (GLsizei)image.Size()[0], (GLsizei)image.Size()[1], format, type, image.DataPtr() );
 
   //glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
 

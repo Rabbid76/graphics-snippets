@@ -43,12 +43,17 @@ class CTextureLoader
 
 public: 
 
+  using Render::ITextureLoader::CreateTexture;
+
   CTextureLoader( void );                     //!< default constructor
   CTextureLoader( size_t loader_binding_id ); //!< constructor
   virtual ~CTextureLoader();                  //!< destructor
 
+  size_t BindingId( void )            const { return _loader_binding_id; }
+  int    MaxAnisotropicFilter( void ) const { return _max_anisotripic_filter; }
+
   //! enable anisotropic filter
-  static void SetMaxAnisotropicFilter( size_t max_anisotripic_filter ) { _max_anisotripic_filter = max_anisotripic_filter; }
+  void SetMaxAnisotropicFilter( int max_anisotripic_filter ) { _max_anisotripic_filter = max_anisotripic_filter; }
 
   //! create a new but empty texture
   virtual Render::ITexturePtr CreateTexture(const Render::TTextureSize &size, size_t layers, const Render::TTextureParameters &parameter) override;
@@ -62,6 +67,9 @@ public:
 
   //! map texture type to OpenGL target type enumerator constant
   static unsigned int TargetType( Render::TTextureType type );
+
+  //! map texture format to OpenGL source format
+  static unsigned int ImageFormat( Render::TImageFormat format );
 
   //! map texture format to OpenGL internal format
   static unsigned int InternalFormat( Render::TTextureFormat format );
@@ -79,7 +87,7 @@ public:
   static std::array<unsigned int, 3> Wrap( const Render::TTextureParameters &parameter );
 
   //! Apply OpenGL texture paramter to current texture object
-  static bool SetTextureParameter( unsigned int texture_object, const Render::TTextureParameters &parameter );
+  static bool SetTextureParameter( unsigned int texture_object, const Render::TTextureParameters &parameter, int max_anisotropic_samples );
 
   //! Generate mipmap according to the parameters
   static bool GenerateMipmaps( unsigned int texture_object, const Render::TTextureParameters &parameter );
@@ -102,7 +110,7 @@ private:
   static bool _dsa;
 
   //! maximum allowed anisotropic filter
-  static size_t _max_anisotripic_filter; 
+  int _max_anisotripic_filter = 0; 
 
   size_t _loader_binding_id = 0;
 };
