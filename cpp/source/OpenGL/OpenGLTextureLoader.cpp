@@ -585,7 +585,7 @@ Render::ITexturePtr CTextureLoader::CreateTexture(
 **********************************************************************/
 Render::ITexturePtr CTextureLoader::CreateTexture(
   const Render::IImageResource     &image,      //!< in: source image resource
-  Render::TTrasformation            transform,  //!< in: special transformtion algorithm
+  Render::TImageTransformations     transform,  //!< in: special transformtion algorithm
   const Render::TTextureSize       &size,       //!< in: texture size
   size_t                            layers,     //!< in: number of layers
   const Render::TTextureParameters &parameter ) //!< in: texture properties
@@ -597,7 +597,7 @@ Render::ITexturePtr CTextureLoader::CreateTexture(
     return nullptr;
   }
 
-  if ( image.Size() == size && transform == Render::TTrasformation::NON )
+  if ( image.Size() == size && transform.none() )
   {
     Render::TTextureParameters create_parameter = parameter;
     create_parameter._max_mipmap = 0;

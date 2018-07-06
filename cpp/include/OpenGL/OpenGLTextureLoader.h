@@ -63,7 +63,7 @@ public:
   virtual Render::ITexturePtr CreateTexture(const Render::TTextureSize &size, size_t layers, const Render::TTextureParameters &parameter) override;
 
   //! create a new texture from an image resource
-  virtual Render::ITexturePtr CreateTexture(const Render::IImageResource &image, Render::TTrasformation transform, const Render::TTextureSize &size, size_t layers, const Render::TTextureParameters &parameter) override;
+  virtual Render::ITexturePtr CreateTexture(const Render::IImageResource &image, Render::TImageTransformations transform, const Render::TTextureSize &size, size_t layers, const Render::TTextureParameters &parameter) override;
 
   //! load image data to texture
   virtual bool LoadToTexture(const Render::IImageResource &image, Render::ITexture &texture, const Render::TTexturePoint &pos, size_t layer) override;

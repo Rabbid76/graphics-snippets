@@ -142,11 +142,16 @@ enum class TTextureFormat
 * \date    2018-06-08
 * \version 1.0
 **********************************************************************/
-enum class TTrasformation
+enum class TImageTransform
 {
-  NON
+  flip_y,     //! the image y axis of the image has to be flipped; mirror the imgae along the horizontal axis of symmetry 
+  bgr_to_rgb, //! the order of the color channel is blue-green-red and has to be turned into red-green-blue. OpenGL can do this by the source formats GL_BGR and GL_BGRA, but not OpneGL ES.
+
   // ...
+
+  NUMBER_OF
 };
+using TImageTransformations = std::bitset<(int)TImageTransform::NUMBER_OF>;
 
 
 using TTexturePoint = std::array<size_t, 3>;
@@ -349,29 +354,29 @@ public:
   //! create a new texture from an image resource
   ITexturePtr CreateTexture( const IImageResource &image, TStandardTextureKind kind)
   {
-    return CreateTexture( image, TTrasformation::NON, image.Size(), image.Layers(), Parameters(kind) );
+    return CreateTexture( image, TImageTransformations(), image.Size(), image.Layers(), Parameters(kind) );
   }
 
   //! create a new texture from an image resource
   ITexturePtr CreateTexture( const IImageResource &image, const TTextureParameters &param)
   {
-    return CreateTexture( image, TTrasformation::NON, image.Size(), image.Layers(), param );
+    return CreateTexture( image, TImageTransformations(), image.Size(), image.Layers(), param );
   }
 
   //! create a new texture from an image resource
-  ITexturePtr CreateTexture( const IImageResource &image, TTrasformation transform, TStandardTextureKind kind )
+  ITexturePtr CreateTexture( const IImageResource &image, TImageTransformations transform, TStandardTextureKind kind )
   {
     return CreateTexture( image, transform, image.Size(), image.Layers(), Parameters(kind) );
   }
 
   //! create a new texture from an image resource
-  ITexturePtr CreateTexture( const IImageResource &image, TTrasformation transform, const TTextureSize &size, size_t layers, TStandardTextureKind kind )
+  ITexturePtr CreateTexture( const IImageResource &image, TImageTransformations transform, const TTextureSize &size, size_t layers, TStandardTextureKind kind )
   {
     return CreateTexture( image, transform, size, layers, Parameters(kind) );
   }
        
   //! create a new texture from an image resource
-  virtual ITexturePtr CreateTexture( const IImageResource &image, TTrasformation transform, const TTextureSize &size, size_t layers, const TTextureParameters &param ) = 0;
+  virtual ITexturePtr CreateTexture( const IImageResource &image, TImageTransformations transform, const TTextureSize &size, size_t layers, const TTextureParameters &param ) = 0;
 
   //! load image data to texture
   virtual bool LoadToTexture( const IImageResource &image, ITexture &texture, const TTexturePoint &pos, size_t layer ) = 0;
