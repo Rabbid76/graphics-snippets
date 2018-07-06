@@ -90,6 +90,9 @@ public:
   //! map texture wrap parameters to OpenGL magnification  filter enumerator constant
   static std::array<unsigned int, 3> Wrap( const Render::TTextureParameters &parameter );
 
+  //! Get texture paramters for the initial creation of a texture
+  static Render::TTextureParameters TextureParamterLeve0( const Render::TTextureParameters &parameter );
+
   //! Apply OpenGL texture paramter to current texture object
   static bool SetTextureParameter( unsigned int texture_object, const Render::TTextureParameters &parameter, int max_anisotropic_samples );
 

@@ -409,6 +409,27 @@ std::array<unsigned int, 3> CTextureLoader::Wrap(
   };
 }
 
+ 
+/******************************************************************//**
+* \brief Get texture paramters for the initial creation of a texture.  
+* 
+* \author  gernot
+* \date    2018-07-09
+* \version 1.0
+**********************************************************************/
+Render::TTextureParameters CTextureLoader::TextureParamterLeve0( 
+  const Render::TTextureParameters &parameter ) //!< I - original parameter
+{
+  // disable trilinear filter and mip mapping
+  Render::TTextureParameters paramter_leve0 = parameter;
+  if ( paramter_leve0._filter == Render::TTextureFilter::trilinear )
+    paramter_leve0._filter = Render::TTextureFilter::bilinear;
+  paramter_leve0._max_mipmap = 0;
+  paramter_leve0._anisotropic = 0;
+  
+  return paramter_leve0;
+}
+
 
 /******************************************************************//**
 * \brief  Apply OpenGL texture paramter to current texture object.  
@@ -541,12 +562,14 @@ Render::ITexturePtr CTextureLoader::CreateTexture(
   {
     glTextureStorage2D( (GLuint)texture->ObjectHandle(), 1, internal_format, (GLsizei)size[0], (GLsizei)size[1] );
   }
+  /*
   else if ( glTexStorage2D != nullptr )
   {
     // for texture level size and allocation see
     // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexStorage2D.xhtml
     glTexStorage2D( target, levels, internal_format, (GLsizei)size[0], (GLsizei)size[1] );
   }
+  */
   else
   {
     static const std::unordered_map< Render::TTextureFormat, std::tuple<GLenum, GLenum> > compatible_foramt_map
@@ -563,7 +586,7 @@ Render::ITexturePtr CTextureLoader::CreateTexture(
     ASSERT( it != compatible_foramt_map.end() );
     GLenum format = it != compatible_foramt_map.end() ? std::get<0>( it->second ) : GL_RGBA;
     GLenum type   = it != compatible_foramt_map.end() ? std::get<1>( it->second ) : GL_BYTE;
-    glTexImage2D( target, 0, GL_RGBA, (GLsizei)size[0], (GLsizei)size[1], 0, format, type, nullptr );
+    glTexImage2D( target, 0, internal_format, (GLsizei)size[0], (GLsizei)size[1], 0, format, type, nullptr );
   }
 
   // set the texture paramters
@@ -596,12 +619,7 @@ Render::ITexturePtr CTextureLoader::CreateTexture(
 
   if ( image.Size() == size && transform.none() )
   {
-    Render::TTextureParameters create_parameter = parameter;
-    create_parameter._max_mipmap = 0;
-    create_parameter._anisotropic = 0;
-    if ( create_parameter._filter == Render::TTextureFilter::trilinear )
-      create_parameter._filter = Render::TTextureFilter::bilinear;
-
+    Render::TTextureParameters create_parameter = TextureParamterLeve0( parameter );
     auto texture = CreateTexture( size, layers, create_parameter );
 
     if ( LoadToTexture( image, *texture.get(), { 0, 0, 0 }, 0 ) == false )
