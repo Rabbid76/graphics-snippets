@@ -569,9 +569,6 @@ Render::ITexturePtr CTextureLoader::CreateTexture(
   // set the texture paramters
   SetTextureParameter( (GLuint)texture->ObjectHandle(), parameter, MaxAnisotropicSamples() );
 
-  // genrate the mipmaps
-  GenerateMipmaps( (GLuint)texture->ObjectHandle(), parameter );
-
   return texture;
 }
 
