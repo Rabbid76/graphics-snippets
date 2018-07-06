@@ -116,8 +116,9 @@ private:
 // CTextureLoader
 //*********************************************************************
 
-bool   CTextureLoader::_capabilities_evaluated = false;
-bool   CTextureLoader::_dsa = false;
+bool CTextureLoader::_capabilities_evaluated = false;
+bool CTextureLoader::_dsa = false;
+int  CTextureLoader::_max_anisotripic_samples_default = 0;
 
 
 /******************************************************************//**
@@ -566,7 +567,7 @@ Render::ITexturePtr CTextureLoader::CreateTexture(
   }
 
   // set the texture paramters
-  SetTextureParameter( (GLuint)texture->ObjectHandle(), parameter, MaxAnisotropicFilter() );
+  SetTextureParameter( (GLuint)texture->ObjectHandle(), parameter, MaxAnisotropicSamples() );
 
   // genrate the mipmaps
   GenerateMipmaps( (GLuint)texture->ObjectHandle(), parameter );
@@ -629,7 +630,7 @@ Render::ITexturePtr CTextureLoader::CreateTexture(
 
   // TODO $$$
 
-  SetTextureParameter( (GLuint)texture->ObjectHandle(), parameter, MaxAnisotropicFilter() ); 
+  SetTextureParameter( (GLuint)texture->ObjectHandle(), parameter, MaxAnisotropicSamples() ); 
   GenerateMipmaps( (GLuint)texture->ObjectHandle(), parameter );
 
   // TODO $$$

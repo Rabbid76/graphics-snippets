@@ -99,11 +99,13 @@ public:
   CBasicDraw( bool core_mode, unsigned int samples, float scale, bool fxaa );
   virtual ~CBasicDraw();
 
+  using Render::ITextureLoaderProvider::NewTextureLoader;
+
   virtual Render::IDrawBufferPtr      NewDrawBuffer( Render::TDrawBufferUsage usage ) override;
   virtual Render::IDrawBuffer       & DrawBuffer( void ) override;
   virtual Render::IDrawBuffer       & DrawBuffer( const void *key, bool &cached ) override;
   virtual Render::IRenderProcessPtr   NewRenderProcess( void ) override;
-  virtual Render::ITextureLoaderPtr   NewTextureLoader( void ) override;
+  virtual Render::ITextureLoaderPtr   NewTextureLoader( size_t loader_binding_id ) override;
 
   virtual const TMat44 & Projection( void ) const override { return _uniforms._projection; } //!< get the projection matrix
   virtual const TMat44 & View( void )       const override { return _uniforms._view; }       //!< get the view matrix

@@ -223,6 +223,7 @@ public:
   virtual ~ITextureLoaderProvider() = default;
 
   virtual ITextureLoaderPtr NewTextureLoader( size_t loader_binding_id ) = 0;
+  virtual ITextureLoaderPtr NewTextureLoader( void ) { return NewTextureLoader(0); }
 };
 
 

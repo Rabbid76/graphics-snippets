@@ -49,11 +49,15 @@ public:
   CTextureLoader( size_t loader_binding_id ); //!< constructor
   virtual ~CTextureLoader();                  //!< destructor
 
-  size_t BindingId( void )            const { return _loader_binding_id; }
-  int    MaxAnisotropicFilter( void ) const { return _max_anisotripic_filter; }
+  
+  size_t BindingId( void )             const { return _loader_binding_id; }
+  int    MaxAnisotropicSamples( void ) const { return _max_anisotripic_samples >= 0 ? _max_anisotripic_samples : _max_anisotripic_samples_default; }
+
+  //! set default anisotropic filter smaples
+  static void SetMaxAnisotropicSamplesDefault( int max_anisotripic_samples ) { _max_anisotripic_samples_default = max_anisotripic_samples; }
 
   //! enable anisotropic filter
-  void SetMaxAnisotropicFilter( int max_anisotripic_filter ) { _max_anisotripic_filter = max_anisotripic_filter; }
+  void SetMaxAnisotropicSamples( int max_anisotripic_samples ) { _max_anisotripic_samples = max_anisotripic_samples; }
 
   //! create a new but empty texture
   virtual Render::ITexturePtr CreateTexture(const Render::TTextureSize &size, size_t layers, const Render::TTextureParameters &parameter) override;
@@ -110,7 +114,10 @@ private:
   static bool _dsa;
 
   //! maximum allowed anisotropic filter
-  int _max_anisotripic_filter = 0; 
+  static int _max_anisotripic_samples_default;
+
+  //! maximum allowed anisotropic filter
+  int _max_anisotripic_samples = -1; 
 
   size_t _loader_binding_id = 0;
 };

@@ -809,9 +809,10 @@ Render::IRenderProcessPtr CBasicDraw::NewRenderProcess( void )
 * \date    2018-07-02
 * \version 1.0
 **********************************************************************/
-Render::ITextureLoaderPtr CBasicDraw::NewTextureLoader( void )
+Render::ITextureLoaderPtr CBasicDraw::NewTextureLoader( 
+  size_t loader_binding_id ) //!< I - texture unit for loading images
 {
-  return std::make_unique<CTextureLoader>();
+  return std::make_unique<CTextureLoader>( loader_binding_id );
 }
 
 
@@ -949,7 +950,7 @@ bool CBasicDraw::Init( void )
     glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &max_anisotropic);
     _max_anistropic_texture_filter = max_anisotropic > 0 ? max_anisotropic : 0;
   }
-  CTextureLoader::SetMaxAnisotropicFilter( (size_t)_max_anistropic_texture_filter );
+  CTextureLoader::SetMaxAnisotropicSamplesDefault( (size_t)_max_anistropic_texture_filter );
 
   // specify render process
   SpecifyRenderProcess();
