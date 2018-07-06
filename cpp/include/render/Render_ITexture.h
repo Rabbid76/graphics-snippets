@@ -177,6 +177,7 @@ public:
 
   virtual ~IImageResource() = default;
 
+  virtual TImageKind   Kind( void )    const = 0; //!< kind of the image reource content
   virtual TTextureType Type( void )    const = 0; //!< type of the texture 1D, 2D, 3D
   virtual TImageFormat Format( void )  const = 0; //!< format of one texel or voxel
   virtual TTextureSize Size( void )    const = 0; //!< size for up to 3 dimensions
@@ -323,7 +324,9 @@ enum TStandardTextureKind
   T2D_RGBA_tiled_trilinear     = 2,
   T2D_RGBA_clamped_nofilter    = 3,
   T2D_RGBA_clamped_bilinear    = 4, //!< Recommended for texture fonts. Note texture fonts may disappear with trilinear filtering and huge minification.
-  T2D_RGBA_clamped_trilinear   = 5
+  T2D_RGBA_clamped_trilinear   = 5,
+
+  TCUBE_RGBA_clamped_bilinear  = 6
 };
 
 
@@ -403,6 +406,9 @@ public:
     
       // T2D_RGBA_clamped_trilinear
       TTextureParameters{ TTextureType::T2D, TTextureFormat::RGBA8, { TTextureWrap::clamp, TTextureWrap::clamp, TTextureWrap::clamp }, TTextureFilter::trilinear, 1000, 16 },
+    
+      // TCUBE_RGBA_clamped_bilinear
+      TTextureParameters{ TTextureType::TCUBE, TTextureFormat::RGBA8, { TTextureWrap::clamp, TTextureWrap::clamp, TTextureWrap::clamp }, TTextureFilter::bilinear, 0, 0 },
     };
 
     return param_table[(int)id];
