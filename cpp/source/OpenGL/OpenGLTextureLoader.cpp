@@ -362,7 +362,7 @@ unsigned int CTextureLoader::Magnification(
   Render::TTextureFilter filter,            //!< in: filter
   int                    max_mipmap_level ) //!< in: maximum mip map level
 {
-  return filter == Render::TTextureFilter::NON ? GL_LINEAR : GL_NEAREST;
+  return filter != Render::TTextureFilter::NON ? GL_LINEAR : GL_NEAREST;
 }
 
 
@@ -535,6 +535,23 @@ Render::ITexturePtr CTextureLoader::CreateTexture(
   size_t                            layers,     //!< in: number of layers
   const Render::TTextureParameters &parameter ) //!< in: texture properties
 {
+  return CreateTexture( size, layers, parameter, true );
+}
+
+
+/******************************************************************//**
+* \brief   Create a new but empty texture.
+* 
+* \author  gernot
+* \date    2018-06-09
+* \version 1.0
+**********************************************************************/
+Render::ITexturePtr CTextureLoader::CreateTexture(
+  const Render::TTextureSize       &size,            //!< in: texture size
+  size_t                            layers,          //!< in: number of layers
+  const Render::TTextureParameters &parameter,       //!< in: texture properties
+  bool                              set_parameters ) //!< in: true: apply the texture parameters to the texture
+{
   GLenum target = TargetType( parameter._type );
   if ( target != GL_TEXTURE_2D )
   {
@@ -590,7 +607,8 @@ Render::ITexturePtr CTextureLoader::CreateTexture(
   }
 
   // set the texture paramters
-  SetTextureParameter( (GLuint)texture->ObjectHandle(), parameter, MaxAnisotropicSamples() );
+  if ( set_parameters )
+    SetTextureParameter( (GLuint)texture->ObjectHandle(), parameter, MaxAnisotropicSamples() );
 
   return texture;
 }
@@ -627,7 +645,7 @@ Render::ITexturePtr CTextureLoader::CreateTexture(
   if ( image.Size() == size && transform_compatible.none() )
   {                                                        
     Render::TTextureParameters create_parameter = TextureParamterLeve0( parameter );
-    auto texture = CreateTexture( size, layers, create_parameter );
+    auto texture = CreateTexture( size, layers, create_parameter, false );
 
     if ( LoadToTexture( image, *texture.get(), { 0, 0, 0 }, 0 ) == false )
       return nullptr;

@@ -99,6 +99,12 @@ public:
   //! Generate mipmap according to the parameters
   static bool GenerateMipmaps( unsigned int texture_object, const Render::TTextureParameters &parameter );
 
+protected: 
+
+  //! create a new but empty texture
+  Render::ITexturePtr CreateTexture(const Render::TTextureSize &size, size_t layers, const Render::TTextureParameters &parameter, bool set_parameters);
+
+
 private:
 
   //! evaluate OpenGL version capabilities
