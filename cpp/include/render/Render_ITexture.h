@@ -40,13 +40,13 @@ using ITextureLoaderPtr = std::unique_ptr<ITextureLoader>;
 **********************************************************************/
 enum class TImageKind : t_byte
 {
-  NON,                    //!< not used (no texture)
-  diffuse,                //!< color texture
-  grayscale,              //!< grayscale texture
-  displacement_map,       //!< displacment map; 1 channel (red)
-  normal_map,             //!< normal map; 3 channels (RGB)
-  noraml_displacment_map, //!< normal map; 3 channels (RGB) + displacment map; 1 channel (alpha)
-  displacment_cone_map    //!< displacment map; 1 channel (red) + cone map; 1 channel (green) 
+  NON,                     //!< not used (no texture)
+  diffuse,                 //!< color texture
+  grayscale,               //!< grayscale texture
+  displacement_map,        //!< displacment map; 1 channel (red)
+  normal_map,              //!< normal map; 3 channels (RGB)
+  noraml_displacement_map, //!< normal map; 3 channels (RGB) + displacment map; 1 channel (alpha)
+  displacement_cone_map    //!< displacment map; 1 channel (red) + cone map; 1 channel (green) 
 };
 
 
