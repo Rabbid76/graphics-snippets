@@ -617,16 +617,23 @@ Render::ITexturePtr CTextureLoader::CreateTexture(
     return nullptr;
   }
 
-  if ( image.Size() == size && transform.none() )
-  {
+  // skip unnecessary transformations
+  Render::TImageTransformations transform_compatible = transform;
+  if ( transform.test( (int)Render::TImageTransform::to_displacement_map ) && image.Kind() == Render::TImageKind::displacement_map )
+    transform.reset( (int)Render::TImageTransform::to_displacement_map );
+  if ( transform.test( (int)Render::TImageTransform::to_normal_and_displacement ) && image.Kind() == Render::TImageKind::noraml_displacment_map )
+    transform.reset( (int)Render::TImageTransform::to_normal_and_displacement );
+ 
+  if ( image.Size() == size && transform_compatible.none() )
+  {                                                        
     Render::TTextureParameters create_parameter = TextureParamterLeve0( parameter );
     auto texture = CreateTexture( size, layers, create_parameter );
 
     if ( LoadToTexture( image, *texture.get(), { 0, 0, 0 }, 0 ) == false )
       return nullptr;
 
-    // TODO $$$ generate mipmaps according to  `parameter`
-
+    SetTextureParameter( (GLuint)texture->ObjectHandle(), parameter, MaxAnisotropicSamples() ); 
+    GenerateMipmaps( (GLuint)texture->ObjectHandle(), parameter );
     return texture;
   }
 

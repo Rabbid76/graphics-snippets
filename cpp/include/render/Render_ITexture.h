@@ -144,8 +144,10 @@ enum class TTextureFormat
 **********************************************************************/
 enum class TImageTransform
 {
-  flip_y,     //! the image y axis of the image has to be flipped; mirror the imgae along the horizontal axis of symmetry 
-  bgr_to_rgb, //! the order of the color channel is blue-green-red and has to be turned into red-green-blue. OpenGL can do this by the source formats GL_BGR and GL_BGRA, but not OpneGL ES.
+  flip_y,                     //!< the image y axis of the image has to be flipped; mirror the imgae along the horizontal axis of symmetry 
+  bgr_to_rgb,                 //!< the order of the color channel is blue-green-red and has to be turned into red-green-blue. OpenGL can do this by the source formats GL_BGR and GL_BGRA, but not OpneGL ES.
+  to_displacement_map,        //!< convert the image resource to a dispacement map
+  to_normal_and_displacement, //!< convert to normal map (RGB cannels) and dispacement map (ALPHA channel)
 
   // ...
 
@@ -271,6 +273,8 @@ struct TTextureParameters
   bool Is1DType( void ) const { return _type == TTextureType::T1D; }
   bool Is2DType( void ) const { return _type == TTextureType::T2D || _type == TTextureType::T2D_ARRAY || _type == TTextureType::TCUBE; }
   bool Is3DType( void ) const { return _type == TTextureType::T3D; }
+
+  bool HasAlphaChannel( void ) const { return _format == TTextureFormat::RGBA8; }
 };
 
 
