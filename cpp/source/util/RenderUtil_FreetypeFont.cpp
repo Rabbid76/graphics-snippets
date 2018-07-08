@@ -97,13 +97,14 @@ public:
     : _glyph( glyph )
   {}
 
-  virtual Render::TImageKind   Kind( void )   const override { return Render::TImageKind::diffuse; }
-  virtual Render::TTextureType Type( void )   const override { return Render::TTextureType::T2D; }
-  virtual Render::TImageFormat Format( void ) const override { return Render::TImageFormat::RGBA8; }
-  virtual Render::TTextureSize Size( void )   const override { return {_glyph._cx, _glyph._cy, 0}; }
-  virtual size_t               Layers( void ) const override { return 1; }
-  virtual size_t               BPL( void )    const override { return 4*_glyph._cx; }
-  virtual const void *         DataPtr()      const override { return _glyph._image.data(); }                                 
+  virtual Render::TImageKind   Kind( void )      const override { return Render::TImageKind::diffuse; }
+  virtual Render::TTextureType Type( void )      const override { return Render::TTextureType::T2D; }
+  virtual Render::TImageFormat Format( void )    const override { return Render::TImageFormat::RGBA8; }
+  virtual Render::TTextureSize Size( void )      const override { return {_glyph._cx, _glyph._cy, 0}; }
+  virtual size_t               Layers( void )    const override { return 1; }
+  virtual size_t               BPL( void )       const override { return 4*_glyph._cx; }
+  virtual size_t               LineAlign( void ) const override { return 4; }
+  virtual const void *         DataPtr()         const override { return _glyph._image.data(); }                                 
 
 private:
 

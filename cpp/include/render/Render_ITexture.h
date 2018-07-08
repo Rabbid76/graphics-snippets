@@ -179,13 +179,14 @@ public:
 
   virtual ~IImageResource() = default;
 
-  virtual TImageKind   Kind( void )    const = 0; //!< kind of the image reource content
-  virtual TTextureType Type( void )    const = 0; //!< type of the texture 1D, 2D, 3D
-  virtual TImageFormat Format( void )  const = 0; //!< format of one texel or voxel
-  virtual TTextureSize Size( void )    const = 0; //!< size for up to 3 dimensions
-  virtual size_t       Layers( void )  const = 0; //!< number of layers
-  virtual size_t       BPL( void )     const = 0; //!< number of byts of a single line of the image
-  virtual const void * DataPtr( void ) const = 0; //!< pointer to the native image data
+  virtual TImageKind   Kind( void )      const = 0; //!< kind of the image reource content
+  virtual TTextureType Type( void )      const = 0; //!< type of the texture 1D, 2D, 3D
+  virtual TImageFormat Format( void )    const = 0; //!< format of one texel or voxel
+  virtual TTextureSize Size( void )      const = 0; //!< size for up to 3 dimensions
+  virtual size_t       Layers( void )    const = 0; //!< number of layers
+  virtual size_t       BPL( void )       const = 0; //!< number of byts of a single line of the image
+  virtual size_t       LineAlign( void ) const = 0; //!< alignment of the start of one line of the image
+  virtual const void * DataPtr( void )   const = 0; //!< pointer to the native image data
 };
 using IImageResourcePtr = std::unique_ptr<IImageResource>;
 

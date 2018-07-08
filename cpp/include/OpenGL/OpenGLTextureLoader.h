@@ -75,6 +75,9 @@ public:
   //! map texture format to OpenGL source format
   static unsigned int ImageFormat( Render::TImageFormat format );
 
+  //! map texture format to OpenGL source format
+  static unsigned int ImageDataType( Render::TImageFormat format );
+
   //! map texture format to OpenGL internal format
   static unsigned int InternalFormat( Render::TTextureFormat format );
 

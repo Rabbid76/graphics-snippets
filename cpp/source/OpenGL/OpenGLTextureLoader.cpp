@@ -271,7 +271,7 @@ unsigned int CTextureLoader::TargetType(
 
 
 /******************************************************************//**
-* \brief Map texture format to OpenGL internal format enumerator
+* \brief Map texture format to OpenGL source image format enumerator
 * constant. 
 * 
 * \author  gernot
@@ -293,6 +293,32 @@ unsigned int CTextureLoader::ImageFormat(
   auto it = image_foramt_map.find(format);
   ASSERT(it != image_foramt_map.end());
   return it != image_foramt_map.end() ? it->second : GL_RGBA;
+}
+
+
+/******************************************************************//**
+* \brief Map texture format to OpenGL data type format enumerator
+* constant. 
+* 
+* \author  gernot
+* \date    2018-06-12
+* \version 1.0
+**********************************************************************/
+unsigned int CTextureLoader::ImageDataType( 
+  Render::TImageFormat format ) //!< in: requested image format
+{
+  static const std::unordered_map< Render::TImageFormat, GLenum > image_datatype_map
+  {
+    { Render::TImageFormat::GRAY8, GL_UNSIGNED_BYTE },
+    { Render::TImageFormat::RGB8,  GL_UNSIGNED_BYTE },
+    { Render::TImageFormat::BGR8,  GL_UNSIGNED_BYTE }, 
+    { Render::TImageFormat::RGBA8, GL_UNSIGNED_BYTE },
+    { Render::TImageFormat::BGRA8, GL_UNSIGNED_BYTE }
+  };
+
+  auto it = image_datatype_map.find(format);
+  ASSERT(it != image_datatype_map.end());
+  return it != image_datatype_map.end() ? it->second : GL_UNSIGNED_BYTE;
 }
 
 
@@ -657,24 +683,12 @@ Render::ITexturePtr CTextureLoader::CreateTexture(
 
   // TODO $$$
   DebugWarning << "creating texture from image resource is not yet implemented";
-  // TODO $$$
-
-  // TODO $$$
-
+  
   Render::ITexturePtr texture = std::make_unique<CTextureInternal>( parameter._type );
   texture->Bind( _loader_binding_id );
 
-  // TODO $$$
-
-  // GL_BGR, GL_BGRA
-
-  // TODO $$$
-
   SetTextureParameter( (GLuint)texture->ObjectHandle(), parameter, MaxAnisotropicSamples() ); 
   GenerateMipmaps( (GLuint)texture->ObjectHandle(), parameter );
-
-  // TODO $$$
-
 
   return nullptr;
 }
@@ -700,17 +714,17 @@ bool CTextureLoader::LoadToTexture(
     return false;
   }
 
-  // TODO $$$
+  // set the alignemt of the start of a line of the image reource
+  size_t alignment = image.LineAlign();
+  glPixelStorei( GL_UNPACK_ALIGNMENT, (GLint)alignment );
 
-  //glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
-
+  // load the color plane of the image resource to the texture 
   GLenum format = ImageFormat( image.Format() );
-  GLenum type   = GL_UNSIGNED_BYTE; // TODO $$$ ImageType(???)
+  GLenum type   = ImageDataType( image.Format() );
   glTexSubImage2D(GL_TEXTURE_2D, 0, (GLsizei)pos[0], (GLsizei)pos[1], (GLsizei)image.Size()[0], (GLsizei)image.Size()[1], format, type, image.DataPtr() );
 
-  //glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
-
-  // TODO $$$
+  // set the default alignemnt
+  glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
 
   return true;
 }
