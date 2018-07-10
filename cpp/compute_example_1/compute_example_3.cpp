@@ -152,8 +152,13 @@ int main(int argc, char** argv)
     glGenBuffers(0, &output_buffer);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, output_buffer);
     glBindBufferBase( GL_SHADER_STORAGE_BUFFER, 0, output_buffer);
+
+    static bool map_buffer = false;
     
-    glBufferStorage( GL_SHADER_STORAGE_BUFFER, sizeof(GLuint) * 10, nullptr, GL_MAP_READ_BIT );
+    if ( map_buffer )
+      glBufferStorage( GL_SHADER_STORAGE_BUFFER, sizeof(GLuint) * 10, nullptr, GL_MAP_READ_BIT );
+    else
+      glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(GLuint) * 10, nullptr, GL_DYNAMIC_READ);
     
     //GLuint program = glCreateProgram();
     //GLuint shader = LoadShader(COMPUTE_SHADER);
@@ -168,12 +173,25 @@ int main(int argc, char** argv)
 
     //glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
-    
-    
-    GLuint *ptr = (GLuint *) glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, sizeof(GLuint) * 10, GL_MAP_READ_BIT );
-    glMemoryBarrier( GL_SHADER_STORAGE_BARRIER_BIT );
-    GLuint info = ptr[ 1 ];
-    glUnmapBuffer( GL_SHADER_STORAGE_BUFFER );
+
+    GLuint info = 0;
+    if ( map_buffer )
+    {
+      GLuint *ptr = (GLuint *) glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, sizeof(GLuint) * 10, GL_MAP_READ_BIT );
+      glMemoryBarrier( GL_SHADER_STORAGE_BARRIER_BIT );
+      info = ptr[ 1 ];
+      glUnmapBuffer( GL_SHADER_STORAGE_BUFFER );
+    }
+    else
+    {
+      //std::vector<GLuint> buffer( 10 );
+      //glGetBufferSubData( GL_SHADER_STORAGE_BUFFER, sizeof( GLuint ) * 10, 0, buffer.data() );
+      //info = buffer[ 1 ];
+
+      GLuint *ptr = (GLuint *) glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, sizeof(GLuint) * 10, GL_MAP_READ_BIT );
+      info = ptr[ 1 ];
+      glUnmapBuffer( GL_SHADER_STORAGE_BUFFER );
+    }
     sprintf(hello, "%d ", info);
 
     
