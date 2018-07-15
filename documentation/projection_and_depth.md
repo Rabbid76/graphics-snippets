@@ -306,6 +306,8 @@ The `z` component contains the depth value, that would be written to `gl_FragDep
 
 To convert form the depth of the depth buffer to the original Z-coordinate, the projection (Orthographic or Perspective), and the near plane and far plane has to be known.
 
+In the following is assumed that the depth range is in [0, 1] and depth is a value in this range:
+
 *Orthographic Projection*
 
     n = near, f = far
