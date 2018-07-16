@@ -40,27 +40,32 @@
 
 
 // test compute shader
-const char *compute_sh = R"(
-#version 310 es
+const char compute_sh[] = R"(
+    #version 310 es
 
-layout(local_size_x = 128) in;
-layout(std430) buffer;
-layout(binding = 0) writeonly buffer Output
-{
-    uint elements[];
-} output_data;
+    layout(local_size_x = 128) in;
+    layout(std430) buffer;
 
-layout(binding = 1) readonly buffer Input0
-{
-    uint elements[];
-} input_data0;
+    layout(binding = 0) buffer Output {
+        uint elements[];
+    } output_data;
 
-void main()
-{
-    uint ident = gl_GlobalInvocationID.x;
-    output_data.elements[ident] = input_data0.elements[ident] * input_data0.elements[ident];
-}
-)";
+    layout(binding = 1) buffer Input0 {
+        uint elements[];
+    } input_data0;
+
+    layout(binding = 2) readonly buffer Input1 {
+        uint elements[];
+    } input_data1;
+
+    void main()
+    {
+        uint ident = gl_GlobalInvocationID.x;
+        output_data.elements[ident] = input_data0.elements[ident] * input_data1.elements[ident];
+    }
+    )";
+
+
 
 
 std::unique_ptr<OpenGL::ShaderProgram> g_compute_prog;
@@ -127,72 +132,80 @@ int main(int argc, char** argv)
       std::cout << ", debug";
     std::cout << std::endl;
 
+    GLint max_ssbo_size = 0;
+    glGetIntegerv( GL_MAX_SHADER_STORAGE_BLOCK_SIZE, &max_ssbo_size );
+    std::cout << "MAX_SHADER_STORAGE_BLOCK_SIZE: " << max_ssbo_size  << std::endl;
+   
 
-    g_compute_prog.reset( new OpenGL::ShaderProgram(
-    {
-      { compute_sh, GL_COMPUTE_SHADER }
-    } ) );
 
+  GLuint input_buffer1 = 0;
+  GLuint input_buffer2 = 0;
+  GLuint data_buffer = 0;
 
-    char hello[100] = "hello";
+  std::vector<uint32_t> data1;
+  std::vector<uint32_t> data2;
+  std::vector<uint32_t> data3;
+  size_t no = 100;
+  for ( size_t i = 0; i < no; ++ i)
+  {
+    data1.push_back( i );
+    data2.push_back( i );
+    data3.push_back( i );
+  }
 
-    GLuint data_buffer;
-    GLuint output_buffer;
+  glGenBuffers(1, &input_buffer1);
+  glBindBuffer(GL_SHADER_STORAGE_BUFFER, input_buffer1);
+  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, input_buffer1);
+  glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(GLuint) * data2.size(), data2.data(),GL_STREAM_COPY);
 
-    uint32_t data[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+  glGenBuffers(1, &input_buffer2);
+  glBindBuffer(GL_SHADER_STORAGE_BUFFER, input_buffer2);
+  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, input_buffer2);
+  glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(GLuint) * data3.size(), data3.data(),GL_STREAM_COPY);
 
-    glGenBuffers(1, &data_buffer);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, data_buffer);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(GLuint) * 10, (void*)data, GL_STREAM_DRAW);
-    glBindBufferBase( GL_SHADER_STORAGE_BUFFER, 1, data_buffer);
+  glGenBuffers(1, &data_buffer);
+  glBindBuffer(GL_SHADER_STORAGE_BUFFER, data_buffer);
+  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, data_buffer);
+  glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(GLuint) * data1.size(), (void*)data1.data(),GL_DYNAMIC_READ);
+  //glBufferStorage( GL_SHADER_STORAGE_BUFFER, sizeof(GLuint) * data1.size(), nullptr, GL_MAP_READ_BIT );
 
-    glGenBuffers(0, &output_buffer);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, output_buffer);
-    glBindBufferBase( GL_SHADER_STORAGE_BUFFER, 0, output_buffer);
+  //GLuint program = glCreateProgram();
+  //GLuint shader = LoadShader(COMPUTE_SHADER);
+  //glAttachShader(program, shader);
 
-    static bool map_buffer = false;
+  //glLinkProgram(program);
+  g_compute_prog.reset( new OpenGL::ShaderProgram(
+  {
+    { compute_sh, GL_COMPUTE_SHADER }
+  } ) );
+  GLuint program = g_compute_prog->Prog();
+  glUseProgram(program);
+
+  glDispatchCompute(no, 1, 1);
+
+  // Write from compute shader to persistently mapped SSBO fails
+  // [https://stackoverflow.com/questions/51182056/write-from-compute-shader-to-persistently-mapped-ssbo-fails]
+  //GLsync sync = glFenceSync( GL_SYNC_GPU_COMMANDS_COMPLETE, 0 );
+  //GLenum sync_result = glClientWaitSync( sync, 0, 1000000000 );
+
+  std::vector<GLuint> ready_data( data1.size() );
+  
+  //GLuint *ptr = (GLuint*)glMapBuffer( GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY );
+  GLuint* ptr = (GLuint*)glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, sizeof(GLuint) * data1.size(), GL_MAP_READ_BIT );
+  
+  //glMemoryBarrier( GL_SHADER_STORAGE_BARRIER_BIT );
+  //glMemoryBarrier( GL_ALL_BARRIER_BITS );
+  
+  std::copy(ptr, ptr + data1.size(), ready_data.begin());
+  glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
     
-    if ( map_buffer )
-      glBufferStorage( GL_SHADER_STORAGE_BUFFER, sizeof(GLuint) * 10, nullptr, GL_MAP_READ_BIT );
-    else
-      glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(GLuint) * 10, nullptr, GL_DYNAMIC_READ);
-    
-    //GLuint program = glCreateProgram();
-    //GLuint shader = LoadShader(COMPUTE_SHADER);
+  GLenum error = glGetError();
+  if ( error != GL_NO_ERROR )
+    std::cout << "error: " << std::hex << error << "h" << std::endl;
 
-    //glAttachShader(program, shader);
-    //glLinkProgram(program);
-
-    GLuint program = g_compute_prog->Prog();
-
-    glUseProgram(program);
-    glDispatchCompute(10,1,1);
-
-    //glMemoryBarrier(GL_ALL_BARRIER_BITS);
-
-
-    GLuint info = 0;
-    if ( map_buffer )
-    {
-      GLuint *ptr = (GLuint *) glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, sizeof(GLuint) * 10, GL_MAP_READ_BIT );
-      glMemoryBarrier( GL_SHADER_STORAGE_BARRIER_BIT );
-      info = ptr[ 1 ];
-      glUnmapBuffer( GL_SHADER_STORAGE_BUFFER );
-    }
-    else
-    {
-      //std::vector<GLuint> buffer( 10 );
-      //glGetBufferSubData( GL_SHADER_STORAGE_BUFFER, sizeof( GLuint ) * 10, 0, buffer.data() );
-      //info = buffer[ 1 ];
-
-      GLuint *ptr = (GLuint *) glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, sizeof(GLuint) * 10, GL_MAP_READ_BIT );
-      info = ptr[ 1 ];
-      glUnmapBuffer( GL_SHADER_STORAGE_BUFFER );
-    }
-    sprintf(hello, "%d ", info);
-
-    
-    std::cout << hello << std::endl;
+  for ( auto d : ready_data )
+    std::cout << d << " ";
+  std::cout << std::endl;
     
 
     g_start_time = std::chrono::high_resolution_clock::now();

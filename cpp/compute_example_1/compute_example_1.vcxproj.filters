@@ -15,7 +15,7 @@
     <ClCompile Include="..\source\OpenGL\OpenGLError.cpp">
       <Filter>OpenGL</Filter>
     </ClCompile>
-    <ClCompile Include="compute_example_3.cpp">
+    <ClCompile Include="compute_example_4.cpp">
       <Filter>source</Filter>
     </ClCompile>
   </ItemGroup>
