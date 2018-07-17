@@ -103,6 +103,17 @@ inline TColor MixColor( const TColor &a, const TColor &b, t_fp w )
   };
 }
 
+//! mix 2 floating point colors
+inline TColor MixColorRGB( const TColor &a, const TColor &b, t_fp w, t_fp alpha )
+{
+  return TColor{
+    MixProperty(a[0], b[0], w),
+    MixProperty(a[1], b[1], w),
+    MixProperty(a[2], b[2], w),
+    alpha
+  };
+}
+
 //! mix 2 byte colors
 inline TColor8 MixColor( const TColor8 &a, const TColor8 &b, t_fp w )
 {
