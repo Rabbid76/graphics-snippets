@@ -69,6 +69,10 @@ using TColor8 = std::array<t_byte, 4>;
 //! floating point color data type
 using TColor = std::array<t_fp, 4>;
 
+//! normalize value
+inline t_fp NormalizedValue( t_byte val )  { return static_cast<t_fp>(val) / static_cast<t_fp>(255.0); }
+inline t_fp NormalizedValue( t_sbyte val ) { return val >= 0 ? static_cast<t_fp>(val) / static_cast<t_fp>(128.0f) : static_cast<t_fp>(val) / static_cast<t_fp>(127.0f); }
+inline t_fp NormalizedValue( t_fp val )    { return val; }
 
 //! convert byte color to floating point color
 inline TColor toColor( const TColor8 &col )
