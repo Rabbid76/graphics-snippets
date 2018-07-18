@@ -74,6 +74,9 @@ inline t_fp NormalizedValue( t_byte val )  { return static_cast<t_fp>(val) / sta
 inline t_fp NormalizedValue( t_sbyte val ) { return val >= 0 ? static_cast<t_fp>(val) / static_cast<t_fp>(128.0f) : static_cast<t_fp>(val) / static_cast<t_fp>(127.0f); }
 inline t_fp NormalizedValue( t_fp val )    { return val; }
 
+//! convert floating point value to singed byte
+inline t_sbyte SByte( t_fp val ) { return (t_sbyte)(val < 0.0 ? val * 128.0f : val * 127.0f); }
+
 //! convert byte color to floating point color
 inline TColor toColor( const TColor8 &col )
 { 
