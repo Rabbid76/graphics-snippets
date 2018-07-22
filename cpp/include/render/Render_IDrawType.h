@@ -75,7 +75,12 @@ inline t_fp NormalizedValue( t_sbyte val ) { return val >= 0 ? static_cast<t_fp>
 inline t_fp NormalizedValue( t_fp val )    { return val; }
 
 //! convert floating point value to singed byte
-inline t_sbyte SByte( t_fp val ) { return (t_sbyte)(val < 0.0 ? val * 128.0f : val * 127.0f); }
+inline t_sbyte UByte( t_byte val ) { return val; }
+inline t_sbyte UByte( t_fp val )   { return static_cast<t_byte>(val * 255.0f); }
+
+//! convert floating point value to singed byte
+inline t_sbyte SByte( t_sbyte val ) { return val; }
+inline t_sbyte SByte( t_fp val )    { return static_cast<t_sbyte>(val < 0.0 ? val * 128.0f : val * 127.0f); }
 
 //! convert byte color to floating point color
 inline TColor toColor( const TColor8 &col )
