@@ -35,6 +35,14 @@ class IProgramIntrospection
   // bit set which resources have to be evaluated
 
   // resource maps : name -> location, index, binding point
+
+/*
+
+map: name -> entry point, type 
+     unorderd_map; if name would mean differnt entryp point types the unorderd_multimap
+
+
+*/
 };
 
 
