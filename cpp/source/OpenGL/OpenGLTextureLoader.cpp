@@ -665,7 +665,7 @@ Render::ITexturePtr CTextureLoader::CreateTexture(
   Render::TImageTransformations transform_compatible = transform;
   if ( transform_compatible.test( (int)Render::TImageTransform::to_displacement_map ) && image.Kind() == Render::TImageKind::displacement_map )
     transform_compatible.reset( (int)Render::TImageTransform::to_displacement_map );
-  if ( transform_compatible.test( (int)Render::TImageTransform::to_normal_and_displacement ) && image.Kind() == Render::TImageKind::noraml_displacement_map )
+  if ( transform_compatible.test( (int)Render::TImageTransform::to_normal_and_displacement ) && image.Kind() == Render::TImageKind::normal_displacement_map)
     transform_compatible.reset( (int)Render::TImageTransform::to_normal_and_displacement );
  
   if ( image.Size() == size && transform_compatible.none() )

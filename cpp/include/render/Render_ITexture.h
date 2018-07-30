@@ -45,7 +45,7 @@ enum class TImageKind : t_byte
   grayscale,               //!< grayscale texture
   displacement_map,        //!< displacment map; 1 channel (red)
   normal_map,              //!< normal map; 3 channels (RGB)
-  noraml_displacement_map, //!< normal map; 3 channels (RGB) + displacment map; 1 channel (alpha)
+  normal_displacement_map, //!< normal map; 3 channels (RGB) + displacment map; 1 channel (alpha)
   displacement_cone_map    //!< displacment map; 1 channel (red) + cone map; 1 channel (green) 
 };
 
