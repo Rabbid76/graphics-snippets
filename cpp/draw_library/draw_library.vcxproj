@@ -167,6 +167,7 @@
     <ClInclude Include="..\include\OpenGL\OpenGLError.h" />
     <ClInclude Include="..\include\OpenGL\OpenGLFixedFunctionPipelineTypes.h" />
     <ClInclude Include="..\include\OpenGL\OpenGLFramebuffer.h" />
+    <ClInclude Include="..\include\OpenGL\OpenGLProgram.h" />
     <ClInclude Include="..\include\OpenGL\OpenGLTextureLoader.h" />
     <ClInclude Include="..\include\OpenGL\OpenGLVertexBuffer.h" />
     <ClInclude Include="..\include\OpenGL\OpenGLVertexBufferCompatibility.h" />
@@ -196,10 +197,12 @@
     <ClCompile Include="..\source\OpenGL\OpenGLBasicDraw.cpp" />
     <ClCompile Include="..\source\OpenGL\OpenGLError.cpp" />
     <ClCompile Include="..\source\OpenGL\OpenGLFramebuffer.cpp" />
+    <ClCompile Include="..\source\OpenGL\OpenGLProgram.cpp" />
     <ClCompile Include="..\source\OpenGL\OpenGLTextureLoader.cpp" />
     <ClCompile Include="..\source\OpenGL\OpenGLVertexBuffer.cpp" />
     <ClCompile Include="..\source\OpenGL\OpenGLVertexBufferCompatibility.cpp" />
     <ClCompile Include="..\source\OpenGL\OpenGLVertexBuffer_2_0.cpp" />
+    <ClCompile Include="..\source\render\Render_IProgram.cpp" />
     <ClCompile Include="..\source\util\RenderUtil_FreetypeFont.cpp" />
     <ClCompile Include="..\source\util\RenderUtil_ObjLoader.cpp" />
     <ClCompile Include="stdafx.cpp">
