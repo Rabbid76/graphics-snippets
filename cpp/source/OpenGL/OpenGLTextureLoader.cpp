@@ -16,7 +16,12 @@
 #include <OpenGLError.h>
 #include <OpenGLTextureLoader.h>
 
-#include <DlOGL_include.h>
+// OpenGL wrapper
+
+#include <GL/glew.h>
+//#include <GL/gl.h> not necessary because of glew 
+#include <GL/glu.h>
+
 
 // stl
 

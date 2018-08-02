@@ -5,6 +5,7 @@
 // OpenGL
 
 #include <OpenGL_Matrix_Camera.h>
+#include <OpenGLProgram.h>
 
 
 // OpenGL wrapper
@@ -21,6 +22,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <deque>
 
 
 // preprcessor definitions
@@ -38,10 +40,14 @@ class ShaderProgram
 {
 private:
 
+  using TShaderPtr  = Render::Program::TShaderPtr;
+  using TShaderList = std::deque<TShaderPtr>;
+
   using TResourceMap = std::map< std::string, GLint >;
 
   bool         _verbose = true;
   GLuint       _prog    = 0;
+  TShaderList  _shaders;
   TResourceMap _attributeIndices;
   TResourceMap _transformFeedbackVaryings;
   TResourceMap _fragOutputLocation;
@@ -184,41 +190,34 @@ public:
   }
 
   // read shader program and compile shader
-  int CompileShader( const std::string & file, int shaderStage ) const
+  int CompileShader( const std::string & file, int shaderStage )
   {
+    Render::Program::TShaderType type = CShaderObject::ShaderType( shaderStage );
+
     std::ifstream sourceFile( file, std::fstream::in );
     std::string sourceCode = file;
     if ( sourceFile.is_open() )
       sourceCode = std::string( (std::istreambuf_iterator<char>( sourceFile )), std::istreambuf_iterator<char>() );
-    const std::map<int, std::string>nameMap{ 
-      { GL_VERTEX_SHADER,  "vertex" },
-      { GL_TESS_CONTROL_SHADER, "tessellation control" },
-      { GL_TESS_EVALUATION_SHADER, "tessellation evaluation" },
-      { GL_GEOMETRY_SHADER,  "geometry" },
-      { GL_FRAGMENT_SHADER, "fragment" },
-      { GL_COMPUTE_SHADER, "compute" }
-    };
+    std::string shader_type_name = CShaderObject::ShaderTypeName( type );
 
     if ( _verbose )
-      std::cout << nameMap.find(shaderStage)->second.data() << "shader code:" << std::endl << sourceCode << std::endl << std::endl;
+      std::cout << shader_type_name << " shader code:" << std::endl << sourceCode << std::endl << std::endl;
     
-    auto shaderObj = glCreateShader( shaderStage );
-    const char *srcCodePtr = sourceCode.c_str();
-    glShaderSource( shaderObj, 1, &srcCodePtr, nullptr );
-    glCompileShader( shaderObj );
-    GLint status;
-    glGetShaderiv( shaderObj, GL_COMPILE_STATUS, &status );
-    if ( status == GL_FALSE )
-    {
-        GLint maxLen;
-	      glGetShaderiv( shaderObj, GL_INFO_LOG_LENGTH, &maxLen );
-        std::vector< char >log( maxLen );
-		    GLsizei len;
-		    glGetShaderInfoLog( shaderObj, maxLen, &len, log.data() );
-		    std::cout << "compile error:" << std::endl << log.data() << std::endl;
-        throw std::runtime_error( "compile error" );
-    }
-    return shaderObj;
+    // create shader object
+    _shaders.emplace_back( std::make_shared<CShaderObject>( type ) );
+
+    // append source code and compile
+    *_shaders.back() << std::move(sourceCode);
+    _shaders.back()->Compile();
+
+    // verify compilation
+    std::string message;
+    bool success = _shaders.back()->Verify( message );
+    if ( success == false )
+      std::cout << message;
+    
+    // return shader object handle
+    return (int)_shaders.back()->ObjectHandle();
   }
     
   // linke shader objects to shader program

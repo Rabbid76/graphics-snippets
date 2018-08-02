@@ -100,9 +100,14 @@ public:
 
   virtual ~IShader() = default;
 
+  // return shader object handle 
+  virtual size_t      ObjectHandle( void ) = 0;
+  virtual TShaderType Type( void ) = 0;
+
   // append source code to the shader 
   virtual IShader & operator << ( const std::string & code ) = 0;
   virtual IShader & operator << ( std::string && code ) = 0;
+  virtual IShader & ClearCode( void ) = 0;
 
   // Compile the shader stage, the function succeeds, even if the compilation fails, but it fails if the stage was not properly initialized.
   virtual bool Compile( void ) = 0;
