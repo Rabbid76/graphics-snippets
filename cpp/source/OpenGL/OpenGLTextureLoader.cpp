@@ -16,11 +16,7 @@
 #include <OpenGLError.h>
 #include <OpenGLTextureLoader.h>
 
-// OpenGL wrapper
-
-#include <GL/glew.h>
-//#include <GL/gl.h> not necessary because of glew 
-#include <GL/glu.h>
+#include <DlOGL_include.h>
 
 // stl
 
@@ -89,7 +85,8 @@ public:
       glDeleteTextures( 1, &_texture_obj );
   }
 
-  size_t ObjectHandle( void ) const override { return _texture_obj; }
+  virtual size_t ObjectHandle( void ) const override { return _texture_obj; }
+  virtual size_t DetachHandle( void )       override { unsigned int hdl = _texture_obj; _texture_obj = 0; return hdl; }
 
   virtual Render::TTextureType Type( void ) const override { return _type; }
 
