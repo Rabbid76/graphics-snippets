@@ -25,7 +25,17 @@
 
 // Own
 #include <OpenGL_Matrix_Camera.h>
+
+//#define NEW_SHADER_PROGRAM
+#if defined(NEW_SHADER_PROGRAM)
+#include <OpenGL_SimpleShaderProgram_temp.h>
+#else
 #include <OpenGL_SimpleShaderProgram.h>
+namespace OpenGL
+{
+using ShaderProgram = ShaderProgramSimple;
+}
+#endif
 
 
 // [Switching Between windowed and full screen in OpenGL/GLFW 3.2](https://stackoverflow.com/questions/47402766/switching-between-windowed-and-full-screen-in-opengl-glfw-3-2/47462358#47462358)

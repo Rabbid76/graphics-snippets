@@ -19,6 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\source\OpenGL\OpenGLError.cpp" />
+    <ClCompile Include="..\source\OpenGL\OpenGLProgram.cpp" />
+    <ClCompile Include="..\source\render\Render_IProgram.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -28,8 +31,12 @@
     <ClCompile Include="transform_feedback_simple.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\include\OpenGL\OpenGLError.h" />
+    <ClInclude Include="..\include\OpenGL\OpenGLProgram.h" />
     <ClInclude Include="..\include\OpenGL\OpenGL_Matrix_Camera.h" />
     <ClInclude Include="..\include\OpenGL\OpenGL_SimpleShaderProgram.h" />
+    <ClInclude Include="..\include\OpenGL\OpenGL_SimpleShaderProgram_temp.h" />
+    <ClInclude Include="..\include\render\Render_IProgram.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>

@@ -27,9 +27,6 @@
     <ClInclude Include="..\include\OpenGL\OpenGL_Matrix_Camera.h">
       <Filter>OpenGL</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\OpenGL\OpenGL_SimpleShaderProgram.h">
-      <Filter>OpenGL</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\OpenGL\OpenGLFixedFunctionPipelineTypes.h">
       <Filter>OpenGL</Filter>
     </ClInclude>
@@ -103,6 +100,9 @@
       <Filter>util</Filter>
     </ClInclude>
     <ClInclude Include="..\include\OpenGL\OpenGLProgram.h">
+      <Filter>OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenGL\OpenGL_SimpleShaderProgram_temp.h">
       <Filter>OpenGL</Filter>
     </ClInclude>
   </ItemGroup>

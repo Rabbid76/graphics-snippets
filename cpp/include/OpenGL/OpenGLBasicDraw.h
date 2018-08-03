@@ -25,7 +25,7 @@
 
 #include <OpenGLError.h>
 #include <OpenGL_Matrix_Camera.h>
-#include <OpenGL_SimpleShaderProgram.h>
+#include <OpenGL_SimpleShaderProgram_temp.h>
 
 // stl
 

@@ -191,8 +191,8 @@ void main()
 )";
 
 
-std::unique_ptr<OpenGL::ShaderProgram> g_prog;
-std::unique_ptr<OpenGL::ShaderProgram> g_cone_prog;
+std::unique_ptr<OpenGL::ShaderProgramSimple> g_prog;
+std::unique_ptr<OpenGL::ShaderProgramSimple> g_cone_prog;
 
 std::chrono::high_resolution_clock::time_point g_start_time;
 
@@ -260,13 +260,13 @@ int main(int argc, char** argv)
 
     std::cout << std::endl;
 
-    g_prog.reset( new OpenGL::ShaderProgram(
+    g_prog.reset( new OpenGL::ShaderProgramSimple(
     {
       { sh_vert, GL_VERTEX_SHADER },
       { sh_frag, GL_FRAGMENT_SHADER }
     } ) );
 
-    g_cone_prog.reset( new OpenGL::ShaderProgram(
+    g_cone_prog.reset( new OpenGL::ShaderProgramSimple(
     {
       { sh_cone_compute.c_str(), GL_COMPUTE_SHADER }
     } ) );

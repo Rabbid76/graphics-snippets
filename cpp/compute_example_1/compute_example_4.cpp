@@ -68,7 +68,7 @@ const char compute_sh[] = R"(
 
 
 
-std::unique_ptr<OpenGL::ShaderProgram> g_compute_prog;
+std::unique_ptr<OpenGL::ShaderProgramSimple> g_compute_prog;
 
 std::chrono::high_resolution_clock::time_point g_start_time;
 
@@ -174,7 +174,7 @@ int main(int argc, char** argv)
   //glAttachShader(program, shader);
 
   //glLinkProgram(program);
-  g_compute_prog.reset( new OpenGL::ShaderProgram(
+  g_compute_prog.reset( new OpenGL::ShaderProgramSimple(
   {
     { compute_sh, GL_COMPUTE_SHADER }
   } ) );

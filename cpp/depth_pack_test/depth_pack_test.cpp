@@ -25,7 +25,7 @@
 
 // Own
 #include <OpenGL_Matrix_Camera.h>
-#include <OpenGL_SimpleShaderProgram.h>
+#include <OpenGL_SimpleShaderProgram_temp.h>
 #include <OpenGLVertexBuffer.h>
 #include <OpenGLFramebuffer.h>
 

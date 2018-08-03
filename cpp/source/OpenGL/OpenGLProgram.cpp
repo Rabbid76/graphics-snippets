@@ -282,5 +282,179 @@ bool CShaderObject::Verify(
 }
 
 
+//*********************************************************************
+// CShaderProgram
+//*********************************************************************
+
+
+/******************************************************************//**
+* \brief ctor  
+* 
+* \author  gernot
+* \date    2018-08-03
+* \version 1.0
+**********************************************************************/
+CShaderProgram::CShaderProgram( void )
+{}
+
+
+/******************************************************************//**
+* \brief ctor  
+* 
+* \author  gernot
+* \date    2018-08-03
+* \version 1.0
+**********************************************************************/
+CShaderProgram::CShaderProgram(
+  CShaderProgram && source_objet ) //!< I - source object
+{
+  *this = std::move( source_objet );
+}
+
+
+/******************************************************************//**
+* \brief dotr   
+* 
+* \author  gernot
+* \date    2018-08-03
+* \version 1.0
+**********************************************************************/
+CShaderProgram::~CShaderProgram()
+{
+  if ( _object != 0 )
+    glDeleteProgram( (GLuint)_object );
+}
+
+
+/******************************************************************//**
+* \brief Move operator  
+* 
+* \author  gernot
+* \date    2018-08-03
+* \version 1.0
+**********************************************************************/
+CShaderProgram & CShaderProgram::operator =( 
+  CShaderProgram && source_objet ) //!< soure object
+{
+  _type    = source_objet._type;
+  _shaders = std::move( source_objet._shaders );
+  _object  = source_objet._object;
+  source_objet._object = 0;
+
+  return *this;
+}
+
+
+/******************************************************************//**
+* \brief Append a shader obeject.  
+* 
+* \author  gernot
+* \date    2018-08-03
+* \version 1.0
+**********************************************************************/
+Render::Program::IProgram & CShaderProgram::operator << ( 
+  const Render::Program::TShaderPtr & shader ) //!< I - sahder object
+{
+  _shaders.push_back( shader );
+  if ( shader->Type() == Render::Program::TShaderType::compute )
+    _type = Render::Program::TProgramType::compute;
+  return *this;
+}
+
+
+/******************************************************************//**
+* \brief Link the program, the function succeeds, even
+* if the linking fails, but it fails if the program was not 
+* properly initialized.  
+* 
+* \author  gernot
+* \date    2018-08-03
+* \version 1.0
+**********************************************************************/
+bool CShaderProgram::Link( void )
+{
+  if ( _object != 0 )
+    glDeleteProgram( (GLuint)_object );
+
+  _object = glCreateProgram();
+  
+  for ( auto shader : _shaders )
+  {
+    size_t shader_objbect = shader != nullptr ? shader->ObjectHandle() : 0;
+    if ( shader_objbect == 0 )
+      continue;
+    glAttachShader( (GLuint)_object, (GLuint)shader_objbect );
+  }
+  
+  glLinkProgram( (GLuint)_object );
+  return true;
+}
+  
+
+/******************************************************************//**
+* \brief Verifies the linking result.  
+* 
+* \author  gernot
+* \date    2018-08-03
+* \version 1.0
+**********************************************************************/
+bool CShaderProgram::CShaderProgram::Verify( 
+  std::string &message ) //!< O - error messages
+{
+  message.clear();
+  if ( _object == 0 )
+    return false;
+
+  GLint status = GL_TRUE;
+  glGetProgramiv( _object, GL_LINK_STATUS, &status );
+  if ( status != GL_FALSE )
+    return true;
+  
+  GLint maxLen;
+	glGetProgramiv( _object, GL_INFO_LOG_LENGTH, &maxLen );
+  std::vector< char >log( maxLen );
+	GLsizei len;
+	glGetProgramInfoLog( _object, maxLen, &len, log.data() );
+  
+  std::stringstream str_stream;
+  str_stream << "link error:" << std::endl << log.data() << std::endl;
+  message = str_stream.str();
+
+  assert( false );
+  return false;
+}
+
+
+/******************************************************************//**
+* \brief Activate a program.  
+* 
+* \author  gernot
+* \date    2018-08-03
+* \version 1.0
+**********************************************************************/
+bool CShaderProgram::Use( void )
+{
+  if ( _object == 0 )
+    return false;
+  glUseProgram( _object );
+  return true;
+}
+
+ 
+/******************************************************************//**
+* \brief Ask for the resource information of the program.  
+* 
+* \author  gernot
+* \date    2018-08-03
+* \version 1.0
+**********************************************************************/
+Render::Program::IIntrospection && CShaderProgram::Introspection( 
+  Render::Program::TResourceTypes resources ) //! I - set of resource types
+{
+  // TODO $$$
+  return std::move( Render::Program::IIntrospection() );
+}
+
+
 } // OpenGL
 

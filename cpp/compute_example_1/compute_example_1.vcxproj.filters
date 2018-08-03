@@ -12,9 +12,6 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>source</Filter>
     </ClCompile>
-    <ClCompile Include="..\source\OpenGL\OpenGLError.cpp">
-      <Filter>OpenGL</Filter>
-    </ClCompile>
     <ClCompile Include="compute_example_4.cpp">
       <Filter>source</Filter>
     </ClCompile>
@@ -30,9 +27,6 @@
       <Filter>OpenGL</Filter>
     </ClInclude>
     <ClInclude Include="..\include\OpenGL\OpenGL_SimpleShaderProgram.h">
-      <Filter>OpenGL</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\OpenGL\OpenGLError.h">
       <Filter>OpenGL</Filter>
     </ClInclude>
   </ItemGroup>

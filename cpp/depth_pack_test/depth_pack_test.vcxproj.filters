@@ -15,13 +15,19 @@
     <ClCompile Include="depth_pack_test.cpp">
       <Filter>source</Filter>
     </ClCompile>
-    <ClCompile Include="..\draw_library\source\OpenGLError.cpp">
+    <ClCompile Include="..\source\render\Render_IProgram.cpp">
       <Filter>OpenGL</Filter>
     </ClCompile>
-    <ClCompile Include="..\draw_library\source\OpenGLFramebuffer.cpp">
+    <ClCompile Include="..\source\OpenGL\OpenGLError.cpp">
       <Filter>OpenGL</Filter>
     </ClCompile>
-    <ClCompile Include="..\draw_library\source\OpenGLVertexBuffer.cpp">
+    <ClCompile Include="..\source\OpenGL\OpenGLFramebuffer.cpp">
+      <Filter>OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\OpenGL\OpenGLProgram.cpp">
+      <Filter>OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\OpenGL\OpenGLVertexBuffer.cpp">
       <Filter>OpenGL</Filter>
     </ClCompile>
   </ItemGroup>
@@ -38,10 +44,22 @@
     <ClInclude Include="..\include\OpenGL\OpenGL_SimpleShaderProgram.h">
       <Filter>OpenGL</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\render\Render_IProgram.h">
+      <Filter>OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\render\Render_IRenderPass.h">
+      <Filter>OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenGL\OpenGL_SimpleShaderProgram_temp.h">
+      <Filter>OpenGL</Filter>
+    </ClInclude>
     <ClInclude Include="..\include\OpenGL\OpenGLError.h">
       <Filter>OpenGL</Filter>
     </ClInclude>
     <ClInclude Include="..\include\OpenGL\OpenGLFramebuffer.h">
+      <Filter>OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenGL\OpenGLProgram.h">
       <Filter>OpenGL</Filter>
     </ClInclude>
     <ClInclude Include="..\include\OpenGL\OpenGLVertexBuffer.h">

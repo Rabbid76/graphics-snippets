@@ -46,7 +46,7 @@ private:
     std::chrono::high_resolution_clock::time_point _start_time;
     std::chrono::high_resolution_clock::time_point _current_time;
 
-    std::unique_ptr<OpenGL::ShaderProgram> _prog;
+    std::unique_ptr<OpenGL::ShaderProgramSimple> _prog;
 
     void InitScene( void );
     void Render( double time_ms );
@@ -228,7 +228,7 @@ void main()
 
 void CWindow_Glfw::InitScene( void )
 {
-    _prog.reset( new OpenGL::ShaderProgram(
+    _prog.reset( new OpenGL::ShaderProgramSimple(
     {
       { sh_vert, GL_VERTEX_SHADER },
       { sh_frag, GL_FRAGMENT_SHADER }

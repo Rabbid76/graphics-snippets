@@ -101,7 +101,9 @@ public:
   virtual ~IShader() = default;
 
   // return shader object handle 
-  virtual size_t      ObjectHandle( void ) = 0;
+  virtual size_t ObjectHandle( void ) = 0;
+
+  // return state type
   virtual TShaderType Type( void ) = 0;
 
   // append source code to the shader 
@@ -140,8 +142,20 @@ public:
 
   virtual ~IProgram() = default;
 
-  // Link the program, the function succeeds, even if the linking fails, but it fails if the program was not properly initialized.
+  // return shader object handle 
+  virtual size_t ObjectHandle( void ) = 0;
+
+  // return program type
+  virtual TProgramType Type( void ) = 0;
+
+  // append a shader obeject
+  virtual IProgram & operator << ( const TShaderPtr & shader ) = 0;
+
+  // Link shader objects to a shader program, the function succeeds, even if the linking fails, but it fails if the program was not properly initialized.
   virtual bool Link( void ) = 0;
+
+  // Activate a program.
+  virtual bool Use( void ) = 0;
   
   // Verifies the linking result.
   virtual bool Verify( std::string &message ) = 0;
@@ -173,7 +187,7 @@ public:
   virtual ~IIntrospection() = default;
 
   // find a active program resource
-  virtual bool FindResource( const std::string &name, size_t handle, TResourceType &resource_type ) = 0;
+  //virtual bool FindResource( const std::string &name, size_t handle, TResourceType &resource_type ) = 0;
 
   // bit set which resources have to be evaluated
 

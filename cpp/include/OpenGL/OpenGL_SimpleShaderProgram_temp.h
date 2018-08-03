@@ -5,6 +5,7 @@
 // OpenGL
 
 #include <OpenGL_Matrix_Camera.h>
+#include <OpenGLProgram.h>
 
 
 // OpenGL wrapper
@@ -21,6 +22,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <deque>
 
 
 // preprcessor definitions
@@ -34,14 +36,19 @@ namespace OpenGL
 using TShaderInfo = std::tuple< std::string, int >;
 
 
-class ShaderProgramSimple
+class ShaderProgram
 {
 private:
+
+  using TShaderPtr  = Render::Program::TShaderPtr;
+  using TShaderList = std::deque<TShaderPtr>; 
+  using TProgramPtr = Render::Program::TProgramPtr;
 
   using TResourceMap = std::map< std::string, GLint >;
 
   bool         _verbose = true;
-  GLuint       _prog    = 0;
+  TShaderList  _shaders;
+  TProgramPtr  _program;
   TResourceMap _attributeIndices;
   TResourceMap _transformFeedbackVaryings;
   TResourceMap _fragOutputLocation;
@@ -49,20 +56,20 @@ private:
   
 public:
 
-  ShaderProgramSimple( const std::vector< TShaderInfo > & shaderList )
+  ShaderProgram( const std::vector< TShaderInfo > & shaderList )
   {
     Create( shaderList, {}, 0 );
   }
 
-  ShaderProgramSimple( const std::vector< TShaderInfo > & shaderList, const std::vector<std::string> &tf_varyings, unsigned int tf_mode )
+  ShaderProgram( const std::vector< TShaderInfo > & shaderList, const std::vector<std::string> &tf_varyings, unsigned int tf_mode )
   {
     Create( shaderList, tf_varyings, tf_mode );
   }
 
-  virtual ~ShaderProgramSimple() { glDeleteProgram( _prog ); }
+  virtual ~ShaderProgram() = default;
   
-  GLuint Prog( void ) const { return _prog; }
-  void Use( void ) const { glUseProgram( _prog ); }
+  GLuint Prog( void ) const { return _program != nullptr ? (GLuint)_program->ObjectHandle() : 0; }
+  void Use( void ) const { if ( _program != nullptr ) _program->Use(); }
   void Release( void ) const { glUseProgram( 0 ); }
   
   void SetUniformI1( const std::string &name, int val ) const
@@ -120,6 +127,13 @@ public:
     const std::vector<std::string>   & tf_varyings,
     unsigned int                       tf_mode )
   {
+    if ( _verbose )
+    {
+      GLenum err = glGetError();
+      if ( err )
+        std::cout << "create shader program clear error: " << err << std::endl;
+    }
+
     // create and compile the shader objects
     std::vector<int> shaderObjs;
     std::transform( shaderList.begin(), shaderList.end(), std::back_inserter( shaderObjs ), [&]( const TShaderInfo & sh_info ) -> int
@@ -127,16 +141,19 @@ public:
       return CompileShader( std::get<0>( sh_info ), std::get<1>( sh_info ) );
     } );
 
-    // create the program object and attach the shader objects
-    _prog = glCreateProgram();
-    for ( auto shObj : shaderObjs )
-      glAttachShader( Prog(), shObj );
-
     if ( _verbose )
     {
       GLenum err = glGetError();
       if ( err )
         std::cout << "shader object error: " << err << std::endl;
+    }
+
+    // create the program object and attach the shader objects
+    _program = std::make_shared<OpenGL::CShaderProgram>();
+    for ( auto shader : _shaders )
+    {
+      if ( shader != nullptr )
+        *_program << shader;
     }
 
     // int the transform feedback varyings
@@ -158,8 +175,14 @@ public:
         std::cout << "transform feedback varying error: " << err << std::endl;
     }
 
-    // link the program 
-    LinkProgram( shaderObjs );
+    // link shader objects to shader program
+    _program->Link();
+    
+    // verify linking
+    std::string message;
+    bool success = _program->Verify( message );
+    if ( success == false )
+      std::cout << message;
 
     if ( _verbose )
     {
@@ -169,8 +192,7 @@ public:
     }
 
     // clean up
-    for ( auto shObj : shaderObjs )
-      glDeleteShader( shObj );
+    _shaders.clear();
 
     // program introspection
     GetResources();
@@ -184,58 +206,34 @@ public:
   }
 
   // read shader program and compile shader
-  int CompileShader( const std::string & file, int shaderStage ) const
+  int CompileShader( const std::string & file, int shaderStage )
   {
+    Render::Program::TShaderType type = CShaderObject::ShaderType( shaderStage );
+
     std::ifstream sourceFile( file, std::fstream::in );
     std::string sourceCode = file;
     if ( sourceFile.is_open() )
       sourceCode = std::string( (std::istreambuf_iterator<char>( sourceFile )), std::istreambuf_iterator<char>() );
-    const std::map<int, std::string>nameMap{ 
-      { GL_VERTEX_SHADER,  "vertex" },
-      { GL_TESS_CONTROL_SHADER, "tessellation control" },
-      { GL_TESS_EVALUATION_SHADER, "tessellation evaluation" },
-      { GL_GEOMETRY_SHADER,  "geometry" },
-      { GL_FRAGMENT_SHADER, "fragment" },
-      { GL_COMPUTE_SHADER, "compute" }
-    };
+    std::string shader_type_name = CShaderObject::ShaderTypeName( type );
 
     if ( _verbose )
-      std::cout << nameMap.find(shaderStage)->second.data() << "shader code:" << std::endl << sourceCode << std::endl << std::endl;
+      std::cout << shader_type_name << " shader code:" << std::endl << sourceCode << std::endl << std::endl;
     
-    auto shaderObj = glCreateShader( shaderStage );
-    const char *srcCodePtr = sourceCode.c_str();
-    glShaderSource( shaderObj, 1, &srcCodePtr, nullptr );
-    glCompileShader( shaderObj );
-    GLint status;
-    glGetShaderiv( shaderObj, GL_COMPILE_STATUS, &status );
-    if ( status == GL_FALSE )
-    {
-        GLint maxLen;
-	      glGetShaderiv( shaderObj, GL_INFO_LOG_LENGTH, &maxLen );
-        std::vector< char >log( maxLen );
-		    GLsizei len;
-		    glGetShaderInfoLog( shaderObj, maxLen, &len, log.data() );
-		    std::cout << "compile error:" << std::endl << log.data() << std::endl;
-        throw std::runtime_error( "compile error" );
-    }
-    return shaderObj;
-  }
+    // create shader object
+    _shaders.emplace_back( std::make_shared<CShaderObject>( type ) );
+
+    // append source code and compile
+    *_shaders.back() << std::move(sourceCode);
+    _shaders.back()->Compile();
+
+    // verify compilation
+    std::string message;
+    bool success = _shaders.back()->Verify( message );
+    if ( success == false )
+      std::cout << message;
     
-  // linke shader objects to shader program
-  void LinkProgram( const std::vector<int> & shaderObjs ) {
-    glLinkProgram( Prog() );
-    GLint status;
-    glGetProgramiv( Prog(), GL_LINK_STATUS, &status );
-    if ( status == GL_FALSE )
-    {
-        GLint maxLen;
-	      glGetProgramiv( Prog(), GL_INFO_LOG_LENGTH, &maxLen );
-        std::vector< char >log( maxLen );
-		    GLsizei len;
-		    glGetProgramInfoLog( Prog(), maxLen, &len, log.data() );
-		    std::cout  << "link error:" << std::endl << log.data() << std::endl;
-        throw std::runtime_error( "link error" );
-    }
+    // return shader object handle
+    return (int)_shaders.back()->ObjectHandle();
   }
 
   // Get program resources
