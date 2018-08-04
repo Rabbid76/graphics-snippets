@@ -280,7 +280,7 @@ bool CShaderObject::Verify(
   str_stream << "compile error:" << std::endl << log.data() << std::endl;
   message = str_stream.str();
 
-  assert( false );
+  //assert( false );
   return false;
 }
 

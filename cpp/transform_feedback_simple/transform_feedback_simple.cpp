@@ -28,6 +28,7 @@
 #include <OpenGL_SimpleShaderProgram_temp.h>
 
 
+
 // [Switching Between windowed and full screen in OpenGL/GLFW 3.2](https://stackoverflow.com/questions/47402766/switching-between-windowed-and-full-screen-in-opengl-glfw-3-2/47462358#47462358)
 class CWindow_Glfw
 {
@@ -236,6 +237,21 @@ void main()
 }
 )";
 
+std::string tf_vert_in_shader = R"(
+#version 460
+// if version < 440:  
+// #extension GL_ARB_enhanced_layouts : enable
+
+layout (location = 0) in vec3 inPos;
+
+layout(xfb_buffer = 0, xfb_offset = 0) out vec2 out_pos;
+
+void main()
+{
+    out_pos = inPos.yx;
+}
+)";
+
 // [Transform Feedback](https://www.khronos.org/opengl/wiki/Transform_Feedback)
 // [Tessellation with Transform Feedback](https://www.opengl.org/discussion_boards/showthread.php/181664-Tessellation-with-Transform-Feedback)
 // [Transform feedback (tutorial)](https://open.gl/feedback)
@@ -268,12 +284,23 @@ void CWindow_Glfw::InitScene( void )
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
     glBindVertexArray( 0 );
 
-
-    _transformFeedbackProg.reset( new OpenGL::ShaderProgram(
+    static bool tf_in_shader_specification = true;
+    if ( tf_in_shader_specification )
     {
-      { tf_vert, GL_VERTEX_SHADER }
-    },
-    { "out_pos" }, GL_INTERLEAVED_ATTRIBS ) );
+      _transformFeedbackProg.reset( new OpenGL::ShaderProgram(
+      {
+        { tf_vert_in_shader, GL_VERTEX_SHADER }
+      },
+      {}, 0 ) );
+    }
+    else
+    {
+      _transformFeedbackProg.reset( new OpenGL::ShaderProgram(
+      {
+        { tf_vert, GL_VERTEX_SHADER }
+      },
+      { "out_pos" }, GL_INTERLEAVED_ATTRIBS ) );
+    }
 
     // TODO $$$ test tbo allown
 
