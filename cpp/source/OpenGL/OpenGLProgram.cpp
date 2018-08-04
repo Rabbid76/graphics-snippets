@@ -235,13 +235,16 @@ bool CShaderObject::Compile( void )
   if ( _object != 0 )
     glDeleteShader( (GLuint)_object );
   
+  // create the sahder object
   GLenum stage = (GLenum)ShaderEnum( _type );
   _object = glCreateShader( stage );
   
+  // append the source code to the shader object
   std::vector<const char *> code_ptr( _code.size() );
   std::transform( _code.begin(), _code.end(), code_ptr.begin(), []( auto &str ) -> const char * { return str.c_str(); } );
   glShaderSource( (GLuint)_object, (GLsizei)code_ptr.size(), code_ptr.data(), nullptr );
   
+  // compile the shader
   glCompileShader( (GLuint)_object );
 
   return true;
@@ -336,28 +339,10 @@ CShaderProgram::~CShaderProgram()
 CShaderProgram & CShaderProgram::operator =( 
   CShaderProgram && source_objet ) //!< soure object
 {
-  _type    = source_objet._type;
   _shaders = std::move( source_objet._shaders );
   _object  = source_objet._object;
   source_objet._object = 0;
 
-  return *this;
-}
-
-
-/******************************************************************//**
-* \brief Append a shader obeject.  
-* 
-* \author  gernot
-* \date    2018-08-03
-* \version 1.0
-**********************************************************************/
-Render::Program::IProgram & CShaderProgram::operator << ( 
-  const Render::Program::TShaderPtr & shader ) //!< I - sahder object
-{
-  _shaders.push_back( shader );
-  if ( shader->Type() == Render::Program::TShaderType::compute )
-    _type = Render::Program::TProgramType::compute;
   return *this;
 }
 
@@ -376,17 +361,44 @@ bool CShaderProgram::Link( void )
   if ( _object != 0 )
     glDeleteProgram( (GLuint)_object );
 
+  // create the program object
   _object = glCreateProgram();
+  GLuint obj = (GLuint)_object;
   
+  // attach shader objects 
   for ( auto shader : _shaders )
   {
     size_t shader_objbect = shader != nullptr ? shader->ObjectHandle() : 0;
     if ( shader_objbect == 0 )
       continue;
-    glAttachShader( (GLuint)_object, (GLuint)shader_objbect );
+    glAttachShader( obj, (GLuint)shader_objbect );
   }
-  
-  glLinkProgram( (GLuint)_object );
+
+  // set addtional resource bindings
+  std::vector<const char*> tf_varying_ptrs;
+  for ( auto & resource : _resource_binding )
+  {
+    std::string                    &name    = std::get<0>( resource );
+    Render::Program::TResourceType &type    = std::get<1>( resource );
+    size_t                         &binding = std::get<2>( resource );
+    
+    switch( type )
+    {
+      default: assert( false ); break;  
+      case Render::Program::TResourceType::attribute:          glBindAttribLocation( obj, (GLuint)binding, name.c_str() ); break;
+      case Render::Program::TResourceType::fragment_data:      glBindFragDataLocation( obj, (GLuint)binding, name.c_str() ); break;
+      case Render::Program::TResourceType::transform_feedback: tf_varying_ptrs.push_back( name.c_str() ); break;
+    }
+  }
+  if ( _transform_feedback_mode != TTranformFeedbackMode::NON )
+  {
+    GLenum mode = _transform_feedback_mode == TTranformFeedbackMode::interleaved ? GL_INTERLEAVED_ATTRIBS : GL_SEPARATE_ATTRIBS;
+    glTransformFeedbackVaryings( obj, (GLsizei)tf_varying_ptrs.size(), tf_varying_ptrs.data(), mode );
+  }
+
+
+  // link the program
+  glLinkProgram( obj );
   return true;
 }
   

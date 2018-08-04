@@ -69,13 +69,31 @@ enum class TProgramType
 };
 
 
-//! atctive resource type of aprogram 
+//! type of an active resource of a program 
 enum class TResourceType
 {
+  attribute,           //!< attribute index
+  fragment_data,       //!< fragment data location
+  transform_feedback,  //!< transform feedback output (the type of a resouce only, has no binding point index or location)
   // ...
   NUMBER_OF,
 };
 using TResourceTypes = std::bitset<(int)TResourceType::NUMBER_OF>;
+
+//! binding point location or index and its type
+using TResourcePoint = std::tuple<size_t, TResourceType>;
+
+//! name of a resource, binding point location or index and its type
+using TResourceBinding = std::tuple<std::string, TResourceType, size_t>;
+
+
+//! trasform feedback buffer mode
+enum class TTranformFeedbackMode
+{
+  NON,         //!< no transform feedback
+  interleaved, //!< one buffer for all transform feedback outputs
+  separate     //!< a separata buffer binding for each transform feedback output
+};
 
 
 //---------------------------------------------------------------------
@@ -145,11 +163,14 @@ public:
   // return shader object handle 
   virtual size_t ObjectHandle( void ) = 0;
 
-  // return program type
-  virtual TProgramType Type( void ) = 0;
-
-  // append a shader obeject
+  // append a shader object
   virtual IProgram & operator << ( const TShaderPtr & shader ) = 0;
+
+  // append resource specification (binding point, location or index)
+  virtual IProgram & operator << ( const TResourceBinding & resource ) = 0;
+
+  // set transform feedback mode
+  virtual IProgram & operator << ( const TTranformFeedbackMode & mode ) = 0;
 
   // Link shader objects to a shader program, the function succeeds, even if the linking fails, but it fails if the program was not properly initialized.
   virtual bool Link( void ) = 0;
@@ -192,6 +213,9 @@ public:
   // bit set which resources have to be evaluated
 
   // resource maps : name -> location, index, binding point
+
+  // return program type
+  //virtual TProgramType Type( void ) = 0;
 
 /*
 

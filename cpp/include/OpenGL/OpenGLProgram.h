@@ -33,6 +33,9 @@ namespace OpenGL
 //*********************************************************************
 
 
+//! TODO $$$ [Standard, Portable Intermediate Representation - V (SPIR-V) shaders
+
+
 /******************************************************************//**
 * \brief OpenGL implementation of a sahder stage.  
 * 
@@ -99,7 +102,9 @@ class CShaderProgram
 {
 public:
 
-  using TShaderList = std::deque<Render::Program::TShaderPtr>;
+  using TShaderList           = std::deque<Render::Program::TShaderPtr>;
+  using TResourceLinkList     = std::deque<Render::Program::TResourceBinding>;
+  using TTranformFeedbackMode = Render::Program::TTranformFeedbackMode;
 
   CShaderProgram( void );
   CShaderProgram( CShaderProgram && source_objet );
@@ -111,11 +116,26 @@ public:
   // return shader object handle 
   virtual size_t ObjectHandle( void ) override { return _object; }
 
-  // return program type
-  virtual Render::Program::TProgramType Type( void ) override { return _type; }
-
   // append a shader obeject
-  virtual Render::Program::IProgram & operator << ( const Render::Program::TShaderPtr & shader ) override;
+  virtual Render::Program::IProgram & operator << ( const Render::Program::TShaderPtr & shader ) override
+  {
+    _shaders.push_back( shader );
+    return *this;
+  }
+
+  // append resource specification (binding point, location or index)
+  virtual IProgram & operator << ( const Render::Program::TResourceBinding & resource ) override
+  {
+    _resource_binding.push_back( resource );
+    return *this;
+  }
+
+  // set transform feedback mode
+  virtual IProgram & operator << ( const Render::Program::TTranformFeedbackMode & mode ) override
+  {
+    _transform_feedback_mode = mode;
+    return *this;
+  }
 
   // Link shader objects to a shader program, the function succeeds, even if the linking fails, but it fails if the program was not properly initialized.
   virtual bool Link( void ) override;
@@ -131,9 +151,10 @@ public:
 
 private:
 
-  TShaderList                   _shaders;                                    //!< shader objects linked to a program
-  Render::Program::TProgramType _type = Render::Program::TProgramType::draw; //!< program type
-  unsigned int                  _object = 0;                                 //!< named program object (GPU)
+  TShaderList           _shaders;                                              //!< shader objects linked to a program
+  TResourceLinkList     _resource_binding;                                     //!< additional resource bindings for linking the program
+  TTranformFeedbackMode _transform_feedback_mode = TTranformFeedbackMode::NON; //!< buffer mode for transform feedback sahders (required for linking)
+  unsigned int          _object                  = 0;                          //!< named program object (GPU)
 };
 
 

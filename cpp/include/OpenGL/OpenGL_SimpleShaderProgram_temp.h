@@ -160,12 +160,10 @@ public:
     if ( tf_varyings.size() > 0 &&
          ( tf_mode == GL_INTERLEAVED_ATTRIBS || tf_mode == GL_SEPARATE_ATTRIBS ) )
     {
-      // When no `xfb_buffer`, `xfb_offset`, or `xfb_stride` layout qualifiers are specified, the set of variables to record is specified with the command
-      //[`glTransformFeedbackVaryings`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTransformFeedbackVaryings.xhtml)
-      std::vector<const char *>varying_ptrs;
-      for ( auto &str : tf_varyings )
-        varying_ptrs.emplace_back( str.c_str() );
-      glTransformFeedbackVaryings(	Prog(), (GLsizei)varying_ptrs.size(), varying_ptrs.data(), (GLenum)tf_mode );
+      for ( auto &str : tf_varyings )  
+        *_program << std::make_tuple( str, Render::Program::TResourceType::transform_feedback, 0 );
+      *_program << (tf_mode == GL_INTERLEAVED_ATTRIBS ?
+        Render::Program::TTranformFeedbackMode::interleaved : Render::Program::TTranformFeedbackMode::separate);
     }
 
     if ( _verbose )
