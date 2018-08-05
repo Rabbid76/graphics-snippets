@@ -175,6 +175,7 @@
     <ClInclude Include="..\include\OpenGL\OpenGL_Matrix_Camera.h" />
     <ClInclude Include="..\include\OpenGL\OpenGL_SimpleShaderProgram_temp.h" />
     <ClInclude Include="..\include\render\IRenderContext.h" />
+    <ClInclude Include="..\include\render\Render_DataBuffer.h" />
     <ClInclude Include="..\include\render\Render_IBuffer.h" />
     <ClInclude Include="..\include\render\Render_IDraw.h" />
     <ClInclude Include="..\include\render\Render_IDrawType.h" />

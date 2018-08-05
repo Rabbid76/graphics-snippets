@@ -105,6 +105,9 @@
     <ClInclude Include="..\include\OpenGL\OpenGL_SimpleShaderProgram_temp.h">
       <Filter>OpenGL</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\render\Render_DataBuffer.h">
+      <Filter>render</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
