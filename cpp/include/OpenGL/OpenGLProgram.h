@@ -20,6 +20,7 @@
 #include <deque>
 #include <tuple> 
 #include <string> 
+#include <unordered_map> 
 
 
 // class definitions
@@ -60,7 +61,7 @@ public:
   static const char *                 ShaderTypeName( Render::Program::TShaderType type );
 
   // return shader object handle 
-  virtual size_t ObjectHandle( void ) override { return _object; }
+  virtual size_t ObjectHandle( void ) const override { return _object; }
 
   // return state type
   virtual Render::Program::TShaderType Type( void ) override { return _type; }
@@ -114,7 +115,7 @@ public:
   virtual CShaderProgram & operator =( CShaderProgram && source_objet );
 
   // return shader object handle 
-  virtual size_t ObjectHandle( void ) override { return _object; }
+  virtual size_t ObjectHandle( void ) const override { return _object; }
 
   // append a shader obeject
   virtual Render::Program::IProgram & operator << ( const Render::Program::TShaderPtr & shader ) override
@@ -147,7 +148,7 @@ public:
   virtual bool Use( void ) override;
 
   // Ask for the resource information of the program.
-  virtual Render::Program::IIntrospection && Introspection( Render::Program::TResourceTypes resources ) override;
+  virtual Render::Program::TIntrospectionPtr Introspection( Render::Program::TResourceTypes resources, bool verbose ) override;
 
 private:
 
@@ -157,6 +158,72 @@ private:
   unsigned int          _object                  = 0;                          //!< named program object (GPU)
 };
 
+
+/******************************************************************//**
+* \brief Implmentation of the intorspection of an OpenGL shader program.  
+* 
+* \author  gernot
+* \date    2018-08-05
+* \version 1.0
+**********************************************************************/
+class CIntrospection
+  : public Render::Program::IIntrospection
+{
+public:
+
+  using IProgram = Render::Program::IProgram;
+  using TResourceType  = Render::Program::TResourceType;
+  using TResourceTypes = Render::Program::TResourceTypes;
+  using TResourcePoint = Render::Program::TResourcePoint;
+
+  CIntrospection( const IProgram & program );
+  virtual ~CIntrospection();
+
+  bool Verbose( void ) const { return _verbose; }
+  CIntrospection & Verbose( bool verbose ) { _verbose = verbose; return *this; }
+
+  // observe the program 
+  virtual CIntrospection & Observe( Render::Program::TResourceTypes resources );
+
+  // find a active program resource
+  virtual bool FindResource( const std::string &name, size_t &handle, TResourceType &resource_type ) override
+  {
+    auto it = _resources.find( name );
+    if ( it == _resources.end() )
+      return false;
+
+    handle        = std::get<0>( it->second );
+    resource_type = std::get<1>( it->second );
+    return true;
+  }
+
+private:
+
+  enum class TResourceKind { NON, location };
+  using TResourceMap     = std::unordered_map< std::string, size_t >;
+  using TResourceTypeMap = std::unordered_map< std::string, TResourcePoint >;
+
+  void GetInterfaceResources( unsigned int prog, unsigned int prog_interface, TResourceMap &resources, TResourceKind kind ) const;
+  void AddResources( const TResourceMap &resources, TResourceType type );
+
+  void GetAttributes( void );
+  void GetTransformFeedbackVaryings( void );
+  void GetFragmentData( void );
+  void GetUniforms( void );           
+  void GetUniformBlocks( void );
+  void GetSubroutines( void );
+
+  const IProgram & _program;                   //!< program object
+  TResourceTypes   _resource_types;            //!< observed resource types
+
+  bool             _verbose = false;           //!< trace introspection result
+  
+  TResourceTypeMap _resources;                 //!< common resource map
+  TResourceMap     _attributeIndices;          //!< map of active attributes and its inidces
+  TResourceMap     _transformFeedbackVaryings; //!< map of transformed feedback varyings
+  TResourceMap     _fragDataLocation;          //!< map of fragment outouts and its locations
+  TResourceMap     _unifomLocation;            //!< map of uniforms and its locations
+};
 
 } // OpenGL
 

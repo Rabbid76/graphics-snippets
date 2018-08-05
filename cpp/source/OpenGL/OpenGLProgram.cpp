@@ -28,6 +28,7 @@
 #include <unordered_map>
 #include <cassert>
 #include <sstream>
+#include <iostream>
 
 
 // class implementations
@@ -460,13 +461,453 @@ bool CShaderProgram::Use( void )
 * \date    2018-08-03
 * \version 1.0
 **********************************************************************/
-Render::Program::IIntrospection && CShaderProgram::Introspection( 
-  Render::Program::TResourceTypes resources ) //! I - set of resource types
+Render::Program::TIntrospectionPtr CShaderProgram::Introspection( 
+  Render::Program::TResourceTypes resources, //!< I - set of resource types
+  bool                            verbose )  //!< I - trace active reources
 {
-  // TODO $$$
-  return std::move( Render::Program::IIntrospection() );
+  auto introspection = std::make_shared<CIntrospection>( *this );
+  introspection->Verbose( verbose ).Observe( resources );
+  return introspection;
 }
 
+
+//*********************************************************************
+// CShaderProgram
+//*********************************************************************
+
+
+/******************************************************************//**
+* \brief ctor  
+* 
+* \author  gernot
+* \date    2018-08-05
+* \version 1.0
+**********************************************************************/
+CIntrospection::CIntrospection( 
+  const IProgram & program ) //!< program object
+  : _program( program )
+{}
+  
+
+/******************************************************************//**
+* \brief dtor  
+* 
+* \author  gernot
+* \date    2018-08-05
+* \version 1.0
+**********************************************************************/
+CIntrospection::~CIntrospection()
+{}
+
+  
+/******************************************************************//**
+* \brief Observe the program.   
+* 
+* \author  gernot
+* \date    2018-08-05
+* \version 1.0
+**********************************************************************/
+CIntrospection & CIntrospection::Observe(
+  Render::Program::TResourceTypes resources ) //!< resource types to be observed
+{
+  // Program Introspection [https://www.khronos.org/opengl/wiki/Program_Introspection]
+
+  // glGetProgramResourceiv            [https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGetProgramResource.xhtml]
+  // glGetProgramResourceName          [https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGetProgramResourceName.xhtml]
+  // glGetProgramResourceIndex         [https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGetProgramResourceIndex.xhtml]
+  // glGetProgramResourceLocation      [https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGetProgramResourceLocation.xhtml]
+  // glGetProgramResourceLocationIndex [https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGetProgramResourceLocationIndex.xhtml]
+
+  // progSize = glGetProgramiv( self.__prog, GL_PROGRAM_BINARY_LENGTH )
+
+  // TODO $$$ interpret Render::Program::TProgramType
+
+  // get active attrbutes
+  if ( resources.test((int)TResourceType::attribute) )
+  {
+    GetAttributes();
+    AddResources( _attributeIndices, TResourceType::attribute );
+  }
+
+  // get active transform feedback varyings
+  if ( resources.test((int)TResourceType::transform_feedback) )
+  {
+    GetTransformFeedbackVaryings();
+    AddResources( _transformFeedbackVaryings, TResourceType::transform_feedback );
+  }
+  
+  // get active fragment data
+  if ( resources.test((int)TResourceType::fragment_data) )
+  {
+    GetFragmentData();
+    AddResources( _fragDataLocation, TResourceType::fragment_data );
+  }  
+
+  // get active uniforms
+  if ( resources.test((int)TResourceType::uniform) )
+  {
+    GetUniforms();
+    AddResources( _unifomLocation, TResourceType::uniform );
+  }
+  
+  // get active uniform blocks
+  if ( resources.test((int)TResourceType::uniform_block) )
+    GetUniformBlocks();
+
+  // TODO $$$ SSBO
+  
+  // get active subroutine uniforms
+  if ( resources.test((int)TResourceType::subroutine_uniform) )
+    GetSubroutines();
+
+
+  // TODO $$$
+
+  return *this;
+}
+
+
+/******************************************************************//**
+* \brief Get program interface resources.  
+* 
+* \author  gernot
+* \date    2018-08-05
+* \version 1.0
+**********************************************************************/
+void CIntrospection::GetInterfaceResources( 
+  unsigned int  prog,           //!< I - program object
+  unsigned int  prog_interface, //!< I - interface name
+  TResourceMap &resources,      //!< O - resource map
+  TResourceKind kind            //!< I - kind of binding (location or NON)
+) const
+{
+  if ( prog == 0 )
+    return;
+
+  GLint no_of, max_len;
+	glGetProgramInterfaceiv( prog, prog_interface, GL_ACTIVE_RESOURCES, &no_of ); // OpenGL 4.3
+  glGetProgramInterfaceiv( prog, prog_interface, GL_MAX_NAME_LENGTH, &max_len ); // OpenGL 4.3
+
+	std::vector< GLchar >name( max_len );
+	for( int i_resource = 0; i_resource < no_of; i_resource++ )
+	{
+    GLsizei strLength;
+    glGetProgramResourceName( prog, prog_interface, i_resource, max_len, &strLength, name.data() );
+    switch( kind )
+    {
+    default:
+    case TResourceKind::NON:
+      resources[name.data()] = -1;
+      break;
+
+    case TResourceKind::location: 
+			resources[name.data()] = glGetProgramResourceLocation( prog, prog_interface, name.data() ); // OpenGL 4.3
+      break;
+    }
+    //resources[name.data()] = glGetProgramResourceIndex( prog, prog_interface, name.data() ); // OpenGL 4.3
+    //resources[name.data()] = glGetProgramResourceLocationIndex( prog, prog_interface, name.data() ); // OpenGL 4.3
+	}
+}
+
+
+/******************************************************************//**
+* \brief Add new resources to common resource map.   
+* 
+* \author  gernot
+* \date    2018-08-05
+* \version 1.0
+**********************************************************************/
+void CIntrospection::AddResources( 
+  const TResourceMap &resources, //! I - new resources
+  TResourceType       type )     //! I - type of resources
+{
+  for ( auto & attribute : resources )
+  {
+    auto it = _resources.find( attribute.first );
+    if ( it != _resources.end() )
+    {
+      bool ok = std::get<1>(it->second) == Render::Program::TResourceType::transform_feedback &&
+                type == Render::Program::TResourceType::fragment_data;
+      assert( ok );
+      continue;
+    }
+    _resources[attribute.first] = std::make_tuple( attribute.second, type );
+  }
+}
+
+
+/******************************************************************//**
+* \brief Get program attribute indices.  
+* 
+* \author  gernot
+* \date    2018-08-05
+* \version 1.0
+**********************************************************************/
+void CIntrospection::GetAttributes( void )
+{
+  size_t program_hdl = _program.ObjectHandle();
+  if ( program_hdl == 0 )
+    return;
+  GLuint prog = (GLuint)program_hdl;
+
+#if defined(OpenGL_program_introspection_old)
+  GLint maxAttribLen, nAttribs;
+	glGetProgramiv( Prog(), GL_ACTIVE_ATTRIBUTES, &nAttribs );
+	glGetProgramiv( Prog(), GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, &maxAttribLen );
+
+	std::vector< GLchar >name( maxAttribLen );
+	for( int attribInx = 0; attribInx < nAttribs; attribInx++ )
+	{
+    GLint written, size;
+		GLenum type;
+		glGetActiveAttrib( Prog(), attribInx, maxAttribLen, &written, &size, &type, name.data() );
+		_attributeIndices[name.data()] = glGetAttribLocation( Prog(), name.data() );
+	}
+#else
+  GetInterfaceResources( prog, GL_PROGRAM_INPUT, _attributeIndices, TResourceKind::location );
+#endif
+
+  if ( _verbose == false )
+    return;
+  for ( auto & resource : _attributeIndices )
+    std::cout << "attribute index " << resource.second << ": " << resource.first << std::endl;
+}
+
+// Get transform feedvback varyings
+/******************************************************************//**
+* \brief Get program attribute indices.  
+* 
+* \author  gernot
+* \date    2018-08-05
+* \version 1.0
+**********************************************************************/
+void CIntrospection::GetTransformFeedbackVaryings(void)
+{
+  size_t program_hdl = _program.ObjectHandle();
+  if ( program_hdl == 0 )
+    return;
+  GLuint prog = (GLuint)program_hdl;
+
+  GetInterfaceResources( prog, GL_TRANSFORM_FEEDBACK_VARYING, _transformFeedbackVaryings, TResourceKind::NON );
+
+  if ( _verbose == false )
+    return;
+  for ( auto & resource : _transformFeedbackVaryings )
+    std::cout << "transform feedback varyings " << resource.second << ": " << resource.first << std::endl;
+}
+
+// Get fragmetn outputs
+/******************************************************************//**
+* \brief Get program attribute indices.  
+* 
+* \author  gernot
+* \date    2018-08-05
+* \version 1.0
+**********************************************************************/
+void CIntrospection::GetFragmentData( void )
+{
+  size_t program_hdl = _program.ObjectHandle();
+  if ( program_hdl == 0 )
+    return;
+  GLuint prog = (GLuint)program_hdl;
+
+  // Fragment Outputs [https://www.khronos.org/opengl/wiki/Program_Introspection#Fragment_Outputs]
+#if defined(OpenGL_program_introspection_old)
+  // int GetFragDataLocation( uint program, const char *name )
+  // int GetFragDataIndex( uint program, const char *name )
+#else
+  GetInterfaceResources( prog, GL_PROGRAM_OUTPUT, _fragDataLocation, TResourceKind::location );
+#endif
+
+  if ( _verbose == false )
+    return;
+  for ( auto & resource : _fragDataLocation )
+    std::cout << "fragment output location " << resource.second << ": " << resource.first << std::endl;
+}
+
+
+/******************************************************************//**
+* \brief Get uniform locations.  
+* 
+* \author  gernot
+* \date    2018-08-05
+* \version 1.0
+**********************************************************************/
+void CIntrospection::GetUniforms( void )
+{
+  size_t program_hdl = _program.ObjectHandle();
+  if ( program_hdl == 0 )
+    return;
+  GLuint prog = (GLuint)program_hdl;
+
+#if defined(OpenGL_program_introspection_old)
+  GLint maxUniformLen, nUniforms;
+	glGetProgramiv( Prog(), GL_ACTIVE_UNIFORMS, &nUniforms );
+	glGetProgramiv( Prog(), GL_ACTIVE_UNIFORM_MAX_LENGTH, &maxUniformLen );
+
+  std::vector< GLchar >name( maxUniformLen );
+  for( int uniformInx = 0; uniformInx < nUniforms; uniformInx++ )
+  {
+    GLint written, size;
+		GLenum type;
+    glGetActiveUniform( Prog(), uniformInx, maxUniformLen, &written, &size, &type, name.data() );
+    _unifomLocation[name.data()] = glGetUniformLocation( Prog(), name.data() ); 
+  }
+#else
+  GetInterfaceResources( prog, GL_UNIFORM, _unifomLocation, TResourceKind::location );
+#endif
+    
+  if ( _verbose == false )
+    return;
+  for ( auto & resource : _unifomLocation )
+    std::cout << "uniform location " << resource.second << ": " << resource.first << std::endl;
+}
+
+
+/******************************************************************//**
+* \brief Get active program uniform block bindig points.  
+* 
+* \author  gernot
+* \date    2018-08-05
+* \version 1.0
+**********************************************************************/
+void CIntrospection::GetUniformBlocks( void )
+{
+  size_t program_hdl = _program.ObjectHandle();
+  if ( program_hdl == 0 )
+    return;
+  GLuint prog = (GLuint)program_hdl;
+
+  GLint nUniformBlocks;
+  glGetProgramiv( prog, GL_ACTIVE_UNIFORM_BLOCKS, &nUniformBlocks );
+		
+  if ( nUniformBlocks > 0 )
+  {					  
+		GLint bufferSize = 0;
+		glGetProgramiv( prog, GL_ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH, &bufferSize );
+    bufferSize =std:: max( bufferSize, 256 );
+
+    std::vector< GLchar >name( bufferSize );
+    for ( int sourceInx = 0; sourceInx < nUniformBlocks; sourceInx++ )
+    {
+      GLsizei size;
+      glGetActiveUniformBlockName( prog, sourceInx, bufferSize, &size, name.data() );
+      GLuint uniformBlockInx = glGetUniformBlockIndex( prog, name.data() );
+        
+			// do not change inactive uniform block (just in case)
+			if (uniformBlockInx == GL_INVALID_INDEX)
+				continue;
+        
+      GLint m_bufferSize;
+      glGetActiveUniformBlockiv( prog, uniformBlockInx, GL_UNIFORM_BLOCK_DATA_SIZE, &m_bufferSize );
+
+      GLint numberOfUniforms;
+      glGetActiveUniformBlockiv( prog, uniformBlockInx, GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &numberOfUniforms );
+      std::vector< GLuint > indices( numberOfUniforms );
+      glGetActiveUniformBlockiv( prog, uniformBlockInx, GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, (GLint*)indices.data() );
+      std::vector< GLuint > offsets( numberOfUniforms );
+      glGetActiveUniformsiv( prog, numberOfUniforms, indices.data(), GL_UNIFORM_OFFSET, (GLint*)offsets.data() );
+        
+        
+      std::vector<std::string> names;
+      for ( size_t inx = 0; inx < indices.size(); inx ++ )
+      {
+        std::vector< GLchar >name( bufferSize );
+        GLsizei written;
+        GLenum type;
+        glGetActiveUniform( prog, indices[inx], bufferSize, &written, &size, &type, name.data() );
+        name[bufferSize-1] = 0;
+        names.push_back( name.data() );
+      }
+        
+
+      // glGetActiveUniformBlockiv
+      // GL_UNIFORM_BLOCK_BINDING
+      // GL_UNIFORM_BLOCK_DATA_SIZE
+      // GL_UNIFORM_BLOCK_NAME_LENGTH
+      // GL_UNIFORM_BLOCK_REFERENCED_BY_VERTEX_SHADER
+      // GL_UNIFORM_BLOCK_REFERENCED_BY_TESS_CONTROL_SHADER
+      // GL_UNIFORM_BLOCK_REFERENCED_BY_TESS_EVALUATION_SHADER
+      // GL_UNIFORM_BLOCK_REFERENCED_BY_GEOMETRY_SHADER
+      // GL_UNIFORM_BLOCK_REFERENCED_BY_FRAGMENT_SHADER
+      // GL_UNIFORM_BLOCK_REFERENCED_BY_COMPUTE_SHADER
+    }
+  }  
+}
+
+
+/******************************************************************//**
+* \brief Get program subroutine uniforms.  
+* 
+* \author  gernot
+* \date    2018-08-05
+* \version 1.0
+**********************************************************************/
+void CIntrospection::GetSubroutines( void )
+{
+  /*
+  for ( int typeInx = 0; typeInx < eShader_NO_OF_TYPES; typeInx ++ )
+	{
+    if ( _gl.IsShaderTypeValid( (TShaderType)typeInx ) == false )
+      continue;
+
+		GLenum shaderType = CShaderObject::MapShaderType( (TShaderType)typeInx );
+			
+		GLint nSubroutineUniforms, maxSubroutineUniformLen;
+		glGetProgramStageiv( Object(), shaderType, GL_ACTIVE_SUBROUTINE_UNIFORMS, &nSubroutineUniforms );
+		glGetProgramStageiv( Object(), shaderType, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &m_locationCount[typeInx] );
+		glGetProgramStageiv( Object(), shaderType, GL_ACTIVE_SUBROUTINE_UNIFORM_MAX_LENGTH, &maxSubroutineUniformLen );
+		GLib().EvaluateGlError( s_subComponentName );
+
+		if ( maxSubroutineUniformLen > 0 &&  nSubroutineUniforms > 0 )
+		{
+			std::vector< GLchar >name( maxSubroutineUniformLen+1 );
+			for( int subroutineUniformInx = 0; subroutineUniformInx < nSubroutineUniforms; subroutineUniformInx++ )
+			{
+				TSubroutineUniform subroutine;
+				GLint nCompatible;
+				glGetActiveSubroutineUniformiv( Object(), shaderType, subroutineUniformInx, GL_NUM_COMPATIBLE_SUBROUTINES, &nCompatible );
+				subroutine.m_compatible.swap( std::vector< GLint >( nCompatible ) );
+				glGetActiveSubroutineUniformiv( Object(), shaderType, subroutineUniformInx, GL_COMPATIBLE_SUBROUTINES, subroutine.m_compatible.data() );
+				glGetActiveSubroutineUniformiv( Object(), shaderType, subroutineUniformInx, GL_UNIFORM_SIZE, &subroutine.m_arraySize );
+				GLint nameLen;
+				glGetActiveSubroutineUniformiv( Object(), shaderType, subroutineUniformInx, GL_UNIFORM_NAME_LENGTH, &nameLen );
+				glGetActiveSubroutineUniformName( Object(), shaderType, subroutineUniformInx, maxSubroutineUniformLen + 1, &nameLen, name.data() );
+				subroutine.m_location = glGetSubroutineUniformLocation( Object(), shaderType, name.data() );
+				subroutine.m_name = name.data();
+				m_subroutineUniform[typeInx][subroutine.m_location] = subroutine;
+			}
+		}
+
+    GLib().EvaluateGlError( s_subComponentName );
+
+		GLint nSubroutine, maxSubroutineLen;
+		glGetProgramStageiv( Object(), shaderType, GL_ACTIVE_SUBROUTINES, &nSubroutine );
+		glGetProgramStageiv( Object(), shaderType, GL_ACTIVE_SUBROUTINE_MAX_LENGTH, &maxSubroutineLen );
+			
+		m_subroutineName[typeInx].clear();
+		if ( maxSubroutineLen > 0 && nSubroutine > 0)
+		{
+			TNameList subroutineList;
+			std::vector< GLchar >name( maxSubroutineLen+1 );
+			for ( int subroutineInx = 0; subroutineInx < nSubroutine; subroutineInx++ )
+			{
+				GLsizei lenght;
+				glGetActiveSubroutineName( Object(), shaderType, subroutineInx, maxSubroutineLen, &lenght, name.data() );
+				m_subroutineName[typeInx].push_back( name.data() );
+			}
+		}
+	}
+
+  glGetProgramResourceLocation
+  GL_VERTEX_SUBROUTINE_UNIFORM,
+  GL_TESS_CONTROL_SUBROUTINE_UNIFORM,
+  GL_TESS_EVALUATION_SUBROUTINE_UNIFORM,
+  GL_GEOMETRY_SUBROUTINE_UNIFORM,
+  GL_FRAGMENT_SUBROUTINE_UNIFORM,
+  GL_COMPUTE_SUBROUTINE_UNIFORM
+  */
+}
 
 } // OpenGL
 

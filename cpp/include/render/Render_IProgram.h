@@ -46,6 +46,7 @@ namespace Program
 {
 
 class IIntrospection;
+using TIntrospectionPtr = std::shared_ptr<IIntrospection>;
 
 
 //! type of a shader stage
@@ -72,9 +73,13 @@ enum class TProgramType
 //! type of an active resource of a program 
 enum class TResourceType
 {
-  attribute,           //!< attribute index
-  fragment_data,       //!< fragment data location
-  transform_feedback,  //!< transform feedback output (the type of a resouce only, has no binding point index or location)
+  attribute,            //!< attribute index
+  fragment_data,        //!< fragment data location
+  transform_feedback,   //!< transform feedback output (the type of a resouce only, has no binding point index or location)
+  uniform,              //!< uniform loaction
+  uniform_block,        //!< unifrmg block index
+  shader_storage_block, //!< shader storage block (SSBO)
+  subroutine_uniform,   //!< shader subroutine unifrom
   // ...
   NUMBER_OF,
 };
@@ -119,7 +124,7 @@ public:
   virtual ~IShader() = default;
 
   // return shader object handle 
-  virtual size_t ObjectHandle( void ) = 0;
+  virtual size_t ObjectHandle( void ) const = 0;
 
   // return state type
   virtual TShaderType Type( void ) = 0;
@@ -161,7 +166,7 @@ public:
   virtual ~IProgram() = default;
 
   // return shader object handle 
-  virtual size_t ObjectHandle( void ) = 0;
+  virtual size_t ObjectHandle( void ) const = 0;
 
   // append a shader object
   virtual IProgram & operator << ( const TShaderPtr & shader ) = 0;
@@ -182,7 +187,7 @@ public:
   virtual bool Verify( std::string &message ) = 0;
 
   // Ask for the resource information of the program.
-  virtual IIntrospection && Introspection( TResourceTypes resources ) = 0;
+  virtual TIntrospectionPtr Introspection( TResourceTypes resources, bool verbose ) = 0;
 };
 using TProgramPtr = std::shared_ptr<IProgram>;
 
@@ -208,7 +213,7 @@ public:
   virtual ~IIntrospection() = default;
 
   // find a active program resource
-  //virtual bool FindResource( const std::string &name, size_t handle, TResourceType &resource_type ) = 0;
+  virtual bool FindResource( const std::string &name, size_t &handle, TResourceType &resource_type ) = 0;
 
   // bit set which resources have to be evaluated
 
@@ -225,7 +230,6 @@ map: name -> entry point, type
 
 */
 };
-using TIntrospectionPtr = std::shared_ptr<IIntrospection>;
 
 
 
