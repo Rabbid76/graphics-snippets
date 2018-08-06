@@ -1,7 +1,7 @@
 
 # Projection, View, Model and Depth
 
-In a rendering, each mesh of the scene usually is transformed by the model matrix, the view matrix and the projection matrix. Finall the projected scene is mapped to the viewport.
+In a rendering, each mesh of the scene usually is transformed by the model matrix, the view matrix and the projection matrix. Finally the projected scene is mapped to the viewport.
 
 The projection, view and model matrix interact together to present the objects (meshes) of a scene on the viewport.
 The model matrix defines the position orientation and scale of a single object (mesh) in the worldspace of the scene.
@@ -15,13 +15,13 @@ This means at orthographic projection, the objects "behind" the viewer are possi
 
 At perspective projection the view space (volume) is defined by a frustum (a truncated pyramid), where the top of the pyramid is the viewer's position.
 The direction of view (line of sight) and the near and the far distance define the planes which truncated the pyramid to a frustum (the direction of view is the normal vector of this planes). 
-The left, right, bottom, top discance define the distance from the intersection of the line of sight and the near plane, with the side faces of the frustum (in the near plane).
+The left, right, bottom, top distance define the distance from the intersection of the line of sight and the near plane, with the side faces of the frustum (in the near plane).
 This causes that the scene looks like, as it would be seen from of a pinhole camera.
 
 One of the most common mistakes, when an object is not visible on the viewport (screen is all "black"), is that the mesh is not within the view volume which is defined by the projection and view matrix.
 
 
-## Coordiante Systems
+## Coordinate Systems
 
 ### Model coordinates (Object coordinates)
 
@@ -88,23 +88,23 @@ e.g.:
 
 look at: eye position *(2.5, -1.5, 3.5)*, center *(2, 0, 0)*, up vector *(0, 1, 0)*
 
-perspcetive projection: field of view (y) of *100° degrees*, near plane at *0.1*, far plane at *20.0* 
+perspective projection: field of view (y) of *100 degrees*, near plane at *0.1*, far plane at *20.0* 
 
 ![perspective projection](image/ndc_coordinates.png)
 
 
-### Normaliced device coordinates
+### Normalized device coordinates
 
 The normalized device coordinates are the clip space coordinates divide by the `w` component of the clip coordinates. This is called [Perspective divide](https://www.khronos.org/opengl/wiki/Vertex_Post-Processing#Perspective_divide)
 
-![normaliced device coordinates](image/NDC.png)
+![normalized device coordinates](image/NDC.png)
 
 
 ### Window coordinates (Screen coordinates)
 
-The window coordinates are the coordinates of the viewport rectangle. The window coordinates finally are passed to the raterization process.
+The window coordinates are the coordinates of the viewport rectangle. The window coordinates finally are passed to the rasterization process.
 
-**Viewport and depthrange**
+**Viewport and depth range**
 
 The normalized device coordinates are linearly mapped to the Window Coordinates (Screen Coordinates) and to the depth for the depth buffer.
 The viewport is defined by [`glViewport`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glViewport.xhtml). The depthrange is set by [`glDepthRange`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glDepthRange.xhtml) and is by default [0, 1].
@@ -162,7 +162,7 @@ The following code does the same as `gluLookAt` or `glm::lookAt` does:
 <br/><hr/>
 ## Projection
 
-The projection matrix describes the mapping from 3D points of the view on a scene, to 2D points on the viewport. It transforms from eye space to the clip space, and the coordinates in the clip space are transformed to the normalized device coordinates (NDC) by dividing with the `w` component of the clip coordinates. The NDC are in range (-1,-1,-1) to (1,1,1).<br/> Every geometry which is out of the clippspace is clipped.<br/>
+The projection matrix describes the mapping from 3D points of the view on a scene, to 2D points on the viewport. It transforms from eye space to the clip space, and the coordinates in the clip space are transformed to the normalized device coordinates (NDC) by dividing with the `w` component of the clip coordinates. The NDC are in range (-1,-1,-1) to (1,1,1).<br/> Every geometry which is out of the clip space is clipped.<br/>
 
 But, **if the `w` component is negative, then the vertex is clipped**. Because the condition for a homogeneous coordinate to be in clip space is 
 
@@ -182,7 +182,7 @@ and that can never be fulfilled.
 **Perspective Clip Space**
 ![near far plane](image/perspective.png)
 
-The objects between the near plane and the far plane of the camera frustum are mappend to the range (-1, 1) of the NDC.<br/>
+The objects between the near plane and the far plane of the camera frustum are mapped to the range (-1, 1) of the NDC.<br/>
 
 
 <br/><hr/>
@@ -279,7 +279,7 @@ The following function will calculate the same projection matrix as `gluPerspect
         };
     }
 
-At Perspective Projection, the Z component is calcualted by the **rational function**:
+At Perspective Projection, the Z component is calculated by the **rational function**:
 
     z_ndc = ( -z_eye * (f+n)/(f-n) - 2*f*n/(f-n) ) / -z_eye
 
@@ -289,7 +289,7 @@ At Perspective Projection, the Z component is calcualted by the **rational funct
 <br/><hr/>
 ## Depth buffer
 
-Since the normalized device coordinates are in range (-1,-1,-1) to (1,1,1) the Z-coordinate has to be mapped to the depth buffern the range [0,1]:
+Since the normalized device coordinates are in range (-1,-1,-1) to (1,1,1) the Z-coordinate has to be mapped to the depth buffer the range [0,1]:
 
     depth = (z_ndc + 1) / 2 
 
@@ -353,7 +353,7 @@ The realtion between the projected area in view space and the Z coordinate of th
 
 ![field of view](image/field_of_view.png)
 
-The normaized dievice size can be transformed to a size in view space like this:
+The normalized device size can be transformed to a size in view space like this:
 
     aspect = w / h
     tanFov = tan( fov_y * 0.5 );
@@ -392,7 +392,7 @@ Recover the view space position by the XY normalized device coordinates:
 
 ### 2. With the projection matrix
 
-The projection paramters, defind by the field of view and the aspect ratio are stored in the projection matrix. Therefore the viewport position can be recovered by the values from the projection matrix, from a symmetrical perspective projection.
+The projection parameters, defined by the field of view and the aspect ratio are stored in the projection matrix. Therefore the viewport position can be recovered by the values from the projection matrix, from a symmetrical perspective projection.
 
 Note the relation between projection matrix, field of view and aspect ratio:
 
@@ -422,7 +422,7 @@ Recover the view space position by the XY normalized device coordinates:
 ### 3. With the inverse projection matrix
 
 
-Of course the viewport position can be rcovered by the inverse projection matrix.
+Of course the viewport position can be recovered by the inverse projection matrix.
 
     mat4 inversePrjMat = inverse( prjMat );
     vec4 viewPosH      = inversePrjMat * vec3( ndc_x, ndc_y, 2.0 * depth - 1.0, 1.0 )

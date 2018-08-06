@@ -652,7 +652,7 @@ See further:
 <br/><hr/>
 ## First Person Camera Transformation
 
-First Person movment, the camera matrix has to be incrementally changed. This means you have to calculate the current movement and current rotation matrix. Apply the movement and rotation to the camera and keep the camera for the next cycle of the loop. At the next cycle of the loop you have to use the manipulated camera from the previous cycle and you have to apply the new movement and rotation. This causes that the camera incremental changes, always based on its current position and orientation.
+For the controlled movement of an object through the scene, the matrix which specified the position and the orientation has to be incrementally changed. This means you have to calculate the current movement and current rotation matrix. Apply the movement and rotation to the position matrix and store the model matrix for the next frame. At the next frame you have to use the manipulated position matrix from the previous frame and you have to apply the new movement and rotation. This causes that the position and orientation incremental changes, always based on its current position and orientation.
 
 ![movement and rotation](image/movement_and_rotation.svg)
 
