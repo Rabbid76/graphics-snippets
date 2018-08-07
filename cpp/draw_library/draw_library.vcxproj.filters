@@ -144,7 +144,7 @@
       <Filter>render</Filter>
     </ClCompile>
     <ClCompile Include="..\source\OpenGL\OpenGLProgram.cpp">
-      <Filter>OpenGL</Filter>
+      <Filter>OpenGL_source</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
