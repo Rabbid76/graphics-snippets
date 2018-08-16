@@ -61,7 +61,7 @@ const char compute_sh[] = R"(
     void main()
     {
         uint ident = gl_GlobalInvocationID.x;
-        output_data.elements[ident] = input_data0.elements[ident] * input_data1.elements[ident];
+        output_data.elements[ident] = input_data0.elements[ident] + input_data1.elements[ident];
     }
     )";
 
@@ -136,6 +136,37 @@ int main(int argc, char** argv)
     glGetIntegerv( GL_MAX_SHADER_STORAGE_BLOCK_SIZE, &max_ssbo_size );
     std::cout << "MAX_SHADER_STORAGE_BLOCK_SIZE: " << max_ssbo_size  << std::endl;
    
+    // extensions
+    //std::cout << glGetStringi( GL_EXTENSIONS, ... ) << std::endl;
+
+    std::cout << std::endl;
+
+    std::cout << "computer shader workgroup capabilities:" << std::endl;
+
+    int work_grp_cnt[3];
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &work_grp_cnt[0]);
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &work_grp_cnt[1]);
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &work_grp_cnt[2]);
+    std::cout << "    max global (total) work group size" << std::endl;
+    std::cout << "        x: " << work_grp_cnt[0] << std::endl;
+    std::cout << "        y: " << work_grp_cnt[1] << std::endl;
+    std::cout << "        z: " << work_grp_cnt[2] << std::endl;
+    
+    int work_grp_size[3];
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 0, &work_grp_size[0]);
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 1, &work_grp_size[1]);
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 2, &work_grp_size[2]);
+    std::cout << "    max local (in one shader) work group sizes" << std::endl;
+    std::cout << "        x: " << work_grp_size[0] << std::endl;
+    std::cout << "        y: " << work_grp_size[1] << std::endl;
+    std::cout << "        z: " << work_grp_size[2] << std::endl;
+
+    int work_grp_inv;
+    glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &work_grp_inv);
+    std::cout << "    max local work group invocations" << std::endl;
+    std::cout << "        x: " << work_grp_inv << std::endl;
+    
+    std::cout << std::endl;
 
 
   GLuint input_buffer1 = 0;
@@ -145,28 +176,28 @@ int main(int argc, char** argv)
   std::vector<uint32_t> data1;
   std::vector<uint32_t> data2;
   std::vector<uint32_t> data3;
-  size_t no = 100;
+  size_t no = 1000;
   for ( size_t i = 0; i < no; ++ i)
   {
     data1.push_back( i );
     data2.push_back( i );
-    data3.push_back( i );
+    data3.push_back( 0 );
   }
 
   glGenBuffers(1, &input_buffer1);
   glBindBuffer(GL_SHADER_STORAGE_BUFFER, input_buffer1);
   glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, input_buffer1);
-  glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(GLuint) * data2.size(), data2.data(),GL_STREAM_COPY);
+  glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(GLuint) * data1.size(), data1.data(),GL_STREAM_COPY);
 
   glGenBuffers(1, &input_buffer2);
   glBindBuffer(GL_SHADER_STORAGE_BUFFER, input_buffer2);
   glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, input_buffer2);
-  glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(GLuint) * data3.size(), data3.data(),GL_STREAM_COPY);
+  glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(GLuint) * data2.size(), data2.data(),GL_STREAM_COPY);
 
   glGenBuffers(1, &data_buffer);
   glBindBuffer(GL_SHADER_STORAGE_BUFFER, data_buffer);
   glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, data_buffer);
-  glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(GLuint) * data1.size(), (void*)data1.data(),GL_DYNAMIC_READ);
+  glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(GLuint) * data3.size(), (void*)data3.data(),GL_DYNAMIC_READ);
   //glBufferStorage( GL_SHADER_STORAGE_BUFFER, sizeof(GLuint) * data1.size(), nullptr, GL_MAP_READ_BIT );
 
   //GLuint program = glCreateProgram();
@@ -188,15 +219,22 @@ int main(int argc, char** argv)
   //GLsync sync = glFenceSync( GL_SYNC_GPU_COMMANDS_COMPLETE, 0 );
   //GLenum sync_result = glClientWaitSync( sync, 0, 1000000000 );
 
-  std::vector<GLuint> ready_data( data1.size() );
+
+  // Only first Compute Shader array element appears updated
+  // [https://stackoverflow.com/questions/34538281/only-first-compute-shader-array-element-appears-updated]
+  // ComputeShader and SSBO read/write Problems [duplicate]
+  // [https://stackoverflow.com/questions/51878910/computeshader-and-ssbo-read-write-problems]
+  glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
+
+  std::vector<GLuint> ready_data( data3.size() );
   
-  //GLuint *ptr = (GLuint*)glMapBuffer( GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY );
-  GLuint* ptr = (GLuint*)glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, sizeof(GLuint) * data1.size(), GL_MAP_READ_BIT );
+  GLuint *ptr = (GLuint*)glMapBuffer( GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY );
+  //GLuint* ptr = (GLuint*)glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, sizeof(GLuint) * data1.size(), GL_MAP_READ_BIT );
   
   //glMemoryBarrier( GL_SHADER_STORAGE_BARRIER_BIT );
   //glMemoryBarrier( GL_ALL_BARRIER_BITS );
   
-  std::copy(ptr, ptr + data1.size(), ready_data.begin());
+  std::copy(ptr, ptr + ready_data.size(), ready_data.begin());
   glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
     
   GLenum error = glGetError();
