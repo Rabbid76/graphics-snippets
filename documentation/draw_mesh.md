@@ -656,3 +656,164 @@ See the [WebGL documentation for `WebGL2RenderingContext.vertexAttribIPointer()`
 - [How to include model matrix to a VBO?](https://stackoverflow.com/questions/24627445/how-to-include-model-matrix-to-a-vbo)
 - [Primitive Restart](https://www.khronos.org/opengl/wiki/Vertex_Rendering#Primitive_Restart)
 
+
+----
+
+Keep this, because it was **deleted**. The anser was added to [What are the Attribute locations for fixed function pipeline in OpenGL 4.0++ core profile?](https://stackoverflow.com/questions/20573235/what-are-the-attribute-locations-for-fixed-function-pipeline-in-opengl-4-0-cor/51949673#51949673), too.
+
+# Using vertex attribute index 0, instead of Fixed-Function attribute GL_VERTEX_ARRAY [duplicate]
+[https://stackoverflow.com/questions/51944318/using-vertex-attribute-index-0-instead-of-fixed-function-attribute-gl-vertex-ar]
+
+## Question
+
+When I want to draw a simple triangle, by using OpenGL, then I can create a [compatibility context](https://www.khronos.org/opengl/wiki/OpenGL_Context#Context_types) and
+use the [Fixed-Function](https://www.khronos.org/opengl/wiki/Fixed_Function_Pipeline) attributes to draw without any need of creating a [shader program](https://www.khronos.org/opengl/wiki/Shader) or a [Vertex Array Object](https://www.khronos.org/opengl/wiki/Vertex_Specification#Vertex_Array_Object).
+
+The following code draws a simple triangle:
+
+    float varray[]{ -0.707f, -0.75f, 0.707f, -0.75f, 0.0f, 0.75f };
+
+    glVertexPointer( 2, GL_FLOAT, 0, varray );
+    glEnableClientState( GL_VERTEX_ARRAY );
+    glDrawArrays( GL_TRIANGLES, 0, 3 );
+
+To my surprise the following code works, too. It does not specify the Fixed-Function attributes or enable any client-side capability,
+but it defines and enables the array of generic vertex attribute data, for the vertex attribute with the index 0 (of course the current program object is still 0):
+
+    glVertexAttribPointer( 0, 2, GL_FLOAT, GL_FALSE, 0, varray );
+    glEnableVertexAttribArray( 0 );
+    glDrawArrays( GL_TRIANGLES, 0, 3 );
+
+I can reproduce this using Nvidia GeForce 940MX and integrated Intel(R) HD Graphics 620 hardware.
+
+I failed to find the relevant part for this behavior in the [OpenGL 4.6 API Compatibility Profile Specification](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.compatibility.pdf).
+
+Why does this work?
+
+Is there some mystic mapping between Fixed-Function attributes and vertex attribute indices?
+
+
+## Answer
+
+After doing some research and thanks to the link of @BDL, I'll answer this question by myself.
+
+If the OpenGL extension [`ARB_vertex_program;  Modify Section 2.7, Vertex Specification`](https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_vertex_program.txt) is valid,
+then there is a mapping between Fixed function attributes and attribute indices: 
+
+> **Setting generic vertex attribute zero specifies a vertex; the four vertex coordinates are taken from the values of attribute zero.**
+> A Vertex2, Vertex3, or Vertex4 command is completely equivalent to the corresponding VertexAttrib command with an index of zero. 
+> Setting any other generic vertex attribute updates the current values of the attribute.
+> There are no current values for vertex attribute zero.
+>
+> **Implementations may, but do not necessarily, use the same storage for the current values of generic and certain conventional vertex attributes**. 
+> When any generic vertex attribute other than zero is specified, the current values for the corresponding conventional attribute in Table X.1 become undefined.
+> Additionally, when a conventional vertex attribute is specified, the current values for the corresponding generic vertex  attribute in Table X.1 become undefined.
+> For example, setting the current normal will leave generic vertex attribute 2 undefined, and vice versa.
+>
+    | Generic Attribute |  Conventional Attribute  | Conventional Attribute Command |
+    |-------------------|--------------------------|--------------------------------|
+    | 0                 | vertex position          | Vertex                         |
+    | 1                 | vertex weights 0-3       | WeightARB, VertexWeightEXT     |
+    | 2                 | normal                   | Normal                         |
+    | 3                 | primary color            | Color                          |
+    | 4                 | secondary color          | SecondaryColorEXT              |
+    | 5                 | fog coordinate           | FogCoordEXT                    |
+    | 6                 | -                        | -                              |
+    | 7                 | -                        | -                              |
+    | 8                 | texture coordinate set 0 | MultiTexCoord(TEXTURE0, ...    |
+    | ...               |                          |                                |
+
+This means there is a "mapping" between vertex attribute *0* and the fixed function attribute `GL_VERTEX_ARRAY`, but not necessarily a mapping for any other vertex attribute.<br/>
+This explains the behavior in my question.
+
+--- 
+Nvidia goes a step ahead as specified in [Release Notes for NVIDIA OpenGL Shading Language Support; November 9, 2006; - pp. 7-8](http://developer.download.nvidia.com/opengl/glsl/glsl_release_notes.pdf).<br/>
+There is an actual mapping between the fixed function attributes and vertex attribute indices, as specified in the table above.<br/>
+See also the answer to [What are the Attribute locations for fixed function pipeline in OpenGL 4.0++ core profile?](https://stackoverflow.com/questions/20573235/what-are-the-attribute-locations-for-fixed-function-pipeline-in-opengl-4-0-cor)
+
+I did some test and came to the result, that the following cod runs on *Nvidia GeForce 940MX*, but fails to run on integrated *Intel(R) HD Graphics 620*.  
+
+The triangle specified as follows 
+
+    static const float varray[]
+    { 
+      // x        y         red   green blue  alpha
+        -0.707f, -0.75f,    1.0f, 0.0f, 0.0f, 1.0f, 
+         0.707f, -0.75f,    1.0f, 1.0f, 0.0f, 1.0f,
+         0.0f,    0.75f,    0.0f, 0.0f, 1.0f, 1.0f
+    };
+
+can be drawn without any shader, by `glBegin`/`glEnd` sequence,
+
+    glBegin( GL_TRIANGLES );
+    for ( int j=0; j < 3; ++j )
+    {
+        glVertex2fv( varray + j*6 );
+        glColor4fv( varray + j*6 + 2 );
+    }
+    glEnd();
+
+by specifying Fixed Function attributes,
+
+    glVertexPointer( 2, GL_FLOAT, 6*sizeof(*varray), varray );
+    glColorPointer( 4, GL_FLOAT, 6*sizeof(*varray), varray+2 );
+    glEnableClientState( GL_VERTEX_ARRAY );
+    glEnableClientState( GL_COLOR_ARRAY );
+    glDrawArrays( GL_TRIANGLES, 0, 3 );
+    glDisableClientState( GL_VERTEX_ARRAY );
+    glDisableClientState( GL_COLOR_ARRAY );
+
+and specifying the array of generic vertex attributes with the indices 0 and 3, with are corresponding to the fixed function attributes `GL_VERTEX_ARRAY` and `GL_COLOR_ARRAY`, for Nvidia hardware:
+
+    glVertexAttribPointer( 0, 2, GL_FLOAT, GL_FALSE, 6*sizeof(*varray), varray );
+    glVertexAttribPointer( 3, 4, GL_FLOAT, GL_FALSE, 6*sizeof(*varray), varray+2 );
+    glEnableVertexAttribArray( 0 );
+    glEnableVertexAttribArray( 3 );
+    glDrawArrays( GL_TRIANGLES, 0, 3 );
+    glDisableVertexAttribArray( 0 );
+    glDisableVertexAttribArray( 3 );
+
+<br>
+The same code will run, by using the following OpenGL 2.0 shader program,
+
+*Vertex shader*
+
+    #version 110
+
+    varying vec4 vertCol;
+
+    void main()
+    {
+        vertCol     = gl_Color;
+        gl_Position = gl_Vertex;
+    }
+
+or the following OpenGL 4.0 shader program:
+
+*Vertex shader*
+
+    #version 400
+
+    layout (location = 0) in vec3 inPos;
+    layout (location = 3) in vec4 inColor;
+
+    out vec4 vertCol;
+
+    void main()
+    {
+        vertCol     = inColor;
+        gl_Position = vec4(inPos, 1.0);
+    }
+
+The *Fragment shader* witch works in both of the above cases (for sake of completeness):
+
+    #version 400
+
+    in vec4 vertCol;
+
+    out vec4 fragColor;
+
+    void main()
+    {
+        fragColor = vertCol;
+    }

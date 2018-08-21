@@ -133,7 +133,7 @@ void CWindow_Glfw::Init( int width, int height, int multisampling, bool doubleBu
     glfwWindowHint( GLFW_DOUBLEBUFFER, _doubleBuffer ? GLFW_TRUE : GLFW_FALSE );
 
     glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, 4 );
-    glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, 6 );
+    glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, 5 );
     glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
     //glfwWindowHint( GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE );
 #if defined(_DEBUG)
@@ -197,21 +197,16 @@ void CWindow_Glfw::MainLoop ( void )
 
 
 std::string sh_vert_2 = R"(
-#version 400
+#version 110
 
-layout (location = 0) in vec3 inPos;
-layout (location = 1) in vec4 inColor;
-
-out vec3 vertPos;
-out vec4 vertCol;
+varying vec4 vertCol;
 
 uniform mat4 u_modelview; 
 
 void main()
 {
-    vertCol     = inColor;
-		vertPos     = inPos;
-		gl_Position = u_modelview * vec4(inPos, 1.0);
+    vertCol     = gl_Color;
+		gl_Position = u_modelview * gl_Vertex;
 }
 )";
 
@@ -219,9 +214,8 @@ std::string sh_vert_4 = R"(
 #version 400
 
 layout (location = 0) in vec3 inPos;
-layout (location = 1) in vec4 inColor;
+layout (location = 3) in vec4 inColor;
 
-out vec3 vertPos;
 out vec4 vertCol;
 
 uniform mat4 u_modelview; 
@@ -229,7 +223,6 @@ uniform mat4 u_modelview;
 void main()
 {
     vertCol     = inColor;
-		vertPos     = inPos;
 		gl_Position = u_modelview * vec4(inPos, 1.0);
 }
 )";
@@ -237,7 +230,6 @@ void main()
 std::string sh_frag = R"(
 #version 400
 
-in vec3 vertPos;
 in vec4 vertCol;
 
 out vec4 fragColor;
@@ -263,6 +255,19 @@ void CWindow_Glfw::InitScene( void )
     } ) ); 
 }
 
+void SetModelView( GLint location, glm::mat4 &m )
+{
+  if ( location < 0 )
+  {
+    glMatrixMode( GL_MODELVIEW );
+    glLoadMatrixf( glm::value_ptr( m ) );
+  }
+  else
+  {
+    glUniformMatrix4fv( location, 1, GL_FALSE, glm::value_ptr(m) );
+  }
+}
+
 void CWindow_Glfw::Render( double time_ms )
 {
     // Using vertex attribute index 0, instead of Fixed-Function attribute GL_VERTEX_ARRAY
@@ -273,33 +278,72 @@ void CWindow_Glfw::Render( double time_ms )
     //
     // ARB_vertex_program Table X.1
     // https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_vertex_program.txt
+    //
+    // Release Notes for NVIDIA OpenGL Shading Language Support; November 9, 2006; - pp. 7-8
+    // http://developer.download.nvidia.com/opengl/glsl/glsl_release_notes.pdf
+
+
+    glMatrixMode( GL_PROJECTION );
+    glLoadIdentity();
+    glMatrixMode( GL_MODELVIEW );
 
     glm::mat4 scale = glm::scale( glm::mat4( 1.0f ), glm::vec3( 0.25f, 0.25f, 0.25f ) );
 
-    static const std::vector<float> varray
+    static const float varray[]
     { 
-      -0.707f, -0.75f,    1.0f, 0.0f, 0.0f, 1.0f, 
-       0.707f, -0.75f,    1.0f, 1.0f, 0.0f, 1.0f,
-       0.0f,    0.75f,    0.0f, 0.0f, 1.0f, 1.0f
+      // x        y         red   green blue  alpha
+        -0.707f, -0.75f,    1.0f, 0.0f, 0.0f, 1.0f, 
+         0.707f, -0.75f,    1.0f, 1.0f, 0.0f, 1.0f,
+         0.0f,    0.75f,    0.0f, 0.0f, 1.0f, 1.0f
     };
 
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);  
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
     
-    GLfloat y[]{ 0.5f, -0.5f };
-    GLuint prog[]{ _prog_2->Prog(), _prog_4->Prog() };
-    for ( int i = 0; i < 2; ++ i )
+    GLfloat y[]{ 0.5f, 0.0f, -0.5f };
+    GLuint prog[]{ 0, _prog_2->Prog(), _prog_4->Prog() };
+    for ( int i = 0; i < 3; ++ i )
     {
         glUseProgram( prog[i] );
-        GLint modelview_loc = glGetUniformLocation( prog[i], "u_modelview" );
+        GLint modelview_loc = prog[i] == 0 ? -1 : glGetUniformLocation( prog[i], "u_modelview" );
 
-        glUniformMatrix4fv( modelview_loc, 1, GL_FALSE, glm::value_ptr(glm::translate(glm::mat4(1.0f),glm::vec3(-0.5f, y[i], 0.0f)) * scale) );
-        glVertexAttribPointer( 0, 2, GL_FLOAT, GL_FALSE, 6*sizeof(*varray.data()), varray.data() );
-        glVertexAttribPointer( 1, 4, GL_FLOAT, GL_FALSE, 6*sizeof(*varray.data()), varray.data()+2 );
-        glEnableVertexAttribArray( 0 );
-        glEnableVertexAttribArray( 1 );
-        glDrawArrays( GL_TRIANGLES, 0, 3 );
-        glDisableVertexAttribArray( 0 );
-        glDisableVertexAttribArray( 1 );
+        // glBegin/glEnd sequence
+        if ( i==0 || i==1 || i==2 )
+        {
+            SetModelView( modelview_loc, glm::translate(glm::mat4(1.0f),glm::vec3(-0.5f, y[i], 0.0f)) * scale );
+            glBegin( GL_TRIANGLES );
+            for ( int j=0; j < 3; ++j )
+            {
+              glVertex2fv( varray + j*6 );
+              glColor4fv( varray + j*6 + 2 );
+            }
+            glEnd();
+        }
+
+        // fixed function attributes
+        if ( i==0 || i==1 || i==2 )
+        {
+            SetModelView( modelview_loc, glm::translate(glm::mat4(1.0f),glm::vec3(0.0f, y[i], 0.0f)) * scale );
+            glVertexPointer( 2, GL_FLOAT, 6*sizeof(*varray), varray );
+            glColorPointer( 4, GL_FLOAT, 6*sizeof(*varray), varray+2 );
+            glEnableClientState( GL_VERTEX_ARRAY );
+            glEnableClientState( GL_COLOR_ARRAY );
+            glDrawArrays( GL_TRIANGLES, 0, 3 );
+            glDisableClientState( GL_VERTEX_ARRAY );
+            glDisableClientState( GL_COLOR_ARRAY );
+        }
+
+        // generic vertex attribute data
+        if ( i==0 || i==1 || i == 2 )
+        {
+            SetModelView( modelview_loc, glm::translate(glm::mat4(1.0f),glm::vec3(0.5f, y[i], 0.0f)) * scale );
+            glVertexAttribPointer( 0, 2, GL_FLOAT, GL_FALSE, 6*sizeof(*varray), varray );
+            glVertexAttribPointer( 3, 4, GL_FLOAT, GL_FALSE, 6*sizeof(*varray), varray+2 );
+            glEnableVertexAttribArray( 0 );
+            glEnableVertexAttribArray( 3 );
+            glDrawArrays( GL_TRIANGLES, 0, 3 );
+            glDisableVertexAttribArray( 0 );
+            glDisableVertexAttribArray( 3 );
+        }
     }
 }
