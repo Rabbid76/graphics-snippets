@@ -136,9 +136,19 @@ bool CDebug::Init( void )
     glDebugMessageCallback( &CDebug::DebugCallback, this );
   _valid = true;
 
+  if ( glDebugMessageControl )
+  {
+    glDebugMessageControl( GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE );
+
+    // See also [How to use glDebugMessageControl](https://stackoverflow.com/questions/51962968/how-to-use-gldebugmessagecontrol/51963554#51963554)
+    //
+    // glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_FALSE);
+    // glDebugMessageControl(GL_DEBUG_SOURCE_API, GL_DEBUG_TYPE_ERROR, GL_DONT_CARE, 0, NULL, GL_TRUE);
+  }
+
   // In Debug Contexts, debug output starts enabled.
   // In non-debug contexts, the OpenGL implementation may not generate messages even if debug output is enabled.
-  _active = true;
+  _active = false;
 
   return IsValid();
 }

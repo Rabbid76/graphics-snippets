@@ -75,8 +75,8 @@ public:
 
   virtual ~TAttributeVector() = default;
 
-  TAttrbutes       AV( void )       { return _va; } //!< access to raw attribute vector
-  const TAttrbutes AV( void ) const { return _va; } //!< access to raw attribute vector
+  TAttrbutes       AV( void )       { return _av; } //!< access to raw attribute vector
+  const TAttrbutes AV( void ) const { return _av; } //!< access to raw attribute vector
 
   virtual int            tuple_size( void ) const override { return V_TUPLE_SIZE; }
   virtual int            stride( void )     const override { return V_STRIDE == 0 ? V_TUPLE_SIZE : V_STRIDE; }
@@ -97,8 +97,8 @@ public:
 
   virtual ~TAttributeVectorN() = default;
 
-  TAttrbutes       AV( void )       { return _va; } //!< access to raw attribute vector
-  const TAttrbutes AV( void ) const { return _va; } //!< access to raw attribute vector
+  TAttrbutes       AV( void )       { return _av; } //!< access to raw attribute vector
+  const TAttrbutes AV( void ) const { return _av; } //!< access to raw attribute vector
 
   virtual int            tuple_size( void ) const override { return _tuple_size; }
   virtual int            stride( void )     const override { return _tuple_size; }
