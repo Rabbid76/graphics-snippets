@@ -27,7 +27,7 @@ Cone Step Mapping<br/>
 [![no_parallax](image/parallax_mapping/parallax_006_cone_step_mapping_derivative_tbn_2.png)][6]
 
 
-Compare the differnt techniques in an **[Example][7]**
+Compare the different techniques in an **[Example][7]**
 
 <br/><hr/>
 ## Displacement map (Heightmap)
