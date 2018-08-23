@@ -18,7 +18,7 @@ There are different types of [Primitives](https://www.khronos.org/opengl/wiki/Pr
 
 For the sickness of completeness there are, the list of **deprecated** primitive types: `GL_QUADS`, `GL_QUAD_STRIP`, and `GL_POLYGON`:
 
-For tessellation ther is the specila primitive type `GL_PATCH`.
+For tessellation there is the special primitive type `GL_PATCH`.
 
 ### Point primitives
 

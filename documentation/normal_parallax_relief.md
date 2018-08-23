@@ -195,7 +195,7 @@ The code listing above is a general coding for displacement mapping. The differe
 <br/><hr/>
 ## Offset Limiting
 
-Offset limiting is one of the simplest parallax techniques. An addtional 3D effect is achieved by adding an offset to the texture coordiantes, which dependent on the height (value from the heightmap) of the texel and optional the angle of incidence of the line of sight to the (fragment) surface. The strength of the effect is controlled by a scale value.
+Offset limiting is one of the simplest parallax techniques. An addtional 3D effect is achieved by adding an offset to the texture coordinates, which dependent on the height (value from the heightmap) of the texel and optional the angle of incidence of the line of sight to the (fragment) surface. The strength of the effect is controlled by a scale value.
 This technique can not represent direction dependent self-concealment, but it is very performant, since it can be calculated in an single operation step.
 
     vec3 Parallax( in vec3 texDir3D, in vec2 texCoord )
@@ -214,7 +214,7 @@ This technique can not represent direction dependent self-concealment, but it is
 
 The idea of advanced parallax algorithms like "Steep Parallax Mapping", is to displace the fragments of a surface by the corresponding heights from heightmap along the normal vector of the surface (interpolated normal vector of the fragment or normal vector of the primitive face).
 
-At "Steep Parallax Mapping" the line of sight is transfomed to the (co-)tangent space, this is the reference system, where the uv-coordinates of a texture form the xy-plane and the z-axis points out of the texture.
+At "Steep Parallax Mapping" the line of sight is transformed to the (co-)tangent space, this is the reference system, where the uv-coordinates of a texture form the xy-plane and the z-axis points out of the texture.
 
 Along the projection of the line of sight onto the texture, the heights of the heightmap define a 2 dimensional curve.
 
