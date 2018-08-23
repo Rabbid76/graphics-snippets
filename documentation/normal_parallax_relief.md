@@ -41,7 +41,7 @@ A heightmap for height field is a raster image which stores the normalized heigh
 <br/><hr/>
 ## Normal map
 
-A normal map is a raster image which stores the normal vectors corresponding to the pixels of a texture, which are caused by bumps and dents. The x, y,and z component of the normal vector is either encoded in 3 color channels or the x and y component are encoded in 2 color channel and the z component is assumed to be 1.0. While in the first case, the normal vector can be stored "normalized" and represent the full space. In the second case the normal vector has to be reconstructed and normalized after texture lookup and is limited to a upside down pyramid, but make use of less memory. The slope of the pyramid depends on how the x and y axis are scaled and if the values are stored linear or non linear (e.g. quadratic).
+A normal map is a raster image which stores the normal vectors corresponding to the pixels of a texture, which are caused by bumps and dents. The x, y and z component of the normal vector is either encoded in 3 color channels or the x and y component are encoded in 2 color channel and the z component is assumed to be 1.0. While in the first case, the normal vector can be stored "normalized" and represent the full space. In the second case the normal vector has to be reconstructed and normalized after texture lookup and is limited to a upside down pyramid, but make use of less memory. The slope of the pyramid depends on how the x and y axis are scaled and if the values are stored linear or non linear (e.g. quadratic).
 
 ### Normal vector from heightmap
 
@@ -104,7 +104,7 @@ In the following are presented glsl functions, which can directly calculate the 
 <br/><hr/>
 ## Normal Mapping
 
-At normal mapping the normal of the fragment is replaced by the normal vector of the normal map (or claculated normal vector from the haght map), which is tranformed form (co-)tangentspace to view space. This normal vector is used for the light calculations per fragment and causes a good representation of bumps and dents of surfaces with a height displacement a limited range. The algorithm fails at large and sudden changes in the displacement, but is a very performant approach.
+At normal mapping the normal of the fragment is replaced by the normal vector of the normal map (or calculated normal vector from the height map), which is transformed form (co-)tangentspace to view space. This normal vector is used for the light calculations per fragment and causes a good representation of bumps and dents of surfaces with a height displacement a limited range. The algorithm fails at large and sudden changes in the displacement, but is a very performant approach.
 
     in TVertexData
     {
