@@ -89,3 +89,8 @@ The 1st sample result for each following channel (frequency) is the result of th
 
 The samples are distributed to 3 ring sections (1st is technically a circle).
 The sample points are linear distributed on the occlusion radius in ascending order. Each sample is added to its corresponding frequency channel (2 to 4).
+
+
+<br/><hr/>
+
+<a href="https://stackexchange.com/users/7322082/rabbid76"><img src="https://stackexchange.com/users/flair/7322082.png" width="208" height="58" alt="profile for Rabbid76 on Stack Exchange, a network of free, community-driven Q&amp;A sites" title="profile for Rabbid76 on Stack Exchange, a network of free, community-driven Q&amp;A sites" /></a>

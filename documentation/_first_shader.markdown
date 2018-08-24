@@ -7,9 +7,9 @@ First OGL 4.0 GLSL shader progra
 # GLSL documentation : First OGL 4.0 GLSL shader program #
 
 A simple OGL 4.0 GLSL shader program with vertex position and color attribute.
-The program is executed with a phyton script. To run the script, PyOpenGL must be installed.
+The program is executed with a python script. To run the script, PyOpenGL must be installed.
 
-A shader program consists at least of a vertex shader and a fragmant shader (exception of computer shaders).
+A shader program consists at least of a vertex shader and a fragment shader (exception of computer shaders).
 The 1st shader stage is the vertex shader and the last shader stage is the fragment shader (In between, optional further stages are possible, which are not further described here).
 
 
@@ -155,3 +155,8 @@ which the greatest attention should be devoted.
     
     # start main loop
     glutMainLoop()
+
+
+<br/><hr/>
+
+<a href="https://stackexchange.com/users/7322082/rabbid76"><img src="https://stackexchange.com/users/flair/7322082.png" width="208" height="58" alt="profile for Rabbid76 on Stack Exchange, a network of free, community-driven Q&amp;A sites" title="profile for Rabbid76 on Stack Exchange, a network of free, community-driven Q&amp;A sites" /></a>

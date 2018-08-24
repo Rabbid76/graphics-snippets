@@ -30,7 +30,7 @@ For tessellation there is the special primitive type `GL_PATCH`.
 
 See [Wikipedia, Triangle fan](https://en.wikipedia.org/wiki/Triangle_fan).
 
-<b>Trinagle stripe</b>
+<b>Triangle stripe</b>
 
 See [Wikipedia, Triangle strip](https://en.wikipedia.org/wiki/Triangle_strip).
 
@@ -126,7 +126,7 @@ See:
 
 ## Vertex buffer object (Array buffer)
 
-It is sufficient to call [`glVertexAttribPointer`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glVertexAttribPointer.xhtml) once per vetrex attribute. The [Vertex Specification](https://www.khronos.org/opengl/wiki/Vertex_Specification) is keept until it is not redefined. Of course, the buffer object, where [`glVertexAttribPointer`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glVertexAttribPointer.xhtml) refers to must not be deleted. Also the state, whether the vertex attribute is enabled ([`glEnableVertexAttribArray`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glEnableVertexAttribArray.xhtml)) or not is kept until the vertex attribute is disabled again ([`glDisableVertexAttribArray`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glEnableVertexAttribArray.xhtml)).
+It is sufficient to call [`glVertexAttribPointer`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glVertexAttribPointer.xhtml) once per vetrex attribute. The [Vertex Specification](https://www.khronos.org/opengl/wiki/Vertex_Specification) is kept until it is not redefined. Of course, the buffer object, where [`glVertexAttribPointer`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glVertexAttribPointer.xhtml) refers to must not be deleted. Also the state, whether the vertex attribute is enabled ([`glEnableVertexAttribArray`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glEnableVertexAttribArray.xhtml)) or not is kept until the vertex attribute is disabled again ([`glDisableVertexAttribArray`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glEnableVertexAttribArray.xhtml)).
 
 The Khronos OpenGL wiki about [Vertex Specification](https://www.khronos.org/opengl/wiki/Vertex_Specification) clearly says:
 
@@ -134,13 +134,13 @@ The Khronos OpenGL wiki about [Vertex Specification](https://www.khronos.org/ope
 
 This state can be retrieved with [`glGetVertexAttrib`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGetVertexAttrib.xhtml).
 
-More information about vertex attrbutes can be found in the [OpenGL 4.6. core specification](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf) from Chapter 10.2 to 10.6.
+More information about vertex attributes can be found in the [OpenGL 4.6. core specification](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf) from Chapter 10.2 to 10.6.
 
 <br/>
 
 <b>Separated tightly packed buffers for different attributes</b>
 
-e.g. Buffers for vertices (x, y, z), normals (x, y, z) and texture oordinates (u, v):
+e.g. Buffers for vertices (x, y, z), normals (x, y, z) and texture coordinates (u, v):
 
 Create the vertex array buffer:
 
@@ -221,7 +221,7 @@ Draw the array in compatibility mode (**deprecated**):
 
 <b>Vertex attribute records set - Stride packed</b>
 
-e.g. Vertex, Normal vector and Texture coordiante
+e.g. Vertex, Normal vector and Texture coordinate
      
     [ Vx0, Vy0, Vz0, Nx0, Ny0, Nz0, Tv0, Tu0,
       Vx1, Vy1, Vz1, Nx1, Ny1, Nz1, Tv1, Tu1,
@@ -304,7 +304,7 @@ Draw the array in compatibility mode (**deprecated**):
 
 ## Index buffer object (Element array buffer)
 
-e.g. Vertex, Normal vector and Texture coordiante
+e.g. Vertex, Normal vector and Texture coordinate
      
     [ Vx0, Vy0, Vz0, Nx0, Ny0, Nz0, Tv0, Tu0,
       Vx1, Vy1, Vz1, Nx1, Ny1, Nz1, Tv1, Tu1,
@@ -337,7 +337,7 @@ Create the vertex array buffer and the index buffer:
 
 Draw the array in core mode:
 
-    GLuint vetexAttribIndex;  // index of the vertex attrbute (shader)
+    GLuint vetexAttribIndex;  // index of the vertex attribute (shader)
     GLuint normalAttribIndex; // index of the normal attribute (shader)
     GLuint texCorAttribIndex; // index of the texture coordinate attribute (shader)
 
@@ -346,7 +346,7 @@ Draw the array in core mode:
     GLsizei stride = 8 * sizeof(GL_float); // size of one record in bytes: 8 * float [ Vx, Vy, Vz, Nx, Ny, Nz, Tv, Tu]
     GLsizei offsV  = 0 * sizeof(GL_float); // offset of the vertex inside the reccord
     GLsizei offsNV = 3 * sizeof(GL_float); // offset of the normal vector inside the reccord
-    GLsizei offsTC = 6 * sizeof(GL_float); // offset of the tecture coordinate inside the reccord
+    GLsizei offsTC = 6 * sizeof(GL_float); // offset of the texture coordinate inside the reccord
     
     glVertexAttribPointer( vetexAttribIndex,  3, GL_FLOAT, GL_FALSE, stride, offsV );  // 3: Vx, Vy, Vz
     glVertexAttribPointer( normalAttribIndex, 3, GL_FLOAT, GL_TRUE,  stride, offsNV ); // 3: Nx, Ny, Nz  -  GL_TRUE: values should be normalized
@@ -442,7 +442,7 @@ See the [OpenGL 4.6 core specification - 10.3.9 Vertex Arrays in Buffer Objects]
 
 <br/>
 
-e.g. Vertex, Normal vector and Texture coordiante
+e.g. Vertex, Normal vector and Texture coordinate
      
     [ Vx0, Vy0, Vz0, Nx0, Ny0, Nz0, Tv0, Tu0,
       Vx1, Vy1, Vz1, Nx1, Ny1, Nz1, Tv1, Tu1,
@@ -454,7 +454,7 @@ Create the vertex array buffer and the index buffer:
 
     GLsizei no_of_points;
     std::vector<GLfloat> data;    // attribute set: [ Vx0, Vy0, Vz0, Nx0, Ny0, Nz0, Tv0, Tu0, Vx1, Vy1, Vz1, Nx1, Ny1, Nz1, Tv1, Tu1, .... ]
-    std::vector<GLuint>  indices; // indces: [ I0, I1, I2, I3, I4, ..... ]
+    std::vector<GLuint>  indices; // indices: [ I0, I1, I2, I3, I4, ..... ]
 
     GLuint vbo;
 
@@ -560,11 +560,11 @@ See [OpenGL Vertex Array/Buffer Objects](https://stackoverflow.com/questions/133
 See [OpenGL ES 4.6 core Specification 3.2 - 5.1.2 Automatic Unbinding of Deleted Objects](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf):<br/>
 See [OpenGL ES 3.2 Specification - 5.1.2 Automatic Unbinding of Deleted Objects](https://www.khronos.org/registry/OpenGL/specs/es/3.2/es_spec_3.2.pdf):
 
-> When a buffer, texture, transform feedback or renderbuffer object is successfully deleted, it is unbound from any bind points it is bound to in the current context, and detached from any attachments of container objects that are bound to the current context ....
+> When a buffer, texture, transform feedback or render buffer object is successfully deleted, it is unbound from any bind points it is bound to in the current context, and detached from any attachments of container objects that are bound to the current context ....
 >
 > Attachments to unbound container objects, such as deletion of a buffer attached to a vertex array object which is not bound to the context, are not affected and continue to act as references on the deleted object ....
 >
-> When a buffer, query, renderbuffer, sampler, sync, or texture object is deleted, its name immediately becomes invalid (e.g. is marked unused), but the underlying object will not be deleted until it is no longer in use.
+> When a buffer, query, render buffer, sampler, sync, or texture object is deleted, its name immediately becomes invalid (e.g. is marked unused), but the underlying object will not be deleted until it is no longer in use.
 
 
 <br/><hr/>
@@ -579,7 +579,7 @@ See [Khronos wiki - OpenGL Context](https://www.khronos.org/opengl/wiki/OpenGL_C
 >
 > ....
 >
-> A new extension, [ARB_compatibility](https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_compatibility.txt), was introduced when OpenGL 3.1 was revealed. The presence of this extension is a signal to the user that deprecated or removed features are still available through the original entrypoints and enumerations. The behavior of such implementations is defined with a separate, much larger, [OpenGL Specification](https://www.khronos.org/opengl/wiki/OpenGL_Specification). Thus, there was a backwards-compatible specification and a non-backwards compatible specification.<br/>
+> A new extension, [ARB_compatibility](https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_compatibility.txt), was introduced when OpenGL 3.1 was revealed. The presence of this extension is a signal to the user that deprecated or removed features are still available through the original entry points and enumerations. The behavior of such implementations is defined with a separate, much larger, [OpenGL Specification](https://www.khronos.org/opengl/wiki/OpenGL_Specification). Thus, there was a backwards-compatible specification and a non-backwards compatible specification.<br/>
 > However, since many implementations support the deprecated and removed features anyway, some implementations want to be able to provide a way for users of higher GL versions to gain access to the old APIs. Several techniques were tried, and it has settled down into a division between Core and Compatibility contexts.
 
 See [Khronos wiki - Fixed Function Pipeline](https://www.khronos.org/opengl/wiki/Fixed_Function_Pipeline):
@@ -652,7 +652,7 @@ See the [WebGL documentation for `WebGL2RenderingContext.vertexAttribIPointer()`
 ## Investigate
 
 - WebgGL draw colored triangle, without shader
-- OpenGL darw colored trinagle with vertex buffer object/certex array object, without shader
+- OpenGL darw colored trinagle with vertex buffer object/vertex array object, without shader
 - [How to include model matrix to a VBO?](https://stackoverflow.com/questions/24627445/how-to-include-model-matrix-to-a-vbo)
 - [Primitive Restart](https://www.khronos.org/opengl/wiki/Vertex_Rendering#Primitive_Restart)
 
@@ -817,3 +817,8 @@ The *Fragment shader* witch works in both of the above cases (for sake of comple
     {
         fragColor = vertCol;
     }
+
+
+<br/><hr/>
+
+<a href="https://stackexchange.com/users/7322082/rabbid76"><img src="https://stackexchange.com/users/flair/7322082.png" width="208" height="58" alt="profile for Rabbid76 on Stack Exchange, a network of free, community-driven Q&amp;A sites" title="profile for Rabbid76 on Stack Exchange, a network of free, community-driven Q&amp;A sites" /></a>

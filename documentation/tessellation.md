@@ -4,7 +4,7 @@ A simple OGL 4.0 GLSL shader program that shows that shows how to add details wi
 The program is executed with a python script. To run the script, PyOpenGL and NumPy must be installed.
 
 The basic mesh in this example is an icosahedron that consists of 20 triangles. The tessellation control shader defines how each triangle is divided into a set of many small parts.
-When tessellating a triangle, the generated data are barycentric coordinates based on the original triangle. The tessellation evaluation shader generates new geometry from the data obtained in this way. In this example, each triangle gets a peak in the middle, which rises outward from the center of the icosader. In this way a much more complex geometry is generated than the original icosahedron.
+When tessellating a triangle, the generated data are barycentric coordinates based on the original triangle. The tessellation evaluation shader generates new geometry from the data obtained in this way. In this example, each triangle gets a peak in the middle, which rises outward from the center of the icosahedron. In this way a much more complex geometry is generated than the original icosahedron.
 
 ![preview](image/tessellation_001.gif)
 
@@ -565,3 +565,7 @@ When tessellating a triangle, the generated data are barycentric coordinates bas
     
     # start main loop
     wnd.Run()
+
+<br/><hr/>
+
+<a href="https://stackexchange.com/users/7322082/rabbid76"><img src="https://stackexchange.com/users/flair/7322082.png" width="208" height="58" alt="profile for Rabbid76 on Stack Exchange, a network of free, community-driven Q&amp;A sites" title="profile for Rabbid76 on Stack Exchange, a network of free, community-driven Q&amp;A sites" /></a>

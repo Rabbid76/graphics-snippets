@@ -28,3 +28,9 @@ See also:
 - [Dave Edwards, Solomon Boulos, Jared Johnson and Peter Shirley, The Halfway Vector Disk for BRDF Modeling](http://www.cs.utah.edu/~boulos/papers/brdftog.pdf)
 - [James F. Blinn, Models of light reflection for computer synthesized picture, 1977](http://miffysora.wdfiles.com/local&ndash;files/blinn-model-for-specular-reflection/Blinn.pdf)
 - [Learning Modern 3D Graphics Programming - Blinn-Phong Model](https://alfonse.bitbucket.io/oldtut/Illumination/Tut11%20BlinnPhong%20Model.html)
+
+
+<br/><hr/>
+
+<a href="https://stackexchange.com/users/7322082/rabbid76"><img src="https://stackexchange.com/users/flair/7322082.png" width="208" height="58" alt="profile for Rabbid76 on Stack Exchange, a network of free, community-driven Q&amp;A sites" title="profile for Rabbid76 on Stack Exchange, a network of free, community-driven Q&amp;A sites" /></a>
+

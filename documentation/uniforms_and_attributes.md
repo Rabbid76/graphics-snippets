@@ -11,7 +11,7 @@ Things like uniforms, attributes etc. are program resources. The locations of ac
 Of course the user can specify the location. In modern OpenGL this can be done by [Layout Qualifier](https://www.khronos.org/opengl/wiki/Layout_Qualifier_(GLSL)).
 In earlier version a generic vertex attribute can be associated to an attribute name by [`glBindAttribLocation`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glBindAttribLocation.xhtml),
 before linking the program. The location information is considered when the program is get linked.<br/>
-But resource informations, like the attribute location ([`glGetAttribLocation`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGetAttribLocation.xhtml)), can only be queried, if the program was successfully linked. The linking of the program "finalize" the program, to be introspective and to be used.<br/>
+But resource information, like the attribute location ([`glGetAttribLocation`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGetAttribLocation.xhtml)), can only be queried, if the program was successfully linked. The linking of the program "finalize" the program, to be introspective and to be used.<br/>
 The "hint" that there is a named attribute associated to a location, does not make an active resource. The active resource is set in the during the link process. 
 
 
@@ -37,7 +37,7 @@ See [OpenGL ES Shading Language 3.20 Specification - 7.6 Uniform Variables - p. 
 >
 > If a program is linked successfully, the GL will generate lists of active resources based on the executable code produced by the link.
 
-This means that, if the compiler and linker determine that the an attribute or an unifor variable is **not accessed**, when the executable code is executed, then the uniform is **inactive**.
+This means that, if the compiler and linker determine that the an attribute or an uniform variable is **not accessed**, when the executable code is executed, then the uniform is **inactive**.
 
 
 See [OpenGL 4.6 Core Profile Specification - 7.6 Uniform Variables - p. 133](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf):
@@ -93,3 +93,6 @@ See [OpenGL ES 2 Specifications - 2.10.4 Shader Variables - p. 32](https://www.k
 > `int GetAttribLocation( uint program, const char *name );`
 
 
+<br/><hr/>
+
+<a href="https://stackexchange.com/users/7322082/rabbid76"><img src="https://stackexchange.com/users/flair/7322082.png" width="208" height="58" alt="profile for Rabbid76 on Stack Exchange, a network of free, community-driven Q&amp;A sites" title="profile for Rabbid76 on Stack Exchange, a network of free, community-driven Q&amp;A sites" /></a>

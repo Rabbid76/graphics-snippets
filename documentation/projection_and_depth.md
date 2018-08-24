@@ -4,7 +4,7 @@
 In a rendering, each mesh of the scene usually is transformed by the model matrix, the view matrix and the projection matrix. Finally the projected scene is mapped to the viewport.
 
 The projection, view and model matrix interact together to present the objects (meshes) of a scene on the viewport.
-The model matrix defines the position orientation and scale of a single object (mesh) in the worldspace of the scene.
+The model matrix defines the position orientation and scale of a single object (mesh) in the world space of the scene.
 The view matrix defines the position and viewing direction of the observer (viewer) within the scene.
 The projection matrix defines the area (volume) with respect to the observer (viewer) projected onto the viewport.
 
@@ -38,7 +38,7 @@ The world sapce is the coordinate system of the scene. Different models (objects
 
 **Model matrix**
 
-The model matrix defines the location, oriantation and the relative size of a model (object, mesh) in the scene. The model matrix transforms the vertex positions of a single mesh to world space for a single specific positioning. There are different model matrices, one for each combination of a model (object) and a location of the object in the wolrd space.
+The model matrix defines the location, orientation and the relative size of a model (object, mesh) in the scene. The model matrix transforms the vertex positions of a single mesh to world space for a single specific positioning. There are different model matrices, one for each combination of a model (object) and a location of the object in the world space.
 
 The model matrix looks like this:
 
@@ -57,7 +57,7 @@ e.g.:
 ![model to world](image/model_to_world.png)    
 
 
-### View sapce (Eye coordinates)
+### View space (Eye coordinates)
 
 The view space is the local system which is defined by the point of view onto the scene.
 The position of the view, the line of sight and the upwards direction of the view, define a coordinate system relative to the world coordinate system. The objects of a scene have to be drawn in relation to the view coordinate system, to be "seen" from the viewing position. The inverse matrix of the view coordinate system is named the **view matrix**.<br/>
@@ -70,7 +70,6 @@ The view coordinates system describes the direction and position from which the 
 If the coordinate system of the view space is a [Right-handed](https://en.wikipedia.org/wiki/Right-hand_rule) system, then the X-axis points to the left, the Y-axis up and the Z-axis out of the view (Note in a right hand system the Z-Axis is the cross product of the X-Axis and the Y-Axis). 
 
 ![view coordinates](image/view_coordinates.png) 
-
 
 ### Clip coordinates
 
@@ -109,12 +108,13 @@ The window coordinates are the coordinates of the viewport rectangle. The window
 The normalized device coordinates are linearly mapped to the Window Coordinates (Screen Coordinates) and to the depth for the depth buffer.
 The viewport is defined by [`glViewport`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glViewport.xhtml). The depthrange is set by [`glDepthRange`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glDepthRange.xhtml) and is by default [0, 1].
 
-
 <br/>
+
 See also:
 [OpenGL Transformation](http://www.songho.ca/opengl/gl_transform.html)<br/> 
 
 <br/><hr/>
+
 ## View
 
 On the viewport the X-axis points to the left, the Y-axis up and the Z-axis out of the view (Note in a right hand system the Z-Axis is the cross product of the X-Axis and the Y-Axis).
@@ -123,7 +123,7 @@ The code below defines a matrix that exactly encapsulates the steps necessary to
 
 - Converting model coordinates into viewport coordinates.
 - Rotation, to look in the direction of the view.
-- Movement to the eye position     
+- Movement to the eye position.
 
 The following code does the same as `gluLookAt` or `glm::lookAt` does:
 
@@ -471,3 +471,8 @@ This means the unprojected rectangle with a specific depth, can be calculated li
 - [Median Distance Perspective Projection](http://csc.lsu.edu/~kooima/articles/medianproj/)
 - [Projection Matrix Tricks](http://www.terathon.com/gdc07_lengyel.pdf)
 - [The Perspective and Orthographic Projection Matrix](https://www.scratchapixel.com/lessons/3d-basic-rendering/perspective-and-orthographic-projection-matrix/building-basic-perspective-projection-matrix)
+
+
+<br/><hr/>
+
+<a href="https://stackexchange.com/users/7322082/rabbid76"><img src="https://stackexchange.com/users/flair/7322082.png" width="208" height="58" alt="profile for Rabbid76 on Stack Exchange, a network of free, community-driven Q&amp;A sites" title="profile for Rabbid76 on Stack Exchange, a network of free, community-driven Q&amp;A sites" /></a>

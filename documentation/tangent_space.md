@@ -7,7 +7,7 @@ In an [Right-Handed Coordinate System][3] (see further [Right-hand rule][5])
 
 ![right handed TBN](image/right_hand_tbn.svg)
 
-the Binormal Vector is calcualted by:
+the Binormal Vector is calculated by:
 
     B = N x T
 
@@ -15,14 +15,14 @@ while in an [Left-Handed Coordinate System][4]
 
 ![left handed TBN](image/left_hand_tbn.svg)
 
-the Binormal Vector is calcualted by:
+the Binormal Vector is calculated by:
 
     B = T x N
 
 <br/>
 In OpenGL is commonly used a [Right-Handed Coordinate System][3], but this depends on the specification and definitions which are chosen by the user.
 
-If a system is mirrored it changes from one system to the other. This may occur if a texture is mirrored or looked at from the backface.
+If a system is mirrored it changes from one system to the other. This may occur if a texture is mirrored or looked at from the back face.
 
 
 <br/><hr/>
@@ -32,13 +32,13 @@ If a system is mirrored it changes from one system to the other. This may occur 
 
 ### Precomputed tangent
 
-One way to get the tangential space in the shader is to pass the tanget as an attribute to the shader, just like the normalvector.
+One way to get the tangential space in the shader is to pass the tanget as an attribute to the shader, just like the normal vector.
 For this the tangents have to be pre-computed and stored in the mesh data.
 
 
 ### Calculating the Tangent in the Fragment Shader
 
-The tangent and the binormal can be calculated by the GLSL derivate functions [`dFdx`, `dFdy`][6], that calcualtes the partial derivative of an argument with respect to `x` or `y`.
+The tangent and the binormal can be calculated by the GLSL derivate functions [`dFdx`, `dFdy`][6], that calculates the partial derivative of an argument with respect to `x` or `y`.
 
     vec3 vsPos    = ....; // fragment position in view space
     vec2 texCoord = ....; // texture coordinate of the fragment
@@ -69,7 +69,7 @@ Or the GLSL function [determinant][7]:
 ### Calculating the Tangent in a Geometry or Tesselation Shader
 
     vec3 vsPos[3]      = ....; // corner points of the triangle primitive in view space
-    vec2 texCoord[3]   = ....; // coresponding texture cooridnates to the corner points of the prmitive
+    vec2 texCoord[3]   = ....; // corresponding texture coordinates to the corner points of the primitive
 
     vec3  p_dA         = vsPos[1].xyz - vsPos[0].xyz;
     vec3  p_dB         = vsPos[2].xyz - vsPos[0].xyz;
@@ -86,7 +86,7 @@ Or the GLSL function [determinant][7]:
 
 If the **normalized normal vector** `n`, the tangent `t` and the binormal` b` are known, the tangent space can be calculated.
 
-Of course the an orthonormalized tangent space matrix can be calcualted by using the cross product,
+Of course the an orthonormalized tangent space matrix can be calculated by using the cross product,
 but this would only work for right-hand systems. If a matrix was mirrored (left-hand system) it will turn to a right hand system:
 
     t        = cross( cross( n, t ), t ); // orthonormalization of the tangent vector
@@ -111,8 +111,8 @@ A common way to orthogonalize any matrix is the [Gram-Schmidt process][8]:
 Another possibility is to use the determinant of the 2*2 matrix which results from the derivations of the texture coordinates `texC_dx`, `texC_dy`
 to take the direction of the binormal vector into account. The idea is that the determinant of a orthogonal matrix is 1 and the determined one of a orthogonal mirror matrix -1.
 
-The determinant can eihter be calcualted by the GLSL function `determinant( mat2( texC_dx, texC_dy )`
-or it can be calcualated by it formula `texC_dx.x * texC_dy.y - texC_dy.x * texC_dx.y`.
+The determinant can either be calculated by the GLSL function `determinant( mat2( texC_dx, texC_dy )`
+or it can be calculated by it formula `texC_dx.x * texC_dy.y - texC_dy.x * texC_dx.y`.
 
 For the calculation of the orthonormalized tangent space matrix, the binormal vector is no longer required and the calculation of the unit vector
 (`normalize`) of the binormal vector can be evaded.
@@ -121,7 +121,7 @@ For the calculation of the orthonormalized tangent space matrix, the binormal ve
     float binormalSign = sign(texDet);
     
     vec3 t             = normalize( t - n * dot( t, n ) );
-    vec3 b             = binormalSign * cross( n, t );     // b is normlized because n and t are orthonormalized unit vectors
+    vec3 b             = binormalSign * cross( n, t );     // b is normalized because n and t are orthonormalized unit vectors
     mat3 tbn           = mat3( t, binormalSign * b, n );   // take in account the direction of the binormal vector
 
 
@@ -180,4 +180,6 @@ For the calculation of the orthonormalized tangent space matrix, the binormal ve
     }
 
 
+<br/><hr/>
 
+<a href="https://stackexchange.com/users/7322082/rabbid76"><img src="https://stackexchange.com/users/flair/7322082.png" width="208" height="58" alt="profile for Rabbid76 on Stack Exchange, a network of free, community-driven Q&amp;A sites" title="profile for Rabbid76 on Stack Exchange, a network of free, community-driven Q&amp;A sites" /></a>

@@ -32,10 +32,10 @@ Compare the different techniques in an **[Example][7]**
 <br/><hr/>
 ## Displacement map (Heightmap)
 
-Heightmap<br/>
+Height map<br/>
 ![heightmap](../resource/texture/example_1_heightmap.bmp)
 
-A heightmap for height field is a raster image which stores the normalized height values of the texels corresponding to a texture. The height values can be used to manipulate the normal vectors of the fragments to visualize bumps and dents. It can even be used to used to displace the fragment, in this case the heightmap is also named displacement map.
+A height map for height field is a raster image which stores the normalized height values of the texels corresponding to a texture. The height values can be used to manipulate the normal vectors of the fragments to visualize bumps and dents. It can even be used to used to displace the fragment, in this case the heightmap is also named displacement map.
 
 
 <br/><hr/>
@@ -657,3 +657,8 @@ This algorithm should well fit with cone step mapping.
   [5]: https://rabbid76.github.io/graphics-snippets/html/technique/parallax_005_parallax_relief_mapping_derivative_tbn.html
   [6]: https://rabbid76.github.io/graphics-snippets/html/technique/parallax_006_cone_step_mapping_derivative_tbn.html
   [7]: https://rabbid76.github.io/graphics-snippets/html/technique/parallax_mapping.html
+
+
+<br/><hr/>
+
+<a href="https://stackexchange.com/users/7322082/rabbid76"><img src="https://stackexchange.com/users/flair/7322082.png" width="208" height="58" alt="profile for Rabbid76 on Stack Exchange, a network of free, community-driven Q&amp;A sites" title="profile for Rabbid76 on Stack Exchange, a network of free, community-driven Q&amp;A sites" /></a>

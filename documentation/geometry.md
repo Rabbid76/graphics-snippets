@@ -1,7 +1,7 @@
 # Creating geometry using a geometry shader
 
 A simple OGL 4.0 GLSL shader program that shows the use of geometry shaders.
-The program is executed with a phyton script. To run the script, PyOpenGL and NumPy must be installed.
+The program is executed with a python script. To run the script, PyOpenGL and NumPy must be installed.
 
 In this example, the entire geometry (a cylinder) is generated in the geometry shader.
 
@@ -474,3 +474,8 @@ In this example, the entire geometry (a cylinder) is generated in the geometry s
     # start main loop
     startTime = time()
     glutMainLoop()
+
+
+<br/><hr/>
+
+<a href="https://stackexchange.com/users/7322082/rabbid76"><img src="https://stackexchange.com/users/flair/7322082.png" width="208" height="58" alt="profile for Rabbid76 on Stack Exchange, a network of free, community-driven Q&amp;A sites" title="profile for Rabbid76 on Stack Exchange, a network of free, community-driven Q&amp;A sites" /></a>

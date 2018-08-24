@@ -35,7 +35,7 @@
 ![intersect line and plane](image/intersection_ray_plane_R0.png)
 
 The ray is defined by a point `R0` and a direction `D`.<br/>
-The plane is definde by a triangle with the three points `PA`, `PB`, and `PC`.
+The plane is defined by a triangle with the three points `PA`, `PB`, and `PC`.
 
 The normal vector of the plane can be calculated by the cross product of 2 legs of the triangle:
 
@@ -64,3 +64,8 @@ The intersection point `X` is:
     LOS ... line of sight
 
     X  =  C + LOS * dot(P0 - C, Z) / dot(LOS, Z)
+
+
+<br/><hr/>
+
+<a href="https://stackexchange.com/users/7322082/rabbid76"><img src="https://stackexchange.com/users/flair/7322082.png" width="208" height="58" alt="profile for Rabbid76 on Stack Exchange, a network of free, community-driven Q&amp;A sites" title="profile for Rabbid76 on Stack Exchange, a network of free, community-driven Q&amp;A sites" /></a>

@@ -7,7 +7,7 @@ Switching the geometry and the surface representation using subroutines in OGL 4
 # GLSL documentation : Switching the geometry and the surface representation using subroutines in OGL 4.0 GLSL #
 
 A simple OGL 4.0 GLSL shader program that shows the use shader subroutines.
-The program is executed with a phyton script. To run the script, PyOpenGL and NumPy must be installed.
+The program is executed with a python script. To run the script, PyOpenGL and NumPy must be installed.
 
 The subroutines switch between different geometry generated in the geometry shader and change the surface representation.
 
@@ -621,3 +621,8 @@ The subroutines switch between different geometry generated in the geometry shad
     # start main loop
     startTime = time()
     glutMainLoop()
+
+
+<br/><hr/>
+
+<a href="https://stackexchange.com/users/7322082/rabbid76"><img src="https://stackexchange.com/users/flair/7322082.png" width="208" height="58" alt="profile for Rabbid76 on Stack Exchange, a network of free, community-driven Q&amp;A sites" title="profile for Rabbid76 on Stack Exchange, a network of free, community-driven Q&amp;A sites" /></a>

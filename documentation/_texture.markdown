@@ -7,7 +7,7 @@ Put a texture on the model and use a texture matrix in OGL 4.0 GLSL
 # GLSL documentation : Put a texture on the model and use a texture matrix in OGL 4.0 GLSL #
 
 A simple OGL 4.0 GLSL shader program that shows how to map a 2D texture on a mesh.
-The program is executed with a phyton script. To run the script, PyOpenGL and NumPy must be installed.
+The program is executed with a python script. To run the script, PyOpenGL and NumPy must be installed.
 
 The texture matrix defines how the texture is mapped on the mesh. 
 By manipulating the texture matrix, the texture can be displaced, scaled and rotated.
@@ -250,3 +250,8 @@ By manipulating the texture matrix, the texture can be displaced, scaled and rot
     # start main loop
     startTime = time()
     glutMainLoop()
+
+
+<br/><hr/>
+
+<a href="https://stackexchange.com/users/7322082/rabbid76"><img src="https://stackexchange.com/users/flair/7322082.png" width="208" height="58" alt="profile for Rabbid76 on Stack Exchange, a network of free, community-driven Q&amp;A sites" title="profile for Rabbid76 on Stack Exchange, a network of free, community-driven Q&amp;A sites" /></a>
