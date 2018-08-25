@@ -61,9 +61,11 @@
 
 [Offset Limiting](https://rabbid76.github.io/graphics-snippets/html/technique/parallax_003_offset_limiting.html)
 
-[Steep Parallax Mapping](https://rabbid76.github.io/graphics-snippets/html/technique/parallax_004_steep_parallax_mapping_derivative_tbn.html)
+[Steep Parallax Mapping](https://rabbid76.github.io/graphics-snippets/html/technique/parallax_004_parallax_occlusion_mapping_derivative_tbn.html)
 
-[Parallax Occlusion Mapping](https://rabbid76.github.io/graphics-snippets/html/technique/parallax_005_parallax_occlusion_mapping_derivative_tbn.html)
+[Parallax Occlusion Mapping](https://rabbid76.github.io/graphics-snippets/html/technique/parallax_005_parallax_relief_mapping_derivative_tbn.html)
+
+[Cone Step Mapping](https://rabbid76.github.io/graphics-snippets/html/technique/parallax_006_cone_step_mapping_derivative_tbn.html)
 
 
 ### Stackoverflow examples
