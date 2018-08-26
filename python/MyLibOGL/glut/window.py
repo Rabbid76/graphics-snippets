@@ -68,14 +68,14 @@ class Window:
         print('')
 
         self.__orbit_mat         = mat.IdentityMat44() # persistent orbit orientation matrix
-        self.__current_orbit_mat = mat.IdentityMat44() # additional orbit orientation while draging
+        self.__current_orbit_mat = mat.IdentityMat44() # additional orbit orientation while dragging
         self.__mouse_drag        = False               # draging on or off
         self.__mouse_drag_axis   = (1, 0, 0)           # current drag axis
         self.__mouse_drag_angle  = 0                   # current drag distance
         self.__mouse_drag_time   = 0                   # current drag time
-        self.__mouse_start       = (0, 0)              # start of mouse draging operation
+        self.__mouse_start       = (0, 0)              # start of mouse dragging operation
         self.__auto_rotate       = True                # auto ratate on or of
-        self.__auto_spin        = False               # auto spinn
+        self.__auto_spin         = False               # auto spin
         self.__model_mat         = mat.IdentityMat44() # persistent model matrix
         self.__current_model_mat = mat.IdentityMat44() # current model matrix
 
@@ -130,10 +130,10 @@ class Window:
         # state: GLUT_UP or GLUT_DOWN
         if button == GLUT_LEFT_BUTTON:
             if state == GLUT_UP:
-                # was draging
+                # was dragfing
                 self._ChangeMotionMode_( False, True, True )
             elif state == GLUT_DOWN:
-                # start draging
+                # start dragging
                 self.__mouse_start = (x, y) 
                 self._ChangeMotionMode_( True, False, False )
         if button == GLUT_RIGHT_BUTTON and state == GLUT_UP:
