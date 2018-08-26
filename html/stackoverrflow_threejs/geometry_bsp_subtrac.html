@@ -1,0 +1,200 @@
+<html>
+
+<head>
+<title>Unexpected result using ThreeCSG</title>
+<style>
+
+body {
+    background: transparent;
+    padding: 0;
+    margin: 0;
+    font-family: sans-serif;
+}
+
+canvas {
+    margin: 10px auto;
+    width: 800px;
+    height: 350px;
+    margin-top: -44px;
+}
+
+#ref-link {
+    position : absolute;
+    bottom : 0;
+    left : 0;
+}
+
+</style>
+
+</head>
+
+<body>
+<script src="https://threejs.org/build/three.js"></script>
+<script src="https://threejs.org/examples/js/libs/dat.gui.min.js"></script>
+<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+<script src="https://rawgit.com/Wilt/ThreeCSG/develop/ThreeCSG.js"></script>
+<script src="https://threejs.org/examples/js/loaders/MTLLoader.js"></script>
+<script src="https://rawgit.com/mrdoob/three.js/dev/examples/js/loaders/LoaderSupport.js"></script>
+<script src="https://rawgit.com/mrdoob/three.js/dev/examples/js/loaders/OBJLoader2.js"></script>
+
+<div id="container"></div>
+
+<a id="ref-link" href="https://stackoverflow.com/questions/47819331/unexpected-result-using-threecsg">
+Unexpected result using ThreeCSG  
+</a>
+
+<script>
+(function onLoad() {
+  var container, camera, scene, renderer, controls;
+  var grey = 0xD3D3D3;
+  
+  init();
+  animate();
+
+  function init() {
+    container = document.getElementById('container');
+    
+    renderer = new THREE.WebGLRenderer({
+      antialias: true
+    });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    container.appendChild(renderer.domElement);
+
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xffffff);
+    
+    camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 10000);
+    camera.position.set(349.11334070460066, 405.44010726325604, 359.3111192889029);
+    scene.add(camera);
+    resize();
+    window.onresize = resize;
+    
+    var hemisphereLight = new THREE.HemisphereLight(0xffffbb, 0x080820, 1);
+    scene.add(hemisphereLight);
+    
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+		
+    addGridHelper();
+    createModel();
+  }
+
+  function createModel() {
+
+    // left cuboid
+  	var cubeGeoL = new THREE.CubeGeometry(125, 250, 250);
+    var cubeMeshL = new THREE.Mesh(cubeGeoL);
+    cubeMeshL.position.x -= 62.5;
+    var cubeBSPL = new ThreeBSP(cubeMeshL);
+   
+    // left part of the heart
+    var heartShapeL = getHeartShapeLeft();
+    var heartGeoL = getHeartGeometry(heartShapeL);
+    var meshToCutL = new THREE.Mesh( heartGeoL );
+    meshToCutL.scale.set(10,10,10);
+    meshToCutL.position.z -= 80;
+    var meshToCutBspL = new ThreeBSP(meshToCutL);
+
+    // left subtract
+    var meshToCutBspL = new ThreeBSP(meshToCutL);
+    var resultBspL = cubeBSPL.subtract(meshToCutBspL);
+    var resultMeshL = resultBspL.toMesh(new THREE.MeshLambertMaterial({flatShading: true}));
+    
+    // right cuboid
+  	var cubeGeoR = new THREE.CubeGeometry(125, 250, 250);
+    var cubeMeshR = new THREE.Mesh(cubeGeoR);
+    cubeMeshR.position.x += 62.5;
+    var cubeBSPR = new ThreeBSP(cubeMeshR);
+
+    // right part of the heart
+    var heartShapeR = getHeartShapeRight();
+    var heartGeoR = getHeartGeometry(heartShapeR);
+    var meshToCutR = new THREE.Mesh( heartGeoR );
+    meshToCutR.scale.set(10,10,10);
+    meshToCutR.position.z -= 80;
+    
+    // right subtract
+    var meshToCutBspR = new ThreeBSP(meshToCutR);
+    var resultBspR = cubeBSPR.subtract(meshToCutBspR);
+    var resultMeshR = resultBspR.toMesh(new THREE.MeshLambertMaterial({flatShading: true}));
+    
+    // union of left an right half
+    var unionBsp = resultBspL.union(resultBspR);
+    var unionMesh = unionBsp.toMesh(new THREE.MeshLambertMaterial({flatShading: true}));
+    scene.add(unionMesh);
+  }
+
+  function getHeartShapeRight() {
+  	var x = 5, y = 10;
+    var heartShape = new THREE.Shape();
+    heartShape.moveTo(x - 5, y - 5);
+    heartShape.bezierCurveTo(x - 5, y - 5, x - 4, y, x, y);
+    heartShape.bezierCurveTo(x + 6, y, x + 6, y - 7, x + 6, y - 7);
+    heartShape.bezierCurveTo(x + 6, y - 11, x + 3, y - 15.4, x - 5, y - 19);
+    return heartShape;
+  }
+
+  function getHeartShapeLeft() {
+  	var x = 5, y = 10;
+    var heartShape = new THREE.Shape();
+    heartShape.moveTo(x - 5, y - 19);
+    heartShape.bezierCurveTo(x - 12, y - 15.4, x - 16, y - 11, x - 16, y - 7);
+    heartShape.bezierCurveTo(x - 16, y - 7, x - 16, y, x - 10, y);
+    heartShape.bezierCurveTo(x - 7, y, x - 5, y - 5, x - 5, y - 5);
+    return heartShape;
+  }
+
+	function getHeartGeometry(heartShape) {
+  	var extrudeSettings = {
+      steps: 2,
+      amount: 16,
+      bevelEnabled: true,
+      bevelThickness: 5,
+      bevelSize: 1,
+      bevelSegments: 1
+    };
+		return new THREE.ExtrudeBufferGeometry( heartShape, extrudeSettings );
+  }
+
+  function addGridHelper() {
+    var planeGeometry = new THREE.PlaneGeometry(2000, 2000);
+    planeGeometry.rotateX(-Math.PI / 2);
+
+    var planeMaterial = new THREE.ShadowMaterial({
+      opacity: 0.2
+    });
+    var plane = new THREE.Mesh(planeGeometry, planeMaterial);
+    plane.position.y = -200;
+    plane.receiveShadow = true;
+    scene.add(plane);
+
+    var helper = new THREE.GridHelper(2000, 100);
+    helper.material.opacity = 0.25;
+    helper.material.transparent = true;
+    scene.add(helper);
+
+    var axis = new THREE.AxesHelper(1000);
+    scene.add(axis);
+  }
+
+  function resize() {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    //controls.handleResize();
+  }
+
+  function animate() {
+    requestAnimationFrame(animate);
+    render();
+  }
+
+  function render() {
+    renderer.render(scene, camera);
+  }
+})();
+</script>
+
+</body>
+</html>

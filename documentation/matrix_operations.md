@@ -31,7 +31,7 @@ Addressing the columns of a `mat3 m33;` in GLSL:
 
 ### 4*4 matrix
 
-A 4*4 matrix looks like this:
+A "mathematical" 4*4 matrix looks like this:
 
       c0  c1  c2  c3            c0  c1  c2  c3
     [ Xx  Yx  Zx  Tx ]        [  0   4   8  12 ]     
@@ -39,7 +39,7 @@ A 4*4 matrix looks like this:
     [ Xz  Yz  Zz  Tz ]        [  2   6  10  14 ]     
     [  0   0   0   1 ]        [  3   7  11  15 ] 
 
-And the memory image of a 4*4 matrix looks like this:
+But the memory image of a 4*4 OpenGL matrix looks like this:
 
     [ Xx, Xy, Xz, 0, Yx, Yy, Yz, 0, Zx, Zy, Zz, 0, Tx, Ty, Tz, 1 ]
 
@@ -58,7 +58,8 @@ Addressing the columns of a `mat4 m44;` in GLSL:
     vec4 c2 = m44[2].xyzw;
     vec4 c3 = m44[3].xyzw;
 
-### Column-major order and Row-major order
+### Column-major order
+
 
 See [The OpenGL Shading Language 4.6, 5.4.2 Vector and Matrix Constructors, page 101](https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.4.60.pdf)<br/>
 and [OpenGL ES Shading Language 3.20 Specification, 5.4.2 Vector and Matrix Constructors, page 100](https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.4.60.pdf):
@@ -70,7 +71,8 @@ and [OpenGL ES Shading Language 3.20 Specification, 5.4.2 Vector and Matrix Cons
          float, float, float, float,  // third column
          float, float, float, float); // fourth column
 
-Note, in compare to that a mathematical matrix in general is represented in row-major order. If a matrix is set up in column-major, then the x, y, z components of an axis or of the translation are in direct succession in the memory. This is a big advantage when accessing the axis vectors or the translation vector of the matrix..
+Note, in compare to a mathematical matrix where the columns are written from top to bottom, which feels natural, at the initialization of an OpenGL matrix, the colums are written from the left to the right. This lead sto the benefit, that the x, y, z components of an axis or of the translation are in direct succession in the memory. This is a big advantage when accessing the axis vectors or the translation vector of the matrix.<br/>
+See also [Data Type (GLSL) - Matrix constructors](https://www.khronos.org/opengl/wiki/Data_Type_(GLSL)#Matrix_constructors).
 
 <br/>
 See further:  

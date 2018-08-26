@@ -128,3 +128,6 @@
 ### Stackoverflow examples - three.js
 
 [Background scene](https://rabbid76.github.io/graphics-snippets/html/stackoverrflow_threejs/background_scene.html)
+
+[BSP geometry - subtract](https://rabbid76.github.io/graphics-snippets/html/stackoverrflow_threejs/geometry_bsp_subtrac.html)
+
