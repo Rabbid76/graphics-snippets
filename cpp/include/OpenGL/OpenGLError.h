@@ -78,23 +78,24 @@ public:
   virtual bool IsActive( void ) const override { return _active; }
   virtual bool IsSynchronous( void ) const override { return _synchronous; }
 
-  virtual bool Init( void ) override;                 //!< init the debug output
-  virtual void Destroy( void ) override;              //!< destroy all internal objects and cleanup
-  virtual bool Activate( bool synchronous ) override; //!< activate the debug output
-  virtual bool Deactivate( void ) override;           //!< decativate the debug output
+  virtual bool Init( Render::TDebugLevel level ) override; //!< initialize the debug output
+  virtual void Destroy( void ) override;                   //!< destroy all internal objects and cleanup
+  virtual bool Activate( bool synchronous ) override;      //!< activate the debug output
+  virtual bool Deactivate( void ) override;                //!< deactivate the debug output
 
 private:
 
   void EnableOutput( bool enable ) const;
   void EnableSynchronous( bool enable ) const;
 
-  // debug callback fucntion
+  // debug callback function
   static void DebugCallback( unsigned int source, unsigned int type, unsigned int id, unsigned int severity, int length, const char* message, const void* userParam );
   void DebugCallback( unsigned int source, unsigned int type, unsigned int id, unsigned int severity, int length, const char* message );
 
-  bool     _valid       = false; //!< valid and intilized
-  bool     _active      = false; //!< debug output is valid
-  bool     _synchronous = false; //!< debug output is synchronous
+  bool                _valid       = false;                    //!< valid and initialized
+  bool                _active      = false;                    //!< debug output is valid
+  bool                _synchronous = false;                    //!< debug output is synchronous
+  Render::TDebugLevel _level       = Render::TDebugLevel::all; //!< level of debug messages
 };
 
 }  // OpenGL

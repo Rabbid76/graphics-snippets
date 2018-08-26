@@ -11,10 +11,10 @@
 // OpenGL wrapper
 
 #include <GL/glew.h>
-//#include <GL/gl.h> not necessary because of glew 
+//#include <GL/gl.h> not necessary because of GLEW
 #include <GL/glu.h>
 
-// stl
+// STL
 
 #include <vector>
 #include <map>
@@ -25,7 +25,7 @@
 #include <deque>
 
 
-// preprcessor definitions
+// preprocessor definitions
 
 //#define OpenGL_program_introspection_old
 

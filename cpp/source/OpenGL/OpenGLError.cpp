@@ -121,7 +121,8 @@ CDebug::~CDebug( void )
 * \date    2018-05-10
 * \version 1.0
 **********************************************************************/
-bool CDebug::Init( void )
+bool CDebug::Init( 
+  Render::TDebugLevel level ) //!< I - debugging level
 {
   if ( IsValid() )
     return true;
@@ -136,14 +137,22 @@ bool CDebug::Init( void )
     glDebugMessageCallback( &CDebug::DebugCallback, this );
   _valid = true;
 
+  _level = level;
   if ( glDebugMessageControl )
   {
-    glDebugMessageControl( GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE );
+    switch (_level)
+    {
+      default:
+      case Render::TDebugLevel::all:
+        glDebugMessageControl( GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE );
+        break;
 
-    // See also [How to use glDebugMessageControl](https://stackoverflow.com/questions/51962968/how-to-use-gldebugmessagecontrol/51963554#51963554)
-    //
-    // glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_FALSE);
-    // glDebugMessageControl(GL_DEBUG_SOURCE_API, GL_DEBUG_TYPE_ERROR, GL_DONT_CARE, 0, NULL, GL_TRUE);
+      case Render::TDebugLevel::error_only:
+        // See also [How to use glDebugMessageControl](https://stackoverflow.com/questions/51962968/how-to-use-gldebugmessagecontrol/51963554#51963554)
+        glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_FALSE);
+        glDebugMessageControl(GL_DEBUG_SOURCE_API, GL_DEBUG_TYPE_ERROR, GL_DONT_CARE, 0, NULL, GL_TRUE);
+        break;
+    }
   }
 
   // In Debug Contexts, debug output starts enabled.

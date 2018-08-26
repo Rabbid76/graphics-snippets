@@ -5,15 +5,15 @@
 #include <GL/gl.h>
 #include <GL/glu.h>
 
-// glm
+// GLM
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-// freeglut
+// FreeGLUT
 #include <GLFW/glfw3.h>
 
-// stl
+// STL
 #include <vector>
 #include <stdexcept>
 #include <chrono>
@@ -45,7 +45,7 @@ enum TScene
   e_isect_line_plane,
   e_isect_plane_cone,
       
-  // depth, model, view, projection, clip space, ndc and viewport
+  // depth, model, view, projection, clip space, NDC and viewport
   e_viewport_coordsys,
   e_model,
   e_world,
@@ -165,7 +165,7 @@ public:
 int main(int argc, char** argv)
 {
     if ( glfwInit() == GLFW_FALSE )
-        throw std::runtime_error( "error initializing glfw" );
+        throw std::runtime_error( "error initializing GLFW" );
 
     // create OpenGL window and make OpenGL context current (`glfwInit` has to be done before).
     CWindow_Glfw window;
@@ -174,7 +174,7 @@ int main(int argc, char** argv)
     // OpenGL context needs to be current for `glewInit`
     glewExperimental = true;
     if ( glewInit() != GLEW_OK )
-        throw std::runtime_error( "error initializing glew" );
+        throw std::runtime_error( "error initializing GLEW" );
     window.InitDebug();
 
     std::cout << glGetString( GL_VENDOR ) << std::endl;
@@ -223,6 +223,16 @@ void CWindow_Glfw::CallbackResize(GLFWwindow* window, int cx, int cy)
     void *ptr = glfwGetWindowUserPointer( window );
     if ( CWindow_Glfw *wndPtr = static_cast<CWindow_Glfw*>( ptr ) )
         wndPtr->Resize( cx, cy );
+}
+
+void CWindow_Glfw::InitDebug( void ) // has to be done after GLEW initialization!
+{
+ #if defined(_DEBUG)
+    static bool synchromous = true;
+    _debug = std::make_unique<OpenGL::CDebug>();
+    _debug->Init( Render::TDebugLevel::all );
+    _debug->Activate( synchromous );
+#endif
 }
 
 void CWindow_Glfw::Init( int width, int height, bool doubleBuffer )
@@ -274,16 +284,6 @@ void CWindow_Glfw::Init( int width, int height, bool doubleBuffer )
     _updateViewport = true;
 
     _draw = std::make_unique<OpenGL::CBasicDraw>( c_core, c_samples, c_scale, c_fxaa );
-}
-
-void CWindow_Glfw::InitDebug( void ) // has to be done afer glew init!
-{
- #if defined(_DEBUG)
-    static bool synchromous = true;
-    _debug = std::make_unique<OpenGL::CDebug>();
-    _debug->Init();
-    _debug->Activate( synchromous );
-#endif
 }
 
 void CWindow_Glfw::Resize( int cx, int cy )
@@ -404,7 +404,7 @@ void CWindow_Glfw::TestScene( double time_ms )
     // TODO $$$ glLineWidth( > 1.0 ) is deprecated in core profile
     // TODO $$$ orbit controll
 
-    // TODO view matrix from pitch, yaw (and roll) or quaternation
+    // TODO view matrix from pitch, yaw (and roll) or quaternion
     
     _draw->ActivateBackground();
 
@@ -587,7 +587,7 @@ void CWindow_Glfw::IsectLinePlane( double time_ms )
   // TODO $$$
 }
 
-// TODO $$$ intersect los viewport -> in docaumatation as example for intersection of a line and a plane
+// TODO $$$ intersect LOS viewport -> in documentation as example for intersection of a line and a plane
 
 void CWindow_Glfw::IsectPlaneCone( double time_ms )
 {
@@ -623,7 +623,7 @@ void CWindow_Glfw::ViewportCoordsys( double time_ms )
 
   _draw->ActivateOpaque();
 
-  // TODO $$$ draw matrix coordinat system
+  // TODO $$$ draw matrix coordinate system
   _draw->DrawArrow( 3, {0.0f, 0.0f, 0.0f, axis_len, 0.0f, 0.0f }, Color_red_2(), 3, arr_size, false, true );
   _draw->DrawArrow( 3, {0.0f, 0.0f, 0.0f, 0.0f, axis_len, 0.0f }, Color_green_2(), 3, arr_size, false, true );
   _draw->DrawArrow( 3, {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, axis_len }, Color_blue_2(), 3, arr_size, false, true );

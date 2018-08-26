@@ -1,5 +1,5 @@
 /******************************************************************//**
-* @brief   Generic interface for debuging graphics output.
+* @brief   Generic interface for debugging graphics output.
 *
 * @author  gernot
 * @date    2018-02-06
@@ -30,9 +30,15 @@ namespace Render
 // IFont
 //---------------------------------------------------------------------
 
+enum class TDebugLevel
+{
+  all,
+  error_only
+};
+
 
 /******************************************************************//**
-* @brief   Generic interface for debuging graphics output.
+* @brief   Generic interface for debugging graphics output.
 *
 * @author  gernot
 * @date    2018-03-17
@@ -44,14 +50,14 @@ public:
 
   virtual ~IDebug() = default;
 
-  virtual bool IsValid( void ) const = 0;        //!< is valide
+  virtual bool IsValid( void ) const = 0;        //!< is valid
   virtual bool IsActive( void ) const = 0;       //!< is active
   virtual bool IsSynchronous( void ) const = 0;  //!< is synchronous output
 
-  virtual bool Init( void ) = 0;                 //!< init the debug output
+  virtual bool Init( TDebugLevel level ) = 0;    //!< initialize the debug output
   virtual void Destroy( void ) = 0;              //!< destroy all internal objects and cleanup
   virtual bool Activate( bool synchronous ) = 0; //!< activate the debug output
-  virtual bool Deactivate( void ) = 0;           //!< decativate the debug output
+  virtual bool Deactivate( void ) = 0;           //!< deactivate the debug output
   
 };
 
