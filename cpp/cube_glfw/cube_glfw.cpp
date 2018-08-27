@@ -34,11 +34,12 @@ class CModelControl
 {
 public:
 
-  using TM44  = glm::mat4;
-  using TV3   = glm::vec3;
-  using TPos  = std::array<int, 2>; 
-  using TSize = std::array<int, 2>;
-  using TTime = std::chrono::high_resolution_clock::time_point;
+  using TM44         = glm::mat4;
+  using TV3          = glm::vec3;
+  using TPos         = std::array<int, 2>; 
+  using TSize        = std::array<int, 2>;
+  using TTime        = std::chrono::high_resolution_clock::time_point;
+  using TAttenuation = std::array<float, 3>;
 
   const TM44 _ident_mat = glm::mat4( 1.0f );
 
@@ -53,6 +54,13 @@ public:
   }
 
   CModelControl & VpSize( TSize vp_size ) { _vp_size = vp_size; return *this; }
+
+  //! Set constant, linear and quadratic attenuation
+  //! \f$ f(x) \; = \; \frac{ x }{ a[0] \,+\, a[1]*x \,+\, a[2]*x*x } \f$
+  //! `attenuation = {1.0, 0.0, 0.0 }` is a linear uniform motion
+  //! TODO function plotter "x/dot(vec3(1.0,x,x*x),vec3(1.0,0.2,0.2))"
+  CModelControl & Attenuation( const TAttenuation &attenuation ) { _attenuation = attenuation; return *this; }  
+
 
   CModelControl & Init( void );
   CModelControl & Update( void );
@@ -96,21 +104,22 @@ private:
 
   CModelControl & ChangeMotionMode( bool drag, bool spin, bool automatically );
 
-  TM44   _orbit_mat{ _ident_mat };             // persistent orbit orientation matrix
-  TM44   _current_orbit_mat{ _ident_mat };     // additional orbit orientation while dragging
-  bool   _mouse_drag{ false };                 // dragging on or off
-  TV3    _mouse_drag_axis{ 1.0f, 0.0f, 0.0f }; // current drag axis
-  float  _mouse_drag_angle{ 0.0f };            // current drag distance
-  double _mouse_drag_time_s{ 0 };              // current drag time in seconds
-  TPos   _mouse_start{ 0, 0 };                 // start of mouse dragging operation
-  bool   _auto_rotate{ true };                 // auto rotate on or of
-  bool   _auto_spin{ false };                  // auto spin
-  TM44   _model_mat{ _ident_mat };             // persistent model matrix
-  TM44   _current_model_mat{ _ident_mat };     // current model matrix
-  TTime  _currentTime;                         // current time
-  TTime  _rotateStartTime;                     // start time of rotation
-  TTime  _dragStartTime;                       // start time of dragging
-  TSize  _vp_size;                             // viewport size
+  TM44         _orbit_mat{ _ident_mat };             // persistent orbit orientation matrix
+  TM44         _current_orbit_mat{ _ident_mat };     // additional orbit orientation while dragging
+  bool         _mouse_drag{ false };                 // dragging on or off
+  TV3          _mouse_drag_axis{ 1.0f, 0.0f, 0.0f }; // current drag axis
+  float        _mouse_drag_angle{ 0.0f };            // current drag distance
+  double       _mouse_drag_time_s{ 0 };              // current drag time in seconds
+  TPos         _mouse_start{ 0, 0 };                 // start of mouse dragging operation
+  bool         _auto_rotate{ true };                 // auto rotate on or of
+  bool         _auto_spin{ false };                  // auto spin
+  TM44         _model_mat{ _ident_mat };             // persistent model matrix
+  TM44         _current_model_mat{ _ident_mat };     // current model matrix
+  TTime        _currentTime;                         // current time
+  TTime        _rotateStartTime;                     // start time of rotation
+  TTime        _dragStartTime;                       // start time of dragging
+  TSize        _vp_size;                             // viewport size
+  TAttenuation _attenuation{ 1.0f, 0.0, 0.0 };       // attenuation of the automatic spin
 };
 
 
@@ -139,6 +148,8 @@ CModelControl & CModelControl::Update( void )
     if ( _mouse_drag_time_s > 0.0 )
     {
       double angle = _mouse_drag_angle * delta_time_s / _mouse_drag_time_s;
+      if ( fabs( _attenuation[0] ) > 0.001 )
+        angle /= _attenuation[0] + _attenuation[1] * angle + _attenuation[2] * angle*angle;
       _current_orbit_mat = RotateMat( (float)angle, _mouse_drag_axis );
     }
   }
@@ -440,6 +451,10 @@ void CWindow_Glfw::MainLoop ( void )
             _model_control->VpSize( _vpSize );
             _updateViewport = false;
         }
+
+        static std::array<float, 3>attenuation{ 1.0f, 0.05f, 0.0f };
+        //static std::array<float, 3>attenuation{ 1.0f, 0.1f, 0.1f };
+        _model_control->Attenuation( attenuation );
 
         _current_time     = std::chrono::high_resolution_clock::now();
         auto   delta_time = _current_time - _start_time;
