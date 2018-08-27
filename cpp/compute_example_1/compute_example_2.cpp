@@ -129,8 +129,8 @@ const char *csSrc_2[] = {
 };
 
 
-std::unique_ptr<OpenGL::ShaderProgram> g_compute_prog;
-std::unique_ptr<OpenGL::ShaderProgram> g_draw_prog;
+std::unique_ptr<OpenGL::ShaderProgramSimple> g_compute_prog;
+std::unique_ptr<OpenGL::ShaderProgramSimple> g_draw_prog;
 
 std::chrono::high_resolution_clock::time_point g_start_time;
 
@@ -212,7 +212,8 @@ int main(int argc, char** argv)
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 
     glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, icx, icy, 0, GL_RGB, GL_UNSIGNED_BYTE, img);
+    glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA32F, icx, icy );
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, icx, icy, GL_RGB, GL_UNSIGNED_BYTE, img);
     glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
 
     glBindTexture( GL_TEXTURE0, 0 );
@@ -250,7 +251,7 @@ int main(int argc, char** argv)
     
     std::cout << std::endl;
 
-    g_draw_prog.reset( new OpenGL::ShaderProgram(
+    g_draw_prog.reset( new OpenGL::ShaderProgramSimple(
     {
       { sh_vert, GL_VERTEX_SHADER },
       { sh_frag, GL_FRAGMENT_SHADER }
@@ -342,14 +343,17 @@ int main(int argc, char** argv)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, cx, cy, 0, GL_RGBA, GL_UNSIGNED_BYTE, test_img.data());
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, cx, cy, 0, GL_RGBA, GL_FLOAT, NULL);
+    glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA32F, cx, cy);
+    //glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, cx, cy, GL_RGBA, GL_UNSIGNED_BYTE, nullptr); // crash
+    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, cx, cy, 0, GL_RGBA, GL_FLOAT, NULL);
     OPENGL_CHECK_GL_ERROR
 
+    //glBindImageTexture(0, tobj, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
     glBindImageTexture(0, tobj, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F); 
     OPENGL_CHECK_GL_ERROR
 
     //glBindTextureUnit( 0, src_tobj );
+    //glBindImageTexture(1, src_tobj, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
     glBindImageTexture(1, src_tobj, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
 
       // launch compute shaders!

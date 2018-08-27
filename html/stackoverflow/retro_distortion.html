@@ -43,8 +43,118 @@
     }
 </script>
 
+<style>
+html,body { margin: 0; overflow: hidden; }
+#gui { position : absolute; top : 0; left : 0; }
+#ref-link { position : absolute; bottom : 0; left : 0; }  
+</style>
+
+<body>
+
+<div>
+<form id="gui" name="inputs">
+    <table>
+        <tr> <td> <font color= #CCF>distortion</font> </td>
+            <td> <input type="range" id="distortion" min="0" max="100" value="10"/> 
+        </td> </tr>
+        <tr> <td> <font color= #CCF>stripes</font> </td>
+            <td> <input type="range" id="stripes"  min="0" max="100" value="70"/> 
+        </td> </tr>
+        <tr> <td> <font color= #CCF>RGB shift</font> </td>
+            <td> <input type="range" id="rgbshift" min="0" max="100" value="10"/> 
+        </td> </tr>
+    </table>
+</form>
+</div>
+
+<a id="ref-link" href="https://stackoverflow.com/questions/46857876/old-school-tv-edge-warping-effect/46866546#46866546">
+Old school tv edge-warping effect?
+</a>
+
+<canvas id="retro-canvas" style="border: none;"></canvas>
+
+</body>
+
 <script type="text/javascript">
+
+var canvas;
+var gl;
+var prog;
+var bufObj = {};
+var textureObj;
+var maskTextureObj;
 var ShaderProgram = {};
+
+function  render(delteMS){
+
+    var vp = [canvas.width, canvas.height];
+    var distortion = document.getElementById( "distortion" ).value / 100.0;
+    var rgbShift = document.getElementById( "rgbshift" ).value / 1000.0;
+    var stripes = document.getElementById( "stripes" ).value / 100.0;
+
+    gl.viewport( 0, 0, canvas.width, canvas.height );
+    gl.enable( gl.DEPTH_TEST );
+    gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
+    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+    var texUnit = 0;
+    gl.activeTexture( gl.TEXTURE0 + texUnit );
+    gl.bindTexture( gl.TEXTURE_2D, textureObj );
+    ShaderProgram.Use( progDraw );
+    ShaderProgram.SetUniformI1( progDraw, "u_texture", texUnit );
+    ShaderProgram.SetUniformF1( progDraw, "u_distortion", distortion );
+    ShaderProgram.SetUniformF1( progDraw, "u_stripe", stripes );
+    ShaderProgram.SetUniformF1( progDraw, "u_rgbshift", rgbShift );
+    VertexBuffer.Draw( bufRect );
+
+    requestAnimationFrame(render);
+}  
+
+function resize() {
+    vp_size = [window.innerWidth, window.innerHeight]
+    //vp_size = [256, 256]
+    canvas.width = vp_size[0];
+    canvas.height = vp_size[1];
+}
+
+function init() {
+
+    canvas = document.getElementById( "retro-canvas");
+    gl = canvas.getContext( "experimental-webgl" );
+    //gl = canvas.getContext( "webgl2" );
+    if ( !gl )
+    return;
+
+    var texCX = 128;
+    var texCY = 128;
+    var texPlan = [];
+    for (ix = 0; ix < texCX; ++ix) {
+        for (iy = 0; iy < texCY; ++iy) {
+            var val_x = Math.sin( Math.PI * 6.0 * ix / texCX )
+            var val_y = Math.sin( Math.PI * 6.0 * iy / texCY )
+            texPlan.push( 128 + 127 * val_x, 63, 128 + 127 * val_y, 255 );
+        }
+    }
+
+    textureObj = Texture.LoadTexture2D( "https://raw.githubusercontent.com/Rabbid76/graphics-snippets/master/resource/texture/supermario.jpg" );
+    
+    progDraw = ShaderProgram.Create( 
+    [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },
+        { source : "draw-shader-fs", stage : gl.FRAGMENT_SHADER }
+    ] );
+    progDraw.inPos = gl.getAttribLocation( progDraw, "inPos" );
+    if ( prog == 0 )
+        return;
+
+    bufRect = VertexBuffer.Create(
+    [ { data :  [ -1, -1, 1, -1, 1, 1, -1, 1 ], attrSize : 2, attrLoc : progDraw.inPos } ],
+    [ 0, 1, 2, 0, 2, 3 ] );
+
+    window.onresize = resize;
+    resize();
+    requestAnimationFrame(render);
+}
+
+
 ShaderProgram.Create = function( shaderList ) {
     var shaderObjs = [];
     for ( var i_sh = 0; i_sh < shaderList.length; ++ i_sh ) {
@@ -166,100 +276,8 @@ Texture.LoadTexture2D = function( name ) {
     return texture;
 }
        
-function drawScene(){
+init();
 
-    var canvas = document.getElementById( "camera-canvas" );
-    var vp = [canvas.width, canvas.height];
-    var distortion = document.getElementById( "distortion" ).value / 100.0;
-    var rgbShift = document.getElementById( "rgbshift" ).value / 1000.0;
-    var stripes = document.getElementById( "stripes" ).value / 100.0;
-    
-    gl.viewport( 0, 0, canvas.width, canvas.height );
-    gl.enable( gl.DEPTH_TEST );
-    gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
-    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
-    var texUnit = 0;
-    gl.activeTexture( gl.TEXTURE0 + texUnit );
-    gl.bindTexture( gl.TEXTURE_2D, textureObj );
-    ShaderProgram.Use( progDraw );
-    ShaderProgram.SetUniformI1( progDraw, "u_texture", texUnit );
-    ShaderProgram.SetUniformF1( progDraw, "u_distortion", distortion );
-    ShaderProgram.SetUniformF1( progDraw, "u_stripe", stripes );
-    ShaderProgram.SetUniformF1( progDraw, "u_rgbshift", rgbShift );
-    VertexBuffer.Draw( bufRect );
-}  
-
-var gl;
-var prog;
-var bufObj = {};
-var textureObj;
-var maskTextureObj;
-function sceneStart() {
-
-    var canvas = document.getElementById( "camera-canvas");
-    gl = canvas.getContext( "experimental-webgl" );
-    //gl = canvas.getContext( "webgl2" );
-    if ( !gl )
-      return;
-
-    var texCX = 128;
-    var texCY = 128;
-    var texPlan = [];
-    for (ix = 0; ix < texCX; ++ix) {
-        for (iy = 0; iy < texCY; ++iy) {
-            var val_x = Math.sin( Math.PI * 6.0 * ix / texCX )
-            var val_y = Math.sin( Math.PI * 6.0 * iy / texCY )
-            texPlan.push( 128 + 127 * val_x, 63, 128 + 127 * val_y, 255 );
-        }
-    }
-    
-    textureObj = Texture.LoadTexture2D( "https://raw.githubusercontent.com/Rabbid76/graphics-snippets/master/resource/texture/supermario.jpg" );
-      
-    progDraw = ShaderProgram.Create( 
-      [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },
-        { source : "draw-shader-fs", stage : gl.FRAGMENT_SHADER }
-      ] );
-    progDraw.inPos = gl.getAttribLocation( progDraw, "inPos" );
-    if ( prog == 0 )
-        return;
-
-    bufRect = VertexBuffer.Create(
-    [ { data :  [ -1, -1, 1, -1, 1, 1, -1, 1 ], attrSize : 2, attrLoc : progDraw.inPos } ],
-      [ 0, 1, 2, 0, 2, 3 ] );
-
-    setInterval(drawScene, 50);
-}
 </script>
 
-<style>
-html,body { margin: 0; overflow: hidden; }
-#gui { position : absolute; top : 0; left : 0; }
-#ref-link { position : absolute; bottom : 0; left : 0; }  
-</style>
-
-<body onload="sceneStart();">
-    <div style="margin-left: 520px;">
-        <div style="float: right; width: 100%; background-color: #CCF;">
-            <form name="inputs">
-                <table>
-                    <tr> <td> distortion </td>
-                        <td> <input type="range" id="distortion" min="0" max="100" value="10"/> 
-                    </td> </tr>
-                    <tr> <td> stripes </td>
-                        <td> <input type="range" id="stripes"  min="0" max="100" value="70"/> 
-                    </td> </tr>
-                    <tr> <td> RGB shift </td>
-                        <td> <input type="range" id="rgbshift" min="0" max="100" value="10"/> 
-                    </td> </tr>
-                </table>
-            </form>
-        </div>
-        <div style="float: right; width: 520px; margin-left: -520px;">
-            <canvas id="camera-canvas" style="border: none;" width="512" height="512"></canvas>
-        </div>
-        <div style="clear: both;"></div>
-    </div>
-    <a id="ref-link" href="https://stackoverflow.com/questions/46857876/old-school-tv-edge-warping-effect/46866546#46866546">
-    Old school tv edge-warping effect?
-    </a>
 </body>

@@ -12,7 +12,7 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>source</Filter>
     </ClCompile>
-    <ClCompile Include="compute_example_5.cpp">
+    <ClCompile Include="compute_example_2.cpp">
       <Filter>source</Filter>
     </ClCompile>
   </ItemGroup>
