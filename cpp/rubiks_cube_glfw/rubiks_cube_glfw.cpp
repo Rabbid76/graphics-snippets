@@ -43,6 +43,9 @@ public:
 
   const TM44 _ident_mat = glm::mat4( 1.0f );
 
+  CModelControl( void ) { Init(); }
+  virtual ~CModelControl() = default;
+
   TM44 OrbitMatrix( void )
   {
     return (_mouse_drag || (_auto_rotate && _auto_spin )) ? _current_orbit_mat * _orbit_mat : _orbit_mat;
@@ -236,7 +239,8 @@ struct mat4: std::array<vec4, 4>
   using std::array<vec4, 4>::operator =;
   mat4 & operator = (glm::mat4 &source)
   {
-    std::copy( glm::value_ptr(source), glm::value_ptr(source)+16, (float*)(this) );
+    float *data_ptr = glm::value_ptr( source );
+    std::copy( data_ptr, data_ptr+16, (float*)(this) );
     return *this;
   }
 };
@@ -253,10 +257,153 @@ struct TUB_MVP
   Render::GLSL::mat4 _model;
 };
 
-struct TUB_RUBIKS
+
+namespace Rubiks
 {
-  std::array<Render::GLSL::mat4, 27> _model;
+
+static const int c_no_of_cubes = 27;
+using TM44Cubes = std::array<glm::mat4, c_no_of_cubes>;
+using TMapCubes = std::array<int, c_no_of_cubes>;
+
+
+struct T_RUBIKS_DATA
+{
+  std::array<Render::GLSL::mat4, c_no_of_cubes> _model;
 };
+
+enum class TAxis { x, y, z };
+enum class TRow { low, mid, high };
+enum class TDirection { left, right };
+
+class CCube
+{
+public:
+
+  CCube( void ) { Init(); }
+  virtual ~CCube() = default;
+
+  const T_RUBIKS_DATA * Data( void ) const { return &_data; }
+
+  CCube & Init( void );
+  CCube & UpdateM44Cubes( void );
+  CCube & Rotate( TAxis axis, TRow row, TDirection dir );
+
+private:
+
+  T_RUBIKS_DATA _data;
+
+  TMapCubes _cube_map;
+  TM44Cubes _trans_scale;
+  TM44Cubes _current_pos;
+  TM44Cubes _animation;
+};
+
+
+CCube & CCube::Init( void )
+{
+  for ( int z=0; z<3; ++ z )
+  {
+    for ( int y=0; y<3; ++ y )
+    {
+      for ( int x=0; x<3; ++ x )
+      {
+        int i = z * 9 + y * 3 + x;
+        _cube_map[i] = i;
+        glm::mat4 part_scale = glm::scale( glm::mat4(1.0f), glm::vec3(1.0f/3.0f) );
+        float offset = 1.1f * 2.0f / 3.0f;
+        glm::vec3 trans_vec( (float)(x-1), (float)(y-1), (float)(z-1) );
+        glm::mat4 part_trans = glm::translate( glm::mat4(1.0f), trans_vec * offset );
+        _trans_scale[i] = part_trans * part_scale;
+      }
+    }
+  }
+
+  for ( int i=0; i<c_no_of_cubes; ++i )
+  {
+    _current_pos[i] = glm::mat4( 1.0f );
+    _animation[i] = glm::mat4( 1.0f );
+  }
+
+  return UpdateM44Cubes();
+}
+
+
+CCube & CCube::UpdateM44Cubes( void )
+{
+  for ( int i = 0; i < c_no_of_cubes; ++i )
+    _data._model[i] = _animation[i] * _current_pos[i] * _trans_scale[i];
+  return *this;
+}
+
+
+CCube & CCube::Rotate( TAxis axis, TRow row, TDirection dir )
+{
+  static const std::unordered_map<TAxis, int> axis_map{ {TAxis::x, 0}, {TAxis::y, 1}, {TAxis::z, 2}};
+  static const std::unordered_map<TRow, int> row_map{ {TRow::low, 0}, {TRow::mid, 1}, {TRow::high, 2}};
+  std::array<glm::vec3, 3> axis_vec{ glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)};
+
+  int axis_i = axis_map.find(axis)->second;
+  int row_i  = row_map.find(row)->second;
+
+  int r_x[2]{ 0,2 };
+  int r_y[2]{ 0,2 };
+  int r_z[2]{ 0,2 };
+
+  switch ( axis )
+  {
+    case TAxis::x: r_x[0] = r_x[1] = row_i; break;
+    case TAxis::y: r_y[0] = r_y[1] = row_i; break;
+    case TAxis::z: r_z[0] = r_z[1] = row_i; break;
+  }
+
+  for ( int z = r_z[0]; z <= r_z[1]; ++ z )
+  {
+    for ( int y = r_y[0]; y <= r_y[1]; ++ y )
+    {
+      for ( int x = r_x[0]; x <= r_x[1]; ++ x )
+      {
+        int i = z * 9 + y * 3 + x;
+        i = _cube_map[i];
+        float angle = glm::radians( 90.0f ) * (dir == TDirection::left ? -1.0f : 1.0f);
+        glm::mat4 rot_mat = glm::rotate(glm::mat4(1.0f), angle, axis_vec[axis_i] );
+        _current_pos[i] = rot_mat * _current_pos[i];
+      }
+    }
+  }
+
+  static const std::array<std::array<int, 2>, 8> indices
+  { 
+    std::array<int, 2>{0, 0}, std::array<int, 2>{1, 0}, std::array<int, 2>{2, 0}, std::array<int, 2>{2, 1},
+    std::array<int, 2>{2, 2}, std::array<int, 2>{1, 2}, std::array<int, 2>{0, 2}, std::array<int, 2>{0, 1} 
+  };
+  TMapCubes current_map = _cube_map;
+  for ( int i = 0; i < 8; ++ i )
+  {
+    int j = ( dir == TDirection::left ? i + 6 : i + 2 ) % 8;
+    
+    std::array<int, 3> ao, an;
+    ao[axis_i] = row_i;
+    an[axis_i] = row_i;
+    ao[(axis_i+1) % 3] = indices[i][0];
+    an[(axis_i+1) % 3] = indices[j][0];
+    ao[(axis_i+2) % 3] = indices[i][1];
+    an[(axis_i+2) % 3] = indices[j][1];
+
+    int io = ao[0] + ao[1] * 3 + ao[2] * 9;
+    int in = an[0] + an[1] * 3 + an[2] * 9;
+
+    _cube_map[in] = current_map[io];
+  }
+
+  // TODO $$$ index mapping and index rotation
+
+  UpdateM44Cubes();
+  return *this;
+}
+
+
+}
+
 
 // [Switching Between windowed and full screen in OpenGL/GLFW 3.2](https://stackoverflow.com/questions/47402766/switching-between-windowed-and-full-screen-in-opengl-glfw-3-2/47462358#47462358)
 class CWindow_Glfw
@@ -270,11 +417,13 @@ public:
     static void CallbackResize(GLFWwindow* window, int cx, int cy);
     static void CallbackMouseButton( GLFWwindow *window, int button, int action, int mode );
     static void CallbackCursorPos( GLFWwindow *window, double x, double y );
+    static void CallbackKey( GLFWwindow *window, int key, int scancode, int action, int mods );
     void MainLoop( void );
 
     void Resize( int cx, int cy );
     void MouseButton( int button, int action, int mode );
     void CursorPos( double x, double y );
+    void Key( int key, int scancode, int action, int mods );
 
     std::chrono::high_resolution_clock::time_point _start_time;
     std::chrono::high_resolution_clock::time_point _current_time;
@@ -296,10 +445,10 @@ private:
     GLFWwindow *         _wnd            = nullptr;
     GLFWmonitor *        _monitor        = nullptr;
 
-    GLuint     _ubo_mvp = 0;
-    TUB_MVP    _ubo_mvp_data;
-    GLuint     _ubo_rubiks = 0;
-    TUB_RUBIKS _ubo_rubiks_data;
+    GLuint                         _ubo_mvp = 0;
+    TUB_MVP                        _ubo_mvp_data;
+    GLuint                         _ubo_rubiks = 0;
+    std::unique_ptr<Rubiks::CCube> _rubiks_cube;
 };
 
 int main(int argc, char** argv)
@@ -351,7 +500,6 @@ int main(int argc, char** argv)
 
 CWindow_Glfw::~CWindow_Glfw()
 {
-  _model_control.reset( nullptr );
   _debug.reset( nullptr );
 
   if ( _wnd != nullptr)
@@ -381,6 +529,14 @@ void CWindow_Glfw::CallbackCursorPos( GLFWwindow *window, double x, double y )
     void *ptr = glfwGetWindowUserPointer( window );
     if ( CWindow_Glfw *wndPtr = static_cast<CWindow_Glfw*>( ptr ) )
         wndPtr->CursorPos( x, y );
+}
+
+
+void CWindow_Glfw::CallbackKey( GLFWwindow *window, int key, int scancode, int action, int mods )
+{
+    void *ptr = glfwGetWindowUserPointer( window );
+    if ( CWindow_Glfw *wndPtr = static_cast<CWindow_Glfw*>( ptr ) )
+        wndPtr->Key( key, scancode, action, mods );
 }
 
 
@@ -431,6 +587,7 @@ void CWindow_Glfw::Init( int width, int height, int multisampling, bool doubleBu
     glfwSetWindowSizeCallback( _wnd, CWindow_Glfw::CallbackResize );
     glfwSetMouseButtonCallback( _wnd, CWindow_Glfw::CallbackMouseButton );
     glfwSetCursorPosCallback( _wnd, CWindow_Glfw::CallbackCursorPos );
+    glfwSetKeyCallback( _wnd, CWindow_Glfw::CallbackKey );
 
     _monitor =  glfwGetPrimaryMonitor();
     glfwGetWindowSize( _wnd, &_wndSize[0], &_wndSize[1] );
@@ -478,13 +635,47 @@ void CWindow_Glfw::CursorPos( double x, double y )
 }
 
 
+void CWindow_Glfw::Key( int key, int scancode, int action, int mods )
+{
+  if ( _rubiks_cube == nullptr )
+    return;
+
+  if ( action != GLFW_PRESS )
+    return;
+
+  switch (key)
+  {
+    case GLFW_KEY_1:
+    case GLFW_KEY_KP_1: _rubiks_cube->Rotate( Rubiks::TAxis::x, Rubiks::TRow::low, Rubiks::TDirection::left ); break;
+    case GLFW_KEY_2:
+    case GLFW_KEY_KP_2: _rubiks_cube->Rotate( Rubiks::TAxis::x, Rubiks::TRow::mid, Rubiks::TDirection::left ); break;
+    case GLFW_KEY_3:
+    case GLFW_KEY_KP_3: _rubiks_cube->Rotate( Rubiks::TAxis::x, Rubiks::TRow::high, Rubiks::TDirection::left ); break;
+
+    case GLFW_KEY_4:
+    case GLFW_KEY_KP_4: _rubiks_cube->Rotate( Rubiks::TAxis::y, Rubiks::TRow::low, Rubiks::TDirection::left ); break;
+    case GLFW_KEY_5:
+    case GLFW_KEY_KP_5: _rubiks_cube->Rotate( Rubiks::TAxis::y, Rubiks::TRow::mid, Rubiks::TDirection::left ); break;
+    case GLFW_KEY_6:
+    case GLFW_KEY_KP_6: _rubiks_cube->Rotate( Rubiks::TAxis::y, Rubiks::TRow::high, Rubiks::TDirection::left ); break;
+
+    case GLFW_KEY_7:
+    case GLFW_KEY_KP_7: _rubiks_cube->Rotate( Rubiks::TAxis::z, Rubiks::TRow::low, Rubiks::TDirection::left ); break;
+    case GLFW_KEY_8:
+    case GLFW_KEY_KP_8: _rubiks_cube->Rotate( Rubiks::TAxis::z, Rubiks::TRow::mid, Rubiks::TDirection::left ); break;
+    case GLFW_KEY_9:
+    case GLFW_KEY_KP_9: _rubiks_cube->Rotate( Rubiks::TAxis::z, Rubiks::TRow::high, Rubiks::TDirection::left ); break;
+  }
+}
+
+
 void CWindow_Glfw::MainLoop ( void )
 {
     InitScene();
-
-    _start_time = std::chrono::high_resolution_clock::now();
+   
+    _start_time    = std::chrono::high_resolution_clock::now();
     _model_control = std::make_unique<CModelControl>();
-    _model_control->Init();
+    _rubiks_cube   = std::make_unique<Rubiks::CCube>();
 
     while (!glfwWindowShouldClose(_wnd))
     {
@@ -553,6 +744,7 @@ void main()
 
 std::string sh_frag = R"(
 #version 460 core
+
 
 in vec3 vertPos;
 in vec4 vertCol;
@@ -653,9 +845,9 @@ void CWindow_Glfw::InitScene( void )
     glBindBufferBase( GL_UNIFORM_BUFFER, 1, _ubo_mvp );
     glBindBuffer( GL_UNIFORM_BUFFER, 0 );
 
-    glGenBuffers( 2, &_ubo_rubiks );
+    glGenBuffers( 1, &_ubo_rubiks );
     glBindBuffer( GL_UNIFORM_BUFFER, _ubo_rubiks );
-    glBufferData( GL_UNIFORM_BUFFER, sizeof( TUB_RUBIKS ), nullptr, GL_STATIC_DRAW );
+    glBufferData( GL_UNIFORM_BUFFER, sizeof( Rubiks::T_RUBIKS_DATA ), nullptr, GL_STATIC_DRAW );
     // glBufferStorage(GL_UNIFORM_BUFFER, GLsizeiptr size?, const GLvoid * data?, GLbitfield flags?);
     glBindBufferBase( GL_UNIFORM_BUFFER, 2, _ubo_rubiks );
     glBindBuffer( GL_UNIFORM_BUFFER, 0 );
@@ -665,23 +857,6 @@ void CWindow_Glfw::InitScene( void )
     glEnable( GL_CULL_FACE );
     glFrontFace( GL_CCW );
     glCullFace( GL_BACK );
-
-
-    for ( int z=0; z<3; ++ z )
-    {
-      for ( int y=0; y<3; ++ y )
-      {
-        for ( int x=0; x<3; ++ x )
-        {
-          int i = z * 9 + y * 3 + x;
-          glm::mat4 part_scale = glm::scale( glm::mat4(1.0f), glm::vec3(1.0f/3.0f) );
-          float offset = 1.1f * 2.0f / 3.0f;
-          glm::vec3 trans_vec( (float)(x-1), (float)(y-1), (float)(z-1) );
-          glm::mat4 part_trans = glm::translate( glm::mat4(1.0f), trans_vec * offset );
-          _ubo_rubiks_data._model[i] = part_trans * part_scale;
-        }
-      }
-    }
 }
 
 
@@ -697,9 +872,12 @@ void CWindow_Glfw::Render( double time_ms )
     glBufferSubData( GL_UNIFORM_BUFFER, 0, sizeof( TUB_MVP ), &_ubo_mvp_data );
     glBindBuffer( GL_UNIFORM_BUFFER, 0 );
 
-    glBindBuffer( GL_UNIFORM_BUFFER, _ubo_rubiks );
-    glBufferSubData( GL_UNIFORM_BUFFER, 0, sizeof( TUB_RUBIKS ), &_ubo_rubiks_data );
-    glBindBuffer( GL_UNIFORM_BUFFER, 0 );
+    if ( _rubiks_cube != nullptr )
+    {
+      glBindBuffer( GL_UNIFORM_BUFFER, _ubo_rubiks );
+      glBufferSubData( GL_UNIFORM_BUFFER, 0, sizeof( Rubiks::T_RUBIKS_DATA ), _rubiks_cube->Data() );
+      glBindBuffer( GL_UNIFORM_BUFFER, 0 );
+    }
 
     _prog->Use();
 
