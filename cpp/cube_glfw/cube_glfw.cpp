@@ -219,18 +219,53 @@ CModelControl & CModelControl::ChangeMotionMode( bool drag, bool spin, bool auto
 }
 
 
+namespace Render
+{
+
+namespace GLSL
+{
+
+using vec2 = std::array<float, 4>;
+using vec3 = std::array<float, 4>;
+using vec4 = std::array<float, 4>;
+using mat2 = std::array<vec2, 2>;
+using mat3 = std::array<vec3, 3>;
+
+struct mat4: std::array<vec4, 4>
+{
+  using std::array<vec4, 4>::operator =;
+  mat4 & operator = (glm::mat4 &source)
+  {
+    std::copy( glm::value_ptr(source), glm::value_ptr(source)+16, (float*)(this) );
+    return *this;
+  }
+};
+
+}
+
+}
+
+
+struct TUB_MVP
+{
+  Render::GLSL::mat4 _projection;
+  Render::GLSL::mat4 _view;
+  Render::GLSL::mat4 _model;
+};
+
 // [Switching Between windowed and full screen in OpenGL/GLFW 3.2](https://stackoverflow.com/questions/47402766/switching-between-windowed-and-full-screen-in-opengl-glfw-3-2/47462358#47462358)
 class CWindow_Glfw
 {
-private:
+public:
 
-    std::array< int, 2 > _wndPos         {0, 0};
-    std::array< int, 2 > _wndSize        {0, 0};
-    std::array< int, 2 > _vpSize         {0, 0};
-    bool                 _updateViewport = true;
-    bool                 _doubleBuffer   = true;
-    GLFWwindow *         _wnd            = nullptr;
-    GLFWmonitor *        _monitor        = nullptr;
+    virtual ~CWindow_Glfw();
+
+    void Init( int width, int height, int multisampling, bool doubleBuffer );
+    void InitDebug( void );
+    static void CallbackResize(GLFWwindow* window, int cx, int cy);
+    static void CallbackMouseButton( GLFWwindow *window, int button, int action, int mode );
+    static void CallbackCursorPos( GLFWwindow *window, double x, double y );
+    void MainLoop( void );
 
     void Resize( int cx, int cy );
     void MouseButton( int button, int action, int mode );
@@ -246,16 +281,18 @@ private:
     void InitScene( void );
     void Render( double time_ms );
 
-public:
+private:
 
-    virtual ~CWindow_Glfw();
+    std::array< int, 2 > _wndPos         {0, 0};
+    std::array< int, 2 > _wndSize        {0, 0};
+    std::array< int, 2 > _vpSize         {0, 0};
+    bool                 _updateViewport = true;
+    bool                 _doubleBuffer   = true;
+    GLFWwindow *         _wnd            = nullptr;
+    GLFWmonitor *        _monitor        = nullptr;
 
-    void Init( int width, int height, int multisampling, bool doubleBuffer );
-    void InitDebug( void );
-    static void CallbackResize(GLFWwindow* window, int cx, int cy);
-    static void CallbackMouseButton( GLFWwindow *window, int button, int action, int mode );
-    static void CallbackCursorPos( GLFWwindow *window, double x, double y );
-    void MainLoop( void );
+    GLuint  _ubo_mvp = 0;
+    TUB_MVP _ubo_mvp_data;
 };
 
 int main(int argc, char** argv)
@@ -454,6 +491,7 @@ void CWindow_Glfw::MainLoop ( void )
 
         static std::array<float, 3>attenuation{ 1.0f, 0.05f, 0.0f };
         //static std::array<float, 3>attenuation{ 1.0f, 0.1f, 0.1f };
+        //static std::array<float, 3>attenuation{ 1.0f, 0.05f, 0.0001f };
         _model_control->Attenuation( attenuation );
 
         _current_time     = std::chrono::high_resolution_clock::now();
@@ -475,7 +513,7 @@ void CWindow_Glfw::MainLoop ( void )
 
 
 std::string sh_vert = R"(
-#version 400 core
+#version 460 core
 
 layout (location = 0) in vec3 inPos;
 layout (location = 1) in vec4 inColor;
@@ -483,9 +521,12 @@ layout (location = 1) in vec4 inColor;
 out vec3 vertPos;
 out vec4 vertCol;
 
-uniform mat4 u_projection;
-uniform mat4 u_view;
-uniform mat4 u_model;
+layout (std140, binding = 1) uniform UB_MVP
+{ 
+    mat4 u_projection;
+    mat4 u_view;
+    mat4 u_model;
+};
 
 void main()
 {
@@ -499,7 +540,7 @@ void main()
 )";
 
 std::string sh_frag = R"(
-#version 400 core
+#version 460 core
 
 in vec3 vertPos;
 in vec4 vertCol;
@@ -592,6 +633,13 @@ void CWindow_Glfw::InitScene( void )
     glVertexAttribPointer( 1, 4, GL_FLOAT, GL_FALSE, 7*sizeof(*varray.data()), (void*)(3*sizeof(*varray.data())) );
     glEnableVertexAttribArray( 1 );
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
+ 
+    glGenBuffers( 1, &_ubo_mvp );
+    glBindBuffer( GL_UNIFORM_BUFFER, _ubo_mvp );
+    glBufferData( GL_UNIFORM_BUFFER, sizeof( TUB_MVP ), nullptr, GL_STATIC_DRAW );
+    // glBufferStorage(GL_UNIFORM_BUFFER, GLsizeiptr size?, const GLvoid * data?, GLbitfield flags?);
+    glBindBufferBase( GL_UNIFORM_BUFFER, 1, _ubo_mvp );
+    glBindBuffer( GL_UNIFORM_BUFFER, 0 );
 
     glEnable( GL_DEPTH_TEST );
 
@@ -604,17 +652,16 @@ void CWindow_Glfw::InitScene( void )
 void CWindow_Glfw::Render( double time_ms )
 {
     float     aspect    = (float)_vpSize[0] / (float)_vpSize[1];
-    glm::mat4 projecion = glm::perspective( glm::radians( 70.0f ), aspect, 0.01f, 100.0f );
-    glm::mat4 view      = glm::lookAt( glm::vec3(0.0f, -4.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f) );
 
-    glm::mat4 model( 1.0f ); 
-    if ( _model_control )
-      model = _model_control->OrbitMatrix() * _model_control->AutoModelMatrix();
+    _ubo_mvp_data._projection = glm::perspective( glm::radians( 70.0f ), aspect, 0.01f, 100.0f );
+    _ubo_mvp_data._view       = glm::lookAt( glm::vec3(0.0f, -4.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f) );
+    _ubo_mvp_data._model      = _model_control != nullptr ? _model_control->OrbitMatrix() * _model_control->AutoModelMatrix() : glm::mat4( 1.0f );
+   
+    glBindBuffer( GL_UNIFORM_BUFFER, _ubo_mvp );
+    glBufferSubData( GL_UNIFORM_BUFFER, 0, sizeof( TUB_MVP ), &_ubo_mvp_data );
+    glBindBuffer( GL_UNIFORM_BUFFER, 0 );
 
     _prog->Use();
-    _prog->SetUniformM44( "u_projection", glm::value_ptr(projecion) );
-    _prog->SetUniformM44( "u_view",       glm::value_ptr(view) );
-    _prog->SetUniformM44( "u_model",       glm::value_ptr(model) );
 
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);  
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
