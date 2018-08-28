@@ -67,6 +67,8 @@
 
 [Cone Step Mapping](https://rabbid76.github.io/graphics-snippets/html/technique/parallax_006_cone_step_mapping_derivative_tbn.html)
 
+[Compare of different "bump" mapping techniques](https://rabbid76.github.io/graphics-snippets/html/technique/parallax_mapping.html)
+
 
 ### Stackoverflow examples
 
@@ -81,8 +83,6 @@
 [Blur sphere](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/blur_sphere_texture.html)
 
 [Glow](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/glow.html)
-
-[Framebuffer swap](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/alternate_framebuffers.html)
 
 [Blinn](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/blinn.html)
 
