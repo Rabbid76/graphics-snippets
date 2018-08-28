@@ -95,22 +95,22 @@ private:
 
   CModelControl & ChangeMotionMode( bool drag, bool spin, bool automatically );
 
-  TM44         _orbit_mat{ _ident_mat };             // persistent orbit orientation matrix
-  TM44         _current_orbit_mat{ _ident_mat };     // additional orbit orientation while dragging
-  bool         _mouse_drag{ false };                 // dragging on or off
-  TV3          _mouse_drag_axis{ 1.0f, 0.0f, 0.0f }; // current drag axis
-  float        _mouse_drag_angle{ 0.0f };            // current drag distance
-  double       _mouse_drag_time_s{ 0 };              // current drag time in seconds
-  TPos         _mouse_start{ 0, 0 };                 // start of mouse dragging operation
-  bool         _auto_rotate{ true };                 // auto rotate on or of
-  bool         _auto_spin{ false };                  // auto spin
-  TM44         _model_mat{ _ident_mat };             // persistent model matrix
-  TM44         _current_model_mat{ _ident_mat };     // current model matrix
-  TTime        _currentTime;                         // current time
-  TTime        _rotateStartTime;                     // start time of rotation
-  TTime        _dragStartTime;                       // start time of dragging
-  TSize        _vp_size;                             // viewport size
-  TAttenuation _attenuation{ 1.0f, 0.0, 0.0 };       // attenuation of the automatic spin
+  TM44         _orbit_mat{ _ident_mat };             //!< persistent orbit orientation matrix
+  TM44         _current_orbit_mat{ _ident_mat };     //!< additional orbit orientation while dragging
+  bool         _mouse_drag{ false };                 //!< dragging on or off
+  TV3          _mouse_drag_axis{ 1.0f, 0.0f, 0.0f }; //!< current drag axis
+  float        _mouse_drag_angle{ 0.0f };            //!< current drag distance
+  double       _mouse_drag_time_s{ 0 };              //!< current drag time in seconds
+  TPos         _mouse_start{ 0, 0 };                 //!< start of mouse dragging operation
+  bool         _auto_rotate{ true };                 //!< auto rotate on or of
+  bool         _auto_spin{ false };                  //!< auto spin
+  TM44         _model_mat{ _ident_mat };             //!< persistent model matrix
+  TM44         _current_model_mat{ _ident_mat };     //!< current model matrix
+  TTime        _currentTime;                         //!< current time
+  TTime        _rotateStartTime;                     //!< start time of rotation
+  TTime        _dragStartTime;                       //!< start time of dragging
+  TSize        _vp_size;                             //!< viewport size
+  TAttenuation _attenuation{ 1.0f, 0.0, 0.0 };       //!< attenuation of the automatic spin
 };
 
 

@@ -13,6 +13,7 @@
 
 // STL
 #include <vector>
+#include <deque>
 #include <stdexcept>
 #include <chrono>
 #include <memory>
@@ -46,6 +47,8 @@ struct TChangeOperation
   TDirection _direction; //!< direction of rotation
 };
 
+using TChangeQueue = std::deque<TChangeOperation>;
+
 
 /******************************************************************//**
 * \brief Representation of the positions and arrangement of the single
@@ -59,25 +62,108 @@ class CCube
 {
 public:
 
+  // TODO $$$ time control class ITimeing
+  // - current time
+  // - time spawn
+  using TTime  = std::chrono::high_resolution_clock::time_point;
+
   CCube( void ) { Init(); }
   virtual ~CCube() = default;
 
   const T_RUBIKS_DATA * Data( void ) const { return &_data; }
 
+  CCube & AnimationTime( double time_s ) { _animation_time_s = time_s; return *this; }
+
   CCube & Init( void );
-  CCube & UpdateM44Cubes( void );
   CCube & Change( const TChangeOperation &op );
+  CCube & Update( void );
+
+  // TODO $$$ Shuffle
+  // add change operations change queue
+  // ensure not to add the inverse operation of the successor operation in queue
+  // ensure not to add the same operation three times in a row
 
 private:
 
+  CCube & UpdateM44Cubes( void );
   CCube & Rotate( const TChangeOperation &op );
 
-  T_RUBIKS_DATA _data;    //!< final Rubik's cube data for rendering
+  TTime TimeNow( void ) const
+  { 
+    return std::chrono::high_resolution_clock::now();
+  }
 
-  TMapCubes _cube_map;    //!< map the logical geometric position in the Rubik' cube to a corresponding sub cube 
-  TM44Cubes _trans_scale; //!< translation and scale of the sub cubes
-  TM44Cubes _current_pos; //!< current rotation of the sub cubes
-  TM44Cubes _animation;   //!< additional animation transformation
+  double DeltaTime_s( TTime time_start, TTime time_end ) const
+  {
+    auto   delta_time = time_end - time_start;
+    double time_ms    = (double)std::chrono::duration_cast<std::chrono::milliseconds>(delta_time).count() / 1000.0;
+    return time_ms;
+  }
+
+  int AxisIndex( TAxis axis ) const
+  {
+     static const std::unordered_map<TAxis, int> axis_map{ {TAxis::x, 0}, {TAxis::y, 1}, {TAxis::z, 2}};
+     int axis_i = axis_map.find(axis)->second;
+     return axis_i;
+  }
+
+  int RowIndex( TRow row ) const
+  {
+    static const std::unordered_map<TRow, int> row_map{ {TRow::low, 0}, {TRow::mid, 1}, {TRow::high, 2}};
+    int row_i = row_map.find(row)->second;
+    return row_i;
+  }
+
+  glm::vec3 Axis( int index ) const
+  {
+    static const std::array<glm::vec3, 3> axis_vec{ glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)};
+    return axis_vec[index];
+  }
+
+  std::vector<int> SubCubeIndices( TAxis axis, TRow row )
+  {
+    std::vector<int> indices;
+
+    // define the affected sub cubes
+    int row_i = RowIndex( row );
+    int r_x[2]{ 0,2 };
+    int r_y[2]{ 0,2 };
+    int r_z[2]{ 0,2 };
+    switch ( axis )
+    {
+      case TAxis::x: r_x[0] = r_x[1] = row_i; break;
+      case TAxis::y: r_y[0] = r_y[1] = row_i; break;
+      case TAxis::z: r_z[0] = r_z[1] = row_i; break;
+    }
+
+    // collect indices of collected sub cubes 
+    for ( int z = r_z[0]; z <= r_z[1]; ++ z )
+    {
+      for ( int y = r_y[0]; y <= r_y[1]; ++ y )
+      {
+        for ( int x = r_x[0]; x <= r_x[1]; ++ x )
+        {
+          int i = z * 9 + y * 3 + x;
+          indices.push_back( _cube_map[i] );
+        }
+      }
+    }
+
+    return indices;
+  }          
+
+  T_RUBIKS_DATA _data;                        //!< final Rubik's cube data for rendering
+
+  TMapCubes     _cube_map;                    //!< map the logical geometric position in the Rubik' cube to a corresponding sub cube 
+  TM44Cubes     _trans_scale;                 //!< translation and scale of the sub cubes
+  TM44Cubes     _current_pos;                 //!< current rotation of the sub cubes
+  TM44Cubes     _animation;                   //!< additional animation transformation
+
+  double        _animation_time_s{ 0 };       //!< time span for an animation
+  TChangeQueue  _pending_queue;               //!< queue of pending change operations
+  bool          _animation_is_active = false; //!< true: animation is active
+  TTime         _current_time;                //!< current time
+  TTime         _animation_start_time;        //!< start time of animation
 };
 
 
@@ -90,6 +176,7 @@ private:
 **********************************************************************/
 CCube & CCube::Init( void )
 {
+  // calculate initial positions of sub cubes
   for ( int z=0; z<3; ++ z )
   {
     for ( int y=0; y<3; ++ y )
@@ -107,13 +194,17 @@ CCube & CCube::Init( void )
     }
   }
 
+  // initialize animation and rotation matrices
   for ( int i=0; i<c_no_of_cubes; ++i )
   {
     _current_pos[i] = glm::mat4( 1.0f );
     _animation[i] = glm::mat4( 1.0f );
   }
 
-  return UpdateM44Cubes();
+  // Update the final model matrices of the sub cubes
+  UpdateM44Cubes();
+
+  return *this;
 }
 
 
@@ -144,7 +235,68 @@ CCube & CCube::UpdateM44Cubes( void )
 CCube & CCube::Change( 
   const TChangeOperation &op ) //!< I - specifies the change operation
 {
-  return Rotate( op );
+  _pending_queue.push_front( op );
+  return *this;
+}
+
+
+/******************************************************************//**
+* \brief Update animation and pending changes  
+* 
+* \author  gernot
+* \date    2018-08-28
+* \version 1.0
+**********************************************************************/
+CCube & CCube::Update( void )
+{
+  bool pending_changes = _pending_queue.empty() == false;
+  _animation_is_active = _animation_is_active && pending_changes;
+
+  _current_time = TimeNow();
+
+  if ( pending_changes == false )
+    return *this;
+  TChangeOperation op = _pending_queue.back();
+
+  if ( _animation_is_active )
+  {
+    double past_animation_time_s = DeltaTime_s( _animation_start_time, _current_time );
+    if ( past_animation_time_s < _animation_time_s )
+    {
+      // get change information
+      int              axis_i = AxisIndex( op._axis );
+      int              row_i  = RowIndex( op._row );
+      std::vector<int> cube_i = SubCubeIndices( op._axis, op._row );
+
+      // update the position model matrix of the affected sub cubes 
+      for ( auto i : cube_i )
+      {
+        float angle = glm::radians( 90.0f ) * (op._direction == TDirection::left ? -1.0f : 1.0f);
+        angle *= past_animation_time_s / _animation_time_s;
+        _animation[i] = glm::rotate( glm::mat4(1.0f), angle, Axis(axis_i) );
+      }
+
+      // Update the final model matrices of the sub cubes
+      UpdateM44Cubes();
+      
+      return *this;
+    }
+    _animation_is_active = false;
+  }
+  else if ( pending_changes )
+  {
+     _animation_is_active = true;
+     _animation_start_time = TimeNow();
+     return *this;
+  }
+ 
+  _pending_queue.pop_back();
+  Rotate( op );
+
+  // Update the final model matrices of the sub cubes
+  UpdateM44Cubes();
+
+  return *this;
 }
 
 
@@ -161,41 +313,20 @@ CCube & CCube::Change(
 CCube & CCube::Rotate( 
   const TChangeOperation &op ) //!< I - specifies the change operation
 {
-  static const std::unordered_map<TAxis, int> axis_map{ {TAxis::x, 0}, {TAxis::y, 1}, {TAxis::z, 2}};
-  static const std::unordered_map<TRow, int> row_map{ {TRow::low, 0}, {TRow::mid, 1}, {TRow::high, 2}};
-  int axis_i = axis_map.find(op._axis)->second;
-  int row_i  = row_map.find(op._row)->second;
+  // get change information
+  int              axis_i = AxisIndex( op._axis );
+  int              row_i  = RowIndex( op._row );
+  std::vector<int> cube_i = SubCubeIndices( op._axis, op._row );
 
-  // define the affected sub cubes
-  int r_x[2]{ 0,2 };
-  int r_y[2]{ 0,2 };
-  int r_z[2]{ 0,2 };
-  switch ( op._axis )
+  // update the position model matrix of the affected sub cubes 
+  for ( auto i : cube_i )
   {
-    case TAxis::x: r_x[0] = r_x[1] = row_i; break;
-    case TAxis::y: r_y[0] = r_y[1] = row_i; break;
-    case TAxis::z: r_z[0] = r_z[1] = row_i; break;
-  }
-
-  // update the position model matrix of the affected sub cubes  
-  static const std::array<glm::vec3, 3> axis_vec{ glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)};
-  for ( int z = r_z[0]; z <= r_z[1]; ++ z )
-  {
-    for ( int y = r_y[0]; y <= r_y[1]; ++ y )
-    {
-      for ( int x = r_x[0]; x <= r_x[1]; ++ x )
-      {
-        int i = z * 9 + y * 3 + x;
-        i = _cube_map[i];
-
-        // TODO $$$ optimize this algorithm and ensure precision. Avoid floating point inaccuracy on continuous operations.
-        // A rotation by 90 degrees can be performed by swapping 2 axis and inverting one of them,
-        // dependent on the direction of the rotation left (-90) or right (90).  
-        float angle = glm::radians( 90.0f ) * (op._direction == TDirection::left ? -1.0f : 1.0f);
-        glm::mat4 rot_mat = glm::rotate(glm::mat4(1.0f), angle, axis_vec[axis_i] );
-        _current_pos[i] = rot_mat * _current_pos[i];
-      }
-    }
+    // TODO $$$ optimize this algorithm and ensure precision. Avoid floating point inaccuracy on continuous operations.
+    // A rotation by 90 degrees can be performed by swapping 2 axis and inverting one of them,
+    // dependent on the direction of the rotation left (-90) or right (90).  
+    float angle = glm::radians( 90.0f ) * (op._direction == TDirection::left ? -1.0f : 1.0f);
+    glm::mat4 rot_mat = glm::rotate( glm::mat4(1.0f), angle, Axis(axis_i) );
+    _current_pos[i] = rot_mat * _current_pos[i];
   }
 
   // Recalculate the index map of the cubes
@@ -223,8 +354,9 @@ CCube & CCube::Rotate(
     _cube_map[in] = current_map[io];
   }
 
-  // Update the final model matrices of the sub cubes
-  UpdateM44Cubes();
+  // reset animation matrices
+  for ( int i=0; i<c_no_of_cubes; ++i )
+    _animation[i] = glm::mat4( 1.0f );
   
   return *this;
 }

@@ -324,16 +324,28 @@ void CWindow_Glfw::MainLoop ( void )
             _updateViewport = false;
         }
 
-        static std::array<float, 3>attenuation{ 1.0f, 0.05f, 0.0f };
-        //static std::array<float, 3>attenuation{ 1.0f, 0.1f, 0.1f };
-        //static std::array<float, 3>attenuation{ 1.0f, 0.05f, 0.0001f };
-        _model_control->Attenuation( attenuation );
+        if ( _model_control != nullptr )
+        {
+          static std::array<float, 3>attenuation{ 1.0f, 0.05f, 0.0f };
+          //static std::array<float, 3>attenuation{ 1.0f, 0.1f, 0.1f };
+          //static std::array<float, 3>attenuation{ 1.0f, 0.05f, 0.0001f };
+          _model_control->Attenuation( attenuation );
+        }
+
+        if ( _rubiks_cube != nullptr )
+        {
+          static double time_s = 1.0;
+          _rubiks_cube->AnimationTime( time_s );
+        }
 
         _current_time     = std::chrono::high_resolution_clock::now();
         auto   delta_time = _current_time - _start_time;
         double time_ms    = (double)std::chrono::duration_cast<std::chrono::milliseconds>(delta_time).count();
         
-        _model_control->Update();
+        if ( _model_control != nullptr )
+          _model_control->Update();
+        if ( _rubiks_cube != nullptr )
+          _rubiks_cube->Update();
 
         Render( time_ms );
 
