@@ -7,6 +7,12 @@
     <Filter Include="OpenGL">
       <UniqueIdentifier>{33227e24-8cb6-4233-974d-a8808f569e85}</UniqueIdentifier>
     </Filter>
+    <Filter Include="util">
+      <UniqueIdentifier>{c515a42d-1756-46a4-a2e6-77abe2db9f36}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="render">
+      <UniqueIdentifier>{3bc88512-4f10-415e-9179-e79d53f3aad2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -40,6 +46,15 @@
     </ClInclude>
     <ClInclude Include="..\include\OpenGL\OpenGLProgram.h">
       <Filter>OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\util\ModelControl.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\render\Render_GLSL.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\render\Render_GLM.h">
+      <Filter>render</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

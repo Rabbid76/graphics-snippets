@@ -27,227 +27,11 @@
 #include <OpenGL_Matrix_Camera.h>
 #include <OpenGL_SimpleShaderProgram_temp.h>
 #include <OpenGLError.h>
-                          
+#include <Render_GLSL.h>
+#include <Render_GLM.h>
+#include <ModelControl.h>                          
+#include <RubiksControl.h>
 
-// Controls model tracking
-class CModelControl
-{
-public:
-
-  using TM44         = glm::mat4;
-  using TV3          = glm::vec3;
-  using TPos         = std::array<int, 2>; 
-  using TSize        = std::array<int, 2>;
-  using TTime        = std::chrono::high_resolution_clock::time_point;
-  using TAttenuation = std::array<float, 3>;
-
-  const TM44 _ident_mat = glm::mat4( 1.0f );
-
-  CModelControl( void ) { Init(); }
-  virtual ~CModelControl() = default;
-
-  TM44 OrbitMatrix( void )
-  {
-    return (_mouse_drag || (_auto_rotate && _auto_spin )) ? _current_orbit_mat * _orbit_mat : _orbit_mat;
-  }
-
-  TM44 AutoModelMatrix( void )
-  {
-    return _auto_rotate ? _current_model_mat * _model_mat : _model_mat;
-  }
-
-  CModelControl & VpSize( TSize vp_size ) { _vp_size = vp_size; return *this; }
-
-  //! Set constant, linear and quadratic attenuation
-  //! \f$ f(x) \; = \; \frac{ x }{ a[0] \,+\, a[1]*x \,+\, a[2]*x*x } \f$
-  //! `attenuation = {1.0, 0.0, 0.0 }` is a linear uniform motion
-  //! TODO function plotter "x/dot(vec3(1.0,x,x*x),vec3(1.0,0.2,0.2))"
-  CModelControl & Attenuation( const TAttenuation &attenuation ) { _attenuation = attenuation; return *this; }  
-
-
-  CModelControl & Init( void );
-  CModelControl & Update( void );
-  CModelControl & UpdatePosition( TPos pos );
-
-  CModelControl & StartRotate( TPos pos )
-  {
-    _mouse_start = pos;
-    return ChangeMotionMode( true, false, false );
-  }
-
-  CModelControl & FinishRotate( TPos pos )
-  {
-    UpdatePosition( pos );
-    return ChangeMotionMode( false, true, true );
-  }
-
-  CModelControl & ToogleRotate( void )
-  {
-    return ChangeMotionMode( false, false, !_auto_rotate );
-  }
-
-private:
-
-  TM44 RotateMat( float angle_rad, const TV3 &axis ) const 
-  {
-    return glm::rotate( glm::mat4( 1.0f ), angle_rad, axis );
-  }
-
-  TTime TimeNow( void ) const
-  { 
-    return std::chrono::high_resolution_clock::now();
-  }
-
-  double DeltaTime_s( TTime time_start, TTime time_end ) const
-  {
-    auto   delta_time = time_end - time_start;
-    double time_ms    = (double)std::chrono::duration_cast<std::chrono::milliseconds>(delta_time).count() / 1000.0;
-    return time_ms;
-  }
-
-  CModelControl & ChangeMotionMode( bool drag, bool spin, bool automatically );
-
-  TM44         _orbit_mat{ _ident_mat };             // persistent orbit orientation matrix
-  TM44         _current_orbit_mat{ _ident_mat };     // additional orbit orientation while dragging
-  bool         _mouse_drag{ false };                 // dragging on or off
-  TV3          _mouse_drag_axis{ 1.0f, 0.0f, 0.0f }; // current drag axis
-  float        _mouse_drag_angle{ 0.0f };            // current drag distance
-  double       _mouse_drag_time_s{ 0 };              // current drag time in seconds
-  TPos         _mouse_start{ 0, 0 };                 // start of mouse dragging operation
-  bool         _auto_rotate{ true };                 // auto rotate on or of
-  bool         _auto_spin{ false };                  // auto spin
-  TM44         _model_mat{ _ident_mat };             // persistent model matrix
-  TM44         _current_model_mat{ _ident_mat };     // current model matrix
-  TTime        _currentTime;                         // current time
-  TTime        _rotateStartTime;                     // start time of rotation
-  TTime        _dragStartTime;                       // start time of dragging
-  TSize        _vp_size;                             // viewport size
-  TAttenuation _attenuation{ 1.0f, 0.0, 0.0 };       // attenuation of the automatic spin
-};
-
-
-CModelControl & CModelControl::Init( void )
-{
-  _currentTime     = TimeNow();  
-  _rotateStartTime = _currentTime;
-  _dragStartTime   = _currentTime;
-  return *this;
-}
-
-
-CModelControl & CModelControl::Update( void )
-{
-  _currentTime       = TimeNow();
-  _current_model_mat = _ident_mat;
-
-  double delta_time_s = DeltaTime_s( _rotateStartTime, _currentTime );
-
-  if ( _mouse_drag ) 
-  {
-    _current_orbit_mat = RotateMat( _mouse_drag_angle, _mouse_drag_axis );
-  }
-  else if ( _auto_rotate && _auto_spin )
-  {
-    if ( _mouse_drag_time_s > 0.0 )
-    {
-      double angle = _mouse_drag_angle * delta_time_s / _mouse_drag_time_s;
-      if ( fabs( _attenuation[0] ) > 0.001 )
-        angle /= _attenuation[0] + _attenuation[1] * angle + _attenuation[2] * angle*angle;
-      _current_orbit_mat = RotateMat( (float)angle, _mouse_drag_axis );
-    }
-  }
-  else if ( _auto_rotate && _auto_spin == false )
-  {
-    double dummy;
-    double auto_angle_x = std::modf( delta_time_s / 13.0, &dummy ) * 2.0 * M_PI;
-    double auto_angle_y = std::modf( delta_time_s / 17.0, &dummy ) * 2.0 * M_PI;
-    _current_model_mat = glm::rotate( _current_model_mat, (float)auto_angle_x, glm::vec3( 1.0f, 0.0f, 0.0f ) );
-    _current_model_mat = glm::rotate( _current_model_mat, (float)auto_angle_y, glm::vec3( 0.0f, 1.0f, 0.0f ) );
-  }
-
-  return *this;
-}
-
-
-CModelControl & CModelControl::UpdatePosition( TPos pos )
-{
-  if ( _mouse_drag == false )
-    return *this;
-
-  double dx = (double)(pos[0] - _mouse_start[0]) / (double)_vp_size[0];
-  double dy = (double)(pos[1] - _mouse_start[1]) / (double)_vp_size[1];
-
-  double len = std::sqrt(dx*dx + dy*dy);
-  if ( len <= 0.000001 )
-    return *this;
-  
-  _mouse_drag_angle  = (float)(M_PI * len);
-  _mouse_drag_axis   = glm::vec3((float)(dy/len), 0.0f, (float)(dx/len));
-  _mouse_drag_time_s = DeltaTime_s( _dragStartTime, TimeNow() );
-
-  return *this;
-}
-
-
-CModelControl & CModelControl::ChangeMotionMode( bool drag, bool spin, bool automatically )
-{
-  bool new_drag = drag;
-  bool new_auto = new_drag == false && automatically;
-  bool new_spin = new_auto && spin;
-  bool change   = _mouse_drag != new_drag || _auto_rotate != new_auto || _auto_spin != new_spin; 
-  if ( change == false )
-    return *this;
-
-  if ( new_drag && _mouse_drag == false )
-  {
-    _dragStartTime     = TimeNow();
-    _mouse_drag_angle  = 0.0f;
-    _mouse_drag_time_s = 0.0;
-  }
-  if ( new_auto && _auto_rotate == false )
-  {
-    _rotateStartTime = TimeNow();
-  }
-
-  _mouse_drag  = new_drag;
-  _auto_rotate = new_auto;
-  _auto_spin   = new_spin;
-
-  _orbit_mat         = _current_orbit_mat * _orbit_mat;
-  _current_orbit_mat = _ident_mat;
-  _model_mat         = _current_model_mat * _model_mat;
-  _current_model_mat =_ident_mat;
-
-  return *this;
-}
-
-
-namespace Render
-{
-
-namespace GLSL
-{
-
-using vec2 = std::array<float, 4>;
-using vec3 = std::array<float, 4>;
-using vec4 = std::array<float, 4>;
-using mat2 = std::array<vec2, 2>;
-using mat3 = std::array<vec3, 3>;
-
-struct mat4: std::array<vec4, 4>
-{
-  using std::array<vec4, 4>::operator =;
-  mat4 & operator = (glm::mat4 &source)
-  {
-    float *data_ptr = glm::value_ptr( source );
-    std::copy( data_ptr, data_ptr+16, (float*)(this) );
-    return *this;
-  }
-};
-
-}
-
-}
 
 
 struct TUB_MVP
@@ -256,153 +40,6 @@ struct TUB_MVP
   Render::GLSL::mat4 _view;
   Render::GLSL::mat4 _model;
 };
-
-
-namespace Rubiks
-{
-
-static const int c_no_of_cubes = 27;
-using TM44Cubes = std::array<glm::mat4, c_no_of_cubes>;
-using TMapCubes = std::array<int, c_no_of_cubes>;
-
-
-struct T_RUBIKS_DATA
-{
-  std::array<Render::GLSL::mat4, c_no_of_cubes> _model;
-};
-
-enum class TAxis { x, y, z };
-enum class TRow { low, mid, high };
-enum class TDirection { left, right };
-
-class CCube
-{
-public:
-
-  CCube( void ) { Init(); }
-  virtual ~CCube() = default;
-
-  const T_RUBIKS_DATA * Data( void ) const { return &_data; }
-
-  CCube & Init( void );
-  CCube & UpdateM44Cubes( void );
-  CCube & Rotate( TAxis axis, TRow row, TDirection dir );
-
-private:
-
-  T_RUBIKS_DATA _data;
-
-  TMapCubes _cube_map;
-  TM44Cubes _trans_scale;
-  TM44Cubes _current_pos;
-  TM44Cubes _animation;
-};
-
-
-CCube & CCube::Init( void )
-{
-  for ( int z=0; z<3; ++ z )
-  {
-    for ( int y=0; y<3; ++ y )
-    {
-      for ( int x=0; x<3; ++ x )
-      {
-        int i = z * 9 + y * 3 + x;
-        _cube_map[i] = i;
-        glm::mat4 part_scale = glm::scale( glm::mat4(1.0f), glm::vec3(1.0f/3.0f) );
-        float offset = 1.1f * 2.0f / 3.0f;
-        glm::vec3 trans_vec( (float)(x-1), (float)(y-1), (float)(z-1) );
-        glm::mat4 part_trans = glm::translate( glm::mat4(1.0f), trans_vec * offset );
-        _trans_scale[i] = part_trans * part_scale;
-      }
-    }
-  }
-
-  for ( int i=0; i<c_no_of_cubes; ++i )
-  {
-    _current_pos[i] = glm::mat4( 1.0f );
-    _animation[i] = glm::mat4( 1.0f );
-  }
-
-  return UpdateM44Cubes();
-}
-
-
-CCube & CCube::UpdateM44Cubes( void )
-{
-  for ( int i = 0; i < c_no_of_cubes; ++i )
-    _data._model[i] = _animation[i] * _current_pos[i] * _trans_scale[i];
-  return *this;
-}
-
-
-CCube & CCube::Rotate( TAxis axis, TRow row, TDirection dir )
-{
-  static const std::unordered_map<TAxis, int> axis_map{ {TAxis::x, 0}, {TAxis::y, 1}, {TAxis::z, 2}};
-  static const std::unordered_map<TRow, int> row_map{ {TRow::low, 0}, {TRow::mid, 1}, {TRow::high, 2}};
-  std::array<glm::vec3, 3> axis_vec{ glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)};
-
-  int axis_i = axis_map.find(axis)->second;
-  int row_i  = row_map.find(row)->second;
-
-  int r_x[2]{ 0,2 };
-  int r_y[2]{ 0,2 };
-  int r_z[2]{ 0,2 };
-
-  switch ( axis )
-  {
-    case TAxis::x: r_x[0] = r_x[1] = row_i; break;
-    case TAxis::y: r_y[0] = r_y[1] = row_i; break;
-    case TAxis::z: r_z[0] = r_z[1] = row_i; break;
-  }
-
-  for ( int z = r_z[0]; z <= r_z[1]; ++ z )
-  {
-    for ( int y = r_y[0]; y <= r_y[1]; ++ y )
-    {
-      for ( int x = r_x[0]; x <= r_x[1]; ++ x )
-      {
-        int i = z * 9 + y * 3 + x;
-        i = _cube_map[i];
-        float angle = glm::radians( 90.0f ) * (dir == TDirection::left ? -1.0f : 1.0f);
-        glm::mat4 rot_mat = glm::rotate(glm::mat4(1.0f), angle, axis_vec[axis_i] );
-        _current_pos[i] = rot_mat * _current_pos[i];
-      }
-    }
-  }
-
-  static const std::array<std::array<int, 2>, 8> indices
-  { 
-    std::array<int, 2>{0, 0}, std::array<int, 2>{1, 0}, std::array<int, 2>{2, 0}, std::array<int, 2>{2, 1},
-    std::array<int, 2>{2, 2}, std::array<int, 2>{1, 2}, std::array<int, 2>{0, 2}, std::array<int, 2>{0, 1} 
-  };
-  TMapCubes current_map = _cube_map;
-  for ( int i = 0; i < 8; ++ i )
-  {
-    int j = ( dir == TDirection::left ? i + 6 : i + 2 ) % 8;
-    
-    std::array<int, 3> ao, an;
-    ao[axis_i] = row_i;
-    an[axis_i] = row_i;
-    ao[(axis_i+1) % 3] = indices[i][0];
-    an[(axis_i+1) % 3] = indices[j][0];
-    ao[(axis_i+2) % 3] = indices[i][1];
-    an[(axis_i+2) % 3] = indices[j][1];
-
-    int io = ao[0] + ao[1] * 3 + ao[2] * 9;
-    int in = an[0] + an[1] * 3 + an[2] * 9;
-
-    _cube_map[in] = current_map[io];
-  }
-
-  // TODO $$$ index mapping and index rotation
-
-  UpdateM44Cubes();
-  return *this;
-}
-
-
-}
 
 
 // [Switching Between windowed and full screen in OpenGL/GLFW 3.2](https://stackoverflow.com/questions/47402766/switching-between-windowed-and-full-screen-in-opengl-glfw-3-2/47462358#47462358)
@@ -645,26 +282,26 @@ void CWindow_Glfw::Key( int key, int scancode, int action, int mods )
 
   switch (key)
   {
-    case GLFW_KEY_1:
-    case GLFW_KEY_KP_1: _rubiks_cube->Rotate( Rubiks::TAxis::x, Rubiks::TRow::low, Rubiks::TDirection::left ); break;
-    case GLFW_KEY_2:
-    case GLFW_KEY_KP_2: _rubiks_cube->Rotate( Rubiks::TAxis::x, Rubiks::TRow::mid, Rubiks::TDirection::left ); break;
-    case GLFW_KEY_3:
-    case GLFW_KEY_KP_3: _rubiks_cube->Rotate( Rubiks::TAxis::x, Rubiks::TRow::high, Rubiks::TDirection::left ); break;
+    case GLFW_KEY_1:    _rubiks_cube->Change( { Rubiks::TAxis::x, Rubiks::TRow::low, Rubiks::TDirection::left } ); break;
+    case GLFW_KEY_KP_1: _rubiks_cube->Change( { Rubiks::TAxis::x, Rubiks::TRow::low, Rubiks::TDirection::right } ); break;
+    case GLFW_KEY_2:    _rubiks_cube->Change( { Rubiks::TAxis::x, Rubiks::TRow::mid, Rubiks::TDirection::left } ); break;
+    case GLFW_KEY_KP_2: _rubiks_cube->Change( { Rubiks::TAxis::x, Rubiks::TRow::mid, Rubiks::TDirection::right } ); break;
+    case GLFW_KEY_3:    _rubiks_cube->Change( { Rubiks::TAxis::x, Rubiks::TRow::high, Rubiks::TDirection::left } ); break;
+    case GLFW_KEY_KP_3: _rubiks_cube->Change( { Rubiks::TAxis::x, Rubiks::TRow::high, Rubiks::TDirection::right } ); break;
 
-    case GLFW_KEY_4:
-    case GLFW_KEY_KP_4: _rubiks_cube->Rotate( Rubiks::TAxis::y, Rubiks::TRow::low, Rubiks::TDirection::left ); break;
-    case GLFW_KEY_5:
-    case GLFW_KEY_KP_5: _rubiks_cube->Rotate( Rubiks::TAxis::y, Rubiks::TRow::mid, Rubiks::TDirection::left ); break;
-    case GLFW_KEY_6:
-    case GLFW_KEY_KP_6: _rubiks_cube->Rotate( Rubiks::TAxis::y, Rubiks::TRow::high, Rubiks::TDirection::left ); break;
+    case GLFW_KEY_4:    _rubiks_cube->Change( { Rubiks::TAxis::y, Rubiks::TRow::low, Rubiks::TDirection::left } ); break;
+    case GLFW_KEY_KP_4: _rubiks_cube->Change( { Rubiks::TAxis::y, Rubiks::TRow::low, Rubiks::TDirection::right } ); break;
+    case GLFW_KEY_5:    _rubiks_cube->Change( { Rubiks::TAxis::y, Rubiks::TRow::mid, Rubiks::TDirection::left } ); break;
+    case GLFW_KEY_KP_5: _rubiks_cube->Change( { Rubiks::TAxis::y, Rubiks::TRow::mid, Rubiks::TDirection::right } ); break;
+    case GLFW_KEY_6:    _rubiks_cube->Change( { Rubiks::TAxis::y, Rubiks::TRow::high, Rubiks::TDirection::left } ); break;
+    case GLFW_KEY_KP_6: _rubiks_cube->Change( { Rubiks::TAxis::y, Rubiks::TRow::high, Rubiks::TDirection::right } ); break;
 
-    case GLFW_KEY_7:
-    case GLFW_KEY_KP_7: _rubiks_cube->Rotate( Rubiks::TAxis::z, Rubiks::TRow::low, Rubiks::TDirection::left ); break;
-    case GLFW_KEY_8:
-    case GLFW_KEY_KP_8: _rubiks_cube->Rotate( Rubiks::TAxis::z, Rubiks::TRow::mid, Rubiks::TDirection::left ); break;
-    case GLFW_KEY_9:
-    case GLFW_KEY_KP_9: _rubiks_cube->Rotate( Rubiks::TAxis::z, Rubiks::TRow::high, Rubiks::TDirection::left ); break;
+    case GLFW_KEY_7:    _rubiks_cube->Change( { Rubiks::TAxis::z, Rubiks::TRow::low, Rubiks::TDirection::left } ); break;
+    case GLFW_KEY_KP_7: _rubiks_cube->Change( { Rubiks::TAxis::z, Rubiks::TRow::low, Rubiks::TDirection::right } ); break;
+    case GLFW_KEY_8:    _rubiks_cube->Change( { Rubiks::TAxis::z, Rubiks::TRow::mid, Rubiks::TDirection::left } ); break;
+    case GLFW_KEY_KP_8: _rubiks_cube->Change( { Rubiks::TAxis::z, Rubiks::TRow::mid, Rubiks::TDirection::right } ); break;
+    case GLFW_KEY_9:    _rubiks_cube->Change( { Rubiks::TAxis::z, Rubiks::TRow::high, Rubiks::TDirection::left } ); break;
+    case GLFW_KEY_KP_9: _rubiks_cube->Change( { Rubiks::TAxis::z, Rubiks::TRow::high, Rubiks::TDirection::right } ); break;
   }
 }
 
@@ -864,9 +501,9 @@ void CWindow_Glfw::Render( double time_ms )
 {
     float     aspect    = (float)_vpSize[0] / (float)_vpSize[1];
 
-    _ubo_mvp_data._projection = glm::perspective( glm::radians( 70.0f ), aspect, 0.01f, 100.0f );
-    _ubo_mvp_data._view       = glm::lookAt( glm::vec3(0.0f, -4.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f) );
-    _ubo_mvp_data._model      = _model_control != nullptr ? _model_control->OrbitMatrix() * _model_control->AutoModelMatrix() : glm::mat4( 1.0f );
+    Render::GLM::CMat4(_ubo_mvp_data._projection) = glm::perspective( glm::radians( 70.0f ), aspect, 0.01f, 100.0f );
+    Render::GLM::CMat4(_ubo_mvp_data._view)       = glm::lookAt( glm::vec3(0.0f, -4.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f) );
+    Render::GLM::CMat4(_ubo_mvp_data._model)      = _model_control != nullptr ? _model_control->OrbitMatrix() * _model_control->AutoModelMatrix() : glm::mat4( 1.0f );
    
     glBindBuffer( GL_UNIFORM_BUFFER, _ubo_mvp );
     glBufferSubData( GL_UNIFORM_BUFFER, 0, sizeof( TUB_MVP ), &_ubo_mvp_data );

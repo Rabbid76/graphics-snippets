@@ -7,6 +7,9 @@
     <Filter Include="OpenGL">
       <UniqueIdentifier>{33227e24-8cb6-4233-974d-a8808f569e85}</UniqueIdentifier>
     </Filter>
+    <Filter Include="util">
+      <UniqueIdentifier>{ea7e2750-45df-4e4b-92ef-a3bb062af501}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -40,6 +43,12 @@
     </ClInclude>
     <ClInclude Include="..\include\OpenGL\OpenGLProgram.h">
       <Filter>OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\util\ModelControl.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\util\RubiksControl.h">
+      <Filter>util</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
