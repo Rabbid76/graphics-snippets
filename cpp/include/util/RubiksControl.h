@@ -271,9 +271,9 @@ CCube & CCube::Update( void )
       // update the position model matrix of the affected sub cubes 
       for ( auto i : cube_i )
       {
-        float angle = glm::radians( 90.0f ) * (op._direction == TDirection::left ? -1.0f : 1.0f);
+        double angle = glm::radians( 90.0f ) * (op._direction == TDirection::left ? -1.0f : 1.0f);
         angle *= past_animation_time_s / _animation_time_s;
-        _animation[i] = glm::rotate( glm::mat4(1.0f), angle, Axis(axis_i) );
+        _animation[i] = glm::rotate( glm::mat4(1.0f), (float)angle, Axis(axis_i) );
       }
 
       // Update the final model matrices of the sub cubes

@@ -363,10 +363,10 @@ std::string sh_vert = R"(
 #version 460 core
 
 layout (location = 0) in vec3 inPos;
-layout (location = 1) in vec4 inColor;
+layout (location = 1) in vec4 inTex;
 
 out vec3 vertPos;
-out vec4 vertCol;
+out vec4 vertTex;
 
 layout (std140, binding = 1) uniform UB_MVP
 { 
@@ -382,10 +382,30 @@ layout (std140, binding = 2) uniform UB_RUBIKS
 
 void main()
 {
-    mat4 model_view = u_view * u_model * u_rubiks_model[gl_InstanceID];
+    vec4 tex     = inTex;
+    int  cube_i  = gl_InstanceID;
+    int  color_i = int(tex.z + 0.5); 
+    int  x_i     = cube_i % 3;
+    int  y_i     = (cube_i % 9) / 3;
+    int  z_i     = cube_i / 9;
+
+    if ( color_i == 1 )
+        tex.z = x_i == 0 ? tex.z : 0.0;
+    else if ( color_i == 2 )
+        tex.z = x_i == 2 ? tex.z : 0.0;
+    else if ( color_i == 3 )
+        tex.z = y_i == 0 ? tex.z : 0.0;
+    else if ( color_i == 4 )
+        tex.z = y_i == 2 ? tex.z : 0.0;
+    else if ( color_i == 5 )
+        tex.z = z_i == 0 ? tex.z : 0.0;
+    else if ( color_i == 6 )
+        tex.z = z_i == 2 ? tex.z : 0.0;
+
+    mat4 model_view = u_view * u_model * u_rubiks_model[cube_i];
     vec4 vertx_pos  = model_view * vec4(inPos, 1.0);
 
-    vertCol     = inColor;
+    vertTex     = tex;
 		vertPos     = vertx_pos.xyz;
 		gl_Position = u_projection * vertx_pos;
 }
@@ -396,13 +416,25 @@ std::string sh_frag = R"(
 
 
 in vec3 vertPos;
-in vec4 vertCol;
+in vec4 vertTex;
 
 out vec4 fragColor;
 
+vec4 color_table[7] = vec4[7](
+    vec4(0.5, 0.5, 0.5, 1.0),
+    vec4(1.0, 0.0, 0.0, 1.0),
+    vec4(0.0, 1.0, 0.0, 1.0),
+    vec4(0.0, 0.0, 1.0, 1.0),
+    vec4(1.0, 0.5, 0.0, 1.0),
+    vec4(1.0, 1.0, 0.0, 1.0),
+    vec4(1.0, 0.0, 1.0, 1.0)
+);
+
 void main()
 {
-    fragColor  = vertCol;
+    int color_i = int(vertTex.z + 0.5); 
+
+    fragColor  = color_table[color_i];
 }
 )";
 
@@ -420,41 +452,41 @@ void CWindow_Glfw::InitScene( void )
 
     static const std::vector<float> varray
     { 
-      // front
-      -1.0f,  -1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f, 
-       1.0f,  -1.0f, -1.0f,    1.0f, 0.0f, 0.0f, 1.0f,
-       1.0f,  -1.0f,  1.0f,    1.0f, 0.0f, 0.0f, 1.0f,
-      -1.0f,  -1.0f,  1.0f,    1.0f, 0.0f, 0.0f, 1.0f,
-
-      // back
-       1.0f,   1.0f, -1.0f,    0.0f, 1.0f, 0.0f, 1.0f, 
-      -1.0f,   1.0f, -1.0f,    0.0f, 1.0f, 0.0f, 1.0f,
-      -1.0f,   1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,
-       1.0f,   1.0f,  1.0f,    0.0f, 1.0f, 0.0f, 1.0f,
-
-       // left
-      -1.0f,   1.0f, -1.0f,    0.0f, 0.0f, 1.0f, 1.0f, 
-      -1.0f,  -1.0f, -1.0f,    0.0f, 0.0f, 1.0f, 1.0f,
-      -1.0f,  -1.0f,  1.0f,    0.0f, 0.0f, 1.0f, 1.0f,
-      -1.0f,   1.0f,  1.0f,    0.0f, 0.0f, 1.0f, 1.0f,
+      // left
+      -1.0f,   1.0f, -1.0f,    0.0f, 0.0f, 1.0f, 0.0f, 
+      -1.0f,  -1.0f, -1.0f,    0.0f, 1.0f, 1.0f, 0.0f,
+      -1.0f,  -1.0f,  1.0f,    1.0f, 1.0f, 1.0f, 0.0f,
+      -1.0f,   1.0f,  1.0f,    1.0f, 0.0f, 1.0f, 0.0f,
 
        // right
-       1.0f,  -1.0f, -1.0f,    1.0f, 0.5f, 0.0f, 1.0f, 
-       1.0f,   1.0f, -1.0f,    1.0f, 0.5f, 0.0f, 1.0f,
-       1.0f,   1.0f,  1.0f,    1.0f, 0.5f, 0.0f, 1.0f,
-       1.0f,  -1.0f,  1.0f,    1.0f, 0.5f, 0.0f, 1.0f,
+       1.0f,  -1.0f, -1.0f,    0.0f, 0.0f, 2.0f, 0.0f, 
+       1.0f,   1.0f, -1.0f,    0.0f, 1.0f, 2.0f, 0.0f,
+       1.0f,   1.0f,  1.0f,    1.0f, 1.0f, 2.0f, 0.0f,
+       1.0f,  -1.0f,  1.0f,    1.0f, 0.0f, 2.0f, 0.0f,
+
+       // front
+      -1.0f,  -1.0f, -1.0f,    0.0f, 0.0f, 3.0f, 0.0f, 
+       1.0f,  -1.0f, -1.0f,    0.0f, 1.0f, 3.0f, 0.0f,
+       1.0f,  -1.0f,  1.0f,    1.0f, 1.0f, 3.0f, 0.0f,
+      -1.0f,  -1.0f,  1.0f,    1.0f, 0.0f, 3.0f, 0.0f,
+
+      // back
+       1.0f,   1.0f, -1.0f,    0.0f, 0.0f, 4.0f, 0.0f, 
+      -1.0f,   1.0f, -1.0f,    0.0f, 1.0f, 4.0f, 0.0f,
+      -1.0f,   1.0f,  1.0f,    1.0f, 1.0f, 4.0f, 0.0f,
+       1.0f,   1.0f,  1.0f,    1.0f, 0.0f, 4.0f, 0.0f,
 
        // bottom
-      -1.0f,   1.0f, -1.0f,    1.0f, 1.0f, 0.0f, 1.0f, 
-       1.0f,   1.0f, -1.0f,    1.0f, 1.0f, 0.0f, 1.0f,
-       1.0f,  -1.0f, -1.0f,    1.0f, 1.0f, 0.0f, 1.0f,
-      -1.0f,  -1.0f, -1.0f,    1.0f, 1.0f, 0.0f, 1.0f,
+      -1.0f,   1.0f, -1.0f,    0.0f, 0.0f, 5.0f, 0.0f, 
+       1.0f,   1.0f, -1.0f,    0.0f, 1.0f, 5.0f, 0.0f,
+       1.0f,  -1.0f, -1.0f,    1.0f, 1.0f, 5.0f, 0.0f,
+      -1.0f,  -1.0f, -1.0f,    1.0f, 0.0f, 5.0f, 0.0f,
 
        // top
-      -1.0f,  -1.0f,  1.0f,    1.0f, 0.0f, 1.0f, 1.0f, 
-       1.0f,  -1.0f,  1.0f,    1.0f, 0.0f, 1.0f, 1.0f,
-       1.0f,   1.0f,  1.0f,    1.0f, 0.0f, 1.0f, 1.0f,
-      -1.0f,   1.0f,  1.0f,    1.0f, 0.0f, 1.0f, 1.0f
+      -1.0f,  -1.0f,  1.0f,    0.0f, 0.0f, 6.0f, 0.0f, 
+       1.0f,  -1.0f,  1.0f,    0.0f, 1.0f, 6.0f, 0.0f,
+       1.0f,   1.0f,  1.0f,    1.0f, 1.0f, 6.0f, 0.0f,
+      -1.0f,   1.0f,  1.0f,    1.0f, 0.0f, 6.0f, 0.0f
     };
 
     static const std::vector<unsigned int> indices
