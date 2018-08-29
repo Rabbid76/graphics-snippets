@@ -15,6 +15,7 @@
 
 // STL
 #include <vector>
+#include <limits>
 #include <stdexcept>
 #include <chrono>
 #include <memory>
@@ -71,6 +72,7 @@ public:
 
     void InitScene( void );
     void Render( double time_ms );
+    void UpdateRenderData( void );
 
 private:
 
@@ -312,7 +314,10 @@ void CWindow_Glfw::MainLoop ( void )
    
     _start_time    = std::chrono::high_resolution_clock::now();
     _model_control = std::make_unique<CModelControl>();
-    _rubiks_cube   = std::make_unique<Rubiks::CCube>();
+
+    static float offset = 2.0f * 1.1f;
+    static float scale = 1.0f / 3.0f;
+    _rubiks_cube = std::make_unique<Rubiks::CCube>( offset, scale );
 
     while (!glfwWindowShouldClose(_wnd))
     {
@@ -365,8 +370,9 @@ std::string sh_vert = R"(
 layout (location = 0) in vec3 inPos;
 layout (location = 1) in vec4 inTex;
 
-out vec3 vertPos;
-out vec4 vertTex;
+out vec3  vertPos;
+out vec4  vertTex;
+out float highlight;
 
 layout (std140, binding = 1) uniform UB_MVP
 { 
@@ -378,6 +384,7 @@ layout (std140, binding = 1) uniform UB_MVP
 layout (std140, binding = 2) uniform UB_RUBIKS
 { 
     mat4 u_rubiks_model[27];
+    int  u_side_hit;
 };
 
 void main()
@@ -405,8 +412,10 @@ void main()
     mat4 model_view = u_view * u_model * u_rubiks_model[cube_i];
     vec4 vertx_pos  = model_view * vec4(inPos, 1.0);
 
+    vertPos     = vertx_pos.xyz;
     vertTex     = tex;
-		vertPos     = vertx_pos.xyz;
+    highlight   = tex.z > 0.5 && color_i == u_side_hit ? 1.0 : 0.0;	
+
 		gl_Position = u_projection * vertx_pos;
 }
 )";
@@ -414,9 +423,9 @@ void main()
 std::string sh_frag = R"(
 #version 460 core
 
-
-in vec3 vertPos;
-in vec4 vertTex;
+in vec3  vertPos;
+in vec4  vertTex;
+in float highlight;
 
 out vec4 fragColor;
 
@@ -432,9 +441,12 @@ vec4 color_table[7] = vec4[7](
 
 void main()
 {
-    int color_i = int(vertTex.z + 0.5); 
+    int color_i = int(vertTex.z + 0.5);
 
-    fragColor  = color_table[color_i];
+    vec4 color = color_table[color_i]; 
+    color.rgb *= max(0.5, highlight);
+
+    fragColor  = color;
 }
 )";
 
@@ -543,11 +555,7 @@ void CWindow_Glfw::InitScene( void )
 
 void CWindow_Glfw::Render( double time_ms )
 {
-    float     aspect    = (float)_vpSize[0] / (float)_vpSize[1];
-
-    Render::GLM::CMat4(_ubo_mvp_data._projection) = glm::perspective( glm::radians( 70.0f ), aspect, 0.01f, 100.0f );
-    Render::GLM::CMat4(_ubo_mvp_data._view)       = glm::lookAt( glm::vec3(0.0f, -4.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f) );
-    Render::GLM::CMat4(_ubo_mvp_data._model)      = _model_control != nullptr ? _model_control->OrbitMatrix() * _model_control->AutoModelMatrix() : glm::mat4( 1.0f );
+    UpdateRenderData();
    
     glBindBuffer( GL_UNIFORM_BUFFER, _ubo_mvp );
     glBufferSubData( GL_UNIFORM_BUFFER, 0, sizeof( TUB_MVP ), &_ubo_mvp_data );
@@ -566,4 +574,125 @@ void CWindow_Glfw::Render( double time_ms )
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
       
     glDrawElementsInstanced( GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr, 27 );
+}
+
+
+void CWindow_Glfw::UpdateRenderData( void )
+{
+    float aspect = (float)_vpSize[0] / (float)_vpSize[1];
+
+    glm::mat4 projection = glm::perspective( glm::radians( 70.0f ), aspect, 0.01f, 100.0f );
+    glm::mat4 view       = glm::lookAt( glm::vec3(0.0f, -4.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f) );
+    glm::mat4 model      = _model_control != nullptr ? _model_control->OrbitMatrix() * _model_control->AutoModelMatrix() : glm::mat4( 1.0f );
+
+    Render::GLM::CMat4(_ubo_mvp_data._projection) = projection;
+    Render::GLM::CMat4(_ubo_mvp_data._view)       = view;
+    Render::GLM::CMat4(_ubo_mvp_data._model)      = model;
+
+    glm::mat4 modelview          = view * model;
+    glm::mat4 inverse_modelview  = glm::inverse( modelview );
+    glm::mat4 inverse_projection = glm::inverse( projection );
+
+    if ( _rubiks_cube == nullptr )
+      return;
+    float cube_offset = _rubiks_cube->Offset();
+    float cube_scale  = _rubiks_cube->Scale();
+    
+    // intersect ray with the side of the cube
+    //
+    // Is it possible get which surface of cube will be click in OpenGL?
+    // [https://stackoverflow.com/questions/45893277/is-it-possble-get-which-surface-of-cube-will-be-click-in-opengl/45946943#45946943]
+    //
+    // How to recover view space position given view space depth value and ndc xy
+    // [https://stackoverflow.com/questions/11277501/how-to-recover-view-space-position-given-view-space-depth-value-and-ndc-xy/46118945#46118945]
+
+
+    // calculate the NDC position of the cursor on the far plane and the camera position
+
+    double w = (double)_vpSize[0];
+    double h = (double)_vpSize[1];
+    double x, y;
+    glfwGetCursorPos( _wnd, &x, &y );
+    double ndc_x = 2.0 * x/w - 1.0;
+    double ndc_y = 1.0 - 2.0 * y/h;
+    glm::vec4 ndc_cursor_far( ndc_x, ndc_y, 1.0, 1.0 ); // z = 1.0 -> far plane
+
+    int isect_side = -1;
+    if ( fabs( ndc_x ) < 1.0f && fabs( ndc_y ) )
+    {
+        // calculate a ray from the eye position along the line of sight through the cursor position
+
+        glm::vec4 view_cursor = inverse_projection * ndc_cursor_far;
+
+        glm::vec4 view_r0 = glm::vec4( 0.0f, 0.0f, 0.0f, 1.0f );
+        glm::vec4 view_r1 = glm::vec4( glm::vec3( view_cursor ) / view_cursor.w, 1.0f );
+
+        glm::vec4 model_r0 = inverse_modelview * view_r0;
+        glm::vec4 model_r1 = inverse_modelview * view_r1; 
+
+        glm::vec3 r0_ray = glm::vec3( model_r0 );
+        glm::vec3 d_ray  = glm::normalize( glm::vec3( model_r1 ) - r0_ray );
+
+
+        // define the cube corner points and its faces
+
+        static const std::array<glm::vec3, 8> cube_pts 
+        {
+          glm::vec3(-1.0f, -1.0f, -1.0f), // 0 : left  front bottom
+          glm::vec3( 1.0f, -1.0f, -1.0f), // 1 : right front bottom
+          glm::vec3(-1.0f,  1.0f, -1.0f), // 2 : left  back  bottom
+          glm::vec3( 1.0f,  1.0f, -1.0f), // 3 : right back  bottom
+          glm::vec3(-1.0f, -1.0f,  1.0f), // 4 : left  front top
+          glm::vec3( 1.0f, -1.0f,  1.0f), // 5 : right front top
+          glm::vec3(-1.0f,  1.0f,  1.0f), // 6 : left  back  top
+          glm::vec3( 1.0f,  1.0f,  1.0f), // 7 : right back  top
+        };
+        static const std::array<std::array<int, 4>, 6> cube_faces
+        {
+          std::array<int, 4>{ 2, 0, 4, 6 }, // 0 : left
+          std::array<int, 4>{ 1, 3, 7, 5 }, // 1 : right
+          std::array<int, 4>{ 0, 1, 5, 4 }, // 2 : front
+          std::array<int, 4>{ 2, 3, 7, 6 }, // 3 : back
+          std::array<int, 4>{ 0, 1, 3, 2 }, // 4 : bottom
+          std::array<int, 4>{ 4, 5, 7, 6 }  // 5 : top
+        };
+
+        // find the nearest intersection of a side of the cube and the ray 
+
+        float cube_sidelen_2 = (cube_offset + 1.0f) * cube_scale; // half side length of the entire cube
+
+        float     isect_dist = std::numeric_limits<float>::max();
+        glm::vec3 isect_pt;
+        for ( int i = 0; i < 6; ++ i )
+        {
+          // calculate the normal vector of the cube side
+          const glm::vec3 &pa = cube_pts[cube_faces[i][0]];
+          const glm::vec3 &pb = cube_pts[cube_faces[i][1]];
+          const glm::vec3 &pc = cube_pts[cube_faces[i][3]];
+          glm::vec3 n_plane  = glm::normalize( glm::cross( pb - pa, pc - pa ) );
+          glm::vec3 p0_plane = pa * cube_sidelen_2;
+
+          // calculate the distance to the intersection with the plane defined by the side of the cube
+          float dist = glm::dot( pa - r0_ray, n_plane ) / glm::dot( d_ray, n_plane );
+          if ( fabs(dist) > isect_dist )
+            continue;
+
+          // calculate the intersection point with the plane
+          glm::vec3 x_pt = r0_ray + d_ray * dist;
+
+          // check if the intersection is on the side of the cube
+          bool on_side = fabs( x_pt.x ) < cube_sidelen_2 + 0.001 &&
+                         fabs( x_pt.y ) < cube_sidelen_2 + 0.001 &&
+                         fabs( x_pt.z ) < cube_sidelen_2 + 0.001;
+          if ( on_side == false )
+            continue;
+
+          isect_side = i;
+          isect_dist = fabs(dist);
+          isect_pt   = x_pt;
+        }
+    }
+    
+    // set the hit data
+    _rubiks_cube->Data()->_side_hit = isect_side + 1;
 }

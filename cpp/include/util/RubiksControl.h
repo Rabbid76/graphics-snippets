@@ -34,6 +34,7 @@ using TMapCubes = std::array<int, c_no_of_cubes>;
 struct T_RUBIKS_DATA
 {
   std::array<Render::GLSL::mat4, c_no_of_cubes> _model;
+  int                                           _side_hit;
 };
 
 enum class TAxis { x, y, z };
@@ -67,14 +68,19 @@ public:
   // - time spawn
   using TTime  = std::chrono::high_resolution_clock::time_point;
 
-  CCube( void ) { Init(); }
+  CCube( float offset, float scale ) { Init( offset, scale ); }
   virtual ~CCube() = default;
 
   const T_RUBIKS_DATA * Data( void ) const { return &_data; }
+  T_RUBIKS_DATA *       Data( void )       { return &_data; }
+  
+  float Offset( void ) const { return _offset; }
+  float Scale( void )  const { return _scale; }
 
   CCube & AnimationTime( double time_s ) { _animation_time_s = time_s; return *this; }
 
-  CCube & Init( void );
+  CCube & Init( float offset, float scale );
+  CCube & InitGeometry( float offset, float scale );
   CCube & Change( const TChangeOperation &op );
   CCube & Update( void );
 
@@ -154,6 +160,8 @@ private:
 
   T_RUBIKS_DATA _data;                        //!< final Rubik's cube data for rendering
 
+  float         _offset;                      //!< distance between 2 sub cubes (unscaled)
+  float         _scale;                       //!< scale of the sub cube
   TMapCubes     _cube_map;                    //!< map the logical geometric position in the Rubik' cube to a corresponding sub cube 
   TM44Cubes     _trans_scale;                 //!< translation and scale of the sub cubes
   TM44Cubes     _current_pos;                 //!< current rotation of the sub cubes
@@ -174,25 +182,12 @@ private:
 * \date    2018-08-28
 * \version 1.0
 **********************************************************************/
-CCube & CCube::Init( void )
+CCube & CCube::Init( 
+  float offset, //!< I - unscaled distance between 2 sub cubes
+  float scale ) //!< I- scale of a single sub cube
 {
-  // calculate initial positions of sub cubes
-  for ( int z=0; z<3; ++ z )
-  {
-    for ( int y=0; y<3; ++ y )
-    {
-      for ( int x=0; x<3; ++ x )
-      {
-        int i = z * 9 + y * 3 + x;
-        _cube_map[i] = i;
-        glm::mat4 part_scale = glm::scale( glm::mat4(1.0f), glm::vec3(1.0f/3.0f) );
-        float offset = 1.1f * 2.0f / 3.0f;
-        glm::vec3 trans_vec( (float)(x-1), (float)(y-1), (float)(z-1) );
-        glm::mat4 part_trans = glm::translate( glm::mat4(1.0f), trans_vec * offset );
-        _trans_scale[i] = part_trans * part_scale;
-      }
-    }
-  }
+  // initialize the size
+  InitGeometry( offset, scale );
 
   // initialize animation and rotation matrices
   for ( int i=0; i<c_no_of_cubes; ++i )
@@ -203,6 +198,41 @@ CCube & CCube::Init( void )
 
   // Update the final model matrices of the sub cubes
   UpdateM44Cubes();
+
+  return *this;
+}
+
+
+/******************************************************************//**
+* \brief Initializes the size attributes and matrices.   
+* 
+* \author  gernot
+* \date    2018-08-28
+* \version 1.0
+**********************************************************************/
+CCube & CCube::InitGeometry( 
+  float offset, //!< I - unscaled distance between 2 sub cubes
+  float scale ) //!< I- scale of a single sub cube
+{
+  _offset = offset;
+  _scale = scale;
+
+  // calculate initial positions of sub cubes
+  for ( int z=0; z<3; ++ z )
+  {
+    for ( int y=0; y<3; ++ y )
+    {
+      for ( int x=0; x<3; ++ x )
+      {
+        int i = z * 9 + y * 3 + x;
+        _cube_map[i] = i;
+        glm::mat4 part_scale = glm::scale( glm::mat4(1.0f), glm::vec3(_scale) );
+        glm::vec3 trans_vec( (float)(x-1), (float)(y-1), (float)(z-1) );
+        glm::mat4 part_trans = glm::translate( glm::mat4(1.0f), trans_vec * _offset );
+        _trans_scale[i] = part_scale * part_trans;
+      }
+    }
+  }
 
   return *this;
 }
