@@ -384,6 +384,7 @@ layout (std140, binding = 1) uniform UB_MVP
 layout (std140, binding = 2) uniform UB_RUBIKS
 { 
     mat4 u_rubiks_model[27];
+    int  u_cube_hit;
     int  u_side_hit;
 };
 
@@ -414,7 +415,9 @@ void main()
 
     vertPos     = vertx_pos.xyz;
     vertTex     = tex;
-    highlight   = tex.z > 0.5 && color_i == u_side_hit ? 1.0 : 0.0;	
+    //highlight   = tex.z > 0.5 && cube_i == u_cube_hit ? 1.0 : 0.0;	
+    //highlight   = tex.z > 0.5 && color_i == u_side_hit ? 1.0 : 0.0;
+    highlight   = tex.z > 0.5 && cube_i == u_cube_hit && color_i == u_side_hit ? 1.0 : 0.0;		
 
 		gl_Position = u_projection * vertx_pos;
 }
@@ -617,9 +620,12 @@ void CWindow_Glfw::UpdateRenderData( void )
     double ndc_y = 1.0 - 2.0 * y/h;
     glm::vec4 ndc_cursor_far( ndc_x, ndc_y, 1.0, 1.0 ); // z = 1.0 -> far plane
 
-    int isect_side = -1;
+    int isect_i_side = -1;
+    int isect_i_cube = -1;
     if ( fabs( ndc_x ) < 1.0f && fabs( ndc_y ) )
     {
+        // TODO $$$ add to "RubikxCOntrol.h"
+
         // calculate a ray from the eye position along the line of sight through the cursor position
 
         glm::vec4 view_cursor = inverse_projection * ndc_cursor_far;
@@ -661,6 +667,7 @@ void CWindow_Glfw::UpdateRenderData( void )
 
         float cube_sidelen_2 = (cube_offset + 1.0f) * cube_scale; // half side length of the entire cube
 
+        int       isect_side = -1;
         float     isect_dist = std::numeric_limits<float>::max();
         glm::vec3 isect_pt;
         for ( int i = 0; i < 6; ++ i )
@@ -691,8 +698,56 @@ void CWindow_Glfw::UpdateRenderData( void )
           isect_dist = fabs(dist);
           isect_pt   = x_pt;
         }
+
+        // get intersected sub cube
+        if ( isect_side >= 0 )
+        {
+          std::array<float, 3 > coords{ isect_pt.x, isect_pt.y, isect_pt.z };
+          std::vector<int> i_coord;
+          bool hit_is_on = true;
+          for ( float coord : coords )
+          {
+            int i = -1;
+            if ( fabs( coord ) <= 1.0f * cube_scale )
+              i = 1;
+            else if ( coord <= -(cube_offset - 1.0f) * cube_scale)
+              i = 0;
+             else if ( coord >= (cube_offset - 1.0f) * cube_scale)
+              i = 2;
+            i_coord.push_back( i );
+            hit_is_on = hit_is_on && i >= 0;
+          }
+          if ( hit_is_on )
+          {
+            int i = 9 * i_coord[2] + 3 * i_coord[1] + i_coord[0];
+            isect_i_cube = _rubiks_cube->CubeIndex(i);
+          }
+        }
+
+        // get the side on the intersected sub cube
+        if ( isect_side >= 0 && isect_i_cube >= 0 )
+        {
+          const glm::mat4 &cube_mat4 = _rubiks_cube->CubePosM44()[isect_i_cube];
+          int axis_i = isect_side / 2;
+          float sign = isect_side % 2 ? 1.0f : -1.0f;
+          glm::vec3 test_vec = glm::vec3( cube_mat4[0][axis_i], cube_mat4[1][axis_i], cube_mat4[2][axis_i] ) * sign;
+
+          if ( test_vec.x < -0.5f )
+            isect_i_side = 0;
+          else if ( test_vec.x > 0.5f )
+            isect_i_side = 1;
+          else if ( test_vec.y < -0.5f )
+            isect_i_side = 2;
+          else if ( test_vec.y > 0.5f )
+            isect_i_side = 3;
+          else if ( test_vec.z < -0.5f )
+            isect_i_side = 4;
+          else if ( test_vec.z > 0.5f )
+            isect_i_side = 5;
+        }
     }
     
     // set the hit data
-    _rubiks_cube->Data()->_side_hit = isect_side + 1;
+    _rubiks_cube->Data()->_cube_hit = isect_i_cube;
+    _rubiks_cube->Data()->_side_hit = isect_i_side + 1;
 }

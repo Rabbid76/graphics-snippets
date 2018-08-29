@@ -34,6 +34,7 @@ using TMapCubes = std::array<int, c_no_of_cubes>;
 struct T_RUBIKS_DATA
 {
   std::array<Render::GLSL::mat4, c_no_of_cubes> _model;
+  int                                           _cube_hit;
   int                                           _side_hit;
 };
 
@@ -71,11 +72,13 @@ public:
   CCube( float offset, float scale ) { Init( offset, scale ); }
   virtual ~CCube() = default;
 
-  const T_RUBIKS_DATA * Data( void ) const { return &_data; }
-  T_RUBIKS_DATA *       Data( void )       { return &_data; }
+  const T_RUBIKS_DATA * Data( void )   const     { return &_data; }
+  T_RUBIKS_DATA *       Data( void )             { return &_data; }
+  const TM44Cubes &     CubePosM44( void ) const { return _current_pos; } 
   
-  float Offset( void ) const { return _offset; }
-  float Scale( void )  const { return _scale; }
+  float Offset( void )     const { return _offset; }
+  float Scale( void )      const { return _scale; }
+  int   CubeIndex( int i ) const { return i < 0 || i >= c_no_of_cubes ? -1 : _cube_map[i]; }
 
   CCube & AnimationTime( double time_s ) { _animation_time_s = time_s; return *this; }
 

@@ -132,4 +132,7 @@ Add or improve an example (webgl/three.js) or page every day
 
 #### Functinality
 
+[ ] light model 
+    [ ] texture array for the 6 cube map sides. 1*1 texture for unicolor side.
+    [ ] texture for (specular, roughness, metallic, ???)
 [ ] Leap motion
