@@ -34,6 +34,9 @@ public:
   CModelControl( void ) { Init(); }
   virtual ~CModelControl() = default;
 
+  bool AutoRotate( void ) const { return _auto_rotate; }
+  bool AutoSpin( void )   const { return _auto_spin; }
+
   TM44 OrbitMatrix( void )
   {
     return (_mouse_drag || (_auto_rotate && _auto_spin )) ? _current_orbit_mat * _orbit_mat : _orbit_mat;

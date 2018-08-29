@@ -92,6 +92,11 @@ public:
   CCube & Update( void );
   CCube & ResetHit( void );
 
+  bool IntersectSidePlane( const glm::vec3 &r0_ray, const glm::vec3 &d_ray, int side_i, float &dist, glm::vec3 &pt );
+  bool Intersect( const glm::vec3 &r0_ray, const glm::vec3 &d_ray, int &side_i, glm::vec3 &pt );
+  bool IntersectedSubCube( int side_i, const glm::vec3 &pt, int &cube_i );
+  bool IntersectedSubCubeSide( int side_i, int cube_i, int &subcube_side_i );
+
 private:
 
   CCube & UpdateM44Cubes( void );
@@ -224,7 +229,7 @@ CCube & CCube::Shuffle(
   static const std::array<TRow, 3> a_row{TRow::low, TRow::mid, TRow::high};
   static const std::array<TDirection, 2> a_dir{TDirection::left, TDirection::right};
 
-  std::srand( std::time(nullptr) );
+  std::srand( (unsigned int)std::time(nullptr) );
 
   // create random operations
   std::vector<TChangeOperation> shuffle_ops;
@@ -238,7 +243,7 @@ CCube & CCube::Shuffle(
       op._row       = a_row[std::rand() % 3];
       op._direction = a_dir[std::rand() % 2];
 
-      if ( _pending_queue.empty() )
+      if ( shuffle_ops.empty() )
         break;
 
       // check if not inverse operation
@@ -252,9 +257,9 @@ CCube & CCube::Shuffle(
         valid = shuffle_ops.front()._axis            != op._axis ||
                 shuffle_ops.front()._row             != op._row ||
                 shuffle_ops.front()._direction       != op._direction;
-                (shuffle_ops.rbegin()-2)->_axis      != op._axis ||
-                (shuffle_ops.rbegin()-2)->_row       != op._row ||
-                (shuffle_ops.rbegin()-2)->_direction != op._direction; 
+                (shuffle_ops.rbegin()+1)->_axis      != op._axis ||
+                (shuffle_ops.rbegin()+1)->_row       != op._row ||
+                (shuffle_ops.rbegin()+1)->_direction != op._direction; 
       }
     }
     while ( valid == false );
@@ -360,6 +365,206 @@ CCube & CCube::ResetHit( void )
   _data._side_hit = 0;
 
   return *this;
+}
+
+
+/******************************************************************//**
+* \brief Intersect a plane on a side of the cube with a ray.  
+* 
+* \author  gernot
+* \date    2018-08-29
+* \version 1.0
+**********************************************************************/
+bool CCube::IntersectSidePlane( 
+  const glm::vec3 &r0_ray, //! I - start point of ray
+  const glm::vec3 &d_ray,  //! I - direction of the ray
+  int              side_i, //! I - index of the side of the cube
+  float           &dist,   //! O - distance to the intersection
+  glm::vec3       &pt )    //! O - 
+{
+  // define the cube corner points and its faces
+
+  static const std::array<glm::vec3, 8> cube_pts 
+  {
+    glm::vec3(-1.0f, -1.0f, -1.0f), // 0 : left  front bottom
+    glm::vec3( 1.0f, -1.0f, -1.0f), // 1 : right front bottom
+    glm::vec3(-1.0f,  1.0f, -1.0f), // 2 : left  back  bottom
+    glm::vec3( 1.0f,  1.0f, -1.0f), // 3 : right back  bottom
+    glm::vec3(-1.0f, -1.0f,  1.0f), // 4 : left  front top
+    glm::vec3( 1.0f, -1.0f,  1.0f), // 5 : right front top
+    glm::vec3(-1.0f,  1.0f,  1.0f), // 6 : left  back  top
+    glm::vec3( 1.0f,  1.0f,  1.0f), // 7 : right back  top
+  };
+  static const std::array<std::array<int, 4>, 6> cube_faces
+  {
+    std::array<int, 4>{ 2, 0, 4, 6 }, // 0 : left
+    std::array<int, 4>{ 1, 3, 7, 5 }, // 1 : right
+    std::array<int, 4>{ 0, 1, 5, 4 }, // 2 : front
+    std::array<int, 4>{ 2, 3, 7, 6 }, // 3 : back
+    std::array<int, 4>{ 0, 1, 3, 2 }, // 4 : bottom
+    std::array<int, 4>{ 4, 5, 7, 6 }  // 5 : top
+  };
+
+  float cube_sidelen_2 = (_offset + 1.0f) * _scale; // half side length of the entire cube
+  
+  // calculate the normal vector of the cube side
+  const glm::vec3 &pa = cube_pts[cube_faces[side_i][0]];
+  const glm::vec3 &pb = cube_pts[cube_faces[side_i][1]];
+  const glm::vec3 &pc = cube_pts[cube_faces[side_i][3]];
+
+  glm::vec3 dir      = glm::normalize( d_ray );
+  glm::vec3 n_plane  = glm::normalize( glm::cross( pb - pa, pc - pa ) );
+  glm::vec3 p0_plane = pa * cube_sidelen_2;
+
+  if ( fabs( fabs( glm::dot( dir, n_plane ) ) - 1.0f ) < 0.0017f ) // 0.0017 < sin(1°)
+    return false;
+
+  // calculate the distance to the intersection with the plane defined by the side of the cube
+  dist = glm::dot( pa - r0_ray, n_plane ) / glm::dot( dir, n_plane );
+  
+  // calculate the intersection point with the plane
+  pt = r0_ray + dir * dist;
+
+  return true;
+}
+
+
+/******************************************************************//**
+* \brief  Intersect a ray with the cube and return the nearest point
+* of intersection. 
+* 
+* \author  gernot
+* \date    2018-08-29
+* \version 1.0
+**********************************************************************/
+bool CCube::Intersect( 
+  const glm::vec3 &r0_ray, //!< I - start point of the ray
+  const glm::vec3 &d_ray,  //!< I - direction vector of the ray
+  int             &side_i, //!< O - index of the intersected side 
+  glm::vec3       &pt )    //!< O - point of intersection
+{
+  // find the nearest intersection of a side of the cube and the ray 
+
+  int       isect_side = -1;
+  float     isect_dist = std::numeric_limits<float>::max();
+  glm::vec3 isect_pt;
+  for ( int i = 0; i < 6; ++ i )
+  {
+    // calculate the intersection of the ray and a side of the cube map
+    float dist;
+    glm::vec3 x_pt;
+    if ( IntersectSidePlane( r0_ray, d_ray, i, dist, x_pt ) == false )
+      continue;
+
+    // check if the intersection point is closer than the previous one
+    if ( fabs(dist) > isect_dist )
+      continue;
+
+    // check if the intersection is on the side of the cube
+    float cube_sidelen_2 = (_offset + 1.0f) * _scale; // half side length of the entire cube
+    bool on_side = fabs( x_pt.x ) < cube_sidelen_2 + 0.001 &&
+                    fabs( x_pt.y ) < cube_sidelen_2 + 0.001 &&
+                    fabs( x_pt.z ) < cube_sidelen_2 + 0.001;
+    if ( on_side == false )
+      continue;
+
+    isect_side = i;
+    isect_dist = fabs(dist);
+    isect_pt   = x_pt;
+  }
+
+  if ( isect_side < 0 )
+    return false;
+
+  side_i = isect_side;
+  pt     = isect_pt;
+  return true;
+}
+
+
+/******************************************************************//**
+* \brief Get the index of the intersected sub cube.  
+* 
+* \author  gernot
+* \date    2018-08-29
+* \version 1.0
+**********************************************************************/
+bool CCube::IntersectedSubCube( 
+  int              side_i,  //!< I - intersection side
+  const glm::vec3 &pt,      //!< I - intersection point
+  int             &cube_i ) //!< O - sub cube index
+{
+  if ( side_i < 0 )
+    return false;
+
+  // get intersected sub cube
+  std::array<float, 3 > coords{ pt.x, pt.y, pt.z };
+  std::vector<int> i_coord;
+  bool hit_is_on = true;
+  for ( float coord : coords )
+  {
+    int i = -1;
+    if ( fabs( coord ) <= 1.0f * _scale )
+      i = 1;
+    else if ( coord <= -(_offset - 1.0f) * _scale)
+      i = 0;
+      else if ( coord >= (_offset - 1.0f) * _scale)
+      i = 2;
+    i_coord.push_back( i );
+    hit_is_on = hit_is_on && i >= 0;
+  }
+  
+  if ( hit_is_on )
+  {
+    int i = 9 * i_coord[2] + 3 * i_coord[1] + i_coord[0];
+    cube_i = CubeIndex(i);
+    return true;
+  }
+  return false;
+}
+
+
+/******************************************************************//**
+* \brief Get the side index of the intersected sub cube.  
+* 
+* \author  gernot
+* \date    2018-08-29
+* \version 1.0
+**********************************************************************/
+bool CCube::IntersectedSubCubeSide( 
+  int  side_i,          //!< I - index of intersected side
+  int  cube_i,          //!< I - index of intersected sub cube
+  int &subcube_side_i ) //!< O - index of intersected side of intersected sub cube 
+{
+  if ( side_i < 0 || cube_i < 0 )
+    return false;
+  
+  // get the side on the intersected sub cube
+  const glm::mat4 &cube_mat4 = CubePosM44()[cube_i];
+  int axis_i = side_i / 2;
+  float sign = side_i % 2 ? 1.0f : -1.0f;
+  glm::vec3 test_vec = glm::vec3( cube_mat4[0][axis_i], cube_mat4[1][axis_i], cube_mat4[2][axis_i] ) * sign;
+
+  int isect_i_side = -1;
+  if ( test_vec.x < -0.5f )
+    isect_i_side = 0;
+  else if ( test_vec.x > 0.5f )
+    isect_i_side = 1;
+  else if ( test_vec.y < -0.5f )
+    isect_i_side = 2;
+  else if ( test_vec.y > 0.5f )
+    isect_i_side = 3;
+  else if ( test_vec.z < -0.5f )
+    isect_i_side = 4;
+  else if ( test_vec.z > 0.5f )
+    isect_i_side = 5;
+
+  if ( isect_i_side >= 0 )
+  {
+    subcube_side_i = isect_i_side;
+    return true;
+  }
+  return false;
 }
 
 

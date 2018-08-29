@@ -48,6 +48,8 @@ class CWindow_Glfw
 {
 public:
 
+    enum class TMode{ roatate, change }; 
+
     virtual ~CWindow_Glfw();
 
     void Init( int width, int height, int multisampling, bool doubleBuffer );
@@ -88,6 +90,11 @@ private:
     TUB_MVP                        _ubo_mvp_data;
     GLuint                         _ubo_rubiks = 0;
     std::unique_ptr<Rubiks::CCube> _rubiks_cube;
+
+    TMode _mode         = TMode::roatate;
+    bool  _hit          = false;
+    int   _start_cube_i = -1;
+    int   _start_side_i = -1;
 };
 
 int main(int argc, char** argv)
@@ -249,18 +256,30 @@ void CWindow_Glfw::MouseButton( int button, int action, int mode )
   double x, y;
   glfwGetCursorPos( _wnd, &x, &y );
 
+  _hit = false;
   switch (button)
   {
     case GLFW_MOUSE_BUTTON_LEFT:
-      if ( action == GLFW_PRESS )
-        _model_control->StartRotate( { (int)x, (int)y } );
-      else if ( action == GLFW_RELEASE )
-        _model_control->FinishRotate( { (int)x, (int)y } );
+      if ( _mode == TMode::roatate )
+      {
+        if ( action == GLFW_PRESS )
+          _model_control->StartRotate( { (int)x, (int)y } );
+        else if ( action == GLFW_RELEASE )
+          _model_control->FinishRotate( { (int)x, (int)y } );
+      }
+      else
+      {
+        if ( action == GLFW_PRESS )
+          _hit = true;
+      }
       break;
 
     case GLFW_MOUSE_BUTTON_RIGHT:
       if ( action == GLFW_RELEASE )
+      {
         _model_control->ToogleRotate();
+        _mode = _model_control->AutoRotate() ? TMode::roatate : TMode::change;
+      }
       break;
   }
 }
@@ -603,9 +622,25 @@ void CWindow_Glfw::UpdateRenderData( void )
     if ( _rubiks_cube == nullptr )
       return;
 
-    if ( _rubiks_cube->AnimationPending() )
+    if (_rubiks_cube->AnimationPending() || _mode != TMode::change || _hit == false )
     {
+      _start_cube_i = -1;
+      _start_side_i = -1;
+    }
+
+    if ( _rubiks_cube->AnimationPending() || _mode != TMode::change )
+    {
+      _hit = false;
       _rubiks_cube->ResetHit();
+      return;
+    }
+
+    if ( _hit && _start_cube_i >= 0 )
+    {
+      // TODO $$$
+
+      _rubiks_cube->Data()->_cube_hit = _start_cube_i;
+      _rubiks_cube->Data()->_side_hit = _start_side_i + 1;
       return;
     }
 
@@ -629,16 +664,14 @@ void CWindow_Glfw::UpdateRenderData( void )
     glfwGetCursorPos( _wnd, &x, &y );
     double ndc_x = 2.0 * x/w - 1.0;
     double ndc_y = 1.0 - 2.0 * y/h;
-    glm::vec4 ndc_cursor_far( ndc_x, ndc_y, 1.0, 1.0 ); // z = 1.0 -> far plane
-
+    
     int isect_i_side = -1;
     int isect_i_cube = -1;
     if ( fabs( ndc_x ) < 1.0f && fabs( ndc_y ) )
     {
-        // TODO $$$ add to "RubikxCOntrol.h"
-
         // calculate a ray from the eye position along the line of sight through the cursor position
 
+        glm::vec4 ndc_cursor_far( ndc_x, ndc_y, 1.0, 1.0 ); // z = 1.0 -> far plane
         glm::vec4 view_cursor = inverse_projection * ndc_cursor_far;
 
         glm::vec4 view_r0 = glm::vec4( 0.0f, 0.0f, 0.0f, 1.0f );
@@ -651,114 +684,29 @@ void CWindow_Glfw::UpdateRenderData( void )
         glm::vec3 d_ray  = glm::normalize( glm::vec3( model_r1 ) - r0_ray );
 
 
-        // define the cube corner points and its faces
-
-        static const std::array<glm::vec3, 8> cube_pts 
-        {
-          glm::vec3(-1.0f, -1.0f, -1.0f), // 0 : left  front bottom
-          glm::vec3( 1.0f, -1.0f, -1.0f), // 1 : right front bottom
-          glm::vec3(-1.0f,  1.0f, -1.0f), // 2 : left  back  bottom
-          glm::vec3( 1.0f,  1.0f, -1.0f), // 3 : right back  bottom
-          glm::vec3(-1.0f, -1.0f,  1.0f), // 4 : left  front top
-          glm::vec3( 1.0f, -1.0f,  1.0f), // 5 : right front top
-          glm::vec3(-1.0f,  1.0f,  1.0f), // 6 : left  back  top
-          glm::vec3( 1.0f,  1.0f,  1.0f), // 7 : right back  top
-        };
-        static const std::array<std::array<int, 4>, 6> cube_faces
-        {
-          std::array<int, 4>{ 2, 0, 4, 6 }, // 0 : left
-          std::array<int, 4>{ 1, 3, 7, 5 }, // 1 : right
-          std::array<int, 4>{ 0, 1, 5, 4 }, // 2 : front
-          std::array<int, 4>{ 2, 3, 7, 6 }, // 3 : back
-          std::array<int, 4>{ 0, 1, 3, 2 }, // 4 : bottom
-          std::array<int, 4>{ 4, 5, 7, 6 }  // 5 : top
-        };
-
-        // find the nearest intersection of a side of the cube and the ray 
-
-        float cube_sidelen_2 = (cube_offset + 1.0f) * cube_scale; // half side length of the entire cube
+        // find the nearest intersection of a side of the cube and the ray
 
         int       isect_side = -1;
-        float     isect_dist = std::numeric_limits<float>::max();
         glm::vec3 isect_pt;
-        for ( int i = 0; i < 6; ++ i )
-        {
-          // calculate the normal vector of the cube side
-          const glm::vec3 &pa = cube_pts[cube_faces[i][0]];
-          const glm::vec3 &pb = cube_pts[cube_faces[i][1]];
-          const glm::vec3 &pc = cube_pts[cube_faces[i][3]];
-          glm::vec3 n_plane  = glm::normalize( glm::cross( pb - pa, pc - pa ) );
-          glm::vec3 p0_plane = pa * cube_sidelen_2;
-
-          // calculate the distance to the intersection with the plane defined by the side of the cube
-          float dist = glm::dot( pa - r0_ray, n_plane ) / glm::dot( d_ray, n_plane );
-          if ( fabs(dist) > isect_dist )
-            continue;
-
-          // calculate the intersection point with the plane
-          glm::vec3 x_pt = r0_ray + d_ray * dist;
-
-          // check if the intersection is on the side of the cube
-          bool on_side = fabs( x_pt.x ) < cube_sidelen_2 + 0.001 &&
-                         fabs( x_pt.y ) < cube_sidelen_2 + 0.001 &&
-                         fabs( x_pt.z ) < cube_sidelen_2 + 0.001;
-          if ( on_side == false )
-            continue;
-
-          isect_side = i;
-          isect_dist = fabs(dist);
-          isect_pt   = x_pt;
-        }
+        if ( _rubiks_cube->Intersect( r0_ray, d_ray, isect_side, isect_pt ) == false )
+            isect_side = -1;
 
         // get intersected sub cube
-        if ( isect_side >= 0 )
-        {
-          std::array<float, 3 > coords{ isect_pt.x, isect_pt.y, isect_pt.z };
-          std::vector<int> i_coord;
-          bool hit_is_on = true;
-          for ( float coord : coords )
-          {
-            int i = -1;
-            if ( fabs( coord ) <= 1.0f * cube_scale )
-              i = 1;
-            else if ( coord <= -(cube_offset - 1.0f) * cube_scale)
-              i = 0;
-             else if ( coord >= (cube_offset - 1.0f) * cube_scale)
-              i = 2;
-            i_coord.push_back( i );
-            hit_is_on = hit_is_on && i >= 0;
-          }
-          if ( hit_is_on )
-          {
-            int i = 9 * i_coord[2] + 3 * i_coord[1] + i_coord[0];
-            isect_i_cube = _rubiks_cube->CubeIndex(i);
-          }
-        }
-
+        if ( _rubiks_cube->IntersectedSubCube( isect_side, isect_pt, isect_i_cube ) == false )
+            isect_i_cube = -1;
+        
         // get the side on the intersected sub cube
-        if ( isect_side >= 0 && isect_i_cube >= 0 )
-        {
-          const glm::mat4 &cube_mat4 = _rubiks_cube->CubePosM44()[isect_i_cube];
-          int axis_i = isect_side / 2;
-          float sign = isect_side % 2 ? 1.0f : -1.0f;
-          glm::vec3 test_vec = glm::vec3( cube_mat4[0][axis_i], cube_mat4[1][axis_i], cube_mat4[2][axis_i] ) * sign;
-
-          if ( test_vec.x < -0.5f )
-            isect_i_side = 0;
-          else if ( test_vec.x > 0.5f )
-            isect_i_side = 1;
-          else if ( test_vec.y < -0.5f )
-            isect_i_side = 2;
-          else if ( test_vec.y > 0.5f )
-            isect_i_side = 3;
-          else if ( test_vec.z < -0.5f )
-            isect_i_side = 4;
-          else if ( test_vec.z > 0.5f )
-            isect_i_side = 5;
-        }
+        if ( _rubiks_cube->IntersectedSubCubeSide( isect_side, isect_i_cube, isect_i_side ) == false )
+            isect_i_side = -1;
     }
     
     // set the hit data
     _rubiks_cube->Data()->_cube_hit = isect_i_cube;
     _rubiks_cube->Data()->_side_hit = isect_i_side + 1;
+
+    if ( _hit )
+    {
+      _start_cube_i = isect_i_cube;
+      _start_side_i = isect_i_side;
+    }
 }
