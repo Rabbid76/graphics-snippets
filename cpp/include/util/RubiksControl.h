@@ -18,6 +18,7 @@
 #include <chrono>
 #include <memory>
 #include <cmath>
+#include <ctime>
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -34,8 +35,8 @@ using TMapCubes = std::array<int, c_no_of_cubes>;
 struct T_RUBIKS_DATA
 {
   std::array<Render::GLSL::mat4, c_no_of_cubes> _model;
-  int                                           _cube_hit;
-  int                                           _side_hit;
+  int                                           _cube_hit = -1;
+  int                                           _side_hit = 0;
 };
 
 enum class TAxis { x, y, z };
@@ -76,26 +77,26 @@ public:
   T_RUBIKS_DATA *       Data( void )             { return &_data; }
   const TM44Cubes &     CubePosM44( void ) const { return _current_pos; } 
   
-  float Offset( void )     const { return _offset; }
-  float Scale( void )      const { return _scale; }
-  int   CubeIndex( int i ) const { return i < 0 || i >= c_no_of_cubes ? -1 : _cube_map[i]; }
+  bool  AnimationActive( void )  const { return _animation_is_active; }
+  bool  AnimationPending( void ) const { return _animation_is_active || _pending_queue.empty() == false; }
+  float Offset( void )           const { return _offset; }
+  float Scale( void )            const { return _scale; }
+  int   CubeIndex( int i )       const { return i < 0 || i >= c_no_of_cubes ? -1 : _cube_map[i]; }
 
   CCube & AnimationTime( double time_s ) { _animation_time_s = time_s; return *this; }
 
   CCube & Init( float offset, float scale );
   CCube & InitGeometry( float offset, float scale );
+  CCube & Shuffle( int steps );
   CCube & Change( const TChangeOperation &op );
   CCube & Update( void );
-
-  // TODO $$$ Shuffle
-  // add change operations change queue
-  // ensure not to add the inverse operation of the successor operation in queue
-  // ensure not to add the same operation three times in a row
+  CCube & ResetHit( void );
 
 private:
 
   CCube & UpdateM44Cubes( void );
   CCube & Rotate( const TChangeOperation &op );
+  std::vector<int> SubCubeIndices( TAxis axis, TRow row );
 
   TTime TimeNow( void ) const
   { 
@@ -128,38 +129,6 @@ private:
     static const std::array<glm::vec3, 3> axis_vec{ glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)};
     return axis_vec[index];
   }
-
-  std::vector<int> SubCubeIndices( TAxis axis, TRow row )
-  {
-    std::vector<int> indices;
-
-    // define the affected sub cubes
-    int row_i = RowIndex( row );
-    int r_x[2]{ 0,2 };
-    int r_y[2]{ 0,2 };
-    int r_z[2]{ 0,2 };
-    switch ( axis )
-    {
-      case TAxis::x: r_x[0] = r_x[1] = row_i; break;
-      case TAxis::y: r_y[0] = r_y[1] = row_i; break;
-      case TAxis::z: r_z[0] = r_z[1] = row_i; break;
-    }
-
-    // collect indices of collected sub cubes 
-    for ( int z = r_z[0]; z <= r_z[1]; ++ z )
-    {
-      for ( int y = r_y[0]; y <= r_y[1]; ++ y )
-      {
-        for ( int x = r_x[0]; x <= r_x[1]; ++ x )
-        {
-          int i = z * 9 + y * 3 + x;
-          indices.push_back( _cube_map[i] );
-        }
-      }
-    }
-
-    return indices;
-  }          
 
   T_RUBIKS_DATA _data;                        //!< final Rubik's cube data for rendering
 
@@ -242,16 +211,61 @@ CCube & CCube::InitGeometry(
 
 
 /******************************************************************//**
-* \brief Calculate the final model matrices of the sub cubes.    
+* \brief Shuffle the cube  
 * 
 * \author  gernot
-* \date    2018-08-28
+* \date    2018-08-29
 * \version 1.0
 **********************************************************************/
-CCube & CCube::UpdateM44Cubes( void )
+CCube & CCube::Shuffle( 
+  int steps ) //!< I - number of shuffles
 {
-  for ( int i = 0; i < c_no_of_cubes; ++i )
-    Render::GLM::CMat4(_data._model[i]) = _animation[i] * _current_pos[i] * _trans_scale[i];
+  static const std::array<TAxis, 3> a_axis{TAxis::x, TAxis::y, TAxis::z};
+  static const std::array<TRow, 3> a_row{TRow::low, TRow::mid, TRow::high};
+  static const std::array<TDirection, 2> a_dir{TDirection::left, TDirection::right};
+
+  std::srand( std::time(nullptr) );
+
+  // create random operations
+  std::vector<TChangeOperation> shuffle_ops;
+  for ( int i = 0; i < steps; ++ i )
+  {
+    TChangeOperation op;
+    bool valid;
+    do
+    {
+      op._axis      = a_axis[std::rand() % 3];
+      op._row       = a_row[std::rand() % 3];
+      op._direction = a_dir[std::rand() % 2];
+
+      if ( _pending_queue.empty() )
+        break;
+
+      // check if not inverse operation
+      valid = shuffle_ops.back()._axis      != op._axis ||
+              shuffle_ops.back()._row       != op._row ||
+              shuffle_ops.back()._direction == op._direction;
+
+      // check if not 3 equal operations in a row
+      if ( valid && shuffle_ops.size() > 1 )
+      {
+        valid = shuffle_ops.front()._axis            != op._axis ||
+                shuffle_ops.front()._row             != op._row ||
+                shuffle_ops.front()._direction       != op._direction;
+                (shuffle_ops.rbegin()-2)->_axis      != op._axis ||
+                (shuffle_ops.rbegin()-2)->_row       != op._row ||
+                (shuffle_ops.rbegin()-2)->_direction != op._direction; 
+      }
+    }
+    while ( valid == false );
+
+    shuffle_ops.push_back( op );
+  }
+
+  // add change operations to pending queue
+  for ( auto & op : shuffle_ops )
+     Change( op );
+
   return *this;
 }
 
@@ -334,6 +348,37 @@ CCube & CCube::Update( void )
 
 
 /******************************************************************//**
+* \brief Reset hit information  
+* 
+* \author  gernot
+* \date    2018-08-29
+* \version 1.0
+**********************************************************************/
+CCube & CCube::ResetHit( void )
+{
+  _data._cube_hit = -1;
+  _data._side_hit = 0;
+
+  return *this;
+}
+
+
+/******************************************************************//**
+* \brief Calculate the final model matrices of the sub cubes.    
+* 
+* \author  gernot
+* \date    2018-08-28
+* \version 1.0
+**********************************************************************/
+CCube & CCube::UpdateM44Cubes( void )
+{
+  for ( int i = 0; i < c_no_of_cubes; ++i )
+    Render::GLM::CMat4(_data._model[i]) = _animation[i] * _current_pos[i] * _trans_scale[i];
+  return *this;
+}
+
+
+/******************************************************************//**
 * \brief Calculate the rotation of a part of the Rubik's cube.
 *
 * Compute the new positions of the sub cubes and calculate the model
@@ -393,6 +438,48 @@ CCube & CCube::Rotate(
   
   return *this;
 }
+
+
+/******************************************************************//**
+* \brief Get all cubes in specific row of an specific axis  
+* 
+* \author  gernot
+* \date    2018-08-29
+* \version 1.0
+**********************************************************************/
+ std::vector<int> CCube::SubCubeIndices( 
+   TAxis axis, //!< I - axis
+   TRow  row ) //!< I - row
+  {
+    std::vector<int> indices;
+
+    // define the affected sub cubes
+    int row_i = RowIndex( row );
+    int r_x[2]{ 0,2 };
+    int r_y[2]{ 0,2 };
+    int r_z[2]{ 0,2 };
+    switch ( axis )
+    {
+      case TAxis::x: r_x[0] = r_x[1] = row_i; break;
+      case TAxis::y: r_y[0] = r_y[1] = row_i; break;
+      case TAxis::z: r_z[0] = r_z[1] = row_i; break;
+    }
+
+    // collect indices of collected sub cubes 
+    for ( int z = r_z[0]; z <= r_z[1]; ++ z )
+    {
+      for ( int y = r_y[0]; y <= r_y[1]; ++ y )
+      {
+        for ( int x = r_x[0]; x <= r_x[1]; ++ x )
+        {
+          int i = z * 9 + y * 3 + x;
+          indices.push_back( _cube_map[i] );
+        }
+      }
+    }
+
+    return indices;
+  }      
 
 
 }

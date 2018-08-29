@@ -319,6 +319,10 @@ void CWindow_Glfw::MainLoop ( void )
     static float scale = 1.0f / 3.0f;
     _rubiks_cube = std::make_unique<Rubiks::CCube>( offset, scale );
 
+    static int shuffles = 11;
+    if ( shuffles > 0 )
+      _rubiks_cube->Shuffle( shuffles );
+
     while (!glfwWindowShouldClose(_wnd))
     {
         if ( _updateViewport )
@@ -598,6 +602,13 @@ void CWindow_Glfw::UpdateRenderData( void )
 
     if ( _rubiks_cube == nullptr )
       return;
+
+    if ( _rubiks_cube->AnimationPending() )
+    {
+      _rubiks_cube->ResetHit();
+      return;
+    }
+
     float cube_offset = _rubiks_cube->Offset();
     float cube_scale  = _rubiks_cube->Scale();
     
