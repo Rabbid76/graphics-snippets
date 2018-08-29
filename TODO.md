@@ -84,11 +84,7 @@ Add or improve an example (webgl/three.js) or page every day
   - improve example
   - stack overflow link
 
-- [Viewport capture 2D](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/viewport_capture_2d.html)
-  - full screen
-  - stack overflow link
-
-- [Viewport capture perspective](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/viewport_capture_perspective.html)
+- [Unproject perspective](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/unproject_perspective.html)
   - full screen
   - stack overflow link
 

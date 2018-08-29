@@ -174,7 +174,7 @@ var shininess = 10.0;
 var glow = 10.0;
 var sigma = 0.8;
 
-function render(delteMS){
+function render(deltaMS){
 
     if ( readInput ) {
         readInput = false;
@@ -201,8 +201,8 @@ function render(delteMS){
     ShaderProgram.SetUniformM44( progDraw.prog, "u_projectionMat44", Camera.Perspective() );
     ShaderProgram.SetUniformM44( progDraw.prog, "u_viewMat44", Camera.LookAt() );
     var modelMat = IdentityMat44()
-    modelMat = RotateAxis( modelMat, CalcAng( delteMS, 13.0 ), 0 );
-    modelMat = RotateAxis( modelMat, CalcAng( delteMS, 17.0 ), 1 );
+    modelMat = RotateAxis( modelMat, CalcAng( deltaMS, 13.0 ), 0 );
+    modelMat = RotateAxis( modelMat, CalcAng( deltaMS, 17.0 ), 1 );
     ShaderProgram.SetUniformM44( progDraw.prog, "u_modelMat44", modelMat );
     ShaderProgram.SetUniformF1( progDraw.prog, "u_shininess", shininess );
     ShaderProgram.SetUniformF1( progDraw.prog, "u_glow", glow );
@@ -300,7 +300,7 @@ function initScene() {
     progDraw = {}
     progDraw.prog = ShaderProgram.Create( 
     [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },
-        { source : "draw-shader-fs", stage : gl.FRAGMENT_SHADER }
+      { source : "draw-shader-fs", stage : gl.FRAGMENT_SHADER }
     ] );
     if ( !progDraw.prog )
         return null;

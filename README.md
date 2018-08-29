@@ -104,9 +104,9 @@
 
 [Model View Projection](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/model_view_projection.html)
 
-[Viewport capture 2D](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/viewport_capture_2d.html)
+[Unproject 2D - Screen coordinate to world](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/unproject_2d.html)
 
-[Viewport capture perspective](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/viewport_capture_perspective.html)
+[Unproject perspective - Intersect world by line of sight](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/unproject_perspective.html)
 
 [Spherical projection](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/spherical_projection.html)
 
