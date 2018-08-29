@@ -50,6 +50,14 @@ public:
 
     enum class TMode{ roatate, change }; 
 
+    struct THitInfo
+    {
+      int _side;        //!< main cube side
+      int _sub_cube;    //!< geometric sub cube index
+      int _mapped_cube; //!< actual (mapped) sub cube index
+      int _cube_side;   //!< side on mapped cube
+    };
+
     virtual ~CWindow_Glfw();
 
     void Init( int width, int height, int multisampling, bool doubleBuffer );
@@ -91,10 +99,10 @@ private:
     GLuint                         _ubo_rubiks = 0;
     std::unique_ptr<Rubiks::CCube> _rubiks_cube;
 
-    TMode _mode         = TMode::roatate;
-    bool  _hit          = false;
-    int   _start_cube_i = -1;
-    int   _start_side_i = -1;
+    TMode     _mode{ TMode::roatate };      //!< manipulation mode (rotate or change) 
+    bool      _hit{ false };                //!< cube was hit
+    THitInfo  _start_hit{ -1, -1, -1, -1 }; //!< initial hit information
+    glm::vec3 _hit_pt;                      //!< point of hit - intersection of line of sight and cube
 };
 
 int main(int argc, char** argv)
@@ -619,28 +627,19 @@ void CWindow_Glfw::UpdateRenderData( void )
     glm::mat4 inverse_modelview  = glm::inverse( modelview );
     glm::mat4 inverse_projection = glm::inverse( projection );
 
+    _rubiks_cube->Data()->_cube_hit = -1;
+    _rubiks_cube->Data()->_side_hit = 0;
+
     if ( _rubiks_cube == nullptr )
       return;
 
-    if (_rubiks_cube->AnimationPending() || _mode != TMode::change || _hit == false )
-    {
-      _start_cube_i = -1;
-      _start_side_i = -1;
-    }
+    if ( _rubiks_cube->AnimationPending() || _mode != TMode::change || _hit == false )
+      _start_hit = { -1, -1, -1, -1 };
 
     if ( _rubiks_cube->AnimationPending() || _mode != TMode::change )
     {
       _hit = false;
       _rubiks_cube->ResetHit();
-      return;
-    }
-
-    if ( _hit && _start_cube_i >= 0 )
-    {
-      // TODO $$$
-
-      _rubiks_cube->Data()->_cube_hit = _start_cube_i;
-      _rubiks_cube->Data()->_side_hit = _start_side_i + 1;
       return;
     }
 
@@ -665,8 +664,7 @@ void CWindow_Glfw::UpdateRenderData( void )
     double ndc_x = 2.0 * x/w - 1.0;
     double ndc_y = 1.0 - 2.0 * y/h;
     
-    int isect_i_side = -1;
-    int isect_i_cube = -1;
+    THitInfo new_hit{ -1, -1, -1, -1 };
     if ( fabs( ndc_x ) < 1.0f && fabs( ndc_y ) )
     {
         // calculate a ray from the eye position along the line of sight through the cursor position
@@ -683,30 +681,86 @@ void CWindow_Glfw::UpdateRenderData( void )
         glm::vec3 r0_ray = glm::vec3( model_r0 );
         glm::vec3 d_ray  = glm::normalize( glm::vec3( model_r1 ) - r0_ray );
 
+        if ( _hit && _start_hit._mapped_cube >= 0 )
+        {
+            _rubiks_cube->Data()->_cube_hit = _start_hit._mapped_cube;
+            _rubiks_cube->Data()->_side_hit = _start_hit._cube_side + 1;
+
+            // get 2nd point on intersection plane
+            float dist;
+            glm::vec3 xpt;
+            if ( _rubiks_cube->IntersectSidePlane( r0_ray, d_ray, _start_hit._side, dist, xpt ) == false )
+                return;
+
+            // check if the length of the vector, which is defined by the 2 intersection points, exceeds the threshold  
+            glm::vec3 hover_dir = xpt - _hit_pt;
+            float threshold_dist = 2.0f * cube_scale * 0.75f;
+            if ( glm::length( hover_dir ) < threshold_dist )
+              return;
+            std::array<float, 3> s{ fabs( hover_dir.x ), fabs( hover_dir.y ), fabs( hover_dir.z ) };
+
+            // get rotation direction vector
+            int max_i = s[0] > s[1] ? (s[0] > s[2] ? 0 : 2) : (s[1] > s[2] ? 1 : 2);
+            glm::vec3 rot_dir( 0.0f, 0.0f, 0.0f );
+            rot_dir[max_i] = hover_dir[max_i] < 0.0f ? -1.0f : 1.0f;
+
+            // TODO $$$ check if the component of `hover_dir` in the rotation direction (`rot_dir`) is greater as a specific threshold
+
+            // get side direction
+            glm::vec3 side_dir( 0.0f, 0.0f, 0.0f );
+            side_dir[_start_hit._side / 2] = _start_hit._side % 2 ? 1.0f : -1.0f;
+
+            // get rotation axis vector
+            glm::vec3 rot_axis = glm::cross( rot_dir, side_dir );
+            Rubiks::TChangeOperation op;
+            op._axis = fabs(rot_axis.x) > 0.5f ? Rubiks::TAxis::x : (fabs(rot_axis.y) > 0.5f ?  Rubiks::TAxis::y : Rubiks::TAxis::z);
+            op._direction = (rot_axis.x + rot_axis.y + rot_axis.z) > 0.0f ? Rubiks::TDirection::left : Rubiks::TDirection::right;
+            
+            // get row
+            int x_i = _start_hit._sub_cube % 3;
+            int y_i = (_start_hit._sub_cube % 9) / 3;
+            int z_i = _start_hit._sub_cube / 9;
+            static const std::array<Rubiks::TRow, 3> a_row{Rubiks::TRow::low, Rubiks::TRow::mid, Rubiks::TRow::high};
+            switch (op._axis)
+            {
+              case Rubiks::TAxis::x: op._row = a_row[x_i]; break;
+              case Rubiks::TAxis::y: op._row = a_row[y_i]; break;
+              case Rubiks::TAxis::z: op._row = a_row[z_i]; break;
+            }
+            
+            // change the cube
+            _hit = false;
+            _start_hit = { -1, -1, -1, -1 };
+            _rubiks_cube->Change( op );
+            return;
+        }
+
 
         // find the nearest intersection of a side of the cube and the ray
 
-        int       isect_side = -1;
         glm::vec3 isect_pt;
-        if ( _rubiks_cube->Intersect( r0_ray, d_ray, isect_side, isect_pt ) == false )
-            isect_side = -1;
+        if ( _rubiks_cube->Intersect( r0_ray, d_ray, new_hit._side, isect_pt ) == false )
+            new_hit._side = -1;
 
         // get intersected sub cube
-        if ( _rubiks_cube->IntersectedSubCube( isect_side, isect_pt, isect_i_cube ) == false )
-            isect_i_cube = -1;
-        
-        // get the side on the intersected sub cube
-        if ( _rubiks_cube->IntersectedSubCubeSide( isect_side, isect_i_cube, isect_i_side ) == false )
-            isect_i_side = -1;
-    }
-    
-    // set the hit data
-    _rubiks_cube->Data()->_cube_hit = isect_i_cube;
-    _rubiks_cube->Data()->_side_hit = isect_i_side + 1;
+        if ( _rubiks_cube->IntersectedSubCube( new_hit._side, isect_pt, new_hit._sub_cube, new_hit._mapped_cube ) == false )
+        {
+            new_hit._sub_cube    = -1;
+            new_hit._mapped_cube = -1;
+        }
 
-    if ( _hit )
-    {
-      _start_cube_i = isect_i_cube;
-      _start_side_i = isect_i_side;
+        // get the side on the intersected sub cube
+        if ( _rubiks_cube->IntersectedSubCubeSide( new_hit._side, new_hit._mapped_cube, new_hit._cube_side ) == false )
+            new_hit._cube_side = -1;
+
+        // set the hit data
+        _rubiks_cube->Data()->_cube_hit = new_hit._mapped_cube;
+        _rubiks_cube->Data()->_side_hit = new_hit._cube_side + 1;
+
+        if ( _hit )
+        {
+            _start_hit = new_hit;
+            _hit_pt    = isect_pt;
+        }
     }
 }

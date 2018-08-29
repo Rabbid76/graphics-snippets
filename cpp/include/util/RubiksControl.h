@@ -94,7 +94,7 @@ public:
 
   bool IntersectSidePlane( const glm::vec3 &r0_ray, const glm::vec3 &d_ray, int side_i, float &dist, glm::vec3 &pt );
   bool Intersect( const glm::vec3 &r0_ray, const glm::vec3 &d_ray, int &side_i, glm::vec3 &pt );
-  bool IntersectedSubCube( int side_i, const glm::vec3 &pt, int &cube_i );
+  bool IntersectedSubCube( int side_i, const glm::vec3 &pt, int &cube_i, int &mapped_cube_i );
   bool IntersectedSubCubeSide( int side_i, int cube_i, int &subcube_side_i );
 
 private:
@@ -490,9 +490,10 @@ bool CCube::Intersect(
 * \version 1.0
 **********************************************************************/
 bool CCube::IntersectedSubCube( 
-  int              side_i,  //!< I - intersection side
-  const glm::vec3 &pt,      //!< I - intersection point
-  int             &cube_i ) //!< O - sub cube index
+  int              side_i,         //!< I - intersection side
+  const glm::vec3 &pt,             //!< I - intersection point
+  int             &cube_i,         //!< O - sub cube index
+  int             &mapped_cube_i ) //!< O - mapped sub cube index
 {
   if ( side_i < 0 )
     return false;
@@ -517,7 +518,8 @@ bool CCube::IntersectedSubCube(
   if ( hit_is_on )
   {
     int i = 9 * i_coord[2] + 3 * i_coord[1] + i_coord[0];
-    cube_i = CubeIndex(i);
+    cube_i        = i;
+    mapped_cube_i = CubeIndex(i);
     return true;
   }
   return false;
