@@ -231,7 +231,7 @@ bool CFreetypeTexturedFont::Load(
       continue;
 
     FT_Glyph glyphDescStroke;
-    err_code = FT_Get_Glyph( face->glyph, &glyphDescStroke );
+    err_code = FT_Get_Glyph( glyph, &glyphDescStroke );
     if ( err_code != 0 )
       continue;
 
@@ -280,7 +280,7 @@ bool CFreetypeTexturedFont::Load(
     if ( create_stroke )
     {
       FT_Glyph glyphDescFill;
-      err_code = FT_Get_Glyph( face->glyph, &glyphDescFill );
+      err_code = FT_Get_Glyph( glyph, &glyphDescFill );
       if ( err_code == 0 )
         err_code = FT_Glyph_To_Bitmap( &glyphDescFill, FT_RENDER_MODE_NORMAL, 0, 1);
 
@@ -305,8 +305,12 @@ bool CFreetypeTexturedFont::Load(
             unsigned int i_source = y * cx_fill + x;
             unsigned int i_target = (y + offset_y) * cx + x + offset_x;
             unsigned char b = bitmap->buffer[i_source];
+            unsigned char b_2 = (unsigned char)( b / 2 );
             
-            glyph_data._image[i_target*4 + 1] = b;
+            glyph_data._image[i_target*4]   = std::max( glyph_data._image[i_target*4], b_2);
+            glyph_data._image[i_target*4+1] = std::max( glyph_data._image[i_target*4+1], b_2);
+            glyph_data._image[i_target*4+2] = std::max( glyph_data._image[i_target*4+2], b_2);
+            glyph_data._image[i_target*4+3] = std::max( glyph_data._image[i_target*4+3], b);         
           }
         }
       }
