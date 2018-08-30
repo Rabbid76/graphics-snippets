@@ -169,7 +169,7 @@ bool CFreetypeTexturedFont::Load(
   if ( _font != nullptr )
     return _valid;
 
-  static bool create_stroke = false;
+  static bool create_stroke = true;
 
   _font = std::make_unique<TFreetypeTFont>();
   TFreetypeTFont &data = *_font.get();
@@ -225,8 +225,11 @@ bool CFreetypeTexturedFont::Load(
   data._glyphs  = std::vector<TFreetypeGlyph>( data._max_char - data._min_char );
   for ( int i = data._min_char; i < data._max_char ; ++ i )
   {
-    //FT_Error err_code_glyph = FT_Load_Char( face, i, FT_LOAD_RENDER ); // used before 
-    FT_Error err_code_glyph = FT_Load_Char( face, i, FT_LOAD_NO_BITMAP | FT_LOAD_TARGET_NORMAL );
+    FT_Error err_code_glyph;
+    if ( create_stroke )
+      err_code_glyph = FT_Load_Char( face, i, FT_LOAD_NO_BITMAP | FT_LOAD_TARGET_NORMAL );
+    else
+      err_code_glyph = FT_Load_Char( face, i, FT_LOAD_RENDER ); // used before 
     if ( err_code_glyph != 0 )
       continue;
 
@@ -242,18 +245,21 @@ bool CFreetypeTexturedFont::Load(
       err_code = FT_Glyph_Stroke( &glyphDescStroke, stroker, true );
       if ( err_code != 0 )
         continue;
-    }
 
-    err_code = FT_Glyph_To_Bitmap( &glyphDescStroke, FT_RENDER_MODE_NORMAL, 0, 1);
-    if ( err_code != 0 )
-      continue;
+      err_code = FT_Glyph_To_Bitmap( &glyphDescStroke, FT_RENDER_MODE_NORMAL, 0, 1);
+      if ( err_code != 0 )
+        continue;
+    }
 
     //FT_Bitmap     *bitmap = &glyph->bitmap;
     FT_BitmapGlyph glyph_bitmap = (FT_BitmapGlyph)glyphDescStroke;
-    FT_Bitmap     *bitmap = &glyph_bitmap->bitmap;
+    FT_Bitmap     *bitmap = create_stroke ? &glyph_bitmap->bitmap : &glyph->bitmap;
                                                                    
     unsigned int cx = bitmap->width;
     unsigned int cy = bitmap->rows;
+    unsigned int ox = glyph_bitmap->left;
+    unsigned int oy = glyph_bitmap->top;
+    unsigned int ax = face->glyph->advance.x;
     
     TFreetypeGlyph &glyph_data = data._glyphs[i-data._min_char];
     if ( bitmap->buffer == nullptr )
@@ -444,7 +450,7 @@ bool CFreetypeTexturedFont::DrawText(
       continue;
     TFreetypeGlyph &glyph = _font->_glyphs[i_c-min_c];
     
-    // clculate font metrics vertex cooridnate box
+    // calculate font metrics vertex coordinate box
     FT_Pos metrics_coord[]{
       metrics_width + glyph._metrics.horiBearingX,                        // min x
       glyph._metrics.horiBearingY - glyph._metrics.height,                // min y
@@ -452,19 +458,19 @@ bool CFreetypeTexturedFont::DrawText(
       glyph._metrics.horiBearingY                                         // max y
     };
 
-    // incerement width to the start of the next glyph
+    // increment width to the start of the next glyph
     metrics_width += glyph._metrics.horiAdvance;
 
     if ( glyph._metrics.width == 0 || glyph._metrics.height == 0 )
       continue;
 
-    // clculate vertex coordinate box
+    // calculate vertex coordinate box
     float glyph_coords[]{
       pos[0] + scale_x * (float)metrics_coord[0], pos[1] + scale_y * (float)metrics_coord[1],
       pos[0] + scale_x * (float)metrics_coord[2], pos[1] + scale_y * (float)metrics_coord[3]
     };
 
-    // calculate texture coordiantes box
+    // calculate texture coordinates box
     float glyph_tex_coords[]{
       (float)glyph._x / (float)_font->_width,
       (float)(glyph._y + glyph._cy) / (float)_font->_max_height,
