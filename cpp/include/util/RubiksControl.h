@@ -39,15 +39,64 @@ struct T_RUBIKS_DATA
   int                                           _side_hit = 0;
 };
 
-enum class TAxis { x, y, z };
-enum class TRow { low, mid, high };
-enum class TDirection { left, right };
+enum class TAxis { x = 0, y = 1, z = 2 };
+enum class TRow { low = 0, mid = 1, high = 2 };
+enum class TDirection { left=0, right=1 };
+
+inline int AxisIndex( TAxis axis )     { return static_cast<int>(axis); }
+inline int RowIndex( TRow row )        { return static_cast<int>(row); }
+inline TAxis Axis( int axis )          { return static_cast<TAxis>(std::max(0, std::min(3, axis))); }
+inline TRow Row( int row )             { return static_cast<TRow>(std::max(0, std::min(3, row))); }
+inline TDirection Direction( int dir ) { return static_cast<TDirection>(std::max(0, std::min(2, dir))); }
+
+glm::vec3 AxisVector( int index )
+{
+  static const std::array<glm::vec3, 3> axis_vec{ glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)};
+  return axis_vec[index];
+}    
+
+inline TAxis Axis( const glm::vec3 &rot_axis )
+{
+  return fabs(rot_axis.x) > 0.5f ? Rubiks::TAxis::x : (fabs(rot_axis.y) > 0.5f ?  Rubiks::TAxis::y : Rubiks::TAxis::z);
+}
+
+inline TDirection Direction( const glm::vec3 &rot_axis )
+{
+  return (rot_axis.x + rot_axis.y + rot_axis.z) > 0.0f ? Rubiks::TDirection::left : Rubiks::TDirection::right;
+}
+
+inline TRow Row( TAxis axis, int sub_cube_i )
+{
+  switch (axis)
+  {
+    case TAxis::x: return Row(sub_cube_i % 3);
+    case TAxis::y: return Row((sub_cube_i % 9) / 3);
+    case TAxis::z: return Row(sub_cube_i / 9);
+  }
+  return TRow::mid;
+}
 
 struct TChangeOperation
 {
-  TAxis      _axis;      //!< rotation axis
-  TRow       _row;       //!< rotation row along the rotation axis
-  TDirection _direction; //!< direction of rotation
+  TChangeOperation( void ) = default;
+  TChangeOperation( const TChangeOperation & ) = default;
+
+  TChangeOperation( TAxis axis, TDirection dir, TRow row )
+    : _axis( axis )
+    , _direction( dir )
+    , _row( row )
+  {}
+
+  TChangeOperation( const glm::vec3 &rot_axis, int sub_cube_i )
+  {
+    _axis      = Axis(rot_axis);
+    _direction = Direction(rot_axis);
+    _row       = Row(_axis, sub_cube_i);
+  }
+
+  TAxis      _axis{ TAxis::x };              //!< rotation axis
+  TDirection _direction{ TDirection::left }; //!< direction of rotation
+  TRow       _row{ TRow::low };              //!< rotation row along the rotation axis
 };
 
 using TChangeQueue = std::deque<TChangeOperation>;
@@ -113,26 +162,6 @@ private:
     auto   delta_time = time_end - time_start;
     double time_ms    = (double)std::chrono::duration_cast<std::chrono::milliseconds>(delta_time).count() / 1000.0;
     return time_ms;
-  }
-
-  int AxisIndex( TAxis axis ) const
-  {
-     static const std::unordered_map<TAxis, int> axis_map{ {TAxis::x, 0}, {TAxis::y, 1}, {TAxis::z, 2}};
-     int axis_i = axis_map.find(axis)->second;
-     return axis_i;
-  }
-
-  int RowIndex( TRow row ) const
-  {
-    static const std::unordered_map<TRow, int> row_map{ {TRow::low, 0}, {TRow::mid, 1}, {TRow::high, 2}};
-    int row_i = row_map.find(row)->second;
-    return row_i;
-  }
-
-  glm::vec3 Axis( int index ) const
-  {
-    static const std::array<glm::vec3, 3> axis_vec{ glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)};
-    return axis_vec[index];
   }
 
   T_RUBIKS_DATA _data;                        //!< final Rubik's cube data for rendering
@@ -225,10 +254,6 @@ CCube & CCube::InitGeometry(
 CCube & CCube::Shuffle( 
   int steps ) //!< I - number of shuffles
 {
-  static const std::array<TAxis, 3> a_axis{TAxis::x, TAxis::y, TAxis::z};
-  static const std::array<TRow, 3> a_row{TRow::low, TRow::mid, TRow::high};
-  static const std::array<TDirection, 2> a_dir{TDirection::left, TDirection::right};
-
   std::srand( (unsigned int)std::time(nullptr) );
 
   // create random operations
@@ -239,9 +264,9 @@ CCube & CCube::Shuffle(
     bool valid;
     do
     {
-      op._axis      = a_axis[std::rand() % 3];
-      op._row       = a_row[std::rand() % 3];
-      op._direction = a_dir[std::rand() % 2];
+      op._axis      = Axis(std::rand() % 3);
+      op._row       = Row(std::rand() % 3);
+      op._direction = Direction(std::rand() % 2);
 
       if ( shuffle_ops.empty() )
         break;
@@ -325,7 +350,7 @@ CCube & CCube::Update( void )
       {
         double angle = glm::radians( 90.0f ) * (op._direction == TDirection::left ? -1.0f : 1.0f);
         angle *= past_animation_time_s / _animation_time_s;
-        _animation[i] = glm::rotate( glm::mat4(1.0f), (float)angle, Axis(axis_i) );
+        _animation[i] = glm::rotate( glm::mat4(1.0f), (float)angle, AxisVector(axis_i) );
       }
 
       // Update the final model matrices of the sub cubes
@@ -603,14 +628,22 @@ CCube & CCube::Rotate(
   int              row_i  = RowIndex( op._row );
   std::vector<int> cube_i = SubCubeIndices( op._axis, op._row );
 
+  static const std::array<glm::mat4, 6> c_rot_mat
+  {
+    glm::mat4( 1,  0,  0, 0,     0, 0, -1, 0,    0,  1, 0, 0,    0, 0, 0, 1 ),
+    glm::mat4( 1,  0,  0, 0,     0, 0,  1, 0,    0, -1, 0, 0,    0, 0, 0, 1 ),
+    glm::mat4( 0,  0,  1, 0,     0, 1,  0, 0,   -1,  0, 0, 0,    0, 0, 0, 1 ),
+    glm::mat4( 0,  0, -1, 0,     0, 1,  0, 0,    1,  0, 0, 0,    0, 0, 0, 1 ),
+    glm::mat4( 0, -1,  0, 0,     1, 0,  0, 0,    0,  0, 1, 0,    0, 0, 0, 1 ),
+    glm::mat4( 0,  1,  0, 0,    -1, 0,  0, 0,    0,  0, 1, 0,    0, 0, 0, 1 )
+  };
+
   // update the position model matrix of the affected sub cubes 
+  const glm::mat4 &rot_mat = c_rot_mat[axis_i*2 + (op._direction == TDirection::left ? 0 : 1)];
   for ( auto i : cube_i )
   {
-    // TODO $$$ optimize this algorithm and ensure precision. Avoid floating point inaccuracy on continuous operations.
-    // A rotation by 90 degrees can be performed by swapping 2 axis and inverting one of them,
-    // dependent on the direction of the rotation left (-90) or right (90).  
-    float angle = glm::radians( 90.0f ) * (op._direction == TDirection::left ? -1.0f : 1.0f);
-    glm::mat4 rot_mat = glm::rotate( glm::mat4(1.0f), angle, Axis(axis_i) );
+    //float angle = glm::radians( 90.0f ) * (op._direction == TDirection::left ? -1.0f : 1.0f);
+    //glm::mat4 rot_mat = glm::rotate( glm::mat4(1.0f), angle, AxisVector(axis_i) );
     _current_pos[i] = rot_mat * _current_pos[i];
   }
 

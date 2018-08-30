@@ -311,26 +311,26 @@ void CWindow_Glfw::Key( int key, int scancode, int action, int mods )
 
   switch (key)
   {
-    case GLFW_KEY_1:    _rubiks_cube->Change( { Rubiks::TAxis::x, Rubiks::TRow::low, Rubiks::TDirection::left } ); break;
-    case GLFW_KEY_KP_1: _rubiks_cube->Change( { Rubiks::TAxis::x, Rubiks::TRow::low, Rubiks::TDirection::right } ); break;
-    case GLFW_KEY_2:    _rubiks_cube->Change( { Rubiks::TAxis::x, Rubiks::TRow::mid, Rubiks::TDirection::left } ); break;
-    case GLFW_KEY_KP_2: _rubiks_cube->Change( { Rubiks::TAxis::x, Rubiks::TRow::mid, Rubiks::TDirection::right } ); break;
-    case GLFW_KEY_3:    _rubiks_cube->Change( { Rubiks::TAxis::x, Rubiks::TRow::high, Rubiks::TDirection::left } ); break;
-    case GLFW_KEY_KP_3: _rubiks_cube->Change( { Rubiks::TAxis::x, Rubiks::TRow::high, Rubiks::TDirection::right } ); break;
+    case GLFW_KEY_1:    _rubiks_cube->Change( { Rubiks::TAxis::x,  Rubiks::TDirection::left,  Rubiks::TRow::low  } ); break;
+    case GLFW_KEY_KP_1: _rubiks_cube->Change( { Rubiks::TAxis::x,  Rubiks::TDirection::right, Rubiks::TRow::low  } ); break;
+    case GLFW_KEY_2:    _rubiks_cube->Change( { Rubiks::TAxis::x,  Rubiks::TDirection::left,  Rubiks::TRow::mid  } ); break;
+    case GLFW_KEY_KP_2: _rubiks_cube->Change( { Rubiks::TAxis::x,  Rubiks::TDirection::right, Rubiks::TRow::mid  } ); break;
+    case GLFW_KEY_3:    _rubiks_cube->Change( { Rubiks::TAxis::x,  Rubiks::TDirection::left,  Rubiks::TRow::high } ); break;
+    case GLFW_KEY_KP_3: _rubiks_cube->Change( { Rubiks::TAxis::x,  Rubiks::TDirection::right, Rubiks::TRow::high } ); break;
 
-    case GLFW_KEY_4:    _rubiks_cube->Change( { Rubiks::TAxis::y, Rubiks::TRow::low, Rubiks::TDirection::left } ); break;
-    case GLFW_KEY_KP_4: _rubiks_cube->Change( { Rubiks::TAxis::y, Rubiks::TRow::low, Rubiks::TDirection::right } ); break;
-    case GLFW_KEY_5:    _rubiks_cube->Change( { Rubiks::TAxis::y, Rubiks::TRow::mid, Rubiks::TDirection::left } ); break;
-    case GLFW_KEY_KP_5: _rubiks_cube->Change( { Rubiks::TAxis::y, Rubiks::TRow::mid, Rubiks::TDirection::right } ); break;
-    case GLFW_KEY_6:    _rubiks_cube->Change( { Rubiks::TAxis::y, Rubiks::TRow::high, Rubiks::TDirection::left } ); break;
-    case GLFW_KEY_KP_6: _rubiks_cube->Change( { Rubiks::TAxis::y, Rubiks::TRow::high, Rubiks::TDirection::right } ); break;
+    case GLFW_KEY_4:    _rubiks_cube->Change( { Rubiks::TAxis::y,  Rubiks::TDirection::left,  Rubiks::TRow::low  } ); break;
+    case GLFW_KEY_KP_4: _rubiks_cube->Change( { Rubiks::TAxis::y,  Rubiks::TDirection::right, Rubiks::TRow::low  } ); break;
+    case GLFW_KEY_5:    _rubiks_cube->Change( { Rubiks::TAxis::y,  Rubiks::TDirection::left,  Rubiks::TRow::mid  } ); break;
+    case GLFW_KEY_KP_5: _rubiks_cube->Change( { Rubiks::TAxis::y,  Rubiks::TDirection::right, Rubiks::TRow::mid  } ); break;
+    case GLFW_KEY_6:    _rubiks_cube->Change( { Rubiks::TAxis::y,  Rubiks::TDirection::left,  Rubiks::TRow::high } ); break;
+    case GLFW_KEY_KP_6: _rubiks_cube->Change( { Rubiks::TAxis::y,  Rubiks::TDirection::right, Rubiks::TRow::high } ); break;
 
-    case GLFW_KEY_7:    _rubiks_cube->Change( { Rubiks::TAxis::z, Rubiks::TRow::low, Rubiks::TDirection::left } ); break;
-    case GLFW_KEY_KP_7: _rubiks_cube->Change( { Rubiks::TAxis::z, Rubiks::TRow::low, Rubiks::TDirection::right } ); break;
-    case GLFW_KEY_8:    _rubiks_cube->Change( { Rubiks::TAxis::z, Rubiks::TRow::mid, Rubiks::TDirection::left } ); break;
-    case GLFW_KEY_KP_8: _rubiks_cube->Change( { Rubiks::TAxis::z, Rubiks::TRow::mid, Rubiks::TDirection::right } ); break;
-    case GLFW_KEY_9:    _rubiks_cube->Change( { Rubiks::TAxis::z, Rubiks::TRow::high, Rubiks::TDirection::left } ); break;
-    case GLFW_KEY_KP_9: _rubiks_cube->Change( { Rubiks::TAxis::z, Rubiks::TRow::high, Rubiks::TDirection::right } ); break;
+    case GLFW_KEY_7:    _rubiks_cube->Change( { Rubiks::TAxis::z,  Rubiks::TDirection::left,  Rubiks::TRow::low  } ); break;
+    case GLFW_KEY_KP_7: _rubiks_cube->Change( { Rubiks::TAxis::z,  Rubiks::TDirection::right, Rubiks::TRow::low  } ); break;
+    case GLFW_KEY_8:    _rubiks_cube->Change( { Rubiks::TAxis::z,  Rubiks::TDirection::left,  Rubiks::TRow::mid  } ); break;
+    case GLFW_KEY_KP_8: _rubiks_cube->Change( { Rubiks::TAxis::z,  Rubiks::TDirection::right, Rubiks::TRow::mid  } ); break;
+    case GLFW_KEY_9:    _rubiks_cube->Change( { Rubiks::TAxis::z,  Rubiks::TDirection::left,  Rubiks::TRow::high } ); break;
+    case GLFW_KEY_KP_9: _rubiks_cube->Change( { Rubiks::TAxis::z,  Rubiks::TDirection::right, Rubiks::TRow::high } ); break;
   }
 }
 
@@ -710,23 +710,9 @@ void CWindow_Glfw::UpdateRenderData( void )
             glm::vec3 side_dir( 0.0f, 0.0f, 0.0f );
             side_dir[_start_hit._side / 2] = _start_hit._side % 2 ? 1.0f : -1.0f;
 
-            // get rotation axis vector
+            // get rotation axis, row and direction
             glm::vec3 rot_axis = glm::cross( rot_dir, side_dir );
-            Rubiks::TChangeOperation op;
-            op._axis = fabs(rot_axis.x) > 0.5f ? Rubiks::TAxis::x : (fabs(rot_axis.y) > 0.5f ?  Rubiks::TAxis::y : Rubiks::TAxis::z);
-            op._direction = (rot_axis.x + rot_axis.y + rot_axis.z) > 0.0f ? Rubiks::TDirection::left : Rubiks::TDirection::right;
-            
-            // get row
-            int x_i = _start_hit._sub_cube % 3;
-            int y_i = (_start_hit._sub_cube % 9) / 3;
-            int z_i = _start_hit._sub_cube / 9;
-            static const std::array<Rubiks::TRow, 3> a_row{Rubiks::TRow::low, Rubiks::TRow::mid, Rubiks::TRow::high};
-            switch (op._axis)
-            {
-              case Rubiks::TAxis::x: op._row = a_row[x_i]; break;
-              case Rubiks::TAxis::y: op._row = a_row[y_i]; break;
-              case Rubiks::TAxis::z: op._row = a_row[z_i]; break;
-            }
+            Rubiks::TChangeOperation op( rot_axis, _start_hit._sub_cube );
             
             // change the cube
             _hit = false;
