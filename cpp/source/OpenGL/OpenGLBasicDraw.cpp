@@ -57,7 +57,7 @@ int                   CBasicDraw::_max_anistropic_texture_filter = 0;
 * Opaque and transparent shader:
 * 
 * If a rendered primitive hasn't a texture, a "white" 1*1 texture is
-* set, this causes tha the shader has not to be changed when switching
+* set, this causes that the shader has not to be changed when switching
 * between color and texture.
 * Since the texture color and the color are modulated (multiplied), a
 * texture can be tint by a color.
@@ -803,7 +803,7 @@ Render::IRenderProcessPtr CBasicDraw::NewRenderProcess( void )
 
 
 /******************************************************************//**
-* \brief Provides a textur loader.
+* \brief Provides a texture loader.
 * 
 * \author  gernot
 * \date    2018-07-02

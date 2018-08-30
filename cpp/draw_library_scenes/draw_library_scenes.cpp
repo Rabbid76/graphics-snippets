@@ -58,7 +58,7 @@ enum TScene
 };
 
 
-static TScene _scene = e_default;
+static TScene g_scene = e_default;
 
 //#define RENDER_BITMAP
 
@@ -125,7 +125,7 @@ private:
     float  _aspect = 1.0;
     float  _scale_x = 1.0;
     float  _scale_y = 1.0;
-    TScene _scene   = e_NDC;
+    TScene _scene   = g_scene;
 
     Render::TPoint2 BL( void ) const { return{ -_scale_x, -_scale_y}; }
     Render::TPoint2 TL( void ) const { return{  _scale_x, -_scale_y}; }

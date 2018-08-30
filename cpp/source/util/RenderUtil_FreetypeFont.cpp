@@ -14,13 +14,14 @@
 #include <Render_IBuffer.h>
 
 
-// freetype
+// FREETYPE
 
 #include <ft2build.h>
+#include <freetype/ftstroke.h>
 #include FT_FREETYPE_H
 
 
-// stl
+// STL
 
 #include <vector>
 #include <iostream>
@@ -44,7 +45,7 @@ namespace Render
 
 
 /******************************************************************//**
-* \brief   freetype glyph metrics
+* \brief   FreeType glyph metrics
 * 
 * \author  gernot
 * \date    2018-06-08
@@ -61,7 +62,7 @@ struct TFreetypeGlyph
 };
 
 /******************************************************************//**
-* @brief   freetype font data 
+* @brief   FreeType font data 
 *
 * @author  gernot
 * @date    2018-03-18
@@ -69,14 +70,15 @@ struct TFreetypeGlyph
 **********************************************************************/
 struct TFreetypeTFont
 {
-  FT_Library                  _hdl;              //!< library handle
-  FT_Face                     _face;             //!< font face
-  unsigned int                _width        = 0; //!< total length 
-  unsigned int                _max_height   = 0; //!< maximum height
-  int                         _max_glyph_cy = 0; //!< maximum glyph metrics height 
-  int                         _max_glyph_y  = 0; //!< maximum glyph metrics bearing y 
-  int                         _min_char     = 0; //!< minimum character
-  int                         _max_char     = 0; //!< maximum character
+  FT_Library                  _hdl     = nullptr; //!< library handle
+  FT_Face                     _face    = nullptr; //!< font face
+  FT_Stroker                  _stroker = nullptr; //!< Glyph Stroker - [https://www.freetype.org/freetype2/docs/reference/ft2-glyph_stroker.html#FT_Stroker]
+  unsigned int                _width         = 0; //!< total length 
+  unsigned int                _max_height    = 0; //!< maximum height
+  int                         _max_glyph_cy  = 0; //!< maximum glyph metrics height 
+  int                         _max_glyph_y   = 0; //!< maximum glyph metrics bearing y 
+  int                         _min_char      = 0; //!< minimum character
+  int                         _max_char      = 0; //!< maximum character
   std::vector<TFreetypeGlyph> _glyphs;           //!< glyph information
 };
 
@@ -84,7 +86,7 @@ struct TFreetypeTFont
 /******************************************************************//**
 * \brief   
 * 
-* \author  gerno
+* \author  gernot
 * \date    2018-06-08
 * \version 1.0
 **********************************************************************/
@@ -162,21 +164,23 @@ void CFreetypeTexturedFont::Destroy( void )
 * @version 1.0
 **********************************************************************/
 bool CFreetypeTexturedFont::Load( 
-  Render::ITextureLoader &loader ) //!< in: texter loader implementation
+  Render::ITextureLoader &loader ) //!< in: texture loader implementation
 {
   if ( _font != nullptr )
     return _valid;
+
+  static bool create_stroke = false;
 
   _font = std::make_unique<TFreetypeTFont>();
   TFreetypeTFont &data = *_font.get();
 
 
-  // init freetype library
+  // initialize FreeType library
   FT_Error err_code = FT_Init_FreeType( &_font->_hdl );
   if ( err_code != 0 )
   {          
-    std::cout << "error: failed to initilaize freetype library (error code: " << err_code << ")" << std::endl;
-    throw std::runtime_error( "init freetype library" );
+    std::cout << "error: failed to initialize FreeType library (error code: " << err_code << ")" << std::endl;
+    throw std::runtime_error( "initialize FreeType library" );
   }
 
   // load the font from file
@@ -186,8 +190,19 @@ bool CFreetypeTexturedFont::Load(
     std::cout << "error: failed to load font file " << _font_filename << " (error code: " << err_code << ")" << std::endl;
     throw std::runtime_error( "load font file" );
   }
+   FT_Face face = _font->_face;
 
-  FT_Face face = _font->_face;
+  // create a stroker
+  if ( create_stroke )
+  {
+    err_code = FT_Stroker_New( _font->_hdl, &_font->_stroker );
+    if ( err_code != 0 )
+    {
+        std::cerr << "Failed to create the stroker (error code: " << err_code << ")" << std::endl;
+        throw std::runtime_error( "initialize FreeType library - stroker" );
+    }
+  }
+  FT_Stroker stroker = _font->_stroker;
 
   // set font size
   static FT_UInt pixel_width  = 0;
@@ -210,34 +225,95 @@ bool CFreetypeTexturedFont::Load(
   data._glyphs  = std::vector<TFreetypeGlyph>( data._max_char - data._min_char );
   for ( int i = data._min_char; i < data._max_char ; ++ i )
   {
-    FT_Error err_code_glyph = FT_Load_Char( face, i, FT_LOAD_RENDER );
+    //FT_Error err_code_glyph = FT_Load_Char( face, i, FT_LOAD_RENDER ); // used before 
+    FT_Error err_code_glyph = FT_Load_Char( face, i, FT_LOAD_NO_BITMAP | FT_LOAD_TARGET_NORMAL );
     if ( err_code_glyph != 0 )
       continue;
 
-    unsigned int cx = glyph->bitmap.width;
-    unsigned int cy = glyph->bitmap.rows;
+    FT_Glyph glyphDescStroke;
+    err_code = FT_Get_Glyph( face->glyph, &glyphDescStroke );
+    if ( err_code != 0 )
+      continue;
+
+    if ( create_stroke )
+    {
+      static double outlineThickness = 1.0;
+      FT_Stroker_Set( stroker, static_cast<FT_Fixed>(outlineThickness * static_cast<float>(1 << 6)), FT_STROKER_LINECAP_ROUND, FT_STROKER_LINEJOIN_ROUND, 0 );
+      err_code = FT_Glyph_Stroke( &glyphDescStroke, stroker, true );
+      if ( err_code != 0 )
+        continue;
+    }
+
+    err_code = FT_Glyph_To_Bitmap( &glyphDescStroke, FT_RENDER_MODE_NORMAL, 0, 1);
+    if ( err_code != 0 )
+      continue;
+
+    //FT_Bitmap     *bitmap = &glyph->bitmap;
+    FT_BitmapGlyph glyph_bitmap = (FT_BitmapGlyph)glyphDescStroke;
+    FT_Bitmap     *bitmap = &glyph_bitmap->bitmap;
+                                                                   
+    unsigned int cx = bitmap->width;
+    unsigned int cy = bitmap->rows;
     
     TFreetypeGlyph &glyph_data = data._glyphs[i-data._min_char];
+    if ( bitmap->buffer == nullptr )
+      continue;
 
     glyph_data._metrics = glyph->metrics;
     glyph_data._x       = data._width;
     glyph_data._y       = 1;
     glyph_data._cx      = cx;
     glyph_data._cy      = cy;
-    
+
     glyph_data._image = std::vector<unsigned char>( cx * cy * 4, 0 );
     for ( unsigned int i = 0; i < cx * cy; ++ i)
     {
-      unsigned char b = glyph->bitmap.buffer[i];
-      if ( i > 0 )
-      {
-        glyph_data._image[i*4 + 0] = b;
-        glyph_data._image[i*4 + 1] = b;
-        glyph_data._image[i*4 + 2] = b;
-        glyph_data._image[i*4 + 3] = b;
-      }
+      unsigned char b = bitmap->buffer[i];
+      glyph_data._image[i*4 + 0] = b;
+      glyph_data._image[i*4 + 1] = b;
+      glyph_data._image[i*4 + 2] = b;
+      glyph_data._image[i*4 + 3] = b;
     }
-    
+
+    FT_Done_Glyph( glyphDescStroke );
+
+    if ( create_stroke )
+    {
+      FT_Glyph glyphDescFill;
+      err_code = FT_Get_Glyph( face->glyph, &glyphDescFill );
+      if ( err_code == 0 )
+        err_code = FT_Glyph_To_Bitmap( &glyphDescFill, FT_RENDER_MODE_NORMAL, 0, 1);
+
+      FT_Bitmap *bitmap = nullptr;
+      if ( err_code == 0 )
+      {
+        FT_BitmapGlyph glyph_bitmap = (FT_BitmapGlyph)glyphDescFill;
+        bitmap = &glyph_bitmap->bitmap;
+      }
+
+      if ( err_code == 0 && bitmap )
+      {
+        unsigned int cx_fill = bitmap->width;
+        unsigned int cy_fill = bitmap->rows;
+        unsigned int offset_x = (cx - cx_fill) / 2;
+        unsigned int offset_y = (cy - cy_fill) / 2;
+
+        for ( unsigned int y = 0; y < cy_fill; ++ y )
+        {
+          for ( unsigned int x = 0; x < cx_fill; ++ x )
+          {
+            unsigned int i_source = y * cx_fill + x;
+            unsigned int i_target = (y + offset_y) * cx + x + offset_x;
+            unsigned char b = bitmap->buffer[i_source];
+            
+            glyph_data._image[i_target*4 + 1] = b;
+          }
+        }
+      }
+
+      FT_Done_Glyph( glyphDescFill );
+    }
+
     data._width      += cx+1;
     data._max_height  = std::max( data._max_height, cy );
 
