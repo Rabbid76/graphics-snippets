@@ -30,24 +30,233 @@ void main()
 }
 </script>
 
+<style>
+html,body { margin: 0; overflow: hidden; }
+#gui { position : absolute; top : 0; left : 0; }
+#ref-link { position : absolute; bottom : 0; left : 0; }  
+</style>
+
+<body>
+    
+<div>
+<form id="gui" name="inputs">
+    <table>
+        <tr> <td> <input type="color" value="#000000" id="color" disabled></td> </tr> 
+        <tr> <td> <font color= #CCF><span id="mouse_x">0</span></font> </td> <td> <font color= #CCF><span id="ndc_x">0</span></font> </td> </tr>
+        <tr> <td> <font color= #CCF><span id="mouse_y">0</span></font> </td> <td> <font color= #CCF><span id="ndc_y">0</span></font> </td> </tr>
+    </table>
+</form>
+</div>
+
+<canvas id="ogl-canvas" style="border: none;"></canvas>
+
+<a id="ref-link" href="https://stackoverflow.com/questions/45893277/is-it-possble-get-which-surface-of-cube-will-be-click-in-opengl/45946943#45946943">
+<font color= #CCF>Is it possble get which surface of cube will be click in OpenGL?</font> 
+</a>
+
+</body>
+
 <script type="text/javascript">
 
-glArrayType = typeof Float32Array !="undefined" ? Float32Array : ( typeof WebGLFloatArray != "undefined" ? WebGLFloatArray : Array );
+var mousePos = [-1, -1];
+var sliderScale = 100.0;
+var canvas
+var gl;
+var progDraw;
+var bufCube = {};
+var bufTorus = {};
+var cubePosData = [];
+var cubeColData = [];
+var cubeInxData = [];
+
+function render(deltaMS){
+
+    Camera.create();
+    Camera.vp = [canvas.width, canvas.height];
+        
+    gl.viewport( 0, 0, canvas.width, canvas.height );
+    gl.enable( gl.DEPTH_TEST );
+    gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
+    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+    
+    var prjMat = Camera.Perspective();
+    var viewMat = Camera.LookAt();
+
+    // set up draw shader
+    ShaderProgram.Use( progDraw );
+    ShaderProgram.SetUniformMat44( progDraw, "u_projectionMat44", prjMat );
+    ShaderProgram.SetUniformMat44( progDraw, "u_viewMat44", viewMat );
+    var modelMat = IdentityMat44()
+    modelMat = RotateAxis( modelMat, CalcAng( deltaMS, 13.0 ), 0 );
+    modelMat = RotateAxis( modelMat, CalcAng( deltaMS, 17.0 ), 1 );
+    ShaderProgram.SetUniformMat44( progDraw, "u_modelMat44", modelMat );
+    
+    // draw scene
+    bufObj = bufCube;
+    gl.enableVertexAttribArray( progDraw.inPos );
+    gl.enableVertexAttribArray( progDraw.inCol );
+    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.pos );
+    gl.vertexAttribPointer( progDraw.inPos, 3, gl.FLOAT, false, 0, 0 );
+    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.col );
+    gl.vertexAttribPointer( progDraw.inCol, 3, gl.FLOAT, false, 0, 0 );
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufObj.inx );
+    gl.drawElements( gl.TRIANGLES, bufObj.inxLen, gl.UNSIGNED_SHORT, 0 );
+    gl.disableVertexAttribArray( progDraw.pos );
+    gl.disableVertexAttribArray( progDraw.col );
+
+    var newColor = "#000000";
+    var pos = [-1, -1];
+    if (mousePos[0] > 0 && mousePos[1] > 0 ) {
+        var pos = [2.0 * mousePos[0] / canvas.width - 1.0, 1.0 - 2.0 * mousePos[1] / canvas.height];
+
+        var invPrjMat = mat44_inverse( prjMat )
+        var invViewMat = mat44_inverse( viewMat )
+        var invModelMat = mat44_inverse( modelMat )
+
+        var viewP1 = Transform([pos[0],pos[1],-1.0], invPrjMat);
+        
+        var R0 = Transform(Transform([0,0,0], invViewMat), invModelMat);
+        var R1 = Transform(Transform(viewP1, invViewMat), invModelMat);
+        var D = Normalize( [ R1[0]-R0[0], R1[1]-R0[1], R1[2]-R0[2] ] );
+
+        var minDist = 100000;
+        for ( it = 0; it < cubeInxData.length; it = it + 3 )
+        {
+            var trI = [ cubeInxData[it+0], cubeInxData[it+1], cubeInxData[it+2] ]
+            var A = [ cubePosData[trI[0]*3+0], cubePosData[trI[0]*3+1], cubePosData[trI[0]*3+2] ];
+            var B = [ cubePosData[trI[1]*3+0], cubePosData[trI[1]*3+1], cubePosData[trI[1]*3+2] ];
+            var C = [ cubePosData[trI[2]*3+0], cubePosData[trI[2]*3+1], cubePosData[trI[2]*3+2] ];
+            
+            P0 = A;
+            NV = Cross( [ B[0]-A[0], B[1]-A[1], B[2]-A[2] ], [ C[0]-A[0], C[1]-A[1], C[2]-A[2] ] );
+            NV = Normalize( NV );
+
+            dist_isect = Dot( [ P0[0]-R0[0], P0[1]-R0[1], P0[2]-R0[2] ], NV ) / Dot( D, NV );
+            if ( dist_isect < 0.0 )
+                continue;
+            P_isect    = [ R0[0] + D[0] * dist_isect, R0[1] + D[1] * dist_isect, R0[2] + D[2] * dist_isect ];
+
+            if ( PointInOrOnTriangle( P_isect, A, B, C ) )
+            {
+                var col = [ 
+                    Math.floor(cubeColData[trI[0]*3+0]*255),
+                    Math.floor(cubeColData[trI[0]*3+1]*255),
+                    Math.floor(cubeColData[trI[0]*3+2]*255) ];
+                h0 = col[0].toString(16); if( h0.length < 2 ) h0 = "0" + h0;
+                h1 = col[1].toString(16); if( h1.length < 2 ) h1 = "0" + h1;
+                h2 = col[2].toString(16); if( h2.length < 2 ) h2 = "0" + h2;
+                if ( dist_isect < minDist ) {
+                    minDist = dist_isect;
+                    newColor = "#" + h0 + h1 + h2;
+                } 
+            }
+        }
+    }
+    document.getElementById( "color" ).value = newColor;
+    document.getElementById( "mouse_x" ).innerHTML = "mouse x: " + mousePos[0];
+    document.getElementById( "mouse_y" ).innerHTML = "mouse y: " + mousePos[1]; 
+    document.getElementById( "ndc_x" ).innerHTML = "NDC x: " + pos[0];
+    document.getElementById( "ndc_y" ).innerHTML = "NDC y: " + pos[1];    
+
+    requestAnimationFrame(render);
+}
+
+function initScene() {
+
+    canvas = document.getElementById( "ogl-canvas");
+    var vp = [canvas.width, canvas.height];
+    gl = canvas.getContext( "experimental-webgl" );
+    if ( !gl )
+      return;
+
+    progDraw = ShaderProgram.Create( 
+      [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },
+        { source : "draw-shader-fs", stage : gl.FRAGMENT_SHADER }
+      ],
+      [ "u_projectionMat44", "u_viewMat44", "u_modelMat44" ] );
+    progDraw.inPos = gl.getAttribLocation( progDraw, "inPos" );
+    progDraw.inCol = gl.getAttribLocation( progDraw, "inCol" );
+    if ( progDraw == 0 )
+        return;
+
+    // create cube
+    var cubePos = [
+        -1.0, -1.0,  1.0,  1.0, -1.0,  1.0,  1.0,  1.0,  1.0, -1.0,  1.0,  1.0,
+        -1.0, -1.0, -1.0,  1.0, -1.0, -1.0,  1.0,  1.0, -1.0, -1.0,  1.0, -1.0 ];
+    var cubeCol = [ 1.0, 0.0, 0.0, 1.0, 0.5, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 ];
+    var cubeHlpInx = [ 0, 1, 2, 3, 1, 5, 6, 2, 5, 4, 7, 6, 4, 0, 3, 7, 3, 2, 6, 7, 1, 0, 4, 5 ]; 
+    for ( var i = 0; i < cubeHlpInx.length; ++ i ) {
+        cubePosData.push( cubePos[cubeHlpInx[i]*3], cubePos[cubeHlpInx[i]*3+1], cubePos[cubeHlpInx[i]*3+2] );
+    }
+    for ( var is = 0; is < 6; ++ is ) {
+        for ( var ip = 0; ip < 4; ++ ip ) {
+           cubeColData.push( cubeCol[is*3], cubeCol[is*3+1], cubeCol[is*3+2] ); 
+        }
+    }
+    for ( var i = 0; i < cubeHlpInx.length; i += 4 ) {
+        cubeInxData.push( i, i+1, i+2, i, i+2, i+3 );
+    }
+    bufCube.pos = gl.createBuffer();
+    gl.bindBuffer( gl.ARRAY_BUFFER, bufCube.pos );
+    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( cubePosData ), gl.STATIC_DRAW );
+    bufCube.col = gl.createBuffer();
+    gl.bindBuffer( gl.ARRAY_BUFFER, bufCube.col );
+    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( cubeColData ), gl.STATIC_DRAW );
+    bufCube.inx = gl.createBuffer();
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufCube.inx );
+    gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( cubeInxData ), gl.STATIC_DRAW );
+    bufCube.inxLen = cubeInxData.length;
+
+    window.onresize = resize;
+    resize();
+    requestAnimationFrame(render);
+}
+
+function resize() {
+    vp_size = [window.innerWidth, window.innerHeight]
+    canvas.width = vp_size[0];
+    canvas.height = vp_size[1];
+}
+
+(function() {
+    document.onmousemove = handleMouseMove;
+    function handleMouseMove(event) {
+        var dot, eventDoc, doc, body, pageX, pageY;
+
+        event = event || window.event; // IE-ism
+
+        if (event.pageX == null && event.clientX != null) {
+            eventDoc = (event.target && event.target.ownerDocument) || document;
+            doc = eventDoc.documentElement;
+            body = eventDoc.body;
+
+            event.pageX = event.clientX +
+              (doc && doc.scrollLeft || body && body.scrollLeft || 0) -
+              (doc && doc.clientLeft || body && body.clientLeft || 0);
+            event.pageY = event.clientY +
+              (doc && doc.scrollTop  || body && body.scrollTop  || 0) -
+              (doc && doc.clientTop  || body && body.clientTop  || 0 );
+        }
+
+        var canvas = document.getElementById( "ogl-canvas");
+        var x = event.pageX - canvas.offsetLeft;
+        var y = event.pageY - canvas.offsetTop;
+        mousePos = [-1, -1];
+        if ( x >= 0 && x < canvas.width && y >= 0 && y < canvas.height ) {
+            mousePos = [x, y]; 
+        }
+    }
+})();
 
 function IdentityMat44() {
-  var m = new glArrayType(16);
-  m[0]  = 1; m[1]  = 0; m[2]  = 0; m[3]  = 0;
-  m[4]  = 0; m[5]  = 1; m[6]  = 0; m[7]  = 0;
-  m[8]  = 0; m[9]  = 0; m[10] = 1; m[11] = 0;
-  m[12] = 0; m[13] = 0; m[14] = 0; m[15] = 1;
-  return m;
+    return [ 1, 0, 0, 0,    0, 1, 0, 0,    0, 0, 1, 0,    0, 0, 0, 1 ];
 };
 
 function RotateAxis(matA, angRad, axis) {
     var aMap = [ [1, 2], [2, 0], [0, 1] ];
     var a0 = aMap[axis][0], a1 = aMap[axis][1]; 
     var sinAng = Math.sin(angRad), cosAng = Math.cos(angRad);
-    var matB = new glArrayType(16);
+    var matB = matA.slice(0);
     for ( var i = 0; i < 16; ++ i ) matB[i] = matA[i];
     for ( var i = 0; i < 3; ++ i ) {
         matB[a0*4+i] = matA[a0*4+i] * cosAng + matA[a1*4+i] * sinAng;
@@ -245,106 +454,14 @@ ShaderProgram.LinkProgram = function( shaderObjs ) {
     return status ? prog : 0;
 }
         
-function drawScene(){
-
-    var canvas = document.getElementById( "ogl-canvas" );
-    Camera.create();
-    Camera.vp = [canvas.width, canvas.height];
-    var currentTime = Date.now();   
-    var deltaMS = currentTime - startTime;
-        
-    gl.viewport( 0, 0, canvas.width, canvas.height );
-    gl.enable( gl.DEPTH_TEST );
-    gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
-    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
-    
-    var prjMat = Camera.Perspective();
-    var viewMat = Camera.LookAt();
-
-    // set up draw shader
-    ShaderProgram.Use( progDraw );
-    ShaderProgram.SetUniformMat44( progDraw, "u_projectionMat44", prjMat );
-    ShaderProgram.SetUniformMat44( progDraw, "u_viewMat44", viewMat );
-    var modelMat = IdentityMat44()
-    modelMat = RotateAxis( modelMat, CalcAng( currentTime, 13.0 ), 0 );
-    modelMat = RotateAxis( modelMat, CalcAng( currentTime, 17.0 ), 1 );
-    ShaderProgram.SetUniformMat44( progDraw, "u_modelMat44", modelMat );
-    
-    // draw scene
-    bufObj = bufCube;
-    gl.enableVertexAttribArray( progDraw.inPos );
-    gl.enableVertexAttribArray( progDraw.inCol );
-    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.pos );
-    gl.vertexAttribPointer( progDraw.inPos, 3, gl.FLOAT, false, 0, 0 );
-    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.col );
-    gl.vertexAttribPointer( progDraw.inCol, 3, gl.FLOAT, false, 0, 0 );
-    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufObj.inx );
-    gl.drawElements( gl.TRIANGLES, bufObj.inxLen, gl.UNSIGNED_SHORT, 0 );
-    gl.disableVertexAttribArray( progDraw.pos );
-    gl.disableVertexAttribArray( progDraw.col );
-
-    var newColor = "#000000";
-    var pos = [-1, -1];
-    if (mousePos[0] > 0 && mousePos[1] > 0 ) {
-        var pos = [2.0 * mousePos[0] / canvas.width - 1.0, 1.0 - 2.0 * mousePos[1] / canvas.height];
-
-        var invPrjMat = mat44_inverse( prjMat )
-        var invViewMat = mat44_inverse( viewMat )
-        var invModelMat = mat44_inverse( modelMat )
-
-        var viewP1 = Transform([pos[0],pos[1],-1.0], invPrjMat);
-        
-        var R0 = Transform(Transform([0,0,0], invViewMat), invModelMat);
-        var R1 = Transform(Transform(viewP1, invViewMat), invModelMat);
-        var D = Normalize( [ R1[0]-R0[0], R1[1]-R0[1], R1[2]-R0[2] ] );
-
-        var minDist = 100000;
-        for ( it = 0; it < cubeInxData.length; it = it + 3 )
-        {
-            var trI = [ cubeInxData[it+0], cubeInxData[it+1], cubeInxData[it+2] ]
-            var A = [ cubePosData[trI[0]*3+0], cubePosData[trI[0]*3+1], cubePosData[trI[0]*3+2] ];
-            var B = [ cubePosData[trI[1]*3+0], cubePosData[trI[1]*3+1], cubePosData[trI[1]*3+2] ];
-            var C = [ cubePosData[trI[2]*3+0], cubePosData[trI[2]*3+1], cubePosData[trI[2]*3+2] ];
-            
-            P0 = A;
-            NV = Cross( [ B[0]-A[0], B[1]-A[1], B[2]-A[2] ], [ C[0]-A[0], C[1]-A[1], C[2]-A[2] ] );
-            NV = Normalize( NV );
-
-            dist_isect = Dot( [ P0[0]-R0[0], P0[1]-R0[1], P0[2]-R0[2] ], NV ) / Dot( D, NV );
-            if ( dist_isect < 0.0 )
-                continue;
-            P_isect    = [ R0[0] + D[0] * dist_isect, R0[1] + D[1] * dist_isect, R0[2] + D[2] * dist_isect ];
-
-            if ( PointInOrOnTriangle( P_isect, A, B, C ) )
-            {
-                var col = [ 
-                    Math.floor(cubeColData[trI[0]*3+0]*255),
-                    Math.floor(cubeColData[trI[0]*3+1]*255),
-                    Math.floor(cubeColData[trI[0]*3+2]*255) ];
-                h0 = col[0].toString(16); if( h0.length < 2 ) h0 = "0" + h0;
-                h1 = col[1].toString(16); if( h1.length < 2 ) h1 = "0" + h1;
-                h2 = col[2].toString(16); if( h2.length < 2 ) h2 = "0" + h2;
-                if ( dist_isect < minDist ) {
-                    minDist = dist_isect;
-                    newColor = "#" + h0 + h1 + h2;
-                } 
-            }
-        }
-    }
-    document.getElementById( "color" ).value = newColor;
-    document.getElementById( "mouseX" ).innerHTML = pos[0];
-    document.getElementById( "mouseY" ).innerHTML = pos[1];
-}
-
-var startTime;
 function Fract( val ) { 
     return val - Math.trunc( val );
 }
-function CalcAng( currentTime, intervall ) {
-    return Fract( (currentTime - startTime) / (1000*intervall) ) * 2.0 * Math.PI;
+function CalcAng( deltaMS, intervall ) {
+    return Fract( deltaMS / (1000*intervall) ) * 2.0 * Math.PI;
 }
-function CalcMove( currentTime, intervall, range ) {
-    var pos = self.Fract( (currentTime - startTime) / (1000*intervall) ) * 2.0
+function CalcMove( deltaMS, intervall, range ) {
+    var pos = self.Fract( deltaMS / (1000*intervall) ) * 2.0
     var pos = pos < 1.0 ? pos : (2.0-pos)
     return range[0] + (range[1] - range[0]) * pos;
 }    
@@ -355,112 +472,6 @@ function EllipticalPosition( a, b, angRag ) {
     return [ a * Math.sin( angRag ) - ea, b * Math.cos( angRag ) - eb, 0 ];
 }
 
-var mousePos = [-1, -1];
-var sliderScale = 100.0
-var gl;
-var progDraw;
-var bufCube = {};
-var bufTorus = {};
-var cubePosData = [];
-var cubeColData = [];
-var cubeInxData = [];
-function sceneStart() {
-
-    var canvas = document.getElementById( "ogl-canvas");
-    var vp = [canvas.width, canvas.height];
-    gl = canvas.getContext( "experimental-webgl" );
-    if ( !gl )
-      return;
-
-    progDraw = ShaderProgram.Create( 
-      [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },
-        { source : "draw-shader-fs", stage : gl.FRAGMENT_SHADER }
-      ],
-      [ "u_projectionMat44", "u_viewMat44", "u_modelMat44" ] );
-    progDraw.inPos = gl.getAttribLocation( progDraw, "inPos" );
-    progDraw.inCol = gl.getAttribLocation( progDraw, "inCol" );
-    if ( progDraw == 0 )
-        return;
-
-    // create cube
-    var cubePos = [
-        -1.0, -1.0,  1.0,  1.0, -1.0,  1.0,  1.0,  1.0,  1.0, -1.0,  1.0,  1.0,
-        -1.0, -1.0, -1.0,  1.0, -1.0, -1.0,  1.0,  1.0, -1.0, -1.0,  1.0, -1.0 ];
-    var cubeCol = [ 1.0, 0.0, 0.0, 1.0, 0.5, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 ];
-    var cubeHlpInx = [ 0, 1, 2, 3, 1, 5, 6, 2, 5, 4, 7, 6, 4, 0, 3, 7, 3, 2, 6, 7, 1, 0, 4, 5 ]; 
-    for ( var i = 0; i < cubeHlpInx.length; ++ i ) {
-        cubePosData.push( cubePos[cubeHlpInx[i]*3], cubePos[cubeHlpInx[i]*3+1], cubePos[cubeHlpInx[i]*3+2] );
-    }
-    for ( var is = 0; is < 6; ++ is ) {
-        for ( var ip = 0; ip < 4; ++ ip ) {
-           cubeColData.push( cubeCol[is*3], cubeCol[is*3+1], cubeCol[is*3+2] ); 
-        }
-    }
-    for ( var i = 0; i < cubeHlpInx.length; i += 4 ) {
-        cubeInxData.push( i, i+1, i+2, i, i+2, i+3 );
-    }
-    bufCube.pos = gl.createBuffer();
-    gl.bindBuffer( gl.ARRAY_BUFFER, bufCube.pos );
-    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( cubePosData ), gl.STATIC_DRAW );
-    bufCube.col = gl.createBuffer();
-    gl.bindBuffer( gl.ARRAY_BUFFER, bufCube.col );
-    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( cubeColData ), gl.STATIC_DRAW );
-    bufCube.inx = gl.createBuffer();
-    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufCube.inx );
-    gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( cubeInxData ), gl.STATIC_DRAW );
-    bufCube.inxLen = cubeInxData.length;
-
-    startTime = Date.now();
-    setInterval(drawScene, 50);
-}
-
-(function() {
-    document.onmousemove = handleMouseMove;
-    function handleMouseMove(event) {
-        var dot, eventDoc, doc, body, pageX, pageY;
-
-        event = event || window.event; // IE-ism
-
-        if (event.pageX == null && event.clientX != null) {
-            eventDoc = (event.target && event.target.ownerDocument) || document;
-            doc = eventDoc.documentElement;
-            body = eventDoc.body;
-
-            event.pageX = event.clientX +
-              (doc && doc.scrollLeft || body && body.scrollLeft || 0) -
-              (doc && doc.clientLeft || body && body.clientLeft || 0);
-            event.pageY = event.clientY +
-              (doc && doc.scrollTop  || body && body.scrollTop  || 0) -
-              (doc && doc.clientTop  || body && body.clientTop  || 0 );
-        }
-
-        var canvas = document.getElementById( "ogl-canvas");
-        var x = event.pageX - canvas.offsetLeft;
-        var y = event.pageY - canvas.offsetTop;
-        mousePos = [-1, -1];
-        if ( x >= 0 && x < canvas.width && y >= 0 && y < canvas.height ) {
-            mousePos = [x, y]; 
-        }
-    }
-})();
+initScene();
 
 </script>
-
-
-<body onload="sceneStart();">
-    <div style="margin-left: 520px;">
-        <div style="float: right; width: 100%; background-color: #CCF;">
-            <form name="inputs">
-                <table>
-                    <tr> <td> <input type="color" value="#000000" id="color" disabled></td> </tr> 
-                    <tr> <td> <span id="mouseX">0</span> </td> </tr>
-                    <tr> <td> <span id="mouseY">0</span> </td> </tr>
-                </table>
-            </form>
-        </div>
-        <div style="float: right; width: 520px; margin-left: -520px;">
-            <canvas id="ogl-canvas" style="border: none;" width="512" height="512"></canvas>
-        </div>
-        <div style="clear: both;"></div>
-    </div>
-</body>

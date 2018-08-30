@@ -84,10 +84,6 @@ Add or improve an example (webgl/three.js) or page every day
   - improve example
   - stack overflow link
 
-- [Unproject perspective](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/unproject_perspective.html)
-  - full screen
-  - stack overflow link
-
 - [Spherical projection](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/spherical_projection.html)
   - full screen
   - stack overflow link
