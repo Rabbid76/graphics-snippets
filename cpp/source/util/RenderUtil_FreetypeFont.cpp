@@ -169,7 +169,7 @@ bool CFreetypeTexturedFont::Load(
   if ( _font != nullptr )
     return _valid;
 
-  static bool create_stroke = true;
+  static bool create_stroke = false;
 
   _font = std::make_unique<TFreetypeTFont>();
   TFreetypeTFont &data = *_font.get();
@@ -190,7 +190,7 @@ bool CFreetypeTexturedFont::Load(
     std::cout << "error: failed to load font file " << _font_filename << " (error code: " << err_code << ")" << std::endl;
     throw std::runtime_error( "load font file" );
   }
-   FT_Face face = _font->_face;
+  FT_Face face = _font->_face;
 
   // create a stroker
   if ( create_stroke )
@@ -233,6 +233,16 @@ bool CFreetypeTexturedFont::Load(
     if ( err_code_glyph != 0 )
       continue;
 
+    unsigned int cx = glyph->bitmap.width;
+    unsigned int cy = glyph->bitmap.rows;
+
+    TFreetypeGlyph &glyph_data = data._glyphs[i-data._min_char];
+    glyph_data._metrics = glyph->metrics;
+    glyph_data._x       = data._width;
+    glyph_data._y       = 1;
+    glyph_data._cx      = cx;
+    glyph_data._cy      = cy;
+
     FT_Glyph glyphDescStroke;
     err_code = FT_Get_Glyph( glyph, &glyphDescStroke );
     if ( err_code != 0 )
@@ -255,21 +265,18 @@ bool CFreetypeTexturedFont::Load(
     FT_BitmapGlyph glyph_bitmap = (FT_BitmapGlyph)glyphDescStroke;
     FT_Bitmap     *bitmap = create_stroke ? &glyph_bitmap->bitmap : &glyph->bitmap;
                                                                    
-    unsigned int cx = bitmap->width;
-    unsigned int cy = bitmap->rows;
+    cx = bitmap->width;
+    cy = bitmap->rows;
+    glyph_data._cx = cx;
+    glyph_data._cy = cy;
+
+    // TODO $$$ use ox and oy instead of `glyph->metrics`?
     unsigned int ox = glyph_bitmap->left;
     unsigned int oy = glyph_bitmap->top;
     unsigned int ax = face->glyph->advance.x;
-    
-    TFreetypeGlyph &glyph_data = data._glyphs[i-data._min_char];
+      
     if ( bitmap->buffer == nullptr )
       continue;
-
-    glyph_data._metrics = glyph->metrics;
-    glyph_data._x       = data._width;
-    glyph_data._y       = 1;
-    glyph_data._cx      = cx;
-    glyph_data._cy      = cy;
 
     glyph_data._image = std::vector<unsigned char>( cx * cy * 4, 0 );
     for ( unsigned int i = 0; i < cx * cy; ++ i)
@@ -323,7 +330,7 @@ bool CFreetypeTexturedFont::Load(
 
       FT_Done_Glyph( glyphDescFill );
     }
-
+    
     data._width      += cx+1;
     data._max_height  = std::max( data._max_height, cy );
 
