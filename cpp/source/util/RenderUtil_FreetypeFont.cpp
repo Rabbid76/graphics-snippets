@@ -169,7 +169,7 @@ bool CFreetypeTexturedFont::Load(
   if ( _font != nullptr )
     return _valid;
 
-  static bool create_stroke = false;
+  static bool create_stroke = true;
 
   _font = std::make_unique<TFreetypeTFont>();
   TFreetypeTFont &data = *_font.get();
@@ -250,7 +250,7 @@ bool CFreetypeTexturedFont::Load(
 
     if ( create_stroke )
     {
-      static double outlineThickness = 1.0;
+      static double outlineThickness = 2.0;
       FT_Stroker_Set( stroker, static_cast<FT_Fixed>(outlineThickness * static_cast<float>(1 << 6)), FT_STROKER_LINECAP_ROUND, FT_STROKER_LINEJOIN_ROUND, 0 );
       err_code = FT_Glyph_Stroke( &glyphDescStroke, stroker, true );
       if ( err_code != 0 )
@@ -282,9 +282,10 @@ bool CFreetypeTexturedFont::Load(
     for ( unsigned int i = 0; i < cx * cy; ++ i)
     {
       unsigned char b = bitmap->buffer[i];
-      glyph_data._image[i*4 + 0] = b;
-      glyph_data._image[i*4 + 1] = b;
-      glyph_data._image[i*4 + 2] = b;
+      unsigned char b_2 = (unsigned char)( b / 2 );
+      glyph_data._image[i*4 + 0] = create_stroke ? b_2 : b;
+      glyph_data._image[i*4 + 1] = create_stroke ? b_2 : b;
+      glyph_data._image[i*4 + 2] = create_stroke ? b_2 : b;
       glyph_data._image[i*4 + 3] = b;
     }
 
@@ -320,9 +321,9 @@ bool CFreetypeTexturedFont::Load(
             unsigned char b = bitmap->buffer[i_source];
             unsigned char b_2 = (unsigned char)( b / 2 );
             
-            glyph_data._image[i_target*4]   = std::max( glyph_data._image[i_target*4], b_2);
-            glyph_data._image[i_target*4+1] = std::max( glyph_data._image[i_target*4+1], b_2);
-            glyph_data._image[i_target*4+2] = std::max( glyph_data._image[i_target*4+2], b_2);
+            glyph_data._image[i_target*4]   = std::max( glyph_data._image[i_target*4], b);
+            glyph_data._image[i_target*4+1] = std::max( glyph_data._image[i_target*4+1], b);
+            glyph_data._image[i_target*4+2] = std::max( glyph_data._image[i_target*4+2], b);
             glyph_data._image[i_target*4+3] = std::max( glyph_data._image[i_target*4+3], b);         
           }
         }

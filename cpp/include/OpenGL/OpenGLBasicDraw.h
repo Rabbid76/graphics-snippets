@@ -78,7 +78,8 @@ public:
     font_pcifico,
     font_alura,
     font_grandhotel,
-    font_greatevibes
+    font_greatevibes,
+    font_pixslim_2
   };
 
   using TProgramPtr = OpenGL::ShaderProgram*;

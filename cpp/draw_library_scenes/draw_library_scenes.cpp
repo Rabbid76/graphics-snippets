@@ -35,7 +35,8 @@
 
 enum TScene
 {
-  e_default,
+  e_test_1,
+  e_test_2,
 
   // transformation
   e_text_rotate,
@@ -58,7 +59,7 @@ enum TScene
 };
 
 
-static TScene g_scene = e_default;
+static TScene g_scene = e_test_2;
 
 //#define RENDER_BITMAP
 
@@ -140,6 +141,7 @@ private:
     void Setup2DCheckered( void );
 
     void TestScene( double time_ms );
+    void TestScene_2( double time_ms );
     void TextRotate( double time_ms );
     void IsectLineLine( double time_ms );
     void IsectLinePlane( double time_ms );
@@ -352,7 +354,8 @@ void CWindow_Glfw::Render( double time_ms )
   {
 
     default:
-    case e_default:           TestScene( time_ms ); break;
+    case e_test_1:            TestScene( time_ms ); break;
+    case e_test_2:            TestScene_2( time_ms ); break;
     case e_text_rotate:       TextRotate( time_ms ); break;
     case e_isect_line_line:   IsectLineLine( time_ms ); break;
     case e_isect_line_plane:  IsectLinePlane( time_ms ); break;
@@ -435,6 +438,23 @@ void CWindow_Glfw::TestScene( double time_ms )
     _draw->DrawConvexPolygon( 2, { -0.8f,  0.8f,  0.8f,  0.8f,  0.0f, -0.8f }, { 0.0f, 1.0f, 0.0f, 0.5f } );
     _draw->DrawConvexPolygon( 2, { -0.8f, -0.8f, -0.8f,  0.8f,  0.8f,  0.0f }, { 0.0f, 0.0f, 1.0f, 0.5f } );
     _draw->DrawConvexPolygon( 2, {  0.8f, -0.8f,  0.8f,  0.8f, -0.8f,  0.0f }, { 1.0f, 1.0f, 0.0f, 0.5f } );
+}
+
+
+void CWindow_Glfw::TestScene_2( double time_ms )
+{
+    _draw->ActivateBackground();
+
+    //Lined( BL(), { 0.0f, _scale_y } );
+    //Checkered( { 0.0f, -_scale_y }, TR() )
+    Setup2DCheckered();
+
+    _draw->ActivateOpaque();
+
+    static float  text_height  = 0.126f;
+    static float  text_scale_y = 1.0f;
+    const char *text = "Hello, a long text with a lot of different letters.";
+    _draw->DrawText2D( OpenGL::CBasicDraw::font_pixslim_2, text, text_height, text_scale_y, { _scale_x * -0.96f, 0.3f, -0.01f }, Color_orange() );
 }
 
 

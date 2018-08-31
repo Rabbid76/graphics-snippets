@@ -892,6 +892,7 @@ bool CBasicDraw::LoadFont(
     case font_alura:       min_char = 32; font_finename = "../resource/font/Allura-Regular.otf"; break;
     case font_grandhotel:  min_char = 32; font_finename = "../resource/font/GrandHotel-Regular.otf"; break;
     case font_greatevibes: min_char = 32; font_finename = "../resource/font/GreatVibes-Regular.otf"; break;
+    case font_pixslim_2:   min_char = 32; font_finename = "../resource/font/pixlim_2.ttf"; break;
   }
 
   if ( font_finename.empty() )
