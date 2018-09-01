@@ -169,7 +169,7 @@ bool CFreetypeTexturedFont::Load(
   if ( _font != nullptr )
     return _valid;
 
-  static bool create_stroke = true;
+  static bool create_stroke = false;
 
   _font = std::make_unique<TFreetypeTFont>();
   TFreetypeTFont &data = *_font.get();

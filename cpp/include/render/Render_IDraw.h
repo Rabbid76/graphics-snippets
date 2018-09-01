@@ -124,31 +124,31 @@ public:
     return Draw( TPrimitive::trianglefan, size, coords_size, coords, color, TStyle() );
   }
 
-  bool DrawPolyline( size_t size, const TBuffer &corrds, const TColor &color, float thickness, bool closed )
+  bool DrawPolyline( size_t tuple_size, const TBuffer &corrds, const TColor &color, float thickness, bool closed )
   {
-    return DrawPolyline( size, corrds.size(), corrds.data(), color, thickness, closed );
+    return DrawPolyline( tuple_size, corrds.size(), corrds.data(), color, thickness, closed );
   }
 
-  virtual bool DrawPolyline( size_t size, size_t coords_size, const t_fp *coords, const TColor &color, float thickness, bool closed )
+  virtual bool DrawPolyline( size_t tuple_size, size_t coords_size, const t_fp *coords, const TColor &color, float thickness, bool closed )
   {
     TStyle style;
     style._thickness = thickness;
-    return Draw( closed ? TPrimitive::lineloop : TPrimitive::linestrip, size, coords_size, coords, color, style );
+    return Draw( closed ? TPrimitive::lineloop : TPrimitive::linestrip, tuple_size, coords_size, coords, color, style );
   }
 
-  bool DrawArrow( size_t size, const TBuffer &corrds, const TColor &color, float thickness, const TVec2 &arrow_size, bool arrow_from, bool arrow_to )
+  bool DrawArrow( size_t tuple_size, const TBuffer &corrds, const TColor &color, float thickness, const TVec2 &arrow_size, bool arrow_from, bool arrow_to )
   {
-    return DrawArrow( size, corrds.size(), corrds.data(), color, thickness, arrow_size, arrow_from, arrow_to );
+    return DrawArrow( tuple_size, corrds.size(), corrds.data(), color, thickness, arrow_size, arrow_from, arrow_to );
   }
 
-  virtual bool DrawArrow( size_t size, size_t coords_size, const t_fp *coords, const TColor &color, float thickness, const TVec2 &arrow_size, bool arrow_from, bool arrow_to )
+  virtual bool DrawArrow( size_t tuple_size, size_t coords_size, const t_fp *coords, const TColor &color, float thickness, const TVec2 &arrow_size, bool arrow_from, bool arrow_to )
   {
     TStyle style;
     style._thickness = thickness;
     style._size      = arrow_size;
     style._properites.set( (int)TStyleProperty::arrow_from, arrow_from );
     style._properites.set( (int)TStyleProperty::arrow_to, arrow_to );
-    return Draw( TPrimitive::linestrip, size, coords_size, coords, color, style );
+    return Draw( TPrimitive::linestrip, tuple_size, coords_size, coords, color, style );
   }
 
   bool DrawRectangle2D( const TPoint2 &min, const TPoint2 &max, float z, const TColor &color, float thickness )

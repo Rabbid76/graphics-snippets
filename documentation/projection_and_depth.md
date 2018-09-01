@@ -14,18 +14,19 @@ All the objects (meshes) which are in the space (volume) are "visible" on the vi
 This means at orthographic projection, the objects "behind" the viewer are possibly "visible". This may seem unnatural, but this is how orthographic projection works.
 
 At perspective projection the view space (volume) is defined by a frustum (a truncated pyramid), where the top of the pyramid is the viewer's position.
-The direction of view (line of sight) and the near and the far distance define the planes which truncated the pyramid to a frustum (the direction of view is the normal vector of this planes). 
-The left, right, bottom, top distance define the distance from the intersection of the line of sight and the near plane, with the side faces of the frustum (in the near plane).
+The direction of view (line of sight) and the near and the far distance define the planes which truncated the pyramid to a frustum (the direction of view is the normal vector of this planes).
+The left, right, bottom, top distance define the distance from the intersection of the line of sight and the near plane, with the side faces of the frustum (on the near plane).
 This causes that the scene looks like, as it would be seen from of a pinhole camera.
 
 One of the most common mistakes, when an object is not visible on the viewport (screen is all "black"), is that the mesh is not within the view volume which is defined by the projection and view matrix.
 
+<br/><hr/>
 
 ## Coordinate Systems
 
 ### Model coordinates (Object coordinates)
 
-The model space is the local space, where within a mesh is defined. The vertex coordinates are defined in model space.
+The model space is the coordinates system, which is used to define or modulate a mesh.. The vertex coordinates are defined in model space.
 
 e.g.:
 
@@ -42,19 +43,23 @@ The model matrix defines the location, orientation and the relative size of a mo
 
 The model matrix looks like this:
 
-    ( X-axis.x, X-axis.y, X-axis.z, 0 )
-    ( Y-axis.x, Y-axis.y, Y-axis.z, 0 )
-    ( Z-axis.x, Z-axis.y, Z-axis.z, 0 )
-    ( trans.x,  trans.y,  trans.z,  1 )
+```txt
+( X-axis.x, X-axis.y, X-axis.z, 0 )
+( Y-axis.x, Y-axis.y, Y-axis.z, 0 )
+( Z-axis.x, Z-axis.y, Z-axis.z, 0 )
+( trans.x,  trans.y,  trans.z,  1 )
+```
 
 e.g.:
 
-    (  0.0, -0.5,  0.0,  0.0 )
-    (  2.0,  0.0,  0.0,  0.0 )
-    (  0.0,  0.0,  1.0,  0.0 )
-    (  0.4,  0.0,  0.0,  1.0 )
+```txt
+(  0.0, -0.5,  0.0,  0.0 )
+(  2.0,  0.0,  0.0,  0.0 )
+(  0.0,  0.0,  1.0,  0.0 )
+(  0.4,  0.0,  0.0,  1.0 )
+```
 
-![model to world](image/model_to_world.png)    
+![model to world](image/model_to_world.png)
 
 
 ### View space (Eye coordinates)
@@ -76,8 +81,9 @@ If the coordinate system of the view space is a [Right-handed](https://en.wikipe
 Clip space coordinates are [Homogeneous coordinates](https://en.wikipedia.org/wiki/Homogeneous_coordinates). In clip space the clipping of the scene is performed.<br/>
 A point is in clip space if the `x`, `y` and `z` components are in the range defined by the inverted `w` component and the `w` component of the homogeneous coordinates of the point:
 
-    -w <=  x, y, z  <= w.
-
+```txt
+-w <=  x, y, z  <= w.
+```
 
 **Projection matrix**
 
@@ -106,7 +112,7 @@ The window coordinates are the coordinates of the viewport rectangle. The window
 **Viewport and depth range**
 
 The normalized device coordinates are linearly mapped to the Window Coordinates (Screen Coordinates) and to the depth for the depth buffer.
-The viewport is defined by [`glViewport`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glViewport.xhtml). The depthrange is set by [`glDepthRange`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glDepthRange.xhtml) and is by default [0, 1].
+The viewport is defined by [`glViewport`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glViewport.xhtml). The depth range is set by [`glDepthRange`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glDepthRange.xhtml) and is by default [0, 1].
 
 <br/>
 
@@ -127,37 +133,38 @@ The code below defines a matrix that exactly encapsulates the steps necessary to
 
 The following code does the same as `gluLookAt` or `glm::lookAt` does:
 
-    using TVec3  = std::array< float, 3 >;
-    using TVec4  = std::array< float, 4 >;
-    using TMat44 = std::array< TVec4, 4 >;
+```cpp
+using TVec3  = std::array< float, 3 >;
+using TVec4  = std::array< float, 4 >;
+using TMat44 = std::array< TVec4, 4 >;
 
-    TVec3 Cross( TVec3 a, TVec3 b ) { return { a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0] }; }
-    float Dot( TVec3 a, TVec3 b ) { return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; }
-    void Normalize( TVec3 & v )
-    {
-        float len = sqrt( v[0] * v[0] + v[1] * v[1] + v[2] * v[2] );
-        v[0] /= len; v[1] /= len; v[2] /= len;
-    }
+TVec3 Cross( TVec3 a, TVec3 b ) { return { a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0] }; }
+float Dot( TVec3 a, TVec3 b ) { return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; }
+void Normalize( TVec3 & v )
+{
+    float len = sqrt( v[0] * v[0] + v[1] * v[1] + v[2] * v[2] );
+    v[0] /= len; v[1] /= len; v[2] /= len;
+}
 
-    TMat44 Camera::LookAt( const TVec3 &pos, const TVec3 &target, const TVec3 &up )
-    { 
-        TVec3 mz = { pos[0] - target[0], pos[1] - target[1], pos[2] - target[2] };
-        Normalize( mz );
-        TVec3 my = { up[0], up[1], up[2] };
-        TVec3 mx = Cross( my, mz );
-        Normalize( mx );
-        my = Cross( mz, mx );
-  
-        TMat44 v{
-            TVec4{ mx[0], my[0], mz[0], 0.0f },
-            TVec4{ mx[1], my[1], mz[1], 0.0f },
-            TVec4{ mx[2], my[2], mz[2], 0.0f },
-            TVec4{ Dot(mx, pos), Dot(my, pos), -Dot(mz, pos), 1.0f }
-        };
-  
-        return v;
-    }
+TMat44 Camera::LookAt( const TVec3 &pos, const TVec3 &target, const TVec3 &up )
+{ 
+    TVec3 mz = { pos[0] - target[0], pos[1] - target[1], pos[2] - target[2] };
+    Normalize( mz );
+    TVec3 my = { up[0], up[1], up[2] };
+    TVec3 mx = Cross( my, mz );
+    Normalize( mx );
+    my = Cross( mz, mx );
 
+    TMat44 v{
+        TVec4{ mx[0], my[0], mz[0], 0.0f },
+        TVec4{ mx[1], my[1], mz[1], 0.0f },
+        TVec4{ mx[2], my[2], mz[2], 0.0f },
+        TVec4{ Dot(mx, pos), Dot(my, pos), -Dot(mz, pos), 1.0f }
+    };
+
+    return v;
+}
+```
 
 <br/><hr/>
 ## Projection

@@ -24,8 +24,8 @@ In OpenGL is commonly used a [Right-Handed Coordinate System][3], but this depen
 
 If a system is mirrored it changes from one system to the other. This may occur if a texture is mirrored or looked at from the back face.
 
-
 <br/><hr/>
+
 ## Tangent and Binormal
 
 ![Tangent and Binormal](image/tangent_binormal.svg)
@@ -40,48 +40,55 @@ For this the tangents have to be pre-computed and stored in the mesh data.
 
 The tangent and the binormal can be calculated by the GLSL derivate functions [`dFdx`, `dFdy`][6], that calculates the partial derivative of an argument with respect to `x` or `y`.
 
-    vec3 vsPos    = ....; // fragment position in view space
-    vec2 texCoord = ....; // texture coordinate of the fragment
+```glsl
+vec3 vsPos    = ....; // fragment position in view space
+vec2 texCoord = ....; // texture coordinate of the fragment
 
-    // derivations of the fragment position
-    vec3 pos_dx   = dFdx( vsPos );
-    vec3 pos_dy   = dFdy( vsPos );
-    
-    // derivations of the texture coordinate
-    vec2 texC_dx  = dFdx( texCoord );
-    vec2 texC_dy  = dFdy( texCoord );
-    
-    // tangent vector and binormal vector
-    vec3 tangent  = texC_dy.y * pos_dx - texC_dx.y * pos_dy;
-    vec3 binormal = texC_dx.x * pos_dy - texC_dy.x * pos_dx;
+// derivations of the fragment position
+vec3 pos_dx   = dFdx( vsPos );
+vec3 pos_dy   = dFdy( vsPos );
 
-The *direction* of the binormal vector (`binormalSign`) can be calculated by the determinant of the 2*2 matrix created from the derivatives of the texture coordinates. The determinatne can be calucalted by:
+// derivations of the texture coordinate
+vec2 texC_dx  = dFdx( texCoord );
+vec2 texC_dy  = dFdy( texCoord );
 
-    float texDet       = tc_dx.x * tc_dy.y - tc_dx.y * tc_dy.x;
+// tangent vector and binormal vector
+vec3 tangent  = texC_dy.y * pos_dx - texC_dx.y * pos_dy;
+vec3 binormal = texC_dx.x * pos_dy - texC_dy.x * pos_dx;
+```
+
+The *direction* of the binormal vector (`binormalSign`) can be calculated by the determinant of the 2*2 matrix created from the derivatives of the texture coordinates. The determinant can be calculated by:
+
+```glsl
+float texDet       = tc_dx.x * tc_dy.y - tc_dx.y * tc_dy.x;
+```
 
 Or the GLSL function [determinant][7]:
 
-    float texDet       = determinant( mat2( tc_dx, tc_dy ) );
-    vec3  tangentVec   = ( tc_dy.y * p_dx - tc_dx.y * p_dy ) / texDet;
-    float binormalSign = sign(texDet);      
-
+```glsl
+float texDet       = determinant( mat2( tc_dx, tc_dy ) );
+vec3  tangentVec   = ( tc_dy.y * p_dx - tc_dx.y * p_dy ) / texDet;
+float binormalSign = sign(texDet);
+```
 
 ### Calculating the Tangent in a Geometry or Tesselation Shader
 
-    vec3 vsPos[3]      = ....; // corner points of the triangle primitive in view space
-    vec2 texCoord[3]   = ....; // corresponding texture coordinates to the corner points of the primitive
+```glsl
+vec3 vsPos[3]      = ....; // corner points of the triangle primitive in view space
+vec2 texCoord[3]   = ....; // corresponding texture coordinates to the corner points of the primitive
 
-    vec3  p_dA         = vsPos[1].xyz - vsPos[0].xyz;
-    vec3  p_dB         = vsPos[2].xyz - vsPos[0].xyz;
-    vec2  tc_dA        = tecCoord[1].uv - tecCoord[0].uv;
-    vec2  tc_dB        = tecCoord[2].uv - tecCoord[0].uv;
-    float texDet       = determinant( mat2( tc_dA, tc_dB ) );
-    
-    vec3  tangentVec   = ( tc_dB.y * p_dA - tc_dA.y * p_dB ) / texDet;
-    float binormalSign = sign(texDet);
+vec3  p_dA         = vsPos[1].xyz - vsPos[0].xyz;
+vec3  p_dB         = vsPos[2].xyz - vsPos[0].xyz;
+vec2  tc_dA        = tecCoord[1].uv - tecCoord[0].uv;
+vec2  tc_dB        = tecCoord[2].uv - tecCoord[0].uv;
+float texDet       = determinant( mat2( tc_dA, tc_dB ) );
 
+vec3  tangentVec   = ( tc_dB.y * p_dA - tc_dA.y * p_dB ) / texDet;
+float binormalSign = sign(texDet);
+```
 
 <br/><hr/>
+
 ## Tangent space matrix
 
 If the **normalized normal vector** `n`, the tangent `t` and the binormal` b` are known, the tangent space can be calculated.
@@ -89,25 +96,31 @@ If the **normalized normal vector** `n`, the tangent `t` and the binormal` b` ar
 Of course the an orthonormalized tangent space matrix can be calculated by using the cross product,
 but this would only work for right-hand systems. If a matrix was mirrored (left-hand system) it will turn to a right hand system:
 
-    t        = cross( cross( n, t ), t ); // orthonormalization of the tangent vector
-    b        = cross( n, t );             // orthonormalization of the binormal vector may invert the binormal vector
-    mat3 tbn = mat3( normalize(t), normalize(b), n );
+```glsl
+t        = cross( cross( n, t ), t ); // orthonormalization of the tangent vector
+b        = cross( n, t );             // orthonormalization of the binormal vector may invert the binormal vector
+mat3 tbn = mat3( normalize(t), normalize(b), n );
+```
 
 In the code snippet above the binormal vector is reversed if the tangent space is a left-handed system.
 To avoid this, the hard must be gone:
 
-    t        = cross( cross( n, t ), t ); // orthonormalization of the tangent vector
-    b        = cross( b, cross( b, n ) ); // orthonormalization of the binormal vectors to the normal vector 
-    b        = cross( cross( t, b ), t ); // orthonormalization of the binormal vectors to the tangent vector
-    mat3 tbn = mat3( normalize(t), normalize(b), n );
+```glsl
+t        = cross( cross( n, t ), t ); // orthonormalization of the tangent vector
+b        = cross( b, cross( b, n ) ); // orthonormalization of the binormal vectors to the normal vector 
+b        = cross( cross( t, b ), t ); // orthonormalization of the binormal vectors to the tangent vector
+mat3 tbn = mat3( normalize(t), normalize(b), n );
+```
 
 A common way to orthogonalize any matrix is the [Gram-Schmidt process][8]:
 
-    t        = t - n * dot( t, n ); // orthonormalization ot the tangent vectors
-    b        = b - n * dot( b, n ); // orthonormalization of the binormal vectors to the normal vector 
-    b        = b - t * dot( b, t ); // orthonormalization of the binormal vectors to the tangent vector
-    mat3 tbn = mat3( normalize(t), normalize(b), n );
-   
+```glsl
+t        = t - n * dot( t, n ); // orthonormalization ot the tangent vectors
+b        = b - n * dot( b, n ); // orthonormalization of the binormal vectors to the normal vector 
+b        = b - t * dot( b, t ); // orthonormalization of the binormal vectors to the tangent vector
+mat3 tbn = mat3( normalize(t), normalize(b), n );
+```
+
 Another possibility is to use the determinant of the 2*2 matrix which results from the derivations of the texture coordinates `texC_dx`, `texC_dy`
 to take the direction of the binormal vector into account. The idea is that the determinant of a orthogonal matrix is 1 and the determined one of a orthogonal mirror matrix -1.
 
@@ -117,13 +130,14 @@ or it can be calculated by it formula `texC_dx.x * texC_dy.y - texC_dy.x * texC_
 For the calculation of the orthonormalized tangent space matrix, the binormal vector is no longer required and the calculation of the unit vector
 (`normalize`) of the binormal vector can be evaded.
 
-    float texDet       = texC_dx.x * texC_dy.y - texC_dy.x * texC_dx.y;
-    float binormalSign = sign(texDet);
-    
-    vec3 t             = normalize( t - n * dot( t, n ) );
-    vec3 b             = binormalSign * cross( n, t );     // b is normalized because n and t are orthonormalized unit vectors
-    mat3 tbn           = mat3( t, binormalSign * b, n );   // take in account the direction of the binormal vector
+```glsl
+float texDet       = texC_dx.x * texC_dy.y - texC_dy.x * texC_dx.y;
+float binormalSign = sign(texDet);
 
+vec3 t             = normalize( t - n * dot( t, n ) );
+vec3 b             = binormalSign * cross( n, t );     // b is normalized because n and t are orthonormalized unit vectors
+mat3 tbn           = mat3( t, binormalSign * b, n );   // take in account the direction of the binormal vector
+```
 
 <br/><hr/>
 ## Resources
@@ -143,7 +157,6 @@ For the calculation of the orthonormalized tangent space matrix, the binormal ve
   [8]: https://en.wikipedia.org/wiki/Gram%E2%80%93Schmidt_process
   [9]: https://en.wikipedia.org/wiki/Tangent_space
  
-
 
 -------------------
 

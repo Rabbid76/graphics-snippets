@@ -12,11 +12,11 @@ Of course the user can specify the location. In modern OpenGL this can be done b
 In earlier version a generic vertex attribute can be associated to an attribute name by [`glBindAttribLocation`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glBindAttribLocation.xhtml),
 before linking the program. The location information is considered when the program is get linked.<br/>
 But resource information, like the attribute location ([`glGetAttribLocation`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGetAttribLocation.xhtml)), can only be queried, if the program was successfully linked. The linking of the program "finalize" the program, to be introspective and to be used.<br/>
-The "hint" that there is a named attribute associated to a location, does not make an active resource. The active resource is set in the during the link process. 
+The "hint" that there is a named attribute associated to a location, does not make an active resource. The active resource is set in the during the link process.
 
+<br/>
 
-
-## Aktive and inactive uniform variables
+## Active and inactive uniform variables
 
 ### OpenGL and ### OpenGL ES 3.2
 
@@ -26,7 +26,6 @@ See [OpenGL ES Shading Language 3.20 Specification - 7.3.1 Program Interfaces - 
 > 7.6 Uniform Variables
 >
 > Shaders can declare named uniform variables, as described in the OpenGL Shading Language Specification. A uniform is considered an active uniform if the compiler and linker determine that the uniform will actually be accessed when the executable code is executed. In cases where the compiler and linker cannot make a conclusive determination, the uniform will be considered active.
-
 
 See [OpenGL 4.6 Core Profile Specification - 7.3.1 Program Interfaces - p. 101](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf):
 See [OpenGL ES Shading Language 3.20 Specification - 7.6 Uniform Variables - p. 79](https://www.khronos.org/registry/OpenGL/index_es.php#specs32):
@@ -38,7 +37,6 @@ See [OpenGL ES Shading Language 3.20 Specification - 7.6 Uniform Variables - p. 
 > If a program is linked successfully, the GL will generate lists of active resources based on the executable code produced by the link.
 
 This means that, if the compiler and linker determine that the an attribute or an uniform variable is **not accessed**, when the executable code is executed, then the uniform is **inactive**.
-
 
 See [OpenGL 4.6 Core Profile Specification - 7.6 Uniform Variables - p. 133](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf):
 See [OpenGL ES Shading Language 3.20 Specification - 7.6 Uniform Variables - p. 104](https://www.khronos.org/registry/OpenGL/index_es.php#specs32):
@@ -54,9 +52,6 @@ See [OpenGL ES Shading Language 3.20 Specification - 11.1 Vertex Shaders - p. 28
 > `int GetAttribLocation( uint program, const char *name );`
 >
 > can be used to determine the location assigned to the **active** input variable named name in program object program.
-
-
-<br/>
 
 ### OpenGL ES 2.0
 
@@ -74,7 +69,6 @@ See [OpenGL ES 2 Specifications - 2.10.4 Shader Variables - p. 35](https://www.k
 See [OpenGL ES 2.0 Online Manual Pages. - `glGetActiveUniform `](https://www.khronos.org/registry/OpenGL-Refpages/es2.0/):
 
 > A uniform variable (either built-in or user-defined) is considered active if it is determined during the link operation that it may be accessed during program execution.
-
 
 See [OpenGL ES 2 Specifications - 2.10.4 Shader Variables - p. 32](https://www.khronos.org/registry/OpenGL/specs/es/2.0/es_full_spec_2.0.pdf):
 

@@ -53,13 +53,14 @@ enum TScene
   e_view,
   e_projection,
   e_NDC,
+  e_orthographic_volume,
 
   // parallax
   e_cone_step
 };
 
 
-static TScene g_scene = e_test_2;
+static TScene g_scene = e_NDC;
 
 //#define RENDER_BITMAP
 
@@ -140,6 +141,10 @@ private:
     void Checkered( const Render::TPoint2 &bl, const Render::TPoint2 &tr, Render::TVec2 dist={ 0.05f, 0.05f }, float z=0.0f, float thickness=1.0f, const Render::TColor color=Color_paper_line() );
     void Setup2DCheckered( void );
 
+    void BoxWired( float left, float right, float bottom, float top, float near, float far, const Render::TColor &color, float thickness );
+    void AxisCross( float len_x, float len_y, float len_z, float thickness, const Render::TVec2 &arr_size );
+    void AxisCrossText( float len_x, float len_y, float len_z, int origin_x, int origin_y, int origin_z, float height, float scale_y );
+
     void TestScene( double time_ms );
     void TestScene_2( double time_ms );
     void TextRotate( double time_ms );
@@ -152,6 +157,7 @@ private:
     void View( double time_ms );
     void Projection( double time_ms );
     void NDC( double time_ms );
+    void OrthographicVolume( double time_ms );
     void ConeStep( double time_ms );
 
 public:
@@ -354,19 +360,20 @@ void CWindow_Glfw::Render( double time_ms )
   {
 
     default:
-    case e_test_1:            TestScene( time_ms ); break;
-    case e_test_2:            TestScene_2( time_ms ); break;
-    case e_text_rotate:       TextRotate( time_ms ); break;
-    case e_isect_line_line:   IsectLineLine( time_ms ); break;
-    case e_isect_line_plane:  IsectLinePlane( time_ms ); break;
-    case e_isect_plane_cone:  IsectPlaneCone( time_ms ); break;
-    case e_viewport_coordsys: ViewportCoordsys( time_ms ); break;
-    case e_model:             Model( time_ms ); break;
-    case e_world:             World( time_ms ); break;
-    case e_view:              View( time_ms ); break;
-    case e_projection:        Projection( time_ms ); break;
-    case e_NDC:               NDC( time_ms ); break;
-    case e_cone_step:         ConeStep( time_ms ); break;
+    case e_test_1:              TestScene( time_ms ); break;
+    case e_test_2:              TestScene_2( time_ms ); break;
+    case e_text_rotate:         TextRotate( time_ms ); break;
+    case e_isect_line_line:     IsectLineLine( time_ms ); break;
+    case e_isect_line_plane:    IsectLinePlane( time_ms ); break;
+    case e_isect_plane_cone:    IsectPlaneCone( time_ms ); break;
+    case e_viewport_coordsys:   ViewportCoordsys( time_ms ); break;
+    case e_model:               Model( time_ms ); break;
+    case e_world:               World( time_ms ); break;
+    case e_view:                View( time_ms ); break;
+    case e_projection:          Projection( time_ms ); break;
+    case e_NDC:                 NDC( time_ms ); break;
+    case e_orthographic_volume: OrthographicVolume( time_ms ); break;
+    case e_cone_step:           ConeStep( time_ms ); break;
   }
 
   _draw->Finish();
@@ -392,6 +399,33 @@ void CWindow_Glfw::Setup2DCheckered( void )
 
   _draw->ActivateBackground();
   Checkered( BL(), TR() );
+}
+
+
+void CWindow_Glfw::BoxWired( float left, float right, float bottom, float top, float near, float far, const Render::TColor &color, float thickness )
+{
+  _draw->DrawPolyline( 3, { left,  bottom, near,   right, bottom, near,   right,    top, near,    left,     top, near }, color, thickness, true );
+  _draw->DrawPolyline( 3, { left,  bottom,  far,   right, bottom,  far,   right,    top,  far,    left,     top,  far }, color, thickness, true );
+  _draw->DrawPolyline( 3, { left,  bottom, near,   left,  bottom,  far }, color, thickness, false );
+  _draw->DrawPolyline( 3, { left,     top, near,   left,     top,  far }, color, thickness, false );
+  _draw->DrawPolyline( 3, { right, bottom,  far,   right, bottom, near }, color, thickness, false );
+  _draw->DrawPolyline( 3, { right,    top,  far,   right,    top, near }, color, thickness, false );
+}
+
+
+void CWindow_Glfw::AxisCross( float len_x, float len_y, float len_z, float thickness, const Render::TVec2 &arr_size )
+{
+  _draw->DrawArrow( 3, {0.0f, 0.0f, 0.0f, len_x, 0.0f, 0.0f }, Color_red_2(), thickness, arr_size, false, true );
+  _draw->DrawArrow( 3, {0.0f, 0.0f, 0.0f, 0.0f, len_y, 0.0f }, Color_green_2(), thickness, arr_size, false, true );
+  _draw->DrawArrow( 3, {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, len_z }, Color_blue_2(), thickness, arr_size, false, true );
+}
+
+
+void CWindow_Glfw::AxisCrossText( float len_x, float len_y, float len_z, int origin_x, int origin_y, int origin_z, float height, float scale_y )
+{
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "X", origin_x, height, scale_y, 0.0f, { len_x, 0.0f, 0.0f }, Color_red_2() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "Y", origin_y, height, scale_y, 0.0f, { 0.0f, len_y, 0.0f }, Color_green_2() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "Z", origin_z, height, scale_y, 0.0f, { 0.0f, 0.0f, len_z }, Color_blue_2() );
 }
 
 
@@ -953,21 +987,93 @@ void CWindow_Glfw::NDC( double time_ms )
 
   _draw->ActivateOpaque();
 
-  _draw->DrawPolyline( 3, { -1.0f, -1.0f, -1.0f,   1.0f, -1.0f, -1.0f,   1.0f,  1.0f, -1.0f,   -1.0f,  1.0f, -1.0f }, Color_darkgray(), 1.0f, true );
-  _draw->DrawPolyline( 3, { -1.0f, -1.0f,  1.0f,   1.0f, -1.0f,  1.0f,   1.0f,  1.0f,  1.0f,   -1.0f,  1.0f,  1.0f }, Color_darkgray(), 1.0f, true );
-  _draw->DrawPolyline( 3, { -1.0f, -1.0f, -1.0f,  -1.0f, -1.0f,  1.0f,   1.0f, -1.0f,  1.0f,    1.0f, -1.0f, -1.0f }, Color_darkgray(), 1.0f, true );
-  _draw->DrawPolyline( 3, { -1.0f,  1.0f, -1.0f,  -1.0f,  1.0f,  1.0f,   1.0f,  1.0f,  1.0f,    1.0f,  1.0f, -1.0f }, Color_darkgray(), 1.0f, true );
-
-  _draw->DrawArrow( 3, {0.0f, 0.0f, 0.0f, axis_len, 0.0f, 0.0f }, Color_red_2(), 3, arr_size, false, true );
-  _draw->DrawArrow( 3, {0.0f, 0.0f, 0.0f, 0.0f, axis_len, 0.0f }, Color_green_2(), 3, arr_size, false, true );
-  _draw->DrawArrow( 3, {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -axis_len }, Color_blue_2(), 3, arr_size, false, true );
+  BoxWired( -1, 1, -1, 1, -1, 1, Color_darkgray(), 3.0f );
+  AxisCross( axis_len, axis_len, -axis_len, 3.0f, arr_size );
 
   _draw->ActivateOpaque();
   _draw->ClearDepth();
   
-  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "X", 7, axis_text_height, axis_text_scale_y, 0.0f, { axis_len, 0.0f, 0.0f }, Color_red_2() );
-  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "Y", 1, axis_text_height, axis_text_scale_y, 0.0f, { 0.0f, axis_len, 0.0f }, Color_green_2() );
-  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "Z", 1, axis_text_height, axis_text_scale_y, 0.0f, { 0.0f, 0.0f, -axis_len }, Color_blue_2() );
+  AxisCrossText( axis_len, axis_len, -axis_len, 7, 1, 1, axis_text_height, axis_text_scale_y );
+  
+  static float text_height  = 0.05f;
+  static float text_scale_y = 1.0f;
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(-1, -1, -1)", 9, text_height, text_scale_y, 0.0f, {-1.0f, -1.1f, 1.0f}, Color_darkgray() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(1, -1, -1)", 8, text_height, text_scale_y, 0.0f, {1.0f, -1.1f, 1.0f}, Color_darkgray() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(-1, 1, -1)", 3, text_height, text_scale_y, 0.0f, {-1.0f, 1.1f, 1.0f}, Color_darkgray() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(1, 1, -1)", 7, text_height, text_scale_y, 0.0f, {1.0f, 0.95f, 1.0f}, Color_darkgray() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(1, 1, 1)", 1, text_height*0.8f, text_scale_y, 0.0f, {1.0f, 1.1f, -1.0f}, Color_darkgray() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(1, -1, 1)", 7, text_height*0.8f, text_scale_y, 0.0f, {1.0f, -1.1f, -1.0f}, Color_darkgray() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(-1, 1, 1)", 3, text_height*0.8f, text_scale_y, 0.0f, {-1.0f, 1.1f, -1.0f}, Color_darkgray() );
+}
+
+
+void CWindow_Glfw::OrthographicVolume( double time_ms )
+{
+  Render::TVec2        arr_size{ 0.2f, 0.12f };
+  Render::TVec2        arr_los_size{ arr_size[0]*2.0f, arr_size[1]*2.0f };
+  float                axis_len = 2.2f;
+  static float         axis_text_height  = 0.126f;
+  static float         axis_text_scale_y = 0.9f;
+  static float         ndc_scale = 0.7f;
+  static float         left   = -1.0f * 16.0f / 9.0f;
+  static float         right  =  1.0f * 16.0f / 9.0f;
+  static float         top    = -1.0f;
+  static float         bottom =  1.0f;
+  static float         near   = -1.0f;
+  static float         far    =  1.0f;
+  static Render::TVec3 camer_pos{ 0.0f, 6.0f, 8.0f };
+
+  OpenGL::Camera camera;
+  camera._vp     = { (int)_vpSize[0], (int)_vpSize[1] };
+  camera._near   = 0.5f;
+  camera._far    = 20.0f;
+  camera._pos    = camer_pos;
+  camera._target = { 0.0f, 0.0f, 0.0f };
+  camera._up     = { 0.0f, 1.0f, 0.0f };
+  camera._fov_y  = 60.0f;
+  Render::TMat44 prj = camera.Perspective();
+  Render::TMat44 view = camera.LookAt();
+
+
+  Render::TMat44 model_volume = OpenGL::Mat44().Translate( { -3.0f, 0.0f, 0.0f } );
+  Render::TMat44 model_ndc    = OpenGL::Mat44().Translate( { 3.0f, 0.0f, 0.0f } ).Scale( {ndc_scale, ndc_scale, ndc_scale} );
+
+  _draw->Projection( prj );
+  _draw->View( view );
+  _draw->Model( Render::Identity() );
+
+  _draw->ActivateOpaque();
+
+
+  // view volume geometry
+
+  _draw->Model( model_volume );
+
+  BoxWired( left, right, bottom, top, near, far, Color_darkgray(), 1.0f );
+
+
+  // NDC geometry
+
+  _draw->Model( model_ndc );
+  
+  BoxWired( -1, 1, -1, 1, -1, 1, Color_darkgray(), 1.0f );
+  AxisCross( axis_len, axis_len, -axis_len, 3.0f, arr_size );
+
+
+  _draw->ActivateOpaque();
+  _draw->ClearDepth();
+
+
+  // view volume text
+
+  _draw->Model( model_volume );
+
+
+  // NDC text
+
+  _draw->Model(model_ndc );
+  
+  AxisCrossText( axis_len, axis_len, -axis_len, 7, 1, 1, axis_text_height, axis_text_scale_y );
 
   static float text_height  = 0.05f;
   static float text_scale_y = 1.0f;

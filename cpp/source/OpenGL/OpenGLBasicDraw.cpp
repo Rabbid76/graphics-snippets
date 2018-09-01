@@ -126,7 +126,7 @@ layout(std430, binding = 1) buffer TUniform
     vec2 u_vp_size;
 };
 
-uniform float u_thickness; 
+uniform vec2 u_thickness_range; 
 
 void main()
 {
@@ -139,7 +139,7 @@ void main()
     dirSucc      = faceforward( dirSucc, -dirNorm, dirSucc );
     vec3 dir0    = abs( dot(dirPred, dirLine) ) > 0.99 ? dirNorm : normalize( dirPred + dirLine );
     vec3 dir1    = abs( dot(dirSucc, dirLine) ) > 0.99 ? dirNorm : normalize( dirSucc - dirLine );
-
+    
     // normalized quad positions
     vec3 normal_pos[4];
     normal_pos[0] = pos0 - dirNorm;
@@ -162,15 +162,18 @@ void main()
     for(int i=0; i<4; ++i)
         wnd_pos[i] = (ndc_pos[i].xy*0.5 + 0.5) * u_vp_size;
 
-    float thickness_scale0 = u_thickness / length(wnd_pos[2] - wnd_pos[0]);
-    float thickness_scale1 = u_thickness / length(wnd_pos[3] - wnd_pos[1]);
+    float thickness_scale0 = 1.0 / dot(dir0, dirNorm) / length(wnd_pos[2] - wnd_pos[0]);
+    float thickness_scale1 = 1.0 / dot(dir1, dirNorm) / length(wnd_pos[3] - wnd_pos[1]);
+
+    float th_base  = u_thickness_range.x * 0.5 + u_thickness_range.y * 0.5;
+    float th_range = u_thickness_range.y - u_thickness_range.x;
 
     // miter positions
     vec3 pos[4];
-    pos[0] = pos0 - thickness_scale0 * dir0 / dot(dir0, dirNorm);
-    pos[1] = pos1 - thickness_scale1 * dir1 / dot(dir1, dirNorm);
-    pos[2] = pos0 + thickness_scale0 * dir0 / dot(dir0, dirNorm);
-    pos[3] = pos1 + thickness_scale1 * dir1 / dot(dir1, dirNorm);
+    pos[0] = pos0 - dir0 * (th_base - ndc_pos[0].z * th_range) * thickness_scale0;
+    pos[1] = pos1 - dir1 * (th_base - ndc_pos[1].z * th_range) * thickness_scale1;
+    pos[2] = pos0 + dir0 * (th_base - ndc_pos[2].z * th_range) * thickness_scale0;
+    pos[3] = pos1 + dir1 * (th_base - ndc_pos[3].z * th_range) * thickness_scale1;
 
     // create the vertices and the primitive
 
@@ -1699,7 +1702,7 @@ bool CBasicDraw::Draw(
   UpdateGeneralUniforms();
   UpdateColorUniforms( color );
   if ( draw_line )
-     _current_prog->SetUniformF1( "u_thickness", style._thickness * _fb_scale );
+    _current_prog->SetUniformF2( "u_thickness_range", { style._thickness * _fb_scale, style._thickness * _fb_scale } );
 
   // bind "white" color texture
   glActiveTexture( GL_TEXTURE0 );
