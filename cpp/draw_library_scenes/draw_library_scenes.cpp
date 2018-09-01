@@ -37,6 +37,7 @@ enum TScene
 {
   e_test_1,
   e_test_2,
+  e_test_perspective,
 
   // transformation
   e_text_rotate,
@@ -60,18 +61,22 @@ enum TScene
 };
 
 
-static TScene g_scene = e_NDC;
+static TScene g_scene = e_orthographic_volume;
 
-//#define RENDER_BITMAP
+#define RENDER_BITMAP 0 
 
-#if !defined(RENDER_BITMAP)
-static int          c_window_cx = 600;
-static int          c_window_cy = 450;
-static bool         c_frameless = false;
-#else
+#if defined(RENDER_BITMAP) && RENDER_BITMAP == 2
+static int          c_window_cx = 400;
+static int          c_window_cy = 400;
+static bool         c_frameless = true;
+#elif defined(RENDER_BITMAP) && RENDER_BITMAP == 1
 static int          c_window_cx = 400;
 static int          c_window_cy = 300;
 static bool         c_frameless = true;
+#else
+static int          c_window_cx = 600;
+static int          c_window_cy = 450;
+static bool         c_frameless = false;
 #endif
 
 static bool         c_core      = true;
@@ -145,8 +150,9 @@ private:
     void AxisCross( float len_x, float len_y, float len_z, float thickness, const Render::TVec2 &arr_size );
     void AxisCrossText( float len_x, float len_y, float len_z, int origin_x, int origin_y, int origin_z, float height, float scale_y );
 
-    void TestScene( double time_ms );
+    void TestScene_1( double time_ms );
     void TestScene_2( double time_ms );
+    void TestScene_Perspecitve( double time_ms );
     void TextRotate( double time_ms );
     void IsectLineLine( double time_ms );
     void IsectLinePlane( double time_ms );
@@ -360,8 +366,9 @@ void CWindow_Glfw::Render( double time_ms )
   {
 
     default:
-    case e_test_1:              TestScene( time_ms ); break;
+    case e_test_1:              TestScene_1( time_ms ); break;
     case e_test_2:              TestScene_2( time_ms ); break;
+    case e_test_perspective:    TestScene_Perspecitve( time_ms ); break;
     case e_text_rotate:         TextRotate( time_ms ); break;
     case e_isect_line_line:     IsectLineLine( time_ms ); break;
     case e_isect_line_plane:    IsectLinePlane( time_ms ); break;
@@ -429,7 +436,7 @@ void CWindow_Glfw::AxisCrossText( float len_x, float len_y, float len_z, int ori
 }
 
 
-void CWindow_Glfw::TestScene( double time_ms )
+void CWindow_Glfw::TestScene_1( double time_ms )
 {
     // TODO $$$ SSOA (3 frequences)
     // TODO $$$ text + greek letters: distance fields!
@@ -489,6 +496,46 @@ void CWindow_Glfw::TestScene_2( double time_ms )
     static float  text_scale_y = 1.0f;
     const char *text = "Hello, a long text with a lot of different letters.";
     _draw->DrawText2D( OpenGL::CBasicDraw::font_pixslim_2, text, text_height, text_scale_y, { _scale_x * -0.96f, 0.3f, -0.01f }, Color_orange() );
+}
+
+
+void CWindow_Glfw::TestScene_Perspecitve( double time_ms )
+{
+  Render::TVec2   arr_size{ 0.2f, 0.12f };
+  Render::TVec2   arr_los_size{ arr_size[0]*2.0f, arr_size[1]*2.0f };
+  float           axis_len = 2.2f;
+  static float    axis_text_height  = 0.126f;
+  static float    axis_text_scale_y = 0.9f;
+
+  OpenGL::Camera camera;
+  camera._vp     = { (int)_vpSize[0], (int)_vpSize[1] };
+  camera._near   = 0.5f;
+  camera._far    = 20.0f;
+  camera._pos    = { 0.0f, -6.0f, 0.0f };
+  camera._target = { 0.0f, 0.0f, 0.0f };
+  camera._up     = { 0.0f, 0.0f, 1.0f };
+  camera._fov_y  = 60.0f;
+  Render::TMat44 prj = camera.Perspective();
+  Render::TMat44 view = camera.LookAt();
+
+  static bool perspective_line = true;
+  _draw->SetDrawProperty( Render::IDraw::TDrawProperty::perspective_line, perspective_line );
+
+  _draw->Projection( prj );
+  _draw->View( view );
+  _draw->Model( Render::Identity() );
+
+  _draw->ActivateOpaque();
+
+  _draw->DrawPolyline( 3, { -2.7f, 0.0f, -1.0f,   -2.7f, 0.0f,  1.0f }, Color_darkgray(), 10.0f, false );
+  _draw->DrawPolyline( 3, { -2.5f, 0.0f, -1.2f,   -1.0f, 6.0f, -2.4f }, Color_darkgray(), 10.0f, false );
+  _draw->DrawPolyline( 3, { -0.8f, 6.0f, -2.0f,   -0.8f, 6.0f,  2.0f }, Color_darkgray(), 10.0f, false );
+  _draw->DrawPolyline( 3, { -2.5f, 0.0f,  1.2f,   -1.0f, 6.0f,  2.4f }, Color_darkgray(), 10.0f, false );
+
+   _draw->DrawPolyline( 3, { 2.7f, 0.0f, -1.2f,   2.7f, 0.0f,  1.2f,  0.8f, 6.0f,  2.4f,   0.8f, 6.0f, -2.4f, }, Color_darkgray(), 10.0f, true );
+
+  //_draw->ActivateOpaque();
+  //_draw->ClearDepth();
 }
 
 
@@ -969,11 +1016,13 @@ void CWindow_Glfw::NDC( double time_ms )
   float           axis_len = 2.2f;
   static float    axis_text_height  = 0.126f;
   static float    axis_text_scale_y = 0.9f;
+  static float    ndc_text_height  = 0.09f;
+  static float    ndc_text_scale_y = 1.0f;
 
   OpenGL::Camera camera;
   camera._vp     = { (int)_vpSize[0], (int)_vpSize[1] };
-  camera._near   = 0.5f;
-  camera._far    = 20.0f;
+  camera._near   = 2.5f;
+  camera._far    = 10.0f;
   camera._pos    = { 3.0f, 1.5f, 3.8f };
   camera._target = { 0.0f, 0.0f, 0.0f };
   camera._up     = { 0.0f, 1.0f, 0.0f };
@@ -981,29 +1030,30 @@ void CWindow_Glfw::NDC( double time_ms )
   Render::TMat44 prj = camera.Perspective();
   Render::TMat44 view = camera.LookAt();
 
+  _draw->SetDrawProperty( Render::IDraw::TDrawProperty::perspective_line, true );
   _draw->Projection( prj );
   _draw->View( view );
   _draw->Model( Render::Identity() );
 
   _draw->ActivateOpaque();
 
-  BoxWired( -1, 1, -1, 1, -1, 1, Color_darkgray(), 3.0f );
-  AxisCross( axis_len, axis_len, -axis_len, 3.0f, arr_size );
+  BoxWired( -1, 1, -1, 1, -1, 1, Color_darkgray(), 7.0f );
+  AxisCross( axis_len, axis_len, -axis_len, 7.0f, arr_size );
 
   _draw->ActivateOpaque();
   _draw->ClearDepth();
   
-  AxisCrossText( axis_len, axis_len, -axis_len, 7, 1, 1, axis_text_height, axis_text_scale_y );
+  AxisCrossText( axis_len, axis_len, -axis_len, 7, 1, 7, axis_text_height, axis_text_scale_y );
   
-  static float text_height  = 0.05f;
-  static float text_scale_y = 1.0f;
-  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(-1, -1, -1)", 9, text_height, text_scale_y, 0.0f, {-1.0f, -1.1f, 1.0f}, Color_darkgray() );
-  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(1, -1, -1)", 8, text_height, text_scale_y, 0.0f, {1.0f, -1.1f, 1.0f}, Color_darkgray() );
-  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(-1, 1, -1)", 3, text_height, text_scale_y, 0.0f, {-1.0f, 1.1f, 1.0f}, Color_darkgray() );
-  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(1, 1, -1)", 7, text_height, text_scale_y, 0.0f, {1.0f, 0.95f, 1.0f}, Color_darkgray() );
-  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(1, 1, 1)", 1, text_height*0.8f, text_scale_y, 0.0f, {1.0f, 1.1f, -1.0f}, Color_darkgray() );
-  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(1, -1, 1)", 7, text_height*0.8f, text_scale_y, 0.0f, {1.0f, -1.1f, -1.0f}, Color_darkgray() );
-  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(-1, 1, 1)", 3, text_height*0.8f, text_scale_y, 0.0f, {-1.0f, 1.1f, -1.0f}, Color_darkgray() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(1, 1, 1)", 1, ndc_text_height*0.8f, ndc_text_scale_y, 0.0f, {1.0f, 1.1f, -1.0f}, Color_magenta() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(-1, -1, -1)", 9, ndc_text_height*0.9f, ndc_text_scale_y, 0.0f, {-1.0f, -1.1f, 1.0f}, Color_magenta() );
+  
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(1, -1, -1)", 8, ndc_text_height, ndc_text_scale_y, 0.0f, {1.0f, -1.1f, 1.0f}, Color_darkgray() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(-1, 1, -1)", 3, ndc_text_height*0.9f, ndc_text_scale_y, 0.0f, {-1.0f, 1.1f, 1.0f}, Color_darkgray() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(1, 1, -1)", 7, ndc_text_height*0.9f, ndc_text_scale_y, 0.0f, {1.05f, 0.95f, 1.0f}, Color_darkgray() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(1, -1, 1)", 7, ndc_text_height*0.8f, ndc_text_scale_y, 0.0f, {1.0f, -1.1f, -1.0f}, Color_darkgray() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(-1, 1, 1)", 3, ndc_text_height*0.8f, ndc_text_scale_y, 0.0f, {-1.0f, 1.1f, -1.0f}, Color_darkgray() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(-1, -1, 1)", 3, ndc_text_height*0.75f, ndc_text_scale_y, 0.0f, {-1.1f, -0.9f, -1.0f}, Color_darkgray() );
 }
 
 
@@ -1014,6 +1064,8 @@ void CWindow_Glfw::OrthographicVolume( double time_ms )
   float                axis_len = 2.2f;
   static float         axis_text_height  = 0.126f;
   static float         axis_text_scale_y = 0.9f;
+  static float         ndc_text_height  = 0.07f;
+  static float         ndc_text_scale_y = 1.0f;
   static float         ndc_scale = 0.7f;
   static float         left   = -1.0f * 16.0f / 9.0f;
   static float         right  =  1.0f * 16.0f / 9.0f;
@@ -1025,7 +1077,7 @@ void CWindow_Glfw::OrthographicVolume( double time_ms )
 
   OpenGL::Camera camera;
   camera._vp     = { (int)_vpSize[0], (int)_vpSize[1] };
-  camera._near   = 0.5f;
+  camera._near   = 0.7f;
   camera._far    = 20.0f;
   camera._pos    = camer_pos;
   camera._target = { 0.0f, 0.0f, 0.0f };
@@ -1075,15 +1127,8 @@ void CWindow_Glfw::OrthographicVolume( double time_ms )
   
   AxisCrossText( axis_len, axis_len, -axis_len, 7, 1, 1, axis_text_height, axis_text_scale_y );
 
-  static float text_height  = 0.05f;
-  static float text_scale_y = 1.0f;
-  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(-1, -1, -1)", 9, text_height, text_scale_y, 0.0f, {-1.0f, -1.1f, 1.0f}, Color_darkgray() );
-  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(1, -1, -1)", 8, text_height, text_scale_y, 0.0f, {1.0f, -1.1f, 1.0f}, Color_darkgray() );
-  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(-1, 1, -1)", 3, text_height, text_scale_y, 0.0f, {-1.0f, 1.1f, 1.0f}, Color_darkgray() );
-  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(1, 1, -1)", 7, text_height, text_scale_y, 0.0f, {1.0f, 0.95f, 1.0f}, Color_darkgray() );
-  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(1, 1, 1)", 1, text_height*0.8f, text_scale_y, 0.0f, {1.0f, 1.1f, -1.0f}, Color_darkgray() );
-  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(1, -1, 1)", 7, text_height*0.8f, text_scale_y, 0.0f, {1.0f, -1.1f, -1.0f}, Color_darkgray() );
-  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(-1, 1, 1)", 3, text_height*0.8f, text_scale_y, 0.0f, {-1.0f, 1.1f, -1.0f}, Color_darkgray() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(1, 1, 1)", 1, ndc_text_height*0.8f, ndc_text_scale_y, 0.0f, {1.0f, 1.1f, -1.0f}, Color_darkgray() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(-1, -1, -1)", 9, ndc_text_height*0.9f, ndc_text_scale_y, 0.0f, {-1.0f, -1.1f, 1.0f}, Color_darkgray() );
 }
 
 
@@ -1092,7 +1137,7 @@ void CWindow_Glfw::ConeStep( double time_ms )
   static Render::TVec2 arr_size{ 0.08f, 0.03f };
   static float arrow_th = 2.0f;
   static float point_size = 8.0f;
-  static float text_height  = 0.07f;
+  static float text_height  = 0.05f;
   static float text_scale_y = 1.0f;
   static float text_margin  = 0.02f;
 

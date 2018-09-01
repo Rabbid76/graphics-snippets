@@ -71,6 +71,8 @@ class CBasicDraw
 
 public:
 
+  using TDrawProperties = std::bitset<(int)TDrawProperty::NO_OF>;
+
   enum TFontID : size_t
   {
     font_sans,
@@ -112,7 +114,15 @@ public:
   virtual const TMat44 & View( void )       const override { return _uniforms._view; }       //!< get the view matrix
   virtual const TMat44 & Model( void )      const override { return _uniforms._model; }      //!< get the model matrix
 
-    //!< sets the background color
+  //!< set a general drawing property and returns the state of the property before the change
+  virtual bool SetDrawProperty( TDrawProperty prop, bool state ) override
+  {
+    bool current_stat = _draw_properties[(int)prop];
+    _draw_properties[(int)prop] = state;
+    return current_stat;
+  };
+
+  //!< sets the background color
   virtual void BackgroundColor( const Render::TColor &bg_color ) override
   {
     // TODO $$$ process change clear color
@@ -183,21 +193,22 @@ private:
   static std::set<std::string> _ogl_extensins;
   static int                   _max_anistropic_texture_filter;
 
-  bool                                  _initialized    = false;
-  bool                                  _drawing        = false;
-  bool                                  _unifroms_valid = false;
-  bool                                  _core_mode      = true;
-  bool                                  _fxaa           = false;
-  unsigned int                          _samples        = 0;
-  float                                 _fb_scale       = 1.0f;
-  size_t                                _current_pass   = 0;
-  TProgramPtr                           _current_prog   = nullptr;
-  const size_t                          _max_buffers    = 8;
-  size_t                                _nextBufferI    = 0;
-  std::array<const void*, 8>            _buffer_keys    { nullptr };
-  std::array<Render::IDrawBufferPtr, 8> _draw_buffers   { nullptr };
-  TSize                                 _vp_size        { 0 };
-  Render::TColor                        _bg_color       { 0.0f };
+  TDrawProperties                       _draw_properties;
+  bool                                  _initialized      = false;
+  bool                                  _drawing          = false;
+  bool                                  _unifroms_valid   = false;
+  bool                                  _core_mode        = true;
+  bool                                  _fxaa             = false;
+  unsigned int                          _samples          = 0;
+  float                                 _fb_scale         = 1.0f;
+  size_t                                _current_pass     = 0;
+  TProgramPtr                           _current_prog     = nullptr;
+  const size_t                          _max_buffers      = 8;
+  size_t                                _nextBufferI      = 0;
+  std::array<const void*, 8>            _buffer_keys      { nullptr };
+  std::array<Render::IDrawBufferPtr, 8> _draw_buffers     { nullptr };
+  TSize                                 _vp_size          { 0 };
+  Render::TColor                        _bg_color         { 0.0f };
   TUniforms                             _uniforms;
   TProcess                              _process;
   TProgram                              _opaque_prog;

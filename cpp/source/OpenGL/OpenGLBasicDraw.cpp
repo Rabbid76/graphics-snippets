@@ -126,20 +126,22 @@ layout(std430, binding = 1) buffer TUniform
     vec2 u_vp_size;
 };
 
-uniform vec2 u_thickness_range; 
+uniform float u_thickness; 
+uniform int   u_perspective_thickness;
 
 void main()
 {
-    vec3 pos0    = in_data[1].pos;
-    vec3 pos1    = in_data[2].pos;
-    vec3 dirLine = normalize( pos1 - pos0 ); 
-    vec3 dirPred = normalize( in_data[0].pos - pos0 );
-    vec3 dirSucc = normalize( in_data[3].pos - pos1 );
-    vec3 dirNorm = normalize(cross(vec3(0.0, 0.0, 1.0), dirLine));      
-    dirSucc      = faceforward( dirSucc, -dirNorm, dirSucc );
-    vec3 dir0    = abs( dot(dirPred, dirLine) ) > 0.99 ? dirNorm : normalize( dirPred + dirLine );
-    vec3 dir1    = abs( dot(dirSucc, dirLine) ) > 0.99 ? dirNorm : normalize( dirSucc - dirLine );
-    
+    vec3 pos0     = in_data[1].pos;
+    vec3 pos1     = in_data[2].pos;
+    vec3 dirLine  = pos1 - pos0; 
+    vec3 dirPred  = pos0 - in_data[0].pos;
+    vec3 dirSucc  = in_data[3].pos - pos1;
+    vec3 dirNorm  = normalize(vec3(-dirLine.y, dirLine.x, 0.0)); 
+    vec3 dirPredN = length(dirPred.xy) < 0.0001 ? dirNorm : normalize(vec3(-dirPred.y, dirPred.x, 0.0));
+    vec3 dirSuccN = length(dirSucc.xy) < 0.0001 ? dirNorm : normalize(vec3(-dirSucc.y, dirSucc.x, 0.0));
+    vec3 dir0     = abs( dot(normalize(dirPred.xy), normalize(dirLine.xy)) ) > 0.99 ? dirNorm : normalize( dirNorm + dirPredN );
+    vec3 dir1     = abs( dot(normalize(dirSucc.xy), normalize(dirLine.xy)) ) > 0.99 ? dirNorm : normalize( dirNorm + dirSuccN );
+   
     // normalized quad positions
     vec3 normal_pos[4];
     normal_pos[0] = pos0 - dirNorm;
@@ -162,18 +164,25 @@ void main()
     for(int i=0; i<4; ++i)
         wnd_pos[i] = (ndc_pos[i].xy*0.5 + 0.5) * u_vp_size;
 
-    float thickness_scale0 = 1.0 / dot(dir0, dirNorm) / length(wnd_pos[2] - wnd_pos[0]);
-    float thickness_scale1 = 1.0 / dot(dir1, dirNorm) / length(wnd_pos[3] - wnd_pos[1]);
-
-    float th_base  = u_thickness_range.x * 0.5 + u_thickness_range.y * 0.5;
-    float th_range = u_thickness_range.y - u_thickness_range.x;
+    float thickness_scale0 = 1.0 / dot(dir0, dirNorm);
+    float thickness_scale1 = 1.0 / dot(dir1, dirNorm);
+    if ( u_perspective_thickness == 0 )
+    {
+        thickness_scale0 *= 1.0 / length(wnd_pos[2].xy - wnd_pos[0].xy);
+        thickness_scale1 *= 1.0 / length(wnd_pos[3].xy - wnd_pos[1].xy);
+    }
+    else
+    {
+        thickness_scale0 *= 1.0 / min(u_vp_size.x, u_vp_size.y);
+        thickness_scale1 *= 1.0 / min(u_vp_size.x, u_vp_size.y);
+    }
 
     // miter positions
     vec3 pos[4];
-    pos[0] = pos0 - dir0 * (th_base - ndc_pos[0].z * th_range) * thickness_scale0;
-    pos[1] = pos1 - dir1 * (th_base - ndc_pos[1].z * th_range) * thickness_scale1;
-    pos[2] = pos0 + dir0 * (th_base - ndc_pos[2].z * th_range) * thickness_scale0;
-    pos[3] = pos1 + dir1 * (th_base - ndc_pos[3].z * th_range) * thickness_scale1;
+    pos[0] = pos0 - dir0 * u_thickness * thickness_scale0;
+    pos[1] = pos1 - dir1 * u_thickness * thickness_scale1;
+    pos[2] = pos0 + dir0 * u_thickness * thickness_scale0;
+    pos[3] = pos1 + dir1 * u_thickness * thickness_scale1;
 
     // create the vertices and the primitive
 
@@ -1702,7 +1711,10 @@ bool CBasicDraw::Draw(
   UpdateGeneralUniforms();
   UpdateColorUniforms( color );
   if ( draw_line )
-    _current_prog->SetUniformF2( "u_thickness_range", { style._thickness * _fb_scale, style._thickness * _fb_scale } );
+  {
+    _current_prog->SetUniformI1( "u_perspective_thickness", _draw_properties[(int)TDrawProperty::perspective_line] ? 1 : 0 );
+    _current_prog->SetUniformF1( "u_thickness", style._thickness * _fb_scale );
+  }
 
   // bind "white" color texture
   glActiveTexture( GL_TEXTURE0 );
