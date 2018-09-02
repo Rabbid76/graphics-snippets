@@ -26,8 +26,7 @@
 
 [Normal, Parallax and Relief mapping (under construction)](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/normal_parallax_relief.md)
 
-
-<br/>
+---
 
 ## HTML
 
@@ -39,21 +38,17 @@
 
 [Function Plotter](https://rabbid76.github.io/graphics-snippets/html/tools/function_plotter.html)
 
-
 ### Special
 
 [Fire](https://rabbid76.github.io/graphics-snippets/html/effect/fire.html)
 
-
 ### Technique
 
-
-**SSAO**
+#### SSAO
 
 [SSAO](https://rabbid76.github.io/graphics-snippets/html/technique/ssao.html)
 
-
-**Normal and Parallax Mapping**
+#### Normal and Parallax Mapping
 
 [No Mapping](https://rabbid76.github.io/graphics-snippets/html/technique/parallax_001_no_parallax_mapping.html)
 
@@ -69,8 +64,7 @@
 
 [Compare of different "bump" mapping techniques](https://rabbid76.github.io/graphics-snippets/html/technique/parallax_mapping.html)
 
-
-### Stackoverflow examples
+### StackOverflow examples
 
 [Shadow map](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/shadow_map.html)
 
@@ -124,8 +118,7 @@
 
 [Background](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/background_cube_poor_webgl.html)
 
-
-### Stackoverflow examples - three.js
+### StackOverflow examples - three.js
 
 [Background scene](https://rabbid76.github.io/graphics-snippets/html/stackoverrflow_threejs/background_scene.html)
 
