@@ -20,7 +20,7 @@ This causes that the scene looks like, as it would be seen from of a pinhole cam
 
 One of the most common mistakes, when an object is not visible on the viewport (screen is all "black"), is that the mesh is not within the view volume which is defined by the projection and view matrix.
 
-<br/><hr/>
+---
 
 ## Coordinate Systems
 
@@ -32,12 +32,11 @@ e.g.:
 
 ![model coordinates](image/model_coordinates.png)
 
-
 ### World coordinates
 
-The world sapce is the coordinate system of the scene. Different models (objects) can be placed multiple times in the world space to form a scene, in together.
+The world space is the coordinate system of the scene. Different models (objects) can be placed multiple times in the world space to form a scene, in together.
 
-**Model matrix**
+#### Model matrix
 
 The model matrix defines the location, orientation and the relative size of a model (object, mesh) in the scene. The model matrix transforms the vertex positions of a single mesh to world space for a single specific positioning. There are different model matrices, one for each combination of a model (object) and a location of the object in the world space.
 
@@ -61,31 +60,30 @@ e.g.:
 
 ![model to world](image/model_to_world.png)
 
-
 ### View space (Eye coordinates)
 
 The view space is the local system which is defined by the point of view onto the scene.
-The position of the view, the line of sight and the upwards direction of the view, define a coordinate system relative to the world coordinate system. The objects of a scene have to be drawn in relation to the view coordinate system, to be "seen" from the viewing position. The inverse matrix of the view coordinate system is named the **view matrix**.<br/>
+The position of the view, the line of sight and the upwards direction of the view, define a coordinate system relative to the world coordinate system. The objects of a scene have to be drawn in relation to the view coordinate system, to be "seen" from the viewing position. The inverse matrix of the view coordinate system is named the **view matrix**.  
 In general world coordinates and view coordinates are [Cartesian coordinates](https://en.wikipedia.org/wiki/Cartesian_coordinate_system)
 
-**View matrix**
+#### View matrix
   
-The view coordinates system describes the direction and position from which the scene is looked at. The view matrix transforms from the world space to the view (eye) space. 
+The view coordinates system describes the direction and position from which the scene is looked at. The view matrix transforms from the world space to the view (eye) space.
 
-If the coordinate system of the view space is a [Right-handed](https://en.wikipedia.org/wiki/Right-hand_rule) system, then the X-axis points to the left, the Y-axis up and the Z-axis out of the view (Note in a right hand system the Z-Axis is the cross product of the X-Axis and the Y-Axis). 
+If the coordinate system of the view space is a [Right-handed](https://en.wikipedia.org/wiki/Right-hand_rule) system, then the X-axis points to the left, the Y-axis up and the Z-axis out of the view (Note in a right hand system the Z-Axis is the cross product of the X-Axis and the Y-Axis).
 
-![view coordinates](image/view_coordinates.png) 
+![view coordinates](image/view_coordinates.png)
 
 ### Clip coordinates
 
-Clip space coordinates are [Homogeneous coordinates](https://en.wikipedia.org/wiki/Homogeneous_coordinates). In clip space the clipping of the scene is performed.<br/>
+Clip space coordinates are [Homogeneous coordinates](https://en.wikipedia.org/wiki/Homogeneous_coordinates). In clip space the clipping of the scene is performed.  
 A point is in clip space if the `x`, `y` and `z` components are in the range defined by the inverted `w` component and the `w` component of the homogeneous coordinates of the point:
 
 ```txt
 -w <=  x, y, z  <= w.
 ```
 
-**Projection matrix**
+#### Projection matrix
 
 The projection matrix describes the mapping from 3D points of a scene, to 2D points of the viewport. The projection matrix transforms from view space to the clip space. The coordinates in the clip space are transformed to the normalized device coordinates (NDC) in the range (-1, -1, -1) to (1, 1, 1) by dividing with the `w` component of the clip coordinates.
 
@@ -93,10 +91,9 @@ e.g.:
 
 look at: eye position *(2.5, -1.5, 3.5)*, center *(2, 0, 0)*, up vector *(0, 1, 0)*
 
-perspective projection: field of view (y) of *100 degrees*, near plane at *0.1*, far plane at *20.0* 
+perspective projection: field of view (y) of *100 degrees*, near plane at *0.1*, far plane at *20.0*
 
 ![perspective projection](image/ndc_coordinates.png)
-
 
 ### Normalized device coordinates
 
@@ -109,17 +106,15 @@ The normalized device coordinates are the clip space coordinates divide by the `
 
 The window coordinates are the coordinates of the viewport rectangle. The window coordinates finally are passed to the rasterization process.
 
-**Viewport and depth range**
+#### Viewport and depth range
 
 The normalized device coordinates are linearly mapped to the Window Coordinates (Screen Coordinates) and to the depth for the depth buffer.
 The viewport is defined by [`glViewport`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glViewport.xhtml). The depth range is set by [`glDepthRange`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glDepthRange.xhtml) and is by default [0, 1].
 
-<br/>
-
 See also:
-[OpenGL Transformation](http://www.songho.ca/opengl/gl_transform.html)<br/> 
+[OpenGL Transformation](http://www.songho.ca/opengl/gl_transform.html)
 
-<br/><hr/>
+---
 
 ## View
 
@@ -147,7 +142,7 @@ void Normalize( TVec3 & v )
 }
 
 TMat44 Camera::LookAt( const TVec3 &pos, const TVec3 &target, const TVec3 &up )
-{ 
+{
     TVec3 mz = { pos[0] - target[0], pos[1] - target[1], pos[2] - target[2] };
     Normalize( mz );
     TVec3 my = { up[0], up[1], up[2] };
@@ -166,33 +161,39 @@ TMat44 Camera::LookAt( const TVec3 &pos, const TVec3 &target, const TVec3 &up )
 }
 ```
 
-<br/><hr/>
+---
+
 ## Projection
 
-The projection matrix describes the mapping from 3D points of the view on a scene, to 2D points on the viewport. It transforms from eye space to the clip space, and the coordinates in the clip space are transformed to the normalized device coordinates (NDC) by dividing with the `w` component of the clip coordinates. The NDC are in range (-1,-1,-1) to (1,1,1).<br/> Every geometry which is out of the clip space is clipped.<br/>
+The projection matrix describes the mapping from 3D points of the view on a scene, to 2D points on the viewport. It transforms from eye space to the clip space, and the coordinates in the clip space are transformed to the normalized device coordinates (NDC) by dividing with the `w` component of the clip coordinates. The NDC are in range (-1,-1,-1) to (1,1,1).  
+Every geometry which is out of the clip space is clipped.
 
-But, **if the `w` component is negative, then the vertex is clipped**. Because the condition for a homogeneous coordinate to be in clip space is 
+But, **if the `w` component is negative, then the vertex is clipped**. Because the condition for a homogeneous coordinate to be in clip space is
 
-    -w <=  x, y, z  <= w.
+```txt
+-w <=  x, y, z  <= w.
+```
 
 If `w = -1` this would mean:
 
-     1 <= x, y, z  <= -1.
+```txt
+1 <= x, y, z  <= -1.
+```
 
 and that can never be fulfilled.
 
-
-**Orthographic Clip Space**
+### Orthographic Clip Space
 
 ![near far plane](image/orthographic.png)
 
-**Perspective Clip Space**
+### Perspective Clip Space
+
 ![near far plane](image/perspective.png)
 
-The objects between the near plane and the far plane of the camera frustum are mapped to the range (-1, 1) of the NDC.<br/>
+The objects between the near plane and the far plane of the camera frustum are mapped to the range (-1, 1) of the NDC.
 
+---
 
-<br/><hr/>
 ## Depth
 
 Whether the depth (`gl_FragCoord.z` and `gl_FragDepth`) is linear mapped or not depends on, the projection matrix.
@@ -200,181 +201,216 @@ While for Orthographic Projection the depth is linear, for Perspective Projectio
 
 In general, the depth (`gl_FragCoord.z` and `gl_FragDepth`) is calculated as follows:
 
-    float ndc_depth = clip_space_pos.z / clip_space_pos.w;
-    float depth = (((farZ-nearZ) * ndc_depth) + nearZ + farZ) / 2.0;
+```glsl
+float ndc_depth = clip_space_pos.z / clip_space_pos.w;
+float depth = (((farZ-nearZ) * ndc_depth) + nearZ + farZ) / 2.0;
+```
 
+---
 
-<br/><hr/>
 ## Orthographic Projection
 
-At Orthographic Projection the coordinates in the view space are linearly mapped to clip space coordinates and the clip space coordinates are equal to the normalized device coordinates, because the `w` component is 1 (for a cartesian input coordinate).<br/>
-The values for left, right, bottom, top, near and far define a box. All the geometry which is inside the volume of the box is "visible" on the viewport. 
+At Orthographic Projection the coordinates in the view space are linearly mapped to clip space coordinates and the clip space coordinates are equal to the normalized device coordinates, because the `w` component is 1 (for a cartesian input coordinate).  
+The values for left, right, bottom, top, near and far define a box. All the geometry which is inside the volume of the box is "visible" on the viewport.
 
 ![Orthographic Projection](image/OrthographicProjection.png)
 
 Orthographic Projection Matrix:
- 
-    r = right, l = left, b = bottom, t = top, n = near, f = far 
 
-    2/(r-l)         0               0               0
-    0               2/(t-b)         0               0
-    0               0               -2/(f-n)        0
-    -(r+l)/(r-l)    -(t+b)/(t-b)    -(f+n)/(f-n)    1
-    
-At Orthographic Projection, the Z component is calcualted by the **linear function**:
+```txt
+r = right, l = left, b = bottom, t = top, n = near, f = far
 
-    z_ndc = z_eye * -2/(f-n) - (f+n)/(f-n)
+2/(r-l)         0               0               0
+0               2/(t-b)         0               0
+0               0               -2/(f-n)        0
+-(r+l)/(r-l)    -(t+b)/(t-b)    -(f+n)/(f-n)    1
+```
+
+At Orthographic Projection, the Z component is calculated by the **linear function**:
+
+```txt
+z_ndc = z_eye * -2/(f-n) - (f+n)/(f-n)
+```
 
 ![Orthographic Z function](image/Orthographic_Z.png)
 
+---
 
-<br/><hr/>
 ## Perspective Projection
 
-At Perspective Projection the projection matrix describes the mapping from 3D points in the world as they are seen from of a pinhole camera, to 2D points of the viewport. <br/> The eye space coordinates in the camera frustum (a truncated pyramid) are mapped to a cube (the normalized device coordinates). 
+At Perspective Projection the projection matrix describes the mapping from 3D points in the world as they are seen from of a pinhole camera, to 2D points of the viewport.  
+The eye space coordinates in the camera frustum (a truncated pyramid) are mapped to a cube (the normalized device coordinates).
 
 ![Perspective Projection](image/PerspectiveProjection.png)
 
 Perspective Projection Matrix:
 
-    r = right, l = left, b = bottom, t = top, n = near, f = far
+```txt
+r = right, l = left, b = bottom, t = top, n = near, f = far
 
-    2*n/(r-l)      0              0                0
-    0              2*n/(t-b)      0                0
-    (r+l)/(r-l)    (t+b)/(t-b)    -(f+n)/(f-n)    -1    
-    0              0              -2*f*n/(f-n)     0
+2*n/(r-l)      0              0                0
+0              2*n/(t-b)      0                0
+(r+l)/(r-l)    (t+b)/(t-b)    -(f+n)/(f-n)    -1
+0              0              -2*f*n/(f-n)     0
+```
 
-where :
+where:
 
-    a = w / h
-    ta = tan( fov_y / 2 );
-   
-    2 * n / (r-l) = 1 / (ta * a)
-    2 * n / (t-b) = 1 / ta
+```txt
+a = w / h
+ta = tan( fov_y / 2 );
+
+2 * n / (r-l) = 1 / (ta * a)
+2 * n / (t-b) = 1 / ta
+```
 
 If the projection is symmetric, where the line of sight is axis of symmetry the frustum, then the matrix can be simplified:
 
-    1/(ta*a)  0     0              0
-    0         1/ta  0              0
-    0         0    -(f+n)/(f-n)   -1    
-    0         0    -2*f*n/(f-n)    0
+```txt
+1/(ta*a)  0     0              0
+0         1/ta  0              0
+0         0    -(f+n)/(f-n)   -1
+0         0    -2*f*n/(f-n)    0
+```
 
-
-<br/>
 The following function will calculate the same projection matrix as `gluPerspective` does:
 
-    #include <array>
+```cpp
+#include <array>
 
-    const float cPI = 3.14159265f;
-    float ToRad( float deg ) { return deg * cPI / 180.0f; }
+const float cPI = 3.14159265f;
+float ToRad( float deg ) { return deg * cPI / 180.0f; }
 
-    using TVec4  = std::array< float, 4 >;
-    using TMat44 = std::array< TVec4, 4 >;
+using TVec4  = std::array< float, 4 >;
+using TMat44 = std::array< TVec4, 4 >;
 
-    TMat44 Perspective( float fov_y, float aspect )
-    {
-        float fn = far + near
-        float f_n = far - near;
-        float r = aspect;
-        float t = 1.0f / tan( ToRad( fov_y ) / 2.0f );
-    
-        return TMat44{ 
-            TVec4{ t / r, 0.0f,  0.0f,                 0.0f },
-            TVec4{ 0.0f,  t,     0.0f,                 0.0f },
-            TVec4{ 0.0f,  0.0f, -fn / f_n,            -1.0f},
-            TVec4{ 0.0f,  0.0f, -2.0f*far*near / f_n,  0.0f }
-        };
-    }
+TMat44 Perspective( float fov_y, float aspect )
+{
+    float fn = far + near
+    float f_n = far - near;
+    float r = aspect;
+    float t = 1.0f / tan( ToRad( fov_y ) / 2.0f );
+
+    return TMat44{
+        TVec4{ t / r, 0.0f,  0.0f,                 0.0f },
+        TVec4{ 0.0f,  t,     0.0f,                 0.0f },
+        TVec4{ 0.0f,  0.0f, -fn / f_n,            -1.0f},
+        TVec4{ 0.0f,  0.0f, -2.0f*far*near / f_n,  0.0f }
+    };
+}
+```
 
 At Perspective Projection, the Z component is calculated by the **rational function**:
 
-    z_ndc = ( -z_eye * (f+n)/(f-n) - 2*f*n/(f-n) ) / -z_eye
+```cpp
+z_ndc = ( -z_eye * (f+n)/(f-n) - 2*f*n/(f-n) ) / -z_eye
+```
 
 ![Perspective Z function](image/Perspective_Z.png)
 
+---
 
-<br/><hr/>
 ## Depth buffer
 
 Since the normalized device coordinates are in range (-1,-1,-1) to (1,1,1) the Z-coordinate has to be mapped to the depth buffer the range [0,1]:
 
-    depth = (z_ndc + 1) / 2 
+```cpp
+depth = (z_ndc + 1) / 2 
+```
 
 How the Z component of the normalized device space is mapped to the depth value, can in OpenGL be defined by the function `glDepthRange`. Usually the range is [0, 1], from the near plane to the far plane.
 
-Note, in the fragment shader, the built in input variable `gl_FragCoord` is available, that contains the window relative coordinate (`x`, `y`, `z`, `1/w`) values for the fragment.<br/> 
+Note, in the fragment shader, the built in input variable `gl_FragCoord` is available, that contains the window relative coordinate (`x`, `y`, `z`, `1/w`) values for the fragment.  
 The `z` component contains the depth value, that would be written to `gl_FragDepth`(except the shader code contains explicit writing to it) and is finally the value stored in th depth buffer.
 
 `gl_FragCoord` may be redeclared with the additional layout qualifier identifiers `origin_upper_left` or `pixel_center_integer`. By default, `gl_FragCoord` assumes a lower-left origin for window coordinates and assumes pixel centers are located at half-pixel centers. For example, the (x, y) location (0.5, 0.5) is returned for the lower-left-most pixel in a window. The origin of `gl_FragCoord` may be changed by redeclaring `gl_FragCoord` with the `origin_upper_left` identifier. 
 
+---
 
-<br/><hr/>
 ## Unproject
 
 To convert form the depth of the depth buffer to the original Z-coordinate, the projection (Orthographic or Perspective), and the near plane and far plane has to be known.
 
 In the following is assumed that the depth range is in [0, 1] and depth is a value in this range:
 
-*Orthographic Projection*
+### Unproject - Orthographic Projection
 
-    n = near, f = far
+```txt
+n = near, f = far
+```
 
-    z_eye = depth * (f-n) + n;
+```cpp
+z_eye = depth * (f-n) + n;
 
-    z_linear = z_eye
-   
-*Perspective Projection*
+z_linear = z_eye
+```
 
-    n = near, f = far
+### Unproject - Perspective Projection
 
-    z_ndc = 2 * depth - 1.0;
-    z_eye = 2 * n * f / (f + n - z_ndc * (f - n));
+```txt
+n = near, f = far
+```
+
+```cpp
+z_ndc = 2 * depth - 1.0;
+z_eye = 2 * n * f / (f + n - z_ndc * (f - n));
+```
 
 If the perspective projection matrix is known this can be done as follows:
 
-    A = prj_mat[2][2]
-    B = prj_mat[3][2]
-    z_eye = B / (A + z_ndc)
+```cpp
+A = prj_mat[2][2]
+B = prj_mat[3][2]
+z_eye = B / (A + z_ndc)
+```
 
-*Perspective Projection - Linearized depth*
+### Perspective Projection - Linearized depth
 
 Convert the depth value or the normalized device z component to a linear value in the range [0.0, 1.0] where 0.0 is near and 1.0 is far.
 
-[How To Linearize the Depth Value](http://www.ozone3d.net/blogs/lab/20090206/how-to-linearize-the-depth-value/)<br/>
-[Linear Depth](http://dev.theomader.com/linear-depth/)<br/>
-[From linear -> non-linear depth values](https://www.gamedev.net/forums/topic/658957-depth-buffer-from-linear-non-linear-depth-values/)<br/>
+[How To Linearize the Depth Value](http://www.ozone3d.net/blogs/lab/20090206/how-to-linearize-the-depth-value/)  
+[Linear Depth](http://dev.theomader.com/linear-depth/)  
+[From linear -> non-linear depth values](https://www.gamedev.net/forums/topic/658957-depth-buffer-from-linear-non-linear-depth-values/)  
 
-    z_linear = (z_eye - n) / (f - n)
+```cpp
+z_linear = (z_eye - n) / (f - n)
+```
 
 Very good approximation for small near values: 
 
-    z_linear = 2 * n / (f + n - z_ndc * (f - n)) - n) / (f-n)
+```cpp
+z_linear = 2 * n / (f + n - z_ndc * (f - n)) - n) / (f-n)
+```
 
 Exact calculation:
 
-    z_linear = (2 * n * f / (f + n - z_ndc * (f - n)) - n) / (f-n)
+```cpp
+z_linear = (2 * n * f / (f + n - z_ndc * (f - n)) - n) / (f-n)
+```
 
-
-<br/>
-The realtion between the projected area in view space and the Z coordinate of the view space is linear. It dpends on the field of view angle and the aspect ratio.
+The relation between the projected area in view space and the Z coordinate of the view space is linear. It depends on the field of view angle and the aspect ratio.
 
 ![field of view](image/field_of_view.png)
 
 The normalized device size can be transformed to a size in view space like this:
 
-    aspect = w / h
-    tanFov = tan( fov_y * 0.5 );
+```cpp
+aspect = w / h
+tanFov = tan( fov_y * 0.5 );
 
-    size_x = ndx_size_x * (tanFov * aspect) / z_eye;
-    size_y = ndx_size_y * tanFov / z_eye;
+size_x = ndx_size_x * (tanFov * aspect) / z_eye;
+size_y = ndx_size_y * tanFov / z_eye;
+```
 
-If the perspective projection matrix is known and the projection is symmetrically (the line of sight is in the center of the viewport and the field of view is not displaced), this can be done as follows:   
+If the perspective projection matrix is known and the projection is symmetrically (the line of sight is in the center of the viewport and the field of view is not displaced), this can be done as follows:
 
-    size_x = ndx_size_x * / (prj_mat[0][0] * z_eye);
-    size_y = ndx_size_y * / (prj_mat[1][1] * z_eye);
+```cpp
+size_x = ndx_size_x * / (prj_mat[0][0] * z_eye);
+size_y = ndx_size_y * / (prj_mat[1][1] * z_eye);
+```
 
+---
 
-<br/><hr/>
 ## 3 Solutions to recover view space position in perspective projection
 
 ### 1. With field of view and aspect
@@ -383,19 +419,22 @@ Since the projection matrix is defined by the field of view and the aspect ratio
 
 Recover the Z distance in view space:
 
-    z_ndc = 2.0 * depth - 1.0;
-    z_eye = 2.0 * n * f / (f + n - z_ndc * (f - n));
+```cpp
+z_ndc = 2.0 * depth - 1.0;
+z_eye = 2.0 * n * f / (f + n - z_ndc * (f - n));
+```
 
 Recover the view space position by the XY normalized device coordinates:
 
-    ndc_x, ndc_y = xy normalized device coordinates in range from (-1, -1) to (1, 1):
-    
-    viewPos.x = z_eye * ndc_x * aspect * tanFov;
-    viewPos.y = z_eye * ndc_y * tanFov;
-    viewPos.z = -z_eye; 
+```txt
+ndc_x, ndc_y = xy normalized device coordinates in range from (-1, -1) to (1, 1):
+```
 
-
-<br/>
+```cpp
+viewPos.x = z_eye * ndc_x * aspect * tanFov;
+viewPos.y = z_eye * ndc_y * tanFov;
+viewPos.z = -z_eye;
+```
 
 ### 2. With the projection matrix
 
@@ -403,49 +442,52 @@ The projection parameters, defined by the field of view and the aspect ratio are
 
 Note the relation between projection matrix, field of view and aspect ratio:
 
-    prjMat[0][0] = 2*n/(r-l) = 1.0 / (tanFov * aspect);
-    prjMat[1][1] = 2*n/(t-b) = 1.0 / tanFov;
-    
-    prjMat[2][2] = -(f+n)/(f-n)
-    prjMat[2][2] = -2*f*n/(f-n)
+```cpp
+prjMat[0][0] = 2*n/(r-l) = 1.0 / (tanFov * aspect);
+prjMat[1][1] = 2*n/(t-b) = 1.0 / tanFov;
 
+prjMat[2][2] = -(f+n)/(f-n)
+prjMat[2][2] = -2*f*n/(f-n)
+```
 
 Recover the Z distance in view space:
 
-    A     = prj_mat[2][2];
-    B     = prj_mat[3][2];
-    z_ndc = 2.0 * depth - 1.0;
-    z_eye = B / (A + z_ndc);
+```cpp
+A     = prj_mat[2][2];
+B     = prj_mat[3][2];
+z_ndc = 2.0 * depth - 1.0;
+z_eye = B / (A + z_ndc);
+```
 
 Recover the view space position by the XY normalized device coordinates:
 
-    viewPos.x = z_eye * ndc_x / prjMat[0][0];
-    viewPos.y = z_eye * ndc_y / prjMat[1][1];
-    viewPos.z = -z_eye; 
-
-
-<br/>
+```cpp
+viewPos.x = z_eye * ndc_x / prjMat[0][0];
+viewPos.y = z_eye * ndc_y / prjMat[1][1];
+viewPos.z = -z_eye;
+```
 
 ### 3. With the inverse projection matrix
 
-
 Of course the viewport position can be recovered by the inverse projection matrix.
 
-    mat4 inversePrjMat = inverse( prjMat );
-    vec4 viewPosH      = inversePrjMat * vec3( ndc_x, ndc_y, 2.0 * depth - 1.0, 1.0 )
-    vec3 viewPos       = viewPos.xyz / viewPos.w;
+```cpp
+mat4 inversePrjMat = inverse( prjMat );
+vec4 viewPosH      = inversePrjMat * vec3( ndc_x, ndc_y, 2.0 * depth - 1.0, 1.0 )
+vec3 viewPos       = viewPos.xyz / viewPos.w;
+```
 
-<br/>
 This means the unprojected rectangle with a specific depth, can be calculated like this:
 
+```cpp
+vec4 viewLowerLeftH  = inversePrjMat * vec3( -1.0, -1.0, 2.0 * depth - 1.0, 1.0 );
+vec4 viewUpperRightH = inversePrjMat * vec3(  1.0,  1.0, 2.0 * depth - 1.0, 1.0 );
+vec3 viewLowerLeft   = viewLowerLeftH.xyz / viewLowerLeftH.w;
+vec3 viewUpperRight  = viewUpperRightH.xyz / viewUpperRightH.w;
+```
 
-    vec4 viewLowerLeftH  = inversePrjMat * vec3( -1.0, -1.0, 2.0 * depth - 1.0, 1.0 );
-    vec4 viewUpperRightH = inversePrjMat * vec3(  1.0,  1.0, 2.0 * depth - 1.0, 1.0 );
-    vec3 viewLowerLeft   = viewLowerLeftH.xyz / viewLowerLeftH.w;
-    vec3 viewUpperRight  = viewUpperRightH.xyz / viewUpperRightH.w;
+---
 
-
-<br/><hr/>
 ## Resources
 
 - [OpenGL - Mouse coordinates to Space coordinates](https://stackoverflow.com/questions/46749675/opengl-mouse-coordinates-to-space-coordinates/46752492#46752492)
@@ -465,7 +507,7 @@ This means the unprojected rectangle with a specific depth, can be calculated li
 - [`gl_FragDepth`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/gl_FragDepth.xhtml)
 - [`glDepthRange`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glDepthRange.xhtml)
 - [Depth offset in OpenGL](https://stackoverflow.com/questions/45314290/depth-offset-in-opengl/45317626#45317626)
-- [Is it possble get which surface of cube will be click in OpenGL?](https://stackoverflow.com/questions/45893277/is-it-possble-get-which-surface-of-cube-will-be-click-in-opengl/45946943#45946943)
+- [Is it possible get which surface of cube will be click in OpenGL?](https://stackoverflow.com/questions/45893277/is-it-possble-get-which-surface-of-cube-will-be-click-in-opengl/45946943#45946943)
 - [Mouse picking miss](https://stackoverflow.com/questions/45882951/mouse-picking-miss/45883624#45883624)
 - [OpenGL screen coordinates to world coordinates](https://stackoverflow.com/questions/44965202/opengl-screen-coordinates-to-world-coordinates/45000237#45000237)
 - [OpenGL ES 2.0: From orthogonal to perspective (card flip effect)](https://stackoverflow.com/questions/47113598/opengl-es-2-0-from-orthogonal-to-perspective-card-flip-effect/47114173#47114173)
@@ -480,6 +522,6 @@ This means the unprojected rectangle with a specific depth, can be calculated li
 - [The Perspective and Orthographic Projection Matrix](https://www.scratchapixel.com/lessons/3d-basic-rendering/perspective-and-orthographic-projection-matrix/building-basic-perspective-projection-matrix)
 
 
-<br/><hr/>
+---
 
 <a href="https://stackexchange.com/users/7322082/rabbid76"><img src="https://stackexchange.com/users/flair/7322082.png" width="208" height="58" alt="profile for Rabbid76 on Stack Exchange, a network of free, community-driven Q&amp;A sites" title="profile for Rabbid76 on Stack Exchange, a network of free, community-driven Q&amp;A sites" /></a>
