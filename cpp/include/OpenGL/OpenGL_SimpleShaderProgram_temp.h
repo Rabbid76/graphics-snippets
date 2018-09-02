@@ -222,7 +222,7 @@ public:
     std::ifstream sourceFile( file, std::fstream::in );
     std::string sourceCode = file;
     if ( sourceFile.is_open() )
-      sourceCode = std::string( (std::istreambuf_iterator<char>( sourceFile )), std::istreambuf_iterator<char>() );
+      sourceCode = std::string( std::istreambuf_iterator<char>( sourceFile ), std::istreambuf_iterator<char>() );
     std::string shader_type_name = CShaderObject::ShaderTypeName( type );
 
     if ( _verbose )

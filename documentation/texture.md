@@ -1,6 +1,5 @@
 # Textures
 
-
 ## Texture Coordinate transformation
 
 When we wrap a texture on a mesh, the texture maybe have to be translated, scaled and rotated.
@@ -74,7 +73,6 @@ TMat44 TextureScale( float scaleU, float scaleV )
 ### Rotation
 
 To rotate a texture, we must turn the orthonormalized x axis and y axis. If we want to rotate the texture around its center (0.5, 0.5), the position of the texture must be corrected with the translation.  
-
 ![texture rotate](image/texture_rotate.png)
 
 Setting up of a clockwise rotation matrix for a 2D texture, around its center point (0.5, 0.5):
@@ -165,9 +163,7 @@ The possible parameters are:
 
 - `GL_MIRROR_CLAMP_TO_EDGE` causes the the textue coordinate to be repeated as for `GL_MIRRORED_REPEAT `for one reptition of the texture, at which point the coordinate to be clamped as in `GL_CLAMP_TO_EDGE`.
 
-
 Note the default value for `GL_TEXTURE_WRAP_S`, `GL_TEXTURE_WRAP_T` and `GL_TEXTURE_WRAP_R` is `GL_REPEAT`.
-
 
 <br/><hr/>
 

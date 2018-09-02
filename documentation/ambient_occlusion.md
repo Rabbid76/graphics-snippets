@@ -52,8 +52,8 @@ Hardware Accelerated Ambient Occlusion Techniques on GPUs; Perumaal Shanmugam, O
 Ambient Occlusion Fields; Janne Kontkanen Samuli Laine<br/>
 [https://users.aalto.fi/~laines9/publications/kontkanen2005i3d_paper.pdf]
 
-
 <br><hr>
+
 ## HBAO Horizon Based Ambient Occlusion
 
 Image-Space Horizon-Based Ambient Occlusion; NVIDIA Corporation; Louis Bavoil, Miguel Sainz, Rouslan Dimitrov<br/>
@@ -65,8 +65,8 @@ Horizon-Based Ambient Occlusion using Compute Shader; Nvidia 2008; Louis Bavoil<
 An alternative implementation for HBAO<br/>
 [http://www.derschmale.com/2013/12/20/an-alternative-implementation-for-hbao-2/]
 
-
 <br><hr>
+
 ## Related
 
 **Reference**
@@ -74,12 +74,11 @@ An alternative implementation for HBAO<br/>
 A Comparative Study of Screen-Space Ambient Occlusion Methods<br/>
 [http://frederikaalund.com/a-comparative-study-of-screen-space-ambient-occlusion-methods/]
 
-
 <br><hr>
+
 ## TODO
 
 ### Dynamically Multi Frequency ambient occlusion
-
 
 4 channels for 4 different frequencies.
 

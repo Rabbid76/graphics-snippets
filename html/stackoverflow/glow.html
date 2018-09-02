@@ -257,39 +257,6 @@ function render(deltaMS){
     requestAnimationFrame(render);
 }
 
-function resize() {
-    //vp_size = [gl.drawingBufferWidth, gl.drawingBufferHeight];
-    vp_size = [window.innerWidth, window.innerHeight]
-    //vp_size = [256, 256]
-    canvas.width = vp_size[0];
-    canvas.height = vp_size[1];
-
-    var fbsize = Math.max(vp_size[0], vp_size[1]);
-    fbsize = 1 << 31 - Math.clz32(fbsize); // nearest power of 2
-
-    blurFB = [];
-    for ( var i = 0; i < 2; ++ i ) {
-        fb = gl.createFramebuffer();
-        fb.width = fbsize;
-        fb.height = fbsize;
-        gl.bindFramebuffer( gl.FRAMEBUFFER, fb );
-        fb.color0_texture = gl.createTexture();
-        gl.bindTexture( gl.TEXTURE_2D, fb.color0_texture );
-        gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST );
-        gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST );
-        gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, fb.width, fb.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null );
-        fb.renderbuffer = gl.createRenderbuffer();
-        gl.bindRenderbuffer( gl.RENDERBUFFER, fb.renderbuffer );
-        gl.renderbufferStorage( gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, fb.width, fb.height );
-        gl.framebufferTexture2D( gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, fb.color0_texture, 0 );
-        gl.framebufferRenderbuffer( gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, fb.renderbuffer );
-        gl.bindTexture( gl.TEXTURE_2D, null );
-        gl.bindRenderbuffer( gl.RENDERBUFFER, null );
-        gl.bindFramebuffer( gl.FRAMEBUFFER, null );
-        blurFB.push( fb );
-    }
-}
-
 function initScene() {
 
     canvas = document.getElementById( "canvas");
@@ -372,6 +339,39 @@ function initScene() {
     window.onresize = resize;
     resize();
     requestAnimationFrame(render);
+}
+
+function resize() {
+    //vp_size = [gl.drawingBufferWidth, gl.drawingBufferHeight];
+    vp_size = [window.innerWidth, window.innerHeight]
+    //vp_size = [256, 256]
+    canvas.width = vp_size[0];
+    canvas.height = vp_size[1];
+
+    var fbsize = Math.max(vp_size[0], vp_size[1]);
+    fbsize = 1 << 31 - Math.clz32(fbsize); // nearest power of 2
+
+    blurFB = [];
+    for ( var i = 0; i < 2; ++ i ) {
+        fb = gl.createFramebuffer();
+        fb.width = fbsize;
+        fb.height = fbsize;
+        gl.bindFramebuffer( gl.FRAMEBUFFER, fb );
+        fb.color0_texture = gl.createTexture();
+        gl.bindTexture( gl.TEXTURE_2D, fb.color0_texture );
+        gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST );
+        gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST );
+        gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, fb.width, fb.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null );
+        fb.renderbuffer = gl.createRenderbuffer();
+        gl.bindRenderbuffer( gl.RENDERBUFFER, fb.renderbuffer );
+        gl.renderbufferStorage( gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, fb.width, fb.height );
+        gl.framebufferTexture2D( gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, fb.color0_texture, 0 );
+        gl.framebufferRenderbuffer( gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, fb.renderbuffer );
+        gl.bindTexture( gl.TEXTURE_2D, null );
+        gl.bindRenderbuffer( gl.RENDERBUFFER, null );
+        gl.bindFramebuffer( gl.FRAMEBUFFER, null );
+        blurFB.push( fb );
+    }
 }
 
 function Fract( val ) { 

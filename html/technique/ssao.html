@@ -53,135 +53,135 @@ void main()
 </script>
 
 <script id="normal-shader-fs" type="x-shader/x-fragment">
-    precision mediump float;
-    
-    varying vec3 vertPos;
-    varying vec3 vertNV;
-    varying vec3 vertCol;
-    varying vec4 vPosPrj;
-    
-    void main()
-    {
-        gl_FragColor = vec4( normalize( vertNV ).xyz * 0.5 + 0.5, 1.0 );
-    } 
-    </script>
+precision mediump float;
+
+varying vec3 vertPos;
+varying vec3 vertNV;
+varying vec3 vertCol;
+varying vec4 vPosPrj;
+
+void main()
+{
+    gl_FragColor = vec4( normalize( vertNV ).xyz * 0.5 + 0.5, 1.0 );
+} 
+</script>
 
 <script id="ssao-shader-vs" type="x-shader/x-vertex">
-    precision mediump float;
-    
-    attribute vec2 inPos;
-    varying   vec2 vPos;
-    
-    uniform vec2  u_depthRange;
-    uniform float u_tanFOV_2;
-    uniform vec2  u_viewportsize;
-    
-    void main()
-    {
-        float aspect = u_viewportsize.x / u_viewportsize.y;
-        float farLen = u_tanFOV_2 * u_depthRange.y;
-        vPos         = inPos;
-        gl_Position  = vec4( inPos, 0.0, 1.0 );
-    }
+precision mediump float;
+
+attribute vec2 inPos;
+varying   vec2 vPos;
+
+uniform vec2  u_depthRange;
+uniform float u_tanFOV_2;
+uniform vec2  u_viewportsize;
+
+void main()
+{
+    float aspect = u_viewportsize.x / u_viewportsize.y;
+    float farLen = u_tanFOV_2 * u_depthRange.y;
+    vPos         = inPos;
+    gl_Position  = vec4( inPos, 0.0, 1.0 );
+}
 </script>
 
 <script id="ssao-shader-fs" type="x-shader/x-fragment">
-    precision mediump float;
-    
-    varying vec2 vPos;
-    
-    uniform sampler2D u_depthSampler;
-    uniform sampler2D u_normalSampler;
-    uniform sampler2D u_ssaoKernelSampler;
-    uniform sampler2D u_ssaoNoiseSampler;
-    uniform float     u_radius;
-    uniform vec2      u_viewportsize;
-    uniform vec2      u_depthRange;
-    uniform float     u_tanFOV_2;
-    uniform mat4      u_projectionMat44;
-    uniform mat4      u_InverseProjectionMat44;
-    
-    float UnpackDepth( in vec3 pack )
-    {
-      float depth = dot( pack, 1.0 / vec3(1.0, 256.0, 256.0*256.0) );
-      return depth * (256.0*256.0*256.0) / (256.0*256.0*256.0 - 1.0);
-    }
-  
-    float DecodeDepth( in vec2 texC )
-    {
-      vec3  depthVal = texture2D( u_depthSampler, texC.st ).xyz;  
-      float depth    =  UnpackDepth( depthVal.rgb );
-      depth         += step(depth, 0.0); //! depth pack contains 0.0 for background!
-      return depth;
-    }
+precision mediump float;
 
-    vec3 DecodeNV( in vec2 texC )
-    {
-      vec3 normalVal = texture2D( u_normalSampler, texC.st ).xyz;  
-      return normalVal * 2.0 - 1.0;
-    }
+varying vec2 vPos;
 
-    vec3 DecodePosDepth( in vec2 texC, in float depth )
-    {
-      vec4 viewPos  = u_InverseProjectionMat44 * vec4(vec3(texC.st, depth) * 2.0 - 1.0, 1.0);
-      viewPos.xyz  /= viewPos.w;
-      return vec3(viewPos.xyz);
-    }
+uniform sampler2D u_depthSampler;
+uniform sampler2D u_normalSampler;
+uniform sampler2D u_ssaoKernelSampler;
+uniform sampler2D u_ssaoNoiseSampler;
+uniform float     u_radius;
+uniform vec2      u_viewportsize;
+uniform vec2      u_depthRange;
+uniform float     u_tanFOV_2;
+uniform mat4      u_projectionMat44;
+uniform mat4      u_InverseProjectionMat44;
 
-    vec4 SSAO(in vec2 texC)
+float UnpackDepth( in vec3 pack )
+{
+    float depth = dot( pack, 1.0 / vec3(1.0, 256.0, 256.0*256.0) );
+    return depth * (256.0*256.0*256.0) / (256.0*256.0*256.0 - 1.0);
+}
+
+float DecodeDepth( in vec2 texC )
+{
+    vec3  depthVal = texture2D( u_depthSampler, texC.st ).xyz;  
+    float depth    =  UnpackDepth( depthVal.rgb );
+    depth         += step(depth, 0.0); //! depth pack contains 0.0 for background!
+    return depth;
+}
+
+vec3 DecodeNV( in vec2 texC )
+{
+    vec3 normalVal = texture2D( u_normalSampler, texC.st ).xyz;  
+    return normalVal * 2.0 - 1.0;
+}
+
+vec3 DecodePosDepth( in vec2 texC, in float depth )
+{
+    vec4 viewPos  = u_InverseProjectionMat44 * vec4(vec3(texC.st, depth) * 2.0 - 1.0, 1.0);
+    viewPos.xyz  /= viewPos.w;
+    return vec3(viewPos.xyz);
+}
+
+vec4 SSAO(in vec2 texC)
+{
+    float occlusion       = 0.0;
+    float fragDepth       = DecodeDepth( texC );
+    float alpha           = 0.0;
+    if (fragDepth < 1.0)
     {
-        float occlusion       = 0.0;
-        float fragDepth       = DecodeDepth( texC );
-        float alpha           = 0.0;
-        if (fragDepth < 1.0)
+        vec3  fragPos         = DecodePosDepth(texC, fragDepth); 
+        float radius          = u_radius;
+        vec3  fragNV          = DecodeNV(texC.st);
+        vec2  noiseScale      = u_viewportsize / float(4.0);
+        vec3  randomVec       = texture2D(u_ssaoNoiseSampler, texC.st * noiseScale).xyz;
+        vec3  tangent         = normalize(randomVec - fragNV * dot( randomVec, fragNV ));
+        mat3  TBN             = mat3(tangent, cross( fragNV, tangent ), fragNV);
+        float kernelPtCount   = 0.0;
+        for( int inx = 0; inx < 32; ++ inx )
         {
-            vec3  fragPos         = DecodePosDepth(texC, fragDepth); 
-            float radius          = u_radius;
-            vec3  fragNV          = DecodeNV(texC.st);
-            vec2  noiseScale      = u_viewportsize / float(4.0);
-            vec3  randomVec       = texture2D(u_ssaoNoiseSampler, texC.st * noiseScale).xyz;
-            vec3  tangent         = normalize(randomVec - fragNV * dot( randomVec, fragNV ));
-            mat3  TBN             = mat3(tangent, cross( fragNV, tangent ), fragNV);
-            float kernelPtCount   = 0.0;
-            for( int inx = 0; inx < 32; ++ inx )
-            {
-                vec3  sampleRel       = TBN * texture2D(u_ssaoNoiseSampler, vec2(float(inx)/32.0, 0.0) ).xyz;
-                sampleRel             = fragPos.xyz + sampleRel * radius;
-                vec4  sampleTexC      = u_projectionMat44 * vec4(sampleRel, 1.0);             // view to clip space
-                sampleTexC.xyz        = 0.5 + 0.5 * sampleTexC.xyz / sampleTexC.w; // clip space -> NDC [-1.0, 1.0] -> [0.0, 1.0]
-                float sampleDepth     = sampleTexC.z;
-                vec2  rangeTest       = step( vec2( 0.0, 0.0 ), sampleTexC.xy ) * step( sampleTexC.xy, vec2( 1.0, 1.0 ) );
-                float w               = rangeTest.x * rangeTest.y;
-                kernelPtCount        += w;
-                float testDepth       = DecodeDepth(sampleTexC.xy);
-                float sampleDelta     = testDepth - sampleDepth;
-                occlusion            += w * step(-0.000005, sampleDelta);
-            }
-            occlusion = occlusion / kernelPtCount;
-            alpha     = 1.0;
+            vec3  sampleRel       = TBN * texture2D(u_ssaoNoiseSampler, vec2(float(inx)/32.0, 0.0) ).xyz;
+            sampleRel             = fragPos.xyz + sampleRel * radius;
+            vec4  sampleTexC      = u_projectionMat44 * vec4(sampleRel, 1.0);             // view to clip space
+            sampleTexC.xyz        = 0.5 + 0.5 * sampleTexC.xyz / sampleTexC.w; // clip space -> NDC [-1.0, 1.0] -> [0.0, 1.0]
+            float sampleDepth     = sampleTexC.z;
+            vec2  rangeTest       = step( vec2( 0.0, 0.0 ), sampleTexC.xy ) * step( sampleTexC.xy, vec2( 1.0, 1.0 ) );
+            float w               = rangeTest.x * rangeTest.y;
+            kernelPtCount        += w;
+            float testDepth       = DecodeDepth(sampleTexC.xy);
+            float sampleDelta     = testDepth - sampleDepth;
+            occlusion            += w * step(-0.000005, sampleDelta);
         }
-        return vec4(vec3(occlusion), alpha);
+        occlusion = occlusion / kernelPtCount;
+        alpha     = 1.0;
     }
+    return vec4(vec3(occlusion), alpha);
+}
 
-    void main()
-    {
-        vec2  uvVarying = vPos.st * 0.5 + 0.5;
-        gl_FragColor    = SSAO(uvVarying.st);
-    }
+void main()
+{
+    vec2  uvVarying = vPos.st * 0.5 + 0.5;
+    gl_FragColor    = SSAO(uvVarying.st);
+}
 </script>
 
 <script id="blur-shader-vs" type="x-shader/x-vertex">
-    precision mediump float;
-    
-    attribute vec2 inPos;
-    
-    varying   vec2 pos;
-    
-    void main()
-    {
-        pos = inPos;
-        gl_Position = vec4( inPos, 0.0, 1.0 );
-    }
+precision mediump float;
+
+attribute vec2 inPos;
+
+varying   vec2 pos;
+
+void main()
+{
+    pos = inPos;
+    gl_Position = vec4( inPos, 0.0, 1.0 );
+}
 </script>
 
 <script id="blur-shader-fs" type="x-shader/x-fragment">
@@ -219,22 +219,9 @@ void main()
 <body>
 
 <style>
-html, body {
-    height: 100%;
-    width: 100%;
-    margin: 0;
-    overflow: hidden;
-}
-#gui {
-    position: absolute;
-    top: 0;
-    left: 0;
-}
-#ref-link {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-}
+html,body { margin: 0; overflow: hidden; }
+#gui { position : absolute; top : 0; left : 0; }
+#ref-link { position : absolute; bottom : 0; left : 0; }  
 </style>
 
 <div><form id="gui" name="inputs">
@@ -246,12 +233,20 @@ html, body {
 </table>
 </form></div>
 
-<canvas id="glow-canvas" style="border: none;" width="512" height="512"></canvas>
+<canvas id="ssao-canvas" style="border: none;"></canvas>
 
 <script type="text/javascript">
 
 (function loadscene() {
 
+var sliderScale = 100.0
+var gl;
+var canvas;
+var bufCube = {};
+var bufTorus = {}
+var bufSSAOQuad = {};
+var bufQuad = {};
+var vp_size;
 var progDepth;
 var progNormal; 
 var progSSAO;
@@ -264,7 +259,7 @@ var texUnitBlurX = 3;
 var texUnitSSAOKErnel = 4;
 var texUnitSSAONoise = 5;
 var camera;
-var canvas;
+
 function render(deltaMS) {
 
     var shininess = 10.0;
@@ -275,7 +270,6 @@ function render(deltaMS) {
     vp_size = [canvas.width, canvas.height];
     camera.Update( vp_size );
         
-    gl.viewport( 0, 0, canvas.width, canvas.height );
     gl.enable( gl.DEPTH_TEST );
     gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
 
@@ -313,7 +307,7 @@ function render(deltaMS) {
     framebuffers[1].BindTexture( texUnitNormal );
    
     // set up SSAO shader
-    var tanFOV_2 = Math.tan( Math.PI * Camera.fov_y / 360 );
+    var tanFOV_2 = Math.tan( Math.PI * camera.fov_y / 360 );
     ShaderProgram.Use( progSSAO );
     ShaderProgram.SetUniformI1( progSSAO, "u_depthSampler", texUnitDepth );
     ShaderProgram.SetUniformI1( progSSAO, "u_normalSampler", texUnitNormal );
@@ -326,12 +320,12 @@ function render(deltaMS) {
     ShaderProgram.SetUniformM44( progSSAO, "u_projectionMat44", prjMat );
     ShaderProgram.SetUniformM44( progSSAO, "u_InverseProjectionMat44", invPrjMat );
         
-    
     // draw full screen space
     VertexBuffer.Draw( bufSSAOQuad );
 
     // reset framebuffer and bind frambuffer texture
     framebuffers[0].Release( true );
+    gl.viewport( 0, 0, canvas.width, canvas.height );
     framebuffers[2].BindTexture( texUnitBlurX );
 
     // set up blur process shader
@@ -346,17 +340,10 @@ function render(deltaMS) {
     requestAnimationFrame(render);
 }    
 
-var sliderScale = 100.0
-var gl;
-var bufCube = {};
-var bufTorus = {}
-var bufSSAOQuad = {};
-var bufQuad = {};
-var vp_size;
 function initScene() {
 
     document.getElementById( "blur" ).checked = true;
-    canvas = document.getElementById( "glow-canvas");
+    canvas = document.getElementById( "ssao-canvas");
     vp_size = [canvas.width, canvas.height];
     var vp = vp_size;
     gl = canvas.getContext( "experimental-webgl" );
@@ -398,10 +385,6 @@ function initScene() {
     progBlur.inPos = ShaderProgram.AttributeIndex( progBlur, "inPos" );
     if ( progBlur == 0 )
         return; 
-
-    ssaoTextures = generateSSAOTextures( 32, 4, texUnitSSAOKErnel, texUnitSSAONoise );   
-
-    framebuffers = [ FrameBuffer.Create( vp ), FrameBuffer.Create( vp ), FrameBuffer.Create( vp ) ]; 
 
     var cubePos = [
         -1.0, -1.0,  1.0,  1.0, -1.0,  1.0,  1.0,  1.0,  1.0, -1.0,  1.0,  1.0,
@@ -488,10 +471,29 @@ function initScene() {
         [ 0, 1, 2, 0, 2, 3 ]
     );
 
-    startTime = Date.now();
+    ssaoTextures = generateSSAOTextures( 32, 4, texUnitSSAOKErnel, texUnitSSAONoise );   
+
     camera = new Camera( [0, 2.5, 0.0], [0, 0, 0], [0, 0, 1], 90, vp_size, 0.5, 100 );
+
+    window.onresize = resize;
+    resize();
     requestAnimationFrame(render);
 }
+
+function resize() {
+    //vp_size = [gl.drawingBufferWidth, gl.drawingBufferHeight];
+    vp_size = [window.innerWidth, window.innerHeight]
+    //vp_size = [256, 256]
+    canvas.width = vp_size[0];
+    canvas.height = vp_size[1];
+
+    var fbsize = Math.max(vp_size[0], vp_size[1]);
+    fbsize = 1 << 31 - Math.clz32(fbsize); // nearest power of 2
+
+    var fb_rect = [fbsize, fbsize];
+    framebuffers = [ FrameBuffer.Create( fb_rect ), FrameBuffer.Create( fb_rect ), FrameBuffer.Create( fb_rect ) ]; 
+}
+
 
 vec4_add = function( a, b ) { return [ a[0]+b[0], a[1]+b[1], a[2]+b[2], a[3]+b[3] ]; }
 vec4_sub = function( a, b ) { return [ a[0]-b[0], a[1]-b[1], a[2]-b[2], a[3]-b[3] ]; }
@@ -927,6 +929,7 @@ FrameBuffer.Create = function( vp, texturePlan ) {
     fb.Bind = function( clear ) {
         gl.bindFramebuffer( gl.FRAMEBUFFER, this );
         if ( clear ) {
+            gl.viewport( 0, 0, this.width, this.height );
             gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
             gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
         }

@@ -9,12 +9,12 @@ There are different types of [Primitives](https://www.khronos.org/opengl/wiki/Pr
 - Line primitives: `GL_LINES`, `GL_LINE_STRIP`, `GL_LINE_LOOP`
 
 - Line primitives with adjacency information: `GL_LINES_ADJACENCY`, `GL_LINE_STRIP_ADJACENCY`<br/>
-  Adjacencies do not create a further geometry, but the provide information which can be use in a geometry shader stage.
+  Adjacency do not create a further geometry, but the provide information which can be use in a geometry shader stage.
 
 - Triangle primitives: `GL_TRIANGLES`, `GL_TRIANGLE_STRIP`, `GL_TRIANGLE_FAN`
 
 - Triangle primitives with adjacency information: `GL_TRIANGLES_ADJACENCY`, `GL_TRIANGLE_STRIP_ADJACENCY`<br/>
-  Adjacencies do not create a further geometry, but the provide information which can be use in a geometry shader stage.
+  Adjacency do not create a further geometry, but the provide information which can be use in a geometry shader stage.
 
 For the sickness of completeness there are, the list of **deprecated** primitive types: `GL_QUADS`, `GL_QUAD_STRIP`, and `GL_POLYGON`:
 
@@ -26,55 +26,56 @@ For tessellation there is the special primitive type `GL_PATCH`.
 
 ### Triangle primitives
 
-<b>Triangle fan</b>
+#### Triangle fan
 
 See [Wikipedia, Triangle fan](https://en.wikipedia.org/wiki/Triangle_fan).
 
-<b>Triangle stripe</b>
+#### Triangle stripe
 
 See [Wikipedia, Triangle strip](https://en.wikipedia.org/wiki/Triangle_strip).
 
 ![quad to triangle](image/quad_to_triangles.svg)
 
-<b>Triangle adjacency</b>
+#### Triangle adjacency
 
 ![triangle adjacency](image/trianglesAdjacency.svg)
 
-<b>Triangle stripe adjacency</b>
-
+#### Triangle stripe adjacency
 
 <br/><hr/>
 
 ## Vertex array
 
-<b>Separated tightly packed buffers for different attributes</b>
+### Separated tightly packed buffers for different attributes
 
 e.g. Buffers for vertices (x, y, z), normals (x, y, z) and texture oordinates (u, v):
 
 Draw the array in core mode:
 
-    GLsizei              no_of_points; // number of vertices and attrbuts
-    std::vector<GLfloat> vertex;       // linearized array (no_of_points * 3): [ Vx0, Vy0, Vz0, Vx1, Vy1, Vz1, .... ] 
-    std::vector<GLfloat> normal;       // linearized array (no_of_points * 3): [ Nx0, Ny0, Nz0, Nx1, Ny1, Nz1, .... ] 
-    std::vector<GLfloat> color;        // linearized array (no_of_points * 5): [ R0, G0, B0, A0, R1, G1, B1, A1, .... ] 
+```cpp
+GLsizei              no_of_points; // number of vertices and attrbuts
+std::vector<GLfloat> vertex;       // linearized array (no_of_points * 3): [ Vx0, Vy0, Vz0, Vx1, Vy1, Vz1, .... ]
+std::vector<GLfloat> normal;       // linearized array (no_of_points * 3): [ Nx0, Ny0, Nz0, Nx1, Ny1, Nz1, .... ]
+std::vector<GLfloat> color;        // linearized array (no_of_points * 5): [ R0, G0, B0, A0, R1, G1, B1, A1, .... ]
 
-    GLuint vetexAttribIndex;  // index of the vertex attrbute (shader)
-    GLuint normalAttribIndex; // index of the normal attribute (shader)
-    GLuint colorAttribIndex;  // index of the color attribute (shader)
+GLuint vetexAttribIndex;  // index of the vertex attrbute (shader)
+GLuint normalAttribIndex; // index of the normal attribute (shader)
+GLuint colorAttribIndex;  // index of the color attribute (shader)
 
-    glVertexAttribPointer( vetexAttribIndex,  3, GL_FLOAT, GL_FALSE, 0, vertex.data() ); // 3: Vx, Vy, Vz
-    glVertexAttribPointer( normalAttribIndex, 3, GL_FLOAT, GL_TRUE,  0, normal.data() ); // 3: Nx, Ny, Nz  -  GL_TRUE: values should be normalized
-    glVertexAttribPointer( colorAttribIndex,  4, GL_FLOAT, GL_FALSE, 0, color.data() );  // 4: R, G, B, A 
+glVertexAttribPointer( vetexAttribIndex,  3, GL_FLOAT, GL_FALSE, 0, vertex.data() ); // 3: Vx, Vy, Vz
+glVertexAttribPointer( normalAttribIndex, 3, GL_FLOAT, GL_TRUE,  0, normal.data() ); // 3: Nx, Ny, Nz  -  GL_TRUE: values should be normalized
+glVertexAttribPointer( colorAttribIndex,  4, GL_FLOAT, GL_FALSE, 0, color.data() );  // 4: R, G, B, A
 
-    glEnableVertexAttribArray( vetexAttribIndex );
-    glEnableVertexAttribArray( normalAttribIndex );
-    glEnableVertexAttribArray( colorAttribIndex );
+glEnableVertexAttribArray( vetexAttribIndex );
+glEnableVertexAttribArray( normalAttribIndex );
+glEnableVertexAttribArray( colorAttribIndex );
 
-    glDrawArrays( GL_TRIANGLES, 0, no_of_points ); 
+glDrawArrays( GL_TRIANGLES, 0, no_of_points ); 
 
-    glDisableVertexAttribArray( vetexAttribIndex );
-    glDisableVertexAttribArray( normalAttribIndex );
-    glDisableVertexAttribArray( colorAttribIndex );
+glDisableVertexAttribArray( vetexAttribIndex );
+glDisableVertexAttribArray( normalAttribIndex );
+glDisableVertexAttribArray( colorAttribIndex );
+```
 
 See:
 
@@ -90,31 +91,33 @@ See the Khronos group reference page for [`glVertexAttribPointer`](https://www.k
 
 > For `glVertexAttribPointer`, if normalized is set to `GL_TRUE`, it indicates that values stored in an integer format are to be mapped to the range [-1,1] (for signed values) or [0,1] (for unsigned values) when they are accessed and **converted to floating point**. Otherwise, values **will be converted to floats directly** without normalization.
   
-
 <br/>
 
 Draw the array in compatibility mode (**deprecated**):
 
-    GLsizei              no_of_points; // number of vertices and attrbuts
-    std::vector<GLfloat> vertex;       // linearized array (no_of_points * 3): [ Vx0, Vy0, Vz0, Vx1, Vy1, Vz1, .... ] 
-    std::vector<GLfloat> normal;       // linearized array (no_of_points * 3): [ Nx0, Ny0, Nz0, Nx1, Ny1, Nz1, .... ] 
-    std::vector<GLfloat> color;        // linearized array (no_of_points * 5): [ R0, G0, B0, A0, R1, G1, B1, A1, .... ] 
-    
-    glVertexPointer( 3, GL_FLOAT, 0, vertex.data() ); // 3: Vx, Vy, Vz 
-    glNormalPointer(    GL_FLOAT, 0, normal.data() );
-    glColorPointer(  4, GL_FLOAT, 0, color.data() );  // 4: R, G, B, A  
+```cpp
+GLsizei              no_of_points; // number of vertices and attrbuts
+std::vector<GLfloat> vertex;       // linearized array (no_of_points * 3): [ Vx0, Vy0, Vz0, Vx1, Vy1, Vz1, .... ]
+std::vector<GLfloat> normal;       // linearized array (no_of_points * 3): [ Nx0, Ny0, Nz0, Nx1, Ny1, Nz1, .... ]
+std::vector<GLfloat> color;        // linearized array (no_of_points * 5): [ R0, G0, B0, A0, R1, G1, B1, A1, .... ]
 
-    glEnableClientState( GL_VERTEX_ARRAY );
-    glEnableClientState( GL_NORMAL_ARRAY );
-    glEnableClientState( GL_COLOR_ARRAY );
+glVertexPointer( 3, GL_FLOAT, 0, vertex.data() ); // 3: Vx, Vy, Vz 
+glNormalPointer(    GL_FLOAT, 0, normal.data() );
+glColorPointer(  4, GL_FLOAT, 0, color.data() );  // 4: R, G, B, A  
 
-    glDrawArrays( GL_TRIANGLES, 0, no_of_points );  
+glEnableClientState( GL_VERTEX_ARRAY );
+glEnableClientState( GL_NORMAL_ARRAY );
+glEnableClientState( GL_COLOR_ARRAY );
 
-    glDisableClientState( GL_VERTEX_ARRAY );
-    glDisableClientState( GL_NORMAL_ARRAY );
-    glDisableClientState( GL_COLOR_ARRAY );
+glDrawArrays( GL_TRIANGLES, 0, no_of_points );  
+
+glDisableClientState( GL_VERTEX_ARRAY );
+glDisableClientState( GL_NORMAL_ARRAY );
+glDisableClientState( GL_COLOR_ARRAY );
+```
 
 See:
+
 - [`glVertexPointer`](https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glVertexPointer.xml)
 - [`glNormalPointer`](https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glNormalPointer.xml)
 - [`glTexCoordPointer`](https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glTexCoordPointer.xml)
@@ -138,29 +141,31 @@ More information about vertex attributes can be found in the [OpenGL 4.6. core s
 
 <br/>
 
-<b>Separated tightly packed buffers for different attributes</b>
+### Separated tightly packed buffers for different attributes
 
 e.g. Buffers for vertices (x, y, z), normals (x, y, z) and texture coordinates (u, v):
 
 Create the vertex array buffer:
 
-    GLsizei              no_of_points; // number of vertices and attrbuts
-    std::vector<GLfloat> vertex;       // linearized array (no_of_points * 3): [ Vx0, Vy0, Vz0, Vx1, Vy1, Vz1, .... ] 
-    std::vector<GLfloat> normal;       // linearized array (no_of_points * 3): [ Nx0, Ny0, Nz0, Nx1, Ny1, Nz1, .... ] 
-    std::vector<GLfloat> texture;      // linearized array (no_of_points * 3): [ Tu0, Tv0, Tu1, Tv1, .... ] 
+```cpp
+GLsizei              no_of_points; // number of vertices and attrbuts
+std::vector<GLfloat> vertex;       // linearized array (no_of_points * 3): [ Vx0, Vy0, Vz0, Vx1, Vy1, Vz1, .... ]
+std::vector<GLfloat> normal;       // linearized array (no_of_points * 3): [ Nx0, Ny0, Nz0, Nx1, Ny1, Nz1, .... ]
+std::vector<GLfloat> texture;      // linearized array (no_of_points * 3): [ Tu0, Tv0, Tu1, Tv1, .... ]
 
-    GLuint vbos[3];
+GLuint vbos[3];
 
-    glGenBuffers( 3, vbos );
-    
-    glBindBuffer( GL_ARRAY_BUFFER, vbos[0] );
-    glBufferData( GL_ARRAY_BUFFER, vertex.size() * sizeof(GLfloat), vertex.data(), GL_STATIC_DRAW );
-    glBindBuffer( GL_ARRAY_BUFFER, vbos[1] );
-    glBufferData( GL_ARRAY_BUFFER, normal.size() * sizeof(GLfloat), normal.data(), GL_STATIC_DRAW );
-    glBindBuffer( GL_ARRAY_BUFFER, vbos[2] );
-    glBufferData( GL_ARRAY_BUFFER, texture.size() * sizeof(GLfloat), texture.data(), GL_STATIC_DRAW );
-    
-    glBindBuffer( GL_ARRAY_BUFFER, 0 );
+glGenBuffers( 3, vbos );
+
+glBindBuffer( GL_ARRAY_BUFFER, vbos[0] );
+glBufferData( GL_ARRAY_BUFFER, vertex.size() * sizeof(GLfloat), vertex.data(), GL_STATIC_DRAW );
+glBindBuffer( GL_ARRAY_BUFFER, vbos[1] );
+glBufferData( GL_ARRAY_BUFFER, normal.size() * sizeof(GLfloat), normal.data(), GL_STATIC_DRAW );
+glBindBuffer( GL_ARRAY_BUFFER, vbos[2] );
+glBufferData( GL_ARRAY_BUFFER, texture.size() * sizeof(GLfloat), texture.data(), GL_STATIC_DRAW );
+
+glBindBuffer( GL_ARRAY_BUFFER, 0 );
+```
 
 See:
 
@@ -172,226 +177,243 @@ See:
 
 Draw the array in core mode:
 
-    GLuint vetexAttribIndex;  // index of the vertex attrbute (shader)
-    GLuint normalAttribIndex; // index of the normal attribute (shader)
-    GLuint texCorAttribIndex; // index of the texture coordinate attribute (shader)
+```cpp
+GLuint vetexAttribIndex;  // index of the vertex attrbute (shader)
+GLuint normalAttribIndex; // index of the normal attribute (shader)
+GLuint texCorAttribIndex; // index of the texture coordinate attribute (shader)
 
-    glBindBuffer( GL_ARRAY_BUFFER, vbos[0] );
-    glVertexAttribPointer( vetexAttribIndex,  3, GL_FLOAT, GL_FALSE, 0, nullptr ); // 3: Vx, Vy, Vz
-    glBindBuffer( GL_ARRAY_BUFFER, vbos[1] );
-    glVertexAttribPointer( normalAttribIndex, 3, GL_FLOAT, GL_TRUE,  0, nullptr ); // 3: Nx, Ny, Nz  -  GL_TRUE: values should be normalized
-    glBindBuffer( GL_ARRAY_BUFFER, vbos[2] );
-    glVertexAttribPointer( texCorAttribIndex,  2, GL_FLOAT, GL_FALSE, 0, nullptr ); // 2: Tu, Tv 
+glBindBuffer( GL_ARRAY_BUFFER, vbos[0] );
+glVertexAttribPointer( vetexAttribIndex,  3, GL_FLOAT, GL_FALSE, 0, nullptr ); // 3: Vx, Vy, Vz
+glBindBuffer( GL_ARRAY_BUFFER, vbos[1] );
+glVertexAttribPointer( normalAttribIndex, 3, GL_FLOAT, GL_TRUE,  0, nullptr ); // 3: Nx, Ny, Nz  -  GL_TRUE: values should be normalized
+glBindBuffer( GL_ARRAY_BUFFER, vbos[2] );
+glVertexAttribPointer( texCorAttribIndex,  2, GL_FLOAT, GL_FALSE, 0, nullptr ); // 2: Tu, Tv 
 
-    glEnableVertexAttribArray( vetexAttribIndex );
-    glEnableVertexAttribArray( normalAttribIndex );
-    glEnableVertexAttribArray( texCorAttribIndex );
+glEnableVertexAttribArray( vetexAttribIndex );
+glEnableVertexAttribArray( normalAttribIndex );
+glEnableVertexAttribArray( texCorAttribIndex );
 
-    glDrawArrays( GL_TRIANGLES, 0, no_of_points ); 
+glDrawArrays( GL_TRIANGLES, 0, no_of_points ); 
 
-    glBindBuffer( GL_ARRAY_BUFFER, 0 );
-    glDisableVertexAttribArray( vetexAttribIndex );
-    glDisableVertexAttribArray( normalAttribIndex );
-    glDisableVertexAttribArray( texCorAttribIndex );
+glBindBuffer( GL_ARRAY_BUFFER, 0 );
+glDisableVertexAttribArray( vetexAttribIndex );
+glDisableVertexAttribArray( normalAttribIndex );
+glDisableVertexAttribArray( texCorAttribIndex );
+```
 
 <br/>
 
 Draw the array in compatibility mode (**deprecated**):
 
-    glBindBuffer( GL_ARRAY_BUFFER, vbos[0] );
-    glVertexPointer(   3, GL_FLOAT, 0, nullptr ); // 3: Vx, Vy, Vz 
-    glBindBuffer( GL_ARRAY_BUFFER, vbos[1] );
-    glNormalPointer(      GL_FLOAT, 0, nullptr );
-    glBindBuffer( GL_ARRAY_BUFFER, vbos[1] );
-    glTexCoordPointer( 2, GL_FLOAT, 0, nullptr ); // 2: Tu, Tv  
+```cpp
+glBindBuffer( GL_ARRAY_BUFFER, vbos[0] );
+glVertexPointer(   3, GL_FLOAT, 0, nullptr ); // 3: Vx, Vy, Vz 
+glBindBuffer( GL_ARRAY_BUFFER, vbos[1] );
+glNormalPointer(      GL_FLOAT, 0, nullptr );
+glBindBuffer( GL_ARRAY_BUFFER, vbos[1] );
+glTexCoordPointer( 2, GL_FLOAT, 0, nullptr ); // 2: Tu, Tv  
 
-    glEnableClientState( GL_VERTEX_ARRAY );
-    glEnableClientState( GL_NORMAL_ARRAY );
-    glEnableClientState( GL_TEXTURE_COORD_ARRAY );
+glEnableClientState( GL_VERTEX_ARRAY );
+glEnableClientState( GL_NORMAL_ARRAY );
+glEnableClientState( GL_TEXTURE_COORD_ARRAY );
 
-    glDrawArrays( GL_TRIANGLES, 0, no_of_points );  
+glDrawArrays( GL_TRIANGLES, 0, no_of_points );  
 
-    glBindBuffer( GL_ARRAY_BUFFER, 0 );
-    glDisableClientState( GL_VERTEX_ARRAY );
-    glDisableClientState( GL_NORMAL_ARRAY );
-    glDisableClientState( GL_TEXTURE_COORD_ARRAY );  
-
+glBindBuffer( GL_ARRAY_BUFFER, 0 );
+glDisableClientState( GL_VERTEX_ARRAY );
+glDisableClientState( GL_NORMAL_ARRAY );
+glDisableClientState( GL_TEXTURE_COORD_ARRAY );  
+```
 
 <br/>    
 
 <b>Vertex attribute records set - Stride packed</b>
 
 e.g. Vertex, Normal vector and Texture coordinate
-     
-    [ Vx0, Vy0, Vz0, Nx0, Ny0, Nz0, Tv0, Tu0,
-      Vx1, Vy1, Vz1, Nx1, Ny1, Nz1, Tv1, Tu1,
-      .....
-    ]
 
-<br/>     
+```txt     
+[ Vx0, Vy0, Vz0, Nx0, Ny0, Nz0, Tv0, Tu0,
+    Vx1, Vy1, Vz1, Nx1, Ny1, Nz1, Tv1, Tu1,
+    .....
+]
+```
+
+<br/>
 
 Create the vertex array buffer:
 
-    GLsizei no_of_points;
-    std::vector<GLfloat> data; // attribute set: [ Vx0, Vy0, Vz0, Nx0, Ny0, Nz0, Tv0, Tu0, Vx1, Vy1, Vz1, Nx1, Ny1, Nz1, Tv1, Tu1, .... ]
+```cpp
+GLsizei no_of_points;
+std::vector<GLfloat> data; // attribute set: [ Vx0, Vy0, Vz0, Nx0, Ny0, Nz0, Tv0, Tu0, Vx1, Vy1, Vz1, Nx1, Ny1, Nz1, Tv1, Tu1, .... ]
 
-    GLuint vbo;
+GLuint vbo;
 
-    glGenBuffers( 1, &vbo );
-    glBindBuffer( GL_ARRAY_BUFFER, vbo );
-    glBufferData( GL_ARRAY_BUFFER, data.size() * sizeof(GLfloat), data.data(), GL_STATIC_DRAW );
-    glBindBuffer( GL_ARRAY_BUFFER, 0 );
+glGenBuffers( 1, &vbo );
+glBindBuffer( GL_ARRAY_BUFFER, vbo );
+glBufferData( GL_ARRAY_BUFFER, data.size() * sizeof(GLfloat), data.data(), GL_STATIC_DRAW );
+glBindBuffer( GL_ARRAY_BUFFER, 0 );
+```
 
 <br/>
 
 Draw the array in core mode:
 
-    GLuint vetexAttribIndex;  // index of the vertex attrbute (shader)
-    GLuint normalAttribIndex; // index of the normal attribute (shader)
-    GLuint texCorAttribIndex; // index of the texture coordinate attribute (shader)
+```cpp
+GLuint vetexAttribIndex;  // index of the vertex attrbute (shader)
+GLuint normalAttribIndex; // index of the normal attribute (shader)
+GLuint texCorAttribIndex; // index of the texture coordinate attribute (shader)
 
-    glBindBuffer( GL_ARRAY_BUFFER, vbo );
-    
-    GLsizei stride = 8 * sizeof(GL_float); // size of one record in bytes: 8 * float [ Vx, Vy, Vz, Nx, Ny, Nz, Tv, Tu]
-    GLsizei offsV  = 0 * sizeof(GL_float); // offset of the vertex inside the reccord
-    GLsizei offsNV = 3 * sizeof(GL_float); // offset of the normal vector inside the reccord
-    GLsizei offsTC = 6 * sizeof(GL_float); // offset of the tecture coordinate inside the reccord
-    
-    glVertexAttribPointer( vetexAttribIndex,  3, GL_FLOAT, GL_FALSE, stride, offsV );  // 3: Vx, Vy, Vz
-    glVertexAttribPointer( normalAttribIndex, 3, GL_FLOAT, GL_TRUE,  stride, offsNV ); // 3: Nx, Ny, Nz  -  GL_TRUE: values should be normalized
-    glVertexAttribPointer( texCorAttribIndex, 2, GL_FLOAT, GL_FALSE, stride, offsTC ); // 2: Tu, Tv 
+glBindBuffer( GL_ARRAY_BUFFER, vbo );
 
-    glEnableVertexAttribArray( vetexAttribIndex );
-    glEnableVertexAttribArray( normalAttribIndex );
-    glEnableVertexAttribArray( texCorAttribIndex );
+GLsizei stride = 8 * sizeof(GL_float); // size of one record in bytes: 8 * float [ Vx, Vy, Vz, Nx, Ny, Nz, Tv, Tu]
+GLsizei offsV  = 0 * sizeof(GL_float); // offset of the vertex inside the reccord
+GLsizei offsNV = 3 * sizeof(GL_float); // offset of the normal vector inside the reccord
+GLsizei offsTC = 6 * sizeof(GL_float); // offset of the tecture coordinate inside the reccord
 
-    glDrawArrays( GL_TRIANGLES, 0, no_of_points ); 
+glVertexAttribPointer( vetexAttribIndex,  3, GL_FLOAT, GL_FALSE, stride, offsV );  // 3: Vx, Vy, Vz
+glVertexAttribPointer( normalAttribIndex, 3, GL_FLOAT, GL_TRUE,  stride, offsNV ); // 3: Nx, Ny, Nz  -  GL_TRUE: values should be normalized
+glVertexAttribPointer( texCorAttribIndex, 2, GL_FLOAT, GL_FALSE, stride, offsTC ); // 2: Tu, Tv 
 
-    glBindBuffer( GL_ARRAY_BUFFER, 0 );
-    glDisableVertexAttribArray( vetexAttribIndex );
-    glDisableVertexAttribArray( normalAttribIndex );
-    glDisableVertexAttribArray( texCorAttribIndex );
+glEnableVertexAttribArray( vetexAttribIndex );
+glEnableVertexAttribArray( normalAttribIndex );
+glEnableVertexAttribArray( texCorAttribIndex );
+
+glDrawArrays( GL_TRIANGLES, 0, no_of_points ); 
+
+glBindBuffer( GL_ARRAY_BUFFER, 0 );
+glDisableVertexAttribArray( vetexAttribIndex );
+glDisableVertexAttribArray( normalAttribIndex );
+glDisableVertexAttribArray( texCorAttribIndex );
+```
 
 <br/>
 
 Draw the array in compatibility mode (**deprecated**):
 
-    glBindBuffer( GL_ARRAY_BUFFER, vbo );
-    
-    GLsizei stride = 8 * sizeof(GL_float); // size of one record in bytes: 8 * float [ Vx, Vy, Vz, Nx, Ny, Nz, Tv, Tu]
-    GLsizei offsV  = 0 * sizeof(GL_float); // offset of the vertex inside the reccord
-    GLsizei offsNV = 3 * sizeof(GL_float); // offset of the normal vector inside the reccord
-    GLsizei offsTC = 6 * sizeof(GL_float); // offset of the tecture coordinate inside the reccord
-    
-    glBindBuffer( GL_ARRAY_BUFFER, vbo );
-    glVertexPointer(   3, GL_FLOAT, stride, offsV );  // 3: Vx, Vy, Vz 
-    glNormalPointer(      GL_FLOAT, stride, offsNV );
-    glTexCoordPointer( 2, GL_FLOAT, stride, offsTC ); // 2: Tu, Tv  
+```cpp
+glBindBuffer( GL_ARRAY_BUFFER, vbo );
 
-    glEnableClientState( GL_VERTEX_ARRAY );
-    glEnableClientState( GL_NORMAL_ARRAY );
-    glEnableClientState( GL_TEXTURE_COORD_ARRAY );
+GLsizei stride = 8 * sizeof(GL_float); // size of one record in bytes: 8 * float [ Vx, Vy, Vz, Nx, Ny, Nz, Tv, Tu]
+GLsizei offsV  = 0 * sizeof(GL_float); // offset of the vertex inside the reccord
+GLsizei offsNV = 3 * sizeof(GL_float); // offset of the normal vector inside the reccord
+GLsizei offsTC = 6 * sizeof(GL_float); // offset of the tecture coordinate inside the reccord
 
-    glDrawArrays( GL_TRIANGLES, 0, no_of_points );  
+glBindBuffer( GL_ARRAY_BUFFER, vbo );
+glVertexPointer(   3, GL_FLOAT, stride, offsV );  // 3: Vx, Vy, Vz 
+glNormalPointer(      GL_FLOAT, stride, offsNV );
+glTexCoordPointer( 2, GL_FLOAT, stride, offsTC ); // 2: Tu, Tv  
 
-    glBindBuffer( GL_ARRAY_BUFFER, 0 );
-    glDisableClientState( GL_VERTEX_ARRAY );
-    glDisableClientState( GL_NORMAL_ARRAY );
-    glDisableClientState( GL_TEXTURE_COORD_ARRAY );
+glEnableClientState( GL_VERTEX_ARRAY );
+glEnableClientState( GL_NORMAL_ARRAY );
+glEnableClientState( GL_TEXTURE_COORD_ARRAY );
 
+glDrawArrays( GL_TRIANGLES, 0, no_of_points );  
+
+glBindBuffer( GL_ARRAY_BUFFER, 0 );
+glDisableClientState( GL_VERTEX_ARRAY );
+glDisableClientState( GL_NORMAL_ARRAY );
+glDisableClientState( GL_TEXTURE_COORD_ARRAY );
+```
 
 <br/><hr/>
 
 ## Index buffer object (Element array buffer)
 
 e.g. Vertex, Normal vector and Texture coordinate
-     
-    [ Vx0, Vy0, Vz0, Nx0, Ny0, Nz0, Tv0, Tu0,
-      Vx1, Vy1, Vz1, Nx1, Ny1, Nz1, Tv1, Tu1,
-      .....
-    ]
+
+```txt     
+[ Vx0, Vy0, Vz0, Nx0, Ny0, Nz0, Tv0, Tu0,
+    Vx1, Vy1, Vz1, Nx1, Ny1, Nz1, Tv1, Tu1,
+    .....
+]
+```
 
 <br/>
 
 Create the vertex array buffer and the index buffer:
 
-    GLsizei no_of_points;
-    std::vector<GLfloat> data;    // attribute set: [ Vx0, Vy0, Vz0, Nx0, Ny0, Nz0, Tv0, Tu0, Vx1, Vy1, Vz1, Nx1, Ny1, Nz1, Tv1, Tu1, .... ]
-    std::vector<GLuint>  indices; // indces: [ I0, I1, I2, I3, I4, ..... ]
+```cpp
+GLsizei no_of_points;
+std::vector<GLfloat> data;    // attribute set: [ Vx0, Vy0, Vz0, Nx0, Ny0, Nz0, Tv0, Tu0, Vx1, Vy1, Vz1, Nx1, Ny1, Nz1, Tv1, Tu1, .... ]
+std::vector<GLuint>  indices; // indces: [ I0, I1, I2, I3, I4, ..... ]
 
-    GLuint vbo;
+GLuint vbo;
 
-    glGenBuffers( 1, &vbo );
-    glBindBuffer( GL_ARRAY_BUFFER, vbo );
-    glBufferData( GL_ARRAY_BUFFER, data.size() * sizeof(GLfloat), data.data(), GL_STATIC_DRAW );
-    glBindBuffer( GL_ARRAY_BUFFER, 0 );
-    
-    GLuint ibo;
+glGenBuffers( 1, &vbo );
+glBindBuffer( GL_ARRAY_BUFFER, vbo );
+glBufferData( GL_ARRAY_BUFFER, data.size() * sizeof(GLfloat), data.data(), GL_STATIC_DRAW );
+glBindBuffer( GL_ARRAY_BUFFER, 0 );
 
-    glGenBuffers( 1, &ibo );
-    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, ibo );
-    glBufferData( GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), indices.data(), GL_STATIC_DRAW );
-    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
+GLuint ibo;
+
+glGenBuffers( 1, &ibo );
+glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, ibo );
+glBufferData( GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), indices.data(), GL_STATIC_DRAW );
+glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
+```
 
 <br/>
 
 Draw the array in core mode:
 
-    GLuint vetexAttribIndex;  // index of the vertex attribute (shader)
-    GLuint normalAttribIndex; // index of the normal attribute (shader)
-    GLuint texCorAttribIndex; // index of the texture coordinate attribute (shader)
+```cpp
+GLuint vetexAttribIndex;  // index of the vertex attribute (shader)
+GLuint normalAttribIndex; // index of the normal attribute (shader)
+GLuint texCorAttribIndex; // index of the texture coordinate attribute (shader)
 
-    glBindBuffer( GL_ARRAY_BUFFER, vbo );
-    
-    GLsizei stride = 8 * sizeof(GL_float); // size of one record in bytes: 8 * float [ Vx, Vy, Vz, Nx, Ny, Nz, Tv, Tu]
-    GLsizei offsV  = 0 * sizeof(GL_float); // offset of the vertex inside the reccord
-    GLsizei offsNV = 3 * sizeof(GL_float); // offset of the normal vector inside the reccord
-    GLsizei offsTC = 6 * sizeof(GL_float); // offset of the texture coordinate inside the reccord
-    
-    glVertexAttribPointer( vetexAttribIndex,  3, GL_FLOAT, GL_FALSE, stride, offsV );  // 3: Vx, Vy, Vz
-    glVertexAttribPointer( normalAttribIndex, 3, GL_FLOAT, GL_TRUE,  stride, offsNV ); // 3: Nx, Ny, Nz  -  GL_TRUE: values should be normalized
-    glVertexAttribPointer( texCorAttribIndex,  2, GL_FLOAT, GL_FALSE, stride, offsTC ); // 2: Tu, Tv 
+glBindBuffer( GL_ARRAY_BUFFER, vbo );
 
-    glEnableVertexAttribArray( vetexAttribIndex );
-    glEnableVertexAttribArray( normalAttribIndex );
-    glEnableVertexAttribArray( texCorAttribIndex );
+GLsizei stride = 8 * sizeof(GL_float); // size of one record in bytes: 8 * float [ Vx, Vy, Vz, Nx, Ny, Nz, Tv, Tu]
+GLsizei offsV  = 0 * sizeof(GL_float); // offset of the vertex inside the reccord
+GLsizei offsNV = 3 * sizeof(GL_float); // offset of the normal vector inside the reccord
+GLsizei offsTC = 6 * sizeof(GL_float); // offset of the texture coordinate inside the reccord
 
-    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, ibo );
-    glDrawElements( GL_TRIANGLES, (GLsizei)indices.size(), GL_UNSIGNED_INT, nullptr );
-    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 ); 
+glVertexAttribPointer( vetexAttribIndex,  3, GL_FLOAT, GL_FALSE, stride, offsV );  // 3: Vx, Vy, Vz
+glVertexAttribPointer( normalAttribIndex, 3, GL_FLOAT, GL_TRUE,  stride, offsNV ); // 3: Nx, Ny, Nz  -  GL_TRUE: values should be normalized
+glVertexAttribPointer( texCorAttribIndex,  2, GL_FLOAT, GL_FALSE, stride, offsTC ); // 2: Tu, Tv 
 
-    glBindBuffer( GL_ARRAY_BUFFER, 0 );
-    glDisableVertexAttribArray( vetexAttribIndex );
-    glDisableVertexAttribArray( normalAttribIndex );
-    glDisableVertexAttribArray( texCorAttribIndex );
+glEnableVertexAttribArray( vetexAttribIndex );
+glEnableVertexAttribArray( normalAttribIndex );
+glEnableVertexAttribArray( texCorAttribIndex );
+
+glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, ibo );
+glDrawElements( GL_TRIANGLES, (GLsizei)indices.size(), GL_UNSIGNED_INT, nullptr );
+glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 ); 
+
+glBindBuffer( GL_ARRAY_BUFFER, 0 );
+glDisableVertexAttribArray( vetexAttribIndex );
+glDisableVertexAttribArray( normalAttribIndex );
+glDisableVertexAttribArray( texCorAttribIndex );
+```
 
 <br/>
 
 Draw the array in compatibility mode (**deprecated**):
 
-    glBindBuffer( GL_ARRAY_BUFFER, vbo );
-    
-    GLsizei stride = 8 * sizeof(GL_float); // size of one record in bytes: 8 * float [ Vx, Vy, Vz, Nx, Ny, Nz, Tv, Tu]
-    GLsizei offsV  = 0 * sizeof(GL_float); // offset of the vertex inside the reccord
-    GLsizei offsNV = 3 * sizeof(GL_float); // offset of the normal vector inside the reccord
-    GLsizei offsTC = 6 * sizeof(GL_float); // offset of the tecture coordinate inside the reccord
-    
-    glBindBuffer( GL_ARRAY_BUFFER, vbo );
-    glVertexPointer(   3, GL_FLOAT, stride, offsV );  // 3: Vx, Vy, Vz 
-    glNormalPointer(      GL_FLOAT, stride, offsNV );
-    glTexCoordPointer( 2, GL_FLOAT, stride, offsTC ); // 2: Tu, Tv  
+```cpp
+glBindBuffer( GL_ARRAY_BUFFER, vbo );
 
-    glEnableClientState( GL_VERTEX_ARRAY );
-    glEnableClientState( GL_NORMAL_ARRAY );
-    glEnableClientState( GL_TEXTURE_COORD_ARRAY );
+GLsizei stride = 8 * sizeof(GL_float); // size of one record in bytes: 8 * float [ Vx, Vy, Vz, Nx, Ny, Nz, Tv, Tu]
+GLsizei offsV  = 0 * sizeof(GL_float); // offset of the vertex inside the reccord
+GLsizei offsNV = 3 * sizeof(GL_float); // offset of the normal vector inside the reccord
+GLsizei offsTC = 6 * sizeof(GL_float); // offset of the tecture coordinate inside the reccord
 
-    glDrawArrays( GL_TRIANGLES, 0, no_of_points );  
+glBindBuffer( GL_ARRAY_BUFFER, vbo );
+glVertexPointer(   3, GL_FLOAT, stride, offsV );  // 3: Vx, Vy, Vz 
+glNormalPointer(      GL_FLOAT, stride, offsNV );
+glTexCoordPointer( 2, GL_FLOAT, stride, offsTC ); // 2: Tu, Tv  
 
-    glBindBuffer( GL_ARRAY_BUFFER, 0 );
-    glDisableClientState( GL_VERTEX_ARRAY );
-    glDisableClientState( GL_NORMAL_ARRAY );
-    glDisableClientState( GL_TEXTURE_COORD_ARRAY );
+glEnableClientState( GL_VERTEX_ARRAY );
+glEnableClientState( GL_NORMAL_ARRAY );
+glEnableClientState( GL_TEXTURE_COORD_ARRAY );
 
+glDrawArrays( GL_TRIANGLES, 0, no_of_points );  
+
+glBindBuffer( GL_ARRAY_BUFFER, 0 );
+glDisableClientState( GL_VERTEX_ARRAY );
+glDisableClientState( GL_NORMAL_ARRAY );
+glDisableClientState( GL_TEXTURE_COORD_ARRAY );
+```
 
 <br/><hr/>
 
@@ -418,7 +440,9 @@ See the [OpenGL 4.6 core specification - 10.3. VERTEX ARRAYS](https://www.khrono
 
 > A vertex array object is created by binding a name returned by `GenVertexArray` with the command<br/>
 >
->    void BindVertexArray( uint array );
+> ```cpp
+> void BindVertexArray( uint array );
+> ```
 >
 > `array` is the vertex array object name.<br/>
 > **The resulting vertex array object is a new state vector**, comprising all the state and with the same initial values listed in tables 23.3 and 23.4.<br/>
@@ -438,71 +462,75 @@ See the [OpenGL 4.6 core specification - 10.3.9 Vertex Arrays in Buffer Objects]
 
 > A buffer object binding point is added to the client state associated with each vertex array index. The commands that specify the locations and organizations of vertex arrays copy the buffer object name that is bound to *ARRAY_BUFFER* to the binding point corresponding to the vertex array index being specified. For example, the '`VertexAttribPointer` command copies the value of *ARRAY_BUFFER_BINDING* (the queriable name of the buffer binding corresponding to the target *ARRAY_BUFFER*) to the client state variable *VERTEX_ATTRIB_ARRAY_BUFFER_BINDING* for the specified index-
 
-
-
 <br/>
 
 e.g. Vertex, Normal vector and Texture coordinate
-     
-    [ Vx0, Vy0, Vz0, Nx0, Ny0, Nz0, Tv0, Tu0,
-      Vx1, Vy1, Vz1, Nx1, Ny1, Nz1, Tv1, Tu1,
-      .....
-    ]
+
+```txt     
+[ Vx0, Vy0, Vz0, Nx0, Ny0, Nz0, Tv0, Tu0,
+    Vx1, Vy1, Vz1, Nx1, Ny1, Nz1, Tv1, Tu1,
+    .....
+]
+```
 
 <br/>
 Create the vertex array buffer and the index buffer:
 
-    GLsizei no_of_points;
-    std::vector<GLfloat> data;    // attribute set: [ Vx0, Vy0, Vz0, Nx0, Ny0, Nz0, Tv0, Tu0, Vx1, Vy1, Vz1, Nx1, Ny1, Nz1, Tv1, Tu1, .... ]
-    std::vector<GLuint>  indices; // indices: [ I0, I1, I2, I3, I4, ..... ]
+```cpp
+GLsizei no_of_points;
+std::vector<GLfloat> data;    // attribute set: [ Vx0, Vy0, Vz0, Nx0, Ny0, Nz0, Tv0, Tu0, Vx1, Vy1, Vz1, Nx1, Ny1, Nz1, Tv1, Tu1, .... ]
+std::vector<GLuint>  indices; // indices: [ I0, I1, I2, I3, I4, ..... ]
 
-    GLuint vbo;
+GLuint vbo;
 
-    glGenBuffers( 1, &vbo );
-    glBindBuffer( GL_ARRAY_BUFFER, vbo );
-    glBufferData( GL_ARRAY_BUFFER, data.size() * sizeof(GLfloat), data.data(), GL_STATIC_DRAW );
-    glBindBuffer( GL_ARRAY_BUFFER, 0 );
-    
-    GLuint ibo;
+glGenBuffers( 1, &vbo );
+glBindBuffer( GL_ARRAY_BUFFER, vbo );
+glBufferData( GL_ARRAY_BUFFER, data.size() * sizeof(GLfloat), data.data(), GL_STATIC_DRAW );
+glBindBuffer( GL_ARRAY_BUFFER, 0 );
 
-    glGenBuffers( 1, &ibo );
-    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, ibo );
-    glBufferData( GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), indices.data(), GL_STATIC_DRAW );
-    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
+GLuint ibo;
+
+glGenBuffers( 1, &ibo );
+glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, ibo );
+glBufferData( GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), indices.data(), GL_STATIC_DRAW );
+glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
+```
 
 <br/>
 
 Create the vertex array object in core mode:
 
-    GLuint vao;
+```cpp
+GLuint vao;
 
-    glGenVertexArrays( 1, &vao );
-    glBindVertexArray( vao );
+glGenVertexArrays( 1, &vao );
+glBindVertexArray( vao );
 
-    GLuint vetexAttribIndex;  // index of the vertex attrbute (shader)
-    GLuint normalAttribIndex; // index of the normal attribute (shader)
-    GLuint texCorAttribIndex; // index of the texture coordinate attribute (shader)
+GLuint vetexAttribIndex;  // index of the vertex attrbute (shader)
+GLuint normalAttribIndex; // index of the normal attribute (shader)
+GLuint texCorAttribIndex; // index of the texture coordinate attribute (shader)
 
-    glBindBuffer( GL_ARRAY_BUFFER, vbo );
-    
-    GLsizei stride = 8 * sizeof(GL_float); // size of one record in bytes: 8 * float [ Vx, Vy, Vz, Nx, Ny, Nz, Tv, Tu]
-    GLsizei offsV  = 0 * sizeof(GL_float); // offset of the vertex inside the reccord
-    GLsizei offsNV = 3 * sizeof(GL_float); // offset of the normal vector inside the reccord
-    GLsizei offsTC = 6 * sizeof(GL_float); // offset of the tecture coordinate inside the reccord
-    
-    glVertexAttribPointer( vetexAttribIndex,  3, GL_FLOAT, GL_FALSE, stride, offsV );  // 3: Vx, Vy, Vz
-    glVertexAttribPointer( normalAttribIndex, 3, GL_FLOAT, GL_TRUE,  stride, offsNV ); // 3: Nx, Ny, Nz  -  GL_TRUE: values should be normalized
-    glVertexAttribPointer( texCorAttribIndex,  2, GL_FLOAT, GL_FALSE, stride, offsTC ); // 2: Tu, Tv 
+glBindBuffer( GL_ARRAY_BUFFER, vbo );
 
-    glEnableVertexAttribArray( vetexAttribIndex );
-    glEnableVertexAttribArray( normalAttribIndex );
-    glEnableVertexAttribArray( texCorAttribIndex );
+GLsizei stride = 8 * sizeof(GL_float); // size of one record in bytes: 8 * float [ Vx, Vy, Vz, Nx, Ny, Nz, Tv, Tu]
+GLsizei offsV  = 0 * sizeof(GL_float); // offset of the vertex inside the reccord
+GLsizei offsNV = 3 * sizeof(GL_float); // offset of the normal vector inside the reccord
+GLsizei offsTC = 6 * sizeof(GL_float); // offset of the tecture coordinate inside the reccord
 
-    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, ibo ); // Associate the element array buffer (index buffer) to the vertex array object
+glVertexAttribPointer( vetexAttribIndex,  3, GL_FLOAT, GL_FALSE, stride, offsV );  // 3: Vx, Vy, Vz
+glVertexAttribPointer( normalAttribIndex, 3, GL_FLOAT, GL_TRUE,  stride, offsNV ); // 3: Nx, Ny, Nz  -  GL_TRUE: values should be normalized
+glVertexAttribPointer( texCorAttribIndex,  2, GL_FLOAT, GL_FALSE, stride, offsTC ); // 2: Tu, Tv 
 
-    glBindVertexArray( 0 ); // Unbind the vertex array object
-    
-    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 ); // Unbinde the element array buffer. This has to be done after the vertex array object is unbound, otherwise the association to the vertex array object would be lost.
+glEnableVertexAttribArray( vetexAttribIndex );
+glEnableVertexAttribArray( normalAttribIndex );
+glEnableVertexAttribArray( texCorAttribIndex );
+
+glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, ibo ); // Associate the element array buffer (index buffer) to the vertex array object
+
+glBindVertexArray( 0 ); // Unbind the vertex array object
+
+glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 ); // Unbinde the element array buffer. This has to be done after the vertex array object is unbound, otherwise the association to the vertex array object would be lost.
+```
 
 See:
 
@@ -514,40 +542,44 @@ See:
 
 Create the vertex array object compatibility mode (**deprecated**):
 
-    GLuint vao;
+```cpp
+GLuint vao;
 
-    glGenVertexArrays( 1, &vao );
-    glBindVertexArray( vao );
+glGenVertexArrays( 1, &vao );
+glBindVertexArray( vao );
 
-    glBindBuffer( GL_ARRAY_BUFFER, vbo );
-    
-    GLsizei stride = 8 * sizeof(GL_float); // size of one record in bytes: 8 * float [ Vx, Vy, Vz, Nx, Ny, Nz, Tv, Tu]
-    GLsizei offsV  = 0 * sizeof(GL_float); // offset of the vertex inside the reccord
-    GLsizei offsNV = 3 * sizeof(GL_float); // offset of the normal vector inside the reccord
-    GLsizei offsTC = 6 * sizeof(GL_float); // offset of the tecture coordinate inside the reccord
-    
-    glBindBuffer( GL_ARRAY_BUFFER, vbo );
-    glVertexPointer(   3, GL_FLOAT, stride, offsV );  // 3: Vx, Vy, Vz 
-    glNormalPointer(      GL_FLOAT, stride, offsNV );
-    glTexCoordPointer( 2, GL_FLOAT, stride, offsTC ); // 2: Tu, Tv  
+glBindBuffer( GL_ARRAY_BUFFER, vbo );
 
-    glEnableClientState( GL_VERTEX_ARRAY );
-    glEnableClientState( GL_NORMAL_ARRAY );
-    glEnableClientState( GL_TEXTURE_COORD_ARRAY );
+GLsizei stride = 8 * sizeof(GL_float); // size of one record in bytes: 8 * float [ Vx, Vy, Vz, Nx, Ny, Nz, Tv, Tu]
+GLsizei offsV  = 0 * sizeof(GL_float); // offset of the vertex inside the reccord
+GLsizei offsNV = 3 * sizeof(GL_float); // offset of the normal vector inside the reccord
+GLsizei offsTC = 6 * sizeof(GL_float); // offset of the tecture coordinate inside the reccord
 
-    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, ibo ); // Associate the element array buffer (index buffer) to the vertex array object
+glBindBuffer( GL_ARRAY_BUFFER, vbo );
+glVertexPointer(   3, GL_FLOAT, stride, offsV );  // 3: Vx, Vy, Vz 
+glNormalPointer(      GL_FLOAT, stride, offsNV );
+glTexCoordPointer( 2, GL_FLOAT, stride, offsTC ); // 2: Tu, Tv  
 
-    glBindVertexArray( 0 ); // Unbind the vertex array object
-    
-    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 ); // Unbinde the element array buffer. This has to be done after the vertex array object is unbound, otherwise the association to the vertex array object would be lost.
+glEnableClientState( GL_VERTEX_ARRAY );
+glEnableClientState( GL_NORMAL_ARRAY );
+glEnableClientState( GL_TEXTURE_COORD_ARRAY );
+
+glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, ibo ); // Associate the element array buffer (index buffer) to the vertex array object
+
+glBindVertexArray( 0 ); // Unbind the vertex array object
+
+glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 ); // Unbinde the element array buffer. This has to be done after the vertex array object is unbound, otherwise the association to the vertex array object would be lost.
+```
 
 <br/>
 
 Draw the array in core mode:
 
-    glBindVertexArray( vao );
-    glDrawElements( GL_TRIANGLES, (GLsizei)indices.size(), GL_UNSIGNED_INT, nullptr );
-    glBindVertexArray( 0 );
+```cpp
+glBindVertexArray( vao );
+glDrawElements( GL_TRIANGLES, (GLsizei)indices.size(), GL_UNSIGNED_INT, nullptr );
+glBindVertexArray( 0 );
+```
 
 <br/>
 
@@ -603,13 +635,14 @@ See also [Khronos forums - Forward compatible vs Core profile](https://www.openg
 <br/>
 e.g. 
 
-    glBegin(GL_TRIANGLE_FAN)
-    glVertex2f(-0.5f, -0.5f)
-    glVertex2f( 0.5f, -0.5f)
-    glVertex2f( 0.5f,  0.5f)
-    glVertex2f(-0.5f,  0.5f)
-    glEnd()
-
+```cpp
+glBegin(GL_TRIANGLE_FAN)
+glVertex2f(-0.5f, -0.5f)
+glVertex2f( 0.5f, -0.5f)
+glVertex2f( 0.5f,  0.5f)
+glVertex2f(-0.5f,  0.5f)
+glEnd()
+```
 
 See [OpenGL 3.0 API Specification; 2.6.3 GL Commands within Begin/End; page 24](https://www.khronos.org/registry/OpenGL/specs/gl/glspec30.pdf)<br/>
 or [OpenGL 4.6 API Compatibility Profile Specification; 10.7.5 Commands Allowed Between Begin and End; page 433](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.compatibility.pdf):
@@ -671,18 +704,22 @@ use the [Fixed-Function](https://www.khronos.org/opengl/wiki/Fixed_Function_Pipe
 
 The following code draws a simple triangle:
 
-    float varray[]{ -0.707f, -0.75f, 0.707f, -0.75f, 0.0f, 0.75f };
+```cpp
+float varray[]{ -0.707f, -0.75f, 0.707f, -0.75f, 0.0f, 0.75f };
 
-    glVertexPointer( 2, GL_FLOAT, 0, varray );
-    glEnableClientState( GL_VERTEX_ARRAY );
-    glDrawArrays( GL_TRIANGLES, 0, 3 );
+glVertexPointer( 2, GL_FLOAT, 0, varray );
+glEnableClientState( GL_VERTEX_ARRAY );
+glDrawArrays( GL_TRIANGLES, 0, 3 );
+```
 
 To my surprise the following code works, too. It does not specify the Fixed-Function attributes or enable any client-side capability,
 but it defines and enables the array of generic vertex attribute data, for the vertex attribute with the index 0 (of course the current program object is still 0):
 
-    glVertexAttribPointer( 0, 2, GL_FLOAT, GL_FALSE, 0, varray );
-    glEnableVertexAttribArray( 0 );
-    glDrawArrays( GL_TRIANGLES, 0, 3 );
+```cpp
+glVertexAttribPointer( 0, 2, GL_FLOAT, GL_FALSE, 0, varray );
+glEnableVertexAttribArray( 0 );
+glDrawArrays( GL_TRIANGLES, 0, 3 );
+```
 
 I can reproduce this using Nvidia GeForce 940MX and integrated Intel(R) HD Graphics 620 hardware.
 
@@ -735,89 +772,102 @@ I did some test and came to the result, that the following cod runs on *Nvidia G
 
 The triangle specified as follows 
 
-    static const float varray[]
-    { 
-      // x        y         red   green blue  alpha
-        -0.707f, -0.75f,    1.0f, 0.0f, 0.0f, 1.0f, 
-         0.707f, -0.75f,    1.0f, 1.0f, 0.0f, 1.0f,
-         0.0f,    0.75f,    0.0f, 0.0f, 1.0f, 1.0f
-    };
+```cpp
+static const float varray[]
+{ 
+    // x        y         red   green blue  alpha
+    -0.707f, -0.75f,    1.0f, 0.0f, 0.0f, 1.0f, 
+     0.707f, -0.75f,    1.0f, 1.0f, 0.0f, 1.0f,
+     0.0f,    0.75f,    0.0f, 0.0f, 1.0f, 1.0f
+};
+```
 
 can be drawn without any shader, by `glBegin`/`glEnd` sequence,
 
-    glBegin( GL_TRIANGLES );
-    for ( int j=0; j < 3; ++j )
-    {
-        glVertex2fv( varray + j*6 );
-        glColor4fv( varray + j*6 + 2 );
-    }
-    glEnd();
+```cpp
+glBegin( GL_TRIANGLES );
+for ( int j=0; j < 3; ++j )
+{
+    glVertex2fv( varray + j*6 );
+    glColor4fv( varray + j*6 + 2 );
+}
+glEnd();
+```
 
 by specifying Fixed Function attributes,
 
-    glVertexPointer( 2, GL_FLOAT, 6*sizeof(*varray), varray );
-    glColorPointer( 4, GL_FLOAT, 6*sizeof(*varray), varray+2 );
-    glEnableClientState( GL_VERTEX_ARRAY );
-    glEnableClientState( GL_COLOR_ARRAY );
-    glDrawArrays( GL_TRIANGLES, 0, 3 );
-    glDisableClientState( GL_VERTEX_ARRAY );
-    glDisableClientState( GL_COLOR_ARRAY );
+```cpp
+glVertexPointer( 2, GL_FLOAT, 6*sizeof(*varray), varray );
+glColorPointer( 4, GL_FLOAT, 6*sizeof(*varray), varray+2 );
+glEnableClientState( GL_VERTEX_ARRAY );
+glEnableClientState( GL_COLOR_ARRAY );
+glDrawArrays( GL_TRIANGLES, 0, 3 );
+glDisableClientState( GL_VERTEX_ARRAY );
+glDisableClientState( GL_COLOR_ARRAY );
+```
 
 and specifying the array of generic vertex attributes with the indices 0 and 3, with are corresponding to the fixed function attributes `GL_VERTEX_ARRAY` and `GL_COLOR_ARRAY`, for Nvidia hardware:
 
-    glVertexAttribPointer( 0, 2, GL_FLOAT, GL_FALSE, 6*sizeof(*varray), varray );
-    glVertexAttribPointer( 3, 4, GL_FLOAT, GL_FALSE, 6*sizeof(*varray), varray+2 );
-    glEnableVertexAttribArray( 0 );
-    glEnableVertexAttribArray( 3 );
-    glDrawArrays( GL_TRIANGLES, 0, 3 );
-    glDisableVertexAttribArray( 0 );
-    glDisableVertexAttribArray( 3 );
+```cpp
+glVertexAttribPointer( 0, 2, GL_FLOAT, GL_FALSE, 6*sizeof(*varray), varray );
+glVertexAttribPointer( 3, 4, GL_FLOAT, GL_FALSE, 6*sizeof(*varray), varray+2 );
+glEnableVertexAttribArray( 0 );
+glEnableVertexAttribArray( 3 );
+glDrawArrays( GL_TRIANGLES, 0, 3 );
+glDisableVertexAttribArray( 0 );
+glDisableVertexAttribArray( 3 );
+```
 
 <br>
 The same code will run, by using the following OpenGL 2.0 shader program,
 
 *Vertex shader*
 
-    #version 110
+```glsl
+#version 110
 
-    varying vec4 vertCol;
+varying vec4 vertCol;
 
-    void main()
-    {
-        vertCol     = gl_Color;
-        gl_Position = gl_Vertex;
-    }
+void main()
+{
+    vertCol     = gl_Color;
+    gl_Position = gl_Vertex;
+}
+```
 
 or the following OpenGL 4.0 shader program:
 
 *Vertex shader*
 
-    #version 400
+```glsl
+#version 400
 
-    layout (location = 0) in vec3 inPos;
-    layout (location = 3) in vec4 inColor;
+layout (location = 0) in vec3 inPos;
+layout (location = 3) in vec4 inColor;
 
-    out vec4 vertCol;
+out vec4 vertCol;
 
-    void main()
-    {
-        vertCol     = inColor;
-        gl_Position = vec4(inPos, 1.0);
-    }
+void main()
+{
+    vertCol     = inColor;
+    gl_Position = vec4(inPos, 1.0);
+}
+```
 
 The *Fragment shader* witch works in both of the above cases (for sake of completeness):
 
-    #version 400
+```glsl
+#version 400
 
-    in vec4 vertCol;
+in vec4 vertCol;
 
-    out vec4 fragColor;
+out vec4 fragColor;
 
-    void main()
-    {
-        fragColor = vertCol;
-    }
-
+void main()
+{
+    fragColor = vertCol;
+}
+```
 
 <br/><hr/>
 

@@ -43,13 +43,16 @@ See [OpenGL ES Shading Language 3.20 Specification - 7.6 Uniform Variables - p. 
 
 > Additionally, several dedicated commands are provided to query properties of **active** uniforms. The command
 >
-> `int GetUniformLocation( uint program, const char *name );`
-
+> ```cpp
+> int GetUniformLocation( uint program, const char *name );
+> ```
 
 See [OpenGL 4.6 Core Profile Specification - 11.1 Vertex Shaders - p. 384](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf):
 See [OpenGL ES Shading Language 3.20 Specification - 11.1 Vertex Shaders - p. 288](https://www.khronos.org/registry/OpenGL/index_es.php#specs32):
 
-> `int GetAttribLocation( uint program, const char *name );`
+> ```cpp
+> int GetAttribLocation( uint program, const char *name );
+> ```
 >
 > can be used to determine the location assigned to the **active** input variable named name in program object program.
 
@@ -63,8 +66,9 @@ See [OpenGL ES 2 Specifications - 2.10.4 Shader Variables - p. 35](https://www.k
 >
 > To find the location of an **active** uniform variable within a program object, use the command
 >
-> `int GetUniformLocation( uint program, const char *name );`
-
+> ```cpp
+> int GetUniformLocation( uint program, const char *name );
+> ```
 
 See [OpenGL ES 2.0 Online Manual Pages. - `glGetActiveUniform `](https://www.khronos.org/registry/OpenGL-Refpages/es2.0/):
 
@@ -78,14 +82,17 @@ See [OpenGL ES 2 Specifications - 2.10.4 Shader Variables - p. 32](https://www.k
 >
 > To determine the set of **active** vertex attributes used by a program, and to determine their types, use the command:
 >
-> `void GetActiveAttrib( uint program, uint index, sizei bufSize, sizei *length, int *size, enum *type, char *name );`
+> ```cpp
+> void GetActiveAttrib( uint program, uint index, sizei bufSize, sizei *length, int *size, enum *type, char *name );
+> ```
 >
 > .....
 >
 > After a program object has been linked successfully, the bindings of attribute variable names to indices can be queried. The command
 >
-> `int GetAttribLocation( uint program, const char *name );`
-
+> ```cpp
+> int GetAttribLocation( uint program, const char *name );
+> ```
 
 <br/><hr/>
 

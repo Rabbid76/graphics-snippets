@@ -236,27 +236,286 @@ html,body { margin: 0; overflow: hidden; }
 #ref-link { position : absolute; bottom : 0; left : 0; }  
 </style>
 
+<body>
+
+<div>
+<form id="gui" name="inputs">
+    <table>
+        <tr> <td> <font color=#40f040>radius</font> </td> 
+                <td> <input type="range" id="radius" min="0" max="100" value="60"/></td></tr>
+        <tr> <td> <font color=#40f040>blur</font> </td> 
+                <td> <input type="checkbox" id="blur" value="1" /></td></tr>
+    </table>
+</form>
+</div>
+
+<canvas id="glow-canvas" style="border: none;" width="512" height="512"></canvas>
+
+
+<a id="ref-link" href="https://stackoverflow.com/questions/46079061/ssao-implementation-in-babylon-js-and-glsl-using-view-ray-for-depth-comparison/46084410#46084410">
+SSAO implementation in Babylon JS and GLSL, using view ray for depth comparison 
+</a>
+
+</body>
+
 <script type="text/javascript">
 
-glArrayType = typeof Float32Array !="undefined" ? Float32Array : ( typeof WebGLFloatArray != "undefined" ? WebGLFloatArray : Array );
+var sliderScale = 100.0
+var gl;
+var canvas;
+var bufCube = {};
+var bufTorus = {}
+var bufSSAOQuad = {};
+var bufQuad = {};
+var progDraw; 
+var progSSAO;
+var progBlur;
+var ssaoTextures;
 
-function IdentityMat44() {
-  var a=new glArrayType(16);
-  a[0]=1;a[1]=0;a[2]=0;a[3]=0;a[4]=0;a[5]=1;a[6]=0;a[7]=0;a[8]=0;a[9]=0;a[10]=1;a[11]=0;a[12]=0;a[13]=0;a[14]=0;a[15]=1;
-  return a;
-};
+function render(deltaMS) {
+
+    var shininess = 10.0;
+    var radius = 0.2 + 0.6 * document.getElementById( "radius" ).value / sliderScale;
+    var blur = document.getElementById( "blur" ).checked;
+    var blurVal = blur ? 1 : 0 
+    
+    Camera.create();
+    Camera.vp = [canvas.width, canvas.height];
+        
+    gl.enable( gl.DEPTH_TEST );
+    gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
+
+    // set up framebuffer
+    blurFB[0].Bind( true );
+    
+    // set up draw shader
+    var prjMat = Camera.Perspective();
+    ShaderProgram.Use( progDraw );
+    ShaderProgram.SetUniformM44( progDraw, "u_projectionMat44", prjMat );
+    var viewMat = Camera.LookAt();
+    //viewMat = RotateAxis( viewMat, -60.0 * Math.PI / 180.0, 0 );
+    //viewMat = RotateAxis( viewMat, -30.0 * Math.PI / 180.0, 1 );
+    viewMat = RotateAxis( viewMat, CalcAng( deltaMS, 13.0 ), 0 );
+    viewMat = RotateAxis( viewMat, CalcAng( deltaMS, 17.0 ), 1 );
+    ShaderProgram.SetUniformM44( progDraw, "u_modelViewMat44", viewMat );
+    ShaderProgram.SetUniformF2( progDraw,  "u_depthRange", [ Camera.near, Camera.far ] );
+    
+    // draw scene
+    for( objI = 0; objI < 2; ++ objI )
+        VertexBuffer.Draw( objI == 0 ? bufCube : bufTorus );
+
+    // set blur-X framebuffer and bind frambuffer texture
+    blurFB[1].Bind( true );
+    var texUnit = 1;
+    blurFB[0].BindTexture( texUnit );
+   
+    // set up SSAO shader
+    var tanFOV_2 = Math.tan( Math.PI * Camera.fov_y / 360 );
+    ShaderProgram.Use( progSSAO );
+    ShaderProgram.SetUniformI1( progSSAO, "u_depthSampler", texUnit )
+    ShaderProgram.SetUniformI1( progSSAO, "u_ssaoKernelSampler", ssaoTextures.kernelTexUnit )
+    ShaderProgram.SetUniformI1( progSSAO, "u_ssaoNoiseSampler", ssaoTextures.noiseTexUnit )
+    ShaderProgram.SetUniformF1( progSSAO, "u_radius", radius );
+    ShaderProgram.SetUniformF2( progSSAO, "u_viewportsize", [ blurFB[0].width, blurFB[0].height ] );
+    ShaderProgram.SetUniformF2( progSSAO, "u_depthRange", [ Camera.near, Camera.far ] );
+    ShaderProgram.SetUniformF1( progSSAO, "u_tanFOV_2", tanFOV_2 );
+    ShaderProgram.SetUniformM44( progSSAO, "u_projectionMat44", prjMat );
+    
+    // draw full screen space
+    VertexBuffer.Draw( bufSSAOQuad );
+
+    // reset framebuffer and bind frambuffer texture
+    blurFB[1].Release( true );
+    gl.viewport( 0, 0, canvas.width, canvas.height );
+    texUnit = 2;
+    blurFB[1].BindTexture( texUnit );
+
+    // set up blur process shader
+    ShaderProgram.Use( progBlur );
+    ShaderProgram.SetUniformI1( progBlur, "u_ssaoSampler", texUnit )
+    ShaderProgram.SetUniformF2( progBlur, "u_viewportsize", [ blurFB[1].width, blurFB[1].height ] );
+    ShaderProgram.SetUniformF1( progBlur, "u_blur", blurVal );
+    
+    // draw full screen space
+    VertexBuffer.Draw( bufQuad );
+
+    requestAnimationFrame(render);
+}
+
+function initScene() {
+
+    document.getElementById( "blur" ).checked = true;
+    canvas = document.getElementById( "glow-canvas");
+    var vp = [canvas.width, canvas.height];
+    gl = canvas.getContext( "experimental-webgl" );
+    if ( !gl )
+      return;
+
+    progDraw = ShaderProgram.Create( 
+      [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },
+        { source : "draw-shader-fs", stage : gl.FRAGMENT_SHADER }
+      ] );
+    progDraw.inPos = ShaderProgram.AttributeIndex( progDraw, "inPos" );
+    progDraw.inNV  = ShaderProgram.AttributeIndex( progDraw, "inNV" );
+    progDraw.inCol = ShaderProgram.AttributeIndex( progDraw, "inCol" );
+    if ( progDraw == 0 )
+        return;
+
+    progSSAO = ShaderProgram.Create( 
+      [ { source : "ssao-shader-vs", stage : gl.VERTEX_SHADER },
+        { source : "ssao-shader-fs", stage : gl.FRAGMENT_SHADER }
+      ] );
+    progSSAO.inPos = ShaderProgram.AttributeIndex( progSSAO, "inPos" );
+    if ( progSSAO == 0 )
+        return;
+
+    progBlur = ShaderProgram.Create( 
+      [ { source : "blur-shader-vs", stage : gl.VERTEX_SHADER },
+        { source : "blur-shader-fs", stage : gl.FRAGMENT_SHADER }
+      ] );
+    progBlur.inPos = ShaderProgram.AttributeIndex( progBlur, "inPos" );
+    if ( progBlur == 0 )
+        return; 
+
+    var cubePos = [
+        -1.0, -1.0,  1.0,  1.0, -1.0,  1.0,  1.0,  1.0,  1.0, -1.0,  1.0,  1.0,
+        -1.0, -1.0, -1.0,  1.0, -1.0, -1.0,  1.0,  1.0, -1.0, -1.0,  1.0, -1.0 ];
+    var cubeCol = [ 1.0, 0.0, 0.0, 1.0, 0.5, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 ];
+    var cubeHlpInx = [ 0, 1, 2, 3, 1, 5, 6, 2, 5, 4, 7, 6, 4, 0, 3, 7, 3, 2, 6, 7, 1, 0, 4, 5 ]; 
+    var cubePosData = [];
+    var cubeLen = 0.9;
+    for ( var i = 0; i < cubeHlpInx.length; ++ i ) {
+        cubePosData.push( cubePos[cubeHlpInx[i]*3]*cubeLen, cubePos[cubeHlpInx[i]*3+1]*cubeLen, cubePos[cubeHlpInx[i]*3+2]*cubeLen );
+    }
+    var cubeNVData = [];
+    for ( var i1 = 0; i1 < cubeHlpInx.length; i1 += 4 ) {
+        var nv = [0, 0, 0];
+        for ( i2 = 0; i2 < 4; ++ i2 ) {
+            var i = i1 + i2;
+            nv[0] += cubePosData[i*3]; nv[1] += cubePosData[i*3+1]; nv[2] += cubePosData[i*3+2];
+        }
+        for ( i2 = 0; i2 < 4; ++ i2 )
+          cubeNVData.push( nv[0], nv[1], nv[2] );
+    }
+    var cubeColData = [];
+    for ( var is = 0; is < 6; ++ is ) {
+        for ( var ip = 0; ip < 4; ++ ip ) {
+           cubeColData.push( cubeCol[is*3], cubeCol[is*3+1], cubeCol[is*3+2] ); 
+        }
+    }
+    var inxData = [];
+    for ( var i = 0; i < cubeHlpInx.length; i += 4 ) {
+        inxData.push( i, i+1, i+2, i, i+2, i+3 );
+    }
+    bufCube = VertexBuffer.Create(
+        [ { data : cubePosData, attrSize : 3, attrLoc : progDraw.inPos },
+          { data : cubeNVData,  attrSize : 3, attrLoc : progDraw.inNV },
+          { data : cubeColData, attrSize : 3, attrLoc : progDraw.inCol } ],
+          inxData
+      );
+
+    // create torus
+    var circum_size = 32, tube_size = 32;
+    var rad_circum = 1.3;
+    var rad_tube = 0.4;
+    var torus_pts = [];
+    var torus_nv = [];
+    var torus_col = [];
+    var torus_inx = [];
+    var col = [1, 0.5, 0.0];
+    for ( var i_c = 0; i_c < circum_size; ++ i_c ) {
+        var center = [
+            Math.cos(2 * Math.PI * i_c / circum_size),
+            Math.sin(2 * Math.PI * i_c / circum_size) ]
+        for ( var i_t = 0; i_t < tube_size; ++ i_t ) {
+            var tubeX = Math.cos(2 * Math.PI * i_t / tube_size)
+            var tubeY = Math.sin(2 * Math.PI * i_t / tube_size)
+            var pt = [
+                center[0] * ( rad_circum + tubeX * rad_tube ),
+                center[1] * ( rad_circum + tubeX * rad_tube ),
+                tubeY * rad_tube ]
+            var nv = [ pt[0] - center[0] * rad_tube, pt[1] - center[1] * rad_tube, tubeY * rad_tube ]
+            torus_pts.push( pt[0], pt[1], pt[2] );
+            torus_nv.push( nv[0], nv[1], nv[2] );
+            torus_col.push( col[0], col[1], col[2] );
+            var i_cn = (i_c+1) % circum_size
+            var i_tn = (i_t+1) % tube_size
+            var i_c0 = i_c * tube_size; 
+            var i_c1 = i_cn * tube_size; 
+            torus_inx.push( i_c0+i_t, i_c0+i_tn, i_c1+i_t, i_c0+i_tn, i_c1+i_t, i_c1+i_tn )
+        }
+    }
+    bufTorus = VertexBuffer.Create(
+        [ { data : torus_pts, attrSize : 3, attrLoc : progDraw.inPos },
+          { data : torus_nv,  attrSize : 3, attrLoc : progDraw.inNV },
+          { data : torus_col, attrSize : 3, attrLoc : progDraw.inCol } ],
+          torus_inx
+      );
+
+    bufSSAOQuad = VertexBuffer.Create( 
+        [ { data : [ -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0 ], attrSize : 2, attrLoc : progSSAO.inPos } ],
+        [ 0, 1, 2, 0, 2, 3 ]
+    );
+
+    bufQuad = VertexBuffer.Create( 
+        [ { data : [ -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0 ], attrSize : 2, attrLoc : progBlur.inPos } ],
+        [ 0, 1, 2, 0, 2, 3 ]
+    );
+
+    ssaoTextures = generateSSAOTextures( 32, 4, 3, 4 );   
+
+    window.onresize = resize;
+    resize(); 
+    requestAnimationFrame(render);
+}
+
+function resize() {
+    //vp_size = [gl.drawingBufferWidth, gl.drawingBufferHeight];
+    vp_size = [window.innerWidth, window.innerHeight]
+    //vp_size = [256, 256]
+    canvas.width = vp_size[0];
+    canvas.height = vp_size[1];
+
+    var fbsize = Math.max(vp_size[0], vp_size[1]);
+    fbsize = 1 << 31 - Math.clz32(fbsize); // nearest power of 2
+
+    var fb_rect = [fbsize, fbsize];
+    blurFB = [ FrameBuffer.Create( fb_rect ), FrameBuffer.Create( fb_rect ) ]; 
+}
+
+
+function IdentityMat44() { return [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]; }
 
 function RotateAxis(matA, angRad, axis) {
     var aMap = [ [1, 2], [2, 0], [0, 1] ];
     var a0 = aMap[axis][0], a1 = aMap[axis][1]; 
     var sinAng = Math.sin(angRad), cosAng = Math.cos(angRad);
-    var matB = new glArrayType(16);
+    var matB = matA.slice(0);
     for ( var i = 0; i < 16; ++ i ) matB[i] = matA[i];
     for ( var i = 0; i < 3; ++ i ) {
         matB[a0*4+i] = matA[a0*4+i] * cosAng + matA[a1*4+i] * sinAng;
         matB[a1*4+i] = matA[a0*4+i] * -sinAng + matA[a1*4+i] * cosAng;
     }
     return matB;
+}
+
+function Rotate(matA, angRad, axis) {
+    var s = Math.sin(angRad), c = Math.cos(angRad);
+    var x = axis[0], y = axis[1], z = axis[2]; 
+    matB = [
+        x*x*(1-c)+c,   x*y*(1-c)-z*s, x*z*(1-c)+y*s, 0,
+        y*x*(1-c)+z*s, y*y*(1-c)+c,   y*z*(1-c)-x*s, 0,
+        z*x*(1-c)-y*s, z*y*(1-c)+x*s, z*z*(1-c)+c,   0,
+        0,             0,             0,             1 ];
+    return Multiply(matA, matB);
+}    
+
+function Multiply(matA, matB) {
+    matC = IdentityMat44();
+    for (var i0=0; i0<4; ++i0 )
+        for (var i1=0; i1<4; ++i1 )
+            matC[i0*4+i1] = matB[i0*4+0] * matA[0*4+i1] + matB[i0*4+1] * matA[1*4+i1] + matB[i0*4+2] * matA[2*4+i1] + matB[i0*4+3] * matA[3*4+i1]  
+    return matC;
 }
 
 function Cross( a, b ) { return [ a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0], 0.0 ]; }
@@ -477,6 +736,7 @@ FrameBuffer.Create = function( vp, texturePlan ) {
     fb.Bind = function( clear ) {
         gl.bindFramebuffer( gl.FRAMEBUFFER, this );
         if ( clear ) {
+            gl.viewport( 0, 0, this.width, this.height );
             gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
             gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
         }
@@ -498,90 +758,14 @@ FrameBuffer.Create = function( vp, texturePlan ) {
     return fb;
 }  
 
-var progDraw; 
-var progSSAO;
-var progBlur;
-var ssaoTextures;
-function drawScene(){
-
-    var shininess = 10.0;
-    var radius = 0.2 + 0.6 * document.getElementById( "radius" ).value / sliderScale;
-    var blur = document.getElementById( "blur" ).checked;
-    var blurVal = blur ? 1 : 0 
-    
-    var canvas = document.getElementById( "glow-canvas" );
-    Camera.create();
-    Camera.vp = [canvas.width, canvas.height];
-    var currentTime = Date.now();   
-    var deltaMS = currentTime - startTime;
-        
-    gl.viewport( 0, 0, canvas.width, canvas.height );
-    gl.enable( gl.DEPTH_TEST );
-    gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
-
-    // set up framebuffer
-    blurFB[0].Bind( true );
-    
-    // set up draw shader
-    var prjMat = Camera.Perspective();
-    ShaderProgram.Use( progDraw );
-    ShaderProgram.SetUniformM44( progDraw, "u_projectionMat44", prjMat );
-    var viewMat = Camera.LookAt();
-    //viewMat = RotateAxis( viewMat, -60.0 * Math.PI / 180.0, 0 );
-    //viewMat = RotateAxis( viewMat, -30.0 * Math.PI / 180.0, 1 );
-    viewMat = RotateAxis( viewMat, CalcAng( currentTime, 13.0 ), 0 );
-    viewMat = RotateAxis( viewMat, CalcAng( currentTime, 17.0 ), 1 );
-    ShaderProgram.SetUniformM44( progDraw, "u_modelViewMat44", viewMat );
-    ShaderProgram.SetUniformF2( progDraw,  "u_depthRange", [ Camera.near, Camera.far ] );
-    
-    // draw scene
-    for( objI = 0; objI < 2; ++ objI )
-        VertexBuffer.Draw( objI == 0 ? bufCube : bufTorus );
-
-    // set blur-X framebuffer and bind frambuffer texture
-    blurFB[1].Bind( true );
-    var texUnit = 1;
-    blurFB[0].BindTexture( texUnit );
-   
-    // set up SSAO shader
-    var tanFOV_2 = Math.tan( Math.PI * Camera.fov_y / 360 );
-    ShaderProgram.Use( progSSAO );
-    ShaderProgram.SetUniformI1( progSSAO, "u_depthSampler", texUnit )
-    ShaderProgram.SetUniformI1( progSSAO, "u_ssaoKernelSampler", ssaoTextures.kernelTexUnit )
-    ShaderProgram.SetUniformI1( progSSAO, "u_ssaoNoiseSampler", ssaoTextures.noiseTexUnit )
-    ShaderProgram.SetUniformF1( progSSAO, "u_radius", radius );
-    ShaderProgram.SetUniformF2( progSSAO, "u_viewportsize", [ blurFB[0].width, blurFB[0].height ] );
-    ShaderProgram.SetUniformF2( progSSAO, "u_depthRange", [ Camera.near, Camera.far ] );
-    ShaderProgram.SetUniformF1( progSSAO, "u_tanFOV_2", tanFOV_2 );
-    ShaderProgram.SetUniformM44( progSSAO, "u_projectionMat44", prjMat );
-    
-    // draw full screen space
-    VertexBuffer.Draw( bufSSAOQuad );
-
-    // reset framebuffer and bind frambuffer texture
-    blurFB[1].Release( true );
-    texUnit = 2;
-    blurFB[1].BindTexture( texUnit );
-
-    // set up blur process shader
-    ShaderProgram.Use( progBlur );
-    ShaderProgram.SetUniformI1( progBlur, "u_ssaoSampler", texUnit )
-    ShaderProgram.SetUniformF2( progBlur, "u_viewportsize", [ blurFB[1].width, blurFB[1].height ] );
-    ShaderProgram.SetUniformF1( progBlur, "u_blur", blurVal );
-    
-    // draw full screen space
-    VertexBuffer.Draw( bufQuad );
-}
-
-var startTime;
 function Fract( val ) { 
     return val - Math.trunc( val );
 }
-function CalcAng( currentTime, intervall ) {
-    return Fract( (currentTime - startTime) / (1000*intervall) ) * 2.0 * Math.PI;
+function CalcAng( deltaMS, intervall ) {
+    return Fract( deltaMS / (1000*intervall) ) * 2.0 * Math.PI;
 }
-function CalcMove( currentTime, intervall, range ) {
-    var pos = self.Fract( (currentTime - startTime) / (1000*intervall) ) * 2.0
+function CalcMove( deltaMS, intervall, range ) {
+    var pos = self.Fract( deltaMS / (1000*intervall) ) * 2.0
     var pos = pos < 1.0 ? pos : (2.0-pos)
     return range[0] + (range[1] - range[0]) * pos;
 }    
@@ -592,162 +776,6 @@ function EllipticalPosition( a, b, angRag ) {
     return [ a * Math.sin( angRag ) - ea, b * Math.cos( angRag ) - eb, 0 ];
 }
 
-var sliderScale = 100.0
-var gl;
-var bufCube = {};
-var bufTorus = {}
-var bufSSAOQuad = {};
-var bufQuad = {};
-function sceneStart() {
-
-    document.getElementById( "blur" ).checked = true;
-    var canvas = document.getElementById( "glow-canvas");
-    var vp = [canvas.width, canvas.height];
-    gl = canvas.getContext( "experimental-webgl" );
-    if ( !gl )
-      return;
-
-    progDraw = ShaderProgram.Create( 
-      [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },
-        { source : "draw-shader-fs", stage : gl.FRAGMENT_SHADER }
-      ] );
-    progDraw.inPos = ShaderProgram.AttributeIndex( progDraw, "inPos" );
-    progDraw.inNV  = ShaderProgram.AttributeIndex( progDraw, "inNV" );
-    progDraw.inCol = ShaderProgram.AttributeIndex( progDraw, "inCol" );
-    if ( progDraw == 0 )
-        return;
-
-    progSSAO = ShaderProgram.Create( 
-      [ { source : "ssao-shader-vs", stage : gl.VERTEX_SHADER },
-        { source : "ssao-shader-fs", stage : gl.FRAGMENT_SHADER }
-      ] );
-    progSSAO.inPos = ShaderProgram.AttributeIndex( progSSAO, "inPos" );
-    if ( progSSAO == 0 )
-        return;
-
-    progBlur = ShaderProgram.Create( 
-      [ { source : "blur-shader-vs", stage : gl.VERTEX_SHADER },
-        { source : "blur-shader-fs", stage : gl.FRAGMENT_SHADER }
-      ] );
-    progBlur.inPos = ShaderProgram.AttributeIndex( progBlur, "inPos" );
-    if ( progBlur == 0 )
-        return; 
-
-    ssaoTextures = generateSSAOTextures( 32, 4, 3, 4 );   
-
-    blurFB = [ FrameBuffer.Create( vp ), FrameBuffer.Create( vp ) ]; 
-
-    var cubePos = [
-        -1.0, -1.0,  1.0,  1.0, -1.0,  1.0,  1.0,  1.0,  1.0, -1.0,  1.0,  1.0,
-        -1.0, -1.0, -1.0,  1.0, -1.0, -1.0,  1.0,  1.0, -1.0, -1.0,  1.0, -1.0 ];
-    var cubeCol = [ 1.0, 0.0, 0.0, 1.0, 0.5, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 ];
-    var cubeHlpInx = [ 0, 1, 2, 3, 1, 5, 6, 2, 5, 4, 7, 6, 4, 0, 3, 7, 3, 2, 6, 7, 1, 0, 4, 5 ]; 
-    var cubePosData = [];
-    var cubeLen = 0.9;
-    for ( var i = 0; i < cubeHlpInx.length; ++ i ) {
-        cubePosData.push( cubePos[cubeHlpInx[i]*3]*cubeLen, cubePos[cubeHlpInx[i]*3+1]*cubeLen, cubePos[cubeHlpInx[i]*3+2]*cubeLen );
-    }
-    var cubeNVData = [];
-    for ( var i1 = 0; i1 < cubeHlpInx.length; i1 += 4 ) {
-        var nv = [0, 0, 0];
-        for ( i2 = 0; i2 < 4; ++ i2 ) {
-            var i = i1 + i2;
-            nv[0] += cubePosData[i*3]; nv[1] += cubePosData[i*3+1]; nv[2] += cubePosData[i*3+2];
-        }
-        for ( i2 = 0; i2 < 4; ++ i2 )
-          cubeNVData.push( nv[0], nv[1], nv[2] );
-    }
-    var cubeColData = [];
-    for ( var is = 0; is < 6; ++ is ) {
-        for ( var ip = 0; ip < 4; ++ ip ) {
-           cubeColData.push( cubeCol[is*3], cubeCol[is*3+1], cubeCol[is*3+2] ); 
-        }
-    }
-    var inxData = [];
-    for ( var i = 0; i < cubeHlpInx.length; i += 4 ) {
-        inxData.push( i, i+1, i+2, i, i+2, i+3 );
-    }
-    bufCube = VertexBuffer.Create(
-        [ { data : cubePosData, attrSize : 3, attrLoc : progDraw.inPos },
-          { data : cubeNVData,  attrSize : 3, attrLoc : progDraw.inNV },
-          { data : cubeColData, attrSize : 3, attrLoc : progDraw.inCol } ],
-          inxData
-      );
-
-    // create torus
-    var circum_size = 32, tube_size = 32;
-    var rad_circum = 1.3;
-    var rad_tube = 0.4;
-    var torus_pts = [];
-    var torus_nv = [];
-    var torus_col = [];
-    var torus_inx = [];
-    var col = [1, 0.5, 0.0];
-    for ( var i_c = 0; i_c < circum_size; ++ i_c ) {
-        var center = [
-            Math.cos(2 * Math.PI * i_c / circum_size),
-            Math.sin(2 * Math.PI * i_c / circum_size) ]
-        for ( var i_t = 0; i_t < tube_size; ++ i_t ) {
-            var tubeX = Math.cos(2 * Math.PI * i_t / tube_size)
-            var tubeY = Math.sin(2 * Math.PI * i_t / tube_size)
-            var pt = [
-                center[0] * ( rad_circum + tubeX * rad_tube ),
-                center[1] * ( rad_circum + tubeX * rad_tube ),
-                tubeY * rad_tube ]
-            var nv = [ pt[0] - center[0] * rad_tube, pt[1] - center[1] * rad_tube, tubeY * rad_tube ]
-            torus_pts.push( pt[0], pt[1], pt[2] );
-            torus_nv.push( nv[0], nv[1], nv[2] );
-            torus_col.push( col[0], col[1], col[2] );
-            var i_cn = (i_c+1) % circum_size
-            var i_tn = (i_t+1) % tube_size
-            var i_c0 = i_c * tube_size; 
-            var i_c1 = i_cn * tube_size; 
-            torus_inx.push( i_c0+i_t, i_c0+i_tn, i_c1+i_t, i_c0+i_tn, i_c1+i_t, i_c1+i_tn )
-        }
-    }
-    bufTorus = VertexBuffer.Create(
-        [ { data : torus_pts, attrSize : 3, attrLoc : progDraw.inPos },
-          { data : torus_nv,  attrSize : 3, attrLoc : progDraw.inNV },
-          { data : torus_col, attrSize : 3, attrLoc : progDraw.inCol } ],
-          torus_inx
-      );
-
-    bufSSAOQuad = VertexBuffer.Create( 
-        [ { data : [ -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0 ], attrSize : 2, attrLoc : progSSAO.inPos } ],
-        [ 0, 1, 2, 0, 2, 3 ]
-    );
-
-    bufQuad = VertexBuffer.Create( 
-        [ { data : [ -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0 ], attrSize : 2, attrLoc : progBlur.inPos } ],
-        [ 0, 1, 2, 0, 2, 3 ]
-    );
-
-    startTime = Date.now();
-    setInterval(drawScene, 50);
-}
+initScene();
 
 </script>
-
-<body onload="sceneStart();">
-
-<a id="ref-link" href="https://stackoverflow.com/questions/46079061/ssao-implementation-in-babylon-js-and-glsl-using-view-ray-for-depth-comparison/46084410#46084410">
-SSAO implementation in Babylon JS and GLSL, using view ray for depth comparison 
-</a>
-
-<div style="margin-left: 520px;">
-    <div style="float: right; width: 100%; background-color: #CCF;">
-        <form name="inputs">
-            <table>
-                <tr> <td> radius </td> 
-                        <td> <input type="range" id="radius" min="0" max="100" value="60"/></td></tr>
-                <tr> <td> blur </td> 
-                        <td> <input type="checkbox" id="blur" value="1" /></td></tr>
-            </table>
-        </form>
-    </div>
-    <div style="float: right; width: 520px; margin-left: -520px;">
-        <canvas id="glow-canvas" style="border: none;" width="512" height="512"></canvas>
-    </div>
-    <div style="clear: both;"></div>
-</div>
-</body>

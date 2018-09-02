@@ -9,7 +9,9 @@ A perfect diffuse surface has a BRDF that has the same value for all incident an
 
 Lambertian reflection is often used as a model for diffuse reflection. This technique causes all closed polygons (such as a triangle within a 3D mesh) to reflect light equally in all directions when rendered. The diffusion coefficient is calculated from the angle between the normal vector and the light vector.
 
-    f_Lambertian = max( 0.0, dot( N, L ) )
+```txt
+f_Lambertian = max( 0.0, dot( N, L ) )
+```
 
 where `N` is the normal vector of the surface, and `L` is the vector towards to the light source.  
 
@@ -17,14 +19,17 @@ where `N` is the normal vector of the surface, and `L` is the vector towards to 
 
 In general The *dot* product of 2 vectors is equal the *cosine* of the angle between the 2 vectors multiplied by the magnitude (lenght) of both vectors. 
 
-    dot( A, B ) == length( A ) * length( B ) * cos( angle_A_B ) 
+```txt
+dot( A, B ) == length( A ) * length( B ) * cos( angle_A_B ) 
+```
 
 This follows, that the *dot* product of 2 unit vectors is equal the *cosine* of the angle between the 2 vectors, because the length of a unit vector is 1.
 
-    uA = normalize( A )
-    uB = normalize( B )
-    cos( angle_A_B ) == dot( uA, uB )
-
+```txt
+uA = normalize( A )
+uB = normalize( B )
+cos( angle_A_B ) == dot( uA, uB )
+```
 
 ![dot A, B](image/dotAB.svg)    
 

@@ -11,16 +11,20 @@ The Phong model is easy to compute with a small number of operations, but it is 
 
 ![dot A, B](image/light_reflect.svg)
 
-    alpha   = theta_o - theta_i
-    f_phong = max(0, pow(cos(alpha), sh)
+```txt
+alpha   = theta_o - theta_i
+f_phong = max(0, pow(cos(alpha), sh)
+```
 
 `sh` (shininess) in [0, infinite] characterizes the shape of the specular highlight (from 0 or dull to more glossy surface). The Phong model works well with large exponents, but has issues and limitations with small exponents.
 
 `cos(alpha)` can be caluclated by the dot product of the view vector and the reflection vector:
 
-    R       = reflect(L, N)
-    VdotR   = dot(V, R)
-    f_phong = max(0, pow(VdotR, sh))
+```txt
+R       = reflect(L, N)
+VdotR   = dot(V, R)
+f_phong = max(0, pow(VdotR, sh))
+```
 
 ![reflect L, N](image/phong_reflect.svg)
 
@@ -30,30 +34,31 @@ The Phong model is easy to compute with a small number of operations, but it is 
 <br/>
 GLSL coding:
 
-    float Distribution_Phong( vec3 esVEye, vec3 esVLight, vec3 esPtNV, float shininess ) 
-    {
-        vec3 reflVector = normalize( reflect( -esVLight, esPtNV ) );
-        return 4.0 * max( pow( dot(reflVector, esVEye), 0.3 * shininess ), 0.0 );
-    }
-
+```glsl
+float Distribution_Phong( vec3 esVEye, vec3 esVLight, vec3 esPtNV, float shininess ) 
+{
+    vec3 reflVector = normalize( reflect( -esVLight, esPtNV ) );
+    return 4.0 * max( pow( dot(reflVector, esVEye), 0.3 * shininess ), 0.0 );
+}
+```
 
 <br/>
 Furthermore, the performance of this model could be improved by an optimization of the exponential operator, like the approximation given by Schlick:
 
-    VdotR_sh = VdotR / (sh - sh * VdotR - VdotR)
-
+```glsl
+VdotR_sh = VdotR / (sh - sh * VdotR - VdotR)
+```
 
 <br/>
 
 ## Obvious issues
 
-**Phong Clipping**
-
+### Phong Clipping
 
 If the light is close to the surface, the specular area tends to have very sharp edges. This is part of the nature of specular reflections. If the light is almost perpendicular to the surface, the specular reflection will shine brightest when the light is almost eclipsed by the surface. This creates a strong discontinuity at the point where the light is no longer in view.<br/>
 You generally see this most with rough surfaces (small exponents). With smoother surfaces, this is rarely seen.
 
-**Phong Distortion**
+### Phong Distortion
 
 This ring area shows one of the main limitations of the Phong model. When trying to depict a surface that is rough but still has specular highlights, the Phong model starts to break down. It will not allow any specular contribution from areas outside of a certain region.
 
@@ -61,8 +66,8 @@ This region comes from the angle between the reflection direction and the view d
 
 Under the microfacet model, there is still some chance that some microfacets are oriented towards the camera, even if reflection direction is pointed sharply away. Thus, there should be at least some specular contribution from those areas. The Phong model cannot allow this, due to how it is computed.
 
-
 <br/>
+
 See also:
 
 - [wikipedia, Phong reflection model][1]

@@ -1,6 +1,5 @@
 # Tangent space
 
-
 ## Relation system
 
 In an [Right-Handed Coordinate System][3] (see further [Right-hand rule][5])
@@ -9,7 +8,9 @@ In an [Right-Handed Coordinate System][3] (see further [Right-hand rule][5])
 
 the Binormal Vector is calculated by:
 
-    B = N x T
+```txt
+B = N x T
+```
 
 while in an [Left-Handed Coordinate System][4]
 
@@ -17,9 +18,10 @@ while in an [Left-Handed Coordinate System][4]
 
 the Binormal Vector is calculated by:
 
-    B = T x N
+```txt
+B = T x N
+```
 
-<br/>
 In OpenGL is commonly used a [Right-Handed Coordinate System][3], but this depends on the specification and definitions which are chosen by the user.
 
 If a system is mirrored it changes from one system to the other. This may occur if a texture is mirrored or looked at from the back face.
@@ -34,7 +36,6 @@ If a system is mirrored it changes from one system to the other. This may occur 
 
 One way to get the tangential space in the shader is to pass the tanget as an attribute to the shader, just like the normal vector.
 For this the tangents have to be pre-computed and stored in the mesh data.
-
 
 ### Calculating the Tangent in the Fragment Shader
 
@@ -140,13 +141,14 @@ mat3 tbn           = mat3( t, binormalSign * b, n );   // take in account the di
 ```
 
 <br/><hr/>
+
 ## Resources
 
 - [How to calculate Tangent and Binormal?][1]
 - [Calculating Binormal Vector][2]
-- [Wikipedia - Tangent space][3] 
+- [Wikipedia - Tangent space][3]
 
-  
+ 
   [1]: https://stackoverflow.com/questions/5255806/how-to-calculate-tangent-and-binormal/44901073#44901073
   [2]: https://stackoverflow.com/questions/47117083/calculating-binormal-vector/47121567#47121567
   [3]: http://mathworld.wolfram.com/Right-HandedCoordinateSystem.html
