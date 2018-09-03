@@ -68,6 +68,32 @@ void main()
 }
 </script>
 
+<body onload="sceneStart();">
+<div style="margin-left: 520px;">
+<div style="float: right; width: 100%; background-color: #CCF;">
+<form name="inputs">
+    <table>
+        <tr> <td> projection </td> <td>
+            <select id="projection">>
+                <option value="0">spherical</option>
+                <option value="1">perspectiv</option>
+            </select>
+        </td> </tr>
+    </table>
+</form>
+</div>
+<div style="float: right; width: 520px; margin-left: -520px;">
+<canvas id="glow-canvas" style="border: none;" width="512" height="256"></canvas>
+</div>
+<div style="clear: both;"></div>
+</div>
+
+<a id="ref-link" href="https://stackoverflow.com/questions/46151527/projection-matrix-for-pseudo-cylindrical-projection/46162819#46162819">
+<font color= #CCF>Projection Matrix for Pseudo Cylindrical Projection</font> 
+</a>
+
+</body>
+
 <script type="text/javascript">
 
 glArrayType = typeof Float32Array !="undefined" ? Float32Array : ( typeof WebGLFloatArray != "undefined" ? WebGLFloatArray : Array );
@@ -373,24 +399,3 @@ function sceneStart() {
 }
 
 </script>
-
-<body onload="sceneStart();">
-    <div style="margin-left: 520px;">
-        <div style="float: right; width: 100%; background-color: #CCF;">
-            <form name="inputs">
-                <table>
-                    <tr> <td> projection </td> <td>
-                        <select id="projection">>
-                            <option value="0">spherical</option>
-                            <option value="1">perspectiv</option>
-                        </select>
-                    </td> </tr>
-                </table>
-            </form>
-        </div>
-        <div style="float: right; width: 520px; margin-left: -520px;">
-            <canvas id="glow-canvas" style="border: none;" width="512" height="256"></canvas>
-        </div>
-        <div style="clear: both;"></div>
-    </div>
-</body>

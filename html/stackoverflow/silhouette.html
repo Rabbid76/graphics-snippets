@@ -1,3 +1,13 @@
+<style>
+html,body { margin: 0; overflow: hidden; }
+#gui { position : absolute; top : 0; left : 0; }
+#ref-link { position : absolute; bottom : 0; left : 0; }  
+</style>
+
+<body onload="cameraStart();">
+<canvas id="camera-canvas" style="border: none;" width="512" height="512"></canvas>
+</body>
+
 <script type="text/javascript">
 
 draw_vert =
@@ -319,7 +329,3 @@ function cameraStart() {
 }
 
 </script>
-
-<body onload="cameraStart();">
-    <canvas id="camera-canvas" style="border: none;" width="512" height="512"></canvas>
-</body>

@@ -160,9 +160,9 @@ html,body { margin: 0; overflow: hidden; }
 </table></form></div>
 
 <div id="ref-link">
-    <a href="https://stackoverflow.com/questions/46122584/opengl-es3-shadow-map-problems/46123519#46123519"> 
-    OpenGL ES3 Shadow map problems
-    </a>
+<a href="https://stackoverflow.com/questions/46122584/opengl-es3-shadow-map-problems/46123519#46123519"> 
+OpenGL ES3 Shadow map problems
+</a>
 </div>
 
 <!--canvas id="scene-canvas" style="border: none;" width="100%" height="100%"></canvas-->
@@ -547,8 +547,8 @@ Camera = function( pos, target, up, fov_y, vp, near, far ) {
 
 this.domElement = document;
 var cam = this;
-//this.domElement.addEventListener( 'contextmenu', function ( event ) { event.preventDefault(); }, false );
-this.domElement.addEventListener( 'mousedown', function(e) { cam.OnMouseDown(event) }, false );
+//this.domElement.addEventListener( 'contextmenu', function(e) { event.preventDefault(); }, false );
+this.domElement.addEventListener( 'mousedown', function(e) { cam.OnMouseDown(e) }, false );
 this.domElement.addEventListener( 'mouseup', function(e) { cam.OnMouseUp(e) }, false );
 this.domElement.addEventListener( 'mousemove', function(e) { cam.OnMouseMove(e) }, false );
 //this.domElement.addEventListener( 'mousewheel', hid_events.onMouseWheel, false );

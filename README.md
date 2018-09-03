@@ -84,6 +84,8 @@
 
 [Lambertian diffuse sphere](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/lambertian_sphere.html)
 
+[Lambertian diffuse fake light](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/lambertian_fake.html)
+
 [Light cone](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/light_cone.html)
 
 [Cube color](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/cube_color.html)

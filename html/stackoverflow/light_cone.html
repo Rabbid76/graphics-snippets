@@ -166,6 +166,35 @@ html,body { margin: 0; overflow: hidden; }
 #ref-link { position : absolute; bottom : 0; left : 0; }  
 </style>
 
+<body onload="sceneStart();">
+<div id="div-main" style="margin-left: 520px;">
+<div style="float: right; width: 100%; background-color: #CCF;">
+<form name="inputs">
+    <table>
+        <tr> <td> ambient </td> 
+                <td> <input type="range" id="ambient" min="0" max="100" value="0"/></td> </tr>
+        <tr> <td> diffuse </td> 
+                <td> <input type="range" id="diffuse" min="0" max="100" value="0"/></td> </tr>
+        <tr> <td> specular </td> 
+                <td> <input type="range" id="specular" min="0" max="100" value="0"/></td> </tr>
+        <tr> <td> shininess </td> 
+                <td> <input type="range" id="shininess" min="1" max="100" value="0"/></td> </tr>
+        <tr> <td> cut off angle </td> 
+                <td> <input type="range" id="cutOffAngle" min="1" max="180" value="0"/></td> </tr>
+    </table>
+</form>
+</div>
+<div id="div-canvas" style="float: right; width: 520px; margin-left: -520px;">
+    <canvas id="glow-canvas" style="border: none;" width="512" height="512"></canvas>
+</div>
+<div style="clear: both;"></div>
+</div>
+
+<a id="ref-link" href="https://stackoverflow.com/questions/45783444/glsl-spotlight-projection-volume/45796941#45796941">
+<font color= #CCF>GLSL spotlight projection volume</font>
+</a>
+</body>
+
 <script type="text/javascript">
 
 glArrayType = typeof Float32Array !="undefined" ? Float32Array : ( typeof WebGLFloatArray != "undefined" ? WebGLFloatArray : Array );
@@ -546,32 +575,3 @@ function sceneStart() {
 }
 
 </script>
-
-<a id="ref-link" href="https://stackoverflow.com/questions/45783444/glsl-spotlight-projection-volume/45796941#45796941">
-GLSL spotlight projection volume
-</a>
-
-<body onload="sceneStart();">
-    <div id="div-main" style="margin-left: 520px;">
-        <div style="float: right; width: 100%; background-color: #CCF;">
-            <form name="inputs">
-                <table>
-                    <tr> <td> ambient </td> 
-                         <td> <input type="range" id="ambient" min="0" max="100" value="0"/></td> </tr>
-                    <tr> <td> diffuse </td> 
-                         <td> <input type="range" id="diffuse" min="0" max="100" value="0"/></td> </tr>
-                    <tr> <td> specular </td> 
-                         <td> <input type="range" id="specular" min="0" max="100" value="0"/></td> </tr>
-                    <tr> <td> shininess </td> 
-                         <td> <input type="range" id="shininess" min="1" max="100" value="0"/></td> </tr>
-                    <tr> <td> cut off angle </td> 
-                         <td> <input type="range" id="cutOffAngle" min="1" max="180" value="0"/></td> </tr>
-                </table>
-            </form>
-        </div>
-        <div id="div-canvas" style="float: right; width: 520px; margin-left: -520px;">
-            <canvas id="glow-canvas" style="border: none;" width="512" height="512"></canvas>
-        </div>
-        <div style="clear: both;"></div>
-    </div>
-</body>

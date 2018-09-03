@@ -92,25 +92,32 @@ void main()
 </script>
 
 <style>
-
-html,body {
-    margin: 0;
-    overflow: hidden;
-}
-
-#gui {
-    position : absolute;
-    top : 0;
-    left : 0;
-}
-
-#ref-link {
-    position : absolute;
-    bottom : 0;
-    left : 0;
-}
-      
+html,body { margin: 0; overflow: hidden; }
+#gui { position : absolute; top : 0; left : 0; }
+#ref-link { position : absolute; bottom : 0; left : 0; }  
 </style>
+
+<body onload="sceneStart();">
+
+<a id="ref-link" href="https://stackoverflow.com/questions/11282394/what-kind-of-blurs-can-be-implemented-in-pixel-shaders/45878733#45878733">
+<font color= #CCF>What kind of blurs can be implemented in pixel shaders?</font>
+</a>
+
+<div style="margin-left: 520px;">
+    <div style="float: right; width: 100%; background-color: #CCF;">
+        <form name="inputs">
+            <table>
+                <tr> <td> blur </td> 
+                        <td> <input type="range" id="sigma" min="0" max="100" value="50"/></td> </tr>
+            </table>
+        </form>
+    </div>
+    <div style="float: right; width: 520px; margin-left: -520px;">
+        <canvas id="glow-canvas" style="border: none;" width="512" height="512"></canvas>
+    </div>
+    <div style="clear: both;"></div>
+</div>
+</body>
 
 <script type="text/javascript">
 
@@ -543,23 +550,3 @@ function sceneStart() {
 }
 
 </script>
-
-<body onload="sceneStart();">
-    <a id="ref-link" href="https://stackoverflow.com/questions/11282394/what-kind-of-blurs-can-be-implemented-in-pixel-shaders/45878733#45878733">
-    What kind of blurs can be implemented in pixel shaders?
-    </a>
-    <div style="margin-left: 520px;">
-        <div style="float: right; width: 100%; background-color: #CCF;">
-            <form name="inputs">
-                <table>
-                    <tr> <td> blur </td> 
-                         <td> <input type="range" id="sigma" min="0" max="100" value="50"/></td> </tr>
-                </table>
-            </form>
-        </div>
-        <div style="float: right; width: 520px; margin-left: -520px;">
-            <canvas id="glow-canvas" style="border: none;" width="512" height="512"></canvas>
-        </div>
-        <div style="clear: both;"></div>
-    </div>
-</body>

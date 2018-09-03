@@ -1,16 +1,3 @@
-<head>
-<title>How can I draw a fullscreen background image in WebGL like sketchfab?</title>
-<style>
-    
-    #ref-link {
-        position : absolute;
-        bottom : 0;
-        left : 0;
-    }
-    
-</style>    
-</head>
-
 <script id="background-shader-vs" type="x-shader/x-vertex">
     precision mediump float;
 
@@ -69,6 +56,22 @@ void main()
     gl_FragColor = vec4( vertCol.rgb, 1.0 );
 }
 </script>
+
+<style>
+html,body { margin: 0; overflow: hidden; }
+#gui { position : absolute; top : 0; left : 0; }
+#ref-link { position : absolute; bottom : 0; left : 0; }  
+</style>
+
+<body onload="sceneStart();">
+
+<canvas id="draw-canvas" style="border: none;" width="100%" height="100%"></canvas>
+
+<a id="ref-link" href="https://stackoverflow.com/questions/48124131/how-can-i-draw-a-fullscreen-background-image-in-webgl-like-sketchfab/48128750#48128750">
+<font color= #CCF>How can I draw a fullscreen background image in WebGL like sketchfab?</font>font> 
+</a>
+
+</body>
 
 <script type="text/javascript">
 
@@ -412,11 +415,3 @@ function sceneStart() {
 }
 
 </script>
-
-<body onload="sceneStart();">
-    <canvas id="draw-canvas" style="border: none;" width="100%" height="100%"></canvas>
-
-    <a id="ref-link" href="https://stackoverflow.com/questions/48124131/how-can-i-draw-a-fullscreen-background-image-in-webgl-like-sketchfab/48128750#48128750">
-    How can I draw a fullscreen background image in WebGL like sketchfab? 
-    </a>
-</body>

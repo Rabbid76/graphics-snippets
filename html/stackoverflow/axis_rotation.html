@@ -1,3 +1,48 @@
+<style>
+html,body { margin: 0; overflow: hidden; }
+#gui { position : absolute; top : 0; left : 0; }
+#ref-link { position : absolute; bottom : 0; left : 0; }  
+</style>
+
+<body onload="cameraStart();">
+<div style="margin-left: 520px;">
+<div style="float: right; width: 100%; background-color: #CCF;">
+    <form name="inputs">
+        <table>
+            <tr> <td> pre translate X </td> 
+                    <td> <input type="range" id="preX" min="-100" max="100" value="0"/></td> </tr>
+            <tr> <td> pre translate Y </td> 
+                    <td> <input type="range" id="preY" min="-100" max="100" value="0"/></td> </tr>
+            <tr> <td> pre translate Z </td> 
+                    <td> <input type="range" id="preZ" min="-100" max="100" value="0"/></td> </tr>
+            <tr> <td> axis of rotation </td> <td>
+                <select id="axis">>
+                    <option value="0">X</option>
+                    <option value="1">Y</option>
+                    <option value="2">Z</option>
+                </select>
+            </td> </tr>
+            <tr> <td> post translate X </td> 
+                    <td> <input type="range" id="postX" min="-100" max="100" value="0"/></td> </tr>
+            <tr> <td> post translate Y </td> 
+                    <td> <input type="range" id="postY" min="-100" max="100" value="0"/></td> </tr>
+            <tr> <td> post translate Z </td> 
+                    <td> <input type="range" id="postZ" min="-100" max="100" value="0"/></td> </tr>
+        </table>
+    </form>
+</div>
+<div style="float: right; width: 520px; margin-left: -520px;">
+    <canvas id="camera-canvas" style="border: none;" width="512" height="512"></canvas>
+</div>
+<div style="clear: both;"></div>
+</div>
+
+<a id="ref-link" href="https://stackoverflow.com/questions/6458051/issues-with-z-axis-rotation-matrix-in-glsl-shader/44986176#44986176">
+<font color= #CCF>Issues with Z-axis rotation matrix in glsl shader</font> 
+</a>
+
+</body>
+
 <script type="text/javascript">
 
 camera_vert =
@@ -262,37 +307,3 @@ function cameraStart() {
 }
 
 </script>
-
-<body onload="cameraStart();">
-    <div style="margin-left: 520px;">
-        <div style="float: right; width: 100%; background-color: #CCF;">
-            <form name="inputs">
-                <table>
-                    <tr> <td> pre translate X </td> 
-                         <td> <input type="range" id="preX" min="-100" max="100" value="0"/></td> </tr>
-                    <tr> <td> pre translate Y </td> 
-                         <td> <input type="range" id="preY" min="-100" max="100" value="0"/></td> </tr>
-                    <tr> <td> pre translate Z </td> 
-                         <td> <input type="range" id="preZ" min="-100" max="100" value="0"/></td> </tr>
-                    <tr> <td> axis of rotation </td> <td>
-                        <select id="axis">>
-                            <option value="0">X</option>
-                            <option value="1">Y</option>
-                            <option value="2">Z</option>
-                        </select>
-                    </td> </tr>
-                    <tr> <td> post translate X </td> 
-                         <td> <input type="range" id="postX" min="-100" max="100" value="0"/></td> </tr>
-                    <tr> <td> post translate Y </td> 
-                         <td> <input type="range" id="postY" min="-100" max="100" value="0"/></td> </tr>
-                    <tr> <td> post translate Z </td> 
-                         <td> <input type="range" id="postZ" min="-100" max="100" value="0"/></td> </tr>
-                </table>
-            </form>
-        </div>
-        <div style="float: right; width: 520px; margin-left: -520px;">
-            <canvas id="camera-canvas" style="border: none;" width="512" height="512"></canvas>
-        </div>
-        <div style="clear: both;"></div>
-    </div>
-</body>

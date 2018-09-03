@@ -102,6 +102,23 @@ html,body { margin: 0; overflow: hidden; }
 #ref-link { position : absolute; bottom : 0; left : 0; }  
 </style>
 
+
+<body onload="sceneStart();">
+
+<div id="ref-link">
+    <a href="https://stackoverflow.com/questions/8291314/get-the-last-frame-color-from-glsl/45333726#45333726"> 
+    Get the last frame color from GLSL
+    </a>
+    <br/>
+    <a href="https://stackoverflow.com/questions/8299279/ping-pong-rendering-between-two-fbos-fails-after-first-frame/45680979#45680979"> 
+    Ping-pong rendering between two FBOs fails after first frame.
+    </a>
+</div>
+
+<canvas id="glow-canvas" style="border: none;" width="512" height="512"></canvas>
+
+</body>
+
 <script type="text/javascript">
 
 // shader program object
@@ -329,18 +346,3 @@ function sceneStart() {
 
 </script>
 
-<body onload="sceneStart();">
-
-<div id="ref-link">
-    <a href="https://stackoverflow.com/questions/8291314/get-the-last-frame-color-from-glsl/45333726#45333726"> 
-    Get the last frame color from GLSL
-    </a>
-    <br/>
-    <a href="https://stackoverflow.com/questions/8299279/ping-pong-rendering-between-two-fbos-fails-after-first-frame/45680979#45680979"> 
-    Ping-pong rendering between two FBOs fails after first frame.
-    </a>
-</div>
-
-<canvas id="glow-canvas" style="border: none;" width="512" height="512"></canvas>
-
-</body>

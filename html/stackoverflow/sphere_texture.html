@@ -39,6 +39,22 @@ void main()
 }
 </script>
 
+<style>
+html,body { margin: 0; overflow: hidden; }
+#gui { position : absolute; top : 0; left : 0; }
+#ref-link { position : absolute; bottom : 0; left : 0; }  
+</style>
+
+<body onload="sceneStart();">
+    
+<canvas id="model-canvas" style="border: none;" width="512" height="512"></canvas>
+
+<a id="ref-link" href="https://stackoverflow.com/questions/45482988/generating-spheres-vertices-indices-and-normals/45483530#45483530">
+<font color= #CCF>Generating spheres vertices, indices and normals?</font> 
+</a>
+
+</body>
+
 <script type="text/javascript">
 
 glArrayType = typeof Float32Array !="undefined" ? Float32Array : ( typeof WebGLFloatArray != "undefined" ? WebGLFloatArray : Array );
@@ -354,7 +370,3 @@ function sceneStart() {
 }
 
 </script>
-
-<body onload="sceneStart();">
-    <canvas id="model-canvas" style="border: none;" width="512" height="512"></canvas>
-</body>
