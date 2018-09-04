@@ -110,7 +110,7 @@ float UnpackDepth( in vec3 pack )
 float DecodeDepth( in vec2 texC )
 {
     vec3  depthVal = texture2D( u_depthSampler, texC.st ).xyz;  
-    float depth    =  UnpackDepth( depthVal.rgb );
+    float depth    = UnpackDepth( depthVal.rgb );
     depth         += step(depth, 0.0); //! depth pack contains 0.0 for background!
     return depth;
 }
@@ -139,13 +139,14 @@ vec4 SSAO(in vec2 texC)
         float radius          = u_radius;
         vec3  fragNV          = DecodeNV(texC.st);
         vec2  noiseScale      = u_viewportsize / float(4.0);
-        vec3  randomVec       = texture2D(u_ssaoNoiseSampler, texC.st * noiseScale).xyz;
+        vec3  randomVec       = texture2D(u_ssaoNoiseSampler, texC.st * noiseScale).xyz * 2.0- 1.0;
         vec3  tangent         = normalize(randomVec - fragNV * dot( randomVec, fragNV ));
         mat3  TBN             = mat3(tangent, cross( fragNV, tangent ), fragNV);
         float kernelPtCount   = 0.0;
         for( int inx = 0; inx < 32; ++ inx )
         {
-            vec3  sampleRel       = TBN * texture2D(u_ssaoNoiseSampler, vec2(float(inx)/32.0, 0.0) ).xyz;
+            vec4  kernelVec       = texture2D(u_ssaoKernelSampler, vec2(float(inx)/32.0, 0.0) );
+            vec3  sampleRel       = TBN * ((kernelVec.xyz * 2.0 - 1.0) * kernelVec.w);
             sampleRel             = fragPos.xyz + sampleRel * radius;
             vec4  sampleTexC      = u_projectionMat44 * vec4(sampleRel, 1.0);             // view to clip space
             sampleTexC.xyz        = 0.5 + 0.5 * sampleTexC.xyz / sampleTexC.w; // clip space -> NDC [-1.0, 1.0] -> [0.0, 1.0]
@@ -227,7 +228,7 @@ html,body { margin: 0; overflow: hidden; }
 <div><form id="gui" name="inputs">
 <table>
     <tr> <td> <font color=#40f040>radius</font> </td> 
-            <td> <input type="range" id="radius" min="0" max="100" value="30"/></td></tr>
+            <td> <input type="range" id="radius" min="0" max="100" value="50"/></td></tr>
     <tr> <td> <font color=#40f040>blur</font> </td> 
             <td> <input type="checkbox" id="blur" value="1" /></td></tr>
 </table>
@@ -263,7 +264,7 @@ var camera;
 function render(deltaMS) {
 
     var shininess = 10.0;
-    var radius = 0.05 + 0.45 * document.getElementById( "radius" ).value / sliderScale;
+    var radius = 0.1 + 0.9 * document.getElementById( "radius" ).value / sliderScale;
     var blur = document.getElementById( "blur" ).checked;
     var blurVal = blur ? 1 : 0 
     
@@ -828,25 +829,37 @@ function generateSSAOTextures( kernelSize, noiseSize, kernelTexUnit, noiseTexUni
       var y = Math.random() * 2.0 - 1.0;
       var z = Math.random() * 2.0 - 1.0;
       var len = Math.sqrt( x * x + y * y + z * z );
+      x = x / len; y = y / len;  z = z / len;
+      var len_xy = Math.sqrt( x * x + y * y );
+      z = z * (1 + len_xy) - len_xy;
       var w = i_k / kernelSize;
       w = 0.1 + 0.9 * w * w;
-      ssaoObject.kernel[i_k*4] = ( x / len + 1.0 ) * 0.5 * 255.0;
-      ssaoObject.kernel[i_k*4+1] = ( y / len + 1.0 ) * 0.5 * 255.0;
-      ssaoObject.kernel[i_k*4+2] = ( z / len + 1.0 ) * 0.5 * 255.0;
+      //w = 0.01 + 0.99 * w; 
+      w = 1.0
+      ssaoObject.kernel[i_k*4] = (x + 1.0 ) * 0.5 * 255.0;
+      ssaoObject.kernel[i_k*4+1] = (y + 1.0 ) * 0.5 * 255.0;
+      ssaoObject.kernel[i_k*4+2] = (z + 1.0 ) * 0.5 * 255.0;
       ssaoObject.kernel[i_k*4+3] = w * 255.0;
     }
 
     ssaoObject.noise = new Uint8Array( noiseSize * noiseSize * 4 );
-    for ( var i_n = 0; i_n < noiseSize * noiseSize; ++ i_n ) {
-      var x = Math.random() * 2.0 - 1.0;
-      var y = Math.random() * 2.0 - 1.0;
-      var z = Math.random() * 2.0 - 1.0;
-      var len = Math.sqrt( x * x + y * y + z * z );
-      ssaoObject.noise[i_n*4] = ( x / len + 1.0 ) * 0.5 * 255.0;
-      ssaoObject.noise[i_n*4+1] = ( y / len + 1.0 ) * 0.5 * 255.0;
-      ssaoObject.noise[i_n*4+2] = ( z / len + 1.0 ) * 0.5 * 255.0;
-      ssaoObject.noise[i_n*4+3] = 255.0;
+    for ( var inx1 = 0; inx1 < 2; inx1 ++ )
+    {
+      for ( var inx2 = 0; inx2 < noiseSize/2; inx2 ++ )
+      {
+        var iang = 2*inx2+inx1;
+        var angle = 2.0 * Math.PI * iang / noiseSize;
+        var inx = inx1*noiseSize / 2 + inx2;
+        var x = Math.cos(angle);
+        var y = Math.sin(angle);
+        var z = 0;
+        var len = Math.sqrt( x * x + y * y + z * z );
+        ssaoObject.noise[inx*4] = ( x / len + 1.0 ) * 0.5 * 255.0;
+        ssaoObject.noise[inx*4+1] = ( y / len + 1.0 ) * 0.5 * 255.0;
+        ssaoObject.noise[inx*4+2] = ( z / len + 1.0 ) * 0.5 * 255.0;
+        ssaoObject.noise[inx*4+3] = 255.0;
     }
+  }
 
     gl.activeTexture( gl.TEXTURE0+kernelTexUnit );
     ssaoObject.kernelTexUnit = kernelTexUnit;
