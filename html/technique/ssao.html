@@ -274,8 +274,12 @@ function render(deltaMS) {
     gl.enable( gl.DEPTH_TEST );
     gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
 
+    // setup view projection and model
     var prjMat = camera.Perspective();
     var invPrjMat = InverseMat44( prjMat );
+    var viewMat = camera.Orbit();
+    var modelMat = IdentityMat44();
+    modelMat = camera.AutoModelMatrix();
 
     // 0: write depth to frame buffer
     // 1: write normal vector to frame buffer
@@ -289,11 +293,6 @@ function render(deltaMS) {
         // set up depth draw shader
         ShaderProgram.Use( passProg );
         ShaderProgram.SetUniformM44( passProg, "u_projectionMat44", prjMat );
-        var viewMat = camera.Orbit();
-        var modelMat = IdentityMat44();
-        modelMat = camera.AutoModelMatrix();
-        //modelMat = RotateAxis( modelMat, -60.0 * Math.PI / 180.0, 0 );
-        //modelMat = RotateAxis( modelMat, -30.0 * Math.PI / 180.0, 1 );
         ShaderProgram.SetUniformM44( passProg, "u_modelViewMat44", Multiply(viewMat, modelMat) );
         ShaderProgram.SetUniformF2( passProg,  "u_depthRange", [ camera.near, camera.far ] );
         
