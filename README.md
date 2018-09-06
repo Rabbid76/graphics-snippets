@@ -78,13 +78,13 @@
 
 [Glow](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/glow.html)
 
-[Blinn](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/blinn.html)
-
-[Gouraud / Phong](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/gouraud_phong.html)
-
 [Lambertian diffuse sphere](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/lambertian_sphere.html)
 
 [Lambertian diffuse fake light](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/lambertian_fake.html)
+
+[Gouraud shading / Phong shading](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/gouraud_phong.html)
+
+[Phong light model / Blinn Phong light model](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/phong_blinnphong.html)
 
 [Light cone](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/light_cone.html)
 
