@@ -704,18 +704,230 @@ class CSimpleLineRenderer
 {
 public:
 
-  CSimpleLineRenderer( Render::IDrawBufferProvider & buffer_provider )
-    : _buffer_provider( buffer_provider )
+  CSimpleLineRenderer(  CBasicDraw & draw_library, Render::IDrawBufferProvider & buffer_provider )
+    : _draw_library( draw_library )
+    , _buffer_provider( buffer_provider )
   {}
 
   ~CSimpleLineRenderer() {}
 
-  // TODO $$$
+  // TODO $$$ virtual
+  void Color( const Render::TColor &color ) { _color = color; }
+  void Style( Render::TDrawStyle style )    { _style = style; }
+
+  // TODO $$$ override  
+  virtual bool Draw( Render::TPrimitive primitive_type, size_t tuple_size, size_t coords_size, const Render::t_fp *coords );
 
 private:
 
+  CBasicDraw                  &_draw_library;
   Render::IDrawBufferProvider &_buffer_provider;
+
+  Render::TColor     _color; //!< color of the line
+  Render::TDrawStyle _style; //!< line style parameter
 };
+
+
+/******************************************************************//**
+* \brief   Draw a line, which is specified by a list of points.
+* 
+* \author  gernot
+* \date    2018-03-15
+* \version 1.0
+**********************************************************************/
+bool CSimpleLineRenderer::Draw( 
+  Render::TPrimitive    primitive_type, //!< in: type of the primitives the allowed enumerators are `lines`, `linestrip`, `lineloop`, `lines_adjacency` and `linestrip_adjacency`
+  size_t                size,           //!< in: tuple size of a vertex coordinates - 2: x, y; 3: x, y, z; 4: x, y, z, w 
+  size_t                coords_size,    //!< in: size of coordinate buffer
+  const Render::t_fp   *coords )        //!< in: coordinate buffer
+{
+  if ( primitive_type != Render::TPrimitive::lines &&
+       primitive_type != Render::TPrimitive::linestrip && 
+       primitive_type != Render::TPrimitive::lineloop &&
+       primitive_type != Render::TPrimitive::lines_adjacency &&
+       primitive_type != Render::TPrimitive::linestrip_adjacency )
+  {
+    assert( false );
+    return false;
+  }
+  
+  if ( size != 2 && size != 3 && size != 4 )
+  {
+    assert( false );
+    return false;
+  }
+
+  bool arrow_from = _style._properites.test( (int)Render::TDrawStyleProperty::arrow_from );
+  bool arrow_to   = _style._properites.test( (int)Render::TDrawStyleProperty::arrow_to );
+  
+  // create indices
+  Render::TPrimitive final_primitive_type = primitive_type;
+  size_t             no_of_vertices       = coords_size / size;
+  std::vector<unsigned short int> indices;
+  indices.reserve( no_of_vertices * 2 );
+  
+  switch(primitive_type)
+  {
+    case Render::TPrimitive::lines:
+      {
+        for ( unsigned short int i = 0; i < (unsigned short int)no_of_vertices; i += 2 )
+        {
+          indices.push_back( i+1 );
+          indices.push_back( i );
+          indices.push_back( i+1 );
+          indices.push_back( i );
+        }
+         
+        final_primitive_type = Render::TPrimitive::lines_adjacency;
+      }
+      break;
+
+    case Render::TPrimitive::linestrip:
+      {
+        indices.push_back( 1 );
+        for ( unsigned short int i = 0; i < (unsigned short int)no_of_vertices; ++ i )
+          indices.push_back( i );
+        indices.push_back( (unsigned short int)(no_of_vertices-2) );
+
+        final_primitive_type = Render::TPrimitive::linestrip_adjacency;
+      }
+      break;
+
+    case Render::TPrimitive::lineloop:
+      {
+        indices.push_back( (unsigned short int)(no_of_vertices-1) );
+        for ( unsigned short int i = 0; i < (unsigned short int)no_of_vertices; ++ i )
+          indices.push_back( i );
+        indices.push_back( 0 );
+        indices.push_back( 1 );
+
+        final_primitive_type = Render::TPrimitive::linestrip_adjacency;
+      }
+      break;
+  }
+
+  // buffer specification
+  Render::TVA va_id = size == 2 ? Render::TVA::b0_xy : (size == 3 ? Render::TVA::b0_xyz : Render::TVA::b0_xyzw);
+  const std::vector<char> bufferdescr = Render::IDrawBuffer::VADescription( va_id );
+
+  // set style and context
+  glEnable( GL_POLYGON_OFFSET_LINE );
+  glPolygonOffset( 1.0, 1.0 );
+  OPENGL_CHECK_GL_ERROR
+
+  // create buffer
+  Render::IDrawBuffer &buffer = _buffer_provider.DrawBuffer();
+  buffer.SpecifyVA( bufferdescr.size(), bufferdescr.data() );
+  if ( arrow_from || arrow_to )
+  {
+    std::vector<Render::t_fp> temp_coords( coords_size );
+    std::copy( coords, coords + coords_size, temp_coords.begin() );
+
+    // cut line at arrow (thick lines would jut out at the peak of the arrow)
+    if (arrow_from)
+    {
+      size_t i0 = 0;
+      size_t ix = size;
+      glm::vec3 p0( coords[i0], coords[i0+1], size == 3 ? coords[i0+2] : 0.0f );
+      glm::vec3 p1( coords[ix], coords[ix+1], size == 3 ? coords[ix+2] : 0.0f );
+      glm::vec3 v0 = p0 - p1;
+      float l = glm::length( v0 );
+      p0 = p1 + v0 * (l-_style._size[0]) / l;
+      temp_coords[i0] = p0[0];
+      temp_coords[i0+1] = p0[1];
+      if (size == 3)
+        temp_coords[i0+2] = p0[2];
+    }
+    if (arrow_to)
+    {
+      size_t i0 = coords_size - size;
+      size_t ix = coords_size - size*2;
+      glm::vec3 p0( coords[i0], coords[i0+1], size == 3 ? coords[i0+2] : 0.0f );
+      glm::vec3 p1( coords[ix], coords[ix+1], size == 3 ? coords[ix+2] : 0.0f );
+      glm::vec3 v0 = p0 - p1;
+      float l = glm::length( v0 );
+      p0 = p1 + v0 * (l-_style._size[0]) / l;
+      temp_coords[i0] = p0[0];
+      temp_coords[i0+1] = p0[1];
+      if (size == 3)
+        temp_coords[i0+2] = p0[2];
+    }
+
+    buffer.UpdateVB( 0, sizeof(float), temp_coords.size(), temp_coords.data() );
+  }
+  else
+    buffer.UpdateVB( 0, sizeof(float), coords_size, coords );
+  
+  // set program
+  _draw_library.SetLineShader( _color, _style._thickness );
+
+  // draw_buffer
+  buffer.DrawElements( final_primitive_type, 2, indices.size(), indices.data(), true );
+  buffer.Release();
+
+  // draw arrows
+  if ( arrow_from || arrow_to )
+  {
+    // set program
+    _draw_library.SetPolygonShader( _color );
+   
+    TMat44 model_bk = _draw_library._uniforms._model;
+
+    // TODO $$$ beautify arrow
+    static const std::vector<float>arrow_vertices{ 0.0f, 0.0f, -1.0f, -0.5f, -1.0f, 0.5f };
+    static const std::vector<char> arrow_buffer_decr = Render::IDrawBuffer::VADescription( Render::TVA::b0_xy );
+    static const size_t no_arrow_vertices = 3;
+
+    // create arrow buffer
+    Render::IDrawBuffer &buffer = _buffer_provider.DrawBuffer();
+    buffer.SpecifyVA( arrow_buffer_decr.size(), arrow_buffer_decr.data() );
+    buffer.UpdateVB( 0, sizeof(float), arrow_vertices.size(), arrow_vertices.data() );
+
+    glm::mat4 model = ToGLM( _draw_library._uniforms._model );
+
+    // arrow at the start of the polyline
+    if ( arrow_from )
+    {
+      // TODO $$$ 3D !!! project to viewport
+      size_t i0 = 0;
+      size_t ix = size;
+      _draw_library.SetModelUniform(
+        TVec3{ _style._size[0], _style._size[1], 1.0f },
+        TVec3{ coords[i0], coords[i0+1], size == 3 ? coords[i0+2] : 0.0f },
+        TVec3{ coords[ix], coords[ix+1], size == 3 ? coords[ix+2] : 0.0f },
+        TVec3{ _draw_library._uniforms._view[2][0], _draw_library._uniforms._view[2][1], - _draw_library._uniforms._view[2][2] } );
+      
+      buffer.DrawArray( Render::TPrimitive::trianglefan, 0, no_arrow_vertices, true );
+      buffer.Release();
+    }
+    _draw_library._uniforms._model = model_bk;
+
+    // arrow at the end of the polyline
+    if ( arrow_to )
+    {
+      // TODO $$$ 3D !!! project to viewport
+      size_t i0 = coords_size - size;
+      size_t ix = coords_size - size*2;
+      _draw_library.SetModelUniform(
+        TVec3{ _style._size[0], _style._size[1], 1.0f },
+        TVec3{ coords[i0], coords[i0+1], size == 3 ? coords[i0+2] : 0.0f },
+        TVec3{ coords[ix], coords[ix+1], size == 3 ? coords[ix+2] : 0.0f },
+        TVec3{ _draw_library._uniforms._view[2][0], _draw_library._uniforms._view[2][1], - _draw_library._uniforms._view[2][2] } );
+
+      buffer.DrawArray( Render::TPrimitive::trianglefan, 0, no_arrow_vertices, true );
+      buffer.Release();
+    }
+     
+    _draw_library._uniforms._model = model_bk;
+    _draw_library.SetModelUniform( &_draw_library._uniforms._model[0][0] );
+  }
+
+  // reset style and context
+  glDisable( GL_POLYGON_OFFSET_LINE ); 
+  OPENGL_CHECK_GL_ERROR
+
+  return true;
+}
 
 
 //---------------------------------------------------------------------
@@ -861,7 +1073,7 @@ Render::ITextureLoaderPtr CBasicDraw::NewTextureLoader(
 Render::ILineRenderer & CBasicDraw::LineRenderer( void )
 {
   if ( _line_renderer == nullptr )
-    _line_renderer = std::make_shared<CSimpleLineRenderer>( *this );
+    _line_renderer = std::make_shared<CSimpleLineRenderer>( *this, *this );
   return *_line_renderer.get();
 }
 
@@ -983,7 +1195,7 @@ bool CBasicDraw::Init( void )
   if ( _initialized )
     return true;
 
-  // get names of opengl extensions
+  // get names of OpenGL extensions
   GLint no_of_extensions = 0;
   glGetIntegerv(GL_NUM_EXTENSIONS, &no_of_extensions);
   for ( int i = 0; i < no_of_extensions; ++i )
@@ -1568,13 +1780,65 @@ bool CBasicDraw::ClearDepth( void )
 * \version 1.0
 **********************************************************************/
 TVec3 CBasicDraw::Project( 
-  const TVec3 &pt //!< in: the taht will be projected 
+  const TVec3 &pt //!< in: the that will be projected 
   ) const
 {
   glm::vec4 prj_pt = ToGLM(_uniforms._projection) * ToGLM(_uniforms._view) * ToGLM(_uniforms._model) * glm::vec4( pt[0], pt[1], pt[2], 1.0f );
   return { prj_pt[0]/prj_pt[3], prj_pt[1]/prj_pt[3], prj_pt[2]/prj_pt[3] };
 }
 
+
+/******************************************************************//**
+* \brief   Prepare the polygon shader for drawing
+* 
+* \author  gernot
+* \date    2018-03-15
+* \version 1.0
+**********************************************************************/
+bool CBasicDraw::SetPolygonShader( 
+  const Render::TColor &color ) //!< I - line color
+{
+  // set program
+  bool transparent_pass = _current_pass == c_tranp_pass;
+  _current_prog = transparent_pass ? _transp_prog.get() : _opaque_prog.get();
+  _current_prog->Use(); 
+
+  // set uniforms
+  UpdateGeneralUniforms();
+  UpdateColorUniforms( color );
+
+  return true;
+}
+
+
+/******************************************************************//**
+* \brief   Prepare the line shader for drawing
+* 
+* \author  gernot
+* \date    2018-03-15
+* \version 1.0
+**********************************************************************/
+bool CBasicDraw::SetLineShader( 
+  const Render::TColor &color,      //!< I - line color
+  Render::t_fp          thickness ) //!< I - thickness of the line
+{
+  bool transparent_pass = _current_pass == c_tranp_pass;
+  _current_prog = transparent_pass ? _transp_line_prog.get() : _opaque_line_prog.get();
+  _current_prog->Use();
+
+  // set uniforms
+  UpdateGeneralUniforms();
+  UpdateColorUniforms( color );
+  _current_prog->SetUniformI1( "u_perspective_thickness", _draw_properties[(int)TDrawProperty::perspective_line] ? 1 : 0 );
+  _current_prog->SetUniformF1( "u_thickness", thickness * _fb_scale );
+
+  // bind "white" color texture
+  glActiveTexture( GL_TEXTURE0 );
+  glBindTexture( GL_TEXTURE_2D, _color_texture ); 
+  OPENGL_CHECK_GL_ERROR
+
+  return true;
+}
 
 /******************************************************************//**
 * \brief   Draw an array of primitives with a single color
@@ -1585,9 +1849,9 @@ TVec3 CBasicDraw::Project(
 **********************************************************************/
 bool CBasicDraw::Draw( 
   Render::TPrimitive    primitive_type, //!< in: type of the primitives
-  size_t                size,           //!< in: size vertex coordiantes
+  size_t                size,           //!< in: size vertex coordinates
   size_t                coords_size,    //!< in: size of coordinate buffer
-  const Render::t_fp   *coords,         //!< in: coordiant buffer
+  const Render::t_fp   *coords,         //!< in: coordinate buffer
   const Render::TColor &color,          //!< in: color for drawing
   const TStyle         &style )         //!< in: additional style parameters 
 {
@@ -1627,66 +1891,26 @@ bool CBasicDraw::Draw(
     primitive_type == Render::TPrimitive::trianglestrip_adjacency ||
     primitive_type == Render::TPrimitive::trianglefan;
 
+  if ( draw_line )
+  {
+    CSimpleLineRenderer &draw_line = (CSimpleLineRenderer&)LineRenderer();
+    draw_line.Color( color );
+    draw_line.Style( style );
+    return draw_line.Draw( primitive_type, size, coords_size, coords );
+  }
+
+ 
   // create indices
   Render::TPrimitive final_primitive_type = primitive_type;
-  bool               index_buffer         = is_line;
   size_t             no_of_vertices       = coords_size / size;
   std::vector<unsigned short int> indices;
   indices.reserve( no_of_vertices * 2 );
-  if ( index_buffer )
-  {
-    switch(primitive_type)
-    {
-      case Render::TPrimitive::lines:
-        {
-          for ( unsigned short int i = 0; i < (unsigned short int)no_of_vertices; i += 2 )
-          {
-            indices.push_back( i+1 );
-            indices.push_back( i );
-            indices.push_back( i+1 );
-            indices.push_back( i );
-          }
-         
-          final_primitive_type = Render::TPrimitive::lines_adjacency;
-        }
-        break;
-
-      case Render::TPrimitive::linestrip:
-        {
-          indices.push_back( 1 );
-          for ( unsigned short int i = 0; i < (unsigned short int)no_of_vertices; ++ i )
-            indices.push_back( i );
-          indices.push_back( (unsigned short int)(no_of_vertices-2) );
-
-          final_primitive_type = Render::TPrimitive::linestrip_adjacency;
-        }
-        break;
-
-      case Render::TPrimitive::lineloop:
-        {
-          indices.push_back( (unsigned short int)(no_of_vertices-1) );
-          for ( unsigned short int i = 0; i < (unsigned short int)no_of_vertices; ++ i )
-            indices.push_back( i );
-          indices.push_back( 0 );
-          indices.push_back( 1 );
-
-          final_primitive_type = Render::TPrimitive::linestrip_adjacency;
-        }
-        break;
-    }
-  }
-
+  
   // buffer specification
   Render::TVA va_id = size == 2 ? Render::TVA::b0_xy : (size == 3 ? Render::TVA::b0_xyz : Render::TVA::b0_xyzw);
   const std::vector<char> bufferdescr = Render::IDrawBuffer::VADescription( va_id );
 
   // set style and context
-  if ( draw_line )
-  {
-    glEnable( GL_POLYGON_OFFSET_LINE );
-    glPolygonOffset( 1.0, 1.0 );
-    OPENGL_CHECK_GL_ERROR
-  }
   if ( is_point )
   {
     glEnable( GL_POLYGON_OFFSET_POINT );
@@ -1699,62 +1923,16 @@ bool CBasicDraw::Draw(
   // create buffer
   Render::IDrawBuffer &buffer = DrawBuffer();
   buffer.SpecifyVA( bufferdescr.size(), bufferdescr.data() );
-  if ( arrow_from || arrow_to )
-  {
-    std::vector<Render::t_fp> temp_coords( coords_size );
-    std::copy( coords, coords + coords_size, temp_coords.begin() );
-
-    // cut line at arraw (thick lines would jut out at the peak of the arrow)
-    if (arrow_from)
-    {
-      size_t i0 = 0;
-      size_t ix = size;
-      glm::vec3 p0( coords[i0], coords[i0+1], size == 3 ? coords[i0+2] : 0.0f );
-      glm::vec3 p1( coords[ix], coords[ix+1], size == 3 ? coords[ix+2] : 0.0f );
-      glm::vec3 v0 = p0 - p1;
-      float l = glm::length( v0 );
-      p0 = p1 + v0 * (l-style._size[0]) / l;
-      temp_coords[i0] = p0[0];
-      temp_coords[i0+1] = p0[1];
-      if (size == 3)
-        temp_coords[i0+2] = p0[2];
-    }
-    if (arrow_to)
-    {
-      size_t i0 = coords_size - size;
-      size_t ix = coords_size - size*2;
-      glm::vec3 p0( coords[i0], coords[i0+1], size == 3 ? coords[i0+2] : 0.0f );
-      glm::vec3 p1( coords[ix], coords[ix+1], size == 3 ? coords[ix+2] : 0.0f );
-      glm::vec3 v0 = p0 - p1;
-      float l = glm::length( v0 );
-      p0 = p1 + v0 * (l-style._size[0]) / l;
-      temp_coords[i0] = p0[0];
-      temp_coords[i0+1] = p0[1];
-      if (size == 3)
-        temp_coords[i0+2] = p0[2];
-    }
-
-    buffer.UpdateVB( 0, sizeof(float), temp_coords.size(), temp_coords.data() );
-  }
-  else
-    buffer.UpdateVB( 0, sizeof(float), coords_size, coords );
+  buffer.UpdateVB( 0, sizeof(float), coords_size, coords );
   
   // set program
   bool transparent_pass = _current_pass == c_tranp_pass;
-  if ( transparent_pass )
-    _current_prog = draw_line ? _transp_line_prog.get() : _transp_prog.get();
-  else
-    _current_prog = draw_line ? _opaque_line_prog.get() : _opaque_prog.get();
-   _current_prog->Use();
+  _current_prog = transparent_pass ? _transp_prog.get() : _opaque_prog.get();
+  _current_prog->Use();
 
   // set uniforms
   UpdateGeneralUniforms();
   UpdateColorUniforms( color );
-  if ( draw_line )
-  {
-    _current_prog->SetUniformI1( "u_perspective_thickness", _draw_properties[(int)TDrawProperty::perspective_line] ? 1 : 0 );
-    _current_prog->SetUniformF1( "u_thickness", style._thickness * _fb_scale );
-  }
 
   // bind "white" color texture
   glActiveTexture( GL_TEXTURE0 );
@@ -1762,81 +1940,10 @@ bool CBasicDraw::Draw(
   OPENGL_CHECK_GL_ERROR
 
   // draw_buffer
-  if ( index_buffer )
-    buffer.DrawElements( final_primitive_type, 2, indices.size(), indices.data(), true );
-  else
-    buffer.DrawArray( final_primitive_type, 0, no_of_vertices, true );
+  buffer.DrawArray( final_primitive_type, 0, no_of_vertices, true );
   buffer.Release();
 
-  // draw arrows
-  if ( arrow_from || arrow_to )
-  {
-    // set program
-    bool transparent_pass = _current_pass == c_tranp_pass;
-    _current_prog = transparent_pass ? _transp_prog.get() : _opaque_prog.get();
-    _current_prog->Use(); 
-
-    // set uniforms
-    UpdateGeneralUniforms();
-    UpdateColorUniforms( color );
-
-    TMat44 model_bk = _uniforms._model;
-
-    // TODO $$$ beautify arrow
-    static const std::vector<float>arrow_vertices{ 0.0f, 0.0f, -1.0f, -0.5f, -1.0f, 0.5f };
-    static const std::vector<char> arrow_buffer_decr = Render::IDrawBuffer::VADescription( Render::TVA::b0_xy );
-    static const size_t no_arrow_vertices = 3;
-
-    // create arroe buffer
-    Render::IDrawBuffer &buffer = DrawBuffer();
-    buffer.SpecifyVA( arrow_buffer_decr.size(), arrow_buffer_decr.data() );
-    buffer.UpdateVB( 0, sizeof(float), arrow_vertices.size(), arrow_vertices.data() );
-
-    glm::mat4 model = ToGLM( _uniforms._model );
-
-    // arrow at the start of the polyline
-    if ( arrow_from )
-    {
-      // TODO $$$ 3D !!! project to viewport
-      size_t i0 = 0;
-      size_t ix = size;
-      SetModelUniform(
-        TVec3{ style._size[0], style._size[1], 1.0f },
-        TVec3{ coords[i0], coords[i0+1], size == 3 ? coords[i0+2] : 0.0f },
-        TVec3{ coords[ix], coords[ix+1], size == 3 ? coords[ix+2] : 0.0f },
-        TVec3{ _uniforms._view[2][0], _uniforms._view[2][1], -_uniforms._view[2][2] } );
-      
-      buffer.DrawArray( Render::TPrimitive::trianglefan, 0, no_arrow_vertices, true );
-      buffer.Release();
-    }
-    _uniforms._model = model_bk;
-
-    // arrow at the end of the polyline
-    if ( arrow_to )
-    {
-      // TODO $$$ 3D !!! project to viewport
-      size_t i0 = coords_size - size;
-      size_t ix = coords_size - size*2;
-      SetModelUniform(
-        TVec3{ style._size[0], style._size[1], 1.0f },
-        TVec3{ coords[i0], coords[i0+1], size == 3 ? coords[i0+2] : 0.0f },
-        TVec3{ coords[ix], coords[ix+1], size == 3 ? coords[ix+2] : 0.0f },
-        TVec3{ _uniforms._view[2][0], _uniforms._view[2][1], -_uniforms._view[2][2] } );
-
-      buffer.DrawArray( Render::TPrimitive::trianglefan, 0, no_arrow_vertices, true );
-      buffer.Release();
-    }
-     
-    _uniforms._model = model_bk;
-    SetModelUniform( &_uniforms._model[0][0] );
-  }
-
   // reset style and context
-  if ( draw_line )
-  {
-    glDisable( GL_POLYGON_OFFSET_LINE ); 
-    OPENGL_CHECK_GL_ERROR
-  }
   if ( is_point )
   {
     glPointSize( 1.0 );

@@ -33,6 +33,22 @@
 namespace Render
 {
 
+enum class TDrawStyleProperty
+{
+  arrow_from,
+  arrow_to,
+  // ...
+  NO_OF
+};
+using TDrawStyleProperties = std::bitset<(int)TDrawStyleProperty::NO_OF>;
+
+struct TDrawStyle
+{
+  float                _thickness = 1.0f;
+  TVec2                _size      { 0.0f };
+  TDrawStyleProperties _properites;
+};
+
 
 //---------------------------------------------------------------------
 // IDraw
@@ -61,21 +77,9 @@ public:
     NO_OF
   };
 
-  enum class TStyleProperty
-  {
-    arrow_from,
-    arrow_to,
-    // ...
-    NO_OF
-  };
-  using TStyleProperties = std::bitset<(int)TStyleProperty::NO_OF>;
-
-  struct TStyle
-  {
-    float            _thickness = 1.0f;
-    TVec2            _size      { 0.0f };
-    TStyleProperties _properites;
-  };
+  using TStyleProperty   = TDrawStyleProperty;
+  using TStyleProperties = TDrawStyleProperties;
+  using TStyle           = TDrawStyle;
 
   virtual ~IDraw() = default;
 

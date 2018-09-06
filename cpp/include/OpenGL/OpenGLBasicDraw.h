@@ -49,6 +49,8 @@ namespace OpenGL
 //---------------------------------------------------------------------
 
 
+  class CSimpleLineRenderer;
+
 /******************************************************************//**
 * @brief   Implementation for basic drawing.
 *
@@ -60,6 +62,7 @@ class CBasicDraw
   : public Render::IDraw
   , public Render::IProvider
 {
+  friend class CSimpleLineRenderer;
 
   // TODO $$$ unifrom blocks (model, view, projection)
   // TODO $$$ SSOA (3 frequences)
@@ -172,10 +175,13 @@ public:
   virtual bool ActivateTransparent( void ) override;                       //!< activate rendering to the transparent buffer
   virtual bool Finish( void ) override;                                    //!< finish the rendering
   virtual bool ClearDepth( void ) override;                                //!< interim clear of the depth buffer
- 
+
   virtual bool Draw( Render::TPrimitive primitive_type, size_t size, size_t coords_size, const Render::t_fp *coords, const Render::TColor &color, const TStyle &style ) override;
 
   virtual bool DrawText2D( TFontId font_id, const char *text, float height, float width_scale, const Render::TPoint3 &pos, const Render::TColor &color ) override;
+
+  bool SetPolygonShader( const Render::TColor &color );
+  bool SetLineShader( const Render::TColor &color, Render::t_fp thickness );
 
 private:
                                                         
