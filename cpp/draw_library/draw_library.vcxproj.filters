@@ -93,9 +93,6 @@
     <ClInclude Include="..\include\render\Render_ITexture.h">
       <Filter>render</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\render\IRenderContext.h">
-      <Filter>render</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\util\RenderUtil_MeshContainer.h">
       <Filter>util</Filter>
     </ClInclude>
@@ -105,7 +102,13 @@
     <ClInclude Include="..\include\OpenGL\OpenGL_SimpleShaderProgram_temp.h">
       <Filter>OpenGL</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\render\Render_DataBuffer.h">
+    <ClInclude Include="..\include\render\Render_IDataBuffer.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\render\Render_IContext.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\render\Render_IDrawLine.h">
       <Filter>render</Filter>
     </ClInclude>
   </ItemGroup>

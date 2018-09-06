@@ -6,8 +6,8 @@
 * @version 1.0
 **********************************************************************/
 #pragma once
-#ifndef Render_IDraw_h_INCLUDED
-#define Render_IDraw_h_INCLUDED
+#ifndef Render_IDraw_h_INCLUDE
+#define Render_IDraw_h_INCLUDE
 
 
 // includes
@@ -286,4 +286,4 @@ public:
 } // Render
 
 
-#endif // Render_IDraw_h_INCLUDED
+#endif // Render_IDraw_h_INCLUDE

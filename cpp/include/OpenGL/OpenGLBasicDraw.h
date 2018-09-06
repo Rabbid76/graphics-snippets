@@ -20,6 +20,7 @@
 #include <Render_ITexture.h>
 #include <Render_IFont.h>
 #include <Render_IRender.h>
+#include <Render_IDrawLine.h>
 
 // OpenGL
 
@@ -109,6 +110,7 @@ public:
   virtual Render::IDrawBuffer       & DrawBuffer( const void *key, bool &cached ) override;
   virtual Render::IRenderProcessPtr   NewRenderProcess( void ) override;
   virtual Render::ITextureLoaderPtr   NewTextureLoader( size_t loader_binding_id ) override;
+  virtual Render::ILineRenderer     & LineRenderer( void ) override;
 
   virtual const TMat44 & Projection( void ) const override { return _uniforms._projection; } //!< get the projection matrix
   virtual const TMat44 & View( void )       const override { return _uniforms._view; }       //!< get the view matrix
@@ -206,7 +208,8 @@ private:
   const size_t                          _max_buffers      = 8;
   size_t                                _nextBufferI      = 0;
   std::array<const void*, 8>            _buffer_keys      { nullptr };
-  std::array<Render::IDrawBufferPtr, 8> _draw_buffers     { nullptr };
+  std::array<Render::IDrawBufferPtr, 8> _draw_buffers;
+  Render::ILineRenererPtr               _line_renderer;
   TSize                                 _vp_size          { 0 };
   Render::TColor                        _bg_color         { 0.0f };
   TUniforms                             _uniforms;

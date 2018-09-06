@@ -16,6 +16,7 @@
 #include <Render_ITexture.h>
 #include <Render_IBuffer.h>
 #include <Render_IRenderPass.h>
+#include <Render_IDrawLine.h>
 
 
 // type declarations
@@ -43,6 +44,7 @@ class IProvider
   : public IDrawBufferProvider
   , public IRenderProcessProvider
   , public ITextureLoaderProvider
+  , public ILineRendererProvider
 {
 public:
 

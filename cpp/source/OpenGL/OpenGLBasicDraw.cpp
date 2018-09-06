@@ -696,6 +696,29 @@ void main()
    
 
 //---------------------------------------------------------------------
+// CSimpleLineRenderer
+//---------------------------------------------------------------------
+
+class CSimpleLineRenderer
+  : public Render::ILineRenderer
+{
+public:
+
+  CSimpleLineRenderer( Render::IDrawBufferProvider & buffer_provider )
+    : _buffer_provider( buffer_provider )
+  {}
+
+  ~CSimpleLineRenderer() {}
+
+  // TODO $$$
+
+private:
+
+  Render::IDrawBufferProvider &_buffer_provider;
+};
+
+
+//---------------------------------------------------------------------
 // CBasicDraw
 //---------------------------------------------------------------------
 
@@ -733,7 +756,7 @@ CBasicDraw::~CBasicDraw()
 
 
 /******************************************************************//**
-* \brief   Create new or retrun existion default draw buffer
+* \brief   Create new or return existing default draw buffer
 * 
 * \author  gernot
 * \date    2017-11-27
@@ -747,7 +770,7 @@ Render::IDrawBuffer & CBasicDraw::DrawBuffer( void )
 
 
 /******************************************************************//**
-* \brief   Create new or retrun existion default draw buffer
+* \brief   Create new or return existing default draw buffer
 * 
 * \author  gernot
 * \date    2017-11-27
@@ -825,6 +848,21 @@ Render::ITextureLoaderPtr CBasicDraw::NewTextureLoader(
   size_t loader_binding_id ) //!< I - texture unit for loading images
 {
   return std::make_unique<CTextureLoader>( loader_binding_id );
+}
+
+
+/******************************************************************//**
+* \brief  Return line renderer interface
+* 
+* \author  gernot
+* \date    2017-11-27
+* \version 1.0
+**********************************************************************/
+Render::ILineRenderer & CBasicDraw::LineRenderer( void )
+{
+  if ( _line_renderer == nullptr )
+    _line_renderer = std::make_shared<CSimpleLineRenderer>( *this );
+  return *_line_renderer.get();
 }
 
 
@@ -1539,7 +1577,7 @@ TVec3 CBasicDraw::Project(
 
 
 /******************************************************************//**
-* \brief   Draw an array od primitives with a single color
+* \brief   Draw an array of primitives with a single color
 * 
 * \author  gernot
 * \date    2018-03-15
@@ -1553,6 +1591,8 @@ bool CBasicDraw::Draw(
   const Render::TColor &color,          //!< in: color for drawing
   const TStyle         &style )         //!< in: additional style parameters 
 {
+  // $$$ TODO $$$ Render::IDrawLine
+
   if ( _drawing == false )
   {
     assert( false );
@@ -1649,7 +1689,7 @@ bool CBasicDraw::Draw(
   }
   if ( is_point )
   {
-    glEnable( GL_POLYGON_OFFSET_LINE );
+    glEnable( GL_POLYGON_OFFSET_POINT );
     glPolygonOffset( 2.0, 1.0 );
     OPENGL_CHECK_GL_ERROR
     glPointSize( style._thickness );

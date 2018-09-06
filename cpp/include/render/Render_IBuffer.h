@@ -15,6 +15,7 @@
 #include <Render_IDrawType.h>
 
 #include <vector>
+#include <memory>
 
 
 
