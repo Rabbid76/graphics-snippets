@@ -154,9 +154,7 @@ function render(deltaMS){
     var viewMat = camera.Orbit();
     var modelMat = IdentityMat44();
     modelMat = camera.AutoModelMatrix();
-    //modelMat = RotateAxis( modelMat, CalcAng( deltaMS, 13.0 ), 0 );
-    //modelMat = RotateAxis( modelMat, CalcAng( deltaMS, 17.0 ), 1 );
-
+    
     // set up draw shader
     ShaderProgram.Use( progDraw );
     ShaderProgram.SetUniformMat44( progDraw, "u_projectionMat44", prjMat );
@@ -244,12 +242,13 @@ function initScene() {
     var layer_size = 16, circum_size = 32;
     var rad_circum = 1.0;
     var rad_tube = 0.5;
+    var cols = [0.8, 0.4, 0.6];
     var sphere_pts = [];
     var sphere_nv = [];
     var sphere_col = [];
     sphere_pts.push( 0.0, 0.0, -2.0 );
     sphere_nv.push( 0.0, 0.0, -1.0 );
-    sphere_col.push( 0.8, 0.4, 0.6 );
+    sphere_col.push( cols[0], cols[1], cols[2] );
     for ( var i_l = 1; i_l < layer_size; ++ i_l ) {
         var angH = (1.0 - i_l / layer_size) * Math.PI;
         var h = Math.cos( angH );
@@ -259,12 +258,12 @@ function initScene() {
             var circumY = Math.sin(2 * Math.PI * i_c / circum_size);
             sphere_pts.push( r * circumX * 2.0, r * circumY * 2.0, h * 2.0 );
             sphere_nv.push( r * circumX, r * circumY, h );
-            sphere_col.push( 0.8, 0.4, 0.6 );
+            sphere_col.push( cols[0], cols[1], cols[2] );
         }
     }
     sphere_pts.push( 0.0, 0.0, 2.0 );
     sphere_nv.push( 0.0, 0.0, 1.0 );
-    sphere_col.push( 0.8, 0.4, 0.6 );
+    sphere_col.push( cols[0], cols[1], cols[2] );
     var sphere_inx = [];
     for ( var i_c = 0; i_c < circum_size; ++ i_c ) {
         sphere_inx.push( i_c+1, 0, (i_c+1) % circum_size + 1 )

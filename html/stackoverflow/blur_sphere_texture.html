@@ -99,33 +99,31 @@ html,body { margin: 0; overflow: hidden; }
 
 <body>
 
+<div>
+<form id="gui" name="inputs">
+    <table>
+        <tr> <td> <font color= #CCF>blur</font> </td> <td> <input type="range" id="sigma" min="0" max="100" value="50"/></td> </tr>
+    </table>
+</form>
+
+<canvas id="blur-canvas" style="border: none;"></canvas>
+
 <a id="ref-link" href="https://stackoverflow.com/questions/11282394/what-kind-of-blurs-can-be-implemented-in-pixel-shaders/45878733#45878733">
 <font color= #CCF>What kind of blurs can be implemented in pixel shaders?</font>
 </a>
 
-<div style="margin-left: 520px;">
-    <div style="float: right; width: 100%; background-color: #CCF;">
-        <form name="inputs">
-            <table>
-                <tr> <td> blur </td> 
-                        <td> <input type="range" id="sigma" min="0" max="100" value="50"/></td> </tr>
-            </table>
-        </form>
-    </div>
-    <div style="float: right; width: 520px; margin-left: -520px;">
-        <canvas id="glow-canvas" style="border: none;" width="512" height="512"></canvas>
-    </div>
-    <div style="clear: both;"></div>
-</div>
 </body>
 
 <script type="text/javascript">
+
+(function loadscene() {
 
 var sliderScale = 100.0
 var gl;
 var vp_size;
 var canvas;
 var camera;
+var blurFB;
 var progDraw;
 var progPost;
 var bufObj = {};
@@ -143,12 +141,12 @@ function render(deltaMS){
     vp_size = [canvas.width, canvas.height];
     camera.Update( vp_size );
         
-    gl.viewport( 0, 0, canvas.width, canvas.height );
     gl.enable( gl.DEPTH_TEST );
     gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
 
     // set up framebuffer
     gl.bindFramebuffer( gl.FRAMEBUFFER, blurFB[0] );
+    gl.viewport( 0, 0, blurFB[0].width, blurFB[0].height );
     gl.framebufferTexture2D( gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, blurFB[0].color0_texture, 0 );
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
     
@@ -196,6 +194,7 @@ function render(deltaMS){
     // set blur-X framebuffer and bind frambuffer texture
     gl.framebufferTexture2D( gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, null, 0 );
     gl.bindFramebuffer( gl.FRAMEBUFFER, blurFB[1] );
+    gl.viewport( 0, 0, blurFB[1].width, blurFB[1].height );
     gl.framebufferTexture2D( gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, blurFB[1].color0_texture, 0 );
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
     var texUnit = 1;
@@ -220,6 +219,7 @@ function render(deltaMS){
     // reset framebuffer and bind frambuffer texture
     gl.framebufferTexture2D( gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, null, 0 );
     gl.bindFramebuffer( gl.FRAMEBUFFER, null );
+    gl.viewport( 0, 0, canvas.width, canvas.height );
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
     texUnit = 2;
     gl.activeTexture( gl.TEXTURE0 + texUnit );
@@ -244,7 +244,7 @@ function render(deltaMS){
 
 function initScene() {
 
-    canvas = document.getElementById( "glow-canvas");
+    canvas = document.getElementById( "blur-canvas");
     vp_size = [canvas.width, canvas.height];
     gl = canvas.getContext( "experimental-webgl" );
     if ( !gl )
@@ -268,28 +268,6 @@ function initScene() {
     progBlur.inPos = ShaderProgram.AttributeIndex( progBlur, "inPos" );
     if ( progBlur == 0 )
         return;    
-
-    blurFB = [];
-    for ( var i = 0; i < 2; ++ i ) {
-      fb = gl.createFramebuffer();
-      fb.width = vp_size[0];
-      fb.height = vp_size[1];
-      gl.bindFramebuffer( gl.FRAMEBUFFER, fb );
-      fb.color0_texture = gl.createTexture();
-      gl.bindTexture( gl.TEXTURE_2D, fb.color0_texture );
-      gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST );
-      gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST );
-      gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, fb.width, fb.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null );
-      fb.renderbuffer = gl.createRenderbuffer();
-      gl.bindRenderbuffer( gl.RENDERBUFFER, fb.renderbuffer );
-      gl.renderbufferStorage( gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, fb.width, fb.height );
-      gl.framebufferTexture2D( gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, fb.color0_texture, 0 );
-      gl.framebufferRenderbuffer( gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, fb.renderbuffer );
-      gl.bindTexture( gl.TEXTURE_2D, null );
-      gl.bindRenderbuffer( gl.RENDERBUFFER, null );
-      gl.bindFramebuffer( gl.FRAMEBUFFER, null );
-      blurFB.push( fb );
-    }
 
     // create sphere vertices
     var layer_size = 16, circum_size = 32, radius = 1.0;
@@ -392,11 +370,44 @@ function initScene() {
     gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufQuad.inx );
     gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( [ 0, 1, 2, 0, 2, 3 ] ), gl.STATIC_DRAW );
 
-    camera = new Camera( [0, 1.5, 0.0], [0, 0, 0], [0, 0, 1], 90, [256, 256], 0.5, 100 );
+    camera = new Camera( [0, 1.5, 0.0], [0, 0, 0], [0, 0, 1], 90, vp_size, 0.5, 100 );
 
-    //window.onresize = resize;
-    //resize();
+    window.onresize = resize;
+    resize();
     requestAnimationFrame(render);
+}
+
+function resize() {
+    //vp_size = [gl.drawingBufferWidth, gl.drawingBufferHeight];
+    vp_size = [window.innerWidth, window.innerHeight]
+    //vp_size = [256, 256]
+    canvas.width = vp_size[0];
+    canvas.height = vp_size[1];
+
+    var fbsize = Math.max(vp_size[0], vp_size[1]);
+    fbsize = 1 << 31 - Math.clz32(fbsize); // nearest power of 2
+
+    blurFB = [];
+    for ( var i = 0; i < 2; ++ i ) {
+        fb = gl.createFramebuffer();
+        fb.width = fbsize;
+        fb.height = fbsize;
+        gl.bindFramebuffer( gl.FRAMEBUFFER, fb );
+        fb.color0_texture = gl.createTexture();
+        gl.bindTexture( gl.TEXTURE_2D, fb.color0_texture );
+        gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST );
+        gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST );
+        gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, fb.width, fb.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null );
+        fb.renderbuffer = gl.createRenderbuffer();
+        gl.bindRenderbuffer( gl.RENDERBUFFER, fb.renderbuffer );
+        gl.renderbufferStorage( gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, fb.width, fb.height );
+        gl.framebufferTexture2D( gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, fb.color0_texture, 0 );
+        gl.framebufferRenderbuffer( gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, fb.renderbuffer );
+        gl.bindTexture( gl.TEXTURE_2D, null );
+        gl.bindRenderbuffer( gl.RENDERBUFFER, null );
+        gl.bindFramebuffer( gl.FRAMEBUFFER, null );
+        blurFB.push( fb );
+    }
 }
 
 var sphere_pts = [];
@@ -681,4 +692,5 @@ function EllipticalPosition( a, b, angRag ) {
 
 initScene();
 
+})();
 </script>

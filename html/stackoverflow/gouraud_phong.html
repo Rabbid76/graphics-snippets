@@ -205,7 +205,7 @@ function render(deltaMS){
     var shininess = document.getElementById( "shininess" ).value;
     var ambientCol = [ambient_col.r*ambient/256.0, ambient_col.g*ambient/256.0, ambient_col.b*ambient/256.0];
     var diffuseCol = [diffuse_col.r*diffuse/256.0, diffuse_col.g*diffuse/256.0, diffuse_col.b*diffuse/256.0];
-    var specularCol = [specular_col.r*ambient/256.0, specular_col.g*ambient/256.0, specular_col.b*ambient/256.0];
+    var specularCol = [specular_col.r*specular/256.0, specular_col.g*specular/256.0, specular_col.b*specular/256.0];
     var form = document.getElementById( "form" ).value;
     var shading = document.getElementById( "shading" ).value;
 
@@ -219,12 +219,10 @@ function render(deltaMS){
 
     // setup view projection and model
     var prjMat = camera.Perspective();
-    var viewMat = camera.LookAt(); //camera.Orbit();
+    var viewMat = camera.Orbit();
     var modelMat = IdentityMat44();
-    //modelMat = camera.AutoModelMatrix();
-    modelMat = RotateAxis( modelMat, CalcAng( deltaMS, 13.0 ), 0 );
-    modelMat = RotateAxis( modelMat, CalcAng( deltaMS, 17.0 ), 1 );
-
+    modelMat = camera.AutoModelMatrix();
+    
     gl.enable(gl.CULL_FACE);
     gl.cullFace(gl.BACK);
     //gl.frontFace(gl.CW);
@@ -340,12 +338,13 @@ function initScene() {
     var layer_size = 16, circum_size = 32;
     var rad_circum = 1.0;
     var rad_tube = 0.5;
+    var cols = [0.75, 0.75, 0.75];
     var sphere_pts = [];
     var sphere_nv = [];
     var sphere_col = [];
     sphere_pts.push( 0.0, 0.0, -2.0 );
     sphere_nv.push( 0.0, 0.0, -1.0 );
-    sphere_col.push( 0.75, 0.75, 0.75 );
+    sphere_col.push( cols[0], cols[1], cols[2] );
     for ( var i_l = 1; i_l < layer_size; ++ i_l ) {
         var angH = (1.0 - i_l / layer_size) * Math.PI;
         var h = Math.cos( angH );
@@ -355,13 +354,12 @@ function initScene() {
             var circumY = Math.sin(2 * Math.PI * i_c / circum_size);
             sphere_pts.push( r * circumX * 2.0, r * circumY * 2.0, h * 2.0 );
             sphere_nv.push( r * circumX, r * circumY, h );
-            //sphere_col.push( 0.8, 0.6, 0.3 );
-            sphere_col.push( 0.75, 0.75, 0.75 );
+            sphere_col.push( cols[0], cols[1], cols[2] );
         }
     }
     sphere_pts.push( 0.0, 0.0, 2.0 );
     sphere_nv.push( 0.0, 0.0, 1.0 );
-    sphere_col.push( 0.75, 0.75, 0.75 );
+    sphere_col.push( cols[0], cols[1], cols[2] );
     var sphere_inx = [];
     for ( var i_c = 0; i_c < circum_size; ++ i_c ) {
         sphere_inx.push( i_c+1, 0, (i_c+1) % circum_size + 1 )
