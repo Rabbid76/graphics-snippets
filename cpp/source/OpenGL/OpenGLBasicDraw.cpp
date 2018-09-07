@@ -1,5 +1,5 @@
 /******************************************************************//**
-* \brief   Implementation og generic interface for basic darwing.
+* \brief   Implementation of generic interface for basic drawing.
 * 
 * \author  gernot
 * \date    2018-02-04
@@ -23,16 +23,16 @@
 // OpenGL wrapper
 
 #include <GL/glew.h>
-//#include <GL/gl.h> not necessary because of glew 
+//#include <GL/gl.h> not necessary because of GLEW 
 #include <GL/glu.h>
 
 
-// Util 
+// utility 
 
 #include <RenderUtil_FreetypeFont.h>
 
 
-// stl
+// STL
 
 #include <cassert>
 #include <algorithm>
@@ -885,7 +885,7 @@ bool CSimpleLineRenderer::Draw(
 
     glm::mat4 model = ToGLM( _draw_library._uniforms._model );
 
-    // arrow at the start of the polyline
+    // arrow at the start of the line polygon
     if ( arrow_from )
     {
       // TODO $$$ 3D !!! project to viewport
@@ -902,7 +902,7 @@ bool CSimpleLineRenderer::Draw(
     }
     _draw_library._uniforms._model = model_bk;
 
-    // arrow at the end of the polyline
+    // arrow at the end of the line polygon
     if ( arrow_to )
     {
       // TODO $$$ 3D !!! project to viewport
@@ -944,7 +944,7 @@ bool CSimpleLineRenderer::Draw(
 **********************************************************************/
 CBasicDraw::CBasicDraw( 
   bool         core_mode, //!< - OpenGL core, forward compatibility mode
-  unsigned int samples,   //!< - sapmles for multisampling
+  unsigned int samples,   //!< - samples for multisampling
   float        scale,     //!< - framebuffer scale
   bool         fxaa )     //!< - true: FXAA
   : _core_mode( core_mode )
@@ -1218,7 +1218,7 @@ bool CBasicDraw::Init( void )
   // specify render process
   SpecifyRenderProcess();
 
-  // opaue shader
+  // opaque shader
   try
   {
     _opaque_prog = std::make_unique<OpenGL::ShaderProgram>(
@@ -1230,7 +1230,7 @@ bool CBasicDraw::Init( void )
   catch (...)
   {}
 
-  // opaue line shader
+  // opaque line shader
   try
   {
     _opaque_line_prog = std::make_unique<OpenGL::ShaderProgram>(
@@ -1388,8 +1388,8 @@ bool CBasicDraw::SpecifyRenderProcess( void )
 
   Render::TPass transp_pass( Render::TPassDepthTest::LESS_READONLY, Render::TPassBlending::ADD );
   transp_pass._targets.emplace_back( c_depth_ID, Render::TPass::TTarget::depth, false ); // depth target
-  transp_pass._targets.emplace_back( c_transp_ID, 0 );                                   // tranparency target
-  transp_pass._targets.emplace_back( c_transp_attr_ID, 1 );                              // tranparency attribute target (adaptive tranparency)
+  transp_pass._targets.emplace_back( c_transp_ID, 0 );                                   // transparency target
+  transp_pass._targets.emplace_back( c_transp_attr_ID, 1 );                              // transparency attribute target (adaptive transparency)
   passes.emplace( c_tranp_pass, transp_pass );
 
   Render::TPass background_pass( Render::TPassDepthTest::OFF, Render::TPassBlending::OFF );
@@ -1398,7 +1398,7 @@ bool CBasicDraw::SpecifyRenderProcess( void )
 
   Render::TPass mixcol_pass( Render::TPassDepthTest::OFF, Render::TPassBlending::MIX_PREMULTIPLIED_ALPHA );
   mixcol_pass._sources.emplace_back( c_color_ID,       1 );      // color buffer source
-  mixcol_pass._sources.emplace_back( c_transp_ID,      2 );      // tranparency buffer source
+  mixcol_pass._sources.emplace_back( c_transp_ID,      2 );      // transparency buffer source
   mixcol_pass._sources.emplace_back( c_transp_attr_ID, 3 );      // transparency attribute buffer source
   mixcol_pass._targets.emplace_back( c_mixed_col_ID, 0, false ); // color target
   passes.emplace( c_mixcol_pass, mixcol_pass );
@@ -1415,7 +1415,7 @@ bool CBasicDraw::SpecifyRenderProcess( void )
 
 
 /******************************************************************//**
-* \brief   Set the uniforms and update the unform blocks.
+* \brief   Set the uniforms and update the uniform blocks.
 * 
 * \author  gernot
 * \date    2018-03-16
@@ -1438,7 +1438,7 @@ bool CBasicDraw::UpdateGeneralUniforms( void )
 
 
 /******************************************************************//**
-* \brief   Set the uniforms and update the unform blocks.
+* \brief   Set the uniforms and update the uniform blocks.
 * 
 * \author  gernot
 * \date    2018-03-16
@@ -1480,7 +1480,7 @@ bool CBasicDraw::SetModelUniform(
 * \brief   Change the model matrix uniform.   
 
 * Set up a scaled model matrix, where `p0` the origin, `px` is on
-* the (-)x-axis and a vector in the xz-plan.
+* the (-)x-axis and a vector in the XZ-plan.
 * Multiplies the current model matrix by the new model matrix.
 * 
 * \author  gernot
@@ -1516,7 +1516,7 @@ bool CBasicDraw::SetModelUniform(
 
 
 /******************************************************************//**
-* \brief   Draw full screen sapce.
+* \brief   Draw full screen space.
 * 
 * \author  gernot
 * \date    2018-03-16
@@ -1544,7 +1544,7 @@ void CBasicDraw::DrawScereenspace( void )
 * \version 1.0
 **********************************************************************/
 bool CBasicDraw::EnableMultisample( 
-  bool enable ) //!< in: true: enambe multisample; false: disable mutisample
+  bool enable ) //!< in: true: enable multisampling; false: disable multisampling
 {
   if ( Multisample() == false )
     return false;
@@ -1658,7 +1658,7 @@ bool CBasicDraw::ActivateOpaque( void )
   _unifroms_valid = false;
   UpdateGeneralUniforms();
 
-  // enabel multisampling
+  // enable multisampling
   EnableMultisample( true );
 
   return true;
@@ -1693,7 +1693,7 @@ bool CBasicDraw::ActivateTransparent( void )
   _unifroms_valid = false;
   UpdateGeneralUniforms();
 
-  // enabel multisampling
+  // enable multisampling
   EnableMultisample( true );
 
   return true;
@@ -1729,7 +1729,7 @@ bool CBasicDraw::Finish( void )
   glUseProgram( 0 );
   OPENGL_CHECK_GL_ERROR
 
-  // finsh pass (fxaa)
+  // finish pass (FXAA)
   _process->PrepareNoClear( c_finish_pass );
   _finish_prog->Use();
   DrawScereenspace();
@@ -2000,7 +2000,7 @@ bool CBasicDraw::DrawText2D(
     glDepthMask( GL_TRUE );
 
     glEnable( GL_BLEND );
-    glBlendFunc( GL_ONE, GL_ONE_MINUS_SRC_ALPHA ); // premulitplied alpha
+    glBlendFunc( GL_ONE, GL_ONE_MINUS_SRC_ALPHA ); // premultiplied alpha
     //glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA ); // D * (1-alpha) + S * alpha
     OPENGL_CHECK_GL_ERROR
   }
