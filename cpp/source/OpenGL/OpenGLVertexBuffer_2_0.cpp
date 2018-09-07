@@ -21,11 +21,15 @@
 #include <OpenGLError.h>
 #include <OpenGLVertexBuffer_2_0.h>
 
-#include <assert.h>
 
-#include <GL/glew.h>
-//#include <GL/gl.h> not necessary because of glew 
-#include <GL/glu.h>
+// OpenGL wrapper
+
+#include <OpenGL_include.h>
+
+
+// STL
+
+#include <assert.h>
 
 
 // class implementations
@@ -138,15 +142,15 @@ void CDrawBuffer_2_0::UnbindVAO( void )
   for ( int i_vbo=0; i_vbo<no_of_vbo; ++ i_vbo )
   {
     int buffer_inx = key[i_key + eVboOffset_index];            // internal index of the array buffer
-    int stride     = key[i_key + eVboOffset_stride];           // (strid / 4) from one attribute to the next attribute
+    int stride     = key[i_key + eVboOffset_stride];           // (stride / 4) from one attribute to the next attribute
     int no_of_attr = key[i_key + eVboOffset_no_of_attributes]; // number of attributes in the set
     i_key += eVboSize;
     for ( int i_attr=0; i_attr<no_of_attr; ++ i_attr )
     {
-      int attr_id   = key[i_key + eAtrributeOffset_id];     // attribute index or clinet state id
+      int attr_id   = key[i_key + eAtrributeOffset_id];     // attribute index or client state id
       int attr_size = key[i_key + eAtrributeOffset_size];   // size of the attribute 1, 2, 3 or 4
       int attr_type = key[i_key + eAtrributeOffset_type];   // type id of the attribute
-      int attr_offs = key[i_key + eAtrributeOffset_offset]; // (offset / 4) otf the attribute in the attribute set
+      int attr_offs = key[i_key + eAtrributeOffset_offset]; // (offset / 4) of the attribute in the attribute set
       i_key += eAttributeSize;
       DisableAttribute( attr_id );
     }
@@ -172,7 +176,7 @@ void CDrawBuffer_2_0::BindVAO( void )
   if ( vao_ptr == nullptr )
     return;
 
-  // setup the clinet states and pointes and bind element array buffer (optional)
+  // setup the client states and pointers and bind element array buffer (optional)
   PreprateAttributesAndIndices( std::get<c_descr>( *vao_ptr ) );
 }
 

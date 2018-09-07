@@ -22,11 +22,16 @@
 #include <OpenGLError.h>
 #include <OpenGLVertexBufferCompatibility.h>
 
+
+// OpenGL wrapper
+
+#include <OpenGL_include.h>
+
+
+// STL
+
 #include <assert.h>
 
-#include <GL/glew.h>
-//#include <GL/gl.h> not necessary because of glew 
-#include <GL/glu.h>
 
 
 // class implementations
@@ -110,7 +115,7 @@ CDrawBuffer & CDrawBuffer::operator = (
 
 /******************************************************************//**
 * \brief   Define and enable an array of generic vertex attribute or
-* define and enable a clinet array.
+* define and enable a client array.
 * 
 * \author  gernot
 * \date    2017-11-27
@@ -121,7 +126,7 @@ void CDrawBuffer::DefineAndEnableAttribute(
   int                    attr_size, //!< I - size of attribute: 1, 2, 3 or 4
   Render::TAttributeType elem_type, //!< I - type id of an element
   int                    attr_offs, //!< I - offset of the attribute in the attribute record set
-  int                    stride     //!< I - strid between two attribute record sets 
+  int                    stride     //!< I - stride between two attribute record sets 
   ) const
 {
   if ( attr_id >= 0 )
@@ -183,7 +188,7 @@ void CDrawBuffer::DefineAndEnableAttribute(
 
 /******************************************************************//**
 * \brief   disable an array of generic vertex attribute or
-* disable a clinet array.
+* disable a client array.
 * 
 * \author  gernot
 * \date    2017-11-27

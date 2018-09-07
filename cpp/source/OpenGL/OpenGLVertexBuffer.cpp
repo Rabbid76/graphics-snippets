@@ -15,13 +15,17 @@
 #include <OpenGLError.h>
 #include <OpenGLVertexBuffer.h>
 
+
+// OpenGL wrapper
+
+#include <OpenGL_include.h>
+
+
+// STL
+
 #include <array>
 #include <algorithm>
 #include <assert.h>
-
-#include <GL/glew.h>
-//#include <GL/gl.h> not necessary because of glew 
-#include <GL/glu.h>
 
 
 // class implementations
@@ -53,8 +57,8 @@ CDrawBuffer::CDrawBuffer( void )
 * \version 1.0
 **********************************************************************/
 CDrawBuffer::CDrawBuffer( 
-  Render::TDrawBufferUsage usage,       //!< ! - usage of vertex buffer
-  size_t                   minVboSize ) //!< I -  minimum size of vertex buffer object
+  Render::TDrawBufferUsage  usage,       //!< ! - usage of vertex buffer
+  size_t                    minVboSize ) //!< I -  minimum size of vertex buffer object
   : _usage( usage )
   , _minVboSize( minVboSize )
 {}
@@ -114,7 +118,7 @@ CDrawBuffer & CDrawBuffer::operator = (
 CDrawBuffer::~CDrawBuffer()
 {
   // unbind any vertex array
-  glBindVertexArray( 0 );
+  UnbindAnyVertexArrayObject();
   OPENGL_CHECK_GL_ERROR
 
   // delete array buffers
@@ -147,8 +151,35 @@ CDrawBuffer::~CDrawBuffer()
 
 
 /******************************************************************//**
+* \brief   Bind a named vertex array object.
+* 
+* \author  gernot
+* \date    2018-09-07
+* \version 1.0
+**********************************************************************/
+void CDrawBuffer::BindVertexArrayObject( 
+  unsigned int currentVAO ) //!< I - vertex array object
+{
+  glBindVertexArray( currentVAO );
+}
+
+
+/******************************************************************//**
+* \brief   Bind the default vertex array object 0.
+* 
+* \author  gernot
+* \date    2018-09-07
+* \version 1.0
+**********************************************************************/
+void CDrawBuffer::UnbindAnyVertexArrayObject( void )
+{
+  glBindVertexArray( 0 );
+}
+
+
+/******************************************************************//**
 * \brief   Return OpenGL primitive type enumerator for a 
-* generic primitve type 
+* generic primitive type 
 * 
 * \author  gernot
 * \date    2017-11-27
@@ -243,7 +274,7 @@ unsigned int CDrawBuffer::Usage( void ) const
 **********************************************************************/
 void CDrawBuffer::UnbindVAO( void )
 {
-  glBindVertexArray( 0 );
+  BindVertexArrayObject( 0 );
   OPENGL_CHECK_GL_ERROR
 }
 
@@ -258,7 +289,7 @@ void CDrawBuffer::UnbindVAO( void )
 void CDrawBuffer::BindVAO( void )
 {
   assert( _currentVAO != 0 );
-  glBindVertexArray( _currentVAO );
+  BindVertexArrayObject( _currentVAO );
   OPENGL_CHECK_GL_ERROR
 }
 
@@ -275,7 +306,7 @@ void CDrawBuffer::DefineAndEnableAttribute(
   int                    attr_size, //!< I - size of attribute: 1, 2, 3 or 4
   Render::TAttributeType elem_type, //!< I - type id of an element
   int                    attr_offs, //!< I - offset of the attribute in the attribute record set
-  int                    stride     //!< I - strid between two attribute record sets 
+  int                    stride     //!< I - stride between two attribute record sets 
   ) const
 {
   assert( attr_id >= 0 );
@@ -321,21 +352,21 @@ void CDrawBuffer::PreprateAttributesAndIndices(
   int i_ibo        = key[eHeadOffset_ibo];       // index buffer id (< 0 means no index buffer)
   size_t no_of_vbo = key[eHeadOffset_no_of_vbo]; // number of array buffers
 
-  // Create a new vertex array opject according to the description
+  // Create a new vertex array object according to the description
   int i_key = eHeadSize;
   for ( int i_vbo=0; i_vbo<no_of_vbo; ++ i_vbo )
   {
     int buffer_inx = key[i_key + eVboOffset_index];            // internal index of the array buffer
-    int stride     = key[i_key + eVboOffset_stride];           // (strid / 4) from one attribute to the next attribute
+    int stride     = key[i_key + eVboOffset_stride];           // (stride / 4) from one attribute to the next attribute
     int no_of_attr = key[i_key + eVboOffset_no_of_attributes]; // number of attributes in the set
     i_key += eVboSize;
     glBindBuffer( GL_ARRAY_BUFFER, std::get<c_obj>( _vbos[buffer_inx] ) );
     for ( int i_attr=0; i_attr<no_of_attr; ++ i_attr )
     {
-      int attr_id   = key[i_key + eAtrributeOffset_id];     // attribute index or clinet state id
+      int attr_id   = key[i_key + eAtrributeOffset_id];     // attribute index or client state id
       int attr_size = key[i_key + eAtrributeOffset_size];   // size of the attribute 1, 2, 3 or 4
       int attr_type = key[i_key + eAtrributeOffset_type];   // type id of the attribute
-      int attr_offs = key[i_key + eAtrributeOffset_offset]; // (offset / 4) otf the attribute in the attribute set
+      int attr_offs = key[i_key + eAtrributeOffset_offset]; // (offset / 4) of the attribute in the attribute set
       i_key += eAttributeSize;
       this->DefineAndEnableAttribute( attr_id, attr_size, static_cast<Render::TAttributeType>(attr_type), attr_offs*4, stride*4 );
     }
@@ -353,8 +384,8 @@ void CDrawBuffer::PreprateAttributesAndIndices(
 
 
 /******************************************************************//**
-* \brief   Create all the requred array buffers and optional the 
-* element arry buffer
+* \brief   Create all the required array buffers and optional the 
+* element array buffer
 * 
 * \author  gernot
 * \date    2017-11-2z
@@ -475,13 +506,13 @@ void CDrawBuffer::SpecifyVA(
   _vaos[hashCode] = std::make_tuple( _currentVAO, key );
   this->BindVAO();
 
-  // Create a new vertex array opject according to the description
+  // Create a new vertex array object according to the description
   PreprateAttributesAndIndices( key );
 
   // Unbind the vertex array object
   this->UnbindVAO();
 
-  // Unbinde the element array buffer
+  // Unbind the element array buffer
   // This has to be done after the vertex array object is unbound, otherwise the association to the vertex array object would be lost.
   if ( i_ibo >= 0 )
   {
@@ -505,7 +536,7 @@ void CDrawBuffer::SpecifyVA(
 bool CDrawBuffer::UpdateVB( 
   size_t      id,             //!< I - internal index of the array buffer 
   size_t      element_size,   //!< I - size of one array element 
-  size_t      no_of_elements, //!< I - number of of the new data
+  size_t      no_of_elements, //!< I - number of the new data
   const void *data )          //!< I - the new data
 {
   if ( id >= _vbos.size() )
@@ -541,7 +572,7 @@ bool CDrawBuffer::UpdateVB(
 bool CDrawBuffer::UpdateIB( 
   size_t      id,             //!< I - internal id of the element array buffer 
   size_t      element_size,   //!< I - size of one array element 
-  size_t      no_of_elements, //!< I - number of of the new data
+  size_t      no_of_elements, //!< I - number of the new data
   const void *data )          //!< I - the new data
 {
   auto ibIt = _ibos.find( id );
@@ -560,7 +591,7 @@ bool CDrawBuffer::UpdateIB(
   curr_noOfElems = no_of_elements;
   curr_elemSize  = element_size;
 
-  // update current size of elments
+  // update current size of elements
   CDrawBuffer::TVAO *vao_ptr = CDrawBuffer::FindExistingVAO( this->_currentVAO );
   if ( vao_ptr != nullptr && std::get<c_descr>( *vao_ptr )[0] == id )
   {
@@ -573,7 +604,7 @@ bool CDrawBuffer::UpdateIB(
 
 
 /******************************************************************//**
-* \brief   Draw the indizes of the current index buffer.
+* \brief   Draw the indices of the current index buffer.
 * 
 * \author  gernot
 * \date    2017-11-27
@@ -593,7 +624,7 @@ void CDrawBuffer::DrawAllElements(
 
 
 /******************************************************************//**
-* \brief   Draw `count` indizes of the current index buffer, starting
+* \brief   Draw `count` indices of the current index buffer, starting
 * at `start`.
 * If `count == 0`, all the indices from `start` to the end of the index
 * buffer will be drawn.
@@ -620,7 +651,7 @@ void CDrawBuffer::DrawElements(
 
 
 /******************************************************************//**
-* \brief   Draw the indizes which are given by the index array.
+* \brief   Draw the indices which are given by the index array.
 * 
 * \author  gernot
 * \date    2017-11-27
@@ -629,7 +660,7 @@ void CDrawBuffer::DrawElements(
 void CDrawBuffer::DrawElements( 
   Render::TPrimitive  primitive_type, //!< I - OpenGL primitive type
   size_t              element_size,   //!< I - size of one array element 
-  size_t              no_of_elements, //!< I - number of of the new data
+  size_t              no_of_elements, //!< I - number of the new data
   const void         *data,           //!< I - the new data
   bool                bind )          //!< I - true : vertex array object  will be bound; false: vertex array object is already bound
 {
@@ -651,8 +682,8 @@ void CDrawBuffer::DrawElements(
   Render::TPrimitive  primitive_type, //!< I - OpenGL primitive type
   size_t              element_size,   //!< I - size of one array element 
   size_t              list_size,      //!< I - length of the list
-  const int          *no_of_elements, //!< I - list of the elment counts
-  const void * const *data,           //!< I - list ot he indices arrays
+  const int          *no_of_elements, //!< I - list of the element counts
+  const void * const *data,           //!< I - list of the indices arrays
   bool                bind )          //!< I - true : vertex array object  will be bound; false: vertex array object is already bound
 {
   if ( bind )
@@ -663,7 +694,7 @@ void CDrawBuffer::DrawElements(
 
 
 /******************************************************************//**
-* \brief   Draw `count` indizes of the current index buffer, starting
+* \brief   Draw `count` indices of the current index buffer, starting
 * at `start`.
 * If `count == 0`, all the indices from `start` to the end of the index
 * buffer will be drawn.
@@ -676,7 +707,7 @@ void CDrawBuffer::DrawElementsBase(
   Render::TPrimitive primitive_type, //!< I - OpenGL primitive type
   size_t             start,          //!< I - first index to be draw
   size_t             count,          //!< I - number of indices to be drawn (if == 0, all the indices from `start` to the end of the index buffer will be drawn)
-  size_t             base_index,     //!< I - constant that should be added to each element of indices when chosing elements from the enabled vertex arrays
+  size_t             base_index,     //!< I - constant that should be added to each element of indices when choosing elements from the enabled vertex arrays
   bool               bind )          //!< I - true : vertex array object  will be bound; false: vertex array object is already bound
 {
   if ( _currNoElems == 0 || start >= _currNoElems )
@@ -691,7 +722,7 @@ void CDrawBuffer::DrawElementsBase(
 
 
 /******************************************************************//**
-* \brief   Draw the indizes which are given by the index array.
+* \brief   Draw the indices which are given by the index array.
 * 
 * \author  gernot
 * \date    2017-11-27
@@ -700,9 +731,9 @@ void CDrawBuffer::DrawElementsBase(
 void CDrawBuffer::DrawElementsBase( 
   Render::TPrimitive  primitive_type, //!< I - OpenGL primitive type
   size_t              element_size,   //!< I - size of one array element 
-  size_t              no_of_elements, //!< I - number of of the new data
+  size_t              no_of_elements, //!< I - number of the new data
   const void         *data,           //!< I - the new data
-  size_t              base_index,     //!< I - constant that should be added to each element of indices when chosing elements from the enabled vertex arrays
+  size_t              base_index,     //!< I - constant that should be added to each element of indices when choosing elements from the enabled vertex arrays
   bool                bind )          //!< I - true : vertex array object  will be bound; false: vertex array object is already bound
 {
   if ( bind )
@@ -713,7 +744,7 @@ void CDrawBuffer::DrawElementsBase(
 
 
 /******************************************************************//**
-* \brief   Draw the elemnts of the current index buffer, if the index
+* \brief   Draw the elements of the current index buffer, if the index
 * is greater or equal than `minInx` and less or equal than `maxInx` 
 * 
 * \author  gernot
@@ -810,7 +841,7 @@ CDrawBuffer::THashCode CDrawBuffer::HashDescription(
 * \version 1.0
 **********************************************************************/
 bool CDrawBuffer::FindExistingVAO( 
-  THashCode   hashCode,         //!< I - optional the hash conde of the description, (if == 0 the hashcode is computed)
+  THashCode   hashCode,         //!< I - optional the hash code of the description, (if == 0 the hash code is computed)
   size_t      description_size, //!< I - size of description array
   const char *description )     //!< I - description - specification of vertices and indices
 {

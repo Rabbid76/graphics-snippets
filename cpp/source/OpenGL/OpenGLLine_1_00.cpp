@@ -14,6 +14,11 @@
 #include <OpenGLLine_1_0.h>
 
 
+// OpenGL wrapper
+
+#include <OpenGL_include.h>
+
+
 // class definitions
 
 

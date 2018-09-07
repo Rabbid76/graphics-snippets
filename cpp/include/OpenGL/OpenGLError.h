@@ -51,6 +51,8 @@ class CError
 {
 public: 
 
+  virtual bool TestErrors( void ) { return true; }
+
   unsigned int Check( void );
 };
 

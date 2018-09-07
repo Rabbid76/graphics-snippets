@@ -120,6 +120,9 @@
     <ClInclude Include="..\include\OpenGL\OpenGLLine_4.h">
       <Filter>OpenGL</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\OpenGL\OpenGL_include.h">
+      <Filter>OpenGL</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

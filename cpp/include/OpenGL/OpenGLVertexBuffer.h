@@ -109,6 +109,9 @@ public: // public operations
 
 protected: // protected operations
 
+  virtual void BindVertexArrayObject( unsigned int currentVAO );
+  virtual void UnbindAnyVertexArrayObject( void );
+
   unsigned int PrimitiveType( Render::TPrimitive primitove_type ) const;
   unsigned int DataType( Render::TAttributeType elem_type ) const;
   unsigned int IndexType( size_t element_size ) const;

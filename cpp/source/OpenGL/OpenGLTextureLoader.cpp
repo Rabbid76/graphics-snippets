@@ -18,12 +18,10 @@
 
 // OpenGL wrapper
 
-#include <GL/glew.h>
-//#include <GL/gl.h> not necessary because of glew 
-#include <GL/glu.h>
+#include <OpenGL_include.h>
 
 
-// stl
+// STL
 
 #include <algorithm> 
 #include <unordered_map>
@@ -354,7 +352,7 @@ unsigned int CTextureLoader::InternalFormat(
 /******************************************************************//**
 * \brief Map filter type to OpenGL minifying filter enumerator constant.
 *
-* It make only sense to appy trilinear filter if the maximum mipmaplevel
+* It make only sense to apply trilinear filter if the maximum mipmap level
 * is greater than 1.
 * 
 * \author  gernot
@@ -363,7 +361,7 @@ unsigned int CTextureLoader::InternalFormat(
 **********************************************************************/
 unsigned int CTextureLoader::Minifying( 
   Render::TTextureFilter filter,            //!< in: filter
-  int                    max_mipmap_level ) //!< in: maximum mip map level
+  int                    max_mipmap_level ) //!< in: maximum mipmap level
 {
   static const std::unordered_map< Render::TTextureFilter, std::array<GLenum, 2> > filter_map
   {
@@ -388,14 +386,14 @@ unsigned int CTextureLoader::Minifying(
 **********************************************************************/
 unsigned int CTextureLoader::Magnification( 
   Render::TTextureFilter filter,            //!< in: filter
-  int                    max_mipmap_level ) //!< in: maximum mip map level
+  int                    max_mipmap_level ) //!< in: maximum mipmap level
 {
   return filter != Render::TTextureFilter::NON ? GL_LINEAR : GL_NEAREST;
 }
 
 
 /******************************************************************//**
-* \brief Mmap texture wrap parameters to OpenGL minifying filter
+* \brief Mipmap texture wrap parameters to OpenGL minifying filter
 * enumerator constant.  
 * 
 * \author  gernot
@@ -419,7 +417,7 @@ unsigned int CTextureLoader::Wrap(
 
 
 /******************************************************************//**
-* \brief Mmap texture wrap parameters to OpenGL minifying filter
+* \brief Mipmap texture wrap parameters to OpenGL minifying filter
 * enumerator constant.  
 * 
 * \author  gernot
@@ -439,7 +437,7 @@ std::array<unsigned int, 3> CTextureLoader::Wrap(
 
  
 /******************************************************************//**
-* \brief Get texture paramters for the initial creation of a texture.  
+* \brief Get texture parameters for the initial creation of a texture.  
 * 
 * \author  gernot
 * \date    2018-07-09
@@ -448,7 +446,7 @@ std::array<unsigned int, 3> CTextureLoader::Wrap(
 Render::TTextureParameters CTextureLoader::TextureParamterLeve0( 
   const Render::TTextureParameters &parameter ) //!< I - original parameter
 {
-  // disable trilinear filter and mip mapping
+  // disable trilinear filter and mipmapping
   Render::TTextureParameters paramter_leve0 = parameter;
   if ( paramter_leve0._filter == Render::TTextureFilter::trilinear )
     paramter_leve0._filter = Render::TTextureFilter::bilinear;
@@ -460,7 +458,7 @@ Render::TTextureParameters CTextureLoader::TextureParamterLeve0(
 
 
 /******************************************************************//**
-* \brief  Apply OpenGL texture paramter to current texture object.  
+* \brief  Apply OpenGL texture parameter to current texture object.  
 *
 * Set the texture parameter properties. If necessary then mipmaps are
 * generated. 
@@ -519,7 +517,7 @@ bool CTextureLoader::SetTextureParameter(
 * Rectangle textures do not support mipmapping (it is an error to specify a minification
 * filter that requires mipmapping). A mipmap is an ordered set of arrays representing
 * the same image; each array has a resolution lower than the previous one.
-* If the texture image of level levelbase has dimensions \f$ w_s \cdot h_s \cdot d_s \f$,
+* If the texture image of level base has dimensions \f$ w_s \cdot h_s \cdot d_s \f$,
 * then there are \f$ \lfloor log_2\left( \mathrm{maxsize} \right)\rfloor + 1\f$  levels
 * in the mipmap, where \f$ \mathrm{maxsize} = \max\left( w_s, h_s\right)\f$.
 *
@@ -634,7 +632,7 @@ Render::ITexturePtr CTextureLoader::CreateTexture(
     glTexImage2D( target, 0, internal_format, (GLsizei)size[0], (GLsizei)size[1], 0, format, type, nullptr );
   }
 
-  // set the texture paramters
+  // set the texture parameters
   if ( set_parameters )
     SetTextureParameter( (GLuint)texture->ObjectHandle(), parameter, MaxAnisotropicSamples() );
 
@@ -651,7 +649,7 @@ Render::ITexturePtr CTextureLoader::CreateTexture(
 **********************************************************************/
 Render::ITexturePtr CTextureLoader::CreateTexture(
   const Render::IImageResource     &image,      //!< in: source image resource
-  Render::TImageTransformations     transform,  //!< in: special transformtion algorithm
+  Render::TImageTransformations     transform,  //!< in: special transformation algorithm
   const Render::TTextureSize       &size,       //!< in: texture size
   size_t                            layers,     //!< in: number of layers
   const Render::TTextureParameters &parameter ) //!< in: texture properties
@@ -716,7 +714,7 @@ bool CTextureLoader::LoadToTexture(
     return false;
   }
 
-  // set the alignemt of the start of a line of the image reource
+  // set the alignment of the start of a line of the image resource
   size_t alignment = image.LineAlign();
   glPixelStorei( GL_UNPACK_ALIGNMENT, (GLint)alignment );
 
@@ -725,7 +723,7 @@ bool CTextureLoader::LoadToTexture(
   GLenum type   = ImageDataType( image.Format() );
   glTexSubImage2D(GL_TEXTURE_2D, 0, (GLsizei)pos[0], (GLsizei)pos[1], (GLsizei)image.Size()[0], (GLsizei)image.Size()[1], format, type, image.DataPtr() );
 
-  // set the default alignemnt
+  // set the default alignment
   glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
 
   return true;

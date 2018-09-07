@@ -16,13 +16,13 @@
 #include <OpenGLError.h>
 #include <OpenGLFramebuffer.h>
 
+
 // OpenGL wrapper
 
-#include <GL/glew.h>
-//#include <GL/gl.h> not necessary because of glew 
-#include <GL/glu.h>
+#include <OpenGL_include.h>
 
-// stl
+
+// STL
 
 #include <algorithm> 
 #include <iostream>
@@ -97,8 +97,8 @@ void CRenderProcess::Invalidate( void )
 
 
 /******************************************************************//**
-* \brief   Destroy the buffer opjects and the passes objects.
-* Destroy textue and framebuffer objects.
+* \brief   Destroy the buffer objects and the passes objects.
+* Destroy texture and framebuffer objects.
 * 
 * \author  gernot
 * \date    2018-02-11
@@ -106,7 +106,7 @@ void CRenderProcess::Invalidate( void )
 **********************************************************************/
 void CRenderProcess::Destruct( void ) 
 {
-  // destroy frambuffer objects (GPU)
+  // destroy framebuffer objects (GPU)
   std::vector<unsigned int> delFbs;
   for ( auto & fbs : _fbs )
   {
@@ -116,7 +116,7 @@ void CRenderProcess::Destruct( void )
   glDeleteFramebuffers( (GLsizei)delFbs.size(), delFbs.data() );
   OPENGL_CHECK_GL_ERROR
 
-  // destroy texture opbjects (GPU)
+  // destroy texture objects (GPU)
   std::vector<unsigned int> delTex;
   for ( auto & tex : _textures )
   {
@@ -167,7 +167,7 @@ void CRenderProcess::DeleteUnnecessaryTextures( void )
     if ( texRequired )
       continue;
 
-    // note thes textures which have to be deleted (GPU)
+    // note this textures which have to be deleted (GPU)
     if ( tex.second._extern == false)
       texDelObjects.emplace_back(tex.second._object);
 
@@ -179,7 +179,7 @@ void CRenderProcess::DeleteUnnecessaryTextures( void )
   for ( auto texId : texDelIDs )
     _textures.erase( texId );
 
-  // delte texture GPU objects
+  // delete texture GPU objects
   if ( texDelObjects.empty() == false )
   {
     glDeleteTextures( (GLsizei)texDelObjects.size(), texDelObjects.data() );
@@ -198,13 +198,13 @@ void CRenderProcess::DeleteUnnecessaryTextures( void )
 **********************************************************************/
 void CRenderProcess::DeleteUnnecessaryFrambuffers( void )
 {
-  // collect all pass/frambuffer IDs and GPU framebuffer objects which have to be deleted
+  // collect all pass/framebuffer IDs and GPU framebuffer objects which have to be deleted
   std::vector<size_t>       fbDelIDs;
   std::vector<unsigned int> fbDelObjects;
   for ( auto & fb : _fbs )
   {
-    // Search the pass/frambuffer ID in the list of the passes.
-    // Note, a frambuffer is only requred for a pass with target specification else the default buffer is used.
+    // Search the pass/framebuffer ID in the list of the passes.
+    // Note, a framebuffer is only required for a pass with target specification else the default buffer is used.
     auto passIt = _passes.find( fb.first );
     bool fbRequired = passIt != _passes.end() && passIt->second._targets.empty() == false;
 
@@ -215,11 +215,11 @@ void CRenderProcess::DeleteUnnecessaryFrambuffers( void )
     }
   }
 
-  // erase frambuffer objects from map
+  // erase framebuffer objects from map
   for ( auto fbID : fbDelIDs )
     _fbs.erase( fbID );
 
-  // delte frambuffer GPU objects
+  // delete framebuffer GPU objects
   if ( fbDelObjects.empty() == false )
   {
     glDeleteFramebuffers( (GLsizei)fbDelObjects.size(), fbDelObjects.data() );
@@ -241,7 +241,7 @@ void CRenderProcess::DeleteUnnecessaryFrambuffers( void )
 **********************************************************************/
 std::array<unsigned int, 3> CRenderProcess::InternalFormat(
   Render::TBufferType     buffer,  //!< in: type of the buffer
-  Render::TBufferDataType format ) //!< in: interrnal format
+  Render::TBufferDataType format ) //!< in: internal format
 {
   static const std::array<unsigned int, 3> return_fail{ 0, 0, 0 };
 
@@ -349,7 +349,7 @@ std::array<unsigned int, 3> CRenderProcess::InternalFormat(
 
 
 /******************************************************************//**
-* \brief Get the side name enumerator of a cubemap side.
+* \brief Get the side name enumerator of a cube map side.
 * 
 * \author  gernot
 * \date    2018-06-26
@@ -546,7 +546,7 @@ bool CRenderProcess::SpecifyPasses(
 
 
 /******************************************************************//**
-* \brief   Validate the specifcations.
+* \brief   Validate the specifications.
 * 
 * \author  gernot
 * \date    2018-02-11
@@ -568,8 +568,8 @@ bool CRenderProcess::Validate( void )
     size_t         passId   = pass.first;  // name of the pass
     Render::TPass &passSpec = pass.second; // specification of the pass
 
-    // calclate the pass scale 
-    // (all OpenGL color attachments to farmebuffer have to have the same scale to achieve frambuffbuffer completness)
+    // calculate the pass scale 
+    // (all OpenGL color attachments to framebuffer have to have the same scale to achieve framebuffer completeness)
     std::array<float, 2> scale_range{ 1.0e10, 0.0 };
     for ( auto & target : passSpec._targets )
     {
@@ -603,7 +603,7 @@ bool CRenderProcess::Validate( void )
         if ( fabs(_scales[target._bufferID] - scale ) > 0.0001 )
         {
           Invalidate();
-          DebugWarning << "buffer scale missmatch (" << _scales[target._bufferID] << " <-> " << scale << ") for buffer " << target._bufferID << " in pass " << passId;
+          DebugWarning << "buffer scale mismatch (" << _scales[target._bufferID] << " <-> " << scale << ") for buffer " << target._bufferID << " in pass " << passId;
         }
       }
       else
@@ -624,20 +624,20 @@ bool CRenderProcess::Validate( void )
         auto bufferIt = _buffers.find( target._bufferID );
         if ( bufferIt == _buffers.end() )
         { 
-          // if ther is no buffer specification, then a render buffer is used, but render buffer cannot be layered
+          // if there is no buffer specification, then a render buffer is used, but render buffer cannot be layered
           Invalidate();
-          DebugWarning << "buffer layer missmatch (" << target._bufferID << ") in pass " << passId;
+          DebugWarning << "buffer layer mismatch (" << target._bufferID << ") in pass " << passId;
         }
 
         // See [Framebuffer Completeness - Completeness Rules](https://www.khronos.org/opengl/wiki/Framebuffer_Object#Completeness_Rules)
         // If a layered image is attached to one attachment, then all attachments must be layered attachments.
         // The attached layers do not have to have the same number of layers,
-        // nor do the layers have to come from the same kind of texture (a cubemap color texture can be paired with an array depth texture). 
+        // nor do the layers have to come from the same kind of texture (a cube map color texture can be paired with an array depth texture). 
         bool is_layerd = IsLayered( bufferIt->second._layers );
         if ( is_layerd == false )
         { 
           Invalidate();
-          DebugWarning << "buffer layer missmatch (" << target._bufferID << ") in pass " << passId;
+          DebugWarning << "buffer layer mismatch (" << target._bufferID << ") in pass " << passId;
         }
       }
     }
@@ -650,13 +650,13 @@ bool CRenderProcess::Validate( void )
         if ( bufferIt == _buffers.end() )
         { 
           Invalidate();
-          DebugWarning << "buffer multisample missmatch (" << target._bufferID << ") in pass " << passId;
+          DebugWarning << "buffer multisample mismatch (" << target._bufferID << ") in pass " << passId;
         }
         bool is_multisampled = IsMultisampled( bufferIt->second._multisamples );
         if ( is_multisampled == false )
         { 
           Invalidate();
-          DebugWarning << "buffer multisample missmatch (" << target._bufferID << ") in pass " << passId;
+          DebugWarning << "buffer multisample mismatch (" << target._bufferID << ") in pass " << passId;
         }
       }
     }
@@ -679,7 +679,7 @@ bool CRenderProcess::Validate( void )
 
 
 /******************************************************************//**
-* \brief   Update a buffer texture acoording to the buffer specification. 
+* \brief   Update a buffer texture according to the buffer specification. 
 * 
 * \author  gernot
 * \date    2018-02-11
@@ -703,7 +703,7 @@ void CRenderProcess::UpdateTexture(
   newTexture._multisamples = specification._multisamples;
   newTexture._linear       = specification._flag.test( Render::TBuffer::e_linear );
 
-  // set the the extern textue object
+  // set the extern texture object
   newTexture._extern       = specification._flag.test( Render::TBuffer::e_extern );
   newTexture._object       = newTexture._extern ? specification._extern_object : 0;
   newTexture._cubemap      = specification._flag.test( Render::TBuffer::e_cubemap );
@@ -730,7 +730,7 @@ void CRenderProcess::UpdateTexture(
     return;
   }
 
-  // check if the textue object exists and has a proper format and size
+  // check if the texture object exists and has a proper format and size
   if ( texIt != _textures.end() )
   {
     // If an identical and proper object exists, nothing more has to done.
@@ -771,7 +771,7 @@ void CRenderProcess::UpdateTexture(
   else if ( is_cubemap )
   {
     if ( newTexture._cubemap_side >= 0 )
-      DebugWarning << "a single cubmap side can't be created" << (int)newTexture._cubemap_side;
+      DebugWarning << "a single cube map side can't be created" << (int)newTexture._cubemap_side;
     target_texture = GL_TEXTURE_CUBE_MAP;
     glBindTexture( target_texture, newTexture._object ); OPENGL_CHECK_GL_ERROR
 
@@ -823,15 +823,15 @@ void CRenderProcess::UpdateTexture(
 * \brief   Create a render buffer according to the target specification
 * and attach the render buffer to the framebuffer attachment point,
 * which is specified in the target specification.
-* The frmabuffer has to be bound.
-* The name of the new renderbuffer object (GPU) is returned.
+* The framebuffer has to be bound.
+* The name of the new render buffer object (GPU) is returned.
 * 
 * \author  gernot
 * \date    2018-02-11
 * \version 1.0
 **********************************************************************/
 unsigned int CRenderProcess::CreateFrambufferRenderBuffer( 
-  const TFramebufferObject     &fb,      //!< in: frambuffer specification 
+  const TFramebufferObject     &fb,      //!< in: framebuffer specification 
   const Render::TPass::TTarget &target ) //!< in: the target specification
 {
   if ( target._bufferID != Render::TPass::TTarget::no )
@@ -851,7 +851,7 @@ unsigned int CRenderProcess::CreateFrambufferRenderBuffer(
        target._attachment == Render::TPass::TTarget::stencil ||
        target._attachment == Render::TPass::TTarget::depth_stencil )
   {
-    // depth/stencil attachmnet 
+    // depth/stencil attachment 
 
     // type of the attachment
     if ( target._attachment == Render::TPass::TTarget::depth )
@@ -871,7 +871,7 @@ unsigned int CRenderProcess::CreateFrambufferRenderBuffer(
   }
   else
   {
-    // color attachmnet
+    // color attachment
 
     // type of the attachment
     GLenum attachType = (GLenum)(GL_COLOR_ATTACHMENT0 + target._attachment);
@@ -889,7 +889,7 @@ unsigned int CRenderProcess::CreateFrambufferRenderBuffer(
   // unbind the render buffer
   glBindRenderbuffer( GL_RENDERBUFFER, 0 ); OPENGL_CHECK_GL_ERROR
   
-  // attach render buffer to frambuffer 
+  // attach render buffer to framebuffer 
   glFramebufferRenderbuffer( GL_FRAMEBUFFER, attachType, GL_RENDERBUFFER, rbo ); OPENGL_CHECK_GL_ERROR
 
   return rbo;
@@ -897,16 +897,16 @@ unsigned int CRenderProcess::CreateFrambufferRenderBuffer(
 
 
 /******************************************************************//**
-* \brief   Attach a texture to the framebuffer attachmnet point,
+* \brief   Attach a texture to the framebuffer attachment point,
 * which is specified in the target specification.
-* The textue has to exist and frmabuffer has to be bound.
+* The texture has to exist and framebuffer has to be bound.
 * 
 * \author  gernot
 * \date    2018-02-11
 * \version 1.0
 **********************************************************************/
 void CRenderProcess::AttachFrambufferTextureBuffer( 
-  const TFramebufferObject     &fb,      //!< in: frambuffer specification 
+  const TFramebufferObject     &fb,      //!< in: framebuffer specification 
   const Render::TPass::TTarget &target ) //!< in: the target specification
 {
   if ( target._bufferID == Render::TPass::TTarget::no )
@@ -926,10 +926,10 @@ void CRenderProcess::AttachFrambufferTextureBuffer(
   }
 
   
-  // add texture attachmnet
+  // add texture attachment
   if ( IsLayered( _textures[target._bufferID]._layers ) )
   {
-    // layerd or multisample texture attachment
+    // layered or multisample texture attachment
     glFramebufferTexture( GL_FRAMEBUFFER, attachType, _textures[target._bufferID]._object, 0 );
     OPENGL_CHECK_GL_ERROR
   }
@@ -958,15 +958,15 @@ void CRenderProcess::AttachFrambufferTextureBuffer(
 /******************************************************************//**
 * \brief   Prepare a render pass.
 * 
-* Note, renderbuffers are deleted immediatly after they are attached to
-* the frambuffer, because:
+* Note, render buffers are deleted immediately after they are attached to
+* the framebuffer, because:
 * 
 * See:
 * [OpenGL 4.6 API core profile specification, Chapter 5.1.3 Deleted Object and Object Name Lifetimes, page 54](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf)<br/>
 * [OpenGL ES Specification 3.2, Chapter 5.1.3 Deleted Object and Object Name Lifetimes, page 45](https://www.khronos.org/registry/OpenGL/specs/es/3.2/es_spec_3.2.pdf)<br/>
 * [Draw call succeeds even VBO is deleted](https://stackoverflow.com/questions/47289353/webgl-2-0-draw-call-succeeds-even-vbo-is-deleted/47290706#47290706)
 *
-* > When a buffer, texture, sampler, renderbuffer, query, or sync object is deleted, its
+* > When a buffer, texture, sampler, render buffer, query, or sync object is deleted, its
 * > name immediately becomes invalid (e.g. is marked unused), but the underlying
 * > object will not be deleted until it is no longer in use.
 *
@@ -985,7 +985,7 @@ bool CRenderProcess::Create(
   _complete = true;
   _bufferInfoMap.clear();
 
-  // delete all frambuffer objects which are not required anymore
+  // delete all framebuffer objects which are not required anymore
   DeleteUnnecessaryTextures();
 
   // delete all texture objects which are not required anymore
@@ -1012,9 +1012,9 @@ bool CRenderProcess::Create(
   {
     size_t              passID   = pass.first;  // name of the pass
     Render::TPass      &passSpec = pass.second; // specification of the pass
-    TFramebufferObject  newFb;                  // new frambuffer object for the render pass
+    TFramebufferObject  newFb;                  // new framebuffer object for the render pass
 
-    // get renderbuffer size
+    // get render buffer size
     newFb._size = { (size_t)(_size[0] * _passScales[passID] + 0.5f), (size_t)(_size[1] * _passScales[passID] + 0.5f) };
 
     // $$$ 
@@ -1027,8 +1027,8 @@ bool CRenderProcess::Create(
       OPENGL_CHECK_GL_ERROR
     }
 
-    // Check if a new frambuffer has to be created
-    // Note, a frambuffer is only requred for a pass with target specification  else the default buffer is used.
+    // Check if a new framebuffer has to be created
+    // Note, a framebuffer is only required for a pass with target specification  else the default buffer is used.
     if ( passSpec._targets.empty() )
       continue;
     
@@ -1037,13 +1037,13 @@ bool CRenderProcess::Create(
     glBindFramebuffer( GL_FRAMEBUFFER, newFb._object ); OPENGL_CHECK_GL_ERROR
     _fbs[passID] = newFb;
 
-    // for each frambuffer target
+    // for each framebuffer target
     std::vector<unsigned int> preDelRenderBufObjs;
     bool has_depth   = false;
     bool has_stencil = false;
     for ( auto target : passSpec._targets )
     {
-      // check if there is any deth or stencil attachmnet
+      // check if there is any depth or stencil attachment
       if ( target._attachment == Render::TPass::TTarget::depth || target._attachment == Render::TPass::TTarget::depth_stencil )
         has_depth = true;
       if ( target._attachment == Render::TPass::TTarget::stencil || target._attachment == Render::TPass::TTarget::depth_stencil )
@@ -1051,14 +1051,14 @@ bool CRenderProcess::Create(
 
       if ( target._bufferID == Render::TPass::TTarget::no ) 
       {
-        // If there is no textue buffer specified, the create a render buffer
+        // If there is no texture buffer specified, the create a render buffer
         unsigned int rbo = CreateFrambufferRenderBuffer( newFb, target );
         if ( rbo != 0 )
-          preDelRenderBufObjs.emplace_back( rbo ); // attach it to the renderbuffer to the pre deleted objects
+          preDelRenderBufObjs.emplace_back( rbo ); // attach the render buffer to the objects which have to be "pre"-deleted
       }
       else
       {
-        // Attach the existing texureto the frambuffer
+        // Attach the existing texture to the framebuffer
         AttachFrambufferTextureBuffer( newFb, target );
       }
     }
@@ -1080,7 +1080,7 @@ bool CRenderProcess::Create(
       OPENGL_CHECK_GL_ERROR
     }
 
-    // check for frame buffer completness
+    // check for frame buffer completeness
     // See:
     // - [Framebuffer Completeness - Completeness Rules](https://www.khronos.org/opengl/wiki/Framebuffer_Object#Completeness_Rules)
     // - [OpenGL 4.6 API core profile specification; 9.4.2 Whole Framebuffer Completeness; page 325](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf)
@@ -1091,18 +1091,18 @@ bool CRenderProcess::Create(
       assert( false );
     }
 
-    // unbind the framebuffer before pre deleting the render buffers
+    // unbind the framebuffer before "pre"-deleting the render buffers
     glBindFramebuffer( GL_FRAMEBUFFER, 0 ); OPENGL_CHECK_GL_ERROR
 
     if ( preDelRenderBufObjs.empty() == false )
     {
-      // pre delete the render buffer objects (see comment block of this method)
+      // "pre"-delete the render buffer objects (see comment block of this method)
       glDeleteRenderbuffers( (GLsizei)preDelRenderBufObjs.size(), preDelRenderBufObjs.data() );
       OPENGL_CHECK_GL_ERROR
     }
   }
 
-  // unbind any framebuffers
+  // unbind any framebuffer
   if ( _passes.empty() == false )
   {
     glBindFramebuffer( GL_FRAMEBUFFER, 0 );
@@ -1114,8 +1114,8 @@ bool CRenderProcess::Create(
 
 
 /******************************************************************//**
-* \brief   Destroy the buffer opjects and the passes objects.
-* Destroy textue and framebuffer objects.
+* \brief   Destroy the buffer objects and the passes objects.
+* Destroy texture and framebuffer objects.
 * 
 * \author  gernot
 * \date    2018-02-11
@@ -1130,7 +1130,7 @@ void CRenderProcess::Destroy( void )
 /******************************************************************//**
 * \brief   Check if the cache for target buffer binding,
 * target buffer clearing and source texture binding is valid.
-* Initialize the chach if it is not valid. 
+* Initialize the cache if it is not valid. 
 * 
 * \author  gernot
 * \date    2018-02-11
@@ -1147,19 +1147,19 @@ const CRenderProcess::TBufferInfoCache & CRenderProcess::EvaluateInfoCache(
   it = _bufferInfoMap.find( passID );
   TBufferInfoCache &info = it->second;
   
-  // search the pass frambuffer
-  // Note, not all passes have to use a frambuffer.
-  // if there is not frambuffer, the target of the pass is the default frambuffer.
+  // search the pass framebuffer
+  // Note, not all passes have to use a framebuffer.
+  // if there is not framebuffer, the target of the pass is the default framebuffer.
   auto fbIt = _fbs.find( passID );
   info._targetIsDefault = fbIt == _fbs.end();
 
   // set the size of the view port for the render pass
   info._vp_size = info._targetIsDefault ? _size : fbIt->second._size;
 
-  // set the named frambuffer object
+  // set the named framebuffer object
   info._fb_obj = info._targetIsDefault ? (unsigned int)pass._default_obj : fbIt->second._object;
 
-  // init the buffer clear mask
+  // initialize the buffer clear mask
   info._clearMask = (info._targetIsDefault && pass._clear_default) ? ( GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT ) : 0;
 
   // evaluate target buffers and target buffer clearing
@@ -1201,7 +1201,7 @@ const CRenderProcess::TBufferInfoCache & CRenderProcess::EvaluateInfoCache(
   if ( clear_all_color && clear_any_color )
   {
     // The following lines are skipped.
-    // Clear all color buffers seperatly because of `glDrawBuffers( N, [] )`
+    // Clear all color buffers separately because of `glDrawBuffers( N, [] )`
     // A single `glClear()` won't proper work 
     //info._clearTargets.clear();
     //info._clearMask = info._clearMask | GL_COLOR_BUFFER_BIT;
@@ -1229,7 +1229,7 @@ const CRenderProcess::TBufferInfoCache & CRenderProcess::EvaluateInfoCache(
 
 
 /******************************************************************//**
-* @brief   Validate the frambuffer sizes
+* @brief   Validate the framebuffer sizes
 *
 * @author  gernot
 * @date    2018-04-19
@@ -1285,7 +1285,7 @@ bool CRenderProcess::ValidateSize(
 * The following steps are processed:
 * 
 * - set the depth test
-* - set the blendig mode
+* - set the blending mode
 * - set the viewport 
 * - bind the frame buffer
 * - set the drawing buffers
@@ -1298,7 +1298,7 @@ bool CRenderProcess::ValidateSize(
 **********************************************************************/
 bool CRenderProcess::Prepare( 
   size_t             passID, //!< in: the name of the render pass
-  TPrepareProperties props ) //!< in: conditons
+  TPrepareProperties props ) //!< in: conditions
 {
   if ( IsValid() == false || _complete == false )
     return false;
@@ -1328,14 +1328,14 @@ bool CRenderProcess::Prepare(
     OPENGL_CHECK_GL_ERROR
   }
 
-  // bind the frambuffer
+  // bind the framebuffer
   if ( props.test((int)TPrepareProperty::bind) )
   {
     glBindFramebuffer( GL_FRAMEBUFFER, bufferInfo._fb_obj );
     OPENGL_CHECK_GL_ERROR
   }
 
-  // setup tartget buffer
+  // setup target buffer
   if ( props.test((int)TPrepareProperty::targets) &&  bufferInfo._targetIsDefault == false )
   {
     if ( bufferInfo._drawBuffers.empty() )
@@ -1376,7 +1376,7 @@ bool CRenderProcess::Prepare(
 
 
 /******************************************************************//**
-* \brief   Relase the current render pass.
+* \brief   Release the current render pass.
 * 
 * \author  gernot
 * \date    2018-02-11
@@ -1419,7 +1419,7 @@ bool CRenderProcess::ReleasePass(
 
 
 /******************************************************************//**
-* \brief   Relase the current render pass.
+* \brief   Release the current render pass.
 * 
 * \author  gernot
 * \date    2018-02-11
@@ -1444,7 +1444,7 @@ bool CRenderProcess::Release( void )
 **********************************************************************/
 bool CRenderProcess::GetBufferObject(
   size_t        bufferID, //!< in: the name of the buffer
-  unsigned int &obj )   //!< out: the GPU frambuffer object
+  unsigned int &obj )   //!< out: the GPU framebuffer object
 {
    if ( IsValid() == false || _complete == false )
     return false;
@@ -1468,7 +1468,7 @@ bool CRenderProcess::GetBufferObject(
 **********************************************************************/
 bool CRenderProcess::GetPassObject( 
   size_t        passID, //!< in: the name of the render pass
-  unsigned int &obj )   //!< out: the GPU frambuffer object
+  unsigned int &obj )   //!< out: the GPU framebuffer object
 {
   if ( IsValid() == false || _complete == false )
     return false;
@@ -1488,7 +1488,7 @@ bool CRenderProcess::GetPassObject(
 
 
 /******************************************************************//**
-* \brief   Bind a frambuffer for reading and/or drawing.
+* \brief   Bind a framebuffer for reading and/or drawing.
 * 
 * \author  gernot
 * \date    2018-02-11
@@ -1512,7 +1512,7 @@ bool CRenderProcess::Bind(
   // Update information for target buffer binding, target buffer clearing and source texture binding
   const TBufferInfoCache &bufferInfo = EvaluateInfoCache( passID, pass );
 
-  // bind the frambuffer
+  // bind the framebuffer
   if ( read && draw == false )
     glBindFramebuffer( GL_READ_FRAMEBUFFER, bufferInfo._fb_obj );
   else if ( read == false && draw )

@@ -17,12 +17,10 @@
 
 // OpenGL wrapper
 
-#include <GL/glew.h>
-//#include <GL/gl.h> not necessary because of glew 
-#include <GL/glu.h>
+#include <OpenGL_include.h>
 
 
-// stl
+// STL
 
 #include <vector>
 #include <algorithm>
@@ -53,6 +51,9 @@ namespace OpenGL
 
 unsigned int CError::Check( void )
 {
+  if ( TestErrors() == false )
+    return false;
+
   GLenum err = glGetError();
   if ( err != GL_NO_ERROR )
     DebugWarning << "OpenGL ERROR " << err;
@@ -90,7 +91,7 @@ CDebug::~CDebug( void )
 
 
 /******************************************************************//**
-* \brief   Initilaization of th debug output
+* \brief   Initialization of th debug output
 *
 * Debug Output
 * [https://www.khronos.org/opengl/wiki/Debug_Output]
@@ -133,6 +134,7 @@ bool CDebug::Init(
   // Messages, once generated, can either be stored in a log or passed directly to the application via a callback function.
   // If a callback is registered, then the messages are not stored in a log.
 
+ #if defined(_WIN64)
   if ( glDebugMessageCallback != nullptr )
     glDebugMessageCallback( &CDebug::DebugCallback, this );
   _valid = true;
@@ -154,6 +156,7 @@ bool CDebug::Init(
         break;
     }
   }
+#endif
 
   // In Debug Contexts, debug output starts enabled.
   // In non-debug contexts, the OpenGL implementation may not generate messages even if debug output is enabled.
@@ -174,7 +177,9 @@ void CDebug::Destroy( void )
   if ( IsValid() == false )
     return;
 
+#if defined(_WIN64)
   glDebugMessageCallback( nullptr, nullptr );
+#endif
 }
 
 
@@ -203,7 +208,7 @@ bool CDebug::Activate(
 
 
  /******************************************************************//**
-* \brief   Decativate the debug output
+* \brief   Deactivate the debug output
 * 
 * \author  gernot
 * \date    2018-05-10
@@ -246,7 +251,7 @@ void CDebug::EnableOutput(
 
 
 /******************************************************************//**
-* \brief   Enable or disable synchronouse debug messaging.
+* \brief   Enable or disable synchronous debug messaging.
 *
 * If enabled, debug messages are produced synchronously by a debug context.
 * If disabled, debug messages may be produced asynchronously.

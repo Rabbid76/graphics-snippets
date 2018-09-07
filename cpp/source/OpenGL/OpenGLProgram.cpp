@@ -17,12 +17,10 @@
 
 // OpenGL wrapper
 
-#include <GL/glew.h>
-//#include <GL/gl.h> not necessary because of glew 
-#include <GL/glu.h>
+#include <OpenGL_include.h>
 
 
-// stl
+// STL
 
 #include <algorithm>
 #include <unordered_map>
@@ -82,7 +80,7 @@ CShaderObject::CShaderObject(
  
 
 /******************************************************************//**
-* \brief dotr   
+* \brief dtor   
 * 
 * \author  gernot
 * \date    2018-08-02
@@ -103,7 +101,7 @@ CShaderObject::~CShaderObject()
 * \version 1.0
 **********************************************************************/
 CShaderObject & CShaderObject::operator =( 
-  CShaderObject && source_objet ) //!< soure object
+  CShaderObject && source_objet ) //!< source object
 {
   _type   = source_objet._type;
   _code   = std::move( source_objet._code );
@@ -159,7 +157,7 @@ CShaderObject & CShaderObject::ClearCode( void )
   
 
 /******************************************************************//**
-* \brief Get the OpenGL enum constant for the shader type. 
+* \brief Get the OpenGL enumerator constant for the shader type. 
 * 
 * \author  gernot
 * \date    2018-08-02
@@ -178,7 +176,7 @@ size_t CShaderObject::ShaderEnum(
 
 
 /******************************************************************//**
-* \brief Get the shader type from the OpenGL enum constant. 
+* \brief Get the shader type from the OpenGL enumerator constant. 
 * 
 * \author  gernot
 * \date    2018-08-02
@@ -197,7 +195,7 @@ Render::Program::TShaderType CShaderObject::ShaderType(
 
 
 /******************************************************************//**
-* \brief Get the a user friendl name for the shader type. 
+* \brief Get the a user friendly name for the shader type. 
 * 
 * \author  gernot
 * \date    2018-08-02
@@ -236,7 +234,7 @@ bool CShaderObject::Compile( void )
   if ( _object != 0 )
     glDeleteShader( (GLuint)_object );
   
-  // create the sahder object
+  // create the shader object
   GLenum stage = (GLenum)ShaderEnum( _type );
   _object = glCreateShader( stage );
   
@@ -317,7 +315,7 @@ CShaderProgram::CShaderProgram(
 
 
 /******************************************************************//**
-* \brief dotr   
+* \brief dtor   
 * 
 * \author  gernot
 * \date    2018-08-03
@@ -338,7 +336,7 @@ CShaderProgram::~CShaderProgram()
 * \version 1.0
 **********************************************************************/
 CShaderProgram & CShaderProgram::operator =( 
-  CShaderProgram && source_objet ) //!< soure object
+  CShaderProgram && source_objet ) //!< source object
 {
   _shaders = std::move( source_objet._shaders );
   _object  = source_objet._object;
@@ -375,7 +373,7 @@ bool CShaderProgram::Link( void )
     glAttachShader( obj, (GLuint)shader_objbect );
   }
 
-  // set addtional resource bindings
+  // set additional resource bindings
   std::vector<const char*> tf_varying_ptrs;
   for ( auto & resource : _resource_binding )
   {
@@ -463,7 +461,7 @@ bool CShaderProgram::Use( void )
 **********************************************************************/
 Render::Program::TIntrospectionPtr CShaderProgram::Introspection( 
   Render::Program::TResourceTypes resources, //!< I - set of resource types
-  bool                            verbose )  //!< I - trace active reources
+  bool                            verbose )  //!< I - trace active resources
 {
   auto introspection = std::make_shared<CIntrospection>( *this );
   introspection->Verbose( verbose ).Observe( resources );
@@ -522,7 +520,7 @@ CIntrospection & CIntrospection::Observe(
 
   // TODO $$$ interpret Render::Program::TProgramType
 
-  // get active attrbutes
+  // get active attributes
   if ( resources.test((int)TResourceType::attribute) )
   {
     GetAttributes();
@@ -673,9 +671,9 @@ void CIntrospection::GetAttributes( void )
     std::cout << "attribute index " << resource.second << ": " << resource.first << std::endl;
 }
 
-// Get transform feedvback varyings
+
 /******************************************************************//**
-* \brief Get program attribute indices.  
+* \brief Get transform feedback varyings.  
 * 
 * \author  gernot
 * \date    2018-08-05
@@ -696,9 +694,9 @@ void CIntrospection::GetTransformFeedbackVaryings(void)
     std::cout << "transform feedback varyings " << resource.second << ": " << resource.first << std::endl;
 }
 
-// Get fragmetn outputs
+
 /******************************************************************//**
-* \brief Get program attribute indices.  
+* \brief Get fragment shader outputs.  
 * 
 * \author  gernot
 * \date    2018-08-05
@@ -765,7 +763,7 @@ void CIntrospection::GetUniforms( void )
 
 
 /******************************************************************//**
-* \brief Get active program uniform block bindig points.  
+* \brief Get active program uniform block binding points.  
 * 
 * \author  gernot
 * \date    2018-08-05
@@ -892,8 +890,8 @@ void CIntrospection::GetSubroutines( void )
 			std::vector< GLchar >name( maxSubroutineLen+1 );
 			for ( int subroutineInx = 0; subroutineInx < nSubroutine; subroutineInx++ )
 			{
-				GLsizei lenght;
-				glGetActiveSubroutineName( Object(), shaderType, subroutineInx, maxSubroutineLen, &lenght, name.data() );
+				GLsizei length;
+				glGetActiveSubroutineName( Object(), shaderType, subroutineInx, maxSubroutineLen, &length, name.data() );
 				m_subroutineName[typeInx].push_back( name.data() );
 			}
 		}

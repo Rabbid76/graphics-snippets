@@ -22,9 +22,7 @@
 
 // OpenGL wrapper
 
-#include <GL/glew.h>
-//#include <GL/gl.h> not necessary because of GLEW 
-#include <GL/glu.h>
+#include <OpenGL_include.h>
 
 
 // utility 

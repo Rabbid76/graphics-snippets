@@ -175,6 +175,7 @@
     <ClInclude Include="..\include\OpenGL\OpenGLVertexBuffer.h" />
     <ClInclude Include="..\include\OpenGL\OpenGLVertexBufferCompatibility.h" />
     <ClInclude Include="..\include\OpenGL\OpenGLVertexBuffer_2_0.h" />
+    <ClInclude Include="..\include\OpenGL\OpenGL_include.h" />
     <ClInclude Include="..\include\OpenGL\OpenGL_Matrix_Camera.h" />
     <ClInclude Include="..\include\OpenGL\OpenGL_SimpleShaderProgram_temp.h" />
     <ClInclude Include="..\include\render\Render_IContext.h" />
