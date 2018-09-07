@@ -45,7 +45,7 @@ using IDrawBufferPtr = std::unique_ptr<IDrawBuffer>;
 **********************************************************************/
 enum class TDrawBufferUsage
 {
-  static_draw,  //!< set up data once and draw repeatly
+  static_draw,  //!< set up data once and draw repeatedly
   dynamic_draw, //!< change the data sometimes
   stream_draw,  //!< set up data and draw once
 };
@@ -133,56 +133,56 @@ enum TIndexType : char
 
 enum TVA
 {
-  b0_xy,                     // 1 vertex buffer (no index buffer): 2 component vertex coordiante
-  b0_xyz,                    // 1 vertex buffer (no index buffer): 3 component vertex coordiante
-  b0_xyzw,                   // 1 vertex buffer (no index buffer): 4 component vertex coordiante
+  b0_xy,                     // 1 vertex buffer (no index buffer): 2 component vertex coordinate
+  b0_xyz,                    // 1 vertex buffer (no index buffer): 3 component vertex coordinate
+  b0_xyzw,                   // 1 vertex buffer (no index buffer): 4 component vertex coordinate
                   
-  b0_xyz_uv,                 // 1 vertex buffer record (no index buffer): 3 component vertex coordiante, 2 component texture coordinates
-  b0_xyz_nnn,                // 1 vertex buffer record (no index buffer): 3 component vertex coordiante, normal vector
-  b0_xyz_nnn_uv,             // 1 vertex buffer record (no index buffer): 3 component vertex coordiante, normal vector, 2 component texture coordinate
+  b0_xyz_uv,                 // 1 vertex buffer record (no index buffer): 3 component vertex coordinate, 2 component texture coordinates
+  b0_xyz_nnn,                // 1 vertex buffer record (no index buffer): 3 component vertex coordinate, normal vector
+  b0_xyz_nnn_uv,             // 1 vertex buffer record (no index buffer): 3 component vertex coordinate, normal vector, 2 component texture coordinate
 
-  b0_xyz__b1_uv,             // 2 vertex buffers (no index buffer): 3 component vertex coordiante, 2 component texture coordinate
-  b0_xyz__b1_nnn,            // 2 vertex buffers (no index buffer): 3 component vertex coordiante, normal vector
-  b0_xyz__b1_nnn__b2_uv,     // 3 vertex buffers (no index buffer): 3 component vertex coordiante, normal vector, 2 component texture coordinate
+  b0_xyz__b1_uv,             // 2 vertex buffers (no index buffer): 3 component vertex coordinate, 2 component texture coordinate
+  b0_xyz__b1_nnn,            // 2 vertex buffers (no index buffer): 3 component vertex coordinate, normal vector
+  b0_xyz__b1_nnn__b2_uv,     // 3 vertex buffers (no index buffer): 3 component vertex coordinate, normal vector, 2 component texture coordinate
 
-  i0__b0_xy,                 // 1 index buffer; 1 vertex buffer: 2 component vertex coordiante
-  i0__b0_xyz,                // 1 index buffer; 1 vertex buffer: 3 component vertex coordiante
+  i0__b0_xy,                 // 1 index buffer; 1 vertex buffer: 2 component vertex coordinate
+  i0__b0_xyz,                // 1 index buffer; 1 vertex buffer: 3 component vertex coordinate
                   
-  i0__b0_xyz_uv,             // 1 index buffer; 1 vertex buffer:  3 component vertex coordiante, 2 component texture coordinate
-  i0__b0_xyz_nnn,            // 1 index buffer; 1 vertex buffer:  3 component vertex coordiante, normal vector
-  i0__b0_xyz_nnn_uv,         // 1 index buffer; 1 vertex buffer:  3 component vertex coordiante, normal vector, 2 component texture coordinate
+  i0__b0_xyz_uv,             // 1 index buffer; 1 vertex buffer:  3 component vertex coordinate, 2 component texture coordinate
+  i0__b0_xyz_nnn,            // 1 index buffer; 1 vertex buffer:  3 component vertex coordinate, normal vector
+  i0__b0_xyz_nnn_uv,         // 1 index buffer; 1 vertex buffer:  3 component vertex coordinate, normal vector, 2 component texture coordinate
 
-  i0__b0_xyz__b1_uv,         // 1 index buffer; 2 vertex buffers: 3 component vertex coordiante, 2 component texture coordinate
-  i0__b0_xyz__b1_nnn,        // 1 index buffer; 2 vertex buffers: 3 component vertex coordiante, normal vector
-  i0__b0_xyz__b1_nnn__b2_uv, // 1 index buffer; 3 vertex buffers: 3 component vertex coordiante, normal vector, 2 component texture coordinate
+  i0__b0_xyz__b1_uv,         // 1 index buffer; 2 vertex buffers: 3 component vertex coordinate, 2 component texture coordinate
+  i0__b0_xyz__b1_nnn,        // 1 index buffer; 2 vertex buffers: 3 component vertex coordinate, normal vector
+  i0__b0_xyz__b1_nnn__b2_uv, // 1 index buffer; 3 vertex buffers: 3 component vertex coordinate, normal vector, 2 component texture coordinate
 
-  b0_xy__b1_rgba,            // 2 vertex buffers (no index buffer): 2 component vertex coordiante, RGBA color
-  b0_xyz__b1_rgba,           // 2 vertex buffers (no index buffer): 3 component vertex coordiante, RGBA color
-  b0_xyzw__b1_rgba,          // 2 vertex buffers (no index buffer): 3 component vertex coordiante, RGBA color
+  b0_xy__b1_rgba,            // 2 vertex buffers (no index buffer): 2 component vertex coordinate, RGBA color
+  b0_xyz__b1_rgba,           // 2 vertex buffers (no index buffer): 3 component vertex coordinate, RGBA color
+  b0_xyzw__b1_rgba,          // 2 vertex buffers (no index buffer): 3 component vertex coordinate, RGBA color
 };
 
 
 /******************************************************************//**
 * \brief   
 * 
-* interface fpr creating and managing vertex arrays with the following description
+* interface for creating and managing vertex arrays with the following description
 *
-* <index buffer>              : index of the index buffer; 0 is default; <= -1 no index buffer is reqired
-* <no of buffers>             : the number of the require vertex buffer objects - followed by the list of vbo specifications
+* <index buffer>              : index of the index buffer; 0 is default; <= -1 no index buffer is required
+* <no of buffers>             : the number of the require vertex buffer objects - followed by the list of VBO specifications
 * {
 *     <array buffer index>    : index of the array buffer
 *     <stride>                : stride from one vertex attribute set to the next, in float (4 byte) units) 
 *     <no of attributes>      : number of the generic vertex attributes in the buffer - followed by the list of attribute specifications
 *     {
 *         <attribute index>   : vertex attribute identification; e.g. attribute index 0, 1, 2 ... or client state -1, -2, -3 ...
-*         <attribute size>    : number of elemts of the vertex attribute
+*         <attribute size>    : number of elements of the vertex attribute
 *         <attribute type>    : type of an attribute (`TAttribType`)
 *         <attribute offset>  : offset of the vertex attributes from the begin of the attributes set in float (4 byte) units) 
 *     }
 * }
 *
 *
-* e.g. Strided record sets:  
+* e.g. Stride record sets:  
 *      Vx0, Vy0, Vz0, Nx0, Ny0, Nz0, Tu0, Tv0,
 *      Vx1, Vy1, Vz1, Nx1, Ny1, Nz1, Tu1, Tv1,
 *      ....
@@ -287,7 +287,7 @@ public:
 
   // buffer specification shortcuts
 
-  using TDescription = std::vector<char>;                           //!< description of a vetex array object content
+  using TDescription = std::vector<char>; //!< description of a vertex array object content
   
   static const TDescription & VADescription( TVA id )
   {

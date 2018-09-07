@@ -72,7 +72,7 @@ public:
 
 
 /******************************************************************//**
-* \brief   Generic interface for a rnder context.
+* \brief   Generic interface for a render context.
 * 
 * \author  gernot
 * \date    2018-02-09

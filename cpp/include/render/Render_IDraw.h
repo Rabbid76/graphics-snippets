@@ -16,8 +16,9 @@
 #include <Render_IBuffer.h>
 #include <Render_IRenderPass.h>
 #include <Render_IFont.h>
+#include <Render_IDrawLine.h>
 
-// stl
+// STL
 
 #include <vector>
 #include <bitset>
@@ -33,20 +34,12 @@
 namespace Render
 {
 
-enum class TDrawStyleProperty
-{
-  arrow_from,
-  arrow_to,
-  // ...
-  NO_OF
-};
-using TDrawStyleProperties = std::bitset<(int)TDrawStyleProperty::NO_OF>;
 
 struct TDrawStyle
 {
-  float                _thickness = 1.0f;
-  TVec2                _size      { 0.0f };
-  TDrawStyleProperties _properites;
+  float                       _thickness{ 1.0f };
+  TVec2                       _size{ 0.0f };
+  Line::TArrowStyleProperties _properites;
 };
 
 
@@ -77,8 +70,8 @@ public:
     NO_OF
   };
 
-  using TStyleProperty   = TDrawStyleProperty;
-  using TStyleProperties = TDrawStyleProperties;
+  using TStyleProperty   = Line::TArrowStyleProperty;
+  using TStyleProperties = Line::TArrowStyleProperties;
   using TStyle           = TDrawStyle;
 
   virtual ~IDraw() = default;

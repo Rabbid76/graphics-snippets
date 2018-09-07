@@ -67,15 +67,32 @@ public:
 
 
 //---------------------------------------------------------------------
-// CStyle
+// Style
 //---------------------------------------------------------------------
 
-class CStyle
+struct TStyle
 {
-  t_fp _width;        //!< line width
-  int  _stipple_type; //!< type of line stippling
+  t_fp _width        = 1.0f; //!< line width
+  int  _stipple_type = 1;    //!< type of line stippling
 
   // TODO $$$ line cap
+};
+
+
+enum class TArrowStyleProperty
+{
+  arrow_from,
+  arrow_to,
+  // ...
+  NO_OF
+};
+using TArrowStyleProperties = std::bitset<(int)TArrowStyleProperty::NO_OF>;
+
+
+struct TArrowStyle
+{
+  TVec2                       _size{ 0.0f };
+  Line::TArrowStyleProperties _properites;
 };
 
 
@@ -96,6 +113,11 @@ class IRender
 public:
 
   virtual ~IRender() = default;
+
+  virtual IRender & SetColor( const TColor & color ) = 0;
+  virtual IRender & SetColor( const TColor8 & color ) = 0;
+  virtual IRender & SetStyle( const TStyle & style ) = 0;
+  virtual IRender & SetArrowStyle( const TArrowStyle & style ) = 0;
 
   //bool Draw( )
 };

@@ -52,7 +52,7 @@ using TPoint3 = std::array< t_fp, 3 >;
 using TPoint4 = std::array< t_fp, 4 >;
 
 
-//! direction vector data tpyes
+//! direction vector data types
 using TVec2  = std::array< t_fp, 2 >;
 using TVec3  = std::array< t_fp, 3 >;
 using TVec4  = std::array< t_fp, 4 >;
@@ -161,7 +161,7 @@ enum class TSketchMode
   texture_hatch,        //! texture hatch
   toon,                 //! toon effect specular light source
   toon_opaque,          //! toon effect opaque color source
-  toon_opaque_mapped,   //! toon effect opaque color source andf luminosity map 
+  toon_opaque_mapped,   //! toon effect opaque color source and luminosity map 
   toon_flat,            //! toon effect flat opaque color source
   // ...
   NUMBER_OF

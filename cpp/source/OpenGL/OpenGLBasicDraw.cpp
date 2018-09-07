@@ -711,10 +711,11 @@ public:
 
   ~CSimpleLineRenderer() {}
 
-  // TODO $$$ virtual
-  void Color( const Render::TColor &color ) { _color = color; }
-  void Style( Render::TDrawStyle style )    { _style = style; }
-
+  virtual IRender & SetColor( const Render::TColor & color )                       { _color = color; return *this; }
+  virtual IRender & SetColor( const Render::TColor8 & color )                      { _color = Render::toColor( color ); return *this; }
+  virtual IRender & SetStyle( const Render::Line::TStyle & style )                 { _style = style; return *this; }
+  virtual IRender & SetArrowStyle( const Render::Line::TArrowStyle & arrow_style ) { _arrow_style = arrow_style; return *this; }
+  
   // TODO $$$ override  
   virtual bool Draw( Render::TPrimitive primitive_type, size_t tuple_size, size_t coords_size, const Render::t_fp *coords );
 
@@ -723,8 +724,9 @@ private:
   CBasicDraw                  &_draw_library;
   Render::IDrawBufferProvider &_buffer_provider;
 
-  Render::TColor     _color; //!< color of the line
-  Render::TDrawStyle _style; //!< line style parameter
+  Render::TColor            _color;       //!< color of the line
+  Render::Line::TStyle      _style;       //!< line style parameter
+  Render::Line::TArrowStyle _arrow_style; //!< arrow style parameter
 };
 
 
@@ -757,8 +759,8 @@ bool CSimpleLineRenderer::Draw(
     return false;
   }
 
-  bool arrow_from = _style._properites.test( (int)Render::TDrawStyleProperty::arrow_from );
-  bool arrow_to   = _style._properites.test( (int)Render::TDrawStyleProperty::arrow_to );
+  bool arrow_from = _arrow_style._properites.test( (int)Render::Line::TArrowStyleProperty::arrow_from );
+  bool arrow_to   = _arrow_style._properites.test( (int)Render::Line::TArrowStyleProperty::arrow_to );
   
   // create indices
   Render::TPrimitive final_primitive_type = primitive_type;
@@ -832,7 +834,7 @@ bool CSimpleLineRenderer::Draw(
       glm::vec3 p1( coords[ix], coords[ix+1], size == 3 ? coords[ix+2] : 0.0f );
       glm::vec3 v0 = p0 - p1;
       float l = glm::length( v0 );
-      p0 = p1 + v0 * (l-_style._size[0]) / l;
+      p0 = p1 + v0 * (l-_arrow_style._size[0]) / l;
       temp_coords[i0] = p0[0];
       temp_coords[i0+1] = p0[1];
       if (size == 3)
@@ -846,7 +848,7 @@ bool CSimpleLineRenderer::Draw(
       glm::vec3 p1( coords[ix], coords[ix+1], size == 3 ? coords[ix+2] : 0.0f );
       glm::vec3 v0 = p0 - p1;
       float l = glm::length( v0 );
-      p0 = p1 + v0 * (l-_style._size[0]) / l;
+      p0 = p1 + v0 * (l-_arrow_style._size[0]) / l;
       temp_coords[i0] = p0[0];
       temp_coords[i0+1] = p0[1];
       if (size == 3)
@@ -859,7 +861,7 @@ bool CSimpleLineRenderer::Draw(
     buffer.UpdateVB( 0, sizeof(float), coords_size, coords );
   
   // set program
-  _draw_library.SetLineShader( _color, _style._thickness );
+  _draw_library.SetLineShader( _color, _style._width );
 
   // draw_buffer
   buffer.DrawElements( final_primitive_type, 2, indices.size(), indices.data(), true );
@@ -892,7 +894,7 @@ bool CSimpleLineRenderer::Draw(
       size_t i0 = 0;
       size_t ix = size;
       _draw_library.SetModelUniform(
-        TVec3{ _style._size[0], _style._size[1], 1.0f },
+        TVec3{ _arrow_style._size[0], _arrow_style._size[1], 1.0f },
         TVec3{ coords[i0], coords[i0+1], size == 3 ? coords[i0+2] : 0.0f },
         TVec3{ coords[ix], coords[ix+1], size == 3 ? coords[ix+2] : 0.0f },
         TVec3{ _draw_library._uniforms._view[2][0], _draw_library._uniforms._view[2][1], - _draw_library._uniforms._view[2][2] } );
@@ -909,7 +911,7 @@ bool CSimpleLineRenderer::Draw(
       size_t i0 = coords_size - size;
       size_t ix = coords_size - size*2;
       _draw_library.SetModelUniform(
-        TVec3{ _style._size[0], _style._size[1], 1.0f },
+        TVec3{ _arrow_style._size[0], _arrow_style._size[1], 1.0f },
         TVec3{ coords[i0], coords[i0+1], size == 3 ? coords[i0+2] : 0.0f },
         TVec3{ coords[ix], coords[ix+1], size == 3 ? coords[ix+2] : 0.0f },
         TVec3{ _draw_library._uniforms._view[2][0], _draw_library._uniforms._view[2][1], - _draw_library._uniforms._view[2][2] } );
@@ -1869,8 +1871,6 @@ bool CBasicDraw::Draw(
     return false;
   }
 
-  bool arrow_from = style._properites.test( (int)TStyleProperty::arrow_from );
-  bool arrow_to   = style._properites.test( (int)TStyleProperty::arrow_to );
   bool is_point   = primitive_type == Render::TPrimitive::points;
 
   bool is_line =
@@ -1894,8 +1894,7 @@ bool CBasicDraw::Draw(
   if ( draw_line )
   {
     CSimpleLineRenderer &draw_line = (CSimpleLineRenderer&)LineRender();
-    draw_line.Color( color );
-    draw_line.Style( style );
+    draw_line.SetColor( color ).SetStyle( { style._thickness, 1 } ).SetArrowStyle( { style._size, style._properites } );
     return draw_line.Draw( primitive_type, size, coords_size, coords );
   }
 

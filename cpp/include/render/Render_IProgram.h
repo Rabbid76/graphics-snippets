@@ -15,7 +15,7 @@
 #include <Render_IDrawType.h>
 
 
-// stl
+// STL
 
 #include <bitset>
 #include <string>
@@ -36,7 +36,7 @@ namespace Render
 
 
 /******************************************************************//**
-* \brief Namspece for shader progrmas and resources.  
+* \brief Namespace for shader programs and resources.  
 * 
 * \author  gernot
 * \date    2018-07-31
@@ -52,7 +52,7 @@ using TIntrospectionPtr = std::shared_ptr<IIntrospection>;
 //! type of a shader stage
 enum class TShaderType
 {
-  vertex,          //!< vertex sahder stage
+  vertex,          //!< vertex shader stage
   tess_control,    //!< tessellation control shader stage
   tess_evaluation, //!< tessellation evaluation shader stage
   geometry,        //!< geometry shader stage
@@ -75,11 +75,11 @@ enum class TResourceType
 {
   attribute,            //!< attribute index
   fragment_data,        //!< fragment data location
-  transform_feedback,   //!< transform feedback output (the type of a resouce only, has no binding point index or location)
-  uniform,              //!< uniform loaction
-  uniform_block,        //!< unifrmg block index
+  transform_feedback,   //!< transform feedback output (the type of a resource only, has no binding point index or location)
+  uniform,              //!< uniform location
+  uniform_block,        //!< uniform block index
   shader_storage_block, //!< shader storage block (SSBO)
-  subroutine_uniform,   //!< shader subroutine unifrom
+  subroutine_uniform,   //!< shader subroutine uniform
   // ...
   NUMBER_OF,
 };
@@ -92,12 +92,12 @@ using TResourcePoint = std::tuple<size_t, TResourceType>;
 using TResourceBinding = std::tuple<std::string, TResourceType, size_t>;
 
 
-//! trasform feedback buffer mode
+//! transform feedback buffer mode
 enum class TTranformFeedbackMode
 {
   NON,         //!< no transform feedback
   interleaved, //!< one buffer for all transform feedback outputs
-  separate     //!< a separata buffer binding for each transform feedback output
+  separate     //!< a separate buffer binding for each transform feedback output
 };
 
 
@@ -225,7 +225,7 @@ public:
 /*
 
 map: name -> entry point, type 
-     unorderd_map; if name would mean differnt entryp point types the unorderd_multimap
+     unorderd_map; if name would mean different entry point types the unorderd_multimap
 
 
 */
@@ -285,7 +285,7 @@ public:
   // create new program object
   virtual TProgramPtr NewProgram( void ) const = 0;
 
-  // create new program introspetion
+  // create new program introspection
   virtual TIntrospectionPtr NewIntrospection( TProgramPtr program, TResourceTypes resource_types ) const = 0;
 
   // create new data exchange 

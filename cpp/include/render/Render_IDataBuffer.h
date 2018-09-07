@@ -15,7 +15,7 @@
 #include <Render_IDrawType.h>
 
 
-// stl
+// STL
 
 
 
@@ -23,7 +23,7 @@
 /******************************************************************//**
 * \brief Namespace for renderer.   
 * 
-* \author  gerno
+* \author  gernot
 * \date    2018-08-05
 * \version 1.0
 **********************************************************************/
@@ -44,7 +44,7 @@ public:
 
   ~IDataBuffer() = default;
 
-  // TODO $$$ implementation fro unifrm block and shader storage buffer
+  // TODO $$$ implementation fro uniform block and shader storage buffer
 };
 
 

@@ -35,7 +35,7 @@ namespace Render
 enum class TLightProperty
 {
   enabled,         //!< the light source is active
-  camera_relative, //!< the light source is not relative to the worled, but it is relative to the camera
+  camera_relative, //!< the light source is not relative to the world, but it is relative to the camera
   cast_shadow,     //!< the light source casts shadows
   radius_cutoff,   //!< the light source has a cut off at maximum influence radius (only for finite light sources)
   auto_radius,     //!< the maximum influence radius cut off is automatically calculated by the light intensity and the attenuation
@@ -67,15 +67,15 @@ struct TLight
       std::tie( l._ambient, l._diffuse, l._specular, l._position, l._attenuation, l._cone_attenuation, l._direction, l._light_cone, l._maximum_radius, l._properties );
   }
 
-  TColor8          _ambient;           //!< ambinet light color; the brightness of the light is encoded to the alpha channel
+  TColor8          _ambient;           //!< ambient light color; the brightness of the light is encoded to the alpha channel
   TColor8          _diffuse;           //!< diffuse light color; the brightness of the light is encoded to the alpha channel
   TColor8          _specular;          //!< specular light color; the brightness of the light is encoded to the alpha channel
-  TPoint4          _position;          //!< position of the light source (homoguenus coordinate); can be infinite (w=0.0)
+  TPoint4          _position;          //!< position of the light source (homogeneous coordinate); can be infinite (w=0.0)
   //t_fp             _attenuation_value; //!< a value in the range [0, 1], which represents the attenuation of a light source
   TVec3            _attenuation;       //!< constant, linear and quadratic attenuation of the light source by its distance
   t_fp             _cone_attenuation;  //!< light cone attenuation (attenuation from the center of the light cone to its borders)
   TVec3            _direction;         //!< direction of a spot light
-  t_fp             _light_cone;        //!< ligtht cone angle of a spot light in radians
+  t_fp             _light_cone;        //!< light cone angle of a spot light in radians
   t_fp             _maximum_radius;    //!< the maximum influence radius for a finite light source (except the distance is calculated automatically `auto_distance`)
   t_fp             _cut_off_weight;    //!< radius cut off weight [0.0, 1.0]; soft (= 0.0) or hard (= 1.0)
   TLightProperties _properties;        //!< `TLightProperty` properties 

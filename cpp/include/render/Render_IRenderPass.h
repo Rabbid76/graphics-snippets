@@ -14,7 +14,7 @@
 
 #include <Render_IDrawType.h>
 
-// stl
+// STL
 
 #include <bitset>
 #include <array>
@@ -232,7 +232,7 @@ struct TBuffer
   unsigned int    _multisamples = 0;                  //!< multisamples
   TProperties     _flag;                              //!< buffer properties
   unsigned int    _extern_object = 0;                 //!< extern buffer object
-  int             _cubemap_side_index = -1;           //!< if >= 0 && < 6, then the side index of the cube map; else the entire cubemap
+  int             _cubemap_side_index = -1;           //!< if >= 0 && < 6, then the side index of the cube map; else the entire cube map
 };
 
 
@@ -348,13 +348,13 @@ struct TPass
   std::vector<TTarget> _targets;                             //!< target buffers
   TPassDepthTest       _depth         = TPassDepthTest::OFF; //!< depth test of the pass
   TPassBlending        _blend         = TPassBlending::OFF;  //!< blending function of the pass
-  size_t               _default_obj   = 0;                   //!< default fb obj
+  size_t               _default_obj   = 0;                   //!< default framebuffer obj
   bool                 _clear_default = true;                //!< clear the default buffer
 };
 
 
 /******************************************************************//**
-* \brief   Generic interface for render pass specification and managment.
+* \brief   Generic interface for render pass specification and management.
 * 
 * The implementations of this interface should make use of 
 * RAII (Resource acquisition is initialization) technique.
@@ -380,7 +380,7 @@ public:
     bind,     //!< bind the target buffers
     targets,  //!< set target buffers
     clear,    //!< clear target buffers according to the target specification
-    source,   //!< binde pass source buffers
+    source,   //!< bind pass source buffers
     // ...
     NO_OF
   }; 
@@ -430,15 +430,15 @@ public:
   virtual bool  IsValid( void ) const = 0;                                 //!< checks if the specifications have been successfully validated
   virtual bool  IsComplete( void ) const = 0;                              //!< checks if the buffers and passes have been successfully created
   virtual void  Invalidate( void ) = 0;                                    //!< invalidate, force renew of buffers and passes
-  virtual bool  Validate( void ) = 0;                                      //!< validate the specifcations
-  virtual bool  ValidateSize( std::array<size_t, 2> ) = 0;                 //!< validate the frambuffer sizes
+  virtual bool  Validate( void ) = 0;                                      //!< validate the specifications
+  virtual bool  ValidateSize( std::array<size_t, 2> ) = 0;                 //!< validate the framebuffer sizes
   virtual bool  Create( std::array<size_t, 2> ) = 0;                       //!< validate the specification and create the render passes 
   virtual TSize CurrentSize( void ) const = 0;                             //!< current process buffer size
-  virtual void  Destroy( void ) = 0;                                       //!< detroy the buffer and the passes
+  virtual void  Destroy( void ) = 0;                                       //!< destroy the buffer and the passes
   virtual bool  Prepare( size_t passID, TPrepareProperties props ) = 0;    //!< prepare a render pass
-  virtual bool  Bind( size_t passID, bool read, bool draw ) = 0;           //!< binds the named famebuffer for drawing
-  virtual bool  ReleasePass( size_t passID ) = 0;                          //!< relase the render pass
-  virtual bool  Release( void ) = 0;                                       //!< relase the current render pass
+  virtual bool  Bind( size_t passID, bool read, bool draw ) = 0;           //!< binds the named framebuffer for drawing
+  virtual bool  ReleasePass( size_t passID ) = 0;                          //!< release the render pass
+  virtual bool  Release( void ) = 0;                                       //!< release the current render pass
   virtual bool  GetBufferObject( size_t bufferID, unsigned int &obj ) = 0; //!< get the implementation object for a buffer
   virtual bool  GetPassObject( size_t passID, unsigned int &obj ) = 0;     //!< get the implementation object for a pass
  

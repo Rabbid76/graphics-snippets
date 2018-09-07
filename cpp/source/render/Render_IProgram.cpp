@@ -29,7 +29,7 @@ namespace Render
 
 
 /******************************************************************//**
-* \brief Namspece for shader progrmas and resources.  
+* \brief Namespace for shader programs and resources.  
 * 
 * \author  gernot
 * \date    2018-07-31

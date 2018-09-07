@@ -43,10 +43,10 @@ enum class TImageKind : t_byte
   NON,                     //!< not used (no texture)
   diffuse,                 //!< color texture
   grayscale,               //!< grayscale texture
-  displacement_map,        //!< displacment map; 1 channel (red)
+  displacement_map,        //!< displacement map; 1 channel (red)
   normal_map,              //!< normal map; 3 channels (RGB)
-  normal_displacement_map, //!< normal map; 3 channels (RGB) + displacment map; 1 channel (alpha)
-  displacement_cone_map    //!< displacment map; 1 channel (red) + cone map; 1 channel (green) 
+  normal_displacement_map, //!< normal map; 3 channels (RGB) + displacement map; 1 channel (alpha)
+  displacement_cone_map    //!< displacement map; 1 channel (red) + cone map; 1 channel (green) 
 };
 
 
@@ -94,8 +94,8 @@ enum class TTextureType : t_byte
   T1D,       //!< 1 dimensional texture
   T2D,       //!< 2 dimensional texture
   T3D,       //!< 3 dimensional texture
-  TCUBE,     //!< 2 dimensional texture with 6 layers (6 sides of the cubemap)
-  T2D_ARRAY, //!< 2 dimensional texutre with layers
+  TCUBE,     //!< 2 dimensional texture with 6 layers (6 sides of the cube map)
+  T2D_ARRAY, //!< 2 dimensional texture with layers
 };
 
 
@@ -136,7 +136,7 @@ enum class TTextureFormat
 
 
 /******************************************************************//**
-* \brief   Transformation when loading an image resurce to a texture. 
+* \brief   Transformation when loading an image resource to a texture. 
 * 
 * \author  gernot
 * \date    2018-06-08
@@ -144,10 +144,10 @@ enum class TTextureFormat
 **********************************************************************/
 enum class TImageTransform
 {
-  flip_y,                     //!< the image y axis of the image has to be flipped; mirror the imgae along the horizontal axis of symmetry 
+  flip_y,                     //!< the image y axis of the image has to be flipped; mirror the image along the horizontal axis of symmetry 
   bgr_to_rgb,                 //!< the order of the color channel is blue-green-red and has to be turned into red-green-blue. OpenGL can do this by the source formats GL_BGR and GL_BGRA, but not OpneGL ES.
-  to_displacement_map,        //!< convert the image resource to a dispacement map
-  to_normal_and_displacement, //!< convert to normal map (RGB cannels) and dispacement map (ALPHA channel)
+  to_displacement_map,        //!< convert the image resource to a displacement map
+  to_normal_and_displacement, //!< convert to normal map (RGB channels) and displacement map (ALPHA channel)
 
   // ...
 
@@ -179,12 +179,12 @@ public:
 
   virtual ~IImageResource() = default;
 
-  virtual TImageKind   Kind( void )      const = 0; //!< kind of the image reource content
+  virtual TImageKind   Kind( void )      const = 0; //!< kind of the image resource content
   virtual TTextureType Type( void )      const = 0; //!< type of the texture 1D, 2D, 3D
   virtual TImageFormat Format( void )    const = 0; //!< format of one texel or voxel
   virtual TTextureSize Size( void )      const = 0; //!< size for up to 3 dimensions
   virtual size_t       Layers( void )    const = 0; //!< number of layers
-  virtual size_t       BPL( void )       const = 0; //!< number of byts of a single line of the image
+  virtual size_t       BPL( void )       const = 0; //!< number of bytes of a single line of the image
   virtual size_t       LineAlign( void ) const = 0; //!< alignment of the start of one line of the image
   virtual const void * DataPtr( void )   const = 0; //!< pointer to the native image data
 };
@@ -315,9 +315,9 @@ using ITexturePtr = std::unique_ptr<ITexture>;
 
 
 /******************************************************************//**
-* \brief   Predfined texture kinds
+* \brief   Predefined texture kinds
 * 
-* Note, the enum constant is used as an index for a paramter table.
+* Note, the enumerator constant is used as an index for a parameter table.
 * 
 * \author  gernot
 * \date    2018-06-09

@@ -51,8 +51,8 @@ public:
 
   virtual ~IAttributeData() = default;
 
-  virtual int            tuple_size( void ) const = 0;  //!< number of the components of an attrbute 1, 2, 3 or 4 
-  virtual int            stride( void ) const = 0;      //!< number of elements (`T_DATA`) from one attrbute to the next attribute
+  virtual int            tuple_size( void ) const = 0;  //!< number of the components of an attribute 1, 2, 3 or 4 
+  virtual int            stride( void ) const = 0;      //!< number of elements (`T_DATA`) from one attribute to the next attribute
   virtual int            offset( void ) const = 0;      //!< index of elements (`T_DATA`) where the first attribute starts in the array
   virtual size_t         size( void ) const = 0;        //!< number of attributes 
   virtual const T_DATA * data( void ) const = 0;        //!< pointer to the raw attribute data
@@ -203,7 +203,7 @@ enum class TMeshFaceType
   // point primitives
   point,
     
-  // line primitves
+  // line primitives
   lines,
   line_strips,
   line_loops,
@@ -219,18 +219,18 @@ enum class TMeshFaceType
 
   // polygon primitives
   quads,    //!< same as a triangle fan with a size of 4 for each polygon 
-  polygons, //!< same as a triangle fan with a separated size for each polgon
+  polygons, //!< same as a triangle fan with a separated size for each polygon
 
   // special primitives
   encoded   //!< the type of the primitive is encoded to the index array data
 };
 
-//! Specification of the size (numberr of vertices) of a primitive (face)  
+//! Specification of the size (number of vertices) of a primitive (face)  
 enum class TMeshFaceSizeKind
 {
   constant,        //!< The size of the faces is constant and equal for each face
   separated_array, //!< The size of the faces is stored in an separated array
-  encoded_restart, //!< The size of the faces is encoded in the index array, by an primitive restrat marker
+  encoded_restart, //!< The size of the faces is encoded in the index array, by an primitive restart marker
   encoded_size     //!< The size of the faces is encoded in the index array, the size is specified at the start of each primitive.
 };
 
@@ -238,7 +238,7 @@ enum class TMeshFaceSizeKind
 enum class TMeshAttributePack
 {
   separated_tightly, //!< the attributes are tightly packed to separated buffers
-  record_stride      //!< the vevrtex and its attributes are pacjed to a tuple recored and stroed in one buffer
+  record_stride      //!< the vertex and its attributes are placed to a tuple recored and stored in one buffer
 };
 
 /******************************************************************//**
@@ -260,14 +260,14 @@ public:
   virtual ~IMeshData() = default;
 
   virtual TMeshFaceType                FaceType( void ) const = 0;            //!< Type of primitives
-  virtual TMeshFaceSizeKind            FaceSizeKind( void ) const = 0;        //!< Specifies how the size of a single primtive is defined 
+  virtual TMeshFaceSizeKind            FaceSizeKind( void ) const = 0;        //!< Specifies how the size of a single primitive is defined 
   virtual TMeshIndexKind               IndexKind( void ) const = 0;           //!< Specifies whether the attributes have separated, common or no indices.
                                                                               //!< If the attributes have no indices, then all the attributes are consecutively sorted according to the faces in the attribute arrays.
   virtual TMeshAttributePack           Pack( void ) const = 0;                //!< specifies the buffer packing
-  virtual const TAttributeContainer  & Vertices( void ) const = 0;            //!< Container for the vertex coordiantes
+  virtual const TAttributeContainer  & Vertices( void ) const = 0;            //!< Container for the vertex coordinates
   
   virtual const TIndexContainer      * Indices( void ) const = 0;             //!< Container for the common indices or vertex indices
-  virtual TIndex                       FaceSize( void ) const = 0;            //!< Size of a single primitive (0, if the primitives hacve different sizes)
+  virtual TIndex                       FaceSize( void ) const = 0;            //!< Size of a single primitive (0, if the primitives have different sizes)
   virtual const TIndexContainer      * FaceSizes( void ) const = 0;           //!< Array of face sizes
   virtual TIndex                       FaceRestart( void ) const = 0;         //!< Primitive restart marker
 
@@ -277,8 +277,8 @@ public:
   virtual const TAttributeContainer  * Normals( void ) const = 0;             //!< Container for face normals
   virtual const TIndexContainer      * NormalIndices( void ) const = 0;       //!< Container for the separated indices of the face normals
   
-  virtual const TAttributeContainer  * TextureCoordinates( void ) const = 0;  //!< Container for the texture coordiantes
-  virtual const TIndexContainer      * TextureCoordIndices( void ) const = 0; //!< Container for the separated indices of the texture coordiantes
+  virtual const TAttributeContainer  * TextureCoordinates( void ) const = 0;  //!< Container for the texture coordinates
+  virtual const TIndexContainer      * TextureCoordIndices( void ) const = 0; //!< Container for the separated indices of the texture coordinates
   
   virtual const TAttributeContainer  * Colors( void ) const = 0;              //!< Container for the color attributes
   virtual const TIndexContainer      * ColorIndices( void ) const = 0;        //!< Container for the separated indices of the color attributes
@@ -292,7 +292,7 @@ using IMeshPtr = std::unique_ptr<IMeshData<T_DATA, T_INDEX>>;
 
 
 /******************************************************************//**
-* \brief   Generic interface for mesh data chache.
+* \brief   Generic interface for mesh data cache.
 * 
 * \author  gernot
 * \date    2018-05-29
@@ -382,7 +382,7 @@ public:
 
 /******************************************************************//**
 * \brief Generic interface for automatic normal vector 
-* gerneration.
+* generation.
 * 
 * \author  gernot
 * \date    2018-05-29
@@ -406,7 +406,7 @@ public:
 
 /******************************************************************//**
 * \brief Generic interface for automatic 2D texture coordinate 
-* gerneration.
+* generation.
 * 
 * \author  gernot
 * \date    2018-05-29
@@ -469,7 +469,7 @@ public:
 };
 
 
-// TODO $$$ "meshdef_template.h" move from workbenche to examples
+// TODO $$$ "meshdef_template.h" move from workbench to examples
 
 
 
