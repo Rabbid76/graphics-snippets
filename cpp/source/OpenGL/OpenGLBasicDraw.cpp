@@ -700,7 +700,7 @@ void main()
 //---------------------------------------------------------------------
 
 class CSimpleLineRenderer
-  : public Render::ILineRenderer
+  : public Render::Line::IRender
 {
 public:
 
@@ -1070,11 +1070,11 @@ Render::ITextureLoaderPtr CBasicDraw::NewTextureLoader(
 * \date    2017-11-27
 * \version 1.0
 **********************************************************************/
-Render::ILineRenderer & CBasicDraw::LineRenderer( void )
+Render::Line::IRender & CBasicDraw::LineRender( void )
 {
-  if ( _line_renderer == nullptr )
-    _line_renderer = std::make_shared<CSimpleLineRenderer>( *this, *this );
-  return *_line_renderer.get();
+  if ( _line_render == nullptr )
+    _line_render = std::make_shared<CSimpleLineRenderer>( *this, *this );
+  return *_line_render.get();
 }
 
 
@@ -1893,7 +1893,7 @@ bool CBasicDraw::Draw(
 
   if ( draw_line )
   {
-    CSimpleLineRenderer &draw_line = (CSimpleLineRenderer&)LineRenderer();
+    CSimpleLineRenderer &draw_line = (CSimpleLineRenderer&)LineRender();
     draw_line.Color( color );
     draw_line.Style( style );
     return draw_line.Draw( primitive_type, size, coords_size, coords );

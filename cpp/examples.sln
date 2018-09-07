@@ -38,6 +38,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cube_glfw", "cube_glfw\cube
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rubiks_cube_glfw", "rubiks_cube_glfw\rubiks_cube_glfw.vcxproj", "{1CD77B47-8D77-4A60-B744-7CB8446DD94B}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "line_render", "line_render\line_render.vcxproj", "{82274D6C-87E3-4438-9EFB-50FF405A2879}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -150,6 +152,14 @@ Global
 		{1CD77B47-8D77-4A60-B744-7CB8446DD94B}.Release|x64.Build.0 = Release|x64
 		{1CD77B47-8D77-4A60-B744-7CB8446DD94B}.Release|x86.ActiveCfg = Release|Win32
 		{1CD77B47-8D77-4A60-B744-7CB8446DD94B}.Release|x86.Build.0 = Release|Win32
+		{82274D6C-87E3-4438-9EFB-50FF405A2879}.Debug|x64.ActiveCfg = Debug|x64
+		{82274D6C-87E3-4438-9EFB-50FF405A2879}.Debug|x64.Build.0 = Debug|x64
+		{82274D6C-87E3-4438-9EFB-50FF405A2879}.Debug|x86.ActiveCfg = Debug|Win32
+		{82274D6C-87E3-4438-9EFB-50FF405A2879}.Debug|x86.Build.0 = Debug|Win32
+		{82274D6C-87E3-4438-9EFB-50FF405A2879}.Release|x64.ActiveCfg = Release|x64
+		{82274D6C-87E3-4438-9EFB-50FF405A2879}.Release|x64.Build.0 = Release|x64
+		{82274D6C-87E3-4438-9EFB-50FF405A2879}.Release|x86.ActiveCfg = Release|Win32
+		{82274D6C-87E3-4438-9EFB-50FF405A2879}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -28,8 +28,20 @@
 namespace Render
 {
 
-class ILineRenderer;
-using ILineRenererPtr = std::shared_ptr<ILineRenderer>;
+
+/******************************************************************//**
+* @brief   Namespace for generic line rendering.
+*
+* @author  gernot
+* @date    2018-02-06
+* @version 1.0
+**********************************************************************/
+namespace Line
+{
+
+
+class IRender;
+using IRenderPtr = std::shared_ptr<IRender>;
 
 
 //---------------------------------------------------------------------
@@ -44,13 +56,26 @@ using ILineRenererPtr = std::shared_ptr<ILineRenderer>;
 * \date    2018-06-08
 * \version 1.0
 **********************************************************************/
-class ILineRendererProvider
+class IRenderProvider
 {
 public:
 
-  virtual ~ILineRendererProvider() = default;
+  virtual ~IRenderProvider() = default;
 
-  virtual ILineRenderer & LineRenderer( void ) = 0;
+  virtual IRender & LineRender( void ) = 0;
+};
+
+
+//---------------------------------------------------------------------
+// CStyle
+//---------------------------------------------------------------------
+
+class CStyle
+{
+  t_fp _width;        //!< line width
+  int  _stipple_type; //!< type of line stippling
+
+  // TODO $$$ line cap
 };
 
 
@@ -66,12 +91,17 @@ public:
 * @date    2018-02-06
 * @version 1.0
 **********************************************************************/
-class ILineRenderer
+class IRender
 {
 public:
 
+  virtual ~IRender() = default;
+
+  //bool Draw( )
 };
 
+
+} // Line
 
 } // Render
 

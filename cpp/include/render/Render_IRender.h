@@ -44,7 +44,7 @@ class IProvider
   : public IDrawBufferProvider
   , public IRenderProcessProvider
   , public ITextureLoaderProvider
-  , public ILineRendererProvider
+  , public Line::IRenderProvider
 {
 public:
 
