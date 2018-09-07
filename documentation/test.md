@@ -3,4 +3,8 @@
 
 # Test
 
-Test formula formula $$\forall x \in R$$
+Test formula $$\forall x \in R$$
+
+Test formula ![f1]
+
+  [f1]: http://chart.apis.google.com/chart?cht=tx&chl=\forall{x}\in{R}
