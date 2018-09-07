@@ -17,6 +17,14 @@
 
 // class definitions
 
+
+/******************************************************************//**
+* \brief Namespace for OpenGL implementations  
+* 
+* \author  gernot
+* \date    2018-09-07
+* \version 1.0
+**********************************************************************/
 namespace OpenGL
 {
 
@@ -27,7 +35,7 @@ namespace OpenGL
 
 
 /******************************************************************//**
-* \brief   OpenGL implementation of the render process managment.
+* \brief   OpenGL implementation of the render process management.
 *          
 *  Make use of:
 *
@@ -63,9 +71,9 @@ public:
     unsigned int                _layers;       //!< number of texture layers
     unsigned int                _multisamples; //!< number of texture layers
     bool                        _linear;       //!< linear texture buffer filter
-    bool                        _extern;       //!< extern texture; a texture which is not maneged in this class, but was handed over for use
-    bool                        _cubemap;      //!< the extern target texture is a side of a cubemap
-    int                         _cubemap_side; //!< the side index of the cubemap side
+    bool                        _extern;       //!< extern texture; a texture which is not managed in this class, but was handed over for use
+    bool                        _cubemap;      //!< the extern target texture is a side of a cube map
+    int                         _cubemap_side; //!< the side index of the cube map side
   };
   using TTextureMap = std::map<size_t, TTextureObject>;
 
@@ -82,10 +90,10 @@ public:
     TBufferInfoCache( void ) = default;
 
     bool                                           _targetIsDefault = false; //!< the target is the default frame buffer
-    TViewportSize                                  _vp_size{ 0, 0 };         //!< frambuffer viewport size
-    unsigned int                                   _fb_obj;                  //!< the named frambuffer object (GPU); if the target is the default frambuffer, the this is 0 
-    unsigned int                                   _clearMask = 0;           //!< OpenGL bit mask for frambuffer clear
-    std::vector<std::pair<size_t, Render::TColor>> _clearTargets;            //!< color attachmet and color for separted clear operations
+    TViewportSize                                  _vp_size{ 0, 0 };         //!< framebuffer viewport size
+    unsigned int                                   _fb_obj;                  //!< the named framebuffer object (GPU); if the target is the default framebuffer, the this is 0 
+    unsigned int                                   _clearMask = 0;           //!< OpenGL bit mask for framebuffer clear
+    std::vector<std::pair<size_t, Render::TColor>> _clearTargets;            //!< color attachment and color for separated clear operations
     std::vector<unsigned int>                      _drawBuffers;             //!< enumerators for the draw buffers
     std::vector<TTextureAndBindig>                 _sourceTextures;          //!< source texture objects and its binding point
   };
@@ -118,14 +126,14 @@ public:
   virtual void ClearPass( size_t passID ) override;                                             //!< clear a render pass specifications
   virtual bool SpecifyPass( size_t passID, const Render::TPass &specification ) override;       //!< specify a single render pass
   virtual bool SpecifyPasses( const TPassMap &passes ) override;                                //!< specify all render passes 
-  virtual bool Validate( void ) override;                                                       //!< validate the specifcations
-  virtual bool ValidateSize( std::array<size_t, 2> ) override;                                  //!< validate the frambuffer sizes
+  virtual bool Validate( void ) override;                                                       //!< validate the specifications
+  virtual bool ValidateSize( std::array<size_t, 2> ) override;                                  //!< validate the framebuffer sizes
   virtual bool Create( TViewportSize size ) override;                                           //!< validate the specification and create the render passes                
   virtual void Destroy( void ) override;                                                        //!< destroy the buffer and the passes
   virtual bool Prepare( size_t passID, TPrepareProperties props ) override;                     //!< prepare a render pass
-  virtual bool Bind( size_t passID, bool read, bool draw ) override;                            //!< binds the named famebuffer
-  virtual bool ReleasePass( size_t passID ) override;                                           //!< relase the render pass
-  virtual bool Release( void ) override;                                                        //!< relase the current render pass
+  virtual bool Bind( size_t passID, bool read, bool draw ) override;                            //!< binds the named framebuffer
+  virtual bool ReleasePass( size_t passID ) override;                                           //!< release the render pass
+  virtual bool Release( void ) override;                                                        //!< release the current render pass
   virtual bool GetBufferObject( size_t bufferID, unsigned int &obj ) override;                  //!< get the implementation object for a buffer
   virtual bool GetPassObject( size_t passID, unsigned int &obj ) override;                      //!< get the implementation object for a pass
 
@@ -150,12 +158,12 @@ private:
   TBufferMap       _buffers;                 //!< buffer specifications
   TPassMap         _passes;                  //!< pass specifications
   bool             _valid       = false;     //!< all process buffers and process passes have been validated successfully 
-  bool             _complete    = false;     //!< all framebuffers are created an stated complete
+  bool             _complete    = false;     //!< all framebuffer objects are created an stated complete
   TScaleMap        _scales;                  //!< validated buffer scales
   TScaleMap        _passScales;              //!< validated render pass scales
   TViewportSize    _size{ 0, 0 };            //!< viewport size for which the render passes have been created
   TTextureMap      _textures;                //!< texture objects for the pass targets
-  TFrambufferMap   _fbs;                     //!< frambuffer objects for the render passes
+  TFrambufferMap   _fbs;                     //!< framebuffer objects for the render passes
   TBufferInfoMap   _bufferInfoMap;           //!< cached information for target buffer binding, target buffer clearing and source texture binding
 };
 

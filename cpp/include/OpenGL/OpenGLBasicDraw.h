@@ -1,5 +1,5 @@
 /******************************************************************//**
-* \brief   Implementation og generic interface for basic darwing.
+* \brief   Implementation of generic interface for basic drawing.
 * 
 * \author  gernot
 * \date    2018-03-15
@@ -28,17 +28,22 @@
 #include <OpenGL_Matrix_Camera.h>
 #include <OpenGL_SimpleShaderProgram_temp.h>
 
-// stl
+// STL
 
 #include <memory>
 #include <set>
 #include <string>
 
 
-// calss declarations
+// class declarations
+
 
 /******************************************************************//**
-* \brief General OpenGL namespace
+* \brief General namespace for OpenGL implementation.  
+* 
+* \author  gernot
+* \date    2018-09-07
+* \version 1.0
 **********************************************************************/
 namespace OpenGL
 {
@@ -64,14 +69,14 @@ class CBasicDraw
 {
   friend class CSimpleLineRenderer;
 
-  // TODO $$$ unifrom blocks (model, view, projection)
-  // TODO $$$ SSOA (3 frequences)
+  // TODO $$$ uniform blocks (model, view, projection)
+  // TODO $$$ SSOA (3 frequencies)
   // TODO $$$ text + greek letters: distance fields!
   // TODO $$$ post effects (cell (toon), sketch, gamma, hdr) - book of shaders
-  // TOOO $$$ meshs
-  // TODO $$$ input polyline
+  // TOOO $$$ meshes
+  // TODO $$$ input line polygons
   // TODO $$$ draw arcs, curves (nurbs, spline) by tessellation shader
-  // TODO $$$ orbit controll
+  // TODO $$$ orbit control
 
 public:
 
@@ -135,7 +140,7 @@ public:
     InvalidateProcess();
   };
 
-  //!< sete the size of the viewport
+  //!< set the size of the viewport
   virtual void ViewportSize( const TSize &vp_size ) override
   { 
     _vp_size = vp_size;
@@ -230,11 +235,11 @@ private:
   unsigned int                          _color_texture  = 0; // TODO $$$ ITexture
   unsigned int                          _uniform_ssbo   = 0; // TODO $$$ IUniform?
 
-  const size_t c_opaque_pass = 1; //!< pass for opque drawing
-  const size_t c_tranp_pass  = 2; //!< pass for tranparent drawing
+  const size_t c_opaque_pass = 1; //!< pass for opaque drawing
+  const size_t c_tranp_pass  = 2; //!< pass for transparent drawing
   const size_t c_back_pass   = 3; //!< pass for drawing to background
   const size_t c_mixcol_pass = 4; //!< mix color pass (put it all together)
-  const size_t c_finish_pass = 5; //!< final pass (fxaa)
+  const size_t c_finish_pass = 5; //!< final pass (FXAA)
 };
 
 

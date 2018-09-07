@@ -29,6 +29,14 @@
 
 //#define OpenGL_program_introspection_old
 
+
+/******************************************************************//**
+* \brief General namespace for OpenGL implementation.  
+* 
+* \author  gernot
+* \date    2018-09-07
+* \version 1.0
+**********************************************************************/
 namespace OpenGL
 {
 

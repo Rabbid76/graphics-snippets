@@ -16,7 +16,7 @@
 
 #include <functional> 
 
-// preprocess definitions
+// preprocessor definitions
 
 #if !defined(__FRAMBUFFER_DEBUG_ERROR_CHECK__)
 //#define __FRAMBUFFER_DEBUG_ERROR_CHECK__
@@ -31,6 +31,14 @@
 
 // class declarations
 
+
+/******************************************************************//**
+* \brief General namespace for OpenGL implementation.  
+* 
+* \author  gernot
+* \date    2018-09-07
+* \version 1.0
+**********************************************************************/
 namespace OpenGL
 {
 

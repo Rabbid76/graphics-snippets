@@ -14,7 +14,7 @@
 #include <Render_IProgram.h>
 
 
-// stl
+// STL
 
 #include <vector>
 #include <deque>
@@ -25,6 +25,14 @@
 
 // class definitions
 
+
+/******************************************************************//**
+* \brief General namespace for OpenGL implementation.  
+* 
+* \author  gernot
+* \date    2018-09-07
+* \version 1.0
+**********************************************************************/
 namespace OpenGL
 {
 
@@ -34,11 +42,11 @@ namespace OpenGL
 //*********************************************************************
 
 
-//! TODO $$$ [Standard, Portable Intermediate Representation - V (SPIR-V) shaders
+//! TODO $$$ [Standard, Portable Intermediate Representation - V (SPIR-V) shader
 
 
 /******************************************************************//**
-* \brief OpenGL implementation of a sahder stage.  
+* \brief OpenGL implementation of a shader stage.  
 * 
 * \author  gernot
 * \date    2018-08-03
@@ -117,7 +125,7 @@ public:
   // return shader object handle 
   virtual size_t ObjectHandle( void ) const override { return _object; }
 
-  // append a shader obeject
+  // append a shader object
   virtual Render::Program::IProgram & operator << ( const Render::Program::TShaderPtr & shader ) override
   {
     _shaders.push_back( shader );
@@ -154,13 +162,13 @@ private:
 
   TShaderList           _shaders;                                              //!< shader objects linked to a program
   TResourceLinkList     _resource_binding;                                     //!< additional resource bindings for linking the program
-  TTranformFeedbackMode _transform_feedback_mode = TTranformFeedbackMode::NON; //!< buffer mode for transform feedback sahders (required for linking)
+  TTranformFeedbackMode _transform_feedback_mode = TTranformFeedbackMode::NON; //!< buffer mode for transform feedback shader (required for linking)
   unsigned int          _object                  = 0;                          //!< named program object (GPU)
 };
 
 
 /******************************************************************//**
-* \brief Implmentation of the intorspection of an OpenGL shader program.  
+* \brief Implementation of the introspection of an OpenGL shader program.  
 * 
 * \author  gernot
 * \date    2018-08-05
@@ -219,9 +227,9 @@ private:
   bool             _verbose = false;           //!< trace introspection result
   
   TResourceTypeMap _resources;                 //!< common resource map
-  TResourceMap     _attributeIndices;          //!< map of active attributes and its inidces
+  TResourceMap     _attributeIndices;          //!< map of active attributes and its indices
   TResourceMap     _transformFeedbackVaryings; //!< map of transformed feedback varyings
-  TResourceMap     _fragDataLocation;          //!< map of fragment outouts and its locations
+  TResourceMap     _fragDataLocation;          //!< map of fragment outputs and its locations
   TResourceMap     _unifomLocation;            //!< map of uniforms and its locations
 };
 

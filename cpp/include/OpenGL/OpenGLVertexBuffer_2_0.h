@@ -29,7 +29,11 @@
 
 
 /******************************************************************//**
-* \brief General OpenGL namespace
+* \brief General namespace for OpenGL implementation.  
+* 
+* \author  gernot
+* \date    2018-09-07
+* \version 1.0
 **********************************************************************/
 namespace OpenGL
 {
@@ -46,7 +50,7 @@ namespace Compatibility
 * \brief   OpenGL implementation of `IDrawBuffer`
 * 
 * Does NOT vertex array buffers and requires at least OpenGL 2.0.
-* Extetends Legacy OpenGL (Fixed Function Pipeline) support
+* Extends Legacy OpenGL (Fixed Function Pipeline) support
 *
 * The vertex array object is emulated on the CPU.
 * 

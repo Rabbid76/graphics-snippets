@@ -30,7 +30,11 @@
 
 
 /******************************************************************//**
-* \brief General OpenGL namespace
+* \brief General namespace for OpenGL implementation.  
+* 
+* \author  gernot
+* \date    2018-09-07
+* \version 1.0
 **********************************************************************/
 namespace OpenGL
 {
@@ -47,7 +51,7 @@ namespace Compatibility
 * \brief   OpenGL implementation of `IDrawBuffer`
 * 
 * Uses vertex array buffers.
-* Extetends Legacy OpenGL (Fixed Function Pipeline) support
+* Extends Legacy OpenGL (Fixed Function Pipeline) support
 * 
 * \author  gernot
 * \date    2017-11-27
@@ -75,15 +79,15 @@ protected: // protected operations
 
   enum TCompSpecificationID
   {
-    comp__b0_xyz,                // compatibility 1 buffer (no index buffer): 3 vertex coordiantes
+    comp__b0_xyz,                // compatibility 1 buffer (no index buffer): 3 vertex coordinates
     
-    comp__b0_xyz_uv,             // compatibility 1 buffer record (no index buffer): 3 vertex coordiantes, 2 texture coordinates
-    comp__b0_xyz_nnn,            // compatibility 1 buffer record (no index buffer): 3 vertex coordiantes, normal vector
-    comp__b0_xyz_nnn_uv,         // compatibility 1 buffer record (no index buffer): 3 vertex coordiantes, normal vector, 2 texture coordinates
+    comp__b0_xyz_uv,             // compatibility 1 buffer record (no index buffer): 3 vertex coordinates, 2 texture coordinates
+    comp__b0_xyz_nnn,            // compatibility 1 buffer record (no index buffer): 3 vertex coordinates, normal vector
+    comp__b0_xyz_nnn_uv,         // compatibility 1 buffer record (no index buffer): 3 vertex coordinates, normal vector, 2 texture coordinates
 
-    comp__b0_xyz__b1_uv,         // compatibility 2 buffers (no index buffer): 3 vertex coordiantes, 2 texture coordinates
-    comp__b0_xyz__b1_nnn,        // compatibility 2 buffers (no index buffer): 3 vertex coordiantes, normal vector
-    comp__b0_xyz__b1_nnn__b2_uv, // compatibility 3 buffers (no index buffer): 3 vertex coordiantes, normal vector, 2 texture coordinates
+    comp__b0_xyz__b1_uv,         // compatibility 2 buffers (no index buffer): 3 vertex coordinates, 2 texture coordinates
+    comp__b0_xyz__b1_nnn,        // compatibility 2 buffers (no index buffer): 3 vertex coordinates, normal vector
+    comp__b0_xyz__b1_nnn__b2_uv, // compatibility 3 buffers (no index buffer): 3 vertex coordinates, normal vector, 2 texture coordinates
   };
 
   static const TDescription & CompatibilitySpecification( TCompSpecificationID id )

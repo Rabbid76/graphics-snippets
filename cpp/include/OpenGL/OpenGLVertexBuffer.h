@@ -25,7 +25,11 @@
 
 
 /******************************************************************//**
-* \brief General OpenGL namespace
+* \brief General namespace for OpenGL implementation.  
+* 
+* \author  gernot
+* \date    2018-09-07
+* \version 1.0
 **********************************************************************/
 namespace OpenGL
 {
@@ -65,7 +69,7 @@ public: // public types
   using TVAOs        = std::map<THashCode, TVAO>;                   //!< vertex array object container type 
 
   constexpr static const int c_obj   = 0; //!< tuple index for GPU object
-  constexpr static const int c_descr = 1; //!< tuple index for descripton
+  constexpr static const int c_descr = 1; //!< tuple index for description
   constexpr static const int c_size  = 1; //!< tuple index for size of buffer
   constexpr static const int c_count = 2; //!< tuple index for number of elements
   constexpr static const int c_elemS = 3; //!< tuple index for size of one elements
@@ -122,12 +126,12 @@ protected: // protected operations
  
 protected: // protected attributes
 
-  size_t                 _minVboSize   = 0;                                   //!< minimum size for a array buffe
+  size_t                 _minVboSize   = 0;                                   //!< minimum size for a array buffer
   Render::TDrawBufferUsage _usage        = Render::TDrawBufferUsage::stream_draw; //!< usage of drawing buffer
   TGPUObj                _currentVAO   = 0;                                   //!< current selected vertex array object <GPU name>
-  size_t                 _currNoElems  = 0;                                   //!< number of elements in the curently selected vertex array object
-  size_t                 _currElemSize = 0;                                   //!< size of an element in the curently selected vertex array object
-  TVBOs                  _vbos;                                               //!< map destcription -> (vertex array object <GPU name>, description)
+  size_t                 _currNoElems  = 0;                                   //!< number of elements in the currently selected vertex array object
+  size_t                 _currElemSize = 0;                                   //!< size of an element in the currently selected vertex array object
+  TVBOs                  _vbos;                                               //!< map description -> (vertex array object <GPU name>, description)
   TIBOs                  _ibos;                                               //!< map index -> ( element array buffer <GPU name>, size <count> of element array buffer )
   TVAOs                  _vaos;                                               //!< list of array buffers ( array buffer <GPU name>, size <count> of array buffer )
 };

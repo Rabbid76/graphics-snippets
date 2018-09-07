@@ -1,12 +1,12 @@
 /******************************************************************//**
-* \brief Type definitions for the abstrahtion of deprecated OpenGL
+* \brief Type definitions for the abstraction of deprecated OpenGL
 * Fixed Function Pipeline.
 *
 * See:
 *   - [Khronos wiki - Fixed Function Pipeline](https://www.khronos.org/opengl/wiki/Fixed_Function_Pipeline)
 *   - [Khronos wiki - Legacy OpenGL](https://www.khronos.org/opengl/wiki/Legacy_OpenGL)
 * 
-* \author  gernott
+* \author  gernot
 * \date    2017-11-27
 * \version 1.0
 **********************************************************************/
@@ -16,7 +16,11 @@
 
 
 /******************************************************************//**
-* \brief General OpenGL namespace
+* \brief General namespace for OpenGL implementation.  
+* 
+* \author  gernot
+* \date    2018-09-07
+* \version 1.0
 **********************************************************************/
 namespace OpenGL
 {
@@ -30,7 +34,7 @@ namespace Compatibility
 
 
 /******************************************************************//**
-* \brief   Compatibility mode Attrbutes kinds and Clinet states
+* \brief   Compatibility mode attributes kinds and client states
 * 
 * \author  gernot
 * \date    2017-11-27

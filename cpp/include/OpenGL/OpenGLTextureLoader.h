@@ -14,11 +14,21 @@
 
 #include <Render_ITexture.h>
 
+// STL
+
 #include <array>
 
 
 // class definitions
 
+
+/******************************************************************//**
+* \brief General namespace for OpenGL implementation.  
+* 
+* \author  gernot
+* \date    2018-09-07
+* \version 1.0
+**********************************************************************/
 namespace OpenGL
 {
 
@@ -30,7 +40,7 @@ class CTextureInternal;
 //*********************************************************************
 
 /******************************************************************//**
-* \brief OpenGL implmentation of generic interface `ITextureLoader`  
+* \brief OpenGL implementation of generic interface `ITextureLoader`  
 * 
 * \author  gernot
 * \date    2018-06-09
@@ -53,7 +63,7 @@ public:
   size_t BindingId( void )             const { return _loader_binding_id; }
   int    MaxAnisotropicSamples( void ) const { return _max_anisotripic_samples >= 0 ? _max_anisotripic_samples : _max_anisotripic_samples_default; }
 
-  //! set default anisotropic filter smaples
+  //! set default anisotropic filter samples
   static void SetMaxAnisotropicSamplesDefault( int max_anisotripic_samples ) { _max_anisotripic_samples_default = max_anisotripic_samples; }
 
   //! enable anisotropic filter
@@ -93,10 +103,10 @@ public:
   //! map texture wrap parameters to OpenGL magnification  filter enumerator constant
   static std::array<unsigned int, 3> Wrap( const Render::TTextureParameters &parameter );
 
-  //! Get texture paramters for the initial creation of a texture
+  //! Get texture parameters for the initial creation of a texture
   static Render::TTextureParameters TextureParamterLeve0( const Render::TTextureParameters &parameter );
 
-  //! Apply OpenGL texture paramter to current texture object
+  //! Apply OpenGL texture parameter to current texture object
   static bool SetTextureParameter( unsigned int texture_object, const Render::TTextureParameters &parameter, int max_anisotropic_samples );
 
   //! Generate mipmap according to the parameters

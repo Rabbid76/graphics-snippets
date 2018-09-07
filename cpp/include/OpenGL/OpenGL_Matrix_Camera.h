@@ -1,12 +1,12 @@
 #pragma once
 
-// glm
+// GLM library
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-// stl
+// STL
 
 #include <tuple>
 #include <array>
@@ -16,6 +16,13 @@
 #include <math.h> 
 
 
+/******************************************************************//**
+* \brief General namespace for OpenGL implementation.  
+* 
+* \author  gernot
+* \date    2018-09-07
+* \version 1.0
+**********************************************************************/
 namespace OpenGL
 {
 
