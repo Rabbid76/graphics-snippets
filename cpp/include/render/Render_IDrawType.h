@@ -168,6 +168,81 @@ enum class TSketchMode
 };
 
 
+//---------------------------------------------------------------------
+// Primitives
+//---------------------------------------------------------------------
+
+
+/******************************************************************//**
+* \brief   Generic primitive type
+* 
+* \author  gernot
+* \date    2017-11-27
+* \version 1.0
+**********************************************************************/
+enum class TPrimitive
+{
+  points                   = 0,
+  lines                    = 1,
+  linestrip                = 2,
+  lineloop                 = 3,
+  lines_adjacency          = 4,
+  linestrip_adjacency      = 5,
+  triangles                = 6,
+  trianglestrip            = 7,
+  trianglefan              = 8,
+  triangle_adjacency       = 9,
+  trianglestrip_adjacency  = 10,
+  patches                  = 11,
+  // ...
+  NO_OF
+};
+
+
+/******************************************************************//**
+* \brief   Generic base primitives
+* 
+* \author  gernot
+* \date    2017-11-27
+* \version 1.0
+**********************************************************************/
+enum class TBasePrimitive
+{
+  point = 0,
+  line = 1,
+  polygon = 2,
+  patch = 3
+};
+
+
+/******************************************************************//**
+* \brief   Identify the bas primitive
+* 
+* \author  gernot
+* \date    2017-11-27
+* \version 1.0
+**********************************************************************/
+inline TBasePrimitive BasePrimitive( TPrimitive primitive )
+{
+  static_assert((int)TPrimitive::NO_OF == 12, "invalid number of primitives");
+  static const std::array<TBasePrimitive, (int)TPrimitive::NO_OF> primitive_map
+  {
+    TBasePrimitive::point,   // TPrimitive::points
+    TBasePrimitive::line,    // TPrimitive::lines
+    TBasePrimitive::line,    // TPrimitive::linestrip
+    TBasePrimitive::line,    // TPrimitive::lineloop
+    TBasePrimitive::line,    // TPrimitive::lines_adjacency
+    TBasePrimitive::line,    // TPrimitive::linestrip_adjacency
+    TBasePrimitive::polygon, // TPrimitive::triangles
+    TBasePrimitive::polygon, // TPrimitive::trianglestrip
+    TBasePrimitive::polygon, // TPrimitive::trianglefan
+    TBasePrimitive::polygon, // TPrimitive::triangle_adjacency
+    TBasePrimitive::polygon, // TPrimitive::trianglestrip_adjacency
+    TBasePrimitive::patch    // TPrimitive::patches
+  };
+  return primitive_map[(int)primitive];
+}
+
 
 } // Draw
 

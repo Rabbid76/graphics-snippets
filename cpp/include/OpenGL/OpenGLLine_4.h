@@ -57,6 +57,9 @@ public:
 
   CLineHighQuality( void );
   virtual ~CLineHighQuality();
+
+  // TODO : comments
+  // The implementation is based on the ... link to paper
 };
 
 

@@ -198,46 +198,9 @@ void CWindow_Glfw::MainLoop ( void )
 } 
 
 
-std::string sh_vert = R"(
-#version 400 core
-
-layout (location = 0) in vec3 inPos;
-layout (location = 1) in vec4 inColor;
-
-out vec3 vertPos;
-out vec4 vertCol;
-
-void main()
-{
-    vertCol     = inColor;
-		vertPos     = inPos;
-		gl_Position = vec4(inPos, 1.0);
-}
-)";
-
-std::string sh_frag = R"(
-#version 400 core
-
-in vec3 vertPos;
-in vec4 vertCol;
-
-out vec4 fragColor;
-
-void main()
-{
-    fragColor  = vertCol;
-}
-)";
-
 void CWindow_Glfw::InitScene( void )
 {
-    _prog.reset( new OpenGL::ShaderProgramSimple(
-    {
-      { sh_vert, GL_VERTEX_SHADER },
-      { sh_frag, GL_FRAGMENT_SHADER }
-    } ) );
-
-    //_prog->Use();
+   
 }
 
 void CWindow_Glfw::Render( double time_ms )

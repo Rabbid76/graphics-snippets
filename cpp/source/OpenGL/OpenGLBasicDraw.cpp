@@ -714,8 +714,9 @@ public:
   virtual IRender & SetStyle( const Render::Line::TStyle & style )                 { _style = style; return *this; }
   virtual IRender & SetArrowStyle( const Render::Line::TArrowStyle & arrow_style ) { _arrow_style = arrow_style; return *this; }
   
-  // TODO $$$ override  
-  virtual bool Draw( Render::TPrimitive primitive_type, size_t tuple_size, size_t coords_size, const Render::t_fp *coords );
+  virtual bool Draw( Render::TPrimitive primitive_type, unsigned int tuple_size, size_t coords_size, const float *coords )  override;
+  
+  virtual bool Draw( Render::TPrimitive primitive_type, unsigned int tuple_size, size_t coords_size, const double *coords ) override { assert(false); return false; }
 
 private:
 
@@ -736,10 +737,10 @@ private:
 * \version 1.0
 **********************************************************************/
 bool CSimpleLineRenderer::Draw( 
-  Render::TPrimitive    primitive_type, //!< in: type of the primitives the allowed enumerators are `lines`, `linestrip`, `lineloop`, `lines_adjacency` and `linestrip_adjacency`
-  size_t                size,           //!< in: tuple size of a vertex coordinates - 2: x, y; 3: x, y, z; 4: x, y, z, w 
-  size_t                coords_size,    //!< in: size of coordinate buffer
-  const Render::t_fp   *coords )        //!< in: coordinate buffer
+  Render::TPrimitive  primitive_type, //!< in: type of the primitives the allowed enumerators are `lines`, `linestrip`, `lineloop`, `lines_adjacency` and `linestrip_adjacency`
+  unsigned int        tuple_size,     //!< in: tuple size of a vertex coordinates - 2: x, y; 3: x, y, z; 4: x, y, z, w 
+  size_t              coords_size,   //!< in: size of coordinate buffer
+  const float        *coords )        //!< in: coordinate buffer
 {
   if ( primitive_type != Render::TPrimitive::lines &&
        primitive_type != Render::TPrimitive::linestrip && 
@@ -751,7 +752,7 @@ bool CSimpleLineRenderer::Draw(
     return false;
   }
   
-  if ( size != 2 && size != 3 && size != 4 )
+  if ( tuple_size != 2 && tuple_size != 3 && tuple_size != 4 )
   {
     assert( false );
     return false;
@@ -762,7 +763,7 @@ bool CSimpleLineRenderer::Draw(
   
   // create indices
   Render::TPrimitive final_primitive_type = primitive_type;
-  size_t             no_of_vertices       = coords_size / size;
+  size_t             no_of_vertices       = coords_size / tuple_size;
   std::vector<unsigned short int> indices;
   indices.reserve( no_of_vertices * 2 );
   
@@ -807,7 +808,7 @@ bool CSimpleLineRenderer::Draw(
   }
 
   // buffer specification
-  Render::TVA va_id = size == 2 ? Render::TVA::b0_xy : (size == 3 ? Render::TVA::b0_xyz : Render::TVA::b0_xyzw);
+  Render::TVA va_id = tuple_size == 2 ? Render::TVA::b0_xy : (tuple_size == 3 ? Render::TVA::b0_xyz : Render::TVA::b0_xyzw);
   const std::vector<char> bufferdescr = Render::IDrawBuffer::VADescription( va_id );
 
   // set style and context
@@ -827,29 +828,29 @@ bool CSimpleLineRenderer::Draw(
     if (arrow_from)
     {
       size_t i0 = 0;
-      size_t ix = size;
-      glm::vec3 p0( coords[i0], coords[i0+1], size == 3 ? coords[i0+2] : 0.0f );
-      glm::vec3 p1( coords[ix], coords[ix+1], size == 3 ? coords[ix+2] : 0.0f );
+      size_t ix = tuple_size;
+      glm::vec3 p0( coords[i0], coords[i0+1], tuple_size == 3 ? coords[i0+2] : 0.0f );
+      glm::vec3 p1( coords[ix], coords[ix+1], tuple_size == 3 ? coords[ix+2] : 0.0f );
       glm::vec3 v0 = p0 - p1;
       float l = glm::length( v0 );
       p0 = p1 + v0 * (l-_arrow_style._size[0]) / l;
       temp_coords[i0] = p0[0];
       temp_coords[i0+1] = p0[1];
-      if (size == 3)
+      if (tuple_size == 3)
         temp_coords[i0+2] = p0[2];
     }
     if (arrow_to)
     {
-      size_t i0 = coords_size - size;
-      size_t ix = coords_size - size*2;
-      glm::vec3 p0( coords[i0], coords[i0+1], size == 3 ? coords[i0+2] : 0.0f );
-      glm::vec3 p1( coords[ix], coords[ix+1], size == 3 ? coords[ix+2] : 0.0f );
+      size_t i0 = coords_size - tuple_size;
+      size_t ix = coords_size - tuple_size*2;
+      glm::vec3 p0( coords[i0], coords[i0+1], tuple_size == 3 ? coords[i0+2] : 0.0f );
+      glm::vec3 p1( coords[ix], coords[ix+1], tuple_size == 3 ? coords[ix+2] : 0.0f );
       glm::vec3 v0 = p0 - p1;
       float l = glm::length( v0 );
       p0 = p1 + v0 * (l-_arrow_style._size[0]) / l;
       temp_coords[i0] = p0[0];
       temp_coords[i0+1] = p0[1];
-      if (size == 3)
+      if (tuple_size == 3)
         temp_coords[i0+2] = p0[2];
     }
 
@@ -890,11 +891,11 @@ bool CSimpleLineRenderer::Draw(
     {
       // TODO $$$ 3D !!! project to viewport
       size_t i0 = 0;
-      size_t ix = size;
+      size_t ix = tuple_size;
       _draw_library.SetModelUniform(
         TVec3{ _arrow_style._size[0], _arrow_style._size[1], 1.0f },
-        TVec3{ coords[i0], coords[i0+1], size == 3 ? coords[i0+2] : 0.0f },
-        TVec3{ coords[ix], coords[ix+1], size == 3 ? coords[ix+2] : 0.0f },
+        TVec3{ coords[i0], coords[i0+1], tuple_size == 3 ? coords[i0+2] : 0.0f },
+        TVec3{ coords[ix], coords[ix+1], tuple_size == 3 ? coords[ix+2] : 0.0f },
         TVec3{ _draw_library._uniforms._view[2][0], _draw_library._uniforms._view[2][1], - _draw_library._uniforms._view[2][2] } );
       
       buffer.DrawArray( Render::TPrimitive::trianglefan, 0, no_arrow_vertices, true );
@@ -906,12 +907,12 @@ bool CSimpleLineRenderer::Draw(
     if ( arrow_to )
     {
       // TODO $$$ 3D !!! project to viewport
-      size_t i0 = coords_size - size;
-      size_t ix = coords_size - size*2;
+      size_t i0 = coords_size - tuple_size;
+      size_t ix = coords_size - tuple_size*2;
       _draw_library.SetModelUniform(
         TVec3{ _arrow_style._size[0], _arrow_style._size[1], 1.0f },
-        TVec3{ coords[i0], coords[i0+1], size == 3 ? coords[i0+2] : 0.0f },
-        TVec3{ coords[ix], coords[ix+1], size == 3 ? coords[ix+2] : 0.0f },
+        TVec3{ coords[i0], coords[i0+1], tuple_size == 3 ? coords[i0+2] : 0.0f },
+        TVec3{ coords[ix], coords[ix+1], tuple_size == 3 ? coords[ix+2] : 0.0f },
         TVec3{ _draw_library._uniforms._view[2][0], _draw_library._uniforms._view[2][1], - _draw_library._uniforms._view[2][2] } );
 
       buffer.DrawArray( Render::TPrimitive::trianglefan, 0, no_arrow_vertices, true );
@@ -1891,9 +1892,9 @@ bool CBasicDraw::Draw(
 
   if ( draw_line )
   {
-    CSimpleLineRenderer &draw_line = (CSimpleLineRenderer&)LineRender();
+    Render::Line::IRender &draw_line = LineRender();
     draw_line.SetColor( color ).SetStyle( { style._thickness, 1 } ).SetArrowStyle( { style._size, style._properites } );
-    return draw_line.Draw( primitive_type, size, coords_size, coords );
+    return draw_line.Draw( primitive_type, (unsigned int)size, coords_size, coords );
   }
 
  

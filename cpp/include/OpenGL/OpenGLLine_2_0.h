@@ -56,6 +56,9 @@ public:
 
   CLineOpenGL_2_00( void );
   virtual ~CLineOpenGL_2_00();
+
+  // TODO : comments
+  // The implementation is based on the OpenGL X.XX compatibility mode specification [link] - line tipple etc.
 };
 
 

@@ -77,30 +77,6 @@ public:
 
 
 /******************************************************************//**
-* \brief   Generic primitive type
-* 
-* \author  gernot
-* \date    2017-11-27
-* \version 1.0
-**********************************************************************/
-enum class TPrimitive
-{
-  points,
-  lines,
-  linestrip,
-  lineloop,
-  lines_adjacency,
-  linestrip_adjacency,
-  triangles,
-  trianglestrip,
-  trianglefan,
-  triangle_adjacency,
-  trianglestrip_adjacency,
-  patches
-};
-
-
-/******************************************************************//**
 * \brief   The type of an attribute element
 * 
 * \author  gernot
