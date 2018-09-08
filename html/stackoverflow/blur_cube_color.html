@@ -116,12 +116,16 @@ html,body { margin: 0; overflow: hidden; }
 </div>
 
 <div id="ref-link">
-<a href="https://stackoverflow.com/questions/8166384/how-to-get-a-glow-shader-effect-in-opengl-es-2-0/45043547#45043547"> 
-<font color= #CCF>How to get a ?Glow? shader effect in OpenGL ES 2.0?</font> 
-</a>
-<br/>
 <a href="https://stackoverflow.com/questions/50882953/glsl-gaussian-blur-artifact-issue/50885727#50885727"> 
 <font color= #CCF>GLSL - Gaussian Blur Artifact Issue</font>
+</a>
+<br/>
+<a href="https://stackoverflow.com/questions/8166384/how-to-get-a-glow-shader-effect-in-opengl-es-2-0/45043547#45043547"> 
+<font color= #CCF>How to get a "Glow" shader effect in OpenGL ES 2.0?</font> 
+</a>
+<br/>
+<a href="https://stackoverflow.com/questions/11282394/what-kind-of-blurs-can-be-implemented-in-pixel-shaders/45878733#45878733">
+<font color= #CCF>What kind of blurs can be implemented in pixel shaders?</font>
 </a>
 </div>
 
@@ -169,12 +173,10 @@ function render(deltaMS){
 
     // setup view projection and model
     var prjMat = camera.Perspective();
-    var viewMat = camera.LookAt(); //camera.Orbit();
+    var viewMat = camera.Orbit();
     var modelMat = IdentityMat44();
-    //modelMat = camera.AutoModelMatrix();
-    modelMat = RotateAxis( modelMat, CalcAng( deltaMS, 13.0 ), 0 );
-    modelMat = RotateAxis( modelMat, CalcAng( deltaMS, 17.0 ), 1 );
-
+    modelMat = camera.AutoModelMatrix();
+    
     // set up draw shader
     ShaderProgram.Use( progDraw.prog );
     ShaderProgram.SetUniformM44( progDraw.prog, "u_projectionMat44", prjMat );

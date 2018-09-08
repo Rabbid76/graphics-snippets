@@ -68,11 +68,11 @@
 
 [Shadow map](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/shadow_map.html)
 
-[SSAO 1](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/ssao_simple.html)
+[Simple fixed SSAO](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/ssao_simple_b.html)
 
-[SSAO 2](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/ssao_simple_b.html)
+[SSAO - random noise and kernel](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/ssao_simple.html)
 
-[Blur cube](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/blur_cube_color.html)
+[Simple blur - Blur cube](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/blur_cube_color.html)
 
 [Blur sphere](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/blur_sphere_texture.html)
 
