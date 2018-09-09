@@ -732,8 +732,6 @@ Is there some mystic mapping between Fixed-Function attributes and vertex attrib
 
 ## Answer
 
-After doing some research and thanks to the link of @BDL, I'll answer this question by myself.
-
 If the OpenGL extension [`ARB_vertex_program;  Modify Section 2.7, Vertex Specification`](https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_vertex_program.txt) is valid,
 then there is a mapping between Fixed function attributes and attribute indices: 
 

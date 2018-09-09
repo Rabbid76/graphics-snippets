@@ -99,7 +99,6 @@ html,body { margin: 0; overflow: hidden; }
 
 <body>
 
-<div>
 <form id="gui" name="inputs">
 <table>
     <tr> <td> <font color= #CCF>blur</font> </td> <td> <input type="range" id="sigma" min="0" max="100" value="50"/></td> </tr>
@@ -142,12 +141,10 @@ function render(deltaMS){
     vp_size = [canvas.width, canvas.height];
     camera.Update( vp_size );
     var prjMat = camera.Perspective();
-    var viewMat = camera.LookAt(); //camera.Orbit();
+    var viewMat = camera.Orbit();
     var modelMat = IdentityMat44();
-    //modelMat = camera.AutoModelMatrix();
-    modelMat = RotateAxis( modelMat, CalcAng( deltaMS, 13.0 ), 0 );
-    modelMat = RotateAxis( modelMat, CalcAng( deltaMS, 17.0 ), 1 );
-        
+    modelMat = camera.AutoModelMatrix();
+         
     gl.enable( gl.DEPTH_TEST );
     gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
 
