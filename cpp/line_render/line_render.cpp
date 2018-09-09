@@ -220,7 +220,11 @@ void CWindow_Glfw::Render( double time_ms )
     line_render->SetStyle( { 10.0f, 2 } );
     line_render->SetColor( Render::TColor{ 0.9f, 0.5f, 0.1f, 1.0f } );
 
-    static const std::vector<double> line_test_1{ -0.5, -0.5, 0.5, -0.5, 0.5, 0.5 };
+    static const std::vector<double> line_test_1{ -0.4, -0.5, 0.6, -0.5, 0.6, 0.5 };
     line_render->Draw( Render::TPrimitive::lineloop, 2, line_test_1.size(), line_test_1.data() );
+
+    static const std::vector<double> line_x_test_2{ -0.6,  0.4, -0.6 };
+    static const std::vector<double> line_y_test_2{ -0.5,  0.5,  0.5 };
+    line_render->Draw( Render::TPrimitive::lineloop, line_x_test_2.size(), line_x_test_2.data(), line_y_test_2.data() );
    
 }

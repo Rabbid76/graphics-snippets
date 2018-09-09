@@ -135,9 +135,20 @@ public:
     const double      *coords          //!< in: pointer to an array of the vertex coordinates
   ) = 0;
 
-  // TODO $$$
-  //virtual bool Draw( Render::TPrimitive primitive_type, size_t no_of_coords, float *x_coords, float *y_coords ) = 0;
-  //virtual bool Draw( Render::TPrimitive primitive_type, size_t no_of_coords, double *x_coords, double *y_coords ) = 0;
+  //! Draw a line sequence
+  virtual bool Draw( 
+    Render::TPrimitive primitive_type, //!< in: primitive type of the coordinates - lines, line strip, line loop, lines adjacency or line strip adjacency 
+    size_t             no_of_coords,   //!< in: number of coordinates and number of elements (size) of the coordinate array
+    const float       *x_coords,       //!< int pointer to an array of the x coordinates
+    const float       *y_coords        //!< int pointer to an array of the y coordinates
+  ) = 0;
+ 
+  virtual bool Draw( 
+    Render::TPrimitive primitive_type, //!< in: primitive type of the coordinates - lines, line strip, line loop, lines adjacency or line strip adjacency 
+    size_t             no_of_coords,   //!< in: number of coordinates and number of elements (size) of the coordinate array
+    const double      *x_coords,       //!< int pointer to an array of the x coordinates
+    const double      *y_coords        //!< int pointer to an array of the y coordinates
+  ) = 0;
 
   // TODO $$$
   //virtual bool StartSequence( Render::TPrimitive primitive_type ) = 0;

@@ -718,6 +718,9 @@ public:
   
   virtual bool Draw( Render::TPrimitive primitive_type, unsigned int tuple_size, size_t coords_size, const double *coords ) override { assert(false); return false; }
 
+  virtual bool Draw( Render::TPrimitive primitive_type, size_t no_of_coords, const float *x_coords, const float *y_coords ) override { assert(false); return false; }
+  virtual bool Draw( Render::TPrimitive primitive_type, size_t no_of_coords, const double *x_coords, const double *y_coords ) override { assert(false); return false; }
+
 private:
 
   CBasicDraw                  &_draw_library;

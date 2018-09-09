@@ -135,7 +135,7 @@ CLineOpenGL_1_00 & CLineOpenGL_1_00::SetStyle(
   glLineWidth( style._width );
 
   // activate line stipple
-  if ( style._stipple_type == 0 )
+  if ( style._stipple_type == 1 )
   {
     glDisable( GL_LINE_STIPPLE );
     return *this;
@@ -259,6 +259,76 @@ bool CLineOpenGL_1_00::Draw(
     for ( const double *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 4 )
       glVertex4dv( ptr );
   }
+
+  // complete sequence
+  glEnd();
+
+  return true;
+}
+
+
+/******************************************************************//**
+* \brief Draw a single line sequence.  
+* 
+* \author  gernot
+* \date    2018-09-07
+* \version 1.0
+**********************************************************************/
+bool CLineOpenGL_1_00::Draw( 
+  Render::TPrimitive primitive_type, //!< in: primitive type of the coordinates - lines, line strip, line loop, lines adjacency or line strip adjacency 
+  size_t             no_of_coords,   //!< in: number of coordinates and number of elements (size) of the coordinate array
+  const float       *x_coords,       //!< int pointer to an array of the x coordinates
+  const float       *y_coords )      //!< int pointer to an array of the y coordinates
+{
+  // A new sequence can't be started within an active sequence
+  if ( _active_sequence )
+  {
+    ASSERT( false );
+    return false;
+  }
+  ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::line );
+  
+  // start `glBegin` / `glEnd` sequence
+  glBegin( OpenGL::Primitive(primitive_type) );
+
+  // draw the line sequence
+  for ( size_t i = 0; i < no_of_coords; ++ i )
+    glVertex2f( x_coords[i], y_coords[i] );
+
+  // complete sequence
+  glEnd();
+
+  return true;
+}
+
+
+/******************************************************************//**
+* \brief Draw a single line sequence.  
+* 
+* \author  gernot
+* \date    2018-09-07
+* \version 1.0
+**********************************************************************/
+bool CLineOpenGL_1_00::Draw( 
+  Render::TPrimitive primitive_type, //!< in: primitive type of the coordinates - lines, line strip, line loop, lines adjacency or line strip adjacency 
+  size_t             no_of_coords,   //!< in: number of coordinates and number of elements (size) of the coordinate array
+  const double      *x_coords,       //!< int pointer to an array of the x coordinates
+  const double      *y_coords )      //!< int pointer to an array of the y coordinates
+{
+  // A new sequence can't be started within an active sequence
+  if ( _active_sequence )
+  {
+    ASSERT( false );
+    return false;
+  }
+  ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::line );
+  
+  // start `glBegin` / `glEnd` sequence
+  glBegin( OpenGL::Primitive(primitive_type) );
+
+  // draw the line sequence
+  for ( size_t i = 0; i < no_of_coords; ++ i )
+    glVertex2d( x_coords[i], y_coords[i] );
 
   // complete sequence
   glEnd();
