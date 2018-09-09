@@ -136,14 +136,14 @@ public:
   ) = 0;
 
   // TODO $$$
-  //virtual void Draw( Render::TPrimitive primitive_type, size_t no_of_coords, float *x_coords, float *y_coords ) = 0;
-  //virtual void Draw( Render::TPrimitive primitive_type, size_t no_of_coords, double *x_coords, double *y_coords ) = 0;
+  //virtual bool Draw( Render::TPrimitive primitive_type, size_t no_of_coords, float *x_coords, float *y_coords ) = 0;
+  //virtual bool Draw( Render::TPrimitive primitive_type, size_t no_of_coords, double *x_coords, double *y_coords ) = 0;
 
   // TODO $$$
-  //virtual void StartSequence( Render::TPrimitive primitive_type ) = 0;
-  //virtual void EndSequence( void ) = 0;
-  //virtual void DrawSequence( float x, float y, float z ) = 0;
-  //virtual void DrawSequence( double x, double y, double z ) = 0;
+  //virtual bool StartSequence( Render::TPrimitive primitive_type ) = 0;
+  //virtual bool EndSequence( void ) = 0;
+  //virtual bool DrawSequence( float x, float y, float z ) = 0;
+  //virtual bool DrawSequence( double x, double y, double z ) = 0;
   //virtual bool DrawSequence( int tuple_size, size_t no_of_coords, const float *coords ) = 0;
   //virtual bool DrawSequence( int tuple_size, size_t no_of_coords, const double *coords ) = 0;
 

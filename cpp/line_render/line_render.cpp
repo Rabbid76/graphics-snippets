@@ -24,6 +24,8 @@
 #include <math.h>
 
 // Own
+#include <Render_IDrawLine.h>
+#include <OpenGLLine_1_0.h>
 #include <OpenGL_Matrix_Camera.h>
 #include <OpenGL_SimpleShaderProgram.h>
 
@@ -34,7 +36,18 @@ static int g_multisampling = 2;
 // [Switching Between windowed and full screen in OpenGL/GLFW 3.2](https://stackoverflow.com/questions/47402766/switching-between-windowed-and-full-screen-in-opengl-glfw-3-2/47462358#47462358)
 class CWindow_Glfw
 {
+public:
+
+    virtual ~CWindow_Glfw();
+
+    void Init( int width, int height, int multisampling, bool doubleBuffer );
+    static void CallbackResize(GLFWwindow* window, int cx, int cy);
+    void MainLoop( void );
+
 private:
+
+    void InitScene( void );
+    void Render( double time_ms );
 
     std::array< int, 2 > _wndPos         {0, 0};
     std::array< int, 2 > _wndSize        {0, 0};
@@ -51,16 +64,7 @@ private:
 
     std::unique_ptr<OpenGL::ShaderProgramSimple> _prog;
 
-    void InitScene( void );
-    void Render( double time_ms );
-
-public:
-
-    virtual ~CWindow_Glfw();
-
-    void Init( int width, int height, int multisampling, bool doubleBuffer );
-    static void CallbackResize(GLFWwindow* window, int cx, int cy);
-    void MainLoop( void );
+    std::unique_ptr<Render::Line::IRender> _line_1;
 };
 
 int main(int argc, char** argv)
@@ -200,7 +204,7 @@ void CWindow_Glfw::MainLoop ( void )
 
 void CWindow_Glfw::InitScene( void )
 {
-   
+  _line_1 = std::make_unique<OpenGL::Line::CLineOpenGL_1_00>();
 }
 
 void CWindow_Glfw::Render( double time_ms )
@@ -210,15 +214,13 @@ void CWindow_Glfw::Render( double time_ms )
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);  
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
       
-    glLineWidth( 10.0f );
-    glEnable( GL_LINE_STIPPLE );
-    glLineStipple( 10.0f, 0x5555 );
 
-    glColor4f( 0.9f, 0.5f, 0.1f, 1.0f );
+    Render::Line::IRender *line_render = _line_1.get();
 
-    glBegin( GL_LINE_LOOP );
-    glVertex2f( -0.5f, -0.5f );
-    glVertex2f(  0.5f, -0.5f );
-    glVertex2f(  0.5f,  0.5f );
-    glEnd();
+    line_render->SetStyle( { 10.0f, 2 } );
+    line_render->SetColor( Render::TColor{ 0.9f, 0.5f, 0.1f, 1.0f } );
+
+    static const std::vector<double> line_test_1{ -0.5, -0.5, 0.5, -0.5, 0.5, 0.5 };
+    line_render->Draw( Render::TPrimitive::lineloop, 2, line_test_1.size(), line_test_1.data() );
+   
 }

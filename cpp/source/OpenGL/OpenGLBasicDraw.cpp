@@ -709,10 +709,10 @@ public:
 
   ~CSimpleLineRenderer() {}
 
-  virtual IRender & SetColor( const Render::TColor & color )                       { _color = color; return *this; }
-  virtual IRender & SetColor( const Render::TColor8 & color )                      { _color = Render::toColor( color ); return *this; }
-  virtual IRender & SetStyle( const Render::Line::TStyle & style )                 { _style = style; return *this; }
-  virtual IRender & SetArrowStyle( const Render::Line::TArrowStyle & arrow_style ) { _arrow_style = arrow_style; return *this; }
+  virtual CSimpleLineRenderer & SetColor( const Render::TColor & color )                       { _color = color; return *this; }
+  virtual CSimpleLineRenderer & SetColor( const Render::TColor8 & color )                      { _color = Render::toColor( color ); return *this; }
+  virtual CSimpleLineRenderer & SetStyle( const Render::Line::TStyle & style )                 { _style = style; return *this; }
+  virtual CSimpleLineRenderer & SetArrowStyle( const Render::Line::TArrowStyle & arrow_style ) { _arrow_style = arrow_style; return *this; }
   
   virtual bool Draw( Render::TPrimitive primitive_type, unsigned int tuple_size, size_t coords_size, const float *coords )  override;
   

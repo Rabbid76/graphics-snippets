@@ -19,6 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\source\OpenGL\OpenGLLine_1_00.cpp" />
+    <ClCompile Include="..\source\OpenGL\OpenGLLine_2_00.cpp" />
+    <ClCompile Include="..\source\OpenGL\OpenGLLine_4.cpp" />
     <ClCompile Include="line_render.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -28,6 +31,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\include\OpenGL\OpenGLLine_1_0.h" />
+    <ClInclude Include="..\include\OpenGL\OpenGLLine_2_0.h" />
+    <ClInclude Include="..\include\OpenGL\OpenGLLine_4.h" />
     <ClInclude Include="..\include\OpenGL\OpenGL_Matrix_Camera.h" />
     <ClInclude Include="..\include\OpenGL\OpenGL_SimpleShaderProgram.h" />
     <ClInclude Include="..\include\render\Render_IDrawLine.h" />

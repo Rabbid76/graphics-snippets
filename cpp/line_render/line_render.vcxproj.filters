@@ -18,6 +18,15 @@
     <ClCompile Include="line_render.cpp">
       <Filter>source</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\OpenGL\OpenGLLine_1_00.cpp">
+      <Filter>OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\OpenGL\OpenGLLine_2_00.cpp">
+      <Filter>OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\OpenGL\OpenGLLine_4.cpp">
+      <Filter>OpenGL</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -37,6 +46,15 @@
     </ClInclude>
     <ClInclude Include="..\include\render\Render_IDrawType.h">
       <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenGL\OpenGLLine_1_0.h">
+      <Filter>OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenGL\OpenGLLine_2_0.h">
+      <Filter>OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenGL\OpenGLLine_4.h">
+      <Filter>OpenGL</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -16,5 +16,12 @@
 //#include <GL/gl.h> not necessary because of GLEW 
 #include <GL/glu.h>
 
+#include <cassert>
+
+#ifndef ASSERT
+#define ASSERT(C) assert(C)
+#endif
+
+
 
 #endif // OpenGL_include_h_INCLUDED
