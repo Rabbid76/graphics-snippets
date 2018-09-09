@@ -145,7 +145,7 @@ CLineOpenGL_1_00 & CLineOpenGL_1_00::SetStyle(
   // set stipple pattern
   static const std::array<GLushort, 8> patterns
   {
-    0x0000, 0xFFFF, 0x5555, 0x3333, 0x0F0F, 0x00FF,  0xDDDD, 0xFDFD
+    0x0000, 0xFFFF, 0x5555, 0x3333, 0x0F0F, 0x00FF, 0x7D7D, 0x7FFD
   };
   GLushort pattern = style._stipple_type >= 0 && style._stipple_type < patterns.size() ? patterns[style._stipple_type] : 0xFFFF;
   glLineStipple( (GLint)(style._width + 0.5f), pattern );
@@ -194,7 +194,7 @@ bool CLineOpenGL_1_00::Draw(
   // start `glBegin` / `glEnd` sequence
   glBegin( OpenGL::Primitive(primitive_type) );
 
-   // draw the line sequence
+  // draw the line sequence
   if ( tuple_size == 2 )
   {
     for ( const float *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 2 )
@@ -243,7 +243,7 @@ bool CLineOpenGL_1_00::Draw(
   // start `glBegin` / `glEnd` sequence
   glBegin( OpenGL::Primitive(primitive_type) );
 
-   // draw the line sequence
+  // draw the line sequence
   if ( tuple_size == 2 )
   {
     for ( const double *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 2 )
@@ -332,6 +332,190 @@ bool CLineOpenGL_1_00::Draw(
 
   // complete sequence
   glEnd();
+
+  return true;
+}
+
+
+/******************************************************************//**
+* \brief Start a new line sequence.  
+* 
+* \author  gernot
+* \date    2018-09-07
+* \version 1.0
+**********************************************************************/
+bool CLineOpenGL_1_00::StartSequence( 
+  Render::TPrimitive primitive_type ) //!< in: primitive type of the coordinates - lines, line strip, line loop, lines adjacency or line strip adjacency 
+{
+  // A new sequence can't be started within an active sequence
+  if ( _active_sequence )
+  {
+    ASSERT( false );
+    return false;
+  }
+  ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::line );
+  
+  _active_sequence = true;
+
+  // start `glBegin` / `glEnd` sequence
+  glBegin( OpenGL::Primitive(primitive_type) );
+
+  return true;
+}
+  
+
+/******************************************************************//**
+* \brief Complete an active line sequence.  
+* 
+* \author  gernot
+* \date    2018-09-07
+* \version 1.0
+**********************************************************************/
+bool CLineOpenGL_1_00::EndSequence( void )
+{
+  // A sequence can't be completed if there is no active sequence
+  if ( _active_sequence == false )
+  {
+    ASSERT( false );
+    return false;
+  }
+ 
+  _active_sequence = false;
+
+  // complete sequence
+  glEnd();
+
+  return true;
+}
+
+
+/******************************************************************//**
+* \brief Specify a new vertex coordinate in an active line sequence.  
+* 
+* \author  gernot
+* \date    2018-09-07
+* \version 1.0
+**********************************************************************/
+bool CLineOpenGL_1_00::DrawSequence( 
+  float x,  //!< in: x coordinate
+  float y,  //!< in: y coordinate
+  float z ) //!< in: z coordinate
+{
+  // A sequence has to be active, to specify a new vertex coordinate
+  if ( _active_sequence == false )
+  {
+    ASSERT( false );
+    return false;
+  }
+
+  // specify the vertex coordinate
+  glVertex3f( x, y, z );
+
+  return true;
+}
+
+
+/******************************************************************//**
+* \brief Specify a new vertex coordinate in an active line sequence.  
+* 
+* \author  gernot
+* \date    2018-09-07
+* \version 1.0
+**********************************************************************/
+bool CLineOpenGL_1_00::DrawSequence( 
+  double x,  //!< in: x coordinate
+  double y,  //!< in: y coordinate
+  double z ) //!< in: z coordinate
+{
+  // A sequence has to be active, to specify a new vertex coordinate
+  if ( _active_sequence == false )
+  {
+    ASSERT( false );
+    return false;
+  }
+
+  // specify the vertex coordinate
+  glVertex3d( x, y, z );
+
+  return true;
+}
+  
+
+/******************************************************************//**
+* \brief Specify a sequence of new vertex coordinates in an active line sequence.  
+* 
+* \author  gernot
+* \date    2018-09-07
+* \version 1.0
+**********************************************************************/
+bool CLineOpenGL_1_00::DrawSequence( 
+  unsigned int       tuple_size,  //!< in: kind of the coordinates - 2: 2D (x, y), 3: 3D (x, y, z), 4: homogeneous (x, y, z, w)   
+  size_t             coords_size, //!< in: number of elements (size) of the coordinate array - `coords_size` = `tuple_size` * "number of coordinates" 
+  const float       *coords )     //!< in: pointer to an array of the vertex coordinates
+{
+  // A sequence has to be active, to specify new vertex coordinates
+  if ( _active_sequence == false )
+  {
+    ASSERT( false );
+    return false;
+  }
+
+  // draw the line sequence
+  if ( tuple_size == 2 )
+  {
+    for ( const float *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 2 )
+      glVertex2fv( ptr );
+  }
+  else if ( tuple_size == 3 )
+  {
+    for ( const float *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 3 )
+      glVertex3fv( ptr );
+  }
+  else if ( tuple_size == 4 )
+  {
+    for ( const float *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 4 )
+      glVertex4fv( ptr );
+  }
+
+  return true;
+}
+
+
+/******************************************************************//**
+* \brief Specify a sequence of new vertex coordinates in an active line sequence.  
+* 
+* \author  gernot
+* \date    2018-09-07
+* \version 1.0
+**********************************************************************/
+bool CLineOpenGL_1_00::DrawSequence( 
+  unsigned int       tuple_size,  //!< in: kind of the coordinates - 2: 2D (x, y), 3: 3D (x, y, z), 4: homogeneous (x, y, z, w)   
+  size_t             coords_size, //!< in: number of elements (size) of the coordinate array - `coords_size` = `tuple_size` * "number of coordinates" 
+  const double      *coords )     //!< in: pointer to an array of the vertex coordinates
+{
+  // A sequence has to be active, to specify new vertex coordinates
+  if ( _active_sequence == false )
+  {
+    ASSERT( false );
+    return false;
+  }
+
+  // draw the line sequence
+  if ( tuple_size == 2 )
+  {
+    for ( const double *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 2 )
+      glVertex2dv( ptr );
+  }
+  else if ( tuple_size == 3 )
+  {
+    for ( const double *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 3 )
+      glVertex3dv( ptr );
+  }
+  else if ( tuple_size == 4 )
+  {
+    for ( const double *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 4 )
+      glVertex4dv( ptr );
+  }
 
   return true;
 }

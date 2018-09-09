@@ -70,6 +70,20 @@ public:
   virtual bool Draw( Render::TPrimitive primitive_type, size_t no_of_coords, const float *x_coords, const float *y_coords ) override;
   virtual bool Draw( Render::TPrimitive primitive_type, size_t no_of_coords, const double *x_coords, const double *y_coords ) override;
 
+  //! Start a new line sequence
+  virtual bool StartSequence( Render::TPrimitive primitive_type ) override;
+  
+  //! Complete an active line sequence
+  virtual bool EndSequence( void ) override;
+
+  //! Specify a new vertex coordinate in an active line sequence
+  virtual bool DrawSequence( float x, float y, float z ) override;
+  virtual bool DrawSequence( double x, double y, double z ) override;
+  
+  //! Specify a sequence of new vertex coordinates in an active line sequence
+  virtual bool DrawSequence( unsigned int tuple_size, size_t coords_size, const float *coords ) override;
+  virtual bool DrawSequence( unsigned int tuple_size, size_t coords_size, const double *coords ) override;
+
 private:
 
   bool _active_sequence = false;

@@ -143,6 +143,7 @@ public:
     const float       *y_coords        //!< int pointer to an array of the y coordinates
   ) = 0;
  
+  //! Draw a line sequence
   virtual bool Draw( 
     Render::TPrimitive primitive_type, //!< in: primitive type of the coordinates - lines, line strip, line loop, lines adjacency or line strip adjacency 
     size_t             no_of_coords,   //!< in: number of coordinates and number of elements (size) of the coordinate array
@@ -150,14 +151,23 @@ public:
     const double      *y_coords        //!< int pointer to an array of the y coordinates
   ) = 0;
 
-  // TODO $$$
-  //virtual bool StartSequence( Render::TPrimitive primitive_type ) = 0;
-  //virtual bool EndSequence( void ) = 0;
-  //virtual bool DrawSequence( float x, float y, float z ) = 0;
-  //virtual bool DrawSequence( double x, double y, double z ) = 0;
-  //virtual bool DrawSequence( int tuple_size, size_t no_of_coords, const float *coords ) = 0;
-  //virtual bool DrawSequence( int tuple_size, size_t no_of_coords, const double *coords ) = 0;
+  //! Start a new line sequence
+  virtual bool StartSequence( Render::TPrimitive primitive_type ) = 0;
+  
+  //! Complete an active line sequence
+  virtual bool EndSequence( void ) = 0;
 
+  //! Specify a new vertex coordinate in an active line sequence
+  virtual bool DrawSequence( float x, float y, float z ) = 0;
+  
+  //! Specify a new vertex coordinate in an active line sequence
+  virtual bool DrawSequence( double x, double y, double z ) = 0;
+  
+  //! Specify a sequence of new vertex coordinates in an active line sequence
+  virtual bool DrawSequence( unsigned int tuple_size, size_t coords_size, const float *coords ) = 0;
+  
+  //! Specify a sequence of new vertex coordinates in an active line sequence
+  virtual bool DrawSequence( unsigned int tuple_size, size_t coords_size, const double *coords ) = 0;
 };
 
 

@@ -48,6 +48,7 @@ private:
 
     void InitScene( void );
     void Render( double time_ms );
+    void RenderTestScene( Render::Line::IRender &line_render );
 
     std::array< int, 2 > _wndPos         {0, 0};
     std::array< int, 2 > _wndSize        {0, 0};
@@ -207,6 +208,7 @@ void CWindow_Glfw::InitScene( void )
   _line_1 = std::make_unique<OpenGL::Line::CLineOpenGL_1_00>();
 }
 
+
 void CWindow_Glfw::Render( double time_ms )
 {
     // Test lines with and without multisampling!
@@ -214,17 +216,43 @@ void CWindow_Glfw::Render( double time_ms )
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);  
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
       
+    glMatrixMode( GL_MODELVIEW );
+    glLoadIdentity();
 
-    Render::Line::IRender *line_render = _line_1.get();
+    if ( _line_1 != nullptr )
+    {
+      glPushMatrix();
+      glTranslatef( -0.5f, 0.5f, 0.0f );
+      glScalef( 0.5f, 0.5f, 0.5f );
 
-    line_render->SetStyle( { 10.0f, 2 } );
-    line_render->SetColor( Render::TColor{ 0.9f, 0.5f, 0.1f, 1.0f } );
+      RenderTestScene( *_line_1.get() );
+
+      glPopMatrix();
+    }
+   
+}
+
+
+void CWindow_Glfw::RenderTestScene( Render::Line::IRender &line_render )
+{
+    line_render.SetStyle( { 8.0f, 2 } );
+    line_render.SetColor( Render::TColor{ 0.9f, 0.5f, 0.1f, 1.0f } );
 
     static const std::vector<double> line_test_1{ -0.4, -0.5, 0.6, -0.5, 0.6, 0.5 };
-    line_render->Draw( Render::TPrimitive::lineloop, 2, line_test_1.size(), line_test_1.data() );
+    line_render.Draw( Render::TPrimitive::lineloop, 2, line_test_1.size(), line_test_1.data() );
+
+    line_render.SetStyle( { 8.0f, 6 } );
+    line_render.SetColor( Render::TColor{ 0.1f, 0.5f, 0.9f, 1.0f } );
 
     static const std::vector<double> line_x_test_2{ -0.6,  0.4, -0.6 };
     static const std::vector<double> line_y_test_2{ -0.5,  0.5,  0.5 };
-    line_render->Draw( Render::TPrimitive::lineloop, line_x_test_2.size(), line_x_test_2.data(), line_y_test_2.data() );
-   
+    line_render.Draw( Render::TPrimitive::lineloop, line_x_test_2.size(), line_x_test_2.data(), line_y_test_2.data() );
+
+    line_render.SetStyle( { 10.0f, 1 } );
+    line_render.SetColor( Render::TColor{ 0.9f, 0.9f, 0.4f, 1.0f } );
+
+    static const std::vector<double> line_test_3{ -0.7, -0.6, 0.7, -0.6, 0.7, 0.6, -0.7, 0.6 };
+    line_render.StartSequence( Render::TPrimitive::lineloop );
+    line_render.DrawSequence( 2, line_test_3.size(), line_test_3.data() );
+    line_render.EndSequence();
 }
