@@ -95,10 +95,10 @@ html,body { margin: 0; overflow: hidden; }
 </style>
 
 <body>
-<canvas id="scene-canvas" style="border: none;" width="512" height="512"></canvas>
+<canvas id="scene-canvas" style="border: none"></canvas>
 
 <a id="ref-link" href="https://stackoverflow.com/questions/44956299/drawing-cylinder-model-as-thick-3d-line/44964300#44964300">
-<font color= #CCF>Drawing Cylinder Model as thick 3d line</font>
+<font color= #10A0A0>Drawing Cylinder Model as thick 3d line</font>
 </a>
 
 </body>
@@ -106,13 +106,7 @@ html,body { margin: 0; overflow: hidden; }
 <script type="text/javascript">
 (function loadscene() {
 
-var gl;
-var canvas;
-var vp_size;
-var progDraw;
-var progPost;
-var bufObj = {};
-var bufQuad = {};
+var gl, canvas, vp_size, progDraw, progPost, bufObj = {}, bufQuad = {}, framebuffer;
 
 function render(deltaMS){
 
@@ -124,12 +118,11 @@ function render(deltaMS){
     var modelMat = IdentM44();
     modelMat = camera.AutoModelMatrix();
         
-    gl.viewport( 0, 0, canvas.width, canvas.height );
     gl.enable( gl.DEPTH_TEST );
     gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
 
     // set up framebuffer
-    gl.bindFramebuffer( gl.FRAMEBUFFER, fb );
+    framebuffer.Bind( true );
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
     
     // set up draw shader
@@ -148,17 +141,17 @@ function render(deltaMS){
     gl.disableVertexAttribArray( bufObj.pos );
 
     // reset framebuffer and bind framebuffer texture
-    gl.bindFramebuffer( gl.FRAMEBUFFER, null );
+    framebuffer.Release( true );
+    var texUnit = 0;
+    framebuffer.BindTexture( texUnit );
+    gl.viewport( 0, 0, canvas.width, canvas.height );
     gl.clearColor( 1.0, 1.0, 1.0, 1.0 );
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
-    var texUnit = 0;
-    gl.activeTexture( gl.TEXTURE0 + texUnit );
-    gl.bindTexture( gl.TEXTURE_2D, fb.color0_texture );
 
     // set up post process shader
     ShProg.Use( progPost );
     ShProg.SetI1( progPost, "u_texture", texUnit )
-    ShProg.SetUniform2F( progPost, "u_textureSize", [ fb.width, fb.height ] );
+    ShProg.SetUniform2F( progPost, "u_textureSize", [ framebuffer.width, framebuffer.height ] );
     
     // draw full screen space
     gl.enableVertexAttribArray( progPost.inPos );
@@ -197,24 +190,6 @@ function initScene() {
     if ( progPost == 0 )
         return;
 
-    fb = gl.createFramebuffer();
-    fb.width = vp_size[0];
-    fb.height = vp_size[1];
-    gl.bindFramebuffer( gl.FRAMEBUFFER, fb );
-    fb.color0_texture = gl.createTexture();
-    gl.bindTexture( gl.TEXTURE_2D, fb.color0_texture );
-    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST );
-    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST );
-    gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, fb.width, fb.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null );
-    fb.renderbuffer = gl.createRenderbuffer();
-    gl.bindRenderbuffer( gl.RENDERBUFFER, fb.renderbuffer );
-    gl.renderbufferStorage( gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, fb.width, fb.height );
-    gl.framebufferTexture2D( gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, fb.color0_texture, 0 );
-    gl.framebufferRenderbuffer( gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, fb.renderbuffer );
-    gl.bindTexture( gl.TEXTURE_2D, null );
-    gl.bindRenderbuffer( gl.RENDERBUFFER, null );
-    gl.bindFramebuffer( gl.FRAMEBUFFER, null );
-
     var pos = [];
     var circumferenceCount = 32;
     for ( var cTB = 0; cTB < 2; cTB ++ ) {
@@ -247,9 +222,23 @@ function initScene() {
 
     camera = new Camera( [0.0, 2.7, 0.0], [0, 0, 0], [0, 0, 1], 90, vp_size, 0.5, 20.0 );
 
-    //window.onresize = resize;
-    //resize();
+    window.onresize = resize;
+    resize();
     requestAnimationFrame(render);
+}
+
+function resize() {
+    //vp_size = [gl.drawingBufferWidth, gl.drawingBufferHeight];
+    vp_size = [window.innerWidth, window.innerHeight]
+    //vp_size = [256, 256]
+    canvas.width = vp_size[0];
+    canvas.height = vp_size[1];
+
+    var fbsize = Math.max(vp_size[0], vp_size[1]);
+    fbsize = 1 << 31 - Math.clz32(fbsize); // nearest power of 2
+
+    var fb_rect = [fbsize, fbsize];
+    framebuffer = FrameBuffer.Create( fb_rect ); 
 }
 
 function IdentM44() {
@@ -502,6 +491,52 @@ function EllipticalPosition( a, b, angRag ) {
     var ea = (a_b <= 0) ? 0 : Math.sqrt( a_b );
     var eb = (a_b >= 0) ? 0 : Math.sqrt( -a_b );
     return [ a * Math.sin( angRag ) - ea, b * Math.cos( angRag ) - eb, 0 ];
+}
+
+var FrameBuffer = {};
+FrameBuffer.Create = function( vp, texturePlan ) {
+    var texPlan = texturePlan ? new Uint8Array( texturePlan ) : null;
+    var fb = gl.createFramebuffer();
+    fb.width = vp[0];
+    fb.height = vp[1];
+    gl.bindFramebuffer( gl.FRAMEBUFFER, fb );
+    fb.color0_texture = gl.createTexture();
+    gl.bindTexture( gl.TEXTURE_2D, fb.color0_texture );
+    gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, fb.width, fb.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, texPlan );
+    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST );
+    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST );
+    fb.renderbuffer = gl.createRenderbuffer();
+    gl.bindRenderbuffer( gl.RENDERBUFFER, fb.renderbuffer );
+    gl.renderbufferStorage( gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, fb.width, fb.height );
+    gl.framebufferTexture2D( gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, fb.color0_texture, 0 );
+    gl.framebufferRenderbuffer( gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, fb.renderbuffer );
+    gl.bindTexture( gl.TEXTURE_2D, null );
+    gl.bindRenderbuffer( gl.RENDERBUFFER, null );
+    gl.bindFramebuffer( gl.FRAMEBUFFER, null );
+
+    fb.Bind = function( clear ) {
+        gl.bindFramebuffer( gl.FRAMEBUFFER, this );
+        if ( clear ) {
+            gl.viewport( 0, 0, this.width, this.height );
+            gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
+            gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+        }
+    };
+
+    fb.Release = function( clear ) {
+        gl.bindFramebuffer( gl.FRAMEBUFFER, null );
+        if ( clear ) {
+            gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
+            gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+        }
+    };
+
+    fb.BindTexture = function( textureUnit ) {
+        gl.activeTexture( gl.TEXTURE0 + textureUnit );
+        gl.bindTexture( gl.TEXTURE_2D, this.color0_texture );
+    };
+
+    return fb;
 }
 
 initScene();

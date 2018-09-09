@@ -114,7 +114,7 @@
 
 [Texture light up](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/texture_light_up.html)
 
-[Silhouette](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/silhouette.html)
+[Toon silhouette](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/silhouette.html)
 
 [Normal map 1](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/normalmap1.html)
 
