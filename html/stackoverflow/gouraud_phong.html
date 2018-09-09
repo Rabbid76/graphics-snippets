@@ -220,7 +220,7 @@ function render(deltaMS){
     // setup view projection and model
     var prjMat = camera.Perspective();
     var viewMat = camera.Orbit();
-    var modelMat = IdentityMat44();
+    var modelMat = IdentM44();
     modelMat = camera.AutoModelMatrix();
     
     gl.enable(gl.CULL_FACE);
@@ -230,15 +230,15 @@ function render(deltaMS){
     
     var progDraw = shading == 0 ? gouraudDraw : phongDraw;;
     // set up draw shader
-    ShaderProgram.Use( progDraw.prog );
-    ShaderProgram.SetUniformM44( progDraw.prog, "u_projectionMat44", prjMat );
-    ShaderProgram.SetUniformM44( progDraw.prog, "u_viewMat44", viewMat );
-    ShaderProgram.SetUniformF3( progDraw.prog, "u_lightSource.lightDir", [-1.0, -0.5, -2.0] )
-    ShaderProgram.SetUniformF3( progDraw.prog, "u_lightSource.ambient", ambientCol )
-    ShaderProgram.SetUniformF3( progDraw.prog, "u_lightSource.diffuse", diffuseCol )
-    ShaderProgram.SetUniformF3( progDraw.prog, "u_lightSource.specular", specularCol )
-    ShaderProgram.SetUniformF1( progDraw.prog, "u_lightSource.shininess", shininess )
-    ShaderProgram.SetUniformM44( progDraw.prog, "u_modelMat44", modelMat );
+    ShProg.Use( progDraw.prog );
+    ShProg.SetM44( progDraw.prog, "u_projectionMat44", prjMat );
+    ShProg.SetM44( progDraw.prog, "u_viewMat44", viewMat );
+    ShProg.SetF3( progDraw.prog, "u_lightSource.lightDir", [-1.0, -0.5, -2.0] )
+    ShProg.SetF3( progDraw.prog, "u_lightSource.ambient", ambientCol )
+    ShProg.SetF3( progDraw.prog, "u_lightSource.diffuse", diffuseCol )
+    ShProg.SetF3( progDraw.prog, "u_lightSource.specular", specularCol )
+    ShProg.SetF1( progDraw.prog, "u_lightSource.shininess", shininess )
+    ShProg.SetM44( progDraw.prog, "u_modelMat44", modelMat );
     
     // draw scene
     bufObj = form == 0 ? bufCube : form == 1 ? bufSphere : bufTorus;
@@ -273,7 +273,7 @@ function initScene() {
       return null;
 
     gouraudDraw = {}
-    gouraudDraw.prog = ShaderProgram.Create( 
+    gouraudDraw.prog = ShProg.Create( 
       [ { source : "gouraud-shader-vs", stage : gl.VERTEX_SHADER },
         { source : "gouraud-shader-fs", stage : gl.FRAGMENT_SHADER }
       ],
@@ -286,7 +286,7 @@ function initScene() {
     gouraudDraw.inCol = gl.getAttribLocation( gouraudDraw.prog, "inCol" );
 
     phongDraw = {}
-    phongDraw.prog = ShaderProgram.Create( 
+    phongDraw.prog = ShProg.Create( 
       [ { source : "phong-shader-vs", stage : gl.VERTEX_SHADER },
         { source : "phong-shader-fs", stage : gl.FRAGMENT_SHADER }
       ],
@@ -445,7 +445,7 @@ function EllipticalPosition( a, b, angRag ) {
     return [ a * Math.sin( angRag ) - ea, b * Math.cos( angRag ) - eb, 0 ];
 }
 
-function IdentityMat44() { return [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]; }
+function IdentM44() { return [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]; }
 
 function RotateAxis(matA, angRad, axis) {
     var aMap = [ [1, 2], [2, 0], [0, 1] ];
@@ -472,7 +472,7 @@ function Rotate(matA, angRad, axis) {
 }    
 
 function Multiply(matA, matB) {
-    matC = IdentityMat44();
+    matC = IdentM44();
     for (var i0=0; i0<4; ++i0 )
         for (var i1=0; i1<4; ++i1 )
             matC[i0*4+i1] = matB[i0*4+0] * matA[0*4+i1] + matB[i0*4+1] * matA[1*4+i1] + matB[i0*4+2] * matA[2*4+i1] + matB[i0*4+3] * matA[3*4+i1]  
@@ -495,7 +495,7 @@ this.fov_y = fov_y;
 this.vp = vp;
 this.near = near;
 this.far = far;
-this.orbit_mat = this.current_orbit_mat = this.model_mat = this.current_model_mat = IdentityMat44();
+this.orbit_mat = this.current_orbit_mat = this.model_mat = this.current_model_mat = IdentM44();
 this.mouse_drag = this.auto_spin = false;
 this.auto_rotate = true;
 this.mouse_start = [0, 0];
@@ -549,14 +549,14 @@ this.Update = function(vp_size) {
     if (vp_size)
         this.vp = vp_size;
     var current_T = this.Time();
-    this.current_model_mat = IdentityMat44()
+    this.current_model_mat = IdentM44()
     if (this.mouse_drag) {
-        this.current_orbit_mat = Rotate(IdentityMat44(), this.mouse_drag_angle, this.mouse_drag_axis);
+        this.current_orbit_mat = Rotate(IdentM44(), this.mouse_drag_angle, this.mouse_drag_axis);
     } else if (this.auto_rotate) {
         if (this.auto_spin ) {
             if (this.mouse_drag_time > 0 ) {
                 var angle = this.mouse_drag_angle * (current_T - this.rotate_start_T) / this.mouse_drag_time;
-                this.current_orbit_mat = Rotate(IdentityMat44(), angle, this.mouse_drag_axis);
+                this.current_orbit_mat = Rotate(IdentM44(), angle, this.mouse_drag_axis);
             }
         } else {
             var auto_angle_x = Fract( (current_T - this.rotate_start_T) / 13000.0 ) * 2.0 * Math.PI;
@@ -584,9 +584,9 @@ this.ChangeMotionMode = function(drag, spin, auto ) {
     this.auto_rotate = new_auto;  
     this.auto_spin = new_spin;
     this.orbit_mat = Multiply(this.current_orbit_mat, this.orbit_mat);
-    this.current_orbit_mat = IdentityMat44();
+    this.current_orbit_mat = IdentM44();
     this.model_mat = Multiply(this.current_model_mat, this.model_mat);
-    this.current_model_mat = IdentityMat44();
+    this.current_model_mat = IdentM44();
 };
 this.OnMouseDown = function( event ) {
     var rect = gl.canvas.getBoundingClientRect();
@@ -625,43 +625,43 @@ this.domElement.addEventListener( 'mousemove', function(e) { cam.OnMouseMove(e) 
 //this.domElement.addEventListener( 'DOMMouseScroll', hid_events.onMouseWheel, false ); // firefox
 }
 
-var ShaderProgram = {};
-ShaderProgram.Create = function( shaderList ) {
+var ShProg = {};
+ShProg.Create = function( shaderList ) {
     var shaderObjs = [];
     for ( var i_sh = 0; i_sh < shaderList.length; ++ i_sh ) {
-        var shderObj = this.CompileShader( shaderList[i_sh].source, shaderList[i_sh].stage );
+        var shderObj = this.Compile( shaderList[i_sh].source, shaderList[i_sh].stage );
         if ( shderObj == 0 )
             return 0;
         shaderObjs.push( shderObj );
     }
-    var progObj = this.LinkProgram( shaderObjs )
+    var progObj = this.Link( shaderObjs )
     if ( progObj != 0 ) {
-        progObj.attribIndex = {};
+        progObj.attrInx = {};
         var noOfAttributes = gl.getProgramParameter( progObj, gl.ACTIVE_ATTRIBUTES );
         for ( var i_n = 0; i_n < noOfAttributes; ++ i_n ) {
             var name = gl.getActiveAttrib( progObj, i_n ).name;
-            progObj.attribIndex[name] = gl.getAttribLocation( progObj, name );
+            progObj.attrInx[name] = gl.getAttribLocation( progObj, name );
         }
-        progObj.unifomLocation = {};
+        progObj.uniLoc = {};
         var noOfUniforms = gl.getProgramParameter( progObj, gl.ACTIVE_UNIFORMS );
         for ( var i_n = 0; i_n < noOfUniforms; ++ i_n ) {
             var name = gl.getActiveUniform( progObj, i_n ).name;
-            progObj.unifomLocation[name] = gl.getUniformLocation( progObj, name );
+            progObj.uniLoc[name] = gl.getUniformLocation( progObj, name );
         }
     }
     return progObj;
 }
-ShaderProgram.AttributeIndex = function( progObj, name ) { return progObj.attribIndex[name]; } 
-ShaderProgram.UniformLocation = function( progObj, name ) { return progObj.unifomLocation[name]; } 
-ShaderProgram.Use = function( progObj ) { gl.useProgram( progObj ); } 
-ShaderProgram.SetUniformI1  = function( progObj, name, val ) { if(progObj.unifomLocation[name]) gl.uniform1i( progObj.unifomLocation[name], val ); }
-ShaderProgram.SetUniformF1  = function( progObj, name, val ) { if(progObj.unifomLocation[name]) gl.uniform1f( progObj.unifomLocation[name], val ); }
-ShaderProgram.SetUniformF2  = function( progObj, name, arr ) { if(progObj.unifomLocation[name]) gl.uniform2fv( progObj.unifomLocation[name], arr ); }
-ShaderProgram.SetUniformF3  = function( progObj, name, arr ) { if(progObj.unifomLocation[name]) gl.uniform3fv( progObj.unifomLocation[name], arr ); }
-ShaderProgram.SetUniformF4  = function( progObj, name, arr ) { if(progObj.unifomLocation[name]) gl.uniform4fv( progObj.unifomLocation[name], arr ); }
-ShaderProgram.SetUniformM33 = function( progObj, name, mat ) { if(progObj.unifomLocation[name]) gl.uniformMatrix3fv( progObj.unifomLocation[name], false, mat ); }
-ShaderProgram.SetUniformM44 = function( progObj, name, mat ) { if(progObj.unifomLocation[name]) gl.uniformMatrix4fv( progObj.unifomLocation[name], false, mat ); }
-ShaderProgram.CompileShader = function( source, shaderStage ) {
+ShProg.AttrI = function( progObj, name ) { return progObj.attrInx[name]; } 
+ShProg.UniformL = function( progObj, name ) { return progObj.uniLoc[name]; } 
+ShProg.Use = function( progObj ) { gl.useProgram( progObj ); } 
+ShProg.SetI1  = function( progObj, name, val ) { if(progObj.uniLoc[name]) gl.uniform1i( progObj.uniLoc[name], val ); }
+ShProg.SetF1  = function( progObj, name, val ) { if(progObj.uniLoc[name]) gl.uniform1f( progObj.uniLoc[name], val ); }
+ShProg.SetF2  = function( progObj, name, arr ) { if(progObj.uniLoc[name]) gl.uniform2fv( progObj.uniLoc[name], arr ); }
+ShProg.SetF3  = function( progObj, name, arr ) { if(progObj.uniLoc[name]) gl.uniform3fv( progObj.uniLoc[name], arr ); }
+ShProg.SetF4  = function( progObj, name, arr ) { if(progObj.uniLoc[name]) gl.uniform4fv( progObj.uniLoc[name], arr ); }
+ShProg.SetM33 = function( progObj, name, mat ) { if(progObj.uniLoc[name]) gl.uniformMatrix3fv( progObj.uniLoc[name], false, mat ); }
+ShProg.SetM44 = function( progObj, name, mat ) { if(progObj.uniLoc[name]) gl.uniformMatrix4fv( progObj.uniLoc[name], false, mat ); }
+ShProg.Compile = function( source, shaderStage ) {
     var shaderScript = document.getElementById(source);
     if (shaderScript)
       source = shaderScript.text;
@@ -672,7 +672,7 @@ ShaderProgram.CompileShader = function( source, shaderStage ) {
     if ( !status ) alert(gl.getShaderInfoLog(shaderObj));
     return status ? shaderObj : null;
 } 
-ShaderProgram.LinkProgram = function( shaderObjs ) {
+ShProg.Link = function( shaderObjs ) {
     var prog = gl.createProgram();
     for ( var i_sh = 0; i_sh < shaderObjs.length; ++ i_sh )
         gl.attachShader( prog, shaderObjs[i_sh] );

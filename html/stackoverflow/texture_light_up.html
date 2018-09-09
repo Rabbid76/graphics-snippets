@@ -66,32 +66,32 @@ html,body { margin: 0; overflow: hidden; }
 <script type="text/javascript">
 
 // shader program object
-var ShaderProgram = {};
-ShaderProgram.Create = function( shaderList, uniformNames ) {
+var ShProg = {};
+ShProg.Create = function( shaderList, uniformNames ) {
     var shaderObjs = [];
     for ( var i_sh = 0; i_sh < shaderList.length; ++ i_sh ) {
-        var shderObj = this.CompileShader( shaderList[i_sh].source, shaderList[i_sh].stage );
+        var shderObj = this.Compile( shaderList[i_sh].source, shaderList[i_sh].stage );
         if ( shderObj == 0 )
             return 0;
         shaderObjs.push( shderObj );
     }
-    var progObj = this.LinkProgram( shaderObjs )
+    var progObj = this.Link( shaderObjs )
     if ( progObj != 0 ) {
-        progObj.unifomLocation = {};
+        progObj.uniLoc = {};
         for ( var i_n = 0; i_n < uniformNames.length; ++ i_n ) {
             var name = uniformNames[i_n];
-            progObj.unifomLocation[name] = gl.getUniformLocation( progObj, name );
+            progObj.uniLoc[name] = gl.getUniformLocation( progObj, name );
         }
     }
     return progObj;
 }
-ShaderProgram.Use = function( progObj ) { gl.useProgram( progObj ); } 
-ShaderProgram.SetUniformInt = function( progObj, name, val ) { gl.uniform1i( progObj.unifomLocation[name], val ); }
-ShaderProgram.SetUniformFloat = function( progObj, name, val ) { gl.uniform1f( progObj.unifomLocation[name], val ); }
-ShaderProgram.SetUniform2f = function( progObj, name, arr ) { gl.uniform2fv( progObj.unifomLocation[name], arr ); }
-ShaderProgram.SetUniform3f = function( progObj, name, arr ) { gl.uniform3fv( progObj.unifomLocation[name], arr ); }
-ShaderProgram.SetUniformMat44 = function( progObj, name, mat ) { gl.uniformMatrix4fv( progObj.unifomLocation[name], false, mat ); }
-ShaderProgram.CompileShader = function( source, shaderStage ) {
+ShProg.Use = function( progObj ) { gl.useProgram( progObj ); } 
+ShProg.SetI1 = function( progObj, name, val ) { gl.uniform1i( progObj.uniLoc[name], val ); }
+ShProg.SetF1 = function( progObj, name, val ) { gl.uniform1f( progObj.uniLoc[name], val ); }
+ShProg.SetF2 = function( progObj, name, arr ) { gl.uniform2fv( progObj.uniLoc[name], arr ); }
+ShProg.SetF3 = function( progObj, name, arr ) { gl.uniform3fv( progObj.uniLoc[name], arr ); }
+ShProg.SetM44 = function( progObj, name, mat ) { gl.uniformMatrix4fv( progObj.uniLoc[name], false, mat ); }
+ShProg.Compile = function( source, shaderStage ) {
     var shaderScript = document.getElementById(source);
     if (shaderScript) {
       source = "";
@@ -108,7 +108,7 @@ ShaderProgram.CompileShader = function( source, shaderStage ) {
     if ( !status ) alert(gl.getShaderInfoLog(shaderObj));
     return status ? shaderObj : 0;
 } 
-ShaderProgram.LinkProgram = function( shaderObjs ) {
+ShProg.Link = function( shaderObjs ) {
     var prog = gl.createProgram();
     for ( var i_sh = 0; i_sh < shaderObjs.length; ++ i_sh )
         gl.attachShader( prog, shaderObjs[i_sh] );
@@ -137,16 +137,16 @@ function drawScene(){
     var maskTexUnit = 1;
     gl.activeTexture( gl.TEXTURE0 + maskTexUnit );
     gl.bindTexture( gl.TEXTURE_2D, maskTextureObj );
-    ShaderProgram.Use( progDraw );
+    ShProg.Use( progDraw );
     var pos = [ 2.0, 2.0 ];
     if (mousePos[0] > 0 && mousePos[1] > 0 )
         pos = [2.0 * mousePos[0] / canvas.width - 1.0, 1.0 - 2.0 * mousePos[1] / canvas.height];
-    ShaderProgram.SetUniform2f( progDraw, "u_mouse", pos );
-    ShaderProgram.SetUniformFloat( progDraw, "u_maxDistance", maxDist );
-    ShaderProgram.SetUniformFloat( progDraw, "u_exponent", exponent );
-    ShaderProgram.SetUniformFloat( progDraw, "u_lightup", lightup );
-    ShaderProgram.SetUniformInt( progDraw, "u_texture", texUnit );
-    ShaderProgram.SetUniformInt( progDraw, "u_maskTexture", maskTexUnit );
+    ShProg.SetF2( progDraw, "u_mouse", pos );
+    ShProg.SetF1( progDraw, "u_maxDistance", maxDist );
+    ShProg.SetF1( progDraw, "u_exponent", exponent );
+    ShProg.SetF1( progDraw, "u_lightup", lightup );
+    ShProg.SetI1( progDraw, "u_texture", texUnit );
+    ShProg.SetI1( progDraw, "u_maskTexture", maskTexUnit );
     gl.enableVertexAttribArray( progDraw.inPos );
     gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.pos );
     gl.vertexAttribPointer( progDraw.inPos, 2, gl.FLOAT, false, 0, 0 ); 
@@ -205,7 +205,7 @@ function sceneStart() {
     gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_BORDER );
   	gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_BORDER );
     
-    progDraw = ShaderProgram.Create( 
+    progDraw = ShProg.Create( 
       [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },
         { source : "draw-shader-fs", stage : gl.FRAGMENT_SHADER }
       ],

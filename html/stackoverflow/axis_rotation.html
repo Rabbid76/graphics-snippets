@@ -92,7 +92,7 @@ function Translate( matA, trans ) {
     return matB;
 }
 
-function IdentityMat44() {
+function IdentM44() {
     var m = new glArrayType(16);
     m[0]  = 1; m[1]  = 0; m[2]  = 0; m[3]  = 0;
     m[4]  = 0; m[5]  = 1; m[6]  = 0; m[7]  = 0;
@@ -132,7 +132,7 @@ Camera.Perspective = function() {
     var f_n = this.far - this.near;
     var r = this.vp[0] / this.vp[1];
     var t = 1 / Math.tan( Math.PI * this.fov_y / 360 );
-    var m = IdentityMat44();
+    var m = IdentM44();
     m[0]  = t/r; m[1]  = 0; m[2]  =  0;                              m[3]  = 0;
     m[4]  = 0;   m[5]  = t; m[6]  =  0;                              m[7]  = 0;
     m[8]  = 0;   m[9]  = 0; m[10] = -fn / f_n;                       m[11] = -1;
@@ -146,7 +146,7 @@ Camera.LookAt = function() {
     var tx = Dot( mx, this.pos );
     var ty = Dot( my, this.pos );
     var tz = Dot( [-mz[0], -mz[1], -mz[2]], this.pos ); 
-    var m = IdentityMat44();
+    var m = IdentM44();
     m[0]  = mx[0]; m[1]  = my[0]; m[2]  = mz[0]; m[3]  = 0;
     m[4]  = mx[1]; m[5]  = my[1]; m[6]  = mz[1]; m[7]  = 0;
     m[8]  = mx[2]; m[9]  = my[2]; m[10] = mz[2]; m[11] = 0;
@@ -155,30 +155,30 @@ Camera.LookAt = function() {
 }       
 
 // shader program object
-var ShaderProgram = {};
-ShaderProgram.Create = function( shaderList, uniformNames ) {
+var ShProg = {};
+ShProg.Create = function( shaderList, uniformNames ) {
     var shaderObjs = [];
     for ( var i_sh = 0; i_sh < shaderList.length; ++ i_sh ) {
-        var shderObj = this.CompileShader( shaderList[i_sh].source, shaderList[i_sh].stage );
+        var shderObj = this.Compile( shaderList[i_sh].source, shaderList[i_sh].stage );
         if ( shderObj == 0 )
           return 0;
         shaderObjs.push( shderObj );
     }
-    var progObj = this.LinkProgram( shaderObjs )
+    var progObj = this.Link( shaderObjs )
     if ( progObj != 0 ) {
-        progObj.unifomLocation = {};
+        progObj.uniLoc = {};
         for ( var i_n = 0; i_n < uniformNames.length; ++ i_n ) {
             var name = uniformNames[i_n];
-            progObj.unifomLocation[name] = gl.getUniformLocation( progObj, name );
+            progObj.uniLoc[name] = gl.getUniformLocation( progObj, name );
         }
     }
     return progObj;
 }
-ShaderProgram.Use = function( progObj ) { gl.useProgram( progObj ); } 
-ShaderProgram.SetUniformInt = function( progObj, name, val ) { gl.uniform1i( progObj.unifomLocation[name], val ); }
-ShaderProgram.SetUniform2f = function( progObj, name, arr ) { gl.uniform2fv( progObj.unifomLocation[name], arr ); }
-ShaderProgram.SetUniformMat44 = function( progObj, name, mat ) { gl.uniformMatrix4fv( progObj.unifomLocation[name], false, mat ); }
-ShaderProgram.CompileShader = function( source, shaderStage ) {
+ShProg.Use = function( progObj ) { gl.useProgram( progObj ); } 
+ShProg.SetI1 = function( progObj, name, val ) { gl.uniform1i( progObj.uniLoc[name], val ); }
+ShProg.SetF2 = function( progObj, name, arr ) { gl.uniform2fv( progObj.uniLoc[name], arr ); }
+ShProg.SetM44 = function( progObj, name, mat ) { gl.uniformMatrix4fv( progObj.uniLoc[name], false, mat ); }
+ShProg.Compile = function( source, shaderStage ) {
     var shaderObj = gl.createShader( shaderStage );
     gl.shaderSource( shaderObj, source );
     gl.compileShader( shaderObj );
@@ -186,7 +186,7 @@ ShaderProgram.CompileShader = function( source, shaderStage ) {
     if ( !status ) alert(gl.getShaderInfoLog(shaderObj));
     return status ? shaderObj : 0;
 } 
-ShaderProgram.LinkProgram = function( shaderObjs ) {
+ShProg.Link = function( shaderObjs ) {
     var prog = gl.createProgram();
     for ( var i_sh = 0; i_sh < shaderObjs.length; ++ i_sh )
         gl.attachShader( prog, shaderObjs[i_sh] );
@@ -211,14 +211,14 @@ function drawScene(){
     gl.enable( gl.DEPTH_TEST );
     gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
-    ShaderProgram.Use( progDraw );
-    ShaderProgram.SetUniformMat44( progDraw, "u_projectionMat44", Camera.Perspective() );
-    ShaderProgram.SetUniformMat44( progDraw, "u_viewMat44", Camera.LookAt() );
+    ShProg.Use( progDraw );
+    ShProg.SetM44( progDraw, "u_projectionMat44", Camera.Perspective() );
+    ShProg.SetM44( progDraw, "u_viewMat44", Camera.LookAt() );
 
-    var modelMat = Translate( IdentityMat44(), preTrans ); 
+    var modelMat = Translate( IdentM44(), preTrans ); 
     modelMat = RotateAxis( modelMat, CalcAng( currentTime, 10.0 ), axisOfRotation );
     var modelMat = Translate( modelMat, postTrans );      
-    ShaderProgram.SetUniformMat44( progDraw, "u_modelMat44", modelMat );
+    ShProg.SetM44( progDraw, "u_modelMat44", modelMat );
     gl.enableVertexAttribArray( progDraw.inPos );
     gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.pos );
     gl.vertexAttribPointer( progDraw.inPos, 3, gl.FLOAT, false, 0, 0 ); 
@@ -271,7 +271,7 @@ function cameraStart() {
     if ( !gl )
       return;
 
-    progDraw = ShaderProgram.Create( 
+    progDraw = ShProg.Create( 
       [ { source : camera_vert, stage : gl.VERTEX_SHADER },
         { source : camera_frag, stage : gl.FRAGMENT_SHADER }
       ],
