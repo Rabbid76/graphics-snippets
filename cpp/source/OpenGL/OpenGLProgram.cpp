@@ -266,21 +266,24 @@ bool CShaderObject::Verify(
 
   GLint status = GL_TRUE;
   glGetShaderiv( _object, GL_COMPILE_STATUS, &status );
-  if ( status != GL_FALSE )
-    return true;
-  
+   
   GLint maxLen;
 	glGetShaderiv( _object, GL_INFO_LOG_LENGTH, &maxLen );
   std::vector< char >log( maxLen );
 	GLsizei len;
 	glGetShaderInfoLog( _object, maxLen, &len, log.data() );
   
-  std::stringstream str_stream;
-  str_stream << "compile error:" << std::endl << log.data() << std::endl;
-  message = str_stream.str();
+  if ( log.size() > 0 || status == GL_FALSE )
+  {
+    std::stringstream str_stream;
+    str_stream << ( status != GL_FALSE ? "compilation:" : "compile error:" ) << std::endl;
+    if ( log.size() > 0 )
+      str_stream << log.data() << std::endl;
+    message = str_stream.str();
+  }
 
-  //assert( false );
-  return false;
+  //assert( status != GL_FALSE );
+  return status != GL_FALSE;
 }
 
 

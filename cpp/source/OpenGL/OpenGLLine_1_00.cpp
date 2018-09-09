@@ -19,6 +19,7 @@
 #include <OpenGL_include.h>
 #include <OpenGL_enumconst.h>
 
+
 // STL
 
 #include <cassert>
@@ -72,6 +73,17 @@ CLineOpenGL_1_00::~CLineOpenGL_1_00()
 
 
 /******************************************************************//**
+* \brief Initialize the line renderer.  
+* 
+* \author  gernot
+* \date    2018-09-07
+* \version 1.0
+**********************************************************************/
+void CLineOpenGL_1_00::Init( void )
+{}
+
+
+/******************************************************************//**
 * \brief Change the current line color, for the pending line drawing
 * instructions
 * 
@@ -79,7 +91,7 @@ CLineOpenGL_1_00::~CLineOpenGL_1_00()
 * \date    2018-09-07
 * \version 1.0
 **********************************************************************/
-CLineOpenGL_1_00 & CLineOpenGL_1_00::SetColor(
+Render::Line::IRender & CLineOpenGL_1_00::SetColor(
   const Render::TColor & color ) //!< I - the new color
 {
   // change the vertex color
@@ -97,7 +109,7 @@ CLineOpenGL_1_00 & CLineOpenGL_1_00::SetColor(
 * \date    2018-09-07
 * \version 1.0
 **********************************************************************/
-CLineOpenGL_1_00 & CLineOpenGL_1_00::SetColor( 
+Render::Line::IRender & CLineOpenGL_1_00::SetColor( 
   const Render::TColor8 & color ) //!< I - the new color
 {
   // change the vertex color
@@ -118,7 +130,7 @@ CLineOpenGL_1_00 & CLineOpenGL_1_00::SetColor(
 * \date    2018-09-09
 * \version 1.0
 **********************************************************************/
-CLineOpenGL_1_00 & CLineOpenGL_1_00::SetStyle( 
+Render::Line::IRender & CLineOpenGL_1_00::SetStyle( 
   const Render::Line::TStyle & style )
 {
   //! This is impossible, while an drawing sequence is active.  
@@ -161,7 +173,7 @@ CLineOpenGL_1_00 & CLineOpenGL_1_00::SetStyle(
 * \date    2018-09-07
 * \version 1.0
 **********************************************************************/
-CLineOpenGL_1_00 & CLineOpenGL_1_00::SetArrowStyle( 
+Render::Line::IRender & CLineOpenGL_1_00::SetArrowStyle( 
   const Render::Line::TArrowStyle & style ) //! I - new style of the arrows at the endings of coherently lines
 {
   assert( false );

@@ -26,6 +26,7 @@
 // Own
 #include <Render_IDrawLine.h>
 #include <OpenGLLine_1_0.h>
+#include <OpenGLLine_2_0.h>
 #include <OpenGL_Matrix_Camera.h>
 #include <OpenGL_SimpleShaderProgram.h>
 
@@ -66,6 +67,7 @@ private:
     std::unique_ptr<OpenGL::ShaderProgramSimple> _prog;
 
     std::unique_ptr<Render::Line::IRender> _line_1;
+    std::unique_ptr<Render::Line::IRender> _line_2;
 };
 
 int main(int argc, char** argv)
@@ -206,6 +208,10 @@ void CWindow_Glfw::MainLoop ( void )
 void CWindow_Glfw::InitScene( void )
 {
   _line_1 = std::make_unique<OpenGL::Line::CLineOpenGL_1_00>();
+  _line_2 = std::make_unique<OpenGL::Line::CLineOpenGL_2_00>();
+
+  _line_1->Init();
+  _line_2->Init();
 }
 
 
@@ -230,6 +236,16 @@ void CWindow_Glfw::Render( double time_ms )
       glPopMatrix();
     }
    
+    if ( _line_2 != nullptr )
+    {
+      glPushMatrix();
+      glTranslatef( 0.5f, 0.5f, 0.0f );
+      glScalef( 0.5f, 0.5f, 0.5f );
+
+      RenderTestScene( *_line_2.get() );
+
+      glPopMatrix();
+    }
 }
 
 

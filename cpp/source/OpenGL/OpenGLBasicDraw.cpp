@@ -709,6 +709,8 @@ public:
 
   ~CSimpleLineRenderer() {}
 
+  virtual void Init( void ) override;
+
   virtual CSimpleLineRenderer & SetColor( const Render::TColor & color )                       { _color = color; return *this; }
   virtual CSimpleLineRenderer & SetColor( const Render::TColor8 & color )                      { _color = Render::toColor( color ); return *this; }
   virtual CSimpleLineRenderer & SetStyle( const Render::Line::TStyle & style )                 { _style = style; return *this; }

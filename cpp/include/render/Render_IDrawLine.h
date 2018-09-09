@@ -114,6 +114,9 @@ public:
 
   virtual ~IRender() = default;
 
+  //! Initialize the line renderer
+  virtual void Init( void ) = 0;
+
   virtual IRender & SetColor( const TColor & color ) = 0;
   virtual IRender & SetColor( const TColor8 & color ) = 0;
   virtual IRender & SetStyle( const TStyle & style ) = 0;
