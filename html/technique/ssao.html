@@ -268,18 +268,17 @@ function render(deltaMS) {
     var blur = document.getElementById( "blur" ).checked;
     var blurVal = blur ? 1 : 0 
     
+    // setup view projection and model
     vp_size = [canvas.width, canvas.height];
     camera.Update( vp_size );
-        
-    gl.enable( gl.DEPTH_TEST );
-    gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
-
-    // setup view projection and model
     var prjMat = camera.Perspective();
     var invPrjMat = InverseMat44( prjMat );
     var viewMat = camera.Orbit();
     var modelMat = IdentM44();
     modelMat = camera.AutoModelMatrix();
+
+    gl.enable( gl.DEPTH_TEST );
+    gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
 
     // 0: write depth to frame buffer
     // 1: write normal vector to frame buffer
