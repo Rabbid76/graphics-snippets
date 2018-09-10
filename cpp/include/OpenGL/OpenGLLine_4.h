@@ -41,6 +41,28 @@ namespace OpenGL
 namespace Line
 {
 
+/******************************************************************//**
+* \brief Implementation of OpenGL line renderer,
+* with the use of OpenGL core profile
+* for OpenGL version 4+ and GLSL version 4.20 (`#version 420`).
+*
+* Line stippling techniques is implemented in the shader program.
+* 
+* \author  gernot
+* \date    2018-08-01
+* \version 1.0
+**********************************************************************/
+class CLineOpenGL_4_core
+{
+public:
+
+  //CLineOpenGL_4_core( void );
+  //virtual ~CLineOpenGL_4_core();
+
+  // TODO : comments
+// The implementation is based on the OpenGL X.XX compatibility mode specification [link] - line tipple etc.
+};
+
 
 /******************************************************************//**
 * \brief Implementation of OpenGL line renderer,

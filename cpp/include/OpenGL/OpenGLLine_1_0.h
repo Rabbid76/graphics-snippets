@@ -47,6 +47,10 @@ namespace Line
 *
 * See [The OpenGL Graphics System A Specification (Version 1.0)[](https://www.khronos.org/registry/OpenGL/specs/gl/glspec10.pdf).
 * 
+* The goal of this implementation is not high performance, but it is
+* to succeed on any hardware, by the use of the lowest possible
+* OpenGL version 1.00.
+*
 * \author  gernot
 * \date    2018-08-01
 * \version 1.0
@@ -61,6 +65,18 @@ public:
 
   //! Initialize the line renderer
   virtual void Init( void ) override;
+
+  //! Notify the render that a sequence of successive lines will follow, that is not interrupted by any other drawing operation.
+  //! This allows the render to do some performance optimizations and to prepare for the line rendering.
+  //! The render can keep states persistent from one line drawing to the other, without initializing and restoring them.
+  //!
+  //! Not implemented (Software OpenGL).
+  virtual bool StartSuccessiveLineDrawings( void ) override { return false; } 
+
+  //! Notify the renderer that a sequence of lines has been finished, and that the internal states have to be restored.
+  //!
+  //! Not implemented (Software OpenGL).
+  virtual bool FinishSuccessiveLineDrawings( void ) override { return false; }
 
   virtual Render::Line::IRender & SetColor( const Render::TColor & color ) override;
   virtual Render::Line::IRender & SetColor( const Render::TColor8 & color ) override;

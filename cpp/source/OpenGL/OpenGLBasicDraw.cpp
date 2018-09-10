@@ -709,7 +709,10 @@ public:
 
   ~CSimpleLineRenderer() {}
 
-  virtual void Init( void ) override;
+  virtual void Init( void ) override;                
+
+  virtual bool StartSuccessiveLineDrawings( void ) { return false; }
+  virtual bool FinishSuccessiveLineDrawings( void ) { return false; }
 
   virtual CSimpleLineRenderer & SetColor( const Render::TColor & color )                       { _color = color; return *this; }
   virtual CSimpleLineRenderer & SetColor( const Render::TColor8 & color )                      { _color = Render::toColor( color ); return *this; }

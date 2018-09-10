@@ -208,7 +208,7 @@ void CWindow_Glfw::MainLoop ( void )
 void CWindow_Glfw::InitScene( void )
 {
   _line_1 = std::make_unique<OpenGL::Line::CLineOpenGL_1_00>();
-  _line_2 = std::make_unique<OpenGL::Line::CLineOpenGL_2_00>();
+  _line_2 = std::make_unique<OpenGL::Line::CLineOpenGL_2_00>( 0 );
 
   _line_1->Init();
   _line_2->Init();

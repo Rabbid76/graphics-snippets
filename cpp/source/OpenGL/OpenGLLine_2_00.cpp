@@ -25,6 +25,7 @@
 // STL
 
 #include <iostream>
+#include <algorithm>
 
 
 // class definitions
@@ -52,12 +53,25 @@ namespace Line
 {
 
 
+
+/*
+
+Evaluate if it would be even more efficient, to combine the vertex shader `_line_vert_110` and `_line_x_y_vert_110`
+and to switch between the different vertex attribute representations by uniform conditions.
+Since the vertex shader is executed per if vertex only, one additional uniform condition should not gain a notifiable performance loss.
+Note, with a modern hardware, a uniform condition would be evaluated once and different code dependent on the uniform would be generated and executed.
+But this would give the chance to avoid shader program switches, which probably are more time consuming operations. 
+
+*/
+
 const std::string CLineOpenGL_2_00::_line_vert_110 = R"(
 #version 110
 
+attribute vec4 attr_vert;
+
 void main()
 {
-  gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
+  gl_Position = gl_ModelViewProjectionMatrix * attr_vert;
 }
 )";
 
@@ -84,10 +98,6 @@ void main()
 }
 )";
 
-const std::string _line_stipple_vert_110;     // TODO $$$
-const std::string _line_stipple_x_y_vert_110; // TODO $$$
-const std::string _line_stipple_frag_110;     // TODO $$$
-
 
 /******************************************************************//**
 * \brief ctor  
@@ -96,7 +106,10 @@ const std::string _line_stipple_frag_110;     // TODO $$$
 * \date    2018-09-07
 * \version 1.0
 **********************************************************************/
-CLineOpenGL_2_00::CLineOpenGL_2_00( void )
+CLineOpenGL_2_00::CLineOpenGL_2_00( 
+  size_t min_cache_elems ) //! I - size of the element cache
+  : _min_cache_elems( min_cache_elems )
+  , _elem_cache( min_cache_elems, 0.0f )
 {}
 
 
@@ -137,6 +150,10 @@ void CLineOpenGL_2_00::Error(
 **********************************************************************/
 void CLineOpenGL_2_00::Init( void )
 {
+  if ( _initilized )
+    return;
+  _initilized = true;
+
   std::string msg;
 
 
@@ -168,7 +185,8 @@ void CLineOpenGL_2_00::Init( void )
   _line_prog->Link();
   if ( _line_prog->Verify( msg ) == false )
     Error( "link error", msg );
-  _line_color_loc = glGetUniformLocation( (GLuint)_line_prog->ObjectHandle(), "u_color" );
+  _line_color_loc       = glGetUniformLocation( (GLuint)_line_prog->ObjectHandle(), "u_color" );
+  _line_vert_attrib_inx = glGetAttribLocation( (GLuint)_line_prog->ObjectHandle(), "attr_vert" );
 
   _line_x_y_prog = std::make_shared<CShaderProgram>();
   *_line_x_y_prog << _line_x_y_vert_shader << _line_frag_shader;
@@ -178,44 +196,6 @@ void CLineOpenGL_2_00::Init( void )
   _line_x_y_color_loc = glGetUniformLocation( (GLuint)_line_x_y_prog->ObjectHandle(), "u_color" );
   _line_x_attrib_inx  = glGetAttribLocation( (GLuint)_line_x_y_prog->ObjectHandle(), "attr_x" );
   _line_y_attrib_inx  = glGetAttribLocation( (GLuint)_line_x_y_prog->ObjectHandle(), "attr_y" );
-
-  // TODO $$$
-}
-
-
-/******************************************************************//**
-* \brief Change the current line color, for the pending line drawing
-* instructions
-* 
-* \author  gernot
-* \date    2018-09-07
-* \version 1.0
-**********************************************************************/
-Render::Line::IRender & CLineOpenGL_2_00::SetColor(
-  const Render::TColor & color ) //!< I - the new color
-{
-  // change the vertex color
-  glColor4fv( color.data() );
-
-  return *this;
-}
-
-
-/******************************************************************//**
-* \brief Change the current line color, for the pending line drawing
-* instructions
-* 
-* \author  gernot
-* \date    2018-09-07
-* \version 1.0
-**********************************************************************/
-Render::Line::IRender & CLineOpenGL_2_00::SetColor( 
-  const Render::TColor8 & color ) //!< I - the new color
-{
-  // change the vertex color
-  glColor4ubv( color.data() );
-
-  return *this;
 }
 
 
@@ -242,6 +222,8 @@ Render::Line::IRender & CLineOpenGL_2_00::SetStyle(
     assert( false );
     return *this;
   }
+
+  _line_style = style;
 
   // set line width
   glLineWidth( style._width );
@@ -303,28 +285,15 @@ bool CLineOpenGL_2_00::Draw(
   ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::line );
   ASSERT( tuple_size == 2 || tuple_size == 3 || tuple_size == 4 );
 
-  // start `glBegin` / `glEnd` sequence
-  glBegin( OpenGL::Primitive(primitive_type) );
+  _line_prog->Use();
+  glUniform4fv( _line_x_y_color_loc, 1, _line_color.data() );
 
-  // draw the line sequence
-  if ( tuple_size == 2 )
-  {
-    for ( const float *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 2 )
-      glVertex2fv( ptr );
-  }
-  else if ( tuple_size == 3 )
-  {
-    for ( const float *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 3 )
-      glVertex3fv( ptr );
-  }
-  else if ( tuple_size == 4 )
-  {
-    for ( const float *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 4 )
-      glVertex4fv( ptr );
-  }
-
-  // complete sequence
-  glEnd();
+  glVertexAttribPointer( _line_vert_attrib_inx, tuple_size, GL_FLOAT, GL_FALSE, 0, coords );
+  glEnableVertexAttribArray( _line_vert_attrib_inx );
+  glDrawArrays( OpenGL::Primitive( primitive_type ), 0, (GLsizei)(coords_size / tuple_size) );
+  glDisableVertexAttribArray( _line_vert_attrib_inx );
+  
+  glUseProgram( 0 );
 
   return true;
 }
@@ -352,28 +321,15 @@ bool CLineOpenGL_2_00::Draw(
   ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::line );
   ASSERT( tuple_size == 2 || tuple_size == 3 || tuple_size == 4 );
 
-  // start `glBegin` / `glEnd` sequence
-  glBegin( OpenGL::Primitive(primitive_type) );
+  _line_prog->Use();
+  glUniform4fv( _line_x_y_color_loc, 1, _line_color.data() );
 
-  // draw the line sequence
-  if ( tuple_size == 2 )
-  {
-    for ( const double *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 2 )
-      glVertex2dv( ptr );
-  }
-  else if ( tuple_size == 3 )
-  {
-    for ( const double *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 3 )
-      glVertex3dv( ptr );
-  }
-  else if ( tuple_size == 4 )
-  {
-    for ( const double *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 4 )
-      glVertex4dv( ptr );
-  }
-
-  // complete sequence
-  glEnd();
+  glVertexAttribPointer( _line_vert_attrib_inx, tuple_size, GL_DOUBLE, GL_FALSE, 0, coords );
+  glEnableVertexAttribArray( _line_vert_attrib_inx );
+  glDrawArrays( OpenGL::Primitive( primitive_type ), 0, (GLsizei)(coords_size / tuple_size) );
+  glDisableVertexAttribArray( _line_vert_attrib_inx );
+  
+  glUseProgram( 0 );
 
   return true;
 }
@@ -399,16 +355,20 @@ bool CLineOpenGL_2_00::Draw(
     return false;
   }
   ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::line );
-  
-  // start `glBegin` / `glEnd` sequence
-  glBegin( OpenGL::Primitive(primitive_type) );
+  ASSERT( _line_x_y_prog != nullptr );
 
-  // draw the line sequence
-  for ( size_t i = 0; i < no_of_coords; ++ i )
-    glVertex2f( x_coords[i], y_coords[i] );
+  _line_x_y_prog->Use();
+  glUniform4fv( _line_x_y_color_loc, 1, _line_color.data() );
 
-  // complete sequence
-  glEnd();
+  glVertexAttribPointer( _line_x_attrib_inx, 1, GL_FLOAT, GL_FALSE, 0, x_coords );
+  glVertexAttribPointer( _line_y_attrib_inx, 1, GL_FLOAT, GL_FALSE, 0, y_coords );
+  glEnableVertexAttribArray( _line_x_attrib_inx );
+  glEnableVertexAttribArray( _line_y_attrib_inx );
+  glDrawArrays( OpenGL::Primitive( primitive_type ), 0, (GLsizei)no_of_coords );
+  glDisableVertexAttribArray( _line_x_attrib_inx );
+  glDisableVertexAttribArray( _line_y_attrib_inx );
+
+  glUseProgram( 0 );
 
   return true;
 }
@@ -435,15 +395,22 @@ bool CLineOpenGL_2_00::Draw(
   }
   ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::line );
   
-  // start `glBegin` / `glEnd` sequence
-  glBegin( OpenGL::Primitive(primitive_type) );
+  // TODO $$$ evaluate line stippling
 
-  // draw the line sequence
-  for ( size_t i = 0; i < no_of_coords; ++ i )
-    glVertex2d( x_coords[i], y_coords[i] );
+  ASSERT( _line_x_y_prog != nullptr );
 
-  // complete sequence
-  glEnd();
+  _line_x_y_prog->Use();
+  glUniform4fv( _line_x_y_color_loc, 1, _line_color.data() );
+
+  glVertexAttribPointer( _line_x_attrib_inx, 1, GL_DOUBLE, GL_FALSE, 0, x_coords );
+  glVertexAttribPointer( _line_y_attrib_inx, 1, GL_DOUBLE, GL_FALSE, 0, y_coords );
+  glEnableVertexAttribArray( _line_x_attrib_inx );
+  glEnableVertexAttribArray( _line_y_attrib_inx );
+  glDrawArrays( OpenGL::Primitive( primitive_type ), 0, (GLsizei)no_of_coords );
+  glDisableVertexAttribArray( _line_x_attrib_inx );
+  glDisableVertexAttribArray( _line_y_attrib_inx );
+
+  glUseProgram( 0 );
 
   return true;
 }
@@ -468,10 +435,7 @@ bool CLineOpenGL_2_00::StartSequence(
   ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::line );
   
   _active_sequence = true;
-
-  // start `glBegin` / `glEnd` sequence
-  glBegin( OpenGL::Primitive(primitive_type) );
-
+  _squence_type    = primitive_type;
   return true;
 }
   
@@ -491,11 +455,21 @@ bool CLineOpenGL_2_00::EndSequence( void )
     ASSERT( false );
     return false;
   }
- 
-  _active_sequence = false;
 
-  // complete sequence
-  glEnd();
+  // draw the line
+
+  _line_prog->Use();
+  glUniform4fv( _line_x_y_color_loc, 1, _line_color.data() );
+
+  glVertexAttribPointer( _line_vert_attrib_inx, 3, GL_FLOAT, GL_FALSE, 0, _elem_cache.data() );
+  glEnableVertexAttribArray( _line_vert_attrib_inx );
+  glDrawArrays( OpenGL::Primitive( _squence_type ), 0, (GLsizei)(_sequence_size / 3) );
+  glDisableVertexAttribArray( _line_vert_attrib_inx );
+  
+  glUseProgram( 0 );
+
+  _active_sequence = false;
+  _sequence_size   = 0;
 
   return true;
 }
@@ -520,8 +494,16 @@ bool CLineOpenGL_2_00::DrawSequence(
     return false;
   }
 
-  // specify the vertex coordinate
-  glVertex3f( x, y, z );
+  // reserve the cache
+  if ( _elem_cache.size() < _sequence_size + 3 )
+    _elem_cache.resize( _elem_cache.size() + std::max((size_t)3, _min_cache_elems) );
+
+  // add the vertex coordinate to the cache
+
+  _elem_cache.data()[_sequence_size + 0] = x;
+  _elem_cache.data()[_sequence_size + 1] = y;
+  _elem_cache.data()[_sequence_size + 2] = z;
+  _sequence_size += 3;
 
   return true;
 }
@@ -546,8 +528,16 @@ bool CLineOpenGL_2_00::DrawSequence(
     return false;
   }
 
-  // specify the vertex coordinate
-  glVertex3d( x, y, z );
+  // reserve the cache
+  if ( _elem_cache.size() < _sequence_size + 3 )
+    _elem_cache.resize( _elem_cache.size() + std::max((size_t)3, _min_cache_elems) );
+
+  // add the vertex coordinate to the cache
+
+  _elem_cache.data()[_sequence_size + 0] = (float)x;
+  _elem_cache.data()[_sequence_size + 1] = (float)y;
+  _elem_cache.data()[_sequence_size + 2] = (float)z;
+  _sequence_size += 3;
 
   return true;
 }
@@ -572,23 +562,38 @@ bool CLineOpenGL_2_00::DrawSequence(
     return false;
   }
 
-  // draw the line sequence
+  // reserve the cache
+  size_t increment = coords_size * 3 / tuple_size;
+  if ( _elem_cache.size() < _sequence_size + increment )
+    _elem_cache.resize( _elem_cache.size() + std::max(increment, _min_cache_elems) );
+
+  // add the vertex coordinate to the cache
+
   if ( tuple_size == 2 )
   {
-    for ( const float *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 2 )
-      glVertex2fv( ptr );
+    float *cache_ptr = _elem_cache.data() + _sequence_size;
+    for ( const float *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 2, cache_ptr += 3 )
+    {
+      cache_ptr[0] = ptr[0];
+      cache_ptr[1] = ptr[1];
+    }
   }
   else if ( tuple_size == 3 )
   {
-    for ( const float *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 3 )
-      glVertex3fv( ptr );
+    std::memcpy( _elem_cache.data() + _sequence_size, coords, increment * sizeof( float ) );
   }
   else if ( tuple_size == 4 )
   {
-    for ( const float *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 4 )
-      glVertex4fv( ptr );
+    float *cache_ptr = _elem_cache.data() + _sequence_size;
+    for ( const float *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 4, cache_ptr += 3 )
+    {
+      cache_ptr[0] = ptr[0] / ptr[3];
+      cache_ptr[1] = ptr[1] / ptr[3];
+      cache_ptr[2] = ptr[2] / ptr[3];
+    }
   }
-
+  _sequence_size += increment;
+  
   return true;
 }
 
@@ -612,22 +617,43 @@ bool CLineOpenGL_2_00::DrawSequence(
     return false;
   }
 
-  // draw the line sequence
+  // reserve the cache
+  size_t increment = coords_size * 3 / tuple_size;
+  if ( _elem_cache.size() < _sequence_size + increment )
+    _elem_cache.resize( _elem_cache.size() + std::max(increment, _min_cache_elems) );
+
+  // add the vertex coordinate to the cache
+
   if ( tuple_size == 2 )
   {
-    for ( const double *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 2 )
-      glVertex2dv( ptr );
+    float *cache_ptr = _elem_cache.data() + _sequence_size;
+    for ( const double *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 2, cache_ptr += 3 )
+    {
+      cache_ptr[0] = (float)ptr[0];
+      cache_ptr[1] = (float)ptr[1];
+    }
   }
   else if ( tuple_size == 3 )
   {
-    for ( const double *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 3 )
-      glVertex3dv( ptr );
+    float *cache_ptr = _elem_cache.data() + _sequence_size;
+    for ( const double *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 3, cache_ptr += 3 )
+    {
+      cache_ptr[0] = (float)ptr[0];
+      cache_ptr[1] = (float)ptr[1];
+      cache_ptr[2] = (float)ptr[2];
+    }
   }
   else if ( tuple_size == 4 )
   {
-    for ( const double *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 4 )
-      glVertex4dv( ptr );
+    float *cache_ptr = _elem_cache.data() + _sequence_size;
+    for ( const double *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 4, cache_ptr += 3 )
+    {
+      cache_ptr[0] = (float)(ptr[0] / ptr[3]);
+      cache_ptr[1] = (float)(ptr[1] / ptr[3]);
+      cache_ptr[2] = (float)(ptr[2] / ptr[3]);
+    }
   }
+  _sequence_size += increment;
 
   return true;
 }
