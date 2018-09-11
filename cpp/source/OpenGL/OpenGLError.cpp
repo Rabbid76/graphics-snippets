@@ -49,9 +49,11 @@ namespace OpenGL
 // CError
 //*********************************************************************
 
+bool CError::_enable_error_check = false;
+
 unsigned int CError::Check( void )
 {
-  if ( TestErrors() == false )
+  if ( IsErrorCheckEnabled() == false )
     return false;
 
   GLenum err = glGetError();

@@ -51,9 +51,15 @@ class CError
 {
 public: 
 
-  virtual bool TestErrors( void ) { return true; }
+  virtual bool IsErrorCheckEnabled( void ) { return _enable_error_check; }
 
   unsigned int Check( void );
+
+  static void EnableErrorCheck( bool eanable ) { _enable_error_check = eanable; }
+
+private: 
+
+  static bool _enable_error_check; //!< true: errors checks are enabled 
 };
 
 
