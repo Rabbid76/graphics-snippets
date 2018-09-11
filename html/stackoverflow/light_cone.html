@@ -156,7 +156,7 @@ void main()
         float att  = 1.0 / dot( vec3( 1.0, dist, dist*dist ), u_light.attenuation );        
         
         
-        gl_FragColor = vec4( mix( texCol.rgb, vec3(1.0, 0.0, 1.0), isIsect * att ), 1.0 );
+        gl_FragColor = vec4( mix( texCol.rgb, vec3(1.0, 1.0, 1.0), isIsect * att * 0.5 ), 1.0 );
     }
 </script>
 
@@ -166,29 +166,25 @@ html,body { margin: 0; overflow: hidden; }
 #ref-link { position : absolute; bottom : 0; left : 0; }  
 </style>
 
-<body onload="sceneStart();">
-<div id="div-main" style="margin-left: 520px;">
-<div style="float: right; width: 100%; background-color: #CCF;">
-<form name="inputs">
-    <table>
-        <tr> <td> ambient </td> 
-                <td> <input type="range" id="ambient" min="0" max="100" value="0"/></td> </tr>
-        <tr> <td> diffuse </td> 
-                <td> <input type="range" id="diffuse" min="0" max="100" value="0"/></td> </tr>
-        <tr> <td> specular </td> 
-                <td> <input type="range" id="specular" min="0" max="100" value="0"/></td> </tr>
-        <tr> <td> shininess </td> 
-                <td> <input type="range" id="shininess" min="1" max="100" value="0"/></td> </tr>
-        <tr> <td> cut off angle </td> 
-                <td> <input type="range" id="cutOffAngle" min="1" max="180" value="0"/></td> </tr>
-    </table>
+<body>
+<div><form id="gui" name="inputs">
+<table>
+    <tr> <td> <font color=#40f040>ambient</font> </td> 
+            <td> <input type="range" id="ambient" min="0" max="100" value="0"/></td> </tr>
+    <tr> <td> <font color=#40f040>diffuse</font> </td> 
+            <td> <input type="range" id="diffuse" min="0" max="100" value="0"/></td> </tr>
+    <tr> <td> <font color=#40f040>specular</font> </td> 
+            <td> <input type="range" id="specular" min="0" max="100" value="0"/></td> </tr>
+    <tr> <td> <font color=#40f040>shininess</font> </td> 
+            <td> <input type="range" id="shininess" min="1" max="100" value="0"/></td> </tr>
+    <tr> <td> <font color=#40f040>cut off angle</font> </td> 
+            <td> <input type="range" id="cutOffAngle" min="1" max="180" value="0"/></td> </tr>
+</table>
 </form>
 </div>
-<div id="div-canvas" style="float: right; width: 520px; margin-left: -520px;">
-    <canvas id="glow-canvas" style="border: none;" width="512" height="512"></canvas>
-</div>
-<div style="clear: both;"></div>
-</div>
+
+
+<canvas id="glow-canvas" style="border: none;" width="512" height="512"></canvas>
 
 <a id="ref-link" href="https://stackoverflow.com/questions/45783444/glsl-spotlight-projection-volume/45796941#45796941">
 <font color= #CCF>GLSL spotlight projection volume</font>
@@ -196,6 +192,199 @@ html,body { margin: 0; overflow: hidden; }
 </body>
 
 <script type="text/javascript">
+
+var sliderScale = 100.0
+var gl;
+var canvas;
+var vp_size;
+var progDraw;
+var progLightCone;
+var bufTorus = {};
+var bufQuad = {};
+var drawFB;
+
+function render(deltaMS) {
+
+    var ambient = document.getElementById( "ambient" ).value / sliderScale;
+    var diffuse = document.getElementById( "diffuse" ).value / sliderScale;
+    var specular = document.getElementById( "specular" ).value / sliderScale;
+    var shininess = document.getElementById( "shininess" ).value;
+    var cutOffAngle = document.getElementById( "cutOffAngle" ).value;
+
+    var lightPos = [1.7, 1.7, -1.6];
+    var lightDir = [-lightPos[0], -lightPos[1], -1.0];
+    var lightCutOffAngleRad = cutOffAngle * Math.PI / 180.0;
+    var lightAtt = [0.0, 0.5, 0.1];
+
+    canvas = document.getElementById( "glow-canvas" );
+    Camera.create();
+    Camera.vp = [canvas.width, canvas.height];
+        
+    drawFB.Bind( true );    
+    gl.viewport( 0, 0, canvas.width, canvas.height );
+    gl.enable( gl.DEPTH_TEST );
+    gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
+    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+
+    ShProg.Use( progDraw );
+    ShProg.SetM44( progDraw, "u_projectionMat44", Camera.Perspective() );
+    ShProg.SetM44( progDraw, "u_viewMat44", Camera.LookAt() );
+    ShProg.SetF3( progDraw, "u_light.position", lightPos );
+    ShProg.SetF3( progDraw, "u_light.direction", lightDir );
+    ShProg.SetF1( progDraw, "u_light.ambient", ambient );
+    ShProg.SetF1( progDraw, "u_light.diffuse", diffuse );
+    ShProg.SetF1( progDraw, "u_light.specular", specular );
+    ShProg.SetF1( progDraw, "u_light.shininess", shininess );
+    ShProg.SetF3( progDraw, "u_light.attenuation", lightAtt );
+    ShProg.SetF1( progDraw, "u_light.cutOffAngle", lightCutOffAngleRad );
+
+    var modelMat = IdentM44()
+    modelMat = RotateAxis( modelMat, CalcAng( deltaMS, 13.0 ), 0 );
+    modelMat = RotateAxis( modelMat, CalcAng( deltaMS, 17.0 ), 1 );
+    ShProg.SetM44( progDraw, "u_modelMat44", modelMat );
+
+    bufObj = bufTorus;
+    gl.enableVertexAttribArray( progDraw.inPos );
+    gl.enableVertexAttribArray( progDraw.inNV );
+    gl.enableVertexAttribArray( progDraw.inCol );
+    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.pos );
+    gl.vertexAttribPointer( progDraw.inPos, 3, gl.FLOAT, false, 0, 0 );
+    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.nv );
+    gl.vertexAttribPointer( progDraw.inNV, 3, gl.FLOAT, false, 0, 0 ); 
+    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.col );
+    gl.vertexAttribPointer( progDraw.inCol, 3, gl.FLOAT, false, 0, 0 );
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufObj.inx );
+    gl.drawElements( gl.TRIANGLES, bufObj.inxLen, gl.UNSIGNED_SHORT, 0 );
+    gl.disableVertexAttribArray( progDraw.pos );
+    gl.disableVertexAttribArray( progDraw.nv );
+    gl.disableVertexAttribArray( progDraw.col );
+
+    drawFB.Release( true );
+    var texUnitDraw = 2;
+    drawFB.BindTexture( texUnitDraw );
+    ShProg.Use( progLightCone );
+    ShProg.SetI1( progLightCone, "u_colorAttachment0", texUnitDraw );
+    ShProg.SetF2( progLightCone, "u_depthRange", [ Camera.near, Camera.far ] );
+    ShProg.SetF2( progLightCone, "u_vp", Camera.vp );
+    ShProg.SetF1( progLightCone, "u_fov", Camera.fov_y * Math.PI / 180.0 );
+    ShProg.SetF3( progLightCone, "u_light.position", lightPos );
+    ShProg.SetF3( progLightCone, "u_light.direction", lightDir );
+    ShProg.SetF3( progLightCone, "u_light.attenuation", lightAtt );
+    ShProg.SetF1( progLightCone, "u_light.cutOffAngle", lightCutOffAngleRad );
+
+    gl.enableVertexAttribArray( progLightCone.inPos );
+    gl.bindBuffer( gl.ARRAY_BUFFER, bufQuad.pos );
+    gl.vertexAttribPointer( progLightCone.inPos, 2, gl.FLOAT, false, 0, 0 );
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufQuad.inx );
+    gl.drawElements( gl.TRIANGLES, bufQuad.inxLen, gl.UNSIGNED_SHORT, 0 );
+    gl.disableVertexAttribArray( progLightCone.inPos );
+
+    requestAnimationFrame(render);
+}
+
+function initScene() {
+
+    canvas = document.getElementById( "glow-canvas");
+    vp_size = [canvas.width, canvas.height];
+    gl = canvas.getContext( "experimental-webgl" );
+    if ( !gl )
+      return;
+    
+    document.getElementById( "ambient" ).value = 0.25 * sliderScale;
+    document.getElementById( "diffuse" ).value = 1.0 * sliderScale;
+    document.getElementById( "specular" ).value = 1.0 * sliderScale;
+    document.getElementById( "shininess" ).value = 10.0;
+    document.getElementById( "cutOffAngle" ).value = 30.0;
+
+    progDraw = ShProg.Create( 
+      [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },
+        { source : "draw-shader-fs", stage : gl.FRAGMENT_SHADER }
+      ] );
+
+    progDraw.inPos = ShProg.AttrI( progDraw, "inPos" );
+    progDraw.inNV  = ShProg.AttrI( progDraw, "inNV" );
+    progDraw.inCol = ShProg.AttrI( progDraw, "inCol" );
+    if ( progDraw == 0 )
+        return;
+
+    progLightCone = ShProg.Create( 
+      [ { source : "light-cone-shader-vs", stage : gl.VERTEX_SHADER },
+        { source : "light-cone-shader-fs", stage : gl.FRAGMENT_SHADER }
+      ] );
+    progLightCone.inPos = ShProg.AttrI( progDraw, "inPos" );
+    if ( progDraw == 0 )
+        return;
+
+    drawFB = FrameBuffer.Create( vp_size );
+
+    var circum_size = 32, tube_size = 32;
+    var rad_circum = 1.2;
+    var rad_tube = 0.7;
+    var torus_pts = [];
+    var torus_nv = [];
+    var torus_col = [];
+    var torus_inx = [];
+    var col = [1, 0.5, 0.0];
+    for ( var i_c = 0; i_c < circum_size; ++ i_c ) {
+        var center = [
+            Math.cos(2 * Math.PI * i_c / circum_size),
+            Math.sin(2 * Math.PI * i_c / circum_size) ]
+        for ( var i_t = 0; i_t < tube_size; ++ i_t ) {
+            var tubeX = Math.cos(2 * Math.PI * i_t / tube_size)
+            var tubeY = Math.sin(2 * Math.PI * i_t / tube_size)
+            var pt = [
+                center[0] * ( rad_circum + tubeX * rad_tube ),
+                center[1] * ( rad_circum + tubeX * rad_tube ),
+                tubeY * rad_tube ]
+            var nv = [ pt[0] - center[0] * rad_tube, pt[1] - center[1] * rad_tube, tubeY * rad_tube ]
+            torus_pts.push( pt[0], pt[1], pt[2] );
+            torus_nv.push( nv[0], nv[1], nv[2] );
+            torus_col.push( col[0], col[1], col[2] );
+            var i_cn = (i_c+1) % circum_size
+            var i_tn = (i_t+1) % tube_size
+            var i_c0 = i_c * tube_size; 
+            var i_c1 = i_cn * tube_size; 
+            torus_inx.push( i_c0+i_t, i_c0+i_tn, i_c1+i_t, i_c0+i_tn, i_c1+i_t, i_c1+i_tn )
+        }
+    }
+    bufTorus.pos = gl.createBuffer();
+    gl.bindBuffer( gl.ARRAY_BUFFER, bufTorus.pos );
+    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( torus_pts ), gl.STATIC_DRAW );
+    bufTorus.nv = gl.createBuffer();
+    gl.bindBuffer( gl.ARRAY_BUFFER, bufTorus.nv );
+    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( torus_nv ), gl.STATIC_DRAW );
+    bufTorus.col = gl.createBuffer();
+    gl.bindBuffer( gl.ARRAY_BUFFER, bufTorus.col );
+    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( torus_col ), gl.STATIC_DRAW );
+    bufTorus.inx = gl.createBuffer();
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufTorus.inx );
+    gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( torus_inx ), gl.STATIC_DRAW );
+    bufTorus.inxLen = torus_inx.length;
+
+    bufQuad.pos = gl.createBuffer();
+    gl.bindBuffer( gl.ARRAY_BUFFER, bufQuad.pos );
+    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( [ -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0 ] ), gl.STATIC_DRAW );
+    bufQuad.inx = gl.createBuffer();
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufQuad.inx );
+    gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( [ 0, 1, 2, 0, 2, 3 ] ), gl.STATIC_DRAW );
+    bufQuad.inxLen = 6;
+
+    //window.onresize = resize;
+    //resize();
+    requestAnimationFrame(render);
+}
+
+function Fract( val ) { 
+    return val - Math.trunc( val );
+}
+function CalcAng( deltaMS, intervall ) {
+    return Fract( deltaMS / (1000*intervall) ) * 2.0 * Math.PI;
+}
+function CalcMove( deltaMS, intervall, range ) {
+    var pos = self.Fract( deltaMS / (1000*intervall) ) * 2.0
+    var pos = pos < 1.0 ? pos : (2.0-pos)
+    return range[0] + (range[1] - range[0]) * pos;
+}    
 
 glArrayType = typeof Float32Array !="undefined" ? Float32Array : ( typeof WebGLFloatArray != "undefined" ? WebGLFloatArray : Array );
 
@@ -375,203 +564,6 @@ ShProg.Link = function( shaderObjs ) {
     return status ? prog : 0;
 }
         
-function drawScene(){
-
-    var ambient = document.getElementById( "ambient" ).value / sliderScale;
-    var diffuse = document.getElementById( "diffuse" ).value / sliderScale;
-    var specular = document.getElementById( "specular" ).value / sliderScale;
-    var shininess = document.getElementById( "shininess" ).value;
-    var cutOffAngle = document.getElementById( "cutOffAngle" ).value;
-    
-    var lightPos = [1.7, 1.7, -1.6];
-    var lightDir = [-lightPos[0], -lightPos[1], -1.0];
-    var lightCutOffAngleRad = cutOffAngle * Math.PI / 180.0;
-    var lightAtt = [0.0, 0.5, 0.1];
-    
-    var canvas = document.getElementById( "glow-canvas" );
-    Camera.create();
-    Camera.vp = [canvas.width, canvas.height];
-    var currentTime = Date.now();   
-    var deltaMS = currentTime - startTime;
-        
-    drawFB.Bind( true );    
-    gl.viewport( 0, 0, canvas.width, canvas.height );
-    gl.enable( gl.DEPTH_TEST );
-    gl.clearColor( 1.0, 1.0, 1.0, 1.0 );
-    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
-    
-    ShProg.Use( progDraw );
-    ShProg.SetM44( progDraw, "u_projectionMat44", Camera.Perspective() );
-    ShProg.SetM44( progDraw, "u_viewMat44", Camera.LookAt() );
-    ShProg.SetF3( progDraw, "u_light.position", lightPos );
-    ShProg.SetF3( progDraw, "u_light.direction", lightDir );
-    ShProg.SetF1( progDraw, "u_light.ambient", ambient );
-    ShProg.SetF1( progDraw, "u_light.diffuse", diffuse );
-    ShProg.SetF1( progDraw, "u_light.specular", specular );
-    ShProg.SetF1( progDraw, "u_light.shininess", shininess );
-    ShProg.SetF3( progDraw, "u_light.attenuation", lightAtt );
-    ShProg.SetF1( progDraw, "u_light.cutOffAngle", lightCutOffAngleRad );
-
-    var modelMat = IdentM44()
-    modelMat = RotateAxis( modelMat, CalcAng( currentTime, 13.0 ), 0 );
-    modelMat = RotateAxis( modelMat, CalcAng( currentTime, 17.0 ), 1 );
-    ShProg.SetM44( progDraw, "u_modelMat44", modelMat );
-    
-    bufObj = bufTorus;
-    gl.enableVertexAttribArray( progDraw.inPos );
-    gl.enableVertexAttribArray( progDraw.inNV );
-    gl.enableVertexAttribArray( progDraw.inCol );
-    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.pos );
-    gl.vertexAttribPointer( progDraw.inPos, 3, gl.FLOAT, false, 0, 0 );
-    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.nv );
-    gl.vertexAttribPointer( progDraw.inNV, 3, gl.FLOAT, false, 0, 0 ); 
-    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.col );
-    gl.vertexAttribPointer( progDraw.inCol, 3, gl.FLOAT, false, 0, 0 );
-    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufObj.inx );
-    gl.drawElements( gl.TRIANGLES, bufObj.inxLen, gl.UNSIGNED_SHORT, 0 );
-    gl.disableVertexAttribArray( progDraw.pos );
-    gl.disableVertexAttribArray( progDraw.nv );
-    gl.disableVertexAttribArray( progDraw.col );
-
-    drawFB.Release( true );
-    var texUnitDraw = 2;
-    drawFB.BindTexture( texUnitDraw );
-    ShProg.Use( progLightCone );
-    ShProg.SetI1( progLightCone, "u_colorAttachment0", texUnitDraw );
-    ShProg.SetF2( progLightCone, "u_depthRange", [ Camera.near, Camera.far ] );
-    ShProg.SetF2( progLightCone, "u_vp", Camera.vp );
-    ShProg.SetF1( progLightCone, "u_fov", Camera.fov_y * Math.PI / 180.0 );
-    ShProg.SetF3( progLightCone, "u_light.position", lightPos );
-    ShProg.SetF3( progLightCone, "u_light.direction", lightDir );
-    ShProg.SetF3( progLightCone, "u_light.attenuation", lightAtt );
-    ShProg.SetF1( progLightCone, "u_light.cutOffAngle", lightCutOffAngleRad );
-
-    gl.enableVertexAttribArray( progLightCone.inPos );
-    gl.bindBuffer( gl.ARRAY_BUFFER, bufQuad.pos );
-    gl.vertexAttribPointer( progLightCone.inPos, 2, gl.FLOAT, false, 0, 0 );
-    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufQuad.inx );
-    gl.drawElements( gl.TRIANGLES, bufQuad.inxLen, gl.UNSIGNED_SHORT, 0 );
-    gl.disableVertexAttribArray( progLightCone.inPos );
-}
-
-var startTime;
-function Fract( val ) { 
-    return val - Math.trunc( val );
-}
-function CalcAng( currentTime, intervall ) {
-    return Fract( (currentTime - startTime) / (1000*intervall) ) * 2.0 * Math.PI;
-}
-function CalcMove( currentTime, intervall, range ) {
-    var pos = self.Fract( (currentTime - startTime) / (1000*intervall) ) * 2.0
-    var pos = pos < 1.0 ? pos : (2.0-pos)
-    return range[0] + (range[1] - range[0]) * pos;
-}    
-
-var sliderScale = 100.0
-var gl;
-var progDraw;
-var progLightCone;
-var bufTorus = {};
-var bufQuad = {};
-var drawFB;
-function sceneStart() {
-
-    var divMain = document.getElementById( "div-main");
-    var divCanavas = document.getElementById( "div-canvas");
-    var canvas = document.getElementById( "glow-canvas");
-    var caMaxSize = Math.min( Math.floor( window.innerWidth/2 ), window.innerHeight );
-    var caSize = ( caMaxSize >= 1024 ) ? 1024 : (( caMaxSize > 512 ) ? 512 : 256);
-    divMain.setAttribute("style", "margin-left: " + caSize.toString() + "px;" );
-    divCanavas.setAttribute("style", "width: " + caSize.toString() + "px;" );
-    divCanavas.setAttribute("style", "margin-left: -" + caSize.toString() + "px;" );
-    canvas.width = caSize;
-    canvas.height = caSize; 
-    var vp = [canvas.width, canvas.height];
-    gl = canvas.getContext( "experimental-webgl" );
-    if ( !gl )
-      return;
-    
-    document.getElementById( "ambient" ).value = 0.1 * sliderScale;
-    document.getElementById( "diffuse" ).value = 1.0 * sliderScale;
-    document.getElementById( "specular" ).value = 1.0 * sliderScale;
-    document.getElementById( "shininess" ).value = 10.0;
-    document.getElementById( "cutOffAngle" ).value = 30.0;
-
-    progDraw = ShProg.Create( 
-      [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },
-        { source : "draw-shader-fs", stage : gl.FRAGMENT_SHADER }
-      ] );
-
-    progDraw.inPos = ShProg.AttrI( progDraw, "inPos" );
-    progDraw.inNV  = ShProg.AttrI( progDraw, "inNV" );
-    progDraw.inCol = ShProg.AttrI( progDraw, "inCol" );
-    if ( progDraw == 0 )
-        return;
-
-    progLightCone = ShProg.Create( 
-      [ { source : "light-cone-shader-vs", stage : gl.VERTEX_SHADER },
-        { source : "light-cone-shader-fs", stage : gl.FRAGMENT_SHADER }
-      ] );
-    progLightCone.inPos = ShProg.AttrI( progDraw, "inPos" );
-    if ( progDraw == 0 )
-        return;
-
-    drawFB = FrameBuffer.Create( vp );
-
-    var circum_size = 32, tube_size = 32;
-    var rad_circum = 1.0;
-    var rad_tube = 0.5;
-    var torus_pts = [];
-    var torus_nv = [];
-    var torus_col = [];
-    var torus_inx = [];
-    var col = [1, 0.5, 0.0];
-    for ( var i_c = 0; i_c < circum_size; ++ i_c ) {
-        var center = [
-            Math.cos(2 * Math.PI * i_c / circum_size),
-            Math.sin(2 * Math.PI * i_c / circum_size) ]
-        for ( var i_t = 0; i_t < tube_size; ++ i_t ) {
-            var tubeX = Math.cos(2 * Math.PI * i_t / tube_size)
-            var tubeY = Math.sin(2 * Math.PI * i_t / tube_size)
-            var pt = [
-                center[0] * ( rad_circum + tubeX * rad_tube ),
-                center[1] * ( rad_circum + tubeX * rad_tube ),
-                tubeY * rad_tube ]
-            var nv = [ pt[0] - center[0] * rad_tube, pt[1] - center[1] * rad_tube, tubeY * rad_tube ]
-            torus_pts.push( pt[0], pt[1], pt[2] );
-            torus_nv.push( nv[0], nv[1], nv[2] );
-            torus_col.push( col[0], col[1], col[2] );
-            var i_cn = (i_c+1) % circum_size
-            var i_tn = (i_t+1) % tube_size
-            var i_c0 = i_c * tube_size; 
-            var i_c1 = i_cn * tube_size; 
-            torus_inx.push( i_c0+i_t, i_c0+i_tn, i_c1+i_t, i_c0+i_tn, i_c1+i_t, i_c1+i_tn )
-        }
-    }
-    bufTorus.pos = gl.createBuffer();
-    gl.bindBuffer( gl.ARRAY_BUFFER, bufTorus.pos );
-    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( torus_pts ), gl.STATIC_DRAW );
-    bufTorus.nv = gl.createBuffer();
-    gl.bindBuffer( gl.ARRAY_BUFFER, bufTorus.nv );
-    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( torus_nv ), gl.STATIC_DRAW );
-    bufTorus.col = gl.createBuffer();
-    gl.bindBuffer( gl.ARRAY_BUFFER, bufTorus.col );
-    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( torus_col ), gl.STATIC_DRAW );
-    bufTorus.inx = gl.createBuffer();
-    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufTorus.inx );
-    gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( torus_inx ), gl.STATIC_DRAW );
-    bufTorus.inxLen = torus_inx.length;
-
-    bufQuad.pos = gl.createBuffer();
-    gl.bindBuffer( gl.ARRAY_BUFFER, bufQuad.pos );
-    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( [ -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0 ] ), gl.STATIC_DRAW );
-    bufQuad.inx = gl.createBuffer();
-    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufQuad.inx );
-    gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( [ 0, 1, 2, 0, 2, 3 ] ), gl.STATIC_DRAW );
-    bufQuad.inxLen = 6;
-
-    startTime = Date.now();
-    setInterval(drawScene, 50);
-}
+initScene();
 
 </script>
