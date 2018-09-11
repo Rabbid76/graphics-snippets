@@ -357,7 +357,8 @@ bool CLineOpenGL_1_00::Draw(
 * \version 1.0
 **********************************************************************/
 bool CLineOpenGL_1_00::StartSequence( 
-  Render::TPrimitive primitive_type ) //!< in: primitive type of the coordinates - lines, line strip, line loop, lines adjacency or line strip adjacency 
+  Render::TPrimitive primitive_type, //!< in: primitive type of the coordinates - lines, line strip, line loop, lines adjacency or line strip adjacency 
+  unsigned int       tuple_size )    //!< in: kind of the coordinates - 2: 2D (x, y), 3: 3D (x, y, z), 4: homogeneous (x, y, z, w)   
 {
   // A new sequence can't be started within an active sequence
   if ( _active_sequence )
@@ -366,8 +367,10 @@ bool CLineOpenGL_1_00::StartSequence(
     return false;
   }
   ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::line );
+  ASSERT( tuple_size == 2 || tuple_size == 3 || tuple_size == 4 );
   
   _active_sequence = true;
+  _tuple_size      = tuple_size;
 
   // start `glBegin` / `glEnd` sequence
   glBegin( OpenGL::Primitive(primitive_type) );
@@ -393,6 +396,7 @@ bool CLineOpenGL_1_00::EndSequence( void )
   }
  
   _active_sequence = false;
+  _tuple_size      = 0;
 
   // complete sequence
   glEnd();
@@ -461,7 +465,6 @@ bool CLineOpenGL_1_00::DrawSequence(
 * \version 1.0
 **********************************************************************/
 bool CLineOpenGL_1_00::DrawSequence( 
-  unsigned int       tuple_size,  //!< in: kind of the coordinates - 2: 2D (x, y), 3: 3D (x, y, z), 4: homogeneous (x, y, z, w)   
   size_t             coords_size, //!< in: number of elements (size) of the coordinate array - `coords_size` = `tuple_size` * "number of coordinates" 
   const float       *coords )     //!< in: pointer to an array of the vertex coordinates
 {
@@ -473,17 +476,17 @@ bool CLineOpenGL_1_00::DrawSequence(
   }
 
   // draw the line sequence
-  if ( tuple_size == 2 )
+  if ( _tuple_size == 2 )
   {
     for ( const float *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 2 )
       glVertex2fv( ptr );
   }
-  else if ( tuple_size == 3 )
+  else if ( _tuple_size == 3 )
   {
     for ( const float *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 3 )
       glVertex3fv( ptr );
   }
-  else if ( tuple_size == 4 )
+  else if ( _tuple_size == 4 )
   {
     for ( const float *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 4 )
       glVertex4fv( ptr );
@@ -501,7 +504,6 @@ bool CLineOpenGL_1_00::DrawSequence(
 * \version 1.0
 **********************************************************************/
 bool CLineOpenGL_1_00::DrawSequence( 
-  unsigned int       tuple_size,  //!< in: kind of the coordinates - 2: 2D (x, y), 3: 3D (x, y, z), 4: homogeneous (x, y, z, w)   
   size_t             coords_size, //!< in: number of elements (size) of the coordinate array - `coords_size` = `tuple_size` * "number of coordinates" 
   const double      *coords )     //!< in: pointer to an array of the vertex coordinates
 {
@@ -513,17 +515,17 @@ bool CLineOpenGL_1_00::DrawSequence(
   }
 
   // draw the line sequence
-  if ( tuple_size == 2 )
+  if ( _tuple_size == 2 )
   {
     for ( const double *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 2 )
       glVertex2dv( ptr );
   }
-  else if ( tuple_size == 3 )
+  else if ( _tuple_size == 3 )
   {
     for ( const double *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 3 )
       glVertex3dv( ptr );
   }
-  else if ( tuple_size == 4 )
+  else if ( _tuple_size == 4 )
   {
     for ( const double *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 4 )
       glVertex4dv( ptr );

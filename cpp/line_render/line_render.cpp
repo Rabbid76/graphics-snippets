@@ -268,7 +268,7 @@ void CWindow_Glfw::RenderTestScene( Render::Line::IRender &line_render )
     line_render.SetColor( Render::TColor{ 0.9f, 0.9f, 0.4f, 1.0f } );
 
     static const std::vector<double> line_test_3{ -0.7, -0.6, 0.7, -0.6, 0.7, 0.6, -0.7, 0.6 };
-    line_render.StartSequence( Render::TPrimitive::lineloop );
-    line_render.DrawSequence( 2, line_test_3.size(), line_test_3.data() );
+    line_render.StartSequence( Render::TPrimitive::lineloop, 2 );
+    line_render.DrawSequence( line_test_3.size(), line_test_3.data() );
     line_render.EndSequence();
 }

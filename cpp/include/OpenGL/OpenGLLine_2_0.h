@@ -99,7 +99,7 @@ public:
   virtual bool Draw( Render::TPrimitive primitive_type, size_t no_of_coords, const double *x_coords, const double *y_coords ) override;
 
   //! Start a new line sequence
-  virtual bool StartSequence( Render::TPrimitive primitive_type ) override;
+  virtual bool StartSequence( Render::TPrimitive primitive_type, unsigned int tuple_size ) override;
   
   //! Complete an active line sequence
   virtual bool EndSequence( void ) override;
@@ -109,8 +109,8 @@ public:
   virtual bool DrawSequence( double x, double y, double z ) override;
   
   //! Specify a sequence of new vertex coordinates in an active line sequence
-  virtual bool DrawSequence( unsigned int tuple_size, size_t coords_size, const float *coords ) override;
-  virtual bool DrawSequence( unsigned int tuple_size, size_t coords_size, const double *coords ) override;
+  virtual bool DrawSequence( size_t coords_size, const float *coords ) override;
+  virtual bool DrawSequence( size_t coords_size, const double *coords ) override;
 
 protected:
 
@@ -138,6 +138,7 @@ private:
                                                                            
   bool                         _active_sequence{ false };                  //!< true: an draw sequence was started, but not finished yet
   Render::TPrimitive           _squence_type{ Render::TPrimitive::NO_OF }; //!< primitive type pf the sequence
+  unsigned int                 _tuple_size{ 0 };                           //!< tuple size (2, 3 or 4) for a sequence
   size_t                       _min_cache_elems{ 0 };                      //!< minimum element size of the sequence cache
   size_t                       _sequence_size{ 0 };                        //!< current size of the sequence cache
   std::vector<float>           _elem_cache;                                //!< the sequence cache - the tuple size of the cache elements is always 3 (x, y, z coordinate)

@@ -424,7 +424,8 @@ bool CLineOpenGL_2_00::Draw(
 * \version 1.0
 **********************************************************************/
 bool CLineOpenGL_2_00::StartSequence( 
-  Render::TPrimitive primitive_type ) //!< in: primitive type of the coordinates - lines, line strip, line loop, lines adjacency or line strip adjacency 
+  Render::TPrimitive primitive_type, //!< in: primitive type of the coordinates - lines, line strip, line loop, lines adjacency or line strip adjacency 
+  unsigned int       tuple_size )    //!< in: kind of the coordinates - 2: 2D (x, y), 3: 3D (x, y, z), 4: homogeneous (x, y, z, w)   
 {
   // A new sequence can't be started within an active sequence
   if ( _active_sequence )
@@ -436,6 +437,7 @@ bool CLineOpenGL_2_00::StartSequence(
   
   _active_sequence = true;
   _squence_type    = primitive_type;
+  _tuple_size      = tuple_size;
   return true;
 }
   
@@ -461,16 +463,17 @@ bool CLineOpenGL_2_00::EndSequence( void )
   _line_prog->Use();
   glUniform4fv( _line_x_y_color_loc, 1, _line_color.data() );
 
-  glVertexAttribPointer( _line_vert_attrib_inx, 3, GL_FLOAT, GL_FALSE, 0, _elem_cache.data() );
+  glVertexAttribPointer( _line_vert_attrib_inx, _tuple_size, GL_FLOAT, GL_FALSE, 0, _elem_cache.data() );
   glEnableVertexAttribArray( _line_vert_attrib_inx );
-  glDrawArrays( OpenGL::Primitive( _squence_type ), 0, (GLsizei)(_sequence_size / 3) );
+  glDrawArrays( OpenGL::Primitive( _squence_type ), 0, (GLsizei)(_sequence_size / _tuple_size) );
   glDisableVertexAttribArray( _line_vert_attrib_inx );
   
   glUseProgram( 0 );
 
   _active_sequence = false;
+  _tuple_size      = 0;
   _sequence_size   = 0;
-
+  
   return true;
 }
 
@@ -500,10 +503,12 @@ bool CLineOpenGL_2_00::DrawSequence(
 
   // add the vertex coordinate to the cache
 
-  _elem_cache.data()[_sequence_size + 0] = x;
-  _elem_cache.data()[_sequence_size + 1] = y;
-  _elem_cache.data()[_sequence_size + 2] = z;
-  _sequence_size += 3;
+  _elem_cache.data()[_sequence_size++] = x;
+  _elem_cache.data()[_sequence_size++] = y;
+  if ( _tuple_size >= 3 )
+    _elem_cache.data()[_sequence_size++] = z;
+  if ( _tuple_size == 4 )
+    _elem_cache.data()[_sequence_size++] = 1.0f;
 
   return true;
 }
@@ -534,10 +539,12 @@ bool CLineOpenGL_2_00::DrawSequence(
 
   // add the vertex coordinate to the cache
 
-  _elem_cache.data()[_sequence_size + 0] = (float)x;
-  _elem_cache.data()[_sequence_size + 1] = (float)y;
-  _elem_cache.data()[_sequence_size + 2] = (float)z;
-  _sequence_size += 3;
+  _elem_cache.data()[_sequence_size++] = (float)x;
+  _elem_cache.data()[_sequence_size++] = (float)y;
+  if ( _tuple_size >= 3 )
+    _elem_cache.data()[_sequence_size++] = (float)z;
+  if ( _tuple_size == 4 )
+    _elem_cache.data()[_sequence_size++] = 1.0f;
 
   return true;
 }
@@ -551,7 +558,6 @@ bool CLineOpenGL_2_00::DrawSequence(
 * \version 1.0
 **********************************************************************/
 bool CLineOpenGL_2_00::DrawSequence( 
-  unsigned int       tuple_size,  //!< in: kind of the coordinates - 2: 2D (x, y), 3: 3D (x, y, z), 4: homogeneous (x, y, z, w)   
   size_t             coords_size, //!< in: number of elements (size) of the coordinate array - `coords_size` = `tuple_size` * "number of coordinates" 
   const float       *coords )     //!< in: pointer to an array of the vertex coordinates
 {
@@ -563,36 +569,13 @@ bool CLineOpenGL_2_00::DrawSequence(
   }
 
   // reserve the cache
-  size_t increment = coords_size * 3 / tuple_size;
-  if ( _elem_cache.size() < _sequence_size + increment )
-    _elem_cache.resize( _elem_cache.size() + std::max(increment, _min_cache_elems) );
+  if ( _elem_cache.size() < _sequence_size + coords_size )
+    _elem_cache.resize( _elem_cache.size() + std::max(coords_size, _min_cache_elems) );
 
   // add the vertex coordinate to the cache
 
-  if ( tuple_size == 2 )
-  {
-    float *cache_ptr = _elem_cache.data() + _sequence_size;
-    for ( const float *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 2, cache_ptr += 3 )
-    {
-      cache_ptr[0] = ptr[0];
-      cache_ptr[1] = ptr[1];
-    }
-  }
-  else if ( tuple_size == 3 )
-  {
-    std::memcpy( _elem_cache.data() + _sequence_size, coords, increment * sizeof( float ) );
-  }
-  else if ( tuple_size == 4 )
-  {
-    float *cache_ptr = _elem_cache.data() + _sequence_size;
-    for ( const float *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 4, cache_ptr += 3 )
-    {
-      cache_ptr[0] = ptr[0] / ptr[3];
-      cache_ptr[1] = ptr[1] / ptr[3];
-      cache_ptr[2] = ptr[2] / ptr[3];
-    }
-  }
-  _sequence_size += increment;
+  std::memcpy( _elem_cache.data() + _sequence_size, coords, coords_size * sizeof( float ) );
+  _sequence_size += coords_size;
   
   return true;
 }
@@ -606,7 +589,6 @@ bool CLineOpenGL_2_00::DrawSequence(
 * \version 1.0
 **********************************************************************/
 bool CLineOpenGL_2_00::DrawSequence( 
-  unsigned int       tuple_size,  //!< in: kind of the coordinates - 2: 2D (x, y), 3: 3D (x, y, z), 4: homogeneous (x, y, z, w)   
   size_t             coords_size, //!< in: number of elements (size) of the coordinate array - `coords_size` = `tuple_size` * "number of coordinates" 
   const double      *coords )     //!< in: pointer to an array of the vertex coordinates
 {
@@ -618,42 +600,15 @@ bool CLineOpenGL_2_00::DrawSequence(
   }
 
   // reserve the cache
-  size_t increment = coords_size * 3 / tuple_size;
-  if ( _elem_cache.size() < _sequence_size + increment )
-    _elem_cache.resize( _elem_cache.size() + std::max(increment, _min_cache_elems) );
+  if ( _elem_cache.size() < _sequence_size + coords_size )
+    _elem_cache.resize( _elem_cache.size() + std::max(coords_size, _min_cache_elems) );
 
   // add the vertex coordinate to the cache
 
-  if ( tuple_size == 2 )
-  {
-    float *cache_ptr = _elem_cache.data() + _sequence_size;
-    for ( const double *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 2, cache_ptr += 3 )
-    {
-      cache_ptr[0] = (float)ptr[0];
-      cache_ptr[1] = (float)ptr[1];
-    }
-  }
-  else if ( tuple_size == 3 )
-  {
-    float *cache_ptr = _elem_cache.data() + _sequence_size;
-    for ( const double *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 3, cache_ptr += 3 )
-    {
-      cache_ptr[0] = (float)ptr[0];
-      cache_ptr[1] = (float)ptr[1];
-      cache_ptr[2] = (float)ptr[2];
-    }
-  }
-  else if ( tuple_size == 4 )
-  {
-    float *cache_ptr = _elem_cache.data() + _sequence_size;
-    for ( const double *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 4, cache_ptr += 3 )
-    {
-      cache_ptr[0] = (float)(ptr[0] / ptr[3]);
-      cache_ptr[1] = (float)(ptr[1] / ptr[3]);
-      cache_ptr[2] = (float)(ptr[2] / ptr[3]);
-    }
-  }
-  _sequence_size += increment;
+  float *cache_ptr = _elem_cache.data() + _sequence_size;
+  for ( const double *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr ++, cache_ptr ++ )
+    *cache_ptr = (float)(*ptr);
+  _sequence_size += coords_size;
 
   return true;
 }

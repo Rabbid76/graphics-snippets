@@ -709,7 +709,7 @@ public:
 
   ~CSimpleLineRenderer() {}
 
-  virtual void Init( void ) override;                
+  virtual void Init( void ) override {};                
 
   virtual bool StartSuccessiveLineDrawings( void ) { return false; }
   virtual bool FinishSuccessiveLineDrawings( void ) { return false; }
@@ -726,12 +726,12 @@ public:
   virtual bool Draw( Render::TPrimitive primitive_type, size_t no_of_coords, const float *x_coords, const float *y_coords ) override { assert(false); return false; }
   virtual bool Draw( Render::TPrimitive primitive_type, size_t no_of_coords, const double *x_coords, const double *y_coords ) override { assert(false); return false; }
 
-  virtual bool StartSequence( Render::TPrimitive primitive_type ) override { assert(false); return false; }
+  virtual bool StartSequence( Render::TPrimitive primitive_type, unsigned int tuple_size ) override { assert(false); return false; }
   virtual bool EndSequence( void ) override { assert(false); return false; }
   virtual bool DrawSequence( float x, float y, float z ) override { assert(false); return false; }
   virtual bool DrawSequence( double x, double y, double z ) override { assert(false); return false; }
-  virtual bool DrawSequence( unsigned int tuple_size, size_t coords_size, const float *coords ) override { assert(false); return false; }
-  virtual bool DrawSequence( unsigned int tuple_size, size_t coords_size, const double *coords ) override { assert(false); return false; }
+  virtual bool DrawSequence( size_t coords_size, const float *coords ) override { assert(false); return false; }
+  virtual bool DrawSequence( size_t coords_size, const double *coords ) override { assert(false); return false; }
 
 private:
 

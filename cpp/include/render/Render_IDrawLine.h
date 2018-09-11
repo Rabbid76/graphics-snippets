@@ -163,7 +163,7 @@ public:
   ) = 0;
 
   //! Start a new line sequence
-  virtual bool StartSequence( Render::TPrimitive primitive_type ) = 0;
+  virtual bool StartSequence( Render::TPrimitive primitive_type, unsigned int tuple_size ) = 0;
   
   //! Complete an active line sequence
   virtual bool EndSequence( void ) = 0;
@@ -175,10 +175,10 @@ public:
   virtual bool DrawSequence( double x, double y, double z ) = 0;
   
   //! Specify a sequence of new vertex coordinates in an active line sequence
-  virtual bool DrawSequence( unsigned int tuple_size, size_t coords_size, const float *coords ) = 0;
+  virtual bool DrawSequence( size_t coords_size, const float *coords ) = 0;
   
   //! Specify a sequence of new vertex coordinates in an active line sequence
-  virtual bool DrawSequence( unsigned int tuple_size, size_t coords_size, const double *coords ) = 0;
+  virtual bool DrawSequence( size_t coords_size, const double *coords ) = 0;
 };
 
 

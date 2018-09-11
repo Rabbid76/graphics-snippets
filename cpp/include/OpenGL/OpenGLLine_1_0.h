@@ -90,7 +90,7 @@ public:
   virtual bool Draw( Render::TPrimitive primitive_type, size_t no_of_coords, const double *x_coords, const double *y_coords ) override;
 
   //! Start a new line sequence
-  virtual bool StartSequence( Render::TPrimitive primitive_type ) override;
+  virtual bool StartSequence( Render::TPrimitive primitive_type, unsigned int tuple_size ) override;
   
   //! Complete an active line sequence
   virtual bool EndSequence( void ) override;
@@ -100,12 +100,13 @@ public:
   virtual bool DrawSequence( double x, double y, double z ) override;
   
   //! Specify a sequence of new vertex coordinates in an active line sequence
-  virtual bool DrawSequence( unsigned int tuple_size, size_t coords_size, const float *coords ) override;
-  virtual bool DrawSequence( unsigned int tuple_size, size_t coords_size, const double *coords ) override;
+  virtual bool DrawSequence( size_t coords_size, const float *coords ) override;
+  virtual bool DrawSequence( size_t coords_size, const double *coords ) override;
 
 private:
 
-  bool _active_sequence = false;
+  bool         _active_sequence{ false }; //!< true: an draw sequence was started, but not finished yet
+  unsigned int _tuple_size{ 0 };          //!< tuple size (2, 3 or 4) for a sequence
 };
 
 
