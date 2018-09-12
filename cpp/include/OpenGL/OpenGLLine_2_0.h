@@ -81,13 +81,13 @@ public:
   //! Notify the render that a sequence of successive lines will follow, that is not interrupted by any other drawing operation.
   //! This allows the render to do some performance optimizations and to prepare for the line rendering.
   //! The render can keep states persistent from one line drawing to the other, without initializing and restoring them.
-  virtual bool StartSuccessiveLineDrawings( void ) override { return false; }  // TODO $$$
+  virtual bool StartSuccessiveLineDrawings( void ) override;
 
   //! Notify the renderer that a sequence of lines has been finished, and that the internal states have to be restored.
-  virtual bool FinishSuccessiveLineDrawings( void ) override { return false; } // TODO $$$
+  virtual bool FinishSuccessiveLineDrawings( void ) override;
 
-  virtual Render::Line::IRender & SetColor( const Render::TColor & color )  override { _line_color = color; return *this; }
-  virtual Render::Line::IRender & SetColor( const Render::TColor8 & color ) override { _line_color = Render::toColor( color ); return *this; }
+  virtual Render::Line::IRender & SetColor( const Render::TColor & color )  override;
+  virtual Render::Line::IRender & SetColor( const Render::TColor8 & color ) override;
 
   virtual Render::Line::IRender & SetStyle( const Render::Line::TStyle & style ) override;
   virtual Render::Line::IRender & SetArrowStyle( const Render::Line::TArrowStyle & style ) override;
@@ -129,6 +129,8 @@ private:
   int                          _line_attrib_y_inx;                         //!< attribute index of the vertex separated y coordinate 
                                                                            
   bool                         _initilized{ false };                       //!< initialization flag of the object
+  bool                         _successive_drawing{ false };               //!< true: optimized successive drawing of lines is enabled
+  int                          _attribute_case{ 0 };                       //!< vertex attribute case for successive drawing of lines
   Render::TColor               _line_color{ 1.0f };                        //!< uniform color of the pending lines
   Render::Line::TStyle         _line_style;                                //!< line style parameters: line width and stippling
                                                                            

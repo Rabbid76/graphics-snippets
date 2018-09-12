@@ -251,6 +251,8 @@ void CWindow_Glfw::Render( double time_ms )
 
 void CWindow_Glfw::RenderTestScene( Render::Line::IRender &line_render )
 {
+    line_render.StartSuccessiveLineDrawings();
+
     line_render.SetStyle( { 8.0f, 2 } );
     line_render.SetColor( Render::TColor{ 0.9f, 0.5f, 0.1f, 1.0f } );
 
@@ -271,4 +273,6 @@ void CWindow_Glfw::RenderTestScene( Render::Line::IRender &line_render )
     line_render.StartSequence( Render::TPrimitive::lineloop, 2 );
     line_render.DrawSequence( line_test_3.size(), line_test_3.data() );
     line_render.EndSequence();
+
+    line_render.FinishSuccessiveLineDrawings();
 }

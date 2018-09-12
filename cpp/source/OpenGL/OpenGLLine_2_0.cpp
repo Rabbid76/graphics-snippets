@@ -186,6 +186,114 @@ void CLineOpenGL_2_00::Init( void )
 
 
 /******************************************************************//**
+* \brief Notify the render that a sequence of successive lines will
+* follow, that is not interrupted by any other drawing operation.
+* This allows the render to do some performance optimizations and to
+* prepare for the line rendering.
+* The render can keep states persistent from one line drawing to the
+* other, without initializing and restoring them.  
+* 
+* \author  gernot
+* \date    2018-09-12
+* \version 1.0
+**********************************************************************/
+bool CLineOpenGL_2_00::StartSuccessiveLineDrawings( void )
+{
+  if ( _active_sequence )
+  {
+    assert( false );
+    return false;
+  }
+  if ( _successive_drawing )
+    return true;
+
+  // activate the shader program
+  _line_prog->Use();
+
+  // initialize uniforms
+  glUniform4fv( _line_color_loc, 1, _line_color.data() );
+  glUniform1i(  _line_case_loc,  0 );
+
+  // enable and disable vertex attributes
+  glEnableVertexAttribArray( _line_attrib_xyzw_inx );
+  glDisableVertexAttribArray( _line_attrib_y_inx );
+
+  _attribute_case     = 0;
+  _successive_drawing = true;
+  return true;
+}
+
+
+/******************************************************************//**
+* \brief Notify the renderer that a sequence of lines has been
+* finished, and that the internal states have to be restored.  
+* 
+* \author  gernot
+* \date    2018-09-12
+* \version 1.0
+**********************************************************************/
+bool CLineOpenGL_2_00::FinishSuccessiveLineDrawings( void )
+{
+  if ( _active_sequence )
+  {
+    assert( false );
+    return false;
+  }
+  if ( _successive_drawing == false )
+    return true;
+
+  // disable vertex attributes
+  glDisableVertexAttribArray( _line_attrib_xyzw_inx );
+  glDisableVertexAttribArray( _line_attrib_y_inx );
+
+  // activate the shader program 0
+  glUseProgram( 0 );
+
+  _attribute_case     = 0;
+  _successive_drawing = false;
+  return true;
+}
+
+
+/******************************************************************//**
+* \brief Set the stroke color of the line. 
+* 
+* \author  gernot
+* \date    2018-09-12
+* \version 1.0
+**********************************************************************/
+Render::Line::IRender & CLineOpenGL_2_00::SetColor( 
+  const Render::TColor & color ) //!< in: new color
+{ 
+  _line_color = color; 
+
+  if ( _successive_drawing )
+    glUniform4fv( _line_color_loc, 1, _line_color.data() );
+  
+  return *this; 
+}
+
+
+/******************************************************************//**
+* \brief Set the stroke color of the line. 
+* 
+* \author  gernot
+* \date    2018-09-12
+* \version 1.0
+**********************************************************************/
+Render::Line::IRender & CLineOpenGL_2_00::SetColor( 
+  const Render::TColor8 & color ) //!< in: new color
+{ 
+  _line_color = Render::toColor( color );
+
+  if ( _successive_drawing )
+    glUniform4fv( _line_color_loc, 1, _line_color.data() );
+  
+  return *this; 
+}
+
+
+/******************************************************************//**
 * \brief Change the current line with and the current line pattern,
 * for the pending line drawing instructions.
 *
@@ -271,17 +379,33 @@ bool CLineOpenGL_2_00::Draw(
   ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::line );
   ASSERT( tuple_size == 2 || tuple_size == 3 || tuple_size == 4 );
 
-  _line_prog->Use();
-  glUniform4fv( _line_color_loc, 1, _line_color.data() );
-  glUniform1i(  _line_case_loc,  0 );
+  // activate program, update uniforms and enable vertex attributes
+  if ( _successive_drawing == false )
+  {
+    _line_prog->Use();
+   
+    glUniform4fv( _line_color_loc, 1, _line_color.data() );
+    glUniform1i(  _line_case_loc,  0 );
+    glEnableVertexAttribArray( _line_attrib_xyzw_inx );
+    glDisableVertexAttribArray( _line_attrib_y_inx );
+  }
+  else if ( _attribute_case != 0 )
+  {
+    glUniform1i(  _line_case_loc,  0 );
+    glDisableVertexAttribArray( _line_attrib_y_inx );
+    _attribute_case = 0;
+  }
 
+  // set vertex attribute pointer and draw the line
   glVertexAttribPointer( _line_attrib_xyzw_inx, tuple_size, GL_FLOAT, GL_FALSE, 0, coords );
-  glEnableVertexAttribArray( _line_attrib_xyzw_inx );
-  glDisableVertexAttribArray( _line_attrib_y_inx );
   glDrawArrays( OpenGL::Primitive( primitive_type ), 0, (GLsizei)(coords_size / tuple_size) );
-  glDisableVertexAttribArray( _line_attrib_xyzw_inx );
   
-  glUseProgram( 0 );
+  // disable vertex attributes and activate program 0
+  if ( _successive_drawing == false )
+  {
+    glDisableVertexAttribArray( _line_attrib_xyzw_inx );
+    glUseProgram( 0 );
+  }
 
   return true;
 }
@@ -309,17 +433,33 @@ bool CLineOpenGL_2_00::Draw(
   ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::line );
   ASSERT( tuple_size == 2 || tuple_size == 3 || tuple_size == 4 );
 
-  _line_prog->Use();
-  glUniform4fv( _line_color_loc, 1, _line_color.data() );
-  glUniform1i(  _line_case_loc,  0 );
+  // activate program, update uniforms and enable vertex attributes
+  if ( _successive_drawing == false )
+  {
+    _line_prog->Use();
+   
+    glUniform4fv( _line_color_loc, 1, _line_color.data() );
+    glUniform1i(  _line_case_loc,  0 );
+    glEnableVertexAttribArray( _line_attrib_xyzw_inx );
+    glDisableVertexAttribArray( _line_attrib_y_inx );
+  }
+  else if ( _attribute_case != 0 )
+  {
+    glUniform1i(  _line_case_loc,  0 );
+    glDisableVertexAttribArray( _line_attrib_y_inx );
+    _attribute_case = 0;
+  }
 
+  // set vertex attribute pointer and draw the line
   glVertexAttribPointer( _line_attrib_xyzw_inx, tuple_size, GL_DOUBLE, GL_FALSE, 0, coords );
-  glEnableVertexAttribArray( _line_attrib_xyzw_inx );
-  glDisableVertexAttribArray( _line_attrib_y_inx );
   glDrawArrays( OpenGL::Primitive( primitive_type ), 0, (GLsizei)(coords_size / tuple_size) );
-  glDisableVertexAttribArray( _line_attrib_xyzw_inx );
-  
-  glUseProgram( 0 );
+ 
+  // disable vertex attributes and activate program 0
+  if ( _successive_drawing == false )
+  {
+    glDisableVertexAttribArray( _line_attrib_xyzw_inx );
+    glUseProgram( 0 );
+  }
 
   return true;
 }
@@ -345,21 +485,36 @@ bool CLineOpenGL_2_00::Draw(
     return false;
   }
   ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::line );
-  ASSERT( _line_prog != nullptr );
 
-  _line_prog->Use();
-  glUniform4fv( _line_color_loc, 1, _line_color.data() );
-  glUniform1i(  _line_case_loc,  1 );
+  // activate program, update uniforms and enable vertex attributes
+  if ( _successive_drawing == false )
+  {
+    _line_prog->Use();
+   
+    glUniform4fv( _line_color_loc, 1, _line_color.data() );
+    glUniform1i(  _line_case_loc,  1 );
+    glEnableVertexAttribArray( _line_attrib_xyzw_inx );
+    glEnableVertexAttribArray( _line_attrib_y_inx );
+  }
+  else if ( _attribute_case == 0 )
+  {
+    glUniform1i(  _line_case_loc,  1 );
+    glEnableVertexAttribArray( _line_attrib_y_inx );
+    _attribute_case = 1;
+  }
 
+  // set vertex attribute pointers and draw the line
   glVertexAttribPointer( _line_attrib_xyzw_inx, 1, GL_FLOAT, GL_FALSE, 0, x_coords );
   glVertexAttribPointer( _line_attrib_y_inx, 1, GL_FLOAT, GL_FALSE, 0, y_coords );
-  glEnableVertexAttribArray( _line_attrib_xyzw_inx );
-  glEnableVertexAttribArray( _line_attrib_y_inx );
   glDrawArrays( OpenGL::Primitive( primitive_type ), 0, (GLsizei)no_of_coords );
-  glDisableVertexAttribArray( _line_attrib_xyzw_inx );
-  glDisableVertexAttribArray( _line_attrib_y_inx );
-
-  glUseProgram( 0 );
+   
+  // disable vertex attributes and activate program 0
+  if ( _successive_drawing == false )
+  {
+    glDisableVertexAttribArray( _line_attrib_xyzw_inx );
+    glDisableVertexAttribArray( _line_attrib_y_inx );
+    glUseProgram( 0 );
+  }
 
   return true;
 }
@@ -385,21 +540,36 @@ bool CLineOpenGL_2_00::Draw(
     return false;
   }
   ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::line );
-  ASSERT( _line_prog != nullptr );
 
-  _line_prog->Use();
-  glUniform4fv( _line_color_loc, 1, _line_color.data() );
-  glUniform1i(  _line_case_loc,  1 );
+  // activate program, update uniforms and enable vertex attributes
+  if ( _successive_drawing == false )
+  {
+    _line_prog->Use();
+   
+    glUniform4fv( _line_color_loc, 1, _line_color.data() );
+    glUniform1i(  _line_case_loc,  1 );
+    glEnableVertexAttribArray( _line_attrib_xyzw_inx );
+    glEnableVertexAttribArray( _line_attrib_y_inx );
+  }
+  else if ( _attribute_case == 0 )
+  {
+    glUniform1i(  _line_case_loc,  1 );
+    glEnableVertexAttribArray( _line_attrib_y_inx );
+    _attribute_case = 1;
+  }
 
+  // set vertex attribute pointers and draw the line
   glVertexAttribPointer( _line_attrib_xyzw_inx, 1, GL_DOUBLE, GL_FALSE, 0, x_coords );
   glVertexAttribPointer( _line_attrib_y_inx, 1, GL_DOUBLE, GL_FALSE, 0, y_coords );
-  glEnableVertexAttribArray( _line_attrib_xyzw_inx );
-  glEnableVertexAttribArray( _line_attrib_y_inx );
   glDrawArrays( OpenGL::Primitive( primitive_type ), 0, (GLsizei)no_of_coords );
-  glDisableVertexAttribArray( _line_attrib_xyzw_inx );
-  glDisableVertexAttribArray( _line_attrib_y_inx );
 
-  glUseProgram( 0 );
+  // disable vertex attributes and activate program 0
+  if ( _successive_drawing == false )
+  {
+    glDisableVertexAttribArray( _line_attrib_xyzw_inx );
+    glDisableVertexAttribArray( _line_attrib_y_inx );
+    glUseProgram( 0 );
+  }
 
   return true;
 }
@@ -449,17 +619,33 @@ bool CLineOpenGL_2_00::EndSequence( void )
 
   // draw the line
 
-  _line_prog->Use();
-  glUniform4fv( _line_color_loc, 1, _line_color.data() );
-  glUniform1i(  _line_case_loc,  0 );
+  // activate program, update uniforms and enable vertex attributes
+  if ( _successive_drawing == false )
+  {
+    _line_prog->Use();
+   
+    glUniform4fv( _line_color_loc, 1, _line_color.data() );
+    glUniform1i(  _line_case_loc,  0 );
+    glEnableVertexAttribArray( _line_attrib_xyzw_inx );
+    glDisableVertexAttribArray( _line_attrib_y_inx );
+  }
+  else if ( _attribute_case != 0 )
+  {
+    glUniform1i(  _line_case_loc,  0 );
+    glDisableVertexAttribArray( _line_attrib_y_inx );
+    _attribute_case = 0;
+  }
 
+  //  set vertex attribute pointer and draw the line
   glVertexAttribPointer( _line_attrib_xyzw_inx, _tuple_size, GL_FLOAT, GL_FALSE, 0, _elem_cache.data() );
-  glEnableVertexAttribArray( _line_attrib_xyzw_inx );
-  glDisableVertexAttribArray( _line_attrib_y_inx );
   glDrawArrays( OpenGL::Primitive( _squence_type ), 0, (GLsizei)(_sequence_size / _tuple_size) );
-  glDisableVertexAttribArray( _line_attrib_xyzw_inx );
   
-  glUseProgram( 0 );
+  // disable vertex attributes and activate program 0
+  if ( _successive_drawing == false )
+  {
+    glDisableVertexAttribArray( _line_attrib_xyzw_inx );
+    glUseProgram( 0 );
+  }
 
   _active_sequence = false;
   _tuple_size      = 0;
