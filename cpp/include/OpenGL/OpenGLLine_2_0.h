@@ -120,17 +120,13 @@ protected:
 private:
 
   static const std::string     _line_vert_110;                             //!< default vertex shader for consecutive vertex attributes
-  static const std::string     _line_x_y_vert_110;                         //!< vertex shader for separated arrays of x and y coordinates
   static const std::string     _line_frag_110;                             //!< fragment shader for uniform colored lines 
                                                                            
   Render::Program::TProgramPtr _line_prog;                                 //!< shader program for consecutive vertex attributes
   int                          _line_color_loc;                            //!< uniform location of color  
-  int                          _line_vert_attrib_inx;                      //!< attribute index of the vertex coordinate 
-                                                                           
-  Render::Program::TProgramPtr _line_x_y_prog;                             //!< shader program for separated arrays of x and y coordinates
-  int                          _line_x_y_color_loc;                        //!< uniform location of color  
-  int                          _line_x_attrib_inx;                         //!< attribute index of x coordinate 
-  int                          _line_y_attrib_inx;                         //!< attribute index of y coordinate 
+  int                          _line_case_loc;                             //!< uniform location of attribute case  
+  int                          _line_attrib_xyzw_inx;                      //!< attribute index of the vertex coordinate 
+  int                          _line_attrib_y_inx;                         //!< attribute index of the vertex separated y coordinate 
                                                                            
   bool                         _initilized{ false };                       //!< initialization flag of the object
   Render::TColor               _line_color{ 1.0f };                        //!< uniform color of the pending lines

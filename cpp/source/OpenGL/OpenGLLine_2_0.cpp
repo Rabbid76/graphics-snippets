@@ -54,11 +54,17 @@ namespace Line
 
 
 
-/*
+/*!
 
-Evaluate if it would be even more efficient, to combine the vertex shader `_line_vert_110` and `_line_x_y_vert_110`
-and to switch between the different vertex attribute representations by uniform conditions.
-Since the vertex shader is executed per if vertex only, one additional uniform condition should not gain a notifiable performance loss.
+Vertex attributes:
+
+- case 1: 1 attribute with 2 to 4 components: x, y, z, w coordinates
+
+- case 2: 2 attributes, which are: 1. x coordinates; 2. y coordinates
+
+It is more efficient, to combine the different vertex attribute representations in one vertex shader and to switch between them by uniform conditions,
+instead of using 2 different vertex shaders, which would lead to 2 different shader programs.
+Since the vertex shader is executed per vertex only, one additional uniform condition should not gain a notifiable performance loss.
 Note, with a modern hardware, a uniform condition would be evaluated once and different code dependent on the uniform would be generated and executed.
 But this would give the chance to avoid shader program switches, which probably are more time consuming operations. 
 
@@ -67,25 +73,18 @@ But this would give the chance to avoid shader program switches, which probably 
 const std::string CLineOpenGL_2_00::_line_vert_110 = R"(
 #version 110
 
-attribute vec4 attr_vert;
-
-void main()
-{
-  gl_Position = gl_ModelViewProjectionMatrix * attr_vert;
-}
-)";
-
-const std::string CLineOpenGL_2_00::_line_x_y_vert_110 = R"(
-#version 110
-
-attribute float attr_x;
+attribute vec4  attr_xyzw;
 attribute float attr_y;
 
+uniform int u_attr_case;
+
 void main()
 {
-  gl_Position = gl_ModelViewProjectionMatrix * vec4(attr_x, attr_y, 0.0, 1.0);
+  vec4 vert_pos = u_attr_case == 0 ? attr_xyzw : vec4(attr_xyzw.x, attr_y, 0.0, 1.0);
+  gl_Position   = gl_ModelViewProjectionMatrix * vert_pos;
 }
 )";
+
 
 const std::string CLineOpenGL_2_00::_line_frag_110 = R"(
 #version 110
@@ -165,12 +164,6 @@ void CLineOpenGL_2_00::Init( void )
   if ( _line_vert_shader->Verify( msg ) == false )
     Error( "compile error", msg );
 
-  auto _line_x_y_vert_shader = std::make_shared<CShaderObject>( Render::Program::TShaderType::vertex );
-  *_line_x_y_vert_shader << _line_x_y_vert_110;
-   _line_x_y_vert_shader->Compile();
-  if ( _line_x_y_vert_shader->Verify( msg ) == false )
-    Error( "compile error", msg );
-
   auto _line_frag_shader = std::make_shared<CShaderObject>( Render::Program::TShaderType::fragment );
   *_line_frag_shader << _line_frag_110;
    _line_frag_shader->Compile();
@@ -186,16 +179,9 @@ void CLineOpenGL_2_00::Init( void )
   if ( _line_prog->Verify( msg ) == false )
     Error( "link error", msg );
   _line_color_loc       = glGetUniformLocation( (GLuint)_line_prog->ObjectHandle(), "u_color" );
-  _line_vert_attrib_inx = glGetAttribLocation( (GLuint)_line_prog->ObjectHandle(), "attr_vert" );
-
-  _line_x_y_prog = std::make_shared<CShaderProgram>();
-  *_line_x_y_prog << _line_x_y_vert_shader << _line_frag_shader;
-  _line_x_y_prog->Link();
-  if ( _line_x_y_prog->Verify( msg ) == false )
-    Error( "link error", msg );
-  _line_x_y_color_loc = glGetUniformLocation( (GLuint)_line_x_y_prog->ObjectHandle(), "u_color" );
-  _line_x_attrib_inx  = glGetAttribLocation( (GLuint)_line_x_y_prog->ObjectHandle(), "attr_x" );
-  _line_y_attrib_inx  = glGetAttribLocation( (GLuint)_line_x_y_prog->ObjectHandle(), "attr_y" );
+  _line_case_loc        = glGetUniformLocation( (GLuint)_line_prog->ObjectHandle(), "u_attr_case" );
+  _line_attrib_xyzw_inx = glGetAttribLocation(  (GLuint)_line_prog->ObjectHandle(), "attr_xyzw" );
+  _line_attrib_y_inx    = glGetAttribLocation(  (GLuint)_line_prog->ObjectHandle(), "attr_y" );
 }
 
 
@@ -286,12 +272,14 @@ bool CLineOpenGL_2_00::Draw(
   ASSERT( tuple_size == 2 || tuple_size == 3 || tuple_size == 4 );
 
   _line_prog->Use();
-  glUniform4fv( _line_x_y_color_loc, 1, _line_color.data() );
+  glUniform4fv( _line_color_loc, 1, _line_color.data() );
+  glUniform1i(  _line_case_loc,  0 );
 
-  glVertexAttribPointer( _line_vert_attrib_inx, tuple_size, GL_FLOAT, GL_FALSE, 0, coords );
-  glEnableVertexAttribArray( _line_vert_attrib_inx );
+  glVertexAttribPointer( _line_attrib_xyzw_inx, tuple_size, GL_FLOAT, GL_FALSE, 0, coords );
+  glEnableVertexAttribArray( _line_attrib_xyzw_inx );
+  glDisableVertexAttribArray( _line_attrib_y_inx );
   glDrawArrays( OpenGL::Primitive( primitive_type ), 0, (GLsizei)(coords_size / tuple_size) );
-  glDisableVertexAttribArray( _line_vert_attrib_inx );
+  glDisableVertexAttribArray( _line_attrib_xyzw_inx );
   
   glUseProgram( 0 );
 
@@ -322,12 +310,14 @@ bool CLineOpenGL_2_00::Draw(
   ASSERT( tuple_size == 2 || tuple_size == 3 || tuple_size == 4 );
 
   _line_prog->Use();
-  glUniform4fv( _line_x_y_color_loc, 1, _line_color.data() );
+  glUniform4fv( _line_color_loc, 1, _line_color.data() );
+  glUniform1i(  _line_case_loc,  0 );
 
-  glVertexAttribPointer( _line_vert_attrib_inx, tuple_size, GL_DOUBLE, GL_FALSE, 0, coords );
-  glEnableVertexAttribArray( _line_vert_attrib_inx );
+  glVertexAttribPointer( _line_attrib_xyzw_inx, tuple_size, GL_DOUBLE, GL_FALSE, 0, coords );
+  glEnableVertexAttribArray( _line_attrib_xyzw_inx );
+  glDisableVertexAttribArray( _line_attrib_y_inx );
   glDrawArrays( OpenGL::Primitive( primitive_type ), 0, (GLsizei)(coords_size / tuple_size) );
-  glDisableVertexAttribArray( _line_vert_attrib_inx );
+  glDisableVertexAttribArray( _line_attrib_xyzw_inx );
   
   glUseProgram( 0 );
 
@@ -355,18 +345,19 @@ bool CLineOpenGL_2_00::Draw(
     return false;
   }
   ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::line );
-  ASSERT( _line_x_y_prog != nullptr );
+  ASSERT( _line_prog != nullptr );
 
-  _line_x_y_prog->Use();
-  glUniform4fv( _line_x_y_color_loc, 1, _line_color.data() );
+  _line_prog->Use();
+  glUniform4fv( _line_color_loc, 1, _line_color.data() );
+  glUniform1i(  _line_case_loc,  1 );
 
-  glVertexAttribPointer( _line_x_attrib_inx, 1, GL_FLOAT, GL_FALSE, 0, x_coords );
-  glVertexAttribPointer( _line_y_attrib_inx, 1, GL_FLOAT, GL_FALSE, 0, y_coords );
-  glEnableVertexAttribArray( _line_x_attrib_inx );
-  glEnableVertexAttribArray( _line_y_attrib_inx );
+  glVertexAttribPointer( _line_attrib_xyzw_inx, 1, GL_FLOAT, GL_FALSE, 0, x_coords );
+  glVertexAttribPointer( _line_attrib_y_inx, 1, GL_FLOAT, GL_FALSE, 0, y_coords );
+  glEnableVertexAttribArray( _line_attrib_xyzw_inx );
+  glEnableVertexAttribArray( _line_attrib_y_inx );
   glDrawArrays( OpenGL::Primitive( primitive_type ), 0, (GLsizei)no_of_coords );
-  glDisableVertexAttribArray( _line_x_attrib_inx );
-  glDisableVertexAttribArray( _line_y_attrib_inx );
+  glDisableVertexAttribArray( _line_attrib_xyzw_inx );
+  glDisableVertexAttribArray( _line_attrib_y_inx );
 
   glUseProgram( 0 );
 
@@ -394,21 +385,19 @@ bool CLineOpenGL_2_00::Draw(
     return false;
   }
   ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::line );
-  
-  // TODO $$$ evaluate line stippling
+  ASSERT( _line_prog != nullptr );
 
-  ASSERT( _line_x_y_prog != nullptr );
+  _line_prog->Use();
+  glUniform4fv( _line_color_loc, 1, _line_color.data() );
+  glUniform1i(  _line_case_loc,  1 );
 
-  _line_x_y_prog->Use();
-  glUniform4fv( _line_x_y_color_loc, 1, _line_color.data() );
-
-  glVertexAttribPointer( _line_x_attrib_inx, 1, GL_DOUBLE, GL_FALSE, 0, x_coords );
-  glVertexAttribPointer( _line_y_attrib_inx, 1, GL_DOUBLE, GL_FALSE, 0, y_coords );
-  glEnableVertexAttribArray( _line_x_attrib_inx );
-  glEnableVertexAttribArray( _line_y_attrib_inx );
+  glVertexAttribPointer( _line_attrib_xyzw_inx, 1, GL_DOUBLE, GL_FALSE, 0, x_coords );
+  glVertexAttribPointer( _line_attrib_y_inx, 1, GL_DOUBLE, GL_FALSE, 0, y_coords );
+  glEnableVertexAttribArray( _line_attrib_xyzw_inx );
+  glEnableVertexAttribArray( _line_attrib_y_inx );
   glDrawArrays( OpenGL::Primitive( primitive_type ), 0, (GLsizei)no_of_coords );
-  glDisableVertexAttribArray( _line_x_attrib_inx );
-  glDisableVertexAttribArray( _line_y_attrib_inx );
+  glDisableVertexAttribArray( _line_attrib_xyzw_inx );
+  glDisableVertexAttribArray( _line_attrib_y_inx );
 
   glUseProgram( 0 );
 
@@ -461,12 +450,14 @@ bool CLineOpenGL_2_00::EndSequence( void )
   // draw the line
 
   _line_prog->Use();
-  glUniform4fv( _line_x_y_color_loc, 1, _line_color.data() );
+  glUniform4fv( _line_color_loc, 1, _line_color.data() );
+  glUniform1i(  _line_case_loc,  0 );
 
-  glVertexAttribPointer( _line_vert_attrib_inx, _tuple_size, GL_FLOAT, GL_FALSE, 0, _elem_cache.data() );
-  glEnableVertexAttribArray( _line_vert_attrib_inx );
+  glVertexAttribPointer( _line_attrib_xyzw_inx, _tuple_size, GL_FLOAT, GL_FALSE, 0, _elem_cache.data() );
+  glEnableVertexAttribArray( _line_attrib_xyzw_inx );
+  glDisableVertexAttribArray( _line_attrib_y_inx );
   glDrawArrays( OpenGL::Primitive( _squence_type ), 0, (GLsizei)(_sequence_size / _tuple_size) );
-  glDisableVertexAttribArray( _line_vert_attrib_inx );
+  glDisableVertexAttribArray( _line_attrib_xyzw_inx );
   
   glUseProgram( 0 );
 
