@@ -234,6 +234,14 @@ public:
   virtual size_t NoOf( void ) const = 0;
   virtual bool   Selected( void ) const = 0;
 
+  /*
+  TODO $$$
+
+  AddSortcut( TShortcur, size_t description_size, const char *description )
+  SpecifyVA( TShortcur ); 
+
+  */
+
   void SpecifyVA( const std::vector<char> & description )
   {
     SpecifyVA( description.size(), description.data() );

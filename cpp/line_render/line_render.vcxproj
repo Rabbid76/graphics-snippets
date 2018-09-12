@@ -19,8 +19,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\source\OpenGL\OpenGLLine_1_00.cpp" />
-    <ClCompile Include="..\source\OpenGL\OpenGLLine_2_00.cpp" />
+    <ClCompile Include="..\source\OpenGL\OpenGLLine_1_0.cpp" />
+    <ClCompile Include="..\source\OpenGL\OpenGLLine_2_0.cpp" />
     <ClCompile Include="..\source\OpenGL\OpenGLLine_4.cpp" />
     <ClCompile Include="..\source\OpenGL\OpenGLProgram.cpp" />
     <ClCompile Include="line_render.cpp" />

@@ -13,7 +13,6 @@
 
 // OpenGL
 
-#include <OpenGLError.h>
 #include <OpenGLFramebuffer.h>
 
 
@@ -1238,47 +1237,10 @@ const CRenderProcess::TBufferInfoCache & CRenderProcess::EvaluateInfoCache(
 bool CRenderProcess::ValidateSize(
   std::array<size_t, 2> size ) //!< in: new size 
 {
-  if ( size == CurrentSize() )
-    return true;
-  return false;
-
-  /*
-  for ( auto &info : _bufferInfoMap )
-  {
-    auto passScaleIt = _passScales.find( info.first );
-    float scale      = passScaleIt != _passScales.end() ? passScaleIt->second : 1.0f;
-    
-    std::array<size_t, 2> new_size
-    {
-      (size_t)( (float)size[0] * scale + 0.5f ),
-      (size_t)( (float)size[1] * scale + 0.5f )
-    };
-
-    if ( info.second._vp_size[0] < new_size[0] || info.second._vp_size[1] < new_size[1] )
-      return false;
-   
-    if ( std::max( info.second._vp_size[0], info.second._vp_size[1] ) > std::max( new_size[0], new_size[1] )*2 )
-      return false;
+  return size == CurrentSize();
   }
 
-  for ( auto &info : _bufferInfoMap )
-  {
-    auto passScaleIt = _passScales.find( info.first );
-    float scale      = passScaleIt != _passScales.end() ? passScaleIt->second : 1.0f;
     
-    std::array<size_t, 2> new_size
-    {
-      (size_t)( (float)size[0] * scale + 0.5f ),
-      (size_t)( (float)size[1] * scale + 0.5f )
-    };
-
-    info.second._vp_size = new_size;
-  }
-  */
-  return true;
-}
-
-
 /******************************************************************//**
 * \brief   Prepare and activate a render pass. 
 * 

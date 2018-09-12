@@ -18,7 +18,6 @@
 
 #include <stdafx.h>
 
-#include <OpenGLError.h>
 #include <OpenGLVertexBuffer_2_0.h>
 
 

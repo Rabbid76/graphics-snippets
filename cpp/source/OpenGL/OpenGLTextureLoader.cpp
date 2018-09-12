@@ -13,7 +13,6 @@
 
 // OpenGL
 
-#include <OpenGLError.h>
 #include <OpenGLTextureLoader.h>
 
 // OpenGL wrapper

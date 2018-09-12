@@ -13,7 +13,6 @@
 
 // OpenGL
 
-#include <OpenGLError.h>
 #include <OpenGLBasicDraw.h>
 #include <OpenGLVertexBuffer.h>
 #include <OpenGLFrameBuffer.h>

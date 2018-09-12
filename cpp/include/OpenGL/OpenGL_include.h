@@ -22,6 +22,7 @@
 #define ASSERT(C) assert(C)
 #endif
 
+#include <OpenGLError.h>
 
 
 #endif // OpenGL_include_h_INCLUDED

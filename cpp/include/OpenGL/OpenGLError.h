@@ -55,7 +55,7 @@ public:
 
   unsigned int Check( void );
 
-  static void EnableErrorCheck( bool eanable ) { _enable_error_check = eanable; }
+  static void EnableErrorCheck( bool enable ) { _enable_error_check = enable; }
 
 private: 
 
