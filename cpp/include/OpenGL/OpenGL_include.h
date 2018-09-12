@@ -1,5 +1,5 @@
 /******************************************************************//**
-* \brief   OpenG Lheader files.
+* \brief   OpenGL header files.
 * 
 * \author  gernot
 * \date    2018-02-04
