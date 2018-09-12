@@ -88,9 +88,9 @@
 
 [Light cone](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/light_cone.html)
 
-[Cube color](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/cube_color.html)
+[Clipping](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/clip_cube.html)
 
-[Cube clipping](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/clip_cube.html)
+[Cube color](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/cube_color.html)
 
 [Cube texture](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/cube_texture.html)
 
