@@ -26,7 +26,7 @@ One of the most common mistakes, when an object is not visible on the viewport (
 
 ### Model coordinates (Object coordinates)
 
-The model space is the coordinates system, which is used to define or modulate a mesh.. The vertex coordinates are defined in model space.
+The model space is the coordinates system, which is used to define or modulate a mesh. The vertex coordinates are defined in model space.
 
 e.g.:
 
@@ -264,7 +264,7 @@ ta = tan( fov_y / 2 );
 2 * n / (t-b) = 1 / ta
 ```
 
-If the projection is symmetric, where the line of sight is axis of symmetry the frustum, then the matrix can be simplified:
+If the projection is symmetric, where the line of sight is axis of symmetry of the view frustum, then the matrix can be simplified:
 
 ```txt
 1/(ta*a)  0     0              0
