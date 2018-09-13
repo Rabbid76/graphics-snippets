@@ -53,6 +53,7 @@ enum TScene
   e_world,
   e_view,
   e_projection,
+  e_perspective_distortion,
   e_NDC,
   e_orthographic_volume,
 
@@ -61,11 +62,15 @@ enum TScene
 };
 
 
-static TScene g_scene = e_orthographic_volume;
+static TScene g_scene = e_perspective_distortion;
 
 #define RENDER_BITMAP 0 
 
-#if defined(RENDER_BITMAP) && RENDER_BITMAP == 2
+#if defined(RENDER_BITMAP) && RENDER_BITMAP == 3
+static int          c_window_cx = 600;
+static int          c_window_cy = 450;
+static bool         c_frameless = true;
+#elif defined(RENDER_BITMAP) && RENDER_BITMAP == 2
 static int          c_window_cx = 400;
 static int          c_window_cy = 400;
 static bool         c_frameless = true;
@@ -142,6 +147,9 @@ private:
     void InitScene( void );
     void Render( double time_ms );
 
+    Render::TMat44 ToM44( const glm::mat4 &m );
+    glm::vec3 ProjectV3( const glm::mat4 &prj_m44, const glm::vec3 &pt );
+
     void Lined( const Render::TPoint2 &bl, const Render::TPoint2 &tr, float dist=0.08f, float z=0.0f, float thickness=1.0f, const Render::TColor color=Color_paper_line() );
     void Checkered( const Render::TPoint2 &bl, const Render::TPoint2 &tr, Render::TVec2 dist={ 0.05f, 0.05f }, float z=0.0f, float thickness=1.0f, const Render::TColor color=Color_paper_line() );
     void Setup2DCheckered( void );
@@ -162,6 +170,7 @@ private:
     void World( double time_ms );
     void View( double time_ms );
     void Projection( double time_ms );
+    void PerspectiveDistortion( double time_ms );
     void NDC( double time_ms );
     void OrthographicVolume( double time_ms );
     void ConeStep( double time_ms );
@@ -366,26 +375,40 @@ void CWindow_Glfw::Render( double time_ms )
   {
 
     default:
-    case e_test_1:              TestScene_1( time_ms ); break;
-    case e_test_2:              TestScene_2( time_ms ); break;
-    case e_test_perspective:    TestScene_Perspecitve( time_ms ); break;
-    case e_text_rotate:         TextRotate( time_ms ); break;
-    case e_isect_line_line:     IsectLineLine( time_ms ); break;
-    case e_isect_line_plane:    IsectLinePlane( time_ms ); break;
-    case e_isect_plane_cone:    IsectPlaneCone( time_ms ); break;
-    case e_viewport_coordsys:   ViewportCoordsys( time_ms ); break;
-    case e_model:               Model( time_ms ); break;
-    case e_world:               World( time_ms ); break;
-    case e_view:                View( time_ms ); break;
-    case e_projection:          Projection( time_ms ); break;
-    case e_NDC:                 NDC( time_ms ); break;
-    case e_orthographic_volume: OrthographicVolume( time_ms ); break;
-    case e_cone_step:           ConeStep( time_ms ); break;
+    case e_test_1:                 TestScene_1( time_ms ); break;
+    case e_test_2:                 TestScene_2( time_ms ); break;
+    case e_test_perspective:       TestScene_Perspecitve( time_ms ); break;
+    case e_text_rotate:            TextRotate( time_ms ); break;
+    case e_isect_line_line:        IsectLineLine( time_ms ); break;
+    case e_isect_line_plane:       IsectLinePlane( time_ms ); break;
+    case e_isect_plane_cone:       IsectPlaneCone( time_ms ); break;
+    case e_viewport_coordsys:      ViewportCoordsys( time_ms ); break;
+    case e_model:                  Model( time_ms ); break;
+    case e_world:                  World( time_ms ); break;
+    case e_view:                   View( time_ms ); break;
+    case e_projection:             Projection( time_ms ); break;
+    case e_perspective_distortion: PerspectiveDistortion ( time_ms ); break;
+    case e_NDC:                    NDC( time_ms ); break;
+    case e_orthographic_volume:    OrthographicVolume( time_ms ); break;
+    case e_cone_step:              ConeStep( time_ms ); break;
   }
 
   _draw->Finish();
 }
 
+
+Render::TMat44 CWindow_Glfw::ToM44( const glm::mat4 &m )
+{
+  Render::TMat44 temp_m;
+  std::memcpy( &temp_m[0][0], glm::value_ptr( m ), sizeof( Render::TMat44 ) );
+  return temp_m;
+}
+
+glm::vec3 CWindow_Glfw::ProjectV3( const glm::mat4 &prj_m44, const glm::vec3 &pt )
+{
+  glm::vec4 h_pt = prj_m44 * glm::vec4( pt, 1.0 );
+  return glm::vec3( h_pt ) / h_pt.w;
+}
 
 void CWindow_Glfw::Lined( const Render::TPoint2 &bl, const Render::TPoint2 &tr, float dist, float z, float thickness, const Render::TColor color )
 {
@@ -1006,6 +1029,122 @@ void CWindow_Glfw::Projection( double time_ms )
     pos[1] += ( pos[1] < -0.001f ) ? -0.02f : ( pos[1] > 0.001f ) ? 0.02f : 0.0f;
     _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, strstr.str().c_str(), pt[2], text_height, text_scale_y, 0.0f, pos, Color_darkgray() );
   }
+}
+
+
+void CWindow_Glfw::PerspectiveDistortion( double time_ms )
+{
+  glm::vec3 bn( 0.0f, -1.0f, -1.0f );
+  glm::vec3 tf( 0.0f, 1.0f, 1.0f );
+  glm::vec3 bf( 0.0f, -1.0f, 1.0f );
+  glm::vec3 tn( 0.0f, 1.0f, -1.0f );
+  
+  static float near = 0.5f;
+  static float far = 2.5f;
+  glm::mat4 prj_mat     = glm::perspective( glm::radians( 60.0f ), 1.0f, near, far );
+  glm::mat4 inv_prj_mat = glm::inverse( prj_mat );
+
+  glm::vec3 bn_u = ProjectV3( inv_prj_mat, bn );
+  glm::vec3 tf_u = ProjectV3( inv_prj_mat, tf );
+  glm::vec3 bf_u = ProjectV3( inv_prj_mat, bf );
+  glm::vec3 tn_u = ProjectV3( inv_prj_mat, tn );
+
+  float pos_z = bf_u.z + (bn_u.z - bf_u.z) * abs(bf_u.y / (bf_u.y-bn_u.y));
+  glm::vec3 eye_u( 0.0f, 0.0f, pos_z );
+
+  std::vector<glm::vec3> cube{ bn, bf, tf, tn };
+
+  float cube_scale = 0.5f;
+  static float cam_dist = -1.25f;
+  Render::IDraw::TBuffer src_cube;
+  for ( auto & pt : cube )
+  {
+    src_cube.push_back( pt.z * cube_scale + cam_dist );
+    src_cube.push_back( pt.y * cube_scale );
+  }
+
+  Render::IDraw::TBuffer dst_cube;
+  for ( size_t i = 0; i < src_cube.size(); i += 2 )
+  {
+    glm::vec3 src_pt( 0.0f, src_cube[i+1], src_cube[i] );
+    glm::vec3 dst_pt = ProjectV3( prj_mat, src_pt );
+    dst_cube.push_back( dst_pt.z );
+    dst_cube.push_back( dst_pt.y );
+  }
+
+  Render::TColor color_src = Color_ink();
+  Render::TColor color_dst = Color_ink();
+  Render::TColor color_near = Color_green_2();
+  Render::TColor color_far = Color_red_2();
+  Render::TColor color_limit = Color_gray();
+  Render::TColor color_text = Color_black();
+
+  static float text_height  = 0.2f;
+  static float text_scale_y = 1.0f;
+  static float text_margin  = 0.04f;
+
+  Setup2DCheckered();
+
+  // frustum
+
+  static float scale = 0.4f;
+  static float map_view = -1.2f;
+  glm::mat4 model_pos = glm::mat4( 1.0f );
+  model_pos = glm::translate( model_pos, glm::vec3( map_view, 0.0f, 0.0f ) ); 
+  model_pos = glm::rotate( model_pos, (float)M_PI, glm::vec3( 0.0f, 1.0f, 0.0f ) );
+  model_pos = glm::scale( model_pos, glm::vec3( scale ) ); 
+  _draw->Model( ToM44(model_pos) );
+  _draw->ActivateOpaque();
+
+  _draw->DrawPolyline( 2, src_cube, color_src, 2.0f, true );
+  _draw->DrawPolyline( 2, {bn_u.z, bn_u.y, tn_u.z, tn_u.y }, color_near, 2.0f, true );
+  _draw->DrawPolyline( 2, {bf_u.z, bf_u.y, tf_u.z, tf_u.y }, color_far, 2.0f, true );
+  _draw->DrawPolyline( 2, {eye_u.z, eye_u.y, bf_u.z, bf_u.y }, color_limit, 2.0f, true );
+  _draw->DrawPolyline( 2, {eye_u.z, eye_u.y, tf_u.z, tf_u.y }, color_limit, 2.0f, true );
+
+
+  // frustum text
+
+  model_pos = glm::mat4( 1.0f );
+  model_pos = glm::translate( model_pos, glm::vec3( map_view, 0.0f, 0.0f ) ); 
+  model_pos = glm::scale( model_pos, glm::vec3( scale ) ); 
+  _draw->Model( ToM44(model_pos) );
+  _draw->ActivateOpaque();
+  _draw->ClearDepth();
+
+  _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, "frustum", 2, text_height, text_scale_y, text_margin, {(-bn_u.z-bf_u.z)/2.0f, 1.5f, 0.0f}, color_text );
+  _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, "near", 8, text_height, text_scale_y, text_margin, {-bn_u.z, -1.45f, 0.0f}, color_near );
+  _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, "far", 8, text_height, text_scale_y, text_margin, {-bf_u.z, -1.45f, 0.0f}, color_far );
+
+
+  // NDC
+
+  static float map_ndc = 0.6f;
+  model_pos = glm::mat4( 1.0f );
+  model_pos = glm::translate( model_pos, glm::vec3( map_ndc, 0.0f, 0.0f ) ); 
+  model_pos = glm::scale( model_pos, glm::vec3( scale ) ); 
+  _draw->Model( ToM44(model_pos) );
+
+  _draw->ActivateOpaque();
+  _draw->ClearDepth();
+
+  _draw->DrawPolyline( 2, dst_cube, color_dst, 2.0f, true );
+  _draw->DrawPolyline( 2, {bn.z, bn.y, tn.z, tn.y }, color_near, 2.0f, true );
+  _draw->DrawPolyline( 2, {bf.z, bf.y, tf.z, tf.y }, color_far, 2.0f, true );
+  _draw->DrawPolyline( 2, {bn.z, bn.y, bf.z, bf.y }, color_limit, 2.0f, true );
+  _draw->DrawPolyline( 2, {tn.z, tn.y, tf.z, tf.y }, color_limit, 2.0f, true );
+
+
+  // NDC text
+
+  _draw->ActivateOpaque();
+  _draw->ClearDepth();
+
+  _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, "normalized device space", 2, text_height, text_scale_y, text_margin, {(bn.z+bf.z)/2.0f, 1.5f, 0.0f}, color_text );
+  _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, "near", 8, text_height, text_scale_y, text_margin, {bn.z, -1.45f, 0.0f}, color_near );
+  _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, "far", 8, text_height, text_scale_y, text_margin, {bf.z, -1.45f, 0.0f}, color_far );
+
+  //float scale
 }
 
 

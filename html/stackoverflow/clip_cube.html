@@ -15,6 +15,7 @@
     uniform mat4 u_projectionMat44;
     uniform mat4 u_viewMat44;
     uniform mat4 u_modelMat44;
+    uniform mat4 u_clipMat44;
     uniform vec4 u_clipPlane;
     
     void main()
@@ -27,7 +28,7 @@
         gl_Position   = u_projectionMat44 * viewPos;
 
         vec4 modelPos  = u_modelMat44 * vec4( inPos, 1.0 );
-        vec4 clipPlane = vec4(normalize(u_clipPlane.xyz), u_clipPlane.w); 
+        vec4 clipPlane = vec4(mat3(u_clipMat44) * normalize(u_clipPlane.xyz), u_clipPlane.w); 
         clip_distance  = dot(modelPos, clipPlane);
         //gl_ClipDistance[0] = dot(modelPos, clipPlane);
     }
@@ -97,16 +98,18 @@ function render(deltaMS){
     if ( readInput ) {
         //readInput = false;
         clip = (document.getElementById( "clip" ).value - 50) / 50;
-    }
+    } 
+    var orbit = 0;
 
     // setup view projection and model
     vp_size = [canvas.width, canvas.height];
     camera.Update( vp_size );
     var prjMat = camera.Perspective();
-    var viewMat = camera.Orbit();
-    var modelMat = IdentM44();
-    modelMat = camera.AutoModelMatrix();
-        
+    var viewMat = camera.LookAt();
+    var orbitMat = Multiply(camera.OrbitMatrix(), camera.AutoModelMatrix());
+    var modelMat = orbit == 0 ? orbitMat : IdentM44();
+    var clipMat = orbit != 0 ? orbitMat : IdentM44();
+            
     gl.viewport( 0, 0, vp_size[0], vp_size[1] );
     gl.enable( gl.DEPTH_TEST );
     gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
@@ -117,6 +120,7 @@ function render(deltaMS){
     ShProg.SetM44( progDraw, "u_projectionMat44", prjMat );
     ShProg.SetM44( progDraw, "u_viewMat44", viewMat );
     ShProg.SetM44( progDraw, "u_modelMat44", modelMat );
+    ShProg.SetM44( progDraw, "u_clipMat44", clipMat );
     ShProg.SetF4( progDraw, "u_clipPlane", [1.0,-1.0,0.0,clip*1.7321] );
     
     // draw scene

@@ -308,6 +308,10 @@ z_ndc = ( -z_eye * (f+n)/(f-n) - 2*f*n/(f-n) ) / -z_eye
 
 ![Perspective Z function](image/Perspective_Z.png)
 
+### What the perspective projection does
+
+![Perspective distortion](image/perspective_distortion.png)
+
 ---
 
 ## Depth buffer
