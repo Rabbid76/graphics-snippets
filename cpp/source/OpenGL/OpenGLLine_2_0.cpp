@@ -28,6 +28,17 @@
 #include <algorithm>
 
 
+// preprocessor definitions
+
+#if defined(max)
+#undef max
+#endif
+
+#if defined(min)
+#undef min
+#endif
+
+
 // class definitions
 
 
