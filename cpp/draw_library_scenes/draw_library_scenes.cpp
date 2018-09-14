@@ -110,7 +110,7 @@ private:
     static constexpr const Render::TColor Color_red( void )          { return { 1.0f, 0.0f, 0.0f, 1.0f }; }
     static constexpr const Render::TColor Color_green( void )        { return { 0.0f, 1.0f, 0.0f, 1.0f }; }
     static constexpr const Render::TColor Color_blue( void )         { return { 0.0f, 0.0f, 1.0f, 1.0f }; }
-    static constexpr const Render::TColor Color_darkred( void )      { return { 0.5f, 0.0f, 0.0f, 1.0f }; }
+    static constexpr const Render::TColor Color_darkred( void )      { return { 0.6f, 0.0f, 0.0f, 1.0f }; }
     static constexpr const Render::TColor Color_darkgreen( void )    { return { 0.0f, 0.5f, 0.0f, 1.0f }; }
     static constexpr const Render::TColor Color_darkblue( void )     { return { 0.0f, 0.0f, 0.5f, 1.0f }; }
     static constexpr const Render::TColor Color_yellow( void )       { return { 1.0f, 1.0f, 0.0f, 1.0f }; }
@@ -118,7 +118,7 @@ private:
     static constexpr const Render::TColor Color_cyan( void )         { return { 0.0f, 1.0f, 1.0f, 1.0f }; }
     static constexpr const Render::TColor Color_orange( void )       { return { 1.0f, 0.5f, 0.0f, 1.0f }; }
     static constexpr const Render::TColor Color_red_2( void )        { return { 0.8f, 0.0f, 0.0f, 1.0f }; }
-    static constexpr const Render::TColor Color_green_2( void )      { return { 0.0f, 0.8f, 0.0f, 1.0f }; }
+    static constexpr const Render::TColor Color_green_2( void )      { return { 0.0f, 0.7f, 0.0f, 1.0f }; }
     static constexpr const Render::TColor Color_blue_2( void )       { return { 0.0f, 0.0f, 0.8f, 1.0f }; }
     static constexpr const Render::TColor Color_darkgray( void )     { return { 0.2f, 0.2f, 0.2f, 1.0f }; }
     static constexpr const Render::TColor Color_gray( void )         { return { 0.5f, 0.5f, 0.5f, 1.0f }; }
@@ -253,7 +253,8 @@ void CWindow_Glfw::InitDebug( void ) // has to be done after GLEW initialization
  #if defined(_DEBUG)
     static bool synchromous = true;
     _debug = std::make_unique<OpenGL::CDebug>();
-    _debug->Init( Render::TDebugLevel::all );
+    static Render::TDebugLevel debug_level = Render::TDebugLevel::error_only;
+    _debug->Init( debug_level );
     _debug->Activate( synchromous );
 #endif
 }
@@ -1055,11 +1056,11 @@ void CWindow_Glfw::PerspectiveDistortion( double time_ms )
   std::vector<glm::vec3> cube{ bn, bf, tf, tn };
 
   float cube_scale = 0.5f;
-  static float cam_dist = -1.25f;
+  static float cam_dist = 1.25f;
   Render::IDraw::TBuffer src_cube;
   for ( auto & pt : cube )
   {
-    src_cube.push_back( pt.z * cube_scale + cam_dist );
+    src_cube.push_back( pt.z * cube_scale - cam_dist );
     src_cube.push_back( pt.y * cube_scale );
   }
 
@@ -1078,17 +1079,26 @@ void CWindow_Glfw::PerspectiveDistortion( double time_ms )
   Render::TColor color_far = Color_red_2();
   Render::TColor color_limit = Color_gray();
   Render::TColor color_text = Color_black();
+  Render::TColor color_ray = Color_orange();
+  Render::TColor color_eye = Color_black();
 
-  static float text_height  = 0.2f;
-  static float text_scale_y = 1.0f;
-  static float text_margin  = 0.04f;
+  static float         text_height  = 0.2f;
+  static float         text_scale_y = 1.0f;
+  static float         text_margin  = 0.04f;
+  static Render::TVec2 arr_size{ 0.15f, 0.10f };
+  static float         arrow_th     = 2.0f;
+  static float         point_size   = 8.0f;
+  
+  static int   segments = 5;
+  static float scale = 0.4f;
+  static float view_offset = 0.7f;
+  static float ndc_offset  = 0.7f;
 
-  Setup2DCheckered();
+  //Setup2DCheckered();
 
   // frustum
 
-  static float scale = 0.4f;
-  static float map_view = -1.2f;
+  float map_view = -cam_dist * scale - view_offset;
   glm::mat4 model_pos = glm::mat4( 1.0f );
   model_pos = glm::translate( model_pos, glm::vec3( map_view, 0.0f, 0.0f ) ); 
   model_pos = glm::rotate( model_pos, (float)M_PI, glm::vec3( 0.0f, 1.0f, 0.0f ) );
@@ -1096,11 +1106,18 @@ void CWindow_Glfw::PerspectiveDistortion( double time_ms )
   _draw->Model( ToM44(model_pos) );
   _draw->ActivateOpaque();
 
+   _draw->DrawPoint2D( {eye_u.z, eye_u.y}, color_eye, point_size );
   _draw->DrawPolyline( 2, src_cube, color_src, 2.0f, true );
   _draw->DrawPolyline( 2, {bn_u.z, bn_u.y, tn_u.z, tn_u.y }, color_near, 2.0f, true );
   _draw->DrawPolyline( 2, {bf_u.z, bf_u.y, tf_u.z, tf_u.y }, color_far, 2.0f, true );
   _draw->DrawPolyline( 2, {eye_u.z, eye_u.y, bf_u.z, bf_u.y }, color_limit, 2.0f, true );
   _draw->DrawPolyline( 2, {eye_u.z, eye_u.y, tf_u.z, tf_u.y }, color_limit, 2.0f, true );
+
+  for( int i = 0; i < segments; ++ i )
+  {
+    float y = bf_u.y + ( tf_u.y - bf_u.y ) * (float)(i+0.5f) / (float)segments;
+     _draw->DrawArrow( 2, {eye_u.z, eye_u.y, bf_u.z, y}, color_ray, arrow_th, arr_size, false, true );
+  }
 
 
   // frustum text
@@ -1119,7 +1136,7 @@ void CWindow_Glfw::PerspectiveDistortion( double time_ms )
 
   // NDC
 
-  static float map_ndc = 0.6f;
+  float map_ndc = ndc_offset;
   model_pos = glm::mat4( 1.0f );
   model_pos = glm::translate( model_pos, glm::vec3( map_ndc, 0.0f, 0.0f ) ); 
   model_pos = glm::scale( model_pos, glm::vec3( scale ) ); 
@@ -1134,6 +1151,11 @@ void CWindow_Glfw::PerspectiveDistortion( double time_ms )
   _draw->DrawPolyline( 2, {bn.z, bn.y, bf.z, bf.y }, color_limit, 2.0f, true );
   _draw->DrawPolyline( 2, {tn.z, tn.y, tf.z, tf.y }, color_limit, 2.0f, true );
 
+  for( int i = 0; i < segments; ++ i )
+  {
+    float y = bf.y + ( tf.y - bf.y ) * (float)(i+0.5f) / (float)segments;
+     _draw->DrawArrow( 2, {-cam_dist, y, bf.z, y}, color_ray, arrow_th, arr_size, false, true );
+  }
 
   // NDC text
 
