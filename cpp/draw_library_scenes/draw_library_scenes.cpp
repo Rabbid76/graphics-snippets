@@ -62,7 +62,7 @@ enum TScene
 };
 
 
-static TScene g_scene = e_perspective_distortion;
+static TScene g_scene = e_orthographic_volume;
 
 #define RENDER_BITMAP 0 
 
