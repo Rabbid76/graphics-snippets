@@ -101,7 +101,6 @@ The normalized device coordinates are the clip space coordinates divide by the `
 
 ![normalized device coordinates](image/NDC.png)
 
-
 ### Window coordinates (Screen coordinates)
 
 The window coordinates are the coordinates of the viewport rectangle. The window coordinates finally are passed to the rasterization process.
@@ -325,7 +324,7 @@ In computer graphics this volume is not a cone, its base is a rectangle, because
 
 The single rays are projected on the pixel of the viewport. Imagine a panel with a hole matrix, as many holes in a row, as pixel in the width of the view and as many holes in a column as pixel in the height of the view. Rays sent from the eye through each hole of the raster, represents the mapping of rays to the pixels on the viewport. The color of the first objected which is hit by a ray is placed at the pixel, which is represented by the ray.
 
-At the left side, the following image shows a cube which is looked at from a eye position and the view frustum. The right prat of the image shows the perspective distortion, caused by the projection on the viewport. The plane of the cube which is closer to the view position seems to be larger, than the plane which is further away. The front top and bottom edge of the cube are clipped, because they are not in the view volume and not visible on the viewport. 
+At the left side, the following image shows a cube which is looked at from a eye position and the view frustum. The right part of the image shows the perspective distortion, caused by the projection on the viewport. The plane of the cube which is closer to the view position seems to be larger, than the plane which is further away. The front top and bottom edge of the cube are clipped, because they are not in the view volume and not visible on the viewport.
 
 ![Perspective distortion](image/perspective_distortion.png)
 
@@ -336,7 +335,7 @@ At the left side, the following image shows a cube which is looked at from a eye
 Since the normalized device coordinates are in range (-1,-1,-1) to (1,1,1) the Z-coordinate has to be mapped to the depth buffer the range [0,1]:
 
 ```cpp
-depth = (z_ndc + 1) / 2 
+depth = (z_ndc + 1) / 2
 ```
 
 How the Z component of the normalized device space is mapped to the depth value, can in OpenGL be defined by the function `glDepthRange`. Usually the range is [0, 1], from the near plane to the far plane.
@@ -541,7 +540,12 @@ vec3 viewUpperRight  = viewUpperRightH.xyz / viewUpperRightH.w;
 - [Median Distance Perspective Projection](http://csc.lsu.edu/~kooima/articles/medianproj/)
 - [Projection Matrix Tricks](http://www.terathon.com/gdc07_lengyel.pdf)
 - [The Perspective and Orthographic Projection Matrix](https://www.scratchapixel.com/lessons/3d-basic-rendering/perspective-and-orthographic-projection-matrix/building-basic-perspective-projection-matrix)
-
+- [OpenGL 101: Matrices - projection, view, model](https://solarianprogrammer.com/2013/05/22/opengl-101-matrices-projection-view-model/), [GitHub](https://github.com/sol-prog/OpenGL-101)
+- [Wikipedia, Viewing frustum](https://en.wikipedia.org/wiki/Viewing_frustum)
+- [Projection Matrix Tricks](http://www.terathon.com/gdc07_lengyel.pdf)
+- [Calculating the gluPerspective matrix and other OpenGL matrix maths](https://unspecified.wordpress.com/2012/06/21/calculating-the-gluperspective-matrix-and-other-opengl-matrix-maths/)
+- [Perspective projections in LH and RH systems](http://www.gamedev.net/page/resources/_/technical/graphics-programming-and-theory/perspective-projections-in-lh-and-rh-systems-r3598)
+- [Perspective Texture Mapping](http://chrishecker.com/images/4/41/Gdmtex1.pdf)
 
 ---
 
