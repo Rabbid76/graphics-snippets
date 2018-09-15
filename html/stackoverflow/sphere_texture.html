@@ -33,7 +33,7 @@ uniform sampler2D u_texture;
 
 void main()
 {
-    vec3 texColor = texture2D( u_texture, texCoord.st ).rgb;
+    vec3 texColor = texture2D( u_texture, vec2(1.0-texCoord.s, texCoord.t) ).rgb;
     vec3 lightCol = (0.2 + 0.8 * NdotL) * texColor.rgb;
     gl_FragColor  = vec4( lightCol.rgb, 1.0 );
 }
@@ -45,9 +45,9 @@ html,body { margin: 0; overflow: hidden; }
 #ref-link { position : absolute; bottom : 0; left : 0; }  
 </style>
 
-<body onload="sceneStart();">
+<body>
     
-<canvas id="model-canvas" style="border: none;" width="512" height="512"></canvas>
+<canvas id="model-canvas" style="border: none"></canvas>
 
 <a id="ref-link" href="https://stackoverflow.com/questions/45482988/generating-spheres-vertices-indices-and-normals/45483530#45483530">
 <font color= #CCF>Generating spheres vertices, indices and normals?</font> 
@@ -57,134 +57,19 @@ html,body { margin: 0; overflow: hidden; }
 
 <script type="text/javascript">
 
-glArrayType = typeof Float32Array !="undefined" ? Float32Array : ( typeof WebGLFloatArray != "undefined" ? WebGLFloatArray : Array );
+(function loadscene() {
 
-function IdentM44() {
-  var m = new glArrayType(16);
-  m[0]  = 1; m[1]  = 0; m[2]  = 0; m[3]  = 0;
-  m[4]  = 0; m[5]  = 1; m[6]  = 0; m[7]  = 0;
-  m[8]  = 0; m[9]  = 0; m[10] = 1; m[11] = 0;
-  m[12] = 0; m[13] = 0; m[14] = 0; m[15] = 1;
-  return m;
-};
+var gl, canvas, vp_size, progDraw, bufSphere = {}, textureObj;
 
-function RotateAxis(matA, angRad, axis) {
-    var aMap = [ [1, 2], [2, 0], [0, 1] ];
-    var a0 = aMap[axis][0], a1 = aMap[axis][1]; 
-    var sinAng = Math.sin(angRad), cosAng = Math.cos(angRad);
-    var matB = new glArrayType(16);
-    for ( var i = 0; i < 16; ++ i ) matB[i] = matA[i];
-    for ( var i = 0; i < 3; ++ i ) {
-        matB[a0*4+i] = matA[a0*4+i] * cosAng + matA[a1*4+i] * sinAng;
-        matB[a1*4+i] = matA[a0*4+i] * -sinAng + matA[a1*4+i] * cosAng;
-    }
-    return matB;
-}
+function render(deltaMS){
 
-function Cross( a, b ) { return [ a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0], 0.0 ]; }
-function Dot( a, b ) { return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; }
-function Normalize( v ) {
-    var len = Math.sqrt( v[0] * v[0] + v[1] * v[1] + v[2] * v[2] );
-    return [ v[0] / len, v[1] / len, v[2] / len ];
-}
-
-var Camera = {};
-Camera.create = function() {
-    this.pos    = [0, 1.5, 0.0];
-    this.target = [0, 0, 0];
-    this.up     = [0, 0, 1];
-    this.fov_y  = 90;
-    this.vp     = [256, 256];
-    this.near   = 0.5;
-    this.far    = 100.0;
-}
-Camera.Perspective = function() {
-    var fn = this.far + this.near;
-    var f_n = this.far - this.near;
-    var r = this.vp[0] / this.vp[1];
-    var t = 1 / Math.tan( Math.PI * this.fov_y / 360 );
-    var m = IdentM44();
-    m[0]  = t/r; m[1]  = 0; m[2]  =  0;                              m[3]  = 0;
-    m[4]  = 0;   m[5]  = t; m[6]  =  0;                              m[7]  = 0;
-    m[8]  = 0;   m[9]  = 0; m[10] = -fn / f_n;                       m[11] = -1;
-    m[12] = 0;   m[13] = 0; m[14] = -2 * this.far * this.near / f_n; m[15] =  0;
-    return m;
-}
-Camera.LookAt = function() {
-    var mz = Normalize( [ this.pos[0]-this.target[0], this.pos[1]-this.target[1], this.pos[2]-this.target[2] ] );
-    var mx = Normalize( Cross( this.up, mz ) );
-    var my = Normalize( Cross( mz, mx ) );
-    var tx = Dot( mx, this.pos );
-    var ty = Dot( my, this.pos );
-    var tz = Dot( [-mz[0], -mz[1], -mz[2]], this.pos ); 
-    var m = IdentM44();
-    m[0]  = mx[0]; m[1]  = my[0]; m[2]  = mz[0]; m[3]  = 0;
-    m[4]  = mx[1]; m[5]  = my[1]; m[6]  = mz[1]; m[7]  = 0;
-    m[8]  = mx[2]; m[9]  = my[2]; m[10] = mz[2]; m[11] = 0;
-    m[12] = tx;    m[13] = ty;    m[14] = tz;    m[15] = 1; 
-    return m;
-} 
-
-// shader program object
-var ShProg = {};
-ShProg.Create = function( shaderList, uniformNames ) {
-    var shaderObjs = [];
-    for ( var i_sh = 0; i_sh < shaderList.length; ++ i_sh ) {
-        var shderObj = this.Compile( shaderList[i_sh].source, shaderList[i_sh].stage );
-        if ( shderObj == 0 )
-            return 0;
-        shaderObjs.push( shderObj );
-    }
-    var progObj = this.Link( shaderObjs )
-    if ( progObj != 0 ) {
-        progObj.uniLoc = {};
-        for ( var i_n = 0; i_n < uniformNames.length; ++ i_n ) {
-            var name = uniformNames[i_n];
-            progObj.uniLoc[name] = gl.getUniformLocation( progObj, name );
-        }
-    }
-    return progObj;
-}
-ShProg.Use = function( progObj ) { gl.useProgram( progObj ); } 
-ShProg.SetI1 = function( progObj, name, val ) { gl.uniform1i( progObj.uniLoc[name], val ); }
-ShProg.SetF1 = function( progObj, name, val ) { gl.uniform1f( progObj.uniLoc[name], val ); }
-ShProg.SetF2 = function( progObj, name, arr ) { gl.uniform2fv( progObj.uniLoc[name], arr ); }
-ShProg.SetF3 = function( progObj, name, arr ) { gl.uniform3fv( progObj.uniLoc[name], arr ); }
-ShProg.SetM44 = function( progObj, name, mat ) { gl.uniformMatrix4fv( progObj.uniLoc[name], false, mat ); }
-ShProg.Compile = function( source, shaderStage ) {
-    var shaderScript = document.getElementById(source);
-    if (shaderScript) {
-      source = "";
-      var node = shaderScript.firstChild;
-      while (node) {
-        if (node.nodeType == 3) source += node.textContent;
-        node = node.nextSibling;
-      }
-    }
-    var shaderObj = gl.createShader( shaderStage );
-    gl.shaderSource( shaderObj, source );
-    gl.compileShader( shaderObj );
-    var status = gl.getShaderParameter( shaderObj, gl.COMPILE_STATUS );
-    if ( !status ) alert(gl.getShaderInfoLog(shaderObj));
-    return status ? shaderObj : 0;
-} 
-ShProg.Link = function( shaderObjs ) {
-    var prog = gl.createProgram();
-    for ( var i_sh = 0; i_sh < shaderObjs.length; ++ i_sh )
-        gl.attachShader( prog, shaderObjs[i_sh] );
-    gl.linkProgram( prog );
-    status = gl.getProgramParameter( prog, gl.LINK_STATUS );
-    if ( !status ) alert("Could not initialise shaders");
-    gl.useProgram( null );
-    return status ? prog : 0;
-}
-        
-function drawScene(){
-    var canvas = document.getElementById( "model-canvas" );
-    Camera.create();
-    Camera.vp = [canvas.width, canvas.height];
-    var currentTime = Date.now();   
-    var deltaMS = currentTime - startTime;
+    // setup view projection and model
+    vp_size = [canvas.width, canvas.height];
+    camera.Update( vp_size );
+    var prjMat = camera.Perspective();
+    var viewMat = camera.Orbit();
+    var modelMat = IdentM44();
+    modelMat = camera.AutoModelMatrix();
         
     gl.viewport( 0, 0, canvas.width, canvas.height );
     gl.enable( gl.DEPTH_TEST );
@@ -197,13 +82,13 @@ function drawScene(){
     
     // set up draw shader
     ShProg.Use( progDraw );
-    ShProg.SetM44( progDraw, "u_projectionMat44", Camera.Perspective() );
-    ShProg.SetM44( progDraw, "u_viewMat44", Camera.LookAt() );
+    ShProg.SetM44( progDraw, "u_projectionMat44", prjMat );
+    ShProg.SetM44( progDraw, "u_viewMat44", viewMat );
     ShProg.SetF3( progDraw, "u_lightDir", [-1.0, -0.5, -2.0] )
     ShProg.SetF3( progDraw, "u_color", [1.0, 0.5, 0.0] )
     var modelMat = IdentM44()
-    modelMat = RotateAxis( modelMat, CalcAng( currentTime, 13.0 ), 0 );
-    modelMat = RotateAxis( modelMat, CalcAng( currentTime, 17.0 ), 1 );
+    modelMat = RotateAxis( modelMat, CalcAng( deltaMS, 13.0 ), 0 );
+    modelMat = RotateAxis( modelMat, CalcAng( deltaMS, 17.0 ), 1 );
     ShProg.SetM44( progDraw, "u_modelMat44", modelMat );
     ShProg.SetI1( progDraw, "u_texture", texUnit );
     
@@ -223,39 +108,13 @@ function drawScene(){
     gl.disableVertexAttribArray( progDraw.inPos );
     gl.disableVertexAttribArray( progDraw.inNV );
     gl.disableVertexAttribArray( progDraw.intex );
+
+    requestAnimationFrame(render);
 }
 
-var startTime;
-function Fract( val ) { 
-    return val - Math.trunc( val );
-}
-function CalcAng( currentTime, varervall ) {
-    return Fract( (currentTime - startTime) / (1000*varervall) ) * 2.0 * Math.PI;
-}
-
-var sphere_pts = [];
-var sphere_nv = [];
-var sphere_tex = [];
-var sphere_inx = [];
-function AddVertex( x, y, z, nvX, nvY, nvZ, u, v )
-{
-     sphere_pts.push( x, y, z );
-     sphere_nv.push( nvX, nvY, nvZ );
-     sphere_tex.push( u, v ); 
-}
-function AddFace( i1, i2, i3, i4 )  {
-    sphere_inx.push( i1, i2, i3 );
-    if ( i4 )
-        sphere_inx.push( i1, i3, i4 );
-}
-
-var gl;
-var progDraw;
-var bufSphere = {};
-var textureObj;
-function sceneStart() {
-    var canvas = document.getElementById( "model-canvas");
-    var vp = [canvas.width, canvas.height];
+function initScene() {
+    canvas = document.getElementById( "model-canvas");
+    vp_size = [canvas.width, canvas.height];
     gl = canvas.getContext( "experimental-webgl" );
     if ( !gl )
       return;
@@ -370,8 +229,275 @@ function sceneStart() {
     //textureObj = Texture.LoadTexture2D( "https://raw.githubusercontent.com/Rabbid76/graphics-snippets/master/resource/texture/supermario.jpg" );    
     textureObj = Texture.LoadTexture2D( "https://raw.githubusercontent.com/Rabbid76/graphics-snippets/master/resource/texture/worldmap1.png" ); 
 
-    startTime = Date.now();
-    setInterval(drawScene, 50);
+    camera = new Camera( [0, 1.5, 0.0], [0, 0, 0], [0, 0, 1], 90, vp_size, 0.5, 100 );
+
+    window.onresize = resize;
+    resize();
+    requestAnimationFrame(render);
+}
+
+function resize() {
+    //vp_size = [gl.drawingBufferWidth, gl.drawingBufferHeight];
+    vp_size = [window.innerWidth, window.innerHeight]
+    //vp_size = [256, 256]
+    canvas.width = vp_size[0];
+    canvas.height = vp_size[1];
+}
+
+function IdentM44() { return [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]; }
+
+function RotateAxis(matA, angRad, axis) {
+    var aMap = [ [1, 2], [2, 0], [0, 1] ];
+    var a0 = aMap[axis][0], a1 = aMap[axis][1]; 
+    var sinAng = Math.sin(angRad), cosAng = Math.cos(angRad);
+    var matB = matA.slice(0);
+    for ( var i = 0; i < 3; ++ i ) {
+        matB[a0*4+i] = matA[a0*4+i] * cosAng + matA[a1*4+i] * sinAng;
+        matB[a1*4+i] = matA[a0*4+i] * -sinAng + matA[a1*4+i] * cosAng;
+    }
+    return matB;
+}
+
+function Rotate(matA, angRad, axis) {
+    var s = Math.sin(angRad), c = Math.cos(angRad);
+    var x = axis[0], y = axis[1], z = axis[2]; 
+    matB = [
+        x*x*(1-c)+c,   x*y*(1-c)-z*s, x*z*(1-c)+y*s, 0,
+        y*x*(1-c)+z*s, y*y*(1-c)+c,   y*z*(1-c)-x*s, 0,
+        z*x*(1-c)-y*s, z*y*(1-c)+x*s, z*z*(1-c)+c,   0,
+        0,             0,             0,             1 ];
+    return Multiply(matA, matB);
+}    
+
+function Multiply(matA, matB) {
+    matC = IdentM44();
+    for (var i0=0; i0<4; ++i0 )
+        for (var i1=0; i1<4; ++i1 )
+            matC[i0*4+i1] = matB[i0*4+0] * matA[0*4+i1] + matB[i0*4+1] * matA[1*4+i1] + matB[i0*4+2] * matA[2*4+i1] + matB[i0*4+3] * matA[3*4+i1]  
+    return matC;
+}
+
+function Cross( a, b ) { return [ a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0], 0.0 ]; }
+function Dot( a, b ) { return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; }
+function Normalize( v ) {
+    var len = Math.sqrt( v[0] * v[0] + v[1] * v[1] + v[2] * v[2] );
+    return [ v[0] / len, v[1] / len, v[2] / len ];
+}
+
+Camera = function( pos, target, up, fov_y, vp, near, far ) {
+this.Time = function() { return Date.now(); }
+this.pos = pos;
+this.target = target;
+this.up = up;
+this.fov_y = fov_y;
+this.vp = vp;
+this.near = near;
+this.far = far;
+this.orbit_mat = this.current_orbit_mat = this.model_mat = this.current_model_mat = IdentM44();
+this.mouse_drag = this.auto_spin = false;
+this.auto_rotate = true;
+this.mouse_start = [0, 0];
+this.mouse_drag_axis = [0, 0, 0];
+this.mouse_drag_angle = 0;
+this.mouse_drag_time = 0;
+this.drag_start_T = this.rotate_start_T = this.Time();
+this.Ortho = function() {
+    var fn = this.far + this.near;
+    var f_n = this.far - this.near;
+    var w = this.vp[0];
+    var h = this.vp[1];
+    return [
+        2/w, 0,   0,       0,
+        0,   2/h, 0,       0,
+        0,   0,   -2/f_n,  0,
+        0,   0,   -fn/f_n, 1 ];
+};  
+this.Perspective = function() {
+    var n = this.near;
+    var f = this.far;
+    var fn = f + n;
+    var f_n = f - n;
+    var r = this.vp[0] / this.vp[1];
+    var t = 1 / Math.tan( Math.PI * this.fov_y / 360 );
+    return [
+        t/r, 0, 0,          0,
+        0,   t, 0,          0,
+        0,   0, -fn/f_n,   -1,
+        0,   0, -2*f*n/f_n, 0 ];
+}; 
+this.LookAt = function() {
+    var mz = Normalize( [ this.pos[0]-this.target[0], this.pos[1]-this.target[1], this.pos[2]-this.target[2] ] );
+    var mx = Normalize( Cross( this.up, mz ) );
+    var my = Normalize( Cross( mz, mx ) );
+    var tx = Dot( mx, this.pos );
+    var ty = Dot( my, this.pos );
+    var tz = Dot( [-mz[0], -mz[1], -mz[2]], this.pos ); 
+    return [mx[0], my[0], mz[0], 0, mx[1], my[1], mz[1], 0, mx[2], my[2], mz[2], 0, tx, ty, tz, 1]; 
+};
+this.Orbit = function() {
+    return Multiply(this.LookAt(), this.OrbitMatrix());
+}; 
+this.OrbitMatrix = function() {
+    return (this.mouse_drag || (this.auto_rotate && this.auto_spin)) ? Multiply(this.current_orbit_mat, this.orbit_mat) : this.orbit_mat;
+};
+this.AutoModelMatrix = function() {
+    return this.auto_rotate ? Multiply(this.current_model_mat, this.model_mat) : this.model_mat;
+};
+this.Update = function(vp_size) {
+    if (vp_size)
+        this.vp = vp_size;
+    var current_T = this.Time();
+    this.current_model_mat = IdentM44()
+    if (this.mouse_drag) {
+        this.current_orbit_mat = Rotate(IdentM44(), this.mouse_drag_angle, this.mouse_drag_axis);
+    } else if (this.auto_rotate) {
+        if (this.auto_spin ) {
+            if (this.mouse_drag_time > 0 ) {
+                var angle = this.mouse_drag_angle * (current_T - this.rotate_start_T) / this.mouse_drag_time;
+                this.current_orbit_mat = Rotate(IdentM44(), angle, this.mouse_drag_axis);
+            }
+        } else {
+            var auto_angle_x = Fract( (current_T - this.rotate_start_T) / 13000.0 ) * 2.0 * Math.PI;
+            var auto_angle_y = Fract( (current_T - this.rotate_start_T) / 17000.0 ) * 2.0 * Math.PI;
+            this.current_model_mat = RotateAxis( this.current_model_mat, auto_angle_x, 0 );
+            this.current_model_mat = RotateAxis( this.current_model_mat, auto_angle_y, 1 );
+        }
+    }
+};
+this.ChangeMotionMode = function(drag, spin, auto ) {
+    var new_drag = drag;
+    var new_auto = new_drag ? false : auto;
+    var new_spin = new_auto ? spin : false;
+    change = this.mouse_drag != new_drag || this.auto_rotate != new_auto || this.auto_spin != new_spin; 
+    if (!change)
+        return;
+    if (new_drag && !this.mouse_drag) {
+        this.drag_start_T = this.Time();
+        this.mouse_drag_angle = 0.0;
+        this.mouse_drag_time = 0;
+    }
+    if (new_auto && !this.auto_rotate)
+        this.rotate_start_T = this.Time();
+    this.mouse_drag = new_drag; 
+    this.auto_rotate = new_auto;  
+    this.auto_spin = new_spin;
+    this.orbit_mat = Multiply(this.current_orbit_mat, this.orbit_mat);
+    this.current_orbit_mat = IdentM44();
+    this.model_mat = Multiply(this.current_model_mat, this.model_mat);
+    this.current_model_mat = IdentM44();
+};
+this.OnMouseDown = function( event ) {
+    var rect = gl.canvas.getBoundingClientRect();
+    if ( event.clientX < rect.left || event.clientX > rect.right ) return;
+    if ( event.clientY < rect.top || event.clientY > rect.bottom ) return;
+    if (event.button == 0) { // left button
+        this.mouse_start = [event.clientX, event.clientY]; 
+        this.ChangeMotionMode( true, false, false );
+    }
+};
+this.OnMouseUp = function( event ) {
+    if (event.button == 0) { // left button
+        this.ChangeMotionMode( false, true, true );
+    } else if (event.button == 1) {// middle button
+        this.ChangeMotionMode( false, false, !this.auto_rotate );
+    }
+};
+this.OnMouseMove = function( event ) {
+    var dx = (event.clientX-this.mouse_start[0]) / this.vp[0];
+    var dy = (event.clientY-this.mouse_start[1]) / this.vp[1];
+    var len = Math.sqrt(dx*dx + dy*dy);
+    if (this.mouse_drag && len > 0) {
+        this.mouse_drag_angle = Math.PI*len;
+        this.mouse_drag_axis = [dy/len, 0, -dx/len];
+        this.mouse_drag_time = this.Time() - this.drag_start_T;
+    }
+};
+
+this.domElement = document;
+var cam = this;
+//this.domElement.addEventListener( 'contextmenu', function(e) { event.preventDefault(); }, false );
+this.domElement.addEventListener( 'mousedown', function(e) { cam.OnMouseDown(e) }, false );
+this.domElement.addEventListener( 'mouseup', function(e) { cam.OnMouseUp(e) }, false );
+this.domElement.addEventListener( 'mousemove', function(e) { cam.OnMouseMove(e) }, false );
+//this.domElement.addEventListener( 'mousewheel', hid_events.onMouseWheel, false );
+//this.domElement.addEventListener( 'DOMMouseScroll', hid_events.onMouseWheel, false ); // firefox
+}
+
+// shader program object
+var ShProg = {};
+ShProg.Create = function( shaderList, uniformNames ) {
+    var shaderObjs = [];
+    for ( var i_sh = 0; i_sh < shaderList.length; ++ i_sh ) {
+        var shderObj = this.Compile( shaderList[i_sh].source, shaderList[i_sh].stage );
+        if ( shderObj == 0 )
+            return 0;
+        shaderObjs.push( shderObj );
+    }
+    var progObj = this.Link( shaderObjs )
+    if ( progObj != 0 ) {
+        progObj.uniLoc = {};
+        for ( var i_n = 0; i_n < uniformNames.length; ++ i_n ) {
+            var name = uniformNames[i_n];
+            progObj.uniLoc[name] = gl.getUniformLocation( progObj, name );
+        }
+    }
+    return progObj;
+}
+ShProg.Use = function( progObj ) { gl.useProgram( progObj ); } 
+ShProg.SetI1 = function( progObj, name, val ) { gl.uniform1i( progObj.uniLoc[name], val ); }
+ShProg.SetF1 = function( progObj, name, val ) { gl.uniform1f( progObj.uniLoc[name], val ); }
+ShProg.SetF2 = function( progObj, name, arr ) { gl.uniform2fv( progObj.uniLoc[name], arr ); }
+ShProg.SetF3 = function( progObj, name, arr ) { gl.uniform3fv( progObj.uniLoc[name], arr ); }
+ShProg.SetM44 = function( progObj, name, mat ) { gl.uniformMatrix4fv( progObj.uniLoc[name], false, mat ); }
+ShProg.Compile = function( source, shaderStage ) {
+    var shaderScript = document.getElementById(source);
+    if (shaderScript) {
+      source = "";
+      var node = shaderScript.firstChild;
+      while (node) {
+        if (node.nodeType == 3) source += node.textContent;
+        node = node.nextSibling;
+      }
+    }
+    var shaderObj = gl.createShader( shaderStage );
+    gl.shaderSource( shaderObj, source );
+    gl.compileShader( shaderObj );
+    var status = gl.getShaderParameter( shaderObj, gl.COMPILE_STATUS );
+    if ( !status ) alert(gl.getShaderInfoLog(shaderObj));
+    return status ? shaderObj : 0;
+} 
+ShProg.Link = function( shaderObjs ) {
+    var prog = gl.createProgram();
+    for ( var i_sh = 0; i_sh < shaderObjs.length; ++ i_sh )
+        gl.attachShader( prog, shaderObjs[i_sh] );
+    gl.linkProgram( prog );
+    status = gl.getProgramParameter( prog, gl.LINK_STATUS );
+    if ( !status ) alert("Could not initialise shaders");
+    gl.useProgram( null );
+    return status ? prog : 0;
+}
+        
+function Fract( val ) { 
+    return val - Math.trunc( val );
+}
+function CalcAng( deltaMS, varervall ) {
+    return Fract( deltaMS / (1000*varervall) ) * 2.0 * Math.PI;
+}
+
+var sphere_pts = [];
+var sphere_nv = [];
+var sphere_tex = [];
+var sphere_inx = [];
+function AddVertex( x, y, z, nvX, nvY, nvZ, u, v )
+{
+     sphere_pts.push( x, y, z );
+     sphere_nv.push( nvX, nvY, nvZ );
+     sphere_tex.push( u, v ); 
+}
+function AddFace( i1, i2, i3, i4 )  {
+    sphere_inx.push( i1, i2, i3 );
+    if ( i4 )
+        sphere_inx.push( i1, i3, i4 );
 }
 
 var Texture = {};
@@ -403,5 +529,9 @@ Texture.LoadTexture2D = function( name ) {
     texture.image.src = name;
     return texture;
 }
+
+initScene();
+
+})();  
 
 </script>

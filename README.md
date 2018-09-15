@@ -94,7 +94,7 @@
 
 [Cube texture](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/cube_texture.html)
 
-[Sphere texture](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/sphere_texture.html)
+[Globe](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/sphere_texture.html)
 
 [Axis rotation](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/axis_rotation.html)
 
