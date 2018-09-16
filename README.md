@@ -96,7 +96,7 @@
 
 [Globe](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/sphere_texture.html)
 
-[Axis rotation](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/axis_rotation.html)
+[Translation and rotation](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/axis_rotation.html)
 
 [Model View Projection](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/model_view_projection.html)
 

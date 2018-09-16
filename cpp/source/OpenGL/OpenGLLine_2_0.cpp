@@ -93,6 +93,7 @@ void main()
 {
   vec4 vert_pos = u_attr_case == 0 ? attr_xyzw : vec4(attr_xyzw.x, attr_y, 0.0, 1.0);
   gl_Position   = gl_ModelViewProjectionMatrix * vert_pos;
+  gl_ClipVertex = gl_Position;
 }
 )";
 

@@ -1,41 +1,68 @@
+<script id="draw-shader-vs" type="x-shader/x-vertex">
+precision mediump float;
+
+attribute vec3 inPos;
+attribute vec3 inCol;
+
+varying   vec3 vertCol;
+
+uniform   mat4 u_projectionMat44;
+uniform   mat4 u_viewMat44;
+uniform   mat4 u_modelMat44;
+
+void main()
+{
+    vertCol       = inCol;
+    vec4 modelPos = u_modelMat44 * vec4( inPos, 1.0 );
+    vec4 viewPos  = u_viewMat44 * modelPos;
+    gl_Position   = u_projectionMat44 * viewPos;
+}
+</script>
+
+<script id="depth-shader-fs" type="x-shader/x-fragment">
+precision mediump float;
+
+varying vec3 vertCol;
+
+void main()
+{
+    gl_FragColor = vec4( vertCol, 1.0 );
+} 
+</script>
+
 <style>
 html,body { margin: 0; overflow: hidden; }
 #gui { position : absolute; top : 0; left : 0; }
 #ref-link { position : absolute; bottom : 0; left : 0; }  
 </style>
 
-<body onload="cameraStart();">
-<div style="margin-left: 520px;">
-<div style="float: right; width: 100%; background-color: #CCF;">
-    <form name="inputs">
-        <table>
-            <tr> <td> pre translate X </td> 
-                    <td> <input type="range" id="preX" min="-100" max="100" value="0"/></td> </tr>
-            <tr> <td> pre translate Y </td> 
-                    <td> <input type="range" id="preY" min="-100" max="100" value="0"/></td> </tr>
-            <tr> <td> pre translate Z </td> 
-                    <td> <input type="range" id="preZ" min="-100" max="100" value="0"/></td> </tr>
-            <tr> <td> axis of rotation </td> <td>
-                <select id="axis">>
-                    <option value="0">X</option>
-                    <option value="1">Y</option>
-                    <option value="2">Z</option>
-                </select>
-            </td> </tr>
-            <tr> <td> post translate X </td> 
-                    <td> <input type="range" id="postX" min="-100" max="100" value="0"/></td> </tr>
-            <tr> <td> post translate Y </td> 
-                    <td> <input type="range" id="postY" min="-100" max="100" value="0"/></td> </tr>
-            <tr> <td> post translate Z </td> 
-                    <td> <input type="range" id="postZ" min="-100" max="100" value="0"/></td> </tr>
-        </table>
-    </form>
-</div>
-<div style="float: right; width: 520px; margin-left: -520px;">
-    <canvas id="camera-canvas" style="border: none;" width="512" height="512"></canvas>
-</div>
-<div style="clear: both;"></div>
-</div>
+<body>
+
+<div><form id="gui" name="inputs">
+<table>
+    <tr> <td> <font color= #FF4040>pre translate X</font> </td> 
+            <td> <input type="range" id="preX" min="-100" max="100" value="0"/></td> </tr>
+    <tr> <td> <font color= #FF4040>pre translate Y</font> </td> 
+            <td> <input type="range" id="preY" min="-100" max="100" value="0"/></td> </tr>
+    <tr> <td> <font color= #FF4040>pre translate Z</font> </td> 
+            <td> <input type="range" id="preZ" min="-100" max="100" value="0"/></td> </tr>
+    <tr> <td> <font color= #FFFF40>axis of rotation</font> </td> <td>
+        <select id="axis">>
+            <option value="0">X</option>
+            <option value="1">Y</option>
+            <option value="2">Z</option>
+        </select>
+    </td> </tr>
+    <tr> <td> <font color= #6060FF>post translate X</font> </td> 
+            <td> <input type="range" id="postX" min="-100" max="100" value="0"/></td> </tr>
+    <tr> <td> <font color= #6060FF>post translate Y</font> </td> 
+            <td> <input type="range" id="postY" min="-100" max="100" value="0"/></td> </tr>
+    <tr> <td> <font color= #6060FF>post translate Z</font> </td> 
+            <td> <input type="range" id="postZ" min="-100" max="100" value="0"/></td> </tr>
+</table>
+</form></div>
+
+<canvas id="camera-canvas" style="border: none"></canvas>
 
 <a id="ref-link" href="https://stackoverflow.com/questions/6458051/issues-with-z-axis-rotation-matrix-in-glsl-shader/44986176#44986176">
 <font color= #CCF>Issues with Z-axis rotation matrix in glsl shader</font> 
@@ -45,38 +72,170 @@ html,body { margin: 0; overflow: hidden; }
 
 <script type="text/javascript">
 
-camera_vert =
-"precision mediump float; \n" +
-"attribute vec3 inPos; \n" +
-"attribute vec3 inCol; \n" +
-"varying   vec3 vertCol;" +
-"uniform   mat4 u_projectionMat44;" +
-"uniform   mat4 u_viewMat44;" +
-"uniform   mat4 u_modelMat44;" +
-"void main()" +
-"{" +
-"    vertCol       = inCol;" +
-"    vec4 modolPos = u_modelMat44 * vec4( inPos, 1.0 );" +
-"    vec4 viewPos  = u_viewMat44 * modolPos;" +
-"    gl_Position   = u_projectionMat44 * viewPos;" +
-"}";
+(function loadscene() {
 
-camera_frag =
-"precision mediump float; \n" +
-"varying vec3 vertCol;" +
-"void main()" +
-"{" +
-"    gl_FragColor = vec4( vertCol, 1.0 );" +
-"}";
+var gl, canvas, vp_size, prog, bufObj, bufAxis, preTrans = [0, 1, 0.5], postTrans = [-0.5, 0, -1], axisOfRotation = 2, sliderScale = 100.0;
 
-glArrayType = typeof Float32Array !="undefined" ? Float32Array : ( typeof WebGLFloatArray != "undefined" ? WebGLFloatArray : Array );
+function getSlider(n) { return document.getElementById(n).value * 2 / sliderScale; }
+function syncFromDocument() {
+    preTrans = [ getSlider( "preX" ), getSlider( "preY" ), getSlider( "preZ" ) ];
+    postTrans = [ getSlider( "postX" ), getSlider( "postY" ), getSlider( "postZ" ) ];
+    axisOfRotation = document.getElementById( "axis" ).value;
+}
+
+function render(deltaMS) {
+
+    syncFromDocument();
+    var rotlMat = Translate( IdentM44(), postTrans ); 
+    rotlMat = RotateAxis( rotlMat, CalcAng( deltaMS, 10.0 ), axisOfRotation );
+    AxisOfRotation.Update( bufAxis, rotlMat, postTrans, axisOfRotation, preTrans );
+    
+    var modelMat = Translate( rotlMat, preTrans );
+
+    Camera.create();
+    Camera.vp = [canvas.width, canvas.height];
+        
+    gl.viewport( 0, 0, canvas.width, canvas.height );
+    gl.enable( gl.DEPTH_TEST );
+    gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
+    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+    
+    ShProg.Use( progDraw );
+          
+    ShProg.SetM44( progDraw, "u_projectionMat44", Camera.Perspective() );
+    ShProg.SetM44( progDraw, "u_viewMat44", Camera.LookAt() );
+    
+    ShProg.SetM44( progDraw, "u_modelMat44", modelMat );
+    VertexBuffer.Draw( bufObj );
+
+    ShProg.SetM44( progDraw, "u_modelMat44", IdentM44() );
+    VertexBuffer.Draw( bufAxis );
+
+    requestAnimationFrame(render);
+}
+
+function initScene() {
+
+    document.getElementById( "preX" ).value = preTrans[0] * sliderScale;
+    document.getElementById( "preY" ).value = preTrans[1] * sliderScale;
+    document.getElementById( "preZ" ).value = preTrans[2] * sliderScale;
+    document.getElementById( "axis" ).value = axisOfRotation;
+    document.getElementById( "postX" ).value = postTrans[0] * sliderScale;
+    document.getElementById( "postY" ).value = postTrans[1] * sliderScale;
+    document.getElementById( "postZ" ).value = postTrans[2] * sliderScale;
+
+    canvas = document.getElementById( "camera-canvas");
+    vp_size = [canvas.width, canvas.height];
+    gl = canvas.getContext( "experimental-webgl" );
+    if ( !gl )
+      return;
+
+    progDraw = ShProg.Create( 
+      [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },
+        { source : "depth-shader-fs", stage : gl.FRAGMENT_SHADER }
+      ],
+      [ "u_projectionMat44", "u_viewMat44", "u_modelMat44"] );
+    progDraw.inPos = gl.getAttribLocation( progDraw, "inPos" );
+    progDraw.inCol = gl.getAttribLocation( progDraw, "inCol" );
+    if ( prog == 0 )
+        return;
+
+    var sin120 = 0.8660254;
+    // 0, 1, 2,   0, 2, 3,   0, 3, 1,   1, 3, 2
+    var pos = [ 0.0, 0.0, 1.0,       0.0, -sin120, -0.5,                       sin120 * sin120, 0.5 * sin120, -0.5, 
+                0.0, 0.0, 1.0,       sin120 * sin120, 0.5 * sin120, -0.5,      -sin120 * sin120, 0.5 * sin120, -0.5,
+                0.0, 0.0, 1.0,       -sin120 * sin120, 0.5 * sin120, -0.5,     0.0, -sin120, -0.5,
+                0.0, -sin120, -0.5,  -sin120 * sin120, 0.5 * sin120, -0.5,     sin120 * sin120, 0.5 * sin120, -0.5 ];
+    var col = [ 1.0, 0.0, 0.0,     1.0, 0.0, 0.0,     1.0, 0.0, 0.0,     
+                1.0, 1.0, 0.0,     1.0, 1.0, 0.0,     1.0, 1.0, 0.0, 
+                0.0, 0.0, 1.0,     0.0, 0.0, 1.0,     0.0, 0.0, 1.0,
+                0.0, 1.0, 0.0,     0.0, 1.0, 0.0,     0.0, 1.0, 0.0 ];
+    var inx = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 ];
+    bufObj = VertexBuffer.Create(
+        [ { data : pos, attrSize : 3, attrLoc : progDraw.inPos },
+          { data : col, attrSize : 3, attrLoc : progDraw.inCol } ],
+          inx
+      );
+      
+    bufAxis = AxisOfRotation.Init();
+
+    window.onresize = resize;
+    resize();
+    requestAnimationFrame(render);
+}
+
+function resize() {
+    //vp_size = [gl.drawingBufferWidth, gl.drawingBufferHeight];
+    vp_size = [window.innerWidth, window.innerHeight]
+    //vp_size = [256, 256]
+    canvas.width = vp_size[0];
+    canvas.height = vp_size[1];
+}
+
+AxisOfRotation = {
+Init: function() {
+    var attr = this.Attributes(IdentM44(), [0.5, 0.5, 0.5], 0, [0.5, 0.5, 0.5])
+    var obj = VertexBuffer.Create(
+        [ { data : attr[0], attrSize : 3, attrLoc : progDraw.inPos },
+          { data : attr[1], attrSize : 3, attrLoc : progDraw.inCol } ],
+          [], gl.LINES
+      );
+    return obj; 
+},
+Update: function(obj, rotMat, t1, a, t2) {
+    var attr = this.Attributes(rotMat, t1, a, t2)
+    gl.bindBuffer(gl.ARRAY_BUFFER, obj.buf[0]);
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, new Float32Array( attr[0] ), gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, obj.buf[1]);
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, new Float32Array( attr[1] ), gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+},
+Attributes: function(rotMat, t1, a, t2) {
+    t20 = TransV3(rotMat, [0, 0, 0]);
+    t21 = TransV3(rotMat, [t2[0], 0, 0]);
+    t22 = TransV3(rotMat, [t2[0], t2[1], 0]);
+    t23 = TransV3(rotMat, [t2[0], t2[1], t2[2]]);
+    var pos = [
+        0, 0, 0, t1[0], 0, 0, t1[0], 0, 0, t1[0], t1[1], 0, t1[0], t1[1], 0, t1[0], t1[1], t1[2],
+        t20[0], t20[1], t20[2], t21[0], t21[1], t21[2], t21[0], t21[1], t21[2], t22[0], t22[1], t22[2], t22[0], t22[1], t22[2], t23[0], t23[1], t23[2] ];  
+    var col = [
+        0.375, 0.375, 1, 0.375, 0.375, 1, 0.375, 0.375, 1, 0.375, 0.375, 1, 0.375, 0.375, 1, 0.375, 0.375, 1,
+        1, 0.25, 0.25, 1, 0.25, 0.25, 1, 0.25, 0.25, 1, 0.25, 0.25, 1, 0.25, 0.25, 1, 0.25, 0.25 ];
+        var c_no = 36;
+    var rad=0;
+    for (var i=0; i<3; ++i) { if (a!=i) rad += t2[i] * t2[i]; }
+    rad = Math.sqrt(rad);
+    for (var i=0; i<=c_no; ++i) {
+        var ang = i/c_no*2*Math.PI;
+        var xc = Math.cos(ang) * rad;
+        var yc = Math.sin(ang) * rad;
+        var x = a==0 ? t2[0] : a==1 ? xc : yc;
+        var y = a==1 ? t2[1] : a==2 ? xc : yc;
+        var z = a==2 ? t2[2] : a==0 ? xc : yc;
+        pos = pos.concat(TransV3(rotMat, [x, y, z]));
+        col = col.concat([1, 1, 0.25]);
+        if (i!=0 && i!=c_no) {
+            pos = pos.concat(TransV3(rotMat, [x, y, z]));
+            col = col.concat([1, 1, 0.25]);    
+        }
+    }
+    return [pos, col];
+} };
+
+function TransV3(m, v) {
+    res = [0, 0, 0];
+    for (i=0; i<3; ++i)
+        res[i] = v[0] * m[i] + v[1] * m[4+i] + v[2] * m[8+i] + m[12+i];
+    return res;
+}
+
+function IdentM44() { return [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]; }
 
 function RotateAxis(matA, angRad, axis) {
     var aMap = [ [1, 2], [2, 0], [0, 1] ];
     var a0 = aMap[axis][0], a1 = aMap[axis][1]; 
     var sinAng = Math.sin(angRad), cosAng = Math.cos(angRad);
-    var matB = new glArrayType(16);
-    for ( var i = 0; i < 16; ++ i ) matB[i] = matA[i];
+    var matB = matA.slice(0);
     for ( var i = 0; i < 3; ++ i ) {
         matB[a0*4+i] = matA[a0*4+i] * cosAng + matA[a1*4+i] * sinAng;
         matB[a1*4+i] = matA[a0*4+i] * -sinAng + matA[a1*4+i] * cosAng;
@@ -85,25 +244,14 @@ function RotateAxis(matA, angRad, axis) {
 }
 
 function Translate( matA, trans ) {
-    var matB = new glArrayType(16);
-    for ( var i = 0; i < 16; ++ i ) matB[i] = matA[i];
+    var matB = matA.slice(0);
     for ( var i = 0; i < 3; ++ i )
         matB[12+i] = matA[i] * trans[0] + matA[4+i] * trans[1] + matA[8+i] * trans[2] + matA[12+i];
     return matB;
 }
 
-function IdentM44() {
-    var m = new glArrayType(16);
-    m[0]  = 1; m[1]  = 0; m[2]  = 0; m[3]  = 0;
-    m[4]  = 0; m[5]  = 1; m[6]  = 0; m[7]  = 0;
-    m[8]  = 0; m[9]  = 0; m[10] = 1; m[11] = 0;
-    m[12] = 0; m[13] = 0; m[14] = 0; m[15] = 1;
-    return m;
-};
-
 function Scale( matA, scale ) {
-    var matB = new glArrayType(16);
-    for ( var i = 0; i < 16; ++ i ) matB[i] = matA[i];
+    var matB = matA.slice(0);
     for ( var a = 0; a < 4; ++ a )
         for ( var i = 0; i < 3; ++ i )
             matB[a*4+i] = matA[a*4+i] * scale[i];
@@ -179,6 +327,15 @@ ShProg.SetI1 = function( progObj, name, val ) { gl.uniform1i( progObj.uniLoc[nam
 ShProg.SetF2 = function( progObj, name, arr ) { gl.uniform2fv( progObj.uniLoc[name], arr ); }
 ShProg.SetM44 = function( progObj, name, mat ) { gl.uniformMatrix4fv( progObj.uniLoc[name], false, mat ); }
 ShProg.Compile = function( source, shaderStage ) {
+    var shaderScript = document.getElementById(source);
+    if (shaderScript) {
+      source = "";
+      var node = shaderScript.firstChild;
+      while (node) {
+        if (node.nodeType == 3) source += node.textContent;
+        node = node.nextSibling;
+      }
+    }
     var shaderObj = gl.createShader( shaderStage );
     gl.shaderSource( shaderObj, source );
     gl.compileShader( shaderObj );
@@ -197,113 +354,50 @@ ShProg.Link = function( shaderObjs ) {
     return status ? prog : 0;
 }
         
-
-function drawScene(){
-
-    syncFromDocument();
-    var canvas = document.getElementById( "camera-canvas" );
-    Camera.create();
-    Camera.vp = [canvas.width, canvas.height];
-    var currentTime = Date.now();   
-    var deltaMS = currentTime - startTime;
-        
-    gl.viewport( 0, 0, canvas.width, canvas.height );
-    gl.enable( gl.DEPTH_TEST );
-    gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
-    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
-    ShProg.Use( progDraw );
-    ShProg.SetM44( progDraw, "u_projectionMat44", Camera.Perspective() );
-    ShProg.SetM44( progDraw, "u_viewMat44", Camera.LookAt() );
-
-    var modelMat = Translate( IdentM44(), preTrans ); 
-    modelMat = RotateAxis( modelMat, CalcAng( currentTime, 10.0 ), axisOfRotation );
-    var modelMat = Translate( modelMat, postTrans );      
-    ShProg.SetM44( progDraw, "u_modelMat44", modelMat );
-    gl.enableVertexAttribArray( progDraw.inPos );
-    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.pos );
-    gl.vertexAttribPointer( progDraw.inPos, 3, gl.FLOAT, false, 0, 0 ); 
-    gl.enableVertexAttribArray( progDraw.inCol );
-    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.col );
-    gl.vertexAttribPointer( progDraw.inCol, 3, gl.FLOAT, false, 0, 0 ); 
-    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufObj.inx );
-    gl.drawElements( gl.TRIANGLES, 12, gl.UNSIGNED_SHORT, 0 );
-    gl.disableVertexAttribArray( progDraw.pos );
-    gl.disableVertexAttribArray( progDraw.col );
-}
-
-var startTime;
 function Fract( val ) { 
     return val - Math.trunc( val );
 }
-function CalcAng( currentTime, intervall ) {
-    return Fract( (currentTime - startTime) / (1000*intervall) ) * 2.0 * Math.PI;
+function CalcAng( deltaMS, interval ) {
+    return Fract( deltaMS / (1000*interval) ) * 2.0 * Math.PI;
 }
 
-var preTrans = [0, 0, 0];
-var postTrans = [1, 0, 0];
-var axisOfRotation = 2;
-var sliderScale = 100.0;
-function syncFromDocument() {
-    preTrans[0]    = document.getElementById( "preX" ).value / sliderScale;
-    preTrans[1]    = document.getElementById( "preY" ).value / sliderScale;
-    preTrans[2]    = document.getElementById( "preZ" ).value / sliderScale;
-    axisOfRotation = document.getElementById( "axis" ).value;
-    postTrans[0]   = document.getElementById( "postX" ).value / sliderScale;
-    postTrans[1]   = document.getElementById( "postY" ).value / sliderScale;
-    postTrans[2]   = document.getElementById( "postZ" ).value / sliderScale;
-}
+var VertexBuffer = {
+Create: function(attribs, indices, type) {
+    var buffer = { buf: [], attr: [], inx: gl.createBuffer(), inxLen: indices.length, primitive_type: type ? type : gl.TRIANGLES };
+    for (var i=0; i<attribs.length; ++i) {
+        buffer.buf.push(gl.createBuffer());
+        buffer.attr.push({ size : attribs[i].attrSize, loc : attribs[i].attrLoc, no_of: attribs[i].data.length/attribs[i].attrSize });
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer.buf[i]);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array( attribs[i].data ), gl.STATIC_DRAW);
+    }
+    if ( buffer.inxLen > 0 ) {
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer.inx);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( indices ), gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, null);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+    }
+    return buffer;
+},
+Draw: function(bufObj) {
+    for (var i=0; i<bufObj.buf.length; ++i) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, bufObj.buf[i]);
+        gl.vertexAttribPointer(bufObj.attr[i].loc, bufObj.attr[i].size, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray( bufObj.attr[i].loc);
+    }
+    if ( bufObj.inxLen > 0 ) {
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bufObj.inx);
+        gl.drawElements(bufObj.primitive_type, bufObj.inxLen, gl.UNSIGNED_SHORT, 0);
+        gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, null );
+    }
+    else
+        gl.drawArrays(bufObj.primitive_type, 0, bufObj.attr[0].no_of );
+    for (var i=0; i<bufObj.buf.length; ++i)
+       gl.disableVertexAttribArray(bufObj.attr[i].loc);
+    gl.bindBuffer( gl.ARRAY_BUFFER, null );
+} };
 
-var gl;
-var prog;
-var bufObj = {};
-function cameraStart() {
+initScene();
 
-    document.getElementById( "preX" ).value = preTrans[0] * sliderScale;
-    document.getElementById( "preY" ).value = preTrans[1] * sliderScale;
-    document.getElementById( "preZ" ).value = preTrans[2] * sliderScale;
-    document.getElementById( "axis" ).value = axisOfRotation;
-    document.getElementById( "postX" ).value = postTrans[0] * sliderScale;
-    document.getElementById( "postY" ).value = postTrans[1] * sliderScale;
-    document.getElementById( "postZ" ).value = postTrans[2] * sliderScale;
-
-    var canvas = document.getElementById( "camera-canvas");
-    gl = canvas.getContext( "experimental-webgl" );
-    if ( !gl )
-      return;
-
-    progDraw = ShProg.Create( 
-      [ { source : camera_vert, stage : gl.VERTEX_SHADER },
-        { source : camera_frag, stage : gl.FRAGMENT_SHADER }
-      ],
-      [ "u_projectionMat44", "u_viewMat44", "u_modelMat44"] );
-    progDraw.inPos = gl.getAttribLocation( progDraw, "inPos" );
-    progDraw.inCol = gl.getAttribLocation( progDraw, "inCol" );
-    if ( prog == 0 )
-        return;
-
-    var sin120 = 0.8660254;
-    // 0, 1, 2,   0, 2, 3,   0, 3, 1,   1, 3, 2
-    var pos = [ 0.0, 0.0, 1.0,       0.0, -sin120, -0.5,                       sin120 * sin120, 0.5 * sin120, -0.5, 
-                0.0, 0.0, 1.0,       sin120 * sin120, 0.5 * sin120, -0.5,      -sin120 * sin120, 0.5 * sin120, -0.5,
-                0.0, 0.0, 1.0,       -sin120 * sin120, 0.5 * sin120, -0.5,     0.0, -sin120, -0.5,
-                0.0, -sin120, -0.5,  -sin120 * sin120, 0.5 * sin120, -0.5,     sin120 * sin120, 0.5 * sin120, -0.5 ];
-    var col = [ 1.0, 0.0, 0.0,     1.0, 0.0, 0.0,     1.0, 0.0, 0.0,     
-                1.0, 1.0, 0.0,     1.0, 1.0, 0.0,     1.0, 1.0, 0.0, 
-                0.0, 0.0, 1.0,     0.0, 0.0, 1.0,     0.0, 0.0, 1.0,
-                0.0, 1.0, 0.0,     0.0, 1.0, 0.0,     0.0, 1.0, 0.0 ];
-    var inx = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 ];
-    bufObj.pos = gl.createBuffer();
-    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.pos );
-    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( pos ), gl.STATIC_DRAW );
-    bufObj.col = gl.createBuffer();
-    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.col );
-    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( col ), gl.STATIC_DRAW );
-    bufObj.inx = gl.createBuffer();
-    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufObj.inx );
-    gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( inx ), gl.STATIC_DRAW );
-
-    startTime = Date.now();
-    setInterval(drawScene, 50);
-}
+})(); 
 
 </script>
