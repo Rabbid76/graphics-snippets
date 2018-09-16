@@ -510,6 +510,19 @@ bool CFreetypeTexturedFont::DrawText(
   // bind glyph texture 
   _font_texture->Bind( textur_binding_id );
 
+
+  /*
+  TODO $$$
+
+  font shader
+
+  - SSBO font metrics
+  - SSBO (dynamic array) glyph indices
+  - atomic font position 
+  - instance render quad (number of letter) 
+
+  */
+
   // draw_buffer
   size_t no_of_vertices = vertex_attributes.size() / 5; // 5 because of x y z u v
   buffer.DrawArray( Render::TPrimitive::triangles, 0, no_of_vertices, true ); // TODO Render::TPrimitive::trianglestrip + indices / primitive restart

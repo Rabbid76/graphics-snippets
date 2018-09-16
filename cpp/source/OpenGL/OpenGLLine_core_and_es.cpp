@@ -1,7 +1,8 @@
 /******************************************************************//**
 * \brief Implementation of OpenGL line renderer,
-* with the use of "modern" OpenGL (4+) and hight quality shaders,
-* for OpenGL version 4+ and GLSL version 4.20 (`#version 420`).
+* with the use of "modern" OpenGL 4+ core and
+* GLSL version 4.20 (`#version 420 core`) or
+* OpenGL es 3(+) and GLSL ES version 3.00 (`#version 300 es`).
 * 
 * \author  gernot
 * \date    2018-08-01
@@ -12,7 +13,7 @@
 
 // includes
 
-#include <OpenGLLine_4.h>
+#include <OpenGLLine_core_and_es.h>
 
 
 // OpenGL wrapper
@@ -52,7 +53,9 @@ namespace Line
 * \date    2018-09-07
 * \version 1.0
 **********************************************************************/
-CLineHighQuality::CLineHighQuality( void )
+CLineOpenGL_core_and_es::CLineOpenGL_core_and_es( 
+  Render::Program::TViewDataPtr view_data )
+  : _view_data( view_data )
 {}
 
 
@@ -63,7 +66,7 @@ CLineHighQuality::CLineHighQuality( void )
 * \date    2018-09-07
 * \version 1.0
 **********************************************************************/
-CLineHighQuality::~CLineHighQuality()
+CLineOpenGL_core_and_es::~CLineOpenGL_core_and_es()
 {}
 
 
