@@ -27,6 +27,7 @@
 #include <Render_IDrawLine.h>
 #include <OpenGLLine_1_0.h>
 #include <OpenGLLine_2_0.h>
+#include <OpenGLLine_core_and_es.h>
 #include <OpenGL_Matrix_Camera.h>
 #include <OpenGL_SimpleShaderProgram.h>
 
@@ -39,6 +40,7 @@ class CWindow_Glfw
 {
 public:
 
+    CWindow_Glfw( void );
     virtual ~CWindow_Glfw();
 
     void Init( int width, int height, int multisampling, bool doubleBuffer );
@@ -68,6 +70,9 @@ private:
 
     std::unique_ptr<Render::Line::IRender> _line_1;
     std::unique_ptr<Render::Line::IRender> _line_2;
+    std::unique_ptr<Render::Line::IRender> _line_3;
+
+    Render::Program::TViewDataPtr _view_data_ptr;
 };
 
 int main(int argc, char** argv)
@@ -113,6 +118,23 @@ int main(int argc, char** argv)
 
     window.MainLoop();
     return 0;
+}
+
+struct CViewData
+  : public Render::Program::IViewData
+{
+    virtual const Render::Program::TViewData & Data( void ) const
+    {
+        assert( false );
+        return _view_data;
+    }
+
+     Render::Program::TViewData _view_data;
+};
+
+CWindow_Glfw::CWindow_Glfw( void )
+{
+  _view_data_ptr = std::make_shared<CViewData>();
 }
 
 CWindow_Glfw::~CWindow_Glfw()
@@ -209,9 +231,11 @@ void CWindow_Glfw::InitScene( void )
 {
   _line_1 = std::make_unique<OpenGL::Line::CLineOpenGL_1_00>();
   _line_2 = std::make_unique<OpenGL::Line::CLineOpenGL_2_00>( 0 );
+  _line_3 = std::make_unique<OpenGL::Line::CLineOpenGL_core_and_es>( _view_data_ptr, 0 );
 
   _line_1->Init();
   _line_2->Init();
+  _line_3->Init();
 }
 
 
@@ -240,6 +264,17 @@ void CWindow_Glfw::Render( double time_ms )
     {
       glPushMatrix();
       glTranslatef( 0.5f, 0.5f, 0.0f );
+      glScalef( 0.5f, 0.5f, 0.5f );
+
+      RenderTestScene( *_line_2.get() );
+
+      glPopMatrix();
+    }
+
+    if ( _line_3 != nullptr )
+    {
+      glPushMatrix();
+      glTranslatef( -0.5f, -0.5f, 0.0f );
       glScalef( 0.5f, 0.5f, 0.5f );
 
       RenderTestScene( *_line_2.get() );
