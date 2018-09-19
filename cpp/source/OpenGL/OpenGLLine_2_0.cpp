@@ -687,8 +687,8 @@ bool CLineOpenGL_2_00::DrawSequence(
   }
 
   // reserve the cache
-  if ( _elem_cache.size() < _sequence_size + 3 )
-    _elem_cache.resize( _elem_cache.size() + std::max((size_t)3, _min_cache_elems) );
+  if ( _elem_cache.size() < _sequence_size + _tuple_size )
+    _elem_cache.resize( _elem_cache.size() + std::max((size_t)_tuple_size, _min_cache_elems) );
 
   // add the vertex coordinate to the cache
 
@@ -723,8 +723,8 @@ bool CLineOpenGL_2_00::DrawSequence(
   }
 
   // reserve the cache
-  if ( _elem_cache.size() < _sequence_size + 3 )
-    _elem_cache.resize( _elem_cache.size() + std::max((size_t)3, _min_cache_elems) );
+  if ( _elem_cache.size() < _sequence_size + _tuple_size )
+    _elem_cache.resize( _elem_cache.size() + std::max((size_t)_tuple_size, _min_cache_elems) );
 
   // add the vertex coordinate to the cache
 

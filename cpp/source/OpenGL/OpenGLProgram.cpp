@@ -379,10 +379,10 @@ bool CShaderProgram::Link( void )
   // attach shader objects 
   for ( auto shader : _shaders )
   {
-    size_t shader_objbect = shader != nullptr ? shader->ObjectHandle() : 0;
-    if ( shader_objbect == 0 )
+    size_t shader_object = shader != nullptr ? shader->ObjectHandle() : 0;
+    if ( shader_object == 0 )
       continue;
-    glAttachShader( obj, (GLuint)shader_objbect );
+    glAttachShader( obj, (GLuint)shader_object );
   }
 
   // set additional resource bindings
@@ -571,7 +571,7 @@ CIntrospection & CIntrospection::Observe(
     GetSubroutines();
 
 
-  // TODO $$$
+  // TODO $$$ further active resources?
 
   return *this;
 }
@@ -829,8 +829,7 @@ void CIntrospection::GetUniformBlocks( void )
         name[bufferSize-1] = 0;
         names.push_back( name.data() );
       }
-        
-
+      
       // glGetActiveUniformBlockiv
       // GL_UNIFORM_BLOCK_BINDING
       // GL_UNIFORM_BLOCK_DATA_SIZE
@@ -886,7 +885,7 @@ void CIntrospection::GetSubroutines( void )
 				subroutine.m_location = glGetSubroutineUniformLocation( Object(), shaderType, name.data() );
 				subroutine.m_name = name.data();
 				m_subroutineUniform[typeInx][subroutine.m_location] = subroutine;
-			}
+}
 		}
 
     GLib().EvaluateGlError( s_subComponentName );
