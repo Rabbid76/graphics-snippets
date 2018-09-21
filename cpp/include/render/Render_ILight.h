@@ -24,7 +24,7 @@ namespace Render
 {
 
 
-/*XEOMETRIC********************************************************//**
+/******************************************************************//**
 * @brief   Additional properties that specify the behavior of the
 *          light source.
 *
