@@ -87,13 +87,20 @@ const std::string CLineOpenGL_2_00::_line_vert_110 = R"(
 attribute vec4  attr_xyzw;
 attribute float attr_y;
 
-uniform int u_attr_case;
+varying vec4 v_color;
+
+uniform int   u_attr_case;
+uniform vec4  u_color;
+uniform float u_depth_att;
 
 void main()
 {
   vec4 vert_pos = u_attr_case == 0 ? attr_xyzw : vec4(attr_xyzw.x, attr_y, 0.0, 1.0);
   gl_Position   = gl_ModelViewProjectionMatrix * vert_pos;
   gl_ClipVertex = gl_Position;
+
+  float depth   = 0.5 + 0.5 * gl_Position.z / gl_Position.w;
+  v_color       = vec4( mix(u_color.rgb, vec3(0.0), depth * u_depth_att), u_color.a );
 }
 )";
 
@@ -101,11 +108,11 @@ void main()
 const std::string CLineOpenGL_2_00::_line_frag_110 = R"(
 #version 110
 
-uniform vec4 u_color;
+varying vec4 v_color;
 
 void main()
 {
-  gl_FragColor = u_color;
+  gl_FragColor = v_color;
 }
 )";
 
@@ -190,10 +197,11 @@ void CLineOpenGL_2_00::Init( void )
   _line_prog->Link();
   if ( _line_prog->Verify( msg ) == false )
     Error( "link error", msg );
-  _line_color_loc       = glGetUniformLocation( (GLuint)_line_prog->ObjectHandle(), "u_color" );
-  _line_case_loc        = glGetUniformLocation( (GLuint)_line_prog->ObjectHandle(), "u_attr_case" );
-  _line_attrib_xyzw_inx = glGetAttribLocation(  (GLuint)_line_prog->ObjectHandle(), "attr_xyzw" );
-  _line_attrib_y_inx    = glGetAttribLocation(  (GLuint)_line_prog->ObjectHandle(), "attr_y" );
+  _line_color_loc             = glGetUniformLocation( (GLuint)_line_prog->ObjectHandle(), "u_color" );
+  _line_case_loc              = glGetUniformLocation( (GLuint)_line_prog->ObjectHandle(), "u_attr_case" );
+  _line_depth_attenuation_loc = glGetUniformLocation( (GLuint)_line_prog->ObjectHandle(), "u_depth_att" );
+  _line_attrib_xyzw_inx       = glGetAttribLocation(  (GLuint)_line_prog->ObjectHandle(), "attr_xyzw" );
+  _line_attrib_y_inx          = glGetAttribLocation(  (GLuint)_line_prog->ObjectHandle(), "attr_y" );
 }
 
 
@@ -223,7 +231,7 @@ bool CLineOpenGL_2_00::StartSuccessiveLineDrawings( void )
   _line_prog->Use();
 
   // initialize uniforms
-  glUniform4fv( _line_color_loc, 1, _line_color.data() );
+  UpdateParameterUniforms();
   glUniform1i(  _line_case_loc,  0 );
 
   // enable and disable vertex attributes
@@ -396,8 +404,8 @@ bool CLineOpenGL_2_00::Draw(
   {
     _line_prog->Use();
    
-    glUniform4fv( _line_color_loc, 1, _line_color.data() );
-    glUniform1i(  _line_case_loc,  0 );
+    UpdateParameterUniforms();
+    glUniform1i( _line_case_loc,  0 );
     glEnableVertexAttribArray( _line_attrib_xyzw_inx );
     glDisableVertexAttribArray( _line_attrib_y_inx );
   }
@@ -450,8 +458,8 @@ bool CLineOpenGL_2_00::Draw(
   {
     _line_prog->Use();
    
-    glUniform4fv( _line_color_loc, 1, _line_color.data() );
-    glUniform1i(  _line_case_loc,  0 );
+    UpdateParameterUniforms();
+    glUniform1i( _line_case_loc,  0 );
     glEnableVertexAttribArray( _line_attrib_xyzw_inx );
     glDisableVertexAttribArray( _line_attrib_y_inx );
   }
@@ -503,14 +511,14 @@ bool CLineOpenGL_2_00::Draw(
   {
     _line_prog->Use();
    
-    glUniform4fv( _line_color_loc, 1, _line_color.data() );
-    glUniform1i(  _line_case_loc,  1 );
+    UpdateParameterUniforms();
+    glUniform1i( _line_case_loc,  1 );
     glEnableVertexAttribArray( _line_attrib_xyzw_inx );
     glEnableVertexAttribArray( _line_attrib_y_inx );
   }
   else if ( _attribute_case == 0 )
   {
-    glUniform1i(  _line_case_loc,  1 );
+    glUniform1i( _line_case_loc,  1 );
     glEnableVertexAttribArray( _line_attrib_y_inx );
     _attribute_case = 1;
   }
@@ -558,14 +566,14 @@ bool CLineOpenGL_2_00::Draw(
   {
     _line_prog->Use();
    
-    glUniform4fv( _line_color_loc, 1, _line_color.data() );
+    UpdateParameterUniforms();
     glUniform1i(  _line_case_loc,  1 );
     glEnableVertexAttribArray( _line_attrib_xyzw_inx );
     glEnableVertexAttribArray( _line_attrib_y_inx );
   }
   else if ( _attribute_case == 0 )
   {
-    glUniform1i(  _line_case_loc,  1 );
+    glUniform1i( _line_case_loc,  1 );
     glEnableVertexAttribArray( _line_attrib_y_inx );
     _attribute_case = 1;
   }
@@ -636,14 +644,14 @@ bool CLineOpenGL_2_00::EndSequence( void )
   {
     _line_prog->Use();
    
-    glUniform4fv( _line_color_loc, 1, _line_color.data() );
+    UpdateParameterUniforms();
     glUniform1i(  _line_case_loc,  0 );
     glEnableVertexAttribArray( _line_attrib_xyzw_inx );
     glDisableVertexAttribArray( _line_attrib_y_inx );
   }
   else if ( _attribute_case != 0 )
   {
-    glUniform1i(  _line_case_loc,  0 );
+    glUniform1i( _line_case_loc,  0 );
     glDisableVertexAttribArray( _line_attrib_y_inx );
     _attribute_case = 0;
   }
@@ -800,6 +808,20 @@ bool CLineOpenGL_2_00::DrawSequence(
   _sequence_size += coords_size;
 
   return true;
+}
+
+
+/******************************************************************//**
+* \brief Set style and color parameter uniforms.  
+* 
+* \author  gernot
+* \date    2018-09-21
+* \version 1.0
+**********************************************************************/
+void CLineOpenGL_2_00::UpdateParameterUniforms( void )
+{
+  glUniform4fv( _line_color_loc, 1, _line_color.data() );
+  glUniform1f( _line_depth_attenuation_loc, _line_style._depth_attenuation );
 }
 
 

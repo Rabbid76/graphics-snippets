@@ -72,12 +72,28 @@ public:
 
 struct TStyle
 {
-  t_fp _width        = 1.0f; //!< line width
-  int  _stipple_type = 1;    //!< type of line stippling
+  TStyle( void ) = default;
+  TStyle( const TStyle & ) = default;
 
-  // TODO $$$ line cap
+  TStyle( t_fp width )
+    : _width( width )
+  {}
+  
+  TStyle( t_fp width, int stipple_type )
+    : _width( width )
+    , _stipple_type( stipple_type )
+  {}
+
+  TStyle( t_fp width, int stipple_type, t_fp depth_attenuation  )
+    : _width( width )
+    , _stipple_type( stipple_type )
+    , _depth_attenuation( depth_attenuation )
+  {}
+
+  t_fp _width             = 1.0f; //!< line width
+  int  _stipple_type      = 1;    //!< type of line stippling
+  t_fp _depth_attenuation = 0.0f; //!< attenuation of the line color by depth
 };
-
 
 enum class TArrowStyleProperty
 {
@@ -94,7 +110,6 @@ struct TArrowStyle
   TVec2                       _size{ 0.0f };
   Line::TArrowStyleProperties _properites;
 };
-
 
 //---------------------------------------------------------------------
 // ILine

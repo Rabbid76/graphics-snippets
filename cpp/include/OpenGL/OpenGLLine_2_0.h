@@ -75,6 +75,9 @@ public:
   CLineOpenGL_2_00( size_t min_cache_elems );
   virtual ~CLineOpenGL_2_00();
 
+  const Render::Line::TStyle & LineStyle( void ) const { return _line_style; }
+  void LineStyle( const Render::Line::TStyle &style ) { _line_style = style; }
+
   //! Initialize the line renderer
   virtual void Init( void ) override;
 
@@ -114,6 +117,9 @@ public:
 
 protected:
 
+  //! set style and color parameter uniforms
+  void UpdateParameterUniforms( void );
+
   //! Trace error message
   virtual void Error( const std::string &kind, const std::string &message );
 
@@ -123,10 +129,11 @@ private:
   static const std::string     _line_frag_110;                             //!< fragment shader for uniform colored lines 
                                                                            
   Render::Program::TProgramPtr _line_prog;                                 //!< shader program for consecutive vertex attributes
-  int                          _line_color_loc;                            //!< uniform location of color  
-  int                          _line_case_loc;                             //!< uniform location of attribute case  
-  int                          _line_attrib_xyzw_inx;                      //!< attribute index of the vertex coordinate 
-  int                          _line_attrib_y_inx;                         //!< attribute index of the vertex separated y coordinate 
+  int                          _line_color_loc{ -1 };                      //!< uniform location of color  
+  int                          _line_depth_attenuation_loc{ -1 };          //!< uniform location of depth attenuation parameter
+  int                          _line_case_loc{ -1 };                       //!< uniform location of attribute case  
+  int                          _line_attrib_xyzw_inx{ -1 };                //!< attribute index of the vertex coordinate 
+  int                          _line_attrib_y_inx{ -1 };                   //!< attribute index of the vertex separated y coordinate 
                                                                            
   bool                         _initilized{ false };                       //!< initialization flag of the object
   bool                         _successive_drawing{ false };               //!< true: optimized successive drawing of lines is enabled

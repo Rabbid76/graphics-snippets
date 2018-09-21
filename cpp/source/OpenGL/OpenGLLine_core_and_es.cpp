@@ -59,6 +59,8 @@ namespace Line
 // Line stipple specification
 // TODO #version 420 core / #version 300 es
 
+// TODO $$$ depth attenuation
+
 const std::string CLineOpenGL_core_and_es::_line_vert_110 = R"(
 #version 110
 
@@ -314,6 +316,8 @@ Render::Line::IRender & CLineOpenGL_core_and_es::SetStyle(
     assert( false );
     return *this;
   }
+
+  // TODO $$$ set depth attenuation
 
   _line_style = style;
 
