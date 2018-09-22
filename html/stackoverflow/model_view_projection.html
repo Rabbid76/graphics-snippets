@@ -245,7 +245,7 @@ ShProg.Link = function( shaderObjs ) {
         gl.attachShader( prog, shaderObjs[i_sh] );
     gl.linkProgram( prog );
     status = gl.getProgramParameter( prog, gl.LINK_STATUS );
-    if ( !status ) alert("Could not initialise shaders");
+    if ( !status ) alert(gl.getProgramInfoLog(prog));
     gl.useProgram( null );
     return status ? prog : 0;
 }
