@@ -711,38 +711,40 @@ ShProg.Link = function (shaderObjs) {
     return status ? prog : null;
 }
 
-var VertexBuffer = {};
-VertexBuffer.Create = function (attributes, indices) {
-    var buffer = {};
-    buffer.buf = [];
-    buffer.attr = []
-    for (var i = 0; i < attributes.length; ++i) {
+var VertexBuffer = {
+Create: function(attribs, indices, type) {
+    var buffer = { buf: [], attr: [], inx: gl.createBuffer(), inxLen: indices.length, primitive_type: type ? type : gl.TRIANGLES };
+    for (var i=0; i<attribs.length; ++i) {
         buffer.buf.push(gl.createBuffer());
-        buffer.attr.push({ size: attributes[i].attrSize, loc: attributes[i].attrLoc });
+        buffer.attr.push({ size : attribs[i].attrSize, loc : attribs[i].attrLoc, no_of: attribs[i].data.length/attribs[i].attrSize });
         gl.bindBuffer(gl.ARRAY_BUFFER, buffer.buf[i]);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(attributes[i].data), gl.STATIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array( attribs[i].data ), gl.STATIC_DRAW);
     }
-    buffer.inx = gl.createBuffer();
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer.inx);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
-    buffer.inxLen = indices.length;
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+    if ( buffer.inxLen > 0 ) {
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer.inx);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( indices ), gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+    }
     return buffer;
-}
-VertexBuffer.Draw = function (bufObj) {
-    for (var i = 0; i < bufObj.buf.length; ++i) {
+},
+Draw: function(bufObj) {
+    for (var i=0; i<bufObj.buf.length; ++i) {
         gl.bindBuffer(gl.ARRAY_BUFFER, bufObj.buf[i]);
         gl.vertexAttribPointer(bufObj.attr[i].loc, bufObj.attr[i].size, gl.FLOAT, false, 0, 0);
-        gl.enableVertexAttribArray(bufObj.attr[i].loc);
+        gl.enableVertexAttribArray( bufObj.attr[i].loc);
     }
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bufObj.inx);
-    gl.drawElements(gl.TRIANGLES, bufObj.inxLen, gl.UNSIGNED_SHORT, 0);
-    for (var i = 0; i < bufObj.buf.length; ++i)
+    if ( bufObj.inxLen > 0 ) {
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bufObj.inx);
+        gl.drawElements(bufObj.primitive_type, bufObj.inxLen, gl.UNSIGNED_SHORT, 0);
+        gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, null );
+    }
+    else
+        gl.drawArrays(bufObj.primitive_type, 0, bufObj.attr[0].no_of );
+    for (var i=0; i<bufObj.buf.length; ++i)
         gl.disableVertexAttribArray(bufObj.attr[i].loc);
-    gl.bindBuffer(gl.ARRAY_BUFFER, null);
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
-}
+    gl.bindBuffer( gl.ARRAY_BUFFER, null );
+} };
 
 initScene();
 

@@ -549,129 +549,131 @@ this.domElement.addEventListener( 'mousemove', function(e) { cam.OnMouseMove(e) 
 //this.domElement.addEventListener( 'DOMMouseScroll', hid_events.onMouseWheel, false ); // firefox
 }
 
-            var Texture = {};
-            Texture.HandleLoadedTexture2D = function (texture, flipY) {
-                gl.activeTexture(gl.TEXTURE0 + texture.unit);
-                gl.bindTexture(gl.TEXTURE_2D, texture.obj);
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.image);
-                if (flipY != undefined && flipY == true)
-                    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-                if (texture.unit == height_map_unit)
-                    height_map_size = [texture.image.width, texture.image.height];
-                return texture;
-            }
-            Texture.LoadTexture2D = function (unit, name) {
-                var texture = {};
-                texture.obj = gl.createTexture();
-                texture.unit = unit;
-                texture.image = new Image();
-                texture.image.setAttribute('crossorigin', 'anonymous');
-                texture.image.onload = function () {
-                    Texture.HandleLoadedTexture2D(texture, true)
-                }
-                texture.image.src = name;
-                return texture;
-            }
+var Texture = {};
+Texture.HandleLoadedTexture2D = function (texture, flipY) {
+    gl.activeTexture(gl.TEXTURE0 + texture.unit);
+    gl.bindTexture(gl.TEXTURE_2D, texture.obj);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.image);
+    if (flipY != undefined && flipY == true)
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+    if (texture.unit == height_map_unit)
+        height_map_size = [texture.image.width, texture.image.height];
+    return texture;
+}
+Texture.LoadTexture2D = function (unit, name) {
+    var texture = {};
+    texture.obj = gl.createTexture();
+    texture.unit = unit;
+    texture.image = new Image();
+    texture.image.setAttribute('crossorigin', 'anonymous');
+    texture.image.onload = function () {
+        Texture.HandleLoadedTexture2D(texture, true)
+    }
+    texture.image.src = name;
+    return texture;
+}
 
-            var ShProg = {};
-            ShProg.Create = function (shaderList) {
-                var shaderObjs = [];
-                for (var i_sh = 0; i_sh < shaderList.length; ++i_sh) {
-                    var shderObj = this.Compile(shaderList[i_sh].source, shaderList[i_sh].stage);
-                    if (shderObj == 0)
-                        return 0;
-                    shaderObjs.push(shderObj);
-                }
-                var prog = {}
-                prog.progObj = this.Link(shaderObjs)
-                if (prog.progObj) {
-                    prog.attrInx = {};
-                    var noOfAttributes = gl.getProgramParameter(prog.progObj, gl.ACTIVE_ATTRIBUTES);
-                    for (var i_n = 0; i_n < noOfAttributes; ++i_n) {
-                        var name = gl.getActiveAttrib(prog.progObj, i_n).name;
-                        prog.attrInx[name] = gl.getAttribLocation(prog.progObj, name);
-                    }
-                    prog.uniLoc = {};
-                    var noOfUniforms = gl.getProgramParameter(prog.progObj, gl.ACTIVE_UNIFORMS);
-                    for (var i_n = 0; i_n < noOfUniforms; ++i_n) {
-                        var name = gl.getActiveUniform(prog.progObj, i_n).name;
-                        prog.uniLoc[name] = gl.getUniformLocation(prog.progObj, name);
-                    }
-                }
-                return prog;
-            }
-            ShProg.AttrI = function (prog, name) { return prog.attrInx[name]; }
-            ShProg.UniformL = function (prog, name) { return prog.uniLoc[name]; }
-            ShProg.Use = function (prog) { gl.useProgram(prog.progObj); }
-            ShProg.SetI1 = function (prog, name, val) { if (prog.uniLoc[name]) gl.uniform1i(prog.uniLoc[name], val); }
-            ShProg.SetF1 = function (prog, name, val) { if (prog.uniLoc[name]) gl.uniform1f(prog.uniLoc[name], val); }
-            ShProg.SetF2 = function (prog, name, arr) { if (prog.uniLoc[name]) gl.uniform2fv(prog.uniLoc[name], arr); }
-            ShProg.SetF3 = function (prog, name, arr) { if (prog.uniLoc[name]) gl.uniform3fv(prog.uniLoc[name], arr); }
-            ShProg.SetF4 = function (prog, name, arr) { if (prog.uniLoc[name]) gl.uniform4fv(prog.uniLoc[name], arr); }
-            ShProg.SetM33 = function (prog, name, mat) { if (prog.uniLoc[name]) gl.uniformMatrix3fv(prog.uniLoc[name], false, mat); }
-            ShProg.SetM44 = function (prog, name, mat) { if (prog.uniLoc[name]) gl.uniformMatrix4fv(prog.uniLoc[name], false, mat); }
-            ShProg.Compile = function (source, shaderStage) {
-                var shaderScript = document.getElementById(source);
-                if (shaderScript)
-                    source = shaderScript.text;
-                var shaderObj = gl.createShader(shaderStage);
-                gl.shaderSource(shaderObj, source);
-                gl.compileShader(shaderObj);
-                var status = gl.getShaderParameter(shaderObj, gl.COMPILE_STATUS);
-                if (!status) alert(gl.getShaderInfoLog(shaderObj));
-                return status ? shaderObj : null;
-            }
-            ShProg.Link = function (shaderObjs) {
-                var prog = gl.createProgram();
-                for (var i_sh = 0; i_sh < shaderObjs.length; ++i_sh)
-                    gl.attachShader(prog, shaderObjs[i_sh]);
-                gl.linkProgram(prog);
-                status = gl.getProgramParameter(prog, gl.LINK_STATUS);
-                if (!status) alert("Could not initialise shaders");
-                gl.useProgram(null);
-                return status ? prog : null;
-            }
+var ShProg = {};
+ShProg.Create = function (shaderList) {
+    var shaderObjs = [];
+    for (var i_sh = 0; i_sh < shaderList.length; ++i_sh) {
+        var shderObj = this.Compile(shaderList[i_sh].source, shaderList[i_sh].stage);
+        if (shderObj == 0)
+            return 0;
+        shaderObjs.push(shderObj);
+    }
+    var prog = {}
+    prog.progObj = this.Link(shaderObjs)
+    if (prog.progObj) {
+        prog.attrInx = {};
+        var noOfAttributes = gl.getProgramParameter(prog.progObj, gl.ACTIVE_ATTRIBUTES);
+        for (var i_n = 0; i_n < noOfAttributes; ++i_n) {
+            var name = gl.getActiveAttrib(prog.progObj, i_n).name;
+            prog.attrInx[name] = gl.getAttribLocation(prog.progObj, name);
+        }
+        prog.uniLoc = {};
+        var noOfUniforms = gl.getProgramParameter(prog.progObj, gl.ACTIVE_UNIFORMS);
+        for (var i_n = 0; i_n < noOfUniforms; ++i_n) {
+            var name = gl.getActiveUniform(prog.progObj, i_n).name;
+            prog.uniLoc[name] = gl.getUniformLocation(prog.progObj, name);
+        }
+    }
+    return prog;
+}
+ShProg.AttrI = function (prog, name) { return prog.attrInx[name]; }
+ShProg.UniformL = function (prog, name) { return prog.uniLoc[name]; }
+ShProg.Use = function (prog) { gl.useProgram(prog.progObj); }
+ShProg.SetI1 = function (prog, name, val) { if (prog.uniLoc[name]) gl.uniform1i(prog.uniLoc[name], val); }
+ShProg.SetF1 = function (prog, name, val) { if (prog.uniLoc[name]) gl.uniform1f(prog.uniLoc[name], val); }
+ShProg.SetF2 = function (prog, name, arr) { if (prog.uniLoc[name]) gl.uniform2fv(prog.uniLoc[name], arr); }
+ShProg.SetF3 = function (prog, name, arr) { if (prog.uniLoc[name]) gl.uniform3fv(prog.uniLoc[name], arr); }
+ShProg.SetF4 = function (prog, name, arr) { if (prog.uniLoc[name]) gl.uniform4fv(prog.uniLoc[name], arr); }
+ShProg.SetM33 = function (prog, name, mat) { if (prog.uniLoc[name]) gl.uniformMatrix3fv(prog.uniLoc[name], false, mat); }
+ShProg.SetM44 = function (prog, name, mat) { if (prog.uniLoc[name]) gl.uniformMatrix4fv(prog.uniLoc[name], false, mat); }
+ShProg.Compile = function (source, shaderStage) {
+    var shaderScript = document.getElementById(source);
+    if (shaderScript)
+        source = shaderScript.text;
+    var shaderObj = gl.createShader(shaderStage);
+    gl.shaderSource(shaderObj, source);
+    gl.compileShader(shaderObj);
+    var status = gl.getShaderParameter(shaderObj, gl.COMPILE_STATUS);
+    if (!status) alert(gl.getShaderInfoLog(shaderObj));
+    return status ? shaderObj : null;
+}
+ShProg.Link = function (shaderObjs) {
+    var prog = gl.createProgram();
+    for (var i_sh = 0; i_sh < shaderObjs.length; ++i_sh)
+        gl.attachShader(prog, shaderObjs[i_sh]);
+    gl.linkProgram(prog);
+    status = gl.getProgramParameter(prog, gl.LINK_STATUS);
+    if (!status) alert("Could not initialise shaders");
+    gl.useProgram(null);
+    return status ? prog : null;
+}
 
-            var VertexBuffer = {};
-            VertexBuffer.Create = function (attributes, indices) {
-                var buffer = {};
-                buffer.buf = [];
-                buffer.attr = []
-                for (var i = 0; i < attributes.length; ++i) {
-                    buffer.buf.push(gl.createBuffer());
-                    buffer.attr.push({ size: attributes[i].attrSize, loc: attributes[i].attrLoc });
-                    gl.bindBuffer(gl.ARRAY_BUFFER, buffer.buf[i]);
-                    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(attributes[i].data), gl.STATIC_DRAW);
-                }
-                buffer.inx = gl.createBuffer();
-                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer.inx);
-                gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
-                buffer.inxLen = indices.length;
-                gl.bindBuffer(gl.ARRAY_BUFFER, null);
-                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
-                return buffer;
-            }
-            VertexBuffer.Draw = function (bufObj) {
-                for (var i = 0; i < bufObj.buf.length; ++i) {
-                    gl.bindBuffer(gl.ARRAY_BUFFER, bufObj.buf[i]);
-                    gl.vertexAttribPointer(bufObj.attr[i].loc, bufObj.attr[i].size, gl.FLOAT, false, 0, 0);
-                    gl.enableVertexAttribArray(bufObj.attr[i].loc);
-                }
-                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bufObj.inx);
-                gl.drawElements(gl.TRIANGLES, bufObj.inxLen, gl.UNSIGNED_SHORT, 0);
-                for (var i = 0; i < bufObj.buf.length; ++i)
-                    gl.disableVertexAttribArray(bufObj.attr[i].loc);
-                gl.bindBuffer(gl.ARRAY_BUFFER, null);
-                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
-            }
+var VertexBuffer = {
+Create: function(attribs, indices, type) {
+    var buffer = { buf: [], attr: [], inx: gl.createBuffer(), inxLen: indices.length, primitive_type: type ? type : gl.TRIANGLES };
+    for (var i=0; i<attribs.length; ++i) {
+        buffer.buf.push(gl.createBuffer());
+        buffer.attr.push({ size : attribs[i].attrSize, loc : attribs[i].attrLoc, no_of: attribs[i].data.length/attribs[i].attrSize });
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer.buf[i]);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array( attribs[i].data ), gl.STATIC_DRAW);
+    }
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+    if ( buffer.inxLen > 0 ) {
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer.inx);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( indices ), gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+    }
+    return buffer;
+},
+Draw: function(bufObj) {
+    for (var i=0; i<bufObj.buf.length; ++i) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, bufObj.buf[i]);
+        gl.vertexAttribPointer(bufObj.attr[i].loc, bufObj.attr[i].size, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray( bufObj.attr[i].loc);
+    }
+    if ( bufObj.inxLen > 0 ) {
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bufObj.inx);
+        gl.drawElements(bufObj.primitive_type, bufObj.inxLen, gl.UNSIGNED_SHORT, 0);
+        gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, null );
+    }
+    else
+        gl.drawArrays(bufObj.primitive_type, 0, bufObj.attr[0].no_of );
+    for (var i=0; i<bufObj.buf.length; ++i)
+        gl.disableVertexAttribArray(bufObj.attr[i].loc);
+    gl.bindBuffer( gl.ARRAY_BUFFER, null );
+} };
 
-            initScene();
+initScene();
 
-        })();
-    </script>
+})();
+</script>
 
 </body>

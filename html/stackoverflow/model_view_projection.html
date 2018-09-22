@@ -37,6 +37,22 @@ html,body { margin: 0; overflow: hidden; }
 </style>
 
 <body>
+
+<form id="gui" name="inputs">
+    <table>
+        <tr> <td> <font color= #CCF>field of view angle</font> </td> 
+             <td> <input type="range" id="fov_input" min="30" max="150" value="90"/></td> </tr>
+        <tr> <td> <font color=#CCF>animate view</font> </td> 
+             <td> <input type="checkbox" id="chg_view" checked="1" /></td></tr> 
+        <tr> <td> <font color=#CCF>rotate model</font> </td> 
+             <td> <input type="checkbox" id="rot_model" checked="1" /></td></tr>     
+        <tr> <td> <font color= #CCF><span id="fov">0</span></font> </td> </tr>
+        <tr> <td> <font color= #CCF><span id="view_x">0</span></font> </td> </tr>
+        <tr> <td> <font color= #CCF><span id="view_y">0</span></font> </td> </tr>
+        <tr> <td> <font color= #CCF><span id="view_z">0</span></font> </td> </tr>
+    </table>
+</form> 
+
 <canvas id="camera-canvas" style="border: none"></canvas>
 </body>
 
@@ -48,29 +64,38 @@ var gl, canvas, vp_size, prog, bufObj = {};
 
 function render(deltaMS) {
 
+    var fov_val = parseInt(document.getElementById( "fov_input" ).value);
+    var chg_view = document.getElementById( "chg_view" ).checked;
+    var rot_model = document.getElementById( "rot_model" ).checked;
+
     Camera.create();
+    Camera.fov_y = fov_val;
     Camera.vp = [canvas.width, canvas.height];
-    Camera.pos = EllipticalPosition( 7, 4, CalcAng( deltaMS, 10.0 ) );
+    if ( chg_view )
+      Camera.pos = EllipticalPosition( 7, 4, CalcAng( deltaMS, 10.0 ) );
+
+    document.getElementById( "fov" ).innerHTML = "filed of view (y axis, degrees): " + (fov_val<100 ? "0" : "") + fov_val + "°";
+    document.getElementById( "view_x" ).innerHTML = "view position x: " + Camera.pos[0].toFixed(5);
+    document.getElementById( "view_y" ).innerHTML = "view position y: " + Camera.pos[1].toFixed(5); 
+    document.getElementById( "view_z" ).innerHTML = "view position z: " + Camera.pos[2].toFixed(5); 
+
+    var prj_mat = Camera.Perspective();
+    var view_mat = Camera.LookAt();
+    var model_mat = IdentM44();
+    if ( rot_model ) {
+        model_mat = RotateAxis( model_mat, CalcAng(deltaMS, 17.0), 0 );
+        model_mat = RotateAxis( model_mat, CalcAng(deltaMS, 13.0), 1 );
+    }
         
     gl.viewport( 0, 0, canvas.width, canvas.height );
     gl.enable( gl.DEPTH_TEST );
     gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
     ShProg.Use( progDraw );
-    ShProg.SetM44( progDraw, "u_projectionMat44", Camera.Perspective() );
-    ShProg.SetM44( progDraw, "u_viewMat44", Camera.LookAt() );
-        
-    ShProg.SetM44( progDraw, "u_modelMat44", IdentM44() );
-    gl.enableVertexAttribArray( progDraw.inPos );
-    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.pos );
-    gl.vertexAttribPointer( progDraw.inPos, 3, gl.FLOAT, false, 0, 0 ); 
-    gl.enableVertexAttribArray( progDraw.inCol );
-    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.col );
-    gl.vertexAttribPointer( progDraw.inCol, 3, gl.FLOAT, false, 0, 0 ); 
-    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufObj.inx );
-    gl.drawElements( gl.TRIANGLES, 12, gl.UNSIGNED_SHORT, 0 );
-    gl.disableVertexAttribArray( progDraw.pos );
-    gl.disableVertexAttribArray( progDraw.col );
+    ShProg.SetM44( progDraw, "u_projectionMat44", prj_mat );
+    ShProg.SetM44( progDraw, "u_viewMat44", view_mat );
+    ShProg.SetM44( progDraw, "u_modelMat44", model_mat );
+    VertexBuffer.Draw( bufObj );
 
     requestAnimationFrame(render);
 }
@@ -97,19 +122,14 @@ function initScene() {
     var pos = [ 0.0, 0.0, 1.0, 0.0, -sin120, -0.5, sin120 * sin120, 0.5 * sin120, -0.5, -sin120 * sin120, 0.5 * sin120, -0.5 ];
     var col = [ 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0 ];
     var inx = [ 0, 1, 2, 0, 2, 3, 0, 3, 1, 1, 3, 2 ];
-    bufObj.pos = gl.createBuffer();
-    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.pos );
-    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( pos ), gl.STATIC_DRAW );
-    bufObj.col = gl.createBuffer();
-    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.col );
-    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( col ), gl.STATIC_DRAW );
-    bufObj.inx = gl.createBuffer();
-    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufObj.inx );
-    gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( inx ), gl.STATIC_DRAW );
+    bufObj = VertexBuffer.Create(
+      [ { data : pos, attrSize : 3, attrLoc : progDraw.inPos },
+        { data : col, attrSize : 3, attrLoc : progDraw.inCol } ],
+        inx );
 
     window.onresize = resize;
     resize();
-    requestAnimationFrame(render);v
+    requestAnimationFrame(render);
 }
 
 function resize() {
@@ -122,6 +142,18 @@ function resize() {
 
 function IdentM44() { return [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]; }
 
+function RotateAxis(matA, angRad, axis) {
+    var aMap = [ [1, 2], [2, 0], [0, 1] ];
+    var a0 = aMap[axis][0], a1 = aMap[axis][1]; 
+    var sinAng = Math.sin(angRad), cosAng = Math.cos(angRad);
+    var matB = matA.slice(0);
+    for ( var i = 0; i < 3; ++ i ) {
+        matB[a0*4+i] = matA[a0*4+i] * cosAng + matA[a1*4+i] * sinAng;
+        matB[a1*4+i] = matA[a0*4+i] * -sinAng + matA[a1*4+i] * cosAng;
+    }
+    return matB;
+}
+
 function Cross( a, b ) { return [ a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0], 0.0 ]; }
 function Dot( a, b ) { return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; }
 function Normalize( v ) {
@@ -131,12 +163,12 @@ function Normalize( v ) {
 
 var Camera = {};
 Camera.create = function() {
-    this.pos    = [0, 8, 0.5];
+    this.pos    = [0, 3, 0];
     this.target = [0, 0, 0];
     this.up     = [0, 0, 1];
     this.fov_y  = 90;
     this.vp     = [800, 600];
-    this.near   = 0.5;
+    this.near   = 0.1;
     this.far    = 100.0;
 }
 Camera.Perspective = function() {
@@ -237,18 +269,20 @@ function EllipticalPosition( a, b, angRag ) {
 }
 
 var VertexBuffer = {
-Create: function(attribs, indices) {
-    var buffer = { buf: [], attr: [], inx: gl.createBuffer(), inxLen: indices.length };
+Create: function(attribs, indices, type) {
+    var buffer = { buf: [], attr: [], inx: gl.createBuffer(), inxLen: indices.length, primitive_type: type ? type : gl.TRIANGLES };
     for (var i=0; i<attribs.length; ++i) {
         buffer.buf.push(gl.createBuffer());
-        buffer.attr.push({ size : attribs[i].attrSize, loc : attribs[i].attrLoc });
+        buffer.attr.push({ size : attribs[i].attrSize, loc : attribs[i].attrLoc, no_of: attribs[i].data.length/attribs[i].attrSize });
         gl.bindBuffer(gl.ARRAY_BUFFER, buffer.buf[i]);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array( attribs[i].data ), gl.STATIC_DRAW);
     }
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer.inx);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( indices ), gl.STATIC_DRAW);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+    if ( buffer.inxLen > 0 ) {
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer.inx);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( indices ), gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+    }
     return buffer;
 },
 Draw: function(bufObj) {
@@ -257,12 +291,16 @@ Draw: function(bufObj) {
         gl.vertexAttribPointer(bufObj.attr[i].loc, bufObj.attr[i].size, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray( bufObj.attr[i].loc);
     }
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bufObj.inx);
-    gl.drawElements(bufObj.primitve_type ? bufObj.primitve_type : gl.TRIANGLES, bufObj.inxLen, gl.UNSIGNED_SHORT, 0);
+    if ( bufObj.inxLen > 0 ) {
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bufObj.inx);
+        gl.drawElements(bufObj.primitive_type, bufObj.inxLen, gl.UNSIGNED_SHORT, 0);
+        gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, null );
+    }
+    else
+        gl.drawArrays(bufObj.primitive_type, 0, bufObj.attr[0].no_of );
     for (var i=0; i<bufObj.buf.length; ++i)
-       gl.disableVertexAttribArray(bufObj.attr[i].loc);
+        gl.disableVertexAttribArray(bufObj.attr[i].loc);
     gl.bindBuffer( gl.ARRAY_BUFFER, null );
-    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, null );
 } };
 
 initScene();
