@@ -74,7 +74,7 @@ html,body { margin: 0; overflow: hidden; }
 
 (function loadscene() {
 
-var gl, canvas, vp_size, prog, bufObj, bufAxis, preTrans = [0, 1, 0.5], postTrans = [-0.5, 0, -1], axisOfRotation = 2, sliderScale = 100.0;
+var gl, canvas, vp_size, prog, bufObj, bufAxis, preTrans = [0, 1, 0.5], postTrans = [0.5, 0, -1], axisOfRotation = 2, sliderScale = 100.0;
 
 function getSlider(n) { return document.getElementById(n).value * 2 / sliderScale; }
 function syncFromDocument() {
@@ -266,7 +266,7 @@ function Normalize( v ) {
 
 var Camera = {};
 Camera.create = function() {
-    this.pos    = [0, 5, 0.4];
+    this.pos    = [0, -5, 0.4];
     this.target = [0, 0, 0];
     this.up     = [0, 0, 1];
     this.fov_y  = 90;
