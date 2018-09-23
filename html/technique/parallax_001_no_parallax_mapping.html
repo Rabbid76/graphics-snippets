@@ -502,14 +502,12 @@ Texture.LoadTexture2D = function (unit, name) {
     return texture;
 }
 
-var ShProg = {};
-ShProg.Create = function (shaderList) {
+var ShProg = {
+Create: function (shaderList) {
     var shaderObjs = [];
     for (var i_sh = 0; i_sh < shaderList.length; ++i_sh) {
         var shderObj = this.Compile(shaderList[i_sh].source, shaderList[i_sh].stage);
-        if (shderObj == 0)
-            return 0;
-        shaderObjs.push(shderObj);
+        if (shderObj) shaderObjs.push(shderObj);
     }
     var prog = {}
     prog.progObj = this.Link(shaderObjs)
@@ -528,18 +526,18 @@ ShProg.Create = function (shaderList) {
         }
     }
     return prog;
-}
-ShProg.AttrI = function (prog, name) { return prog.attrInx[name]; }
-ShProg.UniformL = function (prog, name) { return prog.uniLoc[name]; }
-ShProg.Use = function (prog) { gl.useProgram(prog.progObj); }
-ShProg.SetI1 = function (prog, name, val) { if (prog.uniLoc[name]) gl.uniform1i(prog.uniLoc[name], val); }
-ShProg.SetF1 = function (prog, name, val) { if (prog.uniLoc[name]) gl.uniform1f(prog.uniLoc[name], val); }
-ShProg.SetF2 = function (prog, name, arr) { if (prog.uniLoc[name]) gl.uniform2fv(prog.uniLoc[name], arr); }
-ShProg.SetF3 = function (prog, name, arr) { if (prog.uniLoc[name]) gl.uniform3fv(prog.uniLoc[name], arr); }
-ShProg.SetF4 = function (prog, name, arr) { if (prog.uniLoc[name]) gl.uniform4fv(prog.uniLoc[name], arr); }
-ShProg.SetM33 = function (prog, name, mat) { if (prog.uniLoc[name]) gl.uniformMatrix3fv(prog.uniLoc[name], false, mat); }
-ShProg.SetM44 = function (prog, name, mat) { if (prog.uniLoc[name]) gl.uniformMatrix4fv(prog.uniLoc[name], false, mat); }
-ShProg.Compile = function (source, shaderStage) {
+},
+AttrI: function (prog, name) { return prog.attrInx[name]; },
+UniformL: function (prog, name) { return prog.uniLoc[name]; },
+Use: function (prog) { gl.useProgram(prog.progObj); },
+SetI1: function (prog, name, val) { if (prog.uniLoc[name]) gl.uniform1i(prog.uniLoc[name], val); },
+SetF1: function (prog, name, val) { if (prog.uniLoc[name]) gl.uniform1f(prog.uniLoc[name], val); },
+SetF2: function (prog, name, arr) { if (prog.uniLoc[name]) gl.uniform2fv(prog.uniLoc[name], arr); },
+SetF3: function (prog, name, arr) { if (prog.uniLoc[name]) gl.uniform3fv(prog.uniLoc[name], arr); },
+SetF4: function (prog, name, arr) { if (prog.uniLoc[name]) gl.uniform4fv(prog.uniLoc[name], arr); },
+SetM33: function (prog, name, mat) { if (prog.uniLoc[name]) gl.uniformMatrix3fv(prog.uniLoc[name], false, mat); },
+SetM44: function (prog, name, mat) { if (prog.uniLoc[name]) gl.uniformMatrix4fv(prog.uniLoc[name], false, mat); },
+Compile: function (source, shaderStage) {
     var shaderScript = document.getElementById(source);
     if (shaderScript)
         source = shaderScript.text;
@@ -549,17 +547,16 @@ ShProg.Compile = function (source, shaderStage) {
     var status = gl.getShaderParameter(shaderObj, gl.COMPILE_STATUS);
     if (!status) alert(gl.getShaderInfoLog(shaderObj));
     return status ? shaderObj : null;
-}
-ShProg.Link = function (shaderObjs) {
+},
+Link: function (shaderObjs) {
     var prog = gl.createProgram();
     for (var i_sh = 0; i_sh < shaderObjs.length; ++i_sh)
         gl.attachShader(prog, shaderObjs[i_sh]);
     gl.linkProgram(prog);
     status = gl.getProgramParameter(prog, gl.LINK_STATUS);
-    if (!status) alert("Could not initialise shaders");
-    gl.useProgram(null);
+    if ( !status ) alert(gl.getProgramInfoLog(prog));
     return status ? prog : null;
-}
+} };
 
 var VertexBuffer = {
 Create: function(attribs, indices, type) {

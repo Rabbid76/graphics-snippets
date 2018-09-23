@@ -230,15 +230,15 @@ function render(deltaMS){
     
     var progDraw = shading == 0 ? gouraudDraw : phongDraw;;
     // set up draw shader
-    ShProg.Use( progDraw.prog );
-    ShProg.SetM44( progDraw.prog, "u_projectionMat44", prjMat );
-    ShProg.SetM44( progDraw.prog, "u_viewMat44", viewMat );
-    ShProg.SetF3( progDraw.prog, "u_lightSource.lightDir", [-1.0, -0.5, -2.0] )
-    ShProg.SetF3( progDraw.prog, "u_lightSource.ambient", ambientCol )
-    ShProg.SetF3( progDraw.prog, "u_lightSource.diffuse", diffuseCol )
-    ShProg.SetF3( progDraw.prog, "u_lightSource.specular", specularCol )
-    ShProg.SetF1( progDraw.prog, "u_lightSource.shininess", shininess )
-    ShProg.SetM44( progDraw.prog, "u_modelMat44", modelMat );
+    ShProg.Use( progDraw );
+    ShProg.SetM44( progDraw, "u_projectionMat44", prjMat );
+    ShProg.SetM44( progDraw, "u_viewMat44", viewMat );
+    ShProg.SetF3( progDraw, "u_lightSource.lightDir", [-1.0, -0.5, -2.0] )
+    ShProg.SetF3( progDraw, "u_lightSource.ambient", ambientCol )
+    ShProg.SetF3( progDraw, "u_lightSource.diffuse", diffuseCol )
+    ShProg.SetF3( progDraw, "u_lightSource.specular", specularCol )
+    ShProg.SetF1( progDraw, "u_lightSource.shininess", shininess )
+    ShProg.SetM44( progDraw, "u_modelMat44", modelMat );
     
     // draw scene
     bufObj = form == 0 ? bufCube : form == 1 ? bufSphere : bufTorus;
@@ -272,31 +272,25 @@ function initScene() {
     if ( !gl )
       return null;
 
-    gouraudDraw = {}
-    gouraudDraw.prog = ShProg.Create( 
+    gouraudDraw = ShProg.Create( 
       [ { source : "gouraud-shader-vs", stage : gl.VERTEX_SHADER },
         { source : "gouraud-shader-fs", stage : gl.FRAGMENT_SHADER }
-      ],
-      [ "u_projectionMat44", "u_viewMat44", "u_modelMat44", 
-        "u_lightSource.lightDir", "u_lightSource.ambient", "u_lightSource.diffuse", "u_lightSource.specular", "u_lightSource.shininess", ] );
-    if ( gouraudDraw.prog == 0 )
+      ] );
+    if ( gouraudDraw.progObj == 0 )
       return;  
-    gouraudDraw.inPos = gl.getAttribLocation( gouraudDraw.prog, "inPos" );
-    gouraudDraw.inNV  = gl.getAttribLocation( gouraudDraw.prog, "inNV" );
-    gouraudDraw.inCol = gl.getAttribLocation( gouraudDraw.prog, "inCol" );
+    gouraudDraw.inPos = gl.getAttribLocation( gouraudDraw.progObj, "inPos" );
+    gouraudDraw.inNV  = gl.getAttribLocation( gouraudDraw.progObj, "inNV" );
+    gouraudDraw.inCol = gl.getAttribLocation( gouraudDraw.progObj, "inCol" );
 
-    phongDraw = {}
-    phongDraw.prog = ShProg.Create( 
+    phongDraw = ShProg.Create( 
       [ { source : "phong-shader-vs", stage : gl.VERTEX_SHADER },
         { source : "phong-shader-fs", stage : gl.FRAGMENT_SHADER }
-      ],
-      [ "u_projectionMat44", "u_viewMat44", "u_modelMat44", 
-        "u_lightSource.lightDir", "u_lightSource.ambient", "u_lightSource.diffuse", "u_lightSource.specular", "u_lightSource.shininess", ] );
-    if ( phongDraw.prog == 0 )
+      ] );
+    if ( phongDraw.progObj == 0 )
       return;
-    phongDraw.inPos = gl.getAttribLocation( phongDraw.prog, "inPos" );
-    phongDraw.inNV  = gl.getAttribLocation( phongDraw.prog, "inNV" );
-    phongDraw.inCol = gl.getAttribLocation( phongDraw.prog, "inCol" );
+    phongDraw.inPos = gl.getAttribLocation( phongDraw.progObj, "inPos" );
+    phongDraw.inNV  = gl.getAttribLocation( phongDraw.progObj, "inNV" );
+    phongDraw.inCol = gl.getAttribLocation( phongDraw.progObj, "inCol" );
     
     // create cube
     var cubePos = [
@@ -625,63 +619,61 @@ this.domElement.addEventListener( 'mousemove', function(e) { cam.OnMouseMove(e) 
 //this.domElement.addEventListener( 'DOMMouseScroll', hid_events.onMouseWheel, false ); // firefox
 }
 
-var ShProg = {};
-ShProg.Create = function( shaderList ) {
+var ShProg = {
+Create: function (shaderList) {
     var shaderObjs = [];
-    for ( var i_sh = 0; i_sh < shaderList.length; ++ i_sh ) {
-        var shderObj = this.Compile( shaderList[i_sh].source, shaderList[i_sh].stage );
-        if ( shderObj == 0 )
-            return 0;
-        shaderObjs.push( shderObj );
+    for (var i_sh = 0; i_sh < shaderList.length; ++i_sh) {
+        var shderObj = this.Compile(shaderList[i_sh].source, shaderList[i_sh].stage);
+        if (shderObj) shaderObjs.push(shderObj);
     }
-    var progObj = this.Link( shaderObjs )
-    if ( progObj != 0 ) {
-        progObj.attrInx = {};
-        var noOfAttributes = gl.getProgramParameter( progObj, gl.ACTIVE_ATTRIBUTES );
-        for ( var i_n = 0; i_n < noOfAttributes; ++ i_n ) {
-            var name = gl.getActiveAttrib( progObj, i_n ).name;
-            progObj.attrInx[name] = gl.getAttribLocation( progObj, name );
+    var prog = {}
+    prog.progObj = this.Link(shaderObjs)
+    if (prog.progObj) {
+        prog.attrInx = {};
+        var noOfAttributes = gl.getProgramParameter(prog.progObj, gl.ACTIVE_ATTRIBUTES);
+        for (var i_n = 0; i_n < noOfAttributes; ++i_n) {
+            var name = gl.getActiveAttrib(prog.progObj, i_n).name;
+            prog.attrInx[name] = gl.getAttribLocation(prog.progObj, name);
         }
-        progObj.uniLoc = {};
-        var noOfUniforms = gl.getProgramParameter( progObj, gl.ACTIVE_UNIFORMS );
-        for ( var i_n = 0; i_n < noOfUniforms; ++ i_n ) {
-            var name = gl.getActiveUniform( progObj, i_n ).name;
-            progObj.uniLoc[name] = gl.getUniformLocation( progObj, name );
+        prog.uniLoc = {};
+        var noOfUniforms = gl.getProgramParameter(prog.progObj, gl.ACTIVE_UNIFORMS);
+        for (var i_n = 0; i_n < noOfUniforms; ++i_n) {
+            var name = gl.getActiveUniform(prog.progObj, i_n).name;
+            prog.uniLoc[name] = gl.getUniformLocation(prog.progObj, name);
         }
     }
-    return progObj;
-}
-ShProg.AttrI = function( progObj, name ) { return progObj.attrInx[name]; } 
-ShProg.UniformL = function( progObj, name ) { return progObj.uniLoc[name]; } 
-ShProg.Use = function( progObj ) { gl.useProgram( progObj ); } 
-ShProg.SetI1  = function( progObj, name, val ) { if(progObj.uniLoc[name]) gl.uniform1i( progObj.uniLoc[name], val ); }
-ShProg.SetF1  = function( progObj, name, val ) { if(progObj.uniLoc[name]) gl.uniform1f( progObj.uniLoc[name], val ); }
-ShProg.SetF2  = function( progObj, name, arr ) { if(progObj.uniLoc[name]) gl.uniform2fv( progObj.uniLoc[name], arr ); }
-ShProg.SetF3  = function( progObj, name, arr ) { if(progObj.uniLoc[name]) gl.uniform3fv( progObj.uniLoc[name], arr ); }
-ShProg.SetF4  = function( progObj, name, arr ) { if(progObj.uniLoc[name]) gl.uniform4fv( progObj.uniLoc[name], arr ); }
-ShProg.SetM33 = function( progObj, name, mat ) { if(progObj.uniLoc[name]) gl.uniformMatrix3fv( progObj.uniLoc[name], false, mat ); }
-ShProg.SetM44 = function( progObj, name, mat ) { if(progObj.uniLoc[name]) gl.uniformMatrix4fv( progObj.uniLoc[name], false, mat ); }
-ShProg.Compile = function( source, shaderStage ) {
+    return prog;
+},
+AttrI: function (prog, name) { return prog.attrInx[name]; },
+UniformL: function (prog, name) { return prog.uniLoc[name]; },
+Use: function (prog) { gl.useProgram(prog.progObj); },
+SetI1: function (prog, name, val) { if (prog.uniLoc[name]) gl.uniform1i(prog.uniLoc[name], val); },
+SetF1: function (prog, name, val) { if (prog.uniLoc[name]) gl.uniform1f(prog.uniLoc[name], val); },
+SetF2: function (prog, name, arr) { if (prog.uniLoc[name]) gl.uniform2fv(prog.uniLoc[name], arr); },
+SetF3: function (prog, name, arr) { if (prog.uniLoc[name]) gl.uniform3fv(prog.uniLoc[name], arr); },
+SetF4: function (prog, name, arr) { if (prog.uniLoc[name]) gl.uniform4fv(prog.uniLoc[name], arr); },
+SetM33: function (prog, name, mat) { if (prog.uniLoc[name]) gl.uniformMatrix3fv(prog.uniLoc[name], false, mat); },
+SetM44: function (prog, name, mat) { if (prog.uniLoc[name]) gl.uniformMatrix4fv(prog.uniLoc[name], false, mat); },
+Compile: function (source, shaderStage) {
     var shaderScript = document.getElementById(source);
     if (shaderScript)
-      source = shaderScript.text;
-    var shaderObj = gl.createShader( shaderStage );
-    gl.shaderSource( shaderObj, source );
-    gl.compileShader( shaderObj );
-    var status = gl.getShaderParameter( shaderObj, gl.COMPILE_STATUS );
-    if ( !status ) alert(gl.getShaderInfoLog(shaderObj));
+        source = shaderScript.text;
+    var shaderObj = gl.createShader(shaderStage);
+    gl.shaderSource(shaderObj, source);
+    gl.compileShader(shaderObj);
+    var status = gl.getShaderParameter(shaderObj, gl.COMPILE_STATUS);
+    if (!status) alert(gl.getShaderInfoLog(shaderObj));
     return status ? shaderObj : null;
-} 
-ShProg.Link = function( shaderObjs ) {
+},
+Link: function (shaderObjs) {
     var prog = gl.createProgram();
-    for ( var i_sh = 0; i_sh < shaderObjs.length; ++ i_sh )
-        gl.attachShader( prog, shaderObjs[i_sh] );
-    gl.linkProgram( prog );
-    status = gl.getProgramParameter( prog, gl.LINK_STATUS );
-    if ( !status ) alert("Could not initialise shaders");
-    gl.useProgram( null );
+    for (var i_sh = 0; i_sh < shaderObjs.length; ++i_sh)
+        gl.attachShader(prog, shaderObjs[i_sh]);
+    gl.linkProgram(prog);
+    status = gl.getProgramParameter(prog, gl.LINK_STATUS);
+    if ( !status ) alert(gl.getProgramInfoLog(prog));
     return status ? prog : null;
-}
+} };
 
 var VertexBuffer = {
 Create: function(attribs, indices, type) {

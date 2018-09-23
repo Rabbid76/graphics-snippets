@@ -92,7 +92,7 @@
 
 [Cube color](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/cube_color.html)
 
-[Cube texture](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/cube_texture.html)
+[Textured cube](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/cube_texture.html)
 
 [Globe](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/sphere_texture.html)
 
