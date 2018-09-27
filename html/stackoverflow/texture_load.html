@@ -3,11 +3,13 @@
 
     attribute vec2 inPos;
     varying   vec2 vertPos;
+    uniform   vec2 u_vp_size;
 
     void main()
     {
+        vec2 scale  = u_vp_size.x > u_vp_size.y ? vec2(u_vp_size.y/u_vp_size.x, 1.0) : vec2(1.0, u_vp_size.x/u_vp_size.y);
         vertPos     = inPos;
-        gl_Position = vec4( inPos, 0.0, 1.0 );
+        gl_Position = vec4( inPos * scale, 0.0, 1.0 );
     }
 </script>
 
@@ -31,11 +33,78 @@ html,body { margin: 0; overflow: hidden; }
 #ref-link { position : absolute; bottom : 0; left : 0; }  
 </style>
 
-<body onload="sceneStart();">
-<canvas id="camera-canvas" style="border: none;" width="512" height="512"></canvas>
+<body>
+<canvas id="texture-canvas" style="border: none"></canvas>
 </body>
 
 <script type="text/javascript">
+(function loadscene() {
+
+var gl, canvas, prog, bufObj = {}, textureObj, maskTextureObj;
+
+function render(deltaMS) {
+
+    gl.viewport( 0, 0, vp_size[0], vp_size[1] );
+    gl.enable( gl.DEPTH_TEST );
+    gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
+    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+    var texUnit = 0;
+    gl.activeTexture( gl.TEXTURE0 + texUnit );
+    gl.bindTexture( gl.TEXTURE_2D, textureObj );
+    ShProg.Use( progDraw );
+    ShProg.SetI1( progDraw, "u_texture", texUnit );
+    ShProg.SetF2( progDraw, "u_vp_size", vp_size );
+    VertexBuffer.Draw( bufRect );
+
+    requestAnimationFrame(render);
+}  
+
+function initScene() {
+
+    canvas = document.getElementById( "texture-canvas");
+    gl = canvas.getContext( "experimental-webgl" );
+    //gl = canvas.getContext( "webgl2" );
+    if ( !gl )
+      return;
+
+    var texCX = 128;
+    var texCY = 128;
+    var texPlan = [];
+    for (ix = 0; ix < texCX; ++ix) {
+        for (iy = 0; iy < texCY; ++iy) {
+            var val_x = Math.sin( Math.PI * 6.0 * ix / texCX )
+            var val_y = Math.sin( Math.PI * 6.0 * iy / texCY )
+            texPlan.push( 128 + 127 * val_x, 63, 128 + 127 * val_y, 255 );
+        }
+    }
+    
+    textureObj = Texture.LoadTexture2D( "https://raw.githubusercontent.com/Rabbid76/graphics-snippets/master/resource/texture/supermario.jpg" );
+      
+    progDraw = ShProg.Create( 
+      [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },
+        { source : "draw-shader-fs", stage : gl.FRAGMENT_SHADER }
+      ] );
+    progDraw.inPos = gl.getAttribLocation( progDraw.progObj, "inPos" );
+    if ( progDraw.progObj == 0 )
+        return;
+
+    bufRect = VertexBuffer.Create(
+    [ { data :  [ -1, -1, 1, -1, 1, 1, -1, 1 ], attrSize : 2, attrLoc : progDraw.inPos } ],
+      [ 0, 1, 2, 0, 2, 3 ] );
+
+    window.onresize = resize;
+    resize();
+    requestAnimationFrame(render);
+}
+
+function resize() {
+    //vp_size = [gl.drawingBufferWidth, gl.drawingBufferHeight];
+    vp_size = [window.innerWidth, window.innerHeight]
+    //vp_size = [256, 256]
+    canvas.width = vp_size[0];
+    canvas.height = vp_size[1];
+}
+
 var ShProg = {
 Create: function (shaderList) {
     var shaderObjs = [];
@@ -151,62 +220,8 @@ Texture.LoadTexture2D = function( name ) {
     texture.image.src = name;
     return texture;
 }
-       
-function drawScene(){
 
-    var canvas = document.getElementById( "camera-canvas" );
-    var vp = [canvas.width, canvas.height];
-   
-    gl.viewport( 0, 0, canvas.width, canvas.height );
-    gl.enable( gl.DEPTH_TEST );
-    gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
-    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
-    var texUnit = 0;
-    gl.activeTexture( gl.TEXTURE0 + texUnit );
-    gl.bindTexture( gl.TEXTURE_2D, textureObj );
-    ShProg.Use( progDraw );
-    ShProg.SetI1( progDraw, "u_texture", texUnit );
-    VertexBuffer.Draw( bufRect );
-}  
+initScene();
 
-var gl;
-var prog;
-var bufObj = {};
-var textureObj;
-var maskTextureObj;
-function sceneStart() {
-
-    var canvas = document.getElementById( "camera-canvas");
-    gl = canvas.getContext( "experimental-webgl" );
-    //gl = canvas.getContext( "webgl2" );
-    if ( !gl )
-      return;
-
-    var texCX = 128;
-    var texCY = 128;
-    var texPlan = [];
-    for (ix = 0; ix < texCX; ++ix) {
-        for (iy = 0; iy < texCY; ++iy) {
-            var val_x = Math.sin( Math.PI * 6.0 * ix / texCX )
-            var val_y = Math.sin( Math.PI * 6.0 * iy / texCY )
-            texPlan.push( 128 + 127 * val_x, 63, 128 + 127 * val_y, 255 );
-        }
-    }
-    
-    textureObj = Texture.LoadTexture2D( "https://raw.githubusercontent.com/Rabbid76/graphics-snippets/master/resource/texture/supermario.jpg" );
-      
-    progDraw = ShProg.Create( 
-      [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },
-        { source : "draw-shader-fs", stage : gl.FRAGMENT_SHADER }
-      ] );
-    progDraw.inPos = gl.getAttribLocation( progDraw.progObj, "inPos" );
-    if ( progDraw.progObj == 0 )
-        return;
-
-    bufRect = VertexBuffer.Create(
-    [ { data :  [ -1, -1, 1, -1, 1, 1, -1, 1 ], attrSize : 2, attrLoc : progDraw.inPos } ],
-      [ 0, 1, 2, 0, 2, 3 ] );
-
-    setInterval(drawScene, 50);
-}
+})();       
 </script>

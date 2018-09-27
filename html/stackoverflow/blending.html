@@ -1,10 +1,75 @@
+<script id="back-shader-vs" type="x-shader/x-vertex">
+precision mediump float;
+
+attribute vec2 inPos;
+
+varying vec2 pos;
+
+uniform mat4 u_projectionMat44;
+uniform mat4 u_modelViewMat44;
+
+void main()
+{
+    pos           = inPos.xy;
+    vec4 viewPos  = u_modelViewMat44 * vec4( inPos.xy, 0.0, 1.0 );
+    gl_Position   = u_projectionMat44 * viewPos;
+}
+</script>
+
+<script id="back-shader-fs" type="x-shader/x-fragment">
+precision mediump float;
+
+varying vec2 pos;
+
+void main()
+{
+    vec2 coord = pos * 0.5 + 0.5;
+    gl_FragColor = vec4( coord.x, coord.y, (1.0-coord.x) * (1.0-coord.y), 1.0 );
+}
+</script>
+
+<script id="draw-shader-vs" type="x-shader/x-vertex">
+precision mediump float;
+
+attribute vec2 inPos;
+
+varying vec2 pos;
+
+uniform mat4 u_projectionMat44;
+uniform mat4 u_modelViewMat44;
+
+void main()
+{
+    pos           = inPos.xy;
+    vec4 viewPos  = u_modelViewMat44 * vec4( inPos.xy, 0.0, 1.0 );
+    gl_Position   = u_projectionMat44 * viewPos;
+}
+</script>
+
+<script id="draw-shader-fs" type="x-shader/x-fragment">
+precision mediump float;
+
+varying vec2 pos;
+
+uniform vec4 u_color;
+uniform vec2 u_vp;
+
+void main()
+{
+    float r = length( pos );
+    float d = 4.0 * length( 1.0 / u_vp );
+    float a = 1.0 - smoothstep( 1.0 - d, 1.0 + d, r );
+    gl_FragColor = vec4( u_color.rgb, u_color.a * a );
+}
+</script>
+
 <style>
 html,body { margin: 0; overflow: hidden; }
 #gui { position : absolute; top : 0; left : 0; }
 #ref-link { position : absolute; bottom : 0; left : 0; }  
 </style>
 
-<body onload="cameraStart();">
+<body>
 
 <a id="ref-link" href="https://stackoverflow.com/questions/45066688/blending-anti-aliased-circles-with-regl/45071910#45071910">
 <font color= #CCF>Blending anti-aliased circles with regl</font>
@@ -27,54 +92,114 @@ html,body { margin: 0; overflow: hidden; }
 </body>
 
 <script type="text/javascript">
+(function loadscene() {
 
-back_vert =
-"precision mediump float; \n" +
-"attribute vec2 inPos; \n" +
-"varying vec2 pos; \n" +
-"uniform   mat4 u_projectionMat44;" +
-"uniform   mat4 u_modelViewMat44;" +
-"void main()" +
-"{" +
-"    pos           = inPos.xy;" +
-"    vec4 viewPos  = u_modelViewMat44 * vec4( inPos.xy, 0.0, 1.0 );" +
-"    gl_Position   = u_projectionMat44 * viewPos;" +
-"}";
+var gl, canvas, prog;
+var mousePos = [-1, -1];
+var bufObj = {};
 
-back_frag =
-"precision mediump float; \n" +
-"varying vec2 pos; \n" +
-"void main() \n" +
-"{ \n" +
-"    vec2 coord = pos * 0.5 + 0.5; \n" +
-"    gl_FragColor = vec4( coord.x, coord.y, (1.0-coord.x) * (1.0-coord.y), 1.0 ); \n" +
-"}";
+function render(deltaMS) {
 
-draw_vert =
-"precision mediump float; \n" +
-"attribute vec2 inPos; \n" +
-"varying vec2 pos; \n" +
-"uniform   mat4 u_projectionMat44;" +
-"uniform   mat4 u_modelViewMat44;" +
-"void main()" +
-"{" +
-"    pos           = inPos.xy;" +
-"    vec4 viewPos  = u_modelViewMat44 * vec4( inPos.xy, 0.0, 1.0 );" +
-"    gl_Position   = u_projectionMat44 * viewPos;" +
-"}";
+    var vp = [canvas.width, canvas.height];
+    var aspect =  canvas.width / canvas.height;
+    var matOrtho = Ortho( -aspect, aspect, 1, -1, -1, 1 );
+    var alpha = document.getElementById( "alpha" ).value / 100;
+        
+    gl.viewport( 0, 0, canvas.width, canvas.height );
+    gl.disable( gl.DEPTH_TEST );
+    gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
+    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+    gl.disable( gl.BLEND );
+    ShProg.Use( progBack );
+    ShProg.SetM44( progBack, "u_projectionMat44",  matOrtho );
+    ShProg.SetM44( progBack, "u_modelViewMat44", IdentM44() );
+    gl.enableVertexAttribArray( progBack.inPos );
+    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.pos );
+    gl.vertexAttribPointer( progBack.inPos, 2, gl.FLOAT, false, 0, 0 ); 
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufObj.inx );
+    gl.drawElements( gl.TRIANGLES, bufObj.inx.len, gl.UNSIGNED_SHORT, 0 );
+    gl.disableVertexAttribArray( progBack.pos ); 
 
-draw_frag =
-"precision mediump float; \n" +
-"varying vec2 pos; \n" +
-"uniform vec4 u_color;" +
-"uniform vec2 u_vp;" +
-"void main()" +
-"{" +
-"    float r = length( pos );" +
-"    float d = 4.0 * length( 1.0 / u_vp ); \n" +
-"    float a = 1.0 - smoothstep( 1.0 - d, 1.0 + d, r ); \n" +
-"    gl_FragColor = vec4( u_color.rgb, u_color.a * a );" +
-"}";
+    gl.enable( gl.BLEND );
+    gl.blendFunc( gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA );
+    ShProg.Use( progDraw );
+    gl.enableVertexAttribArray( progDraw.inPos );
+    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.pos );
+    gl.vertexAttribPointer( progDraw.inPos, 2, gl.FLOAT, false, 0, 0 ); 
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufObj.inx );
+    ShProg.SetM44( progDraw, "u_projectionMat44",  matOrtho );
+    ShProg.SetF2( progDraw, "u_vp",  vp );
+        
+    var col = [ [1.0,0.0,0.0], [1.0,1.0,0.0], [0.0,0.0,1.0] ];
+    var time = [ 7.0, 11.0, 13.0 ];
+    for ( var i = 0; i < 3; ++ i ) {    
+        var modelMat = Scale( IdentM44(), [ 0.3, 0.3, 0.3] );
+        var angRad = CalcAng( deltaMS, time[i] ) + i * Math.PI * 2 / 3;
+        var sinAng = Math.sin(angRad), cosAng = Math.cos(angRad);
+        modelMat[12] = cosAng * 0.3 + i * 0.2;
+        modelMat[13] = sinAng * 0.3 + i * 0.2;
+        
+        ShProg.SetM44( progDraw, "u_modelViewMat44", modelMat );
+        var color = col[i];
+        color.push( alpha );
+        ShProg.SetF4( progDraw, "u_color", color );
+        gl.drawElements( gl.TRIANGLES, bufObj.inx.len, gl.UNSIGNED_SHORT, 0 );
+    }
+    gl.disableVertexAttribArray( progDraw.pos ); 
+
+    requestAnimationFrame(render);
+}
+
+function initScene() {
+
+    canvas = document.getElementById( "camera-canvas");
+    gl = canvas.getContext( "experimental-webgl" );
+    if ( !gl )
+      return;
+    var vp = [canvas.width, canvas.height];
+
+    progBack = ShProg.Create( 
+      [ { source : "back-shader-vs", stage : gl.VERTEX_SHADER },
+        { source : "back-shader-fs", stage : gl.FRAGMENT_SHADER }
+      ] );
+    progBack.inPos = gl.getAttribLocation( progBack.progObj, "inPos" );
+    if ( progBack.progObj == 0 )
+        return;
+
+    progDraw = ShProg.Create( 
+      [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },
+        { source : "draw-shader-fs", stage : gl.FRAGMENT_SHADER }
+      ] );
+    progDraw.inPos = gl.getAttribLocation( progDraw.progObj, "inPos" );
+    if ( progDraw.progObj == 0 )
+        return;
+
+    var pos = [ -1, -1, 1, -1, 1, 1, -1, 1 ];
+    var inx = [ 0, 1, 2, 0, 2, 3 ];
+    bufObj.pos = gl.createBuffer();
+    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.pos );
+    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( pos ), gl.STATIC_DRAW );
+    bufObj.inx = gl.createBuffer();
+    bufObj.inx.len = inx.length;
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufObj.inx );
+    gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( inx ), gl.STATIC_DRAW );
+    
+    //window.onresize = resize;
+    //resize();
+    requestAnimationFrame(render);
+}
+
+function Fract( val ) { 
+    return val - Math.trunc( val );
+}
+function CalcAng( deltaMS, interval ) {
+    return Fract( deltaMS / (1000*interval) ) * 2.0 * Math.PI;
+}
+function CalcMove( deltaMS, interval, range ) {
+    var pos = self.Fract( deltaMS / (1000*interval) ) * 2.0
+    var pos = pos < 1.0 ? pos : (2.0-pos)
+    return range[0] + (range[1] - range[0]) * pos;
+}  
 
 glArrayType = typeof Float32Array !="undefined" ? Float32Array : ( typeof WebGLFloatArray != "undefined" ? WebGLFloatArray : Array );
 
@@ -188,113 +313,8 @@ Link: function (shaderObjs) {
     if ( !status ) alert(gl.getProgramInfoLog(prog));
     return status ? prog : null;
 } };
-        
-function drawScene(){
 
-    var canvas = document.getElementById( "camera-canvas" );
-    var vp = [canvas.width, canvas.height];
-    var currentTime = Date.now();   
-    var deltaMS = currentTime - startTime;
-    var aspect =  canvas.width / canvas.height;
-    var matOrtho = Ortho( -aspect, aspect, 1, -1, -1, 1 );
-    var alpha = document.getElementById( "alpha" ).value / 100;
-        
-    gl.viewport( 0, 0, canvas.width, canvas.height );
-    gl.disable( gl.DEPTH_TEST );
-    gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
-    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
-    gl.disable( gl.BLEND );
-    ShProg.Use( progBack );
-    ShProg.SetM44( progBack, "u_projectionMat44",  matOrtho );
-    ShProg.SetM44( progBack, "u_modelViewMat44", IdentM44() );
-    gl.enableVertexAttribArray( progBack.inPos );
-    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.pos );
-    gl.vertexAttribPointer( progBack.inPos, 2, gl.FLOAT, false, 0, 0 ); 
-    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufObj.inx );
-    gl.drawElements( gl.TRIANGLES, bufObj.inx.len, gl.UNSIGNED_SHORT, 0 );
-    gl.disableVertexAttribArray( progBack.pos ); 
+initScene();
 
-    gl.enable( gl.BLEND );
-    gl.blendFunc( gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA );
-    ShProg.Use( progDraw );
-    gl.enableVertexAttribArray( progDraw.inPos );
-    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.pos );
-    gl.vertexAttribPointer( progDraw.inPos, 2, gl.FLOAT, false, 0, 0 ); 
-    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufObj.inx );
-    ShProg.SetM44( progDraw, "u_projectionMat44",  matOrtho );
-    ShProg.SetF2( progDraw, "u_vp",  vp );
-        
-    var col = [ [1.0,0.0,0.0], [1.0,1.0,0.0], [0.0,0.0,1.0] ];
-    var time = [ 7.0, 11.0, 13.0 ];
-    for ( var i = 0; i < 3; ++ i ) {    
-        var modelMat = Scale( IdentM44(), [ 0.3, 0.3, 0.3] );
-        var angRad = CalcAng( currentTime, time[i] ) + i * Math.PI * 2 / 3;
-        var sinAng = Math.sin(angRad), cosAng = Math.cos(angRad);
-        modelMat[12] = cosAng * 0.3 + i * 0.2;
-        modelMat[13] = sinAng * 0.3 + i * 0.2;
-        
-        ShProg.SetM44( progDraw, "u_modelViewMat44", modelMat );
-        var color = col[i];
-        color.push( alpha );
-        ShProg.SetF4( progDraw, "u_color", color );
-        gl.drawElements( gl.TRIANGLES, bufObj.inx.len, gl.UNSIGNED_SHORT, 0 );
-    }
-    gl.disableVertexAttribArray( progDraw.pos ); 
-}
-
-var startTime;
-function Fract( val ) { 
-    return val - Math.trunc( val );
-}
-function CalcAng( currentTime, intervall ) {
-    return Fract( (currentTime - startTime) / (1000*intervall) ) * 2.0 * Math.PI;
-}
-function CalcMove( currentTime, intervall, range ) {
-    var pos = self.Fract( (currentTime - startTime) / (1000*intervall) ) * 2.0
-    var pos = pos < 1.0 ? pos : (2.0-pos)
-    return range[0] + (range[1] - range[0]) * pos;
-}    
-
-var mousePos = [-1, -1];
-var gl;
-var prog;
-var bufObj = {};
-function cameraStart() {
-
-    var canvas = document.getElementById( "camera-canvas");
-    gl = canvas.getContext( "experimental-webgl" );
-    if ( !gl )
-      return;
-    var vp = [canvas.width, canvas.height];
-
-    progBack = ShProg.Create( 
-      [ { source : back_vert, stage : gl.VERTEX_SHADER },
-        { source : back_frag, stage : gl.FRAGMENT_SHADER }
-      ] );
-    progBack.inPos = gl.getAttribLocation( progBack.progObj, "inPos" );
-    if ( progBack.progObj == 0 )
-        return;
-
-    progDraw = ShProg.Create( 
-      [ { source : draw_vert, stage : gl.VERTEX_SHADER },
-        { source : draw_frag, stage : gl.FRAGMENT_SHADER }
-      ] );
-    progDraw.inPos = gl.getAttribLocation( progDraw.progObj, "inPos" );
-    if ( progDraw.progObj == 0 )
-        return;
-
-    var pos = [ -1, -1, 1, -1, 1, 1, -1, 1 ];
-    var inx = [ 0, 1, 2, 0, 2, 3 ];
-    bufObj.pos = gl.createBuffer();
-    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.pos );
-    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( pos ), gl.STATIC_DRAW );
-    bufObj.inx = gl.createBuffer();
-    bufObj.inx.len = inx.length;
-    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufObj.inx );
-    gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( inx ), gl.STATIC_DRAW );
-
-    startTime = Date.now();
-    setInterval(drawScene, 50);
-}
-
+})();        
 </script>
