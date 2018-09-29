@@ -185,6 +185,7 @@
     <ClInclude Include="..\include\render\Render_IBuffer.h" />
     <ClInclude Include="..\include\render\Render_IDraw.h" />
     <ClInclude Include="..\include\render\Render_IDrawLine.h" />
+    <ClInclude Include="..\include\render\Render_IDrawPolygon.h" />
     <ClInclude Include="..\include\render\Render_IDrawType.h" />
     <ClInclude Include="..\include\render\Render_IGraphicsDebug.h" />
     <ClInclude Include="..\include\render\Render_ILight.h" />

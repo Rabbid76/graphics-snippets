@@ -129,6 +129,9 @@
     <ClInclude Include="..\include\OpenGL\OpenGLLine_core_and_es.h">
       <Filter>OpenGL</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\render\Render_IDrawPolygon.h">
+      <Filter>render</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
