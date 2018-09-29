@@ -25,6 +25,8 @@ void main()
 {
     vec2 coord = pos * 0.5 + 0.5;
     gl_FragColor = vec4( coord.x, coord.y, (1.0-coord.x) * (1.0-coord.y), 1.0 );
+    //float gray = smoothstep( 0.3, 0.7, (coord.x + coord.y) * 0.5 );
+    //gl_FragColor = vec4( vec3( gray ), 1.0 );
 }
 </script>
 
@@ -75,37 +77,32 @@ html,body { margin: 0; overflow: hidden; }
 <font color= #CCF>Blending anti-aliased circles with regl</font>
 </a>
 
-<div style="margin-left: 520px;">
-<div style="float: right; width: 100%; background-color: #CCF;">
-    <form name="inputs">
-        <table>
-            <tr> <td> alpha </td> 
-                    <td> <input type="range" id="alpha" min="0" max="100" value="50"/></td> </tr>
-        </table>
-    </form>
-</div>
-<div style="float: right; width:520px; margin-left: -520px;">
-    <canvas id="camera-canvas" style="border: none;" width="512" height="512"></canvas>
-</div>
-<div style="clear: both;"></div>
-</div>
+<form id="gui" name="inputs">
+<table>
+<tr> <td> <font color= #CCF>alpha</font> </td><td> <input type="range" id="alpha" min="0" max="100" value="25"/></td> </tr>
+</table>
+</form>
+
+<canvas id="blend-canvas" style="border: none"></canvas>
+
 </body>
 
 <script type="text/javascript">
 (function loadscene() {
 
-var gl, canvas, prog;
+var gl, canvas, vp_size, prog;
 var mousePos = [-1, -1];
 var bufObj = {};
 
 function render(deltaMS) {
 
-    var vp = [canvas.width, canvas.height];
-    var aspect =  canvas.width / canvas.height;
-    var matOrtho = Ortho( -aspect, aspect, 1, -1, -1, 1 );
+    var aspect = vp_size[0] / vp_size[1];
+    var aspect_x = aspect > 1.0 ? aspect : 1.0;
+    var aspect_y = aspect > 1.0 ? 1.0 : 1.0/aspect;
+    var matOrtho = Ortho( -aspect_x, aspect_x, aspect_y, -aspect_y, -1, 1 );
     var alpha = document.getElementById( "alpha" ).value / 100;
         
-    gl.viewport( 0, 0, canvas.width, canvas.height );
+    gl.viewport( 0, 0, vp_size[0], vp_size[1] );
     gl.disable( gl.DEPTH_TEST );
     gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
@@ -128,7 +125,7 @@ function render(deltaMS) {
     gl.vertexAttribPointer( progDraw.inPos, 2, gl.FLOAT, false, 0, 0 ); 
     gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufObj.inx );
     ShProg.SetM44( progDraw, "u_projectionMat44",  matOrtho );
-    ShProg.SetF2( progDraw, "u_vp",  vp );
+    ShProg.SetF2( progDraw, "u_vp",  vp_size );
         
     var col = [ [1.0,0.0,0.0], [1.0,1.0,0.0], [0.0,0.0,1.0] ];
     var time = [ 7.0, 11.0, 13.0 ];
@@ -152,12 +149,11 @@ function render(deltaMS) {
 
 function initScene() {
 
-    canvas = document.getElementById( "camera-canvas");
+    canvas = document.getElementById( "blend-canvas");
     gl = canvas.getContext( "experimental-webgl" );
     if ( !gl )
       return;
-    var vp = [canvas.width, canvas.height];
-
+    
     progBack = ShProg.Create( 
       [ { source : "back-shader-vs", stage : gl.VERTEX_SHADER },
         { source : "back-shader-fs", stage : gl.FRAGMENT_SHADER }
@@ -184,9 +180,16 @@ function initScene() {
     gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufObj.inx );
     gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( inx ), gl.STATIC_DRAW );
     
-    //window.onresize = resize;
-    //resize();
+    window.onresize = resize;
+    resize();
     requestAnimationFrame(render);
+}
+
+function resize() {
+    //vp_size = [gl.drawingBufferWidth, gl.drawingBufferHeight];
+    vp_size = [window.innerWidth, window.innerHeight]
+    canvas.width = vp_size[0];
+    canvas.height = vp_size[1];
 }
 
 function Fract( val ) { 
@@ -201,22 +204,15 @@ function CalcMove( deltaMS, interval, range ) {
     return range[0] + (range[1] - range[0]) * pos;
 }  
 
-glArrayType = typeof Float32Array !="undefined" ? Float32Array : ( typeof WebGLFloatArray != "undefined" ? WebGLFloatArray : Array );
-
-function IdentM44() {
-    var m = new glArrayType(16);
-    m[0]  = 1; m[1]  = 0; m[2]  = 0; m[3]  = 0;
-    m[4]  = 0; m[5]  = 1; m[6]  = 0; m[7]  = 0;
-    m[8]  = 0; m[9]  = 0; m[10] = 1; m[11] = 0;
-    m[12] = 0; m[13] = 0; m[14] = 0; m[15] = 1;
-    return m;
+function IdentM44() { 
+    return [ 1, 0, 0, 0,    0, 1, 0, 0,    0, 0, 1, 0,    0, 0, 0, 1 ];
 };
 
 function RotateAxis(matA, angRad, axis) {
     var aMap = [ [1, 2], [2, 0], [0, 1] ];
     var a0 = aMap[axis][0], a1 = aMap[axis][1]; 
     var sinAng = Math.sin(angRad), cosAng = Math.cos(angRad);
-    var matB = new glArrayType(16);
+    var matB = matA.slice(0);
     for ( var i = 0; i < 16; ++ i ) matB[i] = matA[i];
     for ( var i = 0; i < 3; ++ i ) {
         matB[a0*4+i] = matA[a0*4+i] * cosAng + matA[a1*4+i] * sinAng;
@@ -226,7 +222,7 @@ function RotateAxis(matA, angRad, axis) {
 }
 
 function Translate( matA, trans ) {
-    var matB = new glArrayType(16);
+    var matB = matA.slice(0);
     for ( var i = 0; i < 16; ++ i ) matB[i] = matA[i];
     for ( var i = 0; i < 3; ++ i )
         matB[12+i] = matA[i] * trans[0] + matA[4+i] * trans[1] + matA[8+i] * trans[2] + matA[12+i];
@@ -234,7 +230,7 @@ function Translate( matA, trans ) {
 }
 
 function Scale( matA, scale ) {
-    var matB = new glArrayType(16);
+    var matB = matA.slice(0);
     for ( var i = 0; i < 16; ++ i ) matB[i] = matA[i];
     for ( var a = 0; a < 4; ++ a )
         for ( var i = 0; i < 3; ++ i )
