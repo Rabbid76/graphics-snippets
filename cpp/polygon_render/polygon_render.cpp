@@ -24,10 +24,9 @@
 #include <math.h>
 
 // Own
-#include <Render_IDrawLine.h>
-#include <OpenGLLine_1_0.h>
-#include <OpenGLLine_2_0.h>
-#include <OpenGLLine_core_and_es.h>
+#include <Render_IProgram.h>
+#include <Render_IDrawPolygon.h>
+#include <OpenGLPolygon_1_0.h>
 #include <OpenGL_Matrix_Camera.h>
 #include <OpenGL_SimpleShaderProgram.h>
 
@@ -51,7 +50,7 @@ private:
 
     void InitScene( void );
     void Render( double time_ms );
-    void RenderTestScene( Render::Line::IRender &line_render );
+    void RenderTestScene( Render::Polygon::IRender &line_render );
 
     std::array< int, 2 > _wndPos         {0, 0};
     std::array< int, 2 > _wndSize        {0, 0};
@@ -68,9 +67,9 @@ private:
 
     std::unique_ptr<OpenGL::ShaderProgramSimple> _prog;
 
-    std::unique_ptr<Render::Line::IRender> _polygon_1;
-    std::unique_ptr<Render::Line::IRender> _polygon_2;
-    std::unique_ptr<Render::Line::IRender> _polygon_3;
+    std::unique_ptr<Render::Polygon::IRender> _polygon_1;
+    std::unique_ptr<Render::Polygon::IRender> _polygon_2;
+    std::unique_ptr<Render::Polygon::IRender> _polygon_3;
 
     Render::Program::TViewDataPtr _view_data_ptr;
 };
@@ -230,7 +229,7 @@ void CWindow_Glfw::MainLoop ( void )
 
 void CWindow_Glfw::InitScene( void )
 {
-  _polygon_1 = std::make_unique<OpenGL::Line::CLineOpenGL_1_00>();
+  _polygon_1 = std::make_unique<OpenGL::Line::CPolygonOpenGL_1_00>();
   //_polygon_2 = std::make_unique<OpenGL::Line::CLineOpenGL_2_00>( 0 );
   //_polygon_3 = std::make_unique<OpenGL::Line::CLineOpenGL_core_and_es>( _view_data_ptr, 0 );
 
@@ -285,30 +284,29 @@ void CWindow_Glfw::Render( double time_ms )
 }
 
 
-void CWindow_Glfw::RenderTestScene( Render::Line::IRender &line_render )
+void CWindow_Glfw::RenderTestScene( Render::Polygon::IRender &line_render )
 {
     line_render.StartSuccessiveLineDrawings();
 
-    line_render.SetStyle( { 8.0f, 2 } );
+    line_render.SetStyle( { 0.0f } );
+    
+    line_render.SetColor( Render::TColor{ 0.9f, 0.9f, 0.4f, 1.0f } );
+
+    static const std::vector<double> line_test_3{ -0.7, -0.6, 0.7, -0.6, 0.7, 0.6, -0.7, 0.6 };
+    line_render.StartSequence( Render::TPrimitive::trianglefan, 2 );
+    line_render.DrawSequence( line_test_3.size(), line_test_3.data() );
+    line_render.EndSequence();
+    
     line_render.SetColor( Render::TColor{ 0.9f, 0.5f, 0.1f, 1.0f } );
 
     static const std::vector<double> line_test_1{ -0.4, -0.5, 0.6, -0.5, 0.6, 0.5 };
-    line_render.Draw( Render::TPrimitive::lineloop, 2, line_test_1.size(), line_test_1.data() );
+    line_render.Draw( Render::TPrimitive::trianglefan, 2, line_test_1.size(), line_test_1.data() );
 
-    line_render.SetStyle( { 8.0f, 6 } );
     line_render.SetColor( Render::TColor{ 0.1f, 0.5f, 0.9f, 1.0f } );
 
     static const std::vector<double> line_x_test_2{ -0.6,  0.4, -0.6 };
     static const std::vector<double> line_y_test_2{ -0.5,  0.5,  0.5 };
-    line_render.Draw( Render::TPrimitive::lineloop, line_x_test_2.size(), line_x_test_2.data(), line_y_test_2.data() );
-
-    line_render.SetStyle( { 10.0f, 1 } );
-    line_render.SetColor( Render::TColor{ 0.9f, 0.9f, 0.4f, 1.0f } );
-
-    static const std::vector<double> line_test_3{ -0.7, -0.6, 0.7, -0.6, 0.7, 0.6, -0.7, 0.6 };
-    line_render.StartSequence( Render::TPrimitive::lineloop, 2 );
-    line_render.DrawSequence( line_test_3.size(), line_test_3.data() );
-    line_render.EndSequence();
+    line_render.Draw( Render::TPrimitive::trianglefan, line_x_test_2.size(), line_x_test_2.data(), line_y_test_2.data() );
 
     line_render.FinishSuccessiveLineDrawings();
 }

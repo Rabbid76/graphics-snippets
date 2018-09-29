@@ -1,5 +1,5 @@
 /******************************************************************//**
-* \brief Implementation of OpenGL line renderer,
+* \brief Implementation of OpenGL polygon renderer,
 * for OpenGL version 1.00 - "Software-OpenGL".
 * 
 * \author  gernot
@@ -11,7 +11,7 @@
 
 // includes
 
-#include <OpenGLLine_1_0.h>
+#include <OpenGLPolygon_1_0.h>
 
 
 // OpenGL wrapper
@@ -32,7 +32,7 @@
 * \brief General namespace for OpenGL implementation.  
 * 
 * \author  gernot
-* \date    2018-09-07
+* \date    2018-09-28
 * \version 1.0
 **********************************************************************/
 namespace OpenGL
@@ -40,10 +40,10 @@ namespace OpenGL
 
 
 /******************************************************************//**
-* \brief Namespace for drawing lines with the use of OpenGL.  
+* \brief Namespace for drawing polygons with the use of OpenGL.  
 * 
 * \author  gernot
-* \date    2018-09-07
+* \date    2018-09-28
 * \version 1.0
 **********************************************************************/
 namespace Line
@@ -54,10 +54,10 @@ namespace Line
 * \brief ctor  
 * 
 * \author  gernot
-* \date    2018-09-07
+* \date    2018-09-28
 * \version 1.0
 **********************************************************************/
-CLineOpenGL_1_00::CLineOpenGL_1_00( void )
+CPolygonOpenGL_1_00::CPolygonOpenGL_1_00( void )
 {}
 
 
@@ -65,33 +65,33 @@ CLineOpenGL_1_00::CLineOpenGL_1_00( void )
 * \brief ctor  
 * 
 * \author  gernot
-* \date    2018-09-07
+* \date    2018-09-28
 * \version 1.0
 **********************************************************************/
-CLineOpenGL_1_00::~CLineOpenGL_1_00()
+CPolygonOpenGL_1_00::~CPolygonOpenGL_1_00()
 {}
 
 
 /******************************************************************//**
-* \brief Initialize the line renderer.  
+* \brief Initialize the polygon renderer.  
 * 
 * \author  gernot
 * \date    2018-09-07
 * \version 1.0
 **********************************************************************/
-void CLineOpenGL_1_00::Init( void )
+void CPolygonOpenGL_1_00::Init( void )
 {}
 
 
 /******************************************************************//**
-* \brief Change the current line color, for the pending line drawing
+* \brief Change the current polygon color, for the pending line drawing
 * instructions
 * 
 * \author  gernot
-* \date    2018-09-07
+* \date    2018-09-28
 * \version 1.0
 **********************************************************************/
-Render::Line::IRender & CLineOpenGL_1_00::SetColor(
+Render::Polygon::IRender & CPolygonOpenGL_1_00::SetColor(
   const Render::TColor & color ) //!< I - the new color
 {
   // change the vertex color
@@ -102,14 +102,14 @@ Render::Line::IRender & CLineOpenGL_1_00::SetColor(
 
 
 /******************************************************************//**
-* \brief Change the current line color, for the pending line drawing
+* \brief Change the current polygon color, for the pending line drawing
 * instructions
 * 
 * \author  gernot
-* \date    2018-09-07
+* \date    2018-09-28
 * \version 1.0
 **********************************************************************/
-Render::Line::IRender & CLineOpenGL_1_00::SetColor( 
+Render::Polygon::IRender & CPolygonOpenGL_1_00::SetColor( 
   const Render::TColor8 & color ) //!< I - the new color
 {
   // change the vertex color
@@ -120,18 +120,14 @@ Render::Line::IRender & CLineOpenGL_1_00::SetColor(
 
 
 /******************************************************************//**
-* \brief Change the current line with and the current line pattern,
-* for the pending line drawing instructions.
-*
-* The line width and line pattern can't be changed within a drawing
-* sequence. 
+* \brief Set the polygon style.
 * 
 * \author  gernot
-* \date    2018-09-09
+* \date    2018-09-28
 * \version 1.0
 **********************************************************************/
-Render::Line::IRender & CLineOpenGL_1_00::SetStyle( 
-  const Render::Line::TStyle & style )
+Render::Polygon::IRender & CPolygonOpenGL_1_00::SetStyle( 
+  const Render::Polygon::TStyle & style )
 {
   //! This is impossible, while an drawing sequence is active.  
   //! The only possible operations within a `glBegin`/`glEnd` sequence are those operations,
@@ -143,40 +139,8 @@ Render::Line::IRender & CLineOpenGL_1_00::SetStyle(
     return *this;
   }
 
-  // set line width
-  glLineWidth( style._width );
-
-  // activate line stipple
-  if ( style._stipple_type == 1 )
-  {
-    glDisable( GL_LINE_STIPPLE );
-    return *this;
-  }
-  glEnable( GL_LINE_STIPPLE );
-
-  // set stipple pattern
-  static const std::array<GLushort, 8> patterns
-  {
-    0x0000, 0xFFFF, 0x5555, 0x3333, 0x0F0F, 0x00FF, 0x7D7D, 0x7FFD
-  };
-  GLushort pattern = style._stipple_type >= 0 && style._stipple_type < patterns.size() ? patterns[style._stipple_type] : 0xFFFF;
-  glLineStipple( (GLint)(style._width + 0.5f), pattern );
-
-  return *this;
-}
-
-
-/******************************************************************//**
-* \brief TODO: not yet implemented!  
-* 
-* \author  gernot
-* \date    2018-09-07
-* \version 1.0
-**********************************************************************/
-Render::Line::IRender & CLineOpenGL_1_00::SetArrowStyle( 
-  const Render::Line::TArrowStyle & style ) //! I - new style of the arrows at the endings of coherently lines
-{
-  assert( false );
+  // ...
+  
   return *this;
 }
 
@@ -185,11 +149,11 @@ Render::Line::IRender & CLineOpenGL_1_00::SetArrowStyle(
 * \brief Draw a single line sequence.  
 * 
 * \author  gernot
-* \date    2018-09-07
+* \date    2018-09-28
 * \version 1.0
 **********************************************************************/
-bool CLineOpenGL_1_00::Draw( 
-  Render::TPrimitive primitive_type, //!< in: primitive type of the coordinates - lines, line strip, line loop, lines adjacency or line strip adjacency  
+bool CPolygonOpenGL_1_00::Draw( 
+  Render::TPrimitive primitive_type, //!< in: primitive type of the coordinates - triangles, triangle strip, triangle fan, triangle adjacency or triangle strip adjacency
   unsigned int       tuple_size,     //!< in: kind of the coordinates - 2: 2D (x, y), 3: 3D (x, y, z), 4: homogeneous (x, y, z, w)   
   size_t             coords_size,    //!< in: number of elements (size) of the coordinate array - `coords_size` = `tuple_size` * "number of coordinates" 
   const float       *coords )        //!< in: pointer to an array of the vertex coordinates
@@ -200,7 +164,7 @@ bool CLineOpenGL_1_00::Draw(
     ASSERT( false );
     return false;
   }
-  ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::line );
+  ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::polygon );
   ASSERT( tuple_size == 2 || tuple_size == 3 || tuple_size == 4 );
 
   // start `glBegin` / `glEnd` sequence
@@ -231,14 +195,14 @@ bool CLineOpenGL_1_00::Draw(
  
 
 /******************************************************************//**
-* \brief Draw a single line sequence.  
+* \brief Draw a single polygon sequence.  
 * 
 * \author  gernot
-* \date    2018-09-07
+* \date    2018-09-28
 * \version 1.0
 **********************************************************************/
-bool CLineOpenGL_1_00::Draw( 
-  Render::TPrimitive primitive_type, //!< in: primitive type of the coordinates - lines, line strip, line loop, lines adjacency or line strip adjacency  
+bool CPolygonOpenGL_1_00::Draw( 
+  Render::TPrimitive primitive_type, //!< in: primitive type of the coordinates - triangles, triangle strip, triangle fan, triangle adjacency or triangle strip adjacency
   unsigned int       tuple_size,     //!< in: kind of the coordinates - 2: 2D (x, y), 3: 3D (x, y, z), 4: homogeneous (x, y, z, w)   
   size_t             coords_size,    //!< in: number of elements (size) of the coordinate array - `coords_size` = `tuple_size` * "number of coordinates" 
   const double      *coords )        //!< in: pointer to an array of the vertex coordinates
@@ -249,7 +213,7 @@ bool CLineOpenGL_1_00::Draw(
     ASSERT( false );
     return false;
   }
-  ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::line );
+  ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::polygon );
   ASSERT( tuple_size == 2 || tuple_size == 3 || tuple_size == 4 );
 
   // start `glBegin` / `glEnd` sequence
@@ -280,14 +244,14 @@ bool CLineOpenGL_1_00::Draw(
 
 
 /******************************************************************//**
-* \brief Draw a single line sequence.  
+* \brief Draw a single polygon sequence.  
 * 
 * \author  gernot
-* \date    2018-09-07
+* \date    2018-09-28
 * \version 1.0
 **********************************************************************/
-bool CLineOpenGL_1_00::Draw( 
-  Render::TPrimitive primitive_type, //!< in: primitive type of the coordinates - lines, line strip, line loop, lines adjacency or line strip adjacency 
+bool CPolygonOpenGL_1_00::Draw( 
+  Render::TPrimitive primitive_type, //!< in: primitive type of the coordinates - triangles, triangle strip, triangle fan, triangle adjacency or triangle strip adjacency
   size_t             no_of_coords,   //!< in: number of coordinates and number of elements (size) of the coordinate array
   const float       *x_coords,       //!< int pointer to an array of the x coordinates
   const float       *y_coords )      //!< int pointer to an array of the y coordinates
@@ -298,7 +262,7 @@ bool CLineOpenGL_1_00::Draw(
     ASSERT( false );
     return false;
   }
-  ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::line );
+  ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::polygon );
   
   // start `glBegin` / `glEnd` sequence
   glBegin( OpenGL::Primitive(primitive_type) );
@@ -315,14 +279,14 @@ bool CLineOpenGL_1_00::Draw(
 
 
 /******************************************************************//**
-* \brief Draw a single line sequence.  
+* \brief Draw a single polygon sequence.  
 * 
 * \author  gernot
-* \date    2018-09-07
+* \date    2018-09-28
 * \version 1.0
 **********************************************************************/
-bool CLineOpenGL_1_00::Draw( 
-  Render::TPrimitive primitive_type, //!< in: primitive type of the coordinates - lines, line strip, line loop, lines adjacency or line strip adjacency 
+bool CPolygonOpenGL_1_00::Draw( 
+  Render::TPrimitive primitive_type, //!< in: primitive type of the coordinates - triangles, triangle strip, triangle fan, triangle adjacency or triangle strip adjacency
   size_t             no_of_coords,   //!< in: number of coordinates and number of elements (size) of the coordinate array
   const double      *x_coords,       //!< int pointer to an array of the x coordinates
   const double      *y_coords )      //!< int pointer to an array of the y coordinates
@@ -333,7 +297,7 @@ bool CLineOpenGL_1_00::Draw(
     ASSERT( false );
     return false;
   }
-  ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::line );
+  ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::polygon );
   
   // start `glBegin` / `glEnd` sequence
   glBegin( OpenGL::Primitive(primitive_type) );
@@ -350,14 +314,14 @@ bool CLineOpenGL_1_00::Draw(
 
 
 /******************************************************************//**
-* \brief Start a new line sequence.  
+* \brief Start a new polygon sequence.  
 * 
 * \author  gernot
-* \date    2018-09-07
+* \date    2018-09-28
 * \version 1.0
 **********************************************************************/
-bool CLineOpenGL_1_00::StartSequence( 
-  Render::TPrimitive primitive_type, //!< in: primitive type of the coordinates - lines, line strip, line loop, lines adjacency or line strip adjacency 
+bool CPolygonOpenGL_1_00::StartSequence( 
+  Render::TPrimitive primitive_type, //!< in: primitive type of the coordinates - triangles, triangle strip, triangle fan, triangle adjacency or triangle strip adjacency
   unsigned int       tuple_size )    //!< in: kind of the coordinates - 2: 2D (x, y), 3: 3D (x, y, z), 4: homogeneous (x, y, z, w)   
 {
   // A new sequence can't be started within an active sequence
@@ -366,7 +330,7 @@ bool CLineOpenGL_1_00::StartSequence(
     ASSERT( false );
     return false;
   }
-  ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::line );
+  ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::polygon );
   ASSERT( tuple_size == 2 || tuple_size == 3 || tuple_size == 4 );
   
   _active_sequence = true;
@@ -380,13 +344,13 @@ bool CLineOpenGL_1_00::StartSequence(
   
 
 /******************************************************************//**
-* \brief Complete an active line sequence.  
+* \brief Complete an active polygon sequence.  
 * 
 * \author  gernot
-* \date    2018-09-07
+* \date    2018-09-28
 * \version 1.0
 **********************************************************************/
-bool CLineOpenGL_1_00::EndSequence( void )
+bool CPolygonOpenGL_1_00::EndSequence( void )
 {
   // A sequence can't be completed if there is no active sequence
   if ( _active_sequence == false )
@@ -406,13 +370,13 @@ bool CLineOpenGL_1_00::EndSequence( void )
 
 
 /******************************************************************//**
-* \brief Specify a new vertex coordinate in an active line sequence.  
+* \brief Specify a new vertex coordinate in an active polygon sequence.  
 * 
 * \author  gernot
-* \date    2018-09-07
+* \date    2018-09-28
 * \version 1.0
 **********************************************************************/
-bool CLineOpenGL_1_00::DrawSequence( 
+bool CPolygonOpenGL_1_00::DrawSequence( 
   float x,  //!< in: x coordinate
   float y,  //!< in: y coordinate
   float z ) //!< in: z coordinate
@@ -432,13 +396,13 @@ bool CLineOpenGL_1_00::DrawSequence(
 
 
 /******************************************************************//**
-* \brief Specify a new vertex coordinate in an active line sequence.  
+* \brief Specify a new vertex coordinate in an active polygon sequence.  
 * 
 * \author  gernot
-* \date    2018-09-07
+* \date    2018-09-28
 * \version 1.0
 **********************************************************************/
-bool CLineOpenGL_1_00::DrawSequence( 
+bool CPolygonOpenGL_1_00::DrawSequence( 
   double x,  //!< in: x coordinate
   double y,  //!< in: y coordinate
   double z ) //!< in: z coordinate
@@ -459,13 +423,13 @@ bool CLineOpenGL_1_00::DrawSequence(
 
 /******************************************************************//**
 * \brief Specify a sequence of new vertex coordinates in an active
-* line sequence.  
+* polygon sequence.  
 * 
 * \author  gernot
-* \date    2018-09-07
+* \date    2018-09-28
 * \version 1.0
 **********************************************************************/
-bool CLineOpenGL_1_00::DrawSequence( 
+bool CPolygonOpenGL_1_00::DrawSequence( 
   size_t             coords_size, //!< in: number of elements (size) of the coordinate array - `coords_size` = `tuple_size` * "number of coordinates" 
   const float       *coords )     //!< in: pointer to an array of the vertex coordinates
 {
@@ -499,13 +463,13 @@ bool CLineOpenGL_1_00::DrawSequence(
 
 /******************************************************************//**
 * \brief Specify a sequence of new vertex coordinates in an active
-* line sequence.  
+* polygon sequence.  
 * 
 * \author  gernot
-* \date    2018-09-07
+* \date    2018-09-28
 * \version 1.0
 **********************************************************************/
-bool CLineOpenGL_1_00::DrawSequence( 
+bool CPolygonOpenGL_1_00::DrawSequence( 
   size_t             coords_size, //!< in: number of elements (size) of the coordinate array - `coords_size` = `tuple_size` * "number of coordinates" 
   const double      *coords )     //!< in: pointer to an array of the vertex coordinates
 {

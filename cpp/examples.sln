@@ -16,12 +16,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "transform_feedback_simple",
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fixed_function_pipeline_matrix_stack", "fixed_function_pipeline_matrix_stack\fixed_function_pipeline_matrix_stack.vcxproj", "{D58700A2-DE4F-4B37-A841-1C72A8A2A363}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "draw_library", "draw_library\draw_library.vcxproj", "{287C92C5-1D7E-4214-8DB9-39C6F645087C}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "draw_library_scenes", "draw_library_scenes\draw_library_scenes.vcxproj", "{1B15D0AF-5D95-4EE7-990E-AA2B8B507D1E}"
 	ProjectSection(ProjectDependencies) = postProject
 		{664E6F0D-6784-4760-9565-D54F8EB1EDF4} = {664E6F0D-6784-4760-9565-D54F8EB1EDF4}
-		{287C92C5-1D7E-4214-8DB9-39C6F645087C} = {287C92C5-1D7E-4214-8DB9-39C6F645087C}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "example_map_generator", "example_map_generator\example_map_generator.vcxproj", "{E50E95FE-9805-4099-85E0-FB048A60D863}"
@@ -90,14 +87,6 @@ Global
 		{D58700A2-DE4F-4B37-A841-1C72A8A2A363}.Release|x64.Build.0 = Release|x64
 		{D58700A2-DE4F-4B37-A841-1C72A8A2A363}.Release|x86.ActiveCfg = Release|Win32
 		{D58700A2-DE4F-4B37-A841-1C72A8A2A363}.Release|x86.Build.0 = Release|Win32
-		{287C92C5-1D7E-4214-8DB9-39C6F645087C}.Debug|x64.ActiveCfg = Debug|x64
-		{287C92C5-1D7E-4214-8DB9-39C6F645087C}.Debug|x64.Build.0 = Debug|x64
-		{287C92C5-1D7E-4214-8DB9-39C6F645087C}.Debug|x86.ActiveCfg = Debug|Win32
-		{287C92C5-1D7E-4214-8DB9-39C6F645087C}.Debug|x86.Build.0 = Debug|Win32
-		{287C92C5-1D7E-4214-8DB9-39C6F645087C}.Release|x64.ActiveCfg = Release|x64
-		{287C92C5-1D7E-4214-8DB9-39C6F645087C}.Release|x64.Build.0 = Release|x64
-		{287C92C5-1D7E-4214-8DB9-39C6F645087C}.Release|x86.ActiveCfg = Release|Win32
-		{287C92C5-1D7E-4214-8DB9-39C6F645087C}.Release|x86.Build.0 = Release|Win32
 		{1B15D0AF-5D95-4EE7-990E-AA2B8B507D1E}.Debug|x64.ActiveCfg = Debug|x64
 		{1B15D0AF-5D95-4EE7-990E-AA2B8B507D1E}.Debug|x64.Build.0 = Debug|x64
 		{1B15D0AF-5D95-4EE7-990E-AA2B8B507D1E}.Debug|x86.ActiveCfg = Debug|Win32

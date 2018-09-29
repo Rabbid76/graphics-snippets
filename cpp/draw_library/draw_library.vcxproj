@@ -171,6 +171,7 @@
     <ClInclude Include="..\include\OpenGL\OpenGLLine_2_0.h" />
     <ClInclude Include="..\include\OpenGL\OpenGLLine_core_and_es.h" />
     <ClInclude Include="..\include\OpenGL\OpenGLLine_highquality.h" />
+    <ClInclude Include="..\include\OpenGL\OpenGLPolygon_1_0.h" />
     <ClInclude Include="..\include\OpenGL\OpenGLProgram.h" />
     <ClInclude Include="..\include\OpenGL\OpenGLTextureLoader.h" />
     <ClInclude Include="..\include\OpenGL\OpenGLVertexBuffer.h" />
@@ -210,6 +211,7 @@
     <ClCompile Include="..\source\OpenGL\OpenGLLine_2_0.cpp" />
     <ClCompile Include="..\source\OpenGL\OpenGLLine_core_and_es.cpp" />
     <ClCompile Include="..\source\OpenGL\OpenGLLine_highquality.cpp" />
+    <ClCompile Include="..\source\OpenGL\OpenGLPolygon_1_0.cpp" />
     <ClCompile Include="..\source\OpenGL\OpenGLProgram.cpp" />
     <ClCompile Include="..\source\OpenGL\OpenGLTextureLoader.cpp" />
     <ClCompile Include="..\source\OpenGL\OpenGLVertexBuffer.cpp" />

@@ -19,10 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\source\OpenGL\OpenGLLine_1_0.cpp" />
-    <ClCompile Include="..\source\OpenGL\OpenGLLine_2_0.cpp" />
     <ClCompile Include="..\source\OpenGL\OpenGLLine_core_and_es.cpp" />
     <ClCompile Include="..\source\OpenGL\OpenGLLine_highquality.cpp" />
+    <ClCompile Include="..\source\OpenGL\OpenGLPolygon_1_0.cpp" />
     <ClCompile Include="..\source\OpenGL\OpenGLProgram.cpp" />
     <ClCompile Include="polygon_render.cpp" />
     <ClCompile Include="stdafx.cpp">
@@ -33,15 +32,13 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\include\OpenGL\OpenGLLine_1_0.h" />
-    <ClInclude Include="..\include\OpenGL\OpenGLLine_2_0.h" />
     <ClInclude Include="..\include\OpenGL\OpenGLLine_core_and_es.h" />
     <ClInclude Include="..\include\OpenGL\OpenGLLine_highquality.h" />
+    <ClInclude Include="..\include\OpenGL\OpenGLPolygon_1_0.h" />
     <ClInclude Include="..\include\OpenGL\OpenGLProgram.h" />
     <ClInclude Include="..\include\OpenGL\OpenGL_Matrix_Camera.h" />
     <ClInclude Include="..\include\OpenGL\OpenGL_SimpleShaderProgram.h" />
     <ClInclude Include="..\include\render\Render_IBuffer.h" />
-    <ClInclude Include="..\include\render\Render_IDrawLine.h" />
     <ClInclude Include="..\include\render\Render_IDrawPolygon.h" />
     <ClInclude Include="..\include\render\Render_IDrawType.h" />
     <ClInclude Include="..\include\render\Render_IProgram.h" />

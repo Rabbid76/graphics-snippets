@@ -132,6 +132,9 @@
     <ClInclude Include="..\include\render\Render_IDrawPolygon.h">
       <Filter>render</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\OpenGL\OpenGLPolygon_1_0.h">
+      <Filter>OpenGL</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -180,6 +183,9 @@
       <Filter>OpenGL_source</Filter>
     </ClCompile>
     <ClCompile Include="..\source\OpenGL\OpenGLLine_core_and_es.cpp">
+      <Filter>OpenGL_source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\OpenGL\OpenGLPolygon_1_0.cpp">
       <Filter>OpenGL_source</Filter>
     </ClCompile>
   </ItemGroup>
