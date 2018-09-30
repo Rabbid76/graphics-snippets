@@ -116,6 +116,8 @@
 
 [Toon silhouette](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/silhouette.html)
 
+[Voronoi](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/voronoi.html)
+
 [Normal map 1](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/normalmap1.html)
 
 [Background](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/background_cube_poor_webgl.html)

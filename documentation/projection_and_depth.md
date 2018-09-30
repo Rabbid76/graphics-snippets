@@ -219,10 +219,10 @@ Orthographic Projection Matrix:
 ```txt
 r = right, l = left, b = bottom, t = top, n = near, f = far
 
-2/(r-l)         0               0               0
-0               2/(t-b)         0               0
-0               0               -2/(f-n)        0
--(r+l)/(r-l)    -(t+b)/(t-b)    -(f+n)/(f-n)    1
+X:    2/(r-l)         0               0               0
+y:    0               2/(t-b)         0               0
+z:    0               0               -2/(f-n)        0
+t:    -(r+l)/(r-l)    -(t+b)/(t-b)    -(f+n)/(f-n)    1
 ```
 
 At Orthographic Projection, the Z component is calculated by the **linear function**:
@@ -243,24 +243,24 @@ The eye space coordinates in the camera frustum (a truncated pyramid) are mapped
 ![Perspective Projection](image/PerspectiveProjection.png)
 
 A perspective projection matrix can be defined by a **frustum**.  
-The distances `left`, `right`, `bottom` and `top`, which are the distances to the side faces of the frustum, from the intersection point with the line of sight on the near plane. `near` and `far` specify the distances to the near and far plane on the frustum.
+The distances `left`, `right`, `bottom` and `top`, are the distances from the center of the view to the side faces of the frustum, on the near plane. `near` and `far` specify the distances to the near and far plane on the frustum.
 
 ```txt
 r = right, l = left, b = bottom, t = top, n = near, f = far
 
-2*n/(r-l)      0              0                0
-0              2*n/(t-b)      0                0
-(r+l)/(r-l)    (t+b)/(t-b)    -(f+n)/(f-n)    -1
-0              0              -2*f*n/(f-n)     0
+x:    2*n/(r-l)      0              0                0
+y:    0              2*n/(t-b)      0                0
+z:    (r+l)/(r-l)    (t+b)/(t-b)    -(f+n)/(f-n)    -1
+t:    0              0              -2*f*n/(f-n)     0
 ```
 
 If the projection is symmetric, where the line of sight is axis of symmetry of the view frustum, then the matrix can be simplified:
 
 ```txt
-1/(ta*a)  0     0              0
-0         1/ta  0              0
-0         0    -(f+n)/(f-n)   -1
-0         0    -2*f*n/(f-n)    0
+x:    1/(ta*a)  0     0              0
+y:    0         1/ta  0              0
+z:    0         0    -(f+n)/(f-n)   -1
+t:    0         0    -2*f*n/(f-n)    0
 ```
 
 where:
