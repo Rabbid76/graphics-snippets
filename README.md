@@ -112,7 +112,7 @@
 
 [Blending](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/blending.html)
 
-[Texture light up](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/texture_light_up.html)
+[Texture flashlight](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/texture_flashlight.html)
 
 [Toon silhouette](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/silhouette.html)
 

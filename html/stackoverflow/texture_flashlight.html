@@ -1,39 +1,42 @@
 <script id="draw-shader-vs" type="x-shader/x-vertex">
-    precision mediump float;
+precision mediump float;
 
-    attribute vec2 inPos;
-    varying   vec2 vertPos;
+attribute vec2 inPos;
+varying   vec2 vertPos;
 
-    void main()
-    {
-        vertPos     = inPos;
-        gl_Position = vec4( inPos, 0.0, 1.0 );
-    }
+void main()
+{
+    vertPos     = inPos;
+    gl_Position = vec4( inPos, 0.0, 1.0 );
+}
 </script>
 
 <script id="draw-shader-fs" type="x-shader/x-fragment">
-    precision mediump float;
+precision mediump float;
 
-    varying vec2      vertPos;
-    uniform sampler2D u_texture;
-    uniform sampler2D u_maskTexture;
-    uniform vec2      u_mouse;
-    uniform float     u_maxDistance;
-    uniform float     u_exponent;
-    uniform float     u_lightup;
-    
-    void main()
-    {
-        float distance    = length( vertPos - u_mouse);
-        float mixK        = pow( distance / u_maxDistance, 2.0 ); 
-        vec2 texCoord     = vertPos * 0.5 + 0.5;
-        vec3 texColor     = texture2D( u_texture, texCoord.st ).rgb;
-        vec3 grayColor    = vec3( 0.2126 * texColor.r + 0.7152 * texColor.g + 0.0722 * texColor.b );
-        vec2 maskTexCoord = 0.5 + 0.5 * (vertPos - u_mouse) / u_maxDistance; 
-        float mask        = texture2D( u_maskTexture, maskTexCoord ).x;
-        vec3 finalColor   = mix( grayColor, texColor * u_lightup, ( 1.0 - clamp( mixK, 0.0, 1.0 ) ) * mask );
-        gl_FragColor      = vec4( finalColor.rgb, 1.0 );
-    }
+varying vec2      vertPos;
+uniform sampler2D u_texture;
+uniform sampler2D u_maskTexture;
+uniform vec2      u_vpsize;
+uniform vec2      u_mouse;
+uniform float     u_maxDistance;
+uniform float     u_exponent;
+uniform float     u_lightup;
+
+void main()
+{
+    float aspect       = u_vpsize[0]/u_vpsize[1];
+    vec2  distVec      = (vertPos - u_mouse) * vec2(max(1.0,aspect), max(1.0,1.0/aspect));
+    float distance     = length(distVec);
+    float mixK         = pow( distance / u_maxDistance, u_exponent ); 
+    vec2  texCoord     = vertPos * 0.5 + 0.5;
+    vec3  texColor     = texture2D( u_texture, texCoord.st ).rgb;
+    vec3  grayColor    = vec3( 0.2126 * texColor.r + 0.7152 * texColor.g + 0.0722 * texColor.b );
+    vec2  maskTexCoord = 0.5 + 0.5 * distVec / u_maxDistance; 
+    float mask         = texture2D( u_maskTexture, maskTexCoord ).a;
+    vec3  finalColor   = mix( grayColor, texColor * u_lightup, ( 1.0 - clamp( mixK, 0.0, 1.0 ) ) * mask );
+    gl_FragColor       = vec4( finalColor.rgb, 1.0 );
+}
 </script>
 
 <style>
@@ -42,20 +45,24 @@ html,body { margin: 0; overflow: hidden; }
 #ref-link { position : absolute; bottom : 0; left : 0; }  
 </style>
 
-<body onload="sceneStart();">
+<body>
 
 <form id="gui" name="inputs">
 <table>
     <tr> <td> <font color= #CCF>max. distance</font> </td> 
-            <td> <input type="range" id="maxDist" min="20" max="100" value="50"/></td> </tr>
+            <td> <input type="range" id="maxDist" min="1" max="100" value="33"/></td> </tr>
     <tr> <td> <font color= #CCF>exponent</font> </td> 
-            <td> <input type="range" id="exponent" min="50" max="250" value="200"/></td> </tr>
+            <td> <input type="range" id="exponent" min="1" max="300" value="100"/></td> </tr>
     <tr> <td> <font color= #CCF>light up</font> </td> 
-            <td> <input type="range" id="lightup" min="50" max="200" value="120"/></td> </tr>
+            <td> <input type="range" id="lightup" min="50" max="200" value="150"/></td> </tr>
 </table>
 </form>
 
-<canvas id="scene-canvas" style="border: none;" width="512" height="512"></canvas>
+<canvas id="scene-canvas" style="border: none"></canvas>
+
+<a id="ref-link" href="https://stackoverflow.com/questions/45270803/webgl-shader-to-color-the-texture-according-to-mouse-position/45273087#45273087">
+<font color= #a0f040>WebGL shader to color the texture according to mouse position</font>  
+</a>
 
 </body>
 
@@ -84,6 +91,7 @@ function render(deltaMS){
     var pos = [ 2.0, 2.0 ];
     if (mousePos[0] > 0 && mousePos[1] > 0 )
         pos = [2.0 * mousePos[0] / vp_size[0] - 1.0, 1.0 - 2.0 * mousePos[1] / vp_size[1]];
+    ShProg.SetF2( progDraw, "u_vpsize", vp_size );
     ShProg.SetF2( progDraw, "u_mouse", pos );
     ShProg.SetF1( progDraw, "u_maxDistance", maxDist );
     ShProg.SetF1( progDraw, "u_exponent", exponent );
@@ -107,43 +115,9 @@ function initScene() {
     if ( !gl )
       return;
 
-    var texCX = 128;
-    var texCY = 128;
-    var texPlan = [];
-    for (ix = 0; ix < texCX; ++ix) {
-        for (iy = 0; iy < texCY; ++iy) {
-            var val_x = Math.sin( Math.PI * 6.0 * ix / texCX )
-            var val_y = Math.sin( Math.PI * 6.0 * iy / texCY )
-            texPlan.push( 128 + 127 * val_x, 63, 128 + 127 * val_y, 255 );
-        }
-    }
-    textureObj = gl.createTexture();
-    gl.activeTexture( gl.TEXTURE0 );
-    gl.bindTexture( gl.TEXTURE_2D, textureObj );
-    gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, texCX, texCY, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array( texPlan ) );
-    gl.pixelStorei( gl.UNPACK_FLIP_Y_WEBGL, true );
-    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR );
-    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR );
-    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT );
-    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT );
-      
-    var maskTexPlan = [];
-    for (ix = 0; ix < texCX; ++ix) {
-        for (iy = 0; iy < texCY; ++iy) {
-            var val_x = Math.sin( Math.PI * 6.0 * ix / texCX )
-            var val_y = Math.sin( Math.PI * 6.0 * iy / texCY )
-            maskTexPlan.push( (val_x * val_y < 0.0) ? 255 : 0, 255, 255, 255 );
-        }
-    }
-    maskTextureObj = gl.createTexture();
-    gl.activeTexture( gl.TEXTURE0 );
-    gl.bindTexture( gl.TEXTURE_2D, maskTextureObj );
-    gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, texCX, texCY, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array( maskTexPlan ) );
-    gl.pixelStorei( gl.UNPACK_FLIP_Y_WEBGL, true );
-    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR );
-    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR );
-    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_BORDER );
-  	gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_BORDER );
+    textureObj = Texture.LoadTexture2D( "https://raw.githubusercontent.com/Rabbid76/graphics-snippets/master/resource/texture/supermario.jpg", true );  
+    maskTextureObj = Texture.LoadTexture2D( "https://raw.githubusercontent.com/Rabbid76/graphics-snippets/master/resource/texture/bat.png", true );  
+
     
     progDraw = ShProg.Create( 
       [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },
@@ -261,6 +235,30 @@ Link: function (shaderObjs) {
     if ( !status ) alert(gl.getProgramInfoLog(prog));
     return status ? prog : null;
 } };
+
+var Texture = {};
+Texture.HandleLoadedTexture2D = function( image, texture, flipY ) {
+    gl.activeTexture( gl.TEXTURE0 );
+    gl.bindTexture( gl.TEXTURE_2D, texture );
+    gl.pixelStorei( gl.UNPACK_FLIP_Y_WEBGL, flipY != undefined && flipY == true );
+    gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image );
+    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR );
+    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR );
+    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT );
+  	gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT );
+    gl.bindTexture( gl.TEXTURE_2D, null );
+    return texture;
+}
+Texture.LoadTexture2D = function( name, flip ) {
+    var texture = gl.createTexture();
+    texture.image = new Image();
+    texture.image.setAttribute('crossorigin', 'anonymous');
+    texture.image.onload = function () {
+        Texture.HandleLoadedTexture2D( texture.image, texture, flip )
+    }
+    texture.image.src = name;
+    return texture;
+}
 
 initScene();
 
