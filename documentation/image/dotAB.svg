@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<svg version="1.2" baseProfile="tiny" width="37.67mm" height="46mm" viewBox="8534 2700 3767 4600" preserveAspectRatio="xMidYMid" fill-rule="evenodd" stroke-width="28.222" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve">
+<svg version="1.2" baseProfile="tiny" width="55.72mm" height="60mm" viewBox="8328 1300 5572 6000" preserveAspectRatio="xMidYMid" fill-rule="evenodd" stroke-width="28.222" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve">
  <defs>
   <font id="EmbeddedFont_1" horiz-adv-x="2048">
    <font-face font-family="Corbel embedded" units-per-em="2048" font-weight="bold" font-style="normal" ascent="1931" descent="556"/>
@@ -11,28 +11,29 @@
    <glyph unicode="c" horiz-adv-x="742" d="M 828,21 C 798,8 761,-2 718,-11 675,-20 629,-25 581,-25 511,-25 446,-15 385,5 324,25 271,55 226,96 181,137 145,188 119,251 93,313 80,386 80,469 80,562 95,642 125,709 155,776 194,830 242,872 289,913 343,944 403,964 462,983 521,993 579,993 622,993 664,989 704,982 744,974 780,963 813,950 L 813,757 C 784,770 753,780 720,788 687,795 651,799 613,799 575,799 539,793 504,782 469,770 439,751 412,726 385,701 364,667 349,626 333,584 325,534 325,475 325,432 331,392 343,355 355,317 373,285 396,258 419,231 448,210 484,194 519,177 561,169 610,169 653,169 693,173 728,182 763,191 797,201 828,214 L 828,21 Z"/>
    <glyph unicode="B" horiz-adv-x="1006" d="M 1129,982 C 1129,924 1116,871 1090,823 1064,774 1021,734 961,702 L 961,698 C 994,687 1025,672 1053,655 1080,637 1104,616 1124,592 1143,567 1159,540 1170,509 1181,478 1186,444 1186,406 1186,373 1181,338 1171,301 1160,264 1142,228 1116,193 1090,158 1055,125 1012,96 969,67 914,43 848,26 831,22 813,18 794,15 774,12 752,9 728,7 704,4 677,3 648,2 619,1 586,0 549,0 L 160,0 160,1338 625,1338 C 724,1338 804,1328 865,1308 910,1293 950,1274 983,1251 1016,1227 1044,1201 1066,1172 1087,1143 1103,1112 1114,1080 1124,1047 1129,1015 1129,982 Z M 405,582 L 405,205 565,205 C 608,205 644,206 675,209 706,211 732,215 754,220 788,227 816,237 839,250 862,262 880,276 894,292 908,307 918,325 924,344 930,363 933,383 933,404 933,441 923,474 902,502 881,530 849,551 805,565 786,571 763,575 737,578 711,581 678,582 637,582 L 405,582 Z M 626,787 C 693,787 742,794 775,807 812,822 838,844 854,871 869,898 877,928 877,962 877,997 868,1029 850,1057 832,1084 801,1105 758,1118 740,1123 719,1127 695,1130 671,1132 641,1133 606,1133 L 405,1133 405,787 626,787 Z"/>
    <glyph unicode="A" horiz-adv-x="1271" d="M 926,341 L 422,341 291,0 30,0 561,1338 785,1338 1316,0 1057,0 926,341 Z M 672,1016 C 625,876 583,759 547,665 L 501,546 847,546 801,665 C 765,760 723,877 676,1016 L 672,1016 Z"/>
+   <glyph unicode="1" horiz-adv-x="848" d="M 427,201 L 427,717 90,621 90,831 482,969 664,969 664,201 946,201 946,0 110,0 110,201 427,201 Z"/>
   </font>
  </defs>
  <g visibility="visible" id="Slide_1">
   <g id="Drawing_1">
-   <rect fill="none" stroke="none" x="11286" y="4548" width="1015" height="801"/>
+   <rect fill="none" stroke="none" x="12886" y="5200" width="1015" height="801"/>
    <g fill="rgb(204,0,0)" stroke="none" font-family="Corbel embedded" font-size="423" font-style="normal" font-weight="700">
-    <text x="11536" y="5075">A</text>
+    <text x="13136" y="5727">A</text>
    </g>
   </g>
   <g id="Drawing_2">
-   <rect fill="none" stroke="none" x="10400" y="2700" width="801" height="768"/>
+   <rect fill="none" stroke="none" x="11800" y="1300" width="801" height="768"/>
    <g fill="rgb(0,153,0)" stroke="none" font-family="Corbel embedded" font-size="423" font-style="normal" font-weight="700">
-    <text x="10650" y="3227">B</text>
+    <text x="12050" y="1827">B</text>
    </g>
   </g>
   <g>
-   <path fill="none" stroke="rgb(204,0,0)" id="Drawing_3_0" stroke-width="53" stroke-linejoin="round" d="M 8560,5321 L 11180,5317"/>
-   <path fill="rgb(204,0,0)" stroke="none" id="Drawing_3_1" d="M 11202,5427 L 11180,5456 11570,5316 11180,5177 11201,5205 11218,5239 11229,5275 11234,5315 11230,5355 11219,5392 11202,5427 Z"/>
+   <path fill="none" stroke="rgb(204,0,0)" id="Drawing_3_0" stroke-width="53" stroke-linejoin="round" d="M 8560,5321 L 12610,5302"/>
+   <path fill="rgb(204,0,0)" stroke="none" id="Drawing_3_1" d="M 12633,5412 L 12611,5441 13000,5300 12610,5162 12631,5190 12648,5224 12659,5260 12664,5300 12660,5340 12649,5378 12633,5412 Z"/>
   </g>
   <g>
-   <path fill="none" stroke="rgb(0,153,0)" id="Drawing_4_0" stroke-width="53" stroke-linejoin="round" d="M 8570,5313 L 10294,3591"/>
-   <path fill="rgb(0,153,0)" stroke="none" id="Drawing_4_1" d="M 10388,3654 L 10393,3690 10570,3316 10196,3493 10230,3498 10266,3510 10300,3527 10331,3553 10357,3583 10375,3618 10388,3654 Z"/>
+   <path fill="none" stroke="rgb(0,153,0)" id="Drawing_4_0" stroke-width="53" stroke-linejoin="round" d="M 8570,5313 L 11628,2179"/>
+   <path fill="rgb(0,153,0)" stroke="none" id="Drawing_4_1" d="M 11722,2240 L 11728,2276 11900,1900 11528,2082 11563,2086 11598,2098 11633,2115 11664,2140 11690,2170 11709,2204 11722,2240 Z"/>
   </g>
   <g>
    <path fill="none" stroke="rgb(0,0,204)" id="Drawing_5_0" stroke-width="53" stroke-linejoin="round" d="M 10180,6317 L 8960,6322"/>
@@ -81,6 +82,45 @@ gg=="/>
    <g fill="rgb(0,0,0)" stroke="none" font-family="Corbel embedded" font-size="494" font-style="normal" font-weight="700">
     <text x="8887" y="7043">
      <tspan x="8887 9107 9382">cos</tspan></text>
+   </g>
+  </g>
+  <g id="Drawing_11">
+<image x="9700" y="6700" width="487" height="401" xlink:href="data:image/png;base64,
+iVBORw0KGgoAAAANSUhEUgAAADwAAAA0CAIAAABZzcxIAAAACXBIWXMAADAgAAAy
+qAEEm7HfAAAEM0lEQVR4nOWaPW7qQBDHN1JOsogiEocwxSIqOk5AZ+zCLQegpfDi
+jhPQpUK4wIdAoojsq/Bs7xp/7Iy9azt5L3p/JVJEwvDz7Ozs7Ezen88n+W16/9sA
+fWQKnSTh5fB5vt9JFEWvVy3LIrPZeuUtGaWj8oHShk5Cd7PnFdCqsgdIvzlPf7ac
+486zmQ576L4tuPqydYxvdtv7daCTwN1sOYyrKuLbiJ91yJOvO/SytV52PHEHdBIG
+m8U2Ug1nUJVYyKNmf36thCBv91hyOauGdZhboZNgPlGBLed68ps+pJTZfvqVBdGi
+WJRoO5k/rjefmTCT2bQzslBolBiDyEWZf3t65Vsjvph/wP6OH4r1TM6qxbwUDA0T
+kw7iQtS+PafuXHo82m6CpYodfgJbUI8ZhA5diDhF1iGWSj1+JZIbwh7CDECHLpSG
+zJBzMf90vIvHV7ARZutjomO5CY0gW0fPEDlTGifXh0jF0fYQ2q/H7p3shOrQSbCH
+PaBpTRXzjhbPvc0X7uopsPsnO6EadHiAYnkIc+btnZPm7OxH/hn6jA1nrkJjbh7E
+TGrO3gcesymS7DQStFQJjSV7E2uwSmfnkb0akjhyvaBxZgNrmNjKIVyGiEuGMr+g
+cWbNNNSuSojwwcwFNM48ODiE6HJtEaSwJaarKaGRvTGiWqkNV1NAI8m+hz1cLdSm
+6anzEjBOdGSi01maP4BfGKdUAf390ZFp8mFB1ObHwA/exgdU/Q3l0C0hPaIGVP0N
+dXl6tH04rIKuK4dGt8iIGpH5x2Iaq6B7LWQXdPSI05XoYbiuwdVoTQIaSUajaVxm
+Cf3NQT1eshOS4YG7+v6VEK3GHC60GiuuMqaS0B1F2CC1VJA9PVJsRDRABu9E7OKZ
+Gz9fEru1QQrqlT3Ky0VDA+MDyc9S/VxSprzyctGw288bQvBl2XIyB+Uf1RnWeQ+7
+0bGu5GksrgcECBzOzs5PL7eyt9qxkOJQaqSZ6uFSaVHU1HeTw+GcN6soKYKxfSHh
+p66fiEiIyH6FITIcGs4uN1Tm2DZqydw87BvHOLVPx7PaM6134jSRN2CzWFqpxCLS
+CyblSjUPIaX2QGKk0okbAblODWMnwVz2QpVKECiYmH91uNo7NcAGG9xpBqi9u7bv
+xaTj5IkpThIGh/1rNKVWgmCVx/y46CzXsd/INVbmLQ2VHqrKuSoB0MhWEV9MwC6z
+WlUhpSm1bzEBRhip4Ts0KCqAq3Oi8mORsQeWrbqYW+rpjHsKMOQesSxnd/ImtJjJ
+iZEcNGxsnWRiB1opmWx0oYmYVcWrAKCJIh6Bi1kVOLxrfAKcrQoDjW1QqPO6JQaE
+XgihozIYNWOBmAcVskSad0Q528zCIL585gP92kSfyKH+er1aGg/1sxHesjp673pm
+w4stpYzajNlm79IxnEYi8zX/+L/4f49/Qr8S+g9BaWwj6akRXQAAAABJRU5ErkJg
+gg=="/>
+  </g>
+  <g>
+   <path fill="none" stroke="rgb(0,0,0)" id="Drawing_12_0" stroke-linejoin="round" d="M 10382,3119 L 8418,5181"/>
+   <path fill="rgb(0,0,0)" stroke="none" id="Drawing_12_1" d="M 10328,3031 L 10376,3077 10424,3123 10472,3169 10466,3175 10461,3181 10454,3188 10406,3142 10358,3096 10309,3050 10315,3044 10321,3038 10328,3031 Z"/>
+   <path fill="rgb(0,0,0)" stroke="none" id="Drawing_12_2" d="M 8472,5269 L 8424,5223 8376,5177 8328,5131 8334,5125 8339,5119 8346,5112 8394,5158 8442,5204 8491,5250 8485,5256 8479,5262 8472,5269 Z"/>
+  </g>
+  <g id="Drawing_13">
+   <rect fill="none" stroke="none" x="9200" y="3200" width="801" height="768"/>
+   <g fill="rgb(0,0,0)" stroke="none" font-family="Corbel embedded" font-size="423" font-style="normal" font-weight="700">
+    <text x="9450" y="3727">1</text>
    </g>
   </g>
  </g>
