@@ -434,7 +434,7 @@ See [OpenGL 4.6 core Specification - 10.3.1 Vertex Array Objects](https://www.kh
 <br/>
 
 The `GL_ELEMENT_ARRAY_BUFFER` has to be bound **after** the vertex array object has been bound (`glBindVertexArray`). The `GL_ELEMENT_ARRAY_BUFFER` object is stored in the vertex array objects state vector.<br/>
-If the vertex array object has been unbound and is bound again, then the `GL_ELEMENT_ARRAY_BUFFER` is known and bound again, too. But if the element array buffer explicitly gets unbound while the vertex array object is bound, it is removed form the state vector.
+If the vertex array object has been unbound and is bound again, then the `GL_ELEMENT_ARRAY_BUFFER` is known and bound again too. But if the element array buffer explicitly gets unbound while the vertex array object is bound, it is removed form the state vector.
 
 See the [OpenGL 4.6 core specification - 10.3. VERTEX ARRAYS](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf):
 
@@ -449,14 +449,16 @@ See the [OpenGL 4.6 core specification - 10.3. VERTEX ARRAYS](https://www.khrono
 > `BindVertexArray` may also be used to bind an existing vertex array object. If the bind is successful no change is made to the state of the bound vertex array object, and **any previous binding is broken**.
 >
 > Tables 23.3, Vertex Array Object State<br/>
-> *VERTEX_ATTRIB_ARRAY_ENABLED*, *VERTEX_ATTRIB_ARRAY_SIZE*, *VERTEX_ATTRIB_ARRAY_STRIDE*, *VERTEX_ATTRIB_ARRAY_TYPE*, *VERTEX_ATTRIB_ARRAY_NORMALIZED*, *VERTEX_ATTRIB_ARRAY_INTEGER*, *VERTEX_ATTRIB_ARRAY_LONG*, *VERTEX_ATTRIB_ARRAY_DIVISOR*, *VERTEX_ATTRIB_ARRAY_POINTER*
+> `VERTEX_ATTRIB_ARRAY_ENABLED`, `VERTEX_ATTRIB_ARRAY_SIZE`, `VERTEX_ATTRIB_ARRAY_STRIDE`, `VERTEX_ATTRIB_ARRAY_TYPE`, `VERTEX_ATTRIB_ARRAY_NORMALIZED`, `VERTEX_ATTRIB_ARRAY_INTEGER`, `VERTEX_ATTRIB_ARRAY_LONG`, `VERTEX_ATTRIB_ARRAY_DIVISOR`, `VERTEX_ATTRIB_ARRAY_POINTER`
 >
 > Table 23.4, Vertex Array Object State<br/>
-> *ELEMENT_ARRAY_BUFFER_BINDING*, *VERTEX_ATTRIB_ARRAY_BUFFER_BINDING*, *VERTEX_ATTRIB_BINDING*, *VERTEX_ATTRIB_RELATIVE_OFFSET*, *VERTEX_BINDING_OFFSET*, *VERTEX_BINDING_STRIDE*, *VERTEX_BINDING_DIVISOR*, *VERTEX_BINDING_BUFFER*.
+> `ELEMENT_ARRAY_BUFFER_BINDING`, `VERTEX_ATTRIB_ARRAY_BUFFER_BINDING`, `VERTEX_ATTRIB_BINDING`, `VERTEX_ATTRIB_RELATIVE_OFFSET`, `VERTEX_BINDING_OFFSET`, `VERTEX_BINDING_STRIDE`, `VERTEX_BINDING_DIVISOR`, `VERTEX_BINDING_BUFFER`.
 >
 > Table 23.5, Vertex Array Data (**not in Vertex Array objects**)<br/>
-> *ARRAY_BUFFER_BINDING*, *DRAW_INDIRECT_BUFFER_BINDING*, *VERTEX_ARRAY_BINDING*, *PARAMETER_BUFFER_BINDING*, *PRIMITIVE_RESTART*, *PRIMITIVE_RESTART_FIXED_INDEX*, *PRIMITIVE_RESTART_INDEX*
+> `ARRAY_BUFFER_BINDING`, `DRAW_INDIRECT_BUFFER_BINDING`, `VERTEX_ARRAY_BINDING`, `PARAMETER_BUFFER_BINDING`, `PRIMITIVE_RESTART`, `PRIMITIVE_RESTART_FIXED_INDEX`, `PRIMITIVE_RESTART_INDEX`
 
+The OpenGL ES specification is similar, but the tables are slightly different  
+[OpenGL ES 3.2 Specification; 10.4 Vertex Array Objects; page 275](https://www.khronos.org/registry/OpenGL/specs/es/3.2/es_spec_3.2.pdf) 
 
 See the [OpenGL 4.6 core specification - 10.3.9 Vertex Arrays in Buffer Objects](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf):
 
