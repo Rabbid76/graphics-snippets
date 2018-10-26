@@ -65,112 +65,101 @@ html,body { margin: 0; overflow: hidden; }
 
 <script type="text/javascript">
 
-var readInput = true;
-function changeEventHandler(event){
-readInput = true;
-}
-
 (function loadscene() {
 
-var gl, progDraw, vp_size, camera;
-var bufCube = {};
+let gl;
 
-function render(delteMS){
+class App {
 
-  if ( readInput ) {
-      readInput = false;
-      // ...
-  }
+    constructor() {
+        this.canvas = document.getElementById( "canvas");
+        gl = canvas.getContext( "experimental-webgl" );
+        //gl = canvas.getContext( "webgl2" );
+        if ( !gl )
+            return null;
 
-  // setup view projection and model
-  vp_size = [canvas.width, canvas.height];
-  camera.Update( vp_size );
-  var modelMat = Mat44.ident();
-  modelMat = camera.autoModelMatrix;
-      
-  gl.viewport( 0, 0, vp_size[0], vp_size[1] );
-  gl.enable( gl.DEPTH_TEST );
-  gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
-  gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+        this.progDraw = new ShProg( 
+            [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },
+                { source : "draw-shader-fs", stage : gl.FRAGMENT_SHADER }
+            ] );
+        if ( !this.progDraw.progObj )
+            return null;
+        this.progDraw.inPos = this.progDraw.AttrI("inPos");
+        this.progDraw.inNV  = this.progDraw.AttrI("inNV");
+        this.progDraw.inCol = this.progDraw.AttrI("inCol");
 
-  // set up draw shader
-  progDraw.Use();
-  progDraw.SetM44("u_projectionMat44", camera.perspective);
-  progDraw.SetM44("u_viewMat44", camera.orbit);
-  progDraw.SetM44("u_modelMat44", modelMat);
-  
-  // draw scene
-  bufCube.Draw();
+        // create cube
+        let cubePos = [
+            -1.0, -1.0,  1.0,  1.0, -1.0,  1.0,  1.0,  1.0,  1.0, -1.0,  1.0,  1.0,
+            -1.0, -1.0, -1.0,  1.0, -1.0, -1.0,  1.0,  1.0, -1.0, -1.0,  1.0, -1.0 ];
+        let cubeCol = [ 1.0, 0.0, 0.0, 1.0, 0.5, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 ];
+        let cubeHlpInx = [ 0, 1, 2, 3, 1, 5, 6, 2, 5, 4, 7, 6, 4, 0, 3, 7, 3, 2, 6, 7, 1, 0, 4, 5 ];  
+        let cubePosData = [];
+        for ( let i = 0; i < cubeHlpInx.length; ++ i ) {
+            cubePosData.push( cubePos[cubeHlpInx[i]*3], cubePos[cubeHlpInx[i]*3+1], cubePos[cubeHlpInx[i]*3+2] );
+        }
+        let cubeNVData = [];
+        for ( let i1 = 0; i1 < cubeHlpInx.length; i1 += 4 ) {
+            let nv = [0, 0, 0];
+            for ( let i2 = 0; i2 < 4; ++ i2 ) {
+                let i = i1 + i2;
+                nv[0] += cubePosData[i*3]; nv[1] += cubePosData[i*3+1]; nv[2] += cubePosData[i*3+2];
+        }
+        for ( let i2 = 0; i2 < 4; ++ i2 )
+            cubeNVData.push( nv[0], nv[1], nv[2] );
+        }
+        let cubeColData = [];
+        for ( let is = 0; is < 6; ++ is ) {
+            for ( let ip = 0; ip < 4; ++ ip ) {
+                cubeColData.push( cubeCol[is*3], cubeCol[is*3+1], cubeCol[is*3+2] ); 
+            }
+        }
+        let cubeInxData = [];
+        for ( let i = 0; i < cubeHlpInx.length; i += 4 ) {
+            cubeInxData.push( i, i+1, i+2, i, i+2, i+3 );   
+        }
+        this.bufCube = new VertexBuffer(
+            [ { data : cubePosData, attrSize : 3, attrLoc : this.progDraw.inPos },
+              { data : cubeNVData,  attrSize : 3, attrLoc : this.progDraw.inNV },
+              { data : cubeColData, attrSize : 3, attrLoc : this.progDraw.inCol } ],
+            cubeInxData );
 
-  requestAnimationFrame(render);
-}
+        this.resize(); 
+        this.camera = new Camera( [0, 3, 0.0], [0, 0, 0], [0, 0, 1], 90, this.vp_size, 0.5, 100 );
 
-function initScene() {
+        var self = this;
+        window.onresize = function() { self.resize(); }
+    }    
 
-  canvas = document.getElementById( "canvas");
-  gl = canvas.getContext( "experimental-webgl" );
-  //gl = canvas.getContext( "webgl2" );
-  if ( !gl )
-  return null;
-  
-  progDraw = new ShProg( 
-  [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },
-      { source : "draw-shader-fs", stage : gl.FRAGMENT_SHADER }
-  ] );
-  if ( !progDraw.progObj )
-      return null;
-  progDraw.inPos = progDraw.AttrI("inPos");
-  progDraw.inNV  = progDraw.AttrI("inNV");
-  progDraw.inCol = progDraw.AttrI("inCol");
-  
-  // create cube
-  var cubePos = [
-  -1.0, -1.0,  1.0,  1.0, -1.0,  1.0,  1.0,  1.0,  1.0, -1.0,  1.0,  1.0,
-  -1.0, -1.0, -1.0,  1.0, -1.0, -1.0,  1.0,  1.0, -1.0, -1.0,  1.0, -1.0 ];
-  var cubeCol = [ 1.0, 0.0, 0.0, 1.0, 0.5, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 ];
-  var cubeHlpInx = [ 0, 1, 2, 3, 1, 5, 6, 2, 5, 4, 7, 6, 4, 0, 3, 7, 3, 2, 6, 7, 1, 0, 4, 5 ];  
-  var cubePosData = [];
-  for ( var i = 0; i < cubeHlpInx.length; ++ i ) {
-  cubePosData.push( cubePos[cubeHlpInx[i]*3], cubePos[cubeHlpInx[i]*3+1], cubePos[cubeHlpInx[i]*3+2] );
-  }
-  var cubeNVData = [];
-  for ( var i1 = 0; i1 < cubeHlpInx.length; i1 += 4 ) {
-  var nv = [0, 0, 0];
-  for ( i2 = 0; i2 < 4; ++ i2 ) {
-      var i = i1 + i2;
-      nv[0] += cubePosData[i*3]; nv[1] += cubePosData[i*3+1]; nv[2] += cubePosData[i*3+2];
-  }
-  for ( i2 = 0; i2 < 4; ++ i2 )
-  cubeNVData.push( nv[0], nv[1], nv[2] );
-  }
-  var cubeColData = [];
-  for ( var is = 0; is < 6; ++ is ) {
-  for ( var ip = 0; ip < 4; ++ ip ) {
-      cubeColData.push( cubeCol[is*3], cubeCol[is*3+1], cubeCol[is*3+2] ); 
-  }
-  }
-  var cubeInxData = [];
-  for ( var i = 0; i < cubeHlpInx.length; i += 4 ) {
-  cubeInxData.push( i, i+1, i+2, i, i+2, i+3 );   
-  }
-  bufCube = new VertexBuffer(
-  [ { data : cubePosData, attrSize : 3, attrLoc : progDraw.inPos },
-  { data : cubeNVData,  attrSize : 3, attrLoc : progDraw.inNV },
-  { data : cubeColData, attrSize : 3, attrLoc : progDraw.inCol } ],
-  cubeInxData );
-  
-  camera = new Camera( [0, 3, 0.0], [0, 0, 0], [0, 0, 1], 90, vp_size, 0.5, 100 );
+    resize() {
+        //vp_size = [gl.drawingBufferWidth, gl.drawingBufferHeight];
+        this.vp_size = [window.innerWidth, window.innerHeight]
+        this.canvas.width = this.vp_size[0];
+        this.canvas.height = this.vp_size[1];
+    }
 
-  window.onresize = resize;
-  resize();
-  requestAnimationFrame(render);
-}
+    draw(deltaMS){
+        
+        // setup view projection and model
+        this.camera.Update( this.vp_size );
+        var modelMat = Mat44.ident();
+        modelMat = this.camera.autoModelMatrix;
+            
+        gl.viewport( 0, 0, this.vp_size[0], this.vp_size[1] );
+        gl.enable( gl.DEPTH_TEST );
+        gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
+        gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
 
-function resize() {
-  //vp_size = [gl.drawingBufferWidth, gl.drawingBufferHeight];
-  vp_size = [window.innerWidth, window.innerHeight]
-  canvas.width = vp_size[0];
-  canvas.height = vp_size[1];
+        // set up draw shader
+        this.progDraw.Use();
+        this.progDraw.SetM44("u_projectionMat44", this.camera.perspective);
+        this.progDraw.SetM44("u_viewMat44", this.camera.orbit);
+        this.progDraw.SetM44("u_modelMat44", modelMat);
+        
+        // draw scene
+        this.bufCube.Draw();
+    }
+
 }
 
 class ShProg {
@@ -477,7 +466,14 @@ multiply: function(matA, matB) {
 }
 }
 
-initScene();
+function render(deltaMS){
+    app.draw(deltaMS);
+    requestAnimationFrame(render);
+}
+
+let app = new App();
+requestAnimationFrame(render);
+
 
 })();
 </script>
