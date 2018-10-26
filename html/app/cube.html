@@ -1,0 +1,476 @@
+<script id="draw-shader-vs" type="x-shader/x-vertex">
+  precision highp float;
+  
+  attribute vec3 inPos;
+  attribute vec3 inNV;
+  attribute vec3 inCol;
+
+  varying vec3  vertPos;
+  varying vec3  vertNV;
+  varying vec3  vertCol;
+   
+  uniform mat4 u_projectionMat44;
+  uniform mat4 u_viewMat44;
+  uniform mat4 u_modelMat44;
+  uniform vec4 u_clipPlane;
+  
+  void main()
+  {   
+      mat4 mv       = u_viewMat44 * u_modelMat44; 
+      vertCol       = inCol;
+      vertNV        = normalize(mat3(mv) * inNV);
+      vec4 viewPos  = mv * vec4( inPos, 1.0 );
+      vertPos       = viewPos.xyz;
+      gl_Position   = u_projectionMat44 * viewPos;
+  }
+</script>
+
+<script id="draw-shader-fs" type="x-shader/x-fragment">
+  precision mediump float;
+
+  varying vec3  vertPos;
+  varying vec3  vertNV;
+  varying vec3  vertCol;
+  
+  void main()
+  {
+      vec3 color   = vertCol;
+      gl_FragColor = vec4( color.rgb, 1.0 );
+  } 
+</script>
+
+<style>
+html,body { margin: 0; overflow: hidden; }
+#gui { position : absolute; top : 0; left : 0; }
+#ref-link { position : absolute; bottom : 0; left : 0; }  
+</style>
+
+<body>
+
+<!--div>
+<form id="gui" name="inputs">
+  <table>
+      <tr> <td> <font color= #CCF></font> </td> 
+              <td> <input type="range" id="" min="0" max="100" value="50" onchange="changeEventHandler(event);"/></td> </tr>
+  </table>
+</form>
+</div-->
+
+<!--div id="ref-link">
+  <a href=""> 
+  </a>
+</div-->
+
+<canvas id="canvas" style="border: none;"></canvas>
+
+<script type="text/javascript">
+
+var readInput = true;
+function changeEventHandler(event){
+readInput = true;
+}
+
+(function loadscene() {
+
+var gl, progDraw, vp_size, camera;
+var bufCube = {};
+
+function render(delteMS){
+
+  if ( readInput ) {
+      readInput = false;
+      // ...
+  }
+
+  // setup view projection and model
+  vp_size = [canvas.width, canvas.height];
+  camera.Update( vp_size );
+  var modelMat = IdentM44();
+  modelMat = camera.autoModelMatrix;
+      
+  gl.viewport( 0, 0, vp_size[0], vp_size[1] );
+  gl.enable( gl.DEPTH_TEST );
+  gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
+  gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+
+  // set up draw shader
+  ShProg.Use( progDraw );
+  ShProg.SetM44( progDraw, "u_projectionMat44", camera.perspective );
+  ShProg.SetM44( progDraw, "u_viewMat44", camera.orbit );
+  ShProg.SetM44( progDraw, "u_modelMat44", modelMat );
+  
+  // draw scene
+  VertexBuffer.Draw( bufCube );
+
+  requestAnimationFrame(render);
+}
+
+function initScene() {
+
+  canvas = document.getElementById( "canvas");
+  gl = canvas.getContext( "experimental-webgl" );
+  //gl = canvas.getContext( "webgl2" );
+  if ( !gl )
+  return null;
+  
+  progDraw = ShProg.Create( 
+  [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },
+      { source : "draw-shader-fs", stage : gl.FRAGMENT_SHADER }
+  ] );
+  if ( !progDraw.progObj )
+      return null;
+  progDraw.inPos = ShProg.AttrI( progDraw, "inPos" );
+  progDraw.inNV  = ShProg.AttrI( progDraw, "inNV" );
+  progDraw.inCol = ShProg.AttrI( progDraw, "inCol" );
+  
+  // create cube
+  var cubePos = [
+  -1.0, -1.0,  1.0,  1.0, -1.0,  1.0,  1.0,  1.0,  1.0, -1.0,  1.0,  1.0,
+  -1.0, -1.0, -1.0,  1.0, -1.0, -1.0,  1.0,  1.0, -1.0, -1.0,  1.0, -1.0 ];
+  var cubeCol = [ 1.0, 0.0, 0.0, 1.0, 0.5, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 ];
+  var cubeHlpInx = [ 0, 1, 2, 3, 1, 5, 6, 2, 5, 4, 7, 6, 4, 0, 3, 7, 3, 2, 6, 7, 1, 0, 4, 5 ];  
+  var cubePosData = [];
+  for ( var i = 0; i < cubeHlpInx.length; ++ i ) {
+  cubePosData.push( cubePos[cubeHlpInx[i]*3], cubePos[cubeHlpInx[i]*3+1], cubePos[cubeHlpInx[i]*3+2] );
+  }
+  var cubeNVData = [];
+  for ( var i1 = 0; i1 < cubeHlpInx.length; i1 += 4 ) {
+  var nv = [0, 0, 0];
+  for ( i2 = 0; i2 < 4; ++ i2 ) {
+      var i = i1 + i2;
+      nv[0] += cubePosData[i*3]; nv[1] += cubePosData[i*3+1]; nv[2] += cubePosData[i*3+2];
+  }
+  for ( i2 = 0; i2 < 4; ++ i2 )
+  cubeNVData.push( nv[0], nv[1], nv[2] );
+  }
+  var cubeColData = [];
+  for ( var is = 0; is < 6; ++ is ) {
+  for ( var ip = 0; ip < 4; ++ ip ) {
+      cubeColData.push( cubeCol[is*3], cubeCol[is*3+1], cubeCol[is*3+2] ); 
+  }
+  }
+  var cubeInxData = [];
+  for ( var i = 0; i < cubeHlpInx.length; i += 4 ) {
+  cubeInxData.push( i, i+1, i+2, i, i+2, i+3 );   
+  }
+  bufCube = VertexBuffer.Create(
+  [ { data : cubePosData, attrSize : 3, attrLoc : progDraw.inPos },
+  { data : cubeNVData,  attrSize : 3, attrLoc : progDraw.inNV },
+  { data : cubeColData, attrSize : 3, attrLoc : progDraw.inCol } ],
+  cubeInxData );
+  
+  camera = new Camera( [0, 3, 0.0], [0, 0, 0], [0, 0, 1], 90, vp_size, 0.5, 100 );
+
+  window.onresize = resize;
+  resize();
+  requestAnimationFrame(render);
+}
+
+function resize() {
+  //vp_size = [gl.drawingBufferWidth, gl.drawingBufferHeight];
+  vp_size = [window.innerWidth, window.innerHeight]
+  canvas.width = vp_size[0];
+  canvas.height = vp_size[1];
+}
+
+function Fract( val ) { 
+  return val - Math.trunc( val );
+}
+function CalcAng( deltaTime, intervall ) {
+  return Fract( deltaTime / (1000*intervall) ) * 2.0 * Math.PI;
+}
+function CalcMove( deltaTime, intervall, range ) {
+  var pos = self.Fract( deltaTime / (1000*intervall) ) * 2.0
+  var pos = pos < 1.0 ? pos : (2.0-pos)
+  return range[0] + (range[1] - range[0]) * pos;
+}    
+function EllipticalPosition( a, b, angRag ) {
+  var a_b = a * a - b * b
+  var ea = (a_b <= 0) ? 0 : Math.sqrt( a_b );
+  var eb = (a_b >= 0) ? 0 : Math.sqrt( -a_b );
+  return [ a * Math.sin( angRag ) - ea, b * Math.cos( angRag ) - eb, 0 ];
+}
+
+function IdentM44() { return [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]; }
+
+function RotateAxis(matA, angRad, axis) {
+  var aMap = [ [1, 2], [2, 0], [0, 1] ];
+  var a0 = aMap[axis][0], a1 = aMap[axis][1]; 
+  var sinAng = Math.sin(angRad), cosAng = Math.cos(angRad);
+  var matB = matA.slice(0);
+  for ( var i = 0; i < 3; ++ i ) {
+      matB[a0*4+i] = matA[a0*4+i] * cosAng + matA[a1*4+i] * sinAng;
+      matB[a1*4+i] = matA[a0*4+i] * -sinAng + matA[a1*4+i] * cosAng;
+  }
+  return matB;
+}
+
+function Rotate(matA, angRad, axis) {
+  var s = Math.sin(angRad), c = Math.cos(angRad);
+  var x = axis[0], y = axis[1], z = axis[2]; 
+  matB = [
+      x*x*(1-c)+c,   x*y*(1-c)-z*s, x*z*(1-c)+y*s, 0,
+      y*x*(1-c)+z*s, y*y*(1-c)+c,   y*z*(1-c)-x*s, 0,
+      z*x*(1-c)-y*s, z*y*(1-c)+x*s, z*z*(1-c)+c,   0,
+      0,             0,             0,             1 ];
+  return Multiply(matA, matB);
+}    
+
+function Multiply(matA, matB) {
+  matC = IdentM44();
+  for (var i0=0; i0<4; ++i0 )
+      for (var i1=0; i1<4; ++i1 )
+          matC[i0*4+i1] = matB[i0*4+0] * matA[0*4+i1] + matB[i0*4+1] * matA[1*4+i1] + matB[i0*4+2] * matA[2*4+i1] + matB[i0*4+3] * matA[3*4+i1]  
+  return matC;
+}
+
+function Cross( a, b ) { return [ a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0], 0.0 ]; }
+function Dot( a, b ) { return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; }
+function Normalize( v ) {
+  var len = Math.sqrt( v[0] * v[0] + v[1] * v[1] + v[2] * v[2] );
+  return [ v[0] / len, v[1] / len, v[2] / len ];
+}
+
+var ShProg = {
+Create: function (shaderList) {
+  var shaderObjs = [];
+  for (var i_sh = 0; i_sh < shaderList.length; ++i_sh) {
+      var shderObj = this.Compile(shaderList[i_sh].source, shaderList[i_sh].stage);
+      if (shderObj) shaderObjs.push(shderObj);
+  }
+  var prog = {}
+  prog.progObj = this.Link(shaderObjs)
+  if (prog.progObj) {
+      prog.attrInx = {};
+      var noOfAttributes = gl.getProgramParameter(prog.progObj, gl.ACTIVE_ATTRIBUTES);
+      for (var i_n = 0; i_n < noOfAttributes; ++i_n) {
+          var name = gl.getActiveAttrib(prog.progObj, i_n).name;
+          prog.attrInx[name] = gl.getAttribLocation(prog.progObj, name);
+      }
+      prog.uniLoc = {};
+      var noOfUniforms = gl.getProgramParameter(prog.progObj, gl.ACTIVE_UNIFORMS);
+      for (var i_n = 0; i_n < noOfUniforms; ++i_n) {
+          var name = gl.getActiveUniform(prog.progObj, i_n).name;
+          prog.uniLoc[name] = gl.getUniformLocation(prog.progObj, name);
+      }
+  }
+  return prog;
+},
+AttrI: function (prog, name) { return prog.attrInx[name]; },
+UniformL: function (prog, name) { return prog.uniLoc[name]; },
+Use: function (prog) { gl.useProgram(prog.progObj); },
+SetI1: function (prog, name, val) { if (prog.uniLoc[name]) gl.uniform1i(prog.uniLoc[name], val); },
+SetF1: function (prog, name, val) { if (prog.uniLoc[name]) gl.uniform1f(prog.uniLoc[name], val); },
+SetF2: function (prog, name, arr) { if (prog.uniLoc[name]) gl.uniform2fv(prog.uniLoc[name], arr); },
+SetF3: function (prog, name, arr) { if (prog.uniLoc[name]) gl.uniform3fv(prog.uniLoc[name], arr); },
+SetF4: function (prog, name, arr) { if (prog.uniLoc[name]) gl.uniform4fv(prog.uniLoc[name], arr); },
+SetM33: function (prog, name, mat) { if (prog.uniLoc[name]) gl.uniformMatrix3fv(prog.uniLoc[name], false, mat); },
+SetM44: function (prog, name, mat) { if (prog.uniLoc[name]) gl.uniformMatrix4fv(prog.uniLoc[name], false, mat); },
+Compile: function (source, shaderStage) {
+  var shaderScript = document.getElementById(source);
+  if (shaderScript)
+      source = shaderScript.text;
+  var shaderObj = gl.createShader(shaderStage);
+  gl.shaderSource(shaderObj, source);
+  gl.compileShader(shaderObj);
+  var status = gl.getShaderParameter(shaderObj, gl.COMPILE_STATUS);
+  if (!status) alert(gl.getShaderInfoLog(shaderObj));
+  return status ? shaderObj : null;
+},
+Link: function (shaderObjs) {
+  var prog = gl.createProgram();
+  for (var i_sh = 0; i_sh < shaderObjs.length; ++i_sh)
+      gl.attachShader(prog, shaderObjs[i_sh]);
+  gl.linkProgram(prog);
+  status = gl.getProgramParameter(prog, gl.LINK_STATUS);
+  if ( !status ) alert(gl.getProgramInfoLog(prog));
+  return status ? prog : null;
+} };
+
+var VertexBuffer = {
+Create: function(attribs, indices, type) {
+  var buffer = { buf: [], attr: [], inx: gl.createBuffer(), inxLen: indices.length, primitive_type: type ? type : gl.TRIANGLES };
+  for (var i=0; i<attribs.length; ++i) {
+      buffer.buf.push(gl.createBuffer());
+      buffer.attr.push({ size : attribs[i].attrSize, loc : attribs[i].attrLoc, no_of: attribs[i].data.length/attribs[i].attrSize });
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer.buf[i]);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array( attribs[i].data ), gl.STATIC_DRAW);
+  }
+  gl.bindBuffer(gl.ARRAY_BUFFER, null);
+  if ( buffer.inxLen > 0 ) {
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer.inx);
+      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( indices ), gl.STATIC_DRAW);
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+  }
+  return buffer;
+},
+Draw: function(bufObj) {
+  for (var i=0; i<bufObj.buf.length; ++i) {
+      gl.bindBuffer(gl.ARRAY_BUFFER, bufObj.buf[i]);
+      gl.vertexAttribPointer(bufObj.attr[i].loc, bufObj.attr[i].size, gl.FLOAT, false, 0, 0);
+      gl.enableVertexAttribArray( bufObj.attr[i].loc);
+  }
+  if ( bufObj.inxLen > 0 ) {
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bufObj.inx);
+      gl.drawElements(bufObj.primitive_type, bufObj.inxLen, gl.UNSIGNED_SHORT, 0);
+      gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, null );
+  }
+  else
+      gl.drawArrays(bufObj.primitive_type, 0, bufObj.attr[0].no_of );
+  for (var i=0; i<bufObj.buf.length; ++i)
+      gl.disableVertexAttribArray(bufObj.attr[i].loc);
+  gl.bindBuffer( gl.ARRAY_BUFFER, null );
+} };
+
+class Camera
+{
+    constructor( pos, target, up, fov_y, vp, near, far ) {
+        this.pos = pos;
+        this.target = target;
+        this.up = up;
+        this.fov_y = fov_y;
+        this.vp = vp;
+        this.near = near;
+        this.far = far;
+        this.orbit_mat = this.current_orbit_mat = this.model_mat = this.current_model_mat = IdentM44();
+        this.mouse_drag = this.auto_spin = false;
+        this.auto_rotate = true;
+        this.mouse_start = [0, 0];
+        this.mouse_drag_axis = [0, 0, 0];
+        this.mouse_drag_angle = 0;
+        this.mouse_drag_time = 0;
+        this.drag_start_T = this.rotate_start_T = this.time;
+
+        this.domElement = document;
+        var cam = this;
+        this.domElement.addEventListener( 'mousedown', function(e) { cam.OnMouseDown(e) }, false );
+        this.domElement.addEventListener( 'mouseup', function(e) { cam.OnMouseUp(e) }, false );
+        this.domElement.addEventListener( 'mousemove', function(e) { cam.OnMouseMove(e) }, false );
+        //this.domElement.addEventListener( 'contextmenu', function(e) { event.preventDefault(); }, false );
+        //this.domElement.addEventListener( 'mousewheel', hid_events.onMouseWheel, false );
+        //this.domElement.addEventListener( 'DOMMouseScroll', hid_events.onMouseWheel, false ); // firefox
+    }
+
+    get time() { return Date.now(); }
+        
+    get ortho() {
+        let fn = this.far + this.near;
+        let f_n = this.far - this.near;
+        let w = this.vp[0];
+        let h = this.vp[1];
+        return [ 2/w, 0, 0, 0, 0, 2/h, 0, 0, 0, 0, -2/f_n, 0, 0, 0, -fn/f_n, 1 ];
+    }  
+
+    get perspective() {
+        let n = this.near;
+        let f = this.far;
+        let fn = f + n;
+        let f_n = f - n;
+        let r = this.vp[0] / this.vp[1];
+        let t = 1 / Math.tan( Math.PI * this.fov_y / 360 );
+        return [ t/r, 0, 0, 0, 0, t, 0, 0, 0, 0, -fn/f_n, -1, 0, 0, -2*f*n/f_n, 0 ];
+    } 
+
+    get lookAt() {
+        let mz = Normalize( [ this.pos[0]-this.target[0], this.pos[1]-this.target[1], this.pos[2]-this.target[2] ] );
+        let mx = Normalize( Cross( this.up, mz ) );
+        let my = Normalize( Cross( mz, mx ) );
+        let tx = Dot( mx, this.pos );
+        let ty = Dot( my, this.pos );
+        let tz = Dot( [-mz[0], -mz[1], -mz[2]], this.pos ); 
+        return [mx[0], my[0], mz[0], 0, mx[1], my[1], mz[1], 0, mx[2], my[2], mz[2], 0, tx, ty, tz, 1]; 
+    }
+
+    get orbit() {
+      return Multiply(this.lookAt, this.orbitMatrix);
+    }
+
+    get orbitMatrix() {
+      return (this.mouse_drag || (this.auto_rotate && this.auto_spin)) ? Multiply(this.current_orbit_mat, this.orbit_mat) : this.orbit_mat;
+    }
+
+    get autoModelMatrix() {
+      return this.auto_rotate ? Multiply(this.current_model_mat, this.model_mat) : this.model_mat;
+    }
+
+    Update(vp_size) {
+        if (vp_size)
+            this.vp = vp_size;
+        let current_T = this.time;
+        this.current_model_mat = IdentM44()
+        if (this.mouse_drag) {
+            this.current_orbit_mat = Rotate(IdentM44(), this.mouse_drag_angle, this.mouse_drag_axis);
+        } else if (this.auto_rotate) {
+            if (this.auto_spin ) {
+                if (this.mouse_drag_time > 0 ) {
+                    let angle = this.mouse_drag_angle * (current_T - this.rotate_start_T) / this.mouse_drag_time;
+                    this.current_orbit_mat = Rotate(IdentM44(), angle, this.mouse_drag_axis);
+                }
+            } else {
+                let auto_angle_x = Fract( (current_T - this.rotate_start_T) / 13000.0 ) * 2.0 * Math.PI;
+                let auto_angle_y = Fract( (current_T - this.rotate_start_T) / 17000.0 ) * 2.0 * Math.PI;
+                this.current_model_mat = RotateAxis( this.current_model_mat, auto_angle_x, 0 );
+                this.current_model_mat = RotateAxis( this.current_model_mat, auto_angle_y, 1 );
+            }
+        }
+    }
+
+    ChangeMotionMode(drag, spin, auto ) {
+        let new_drag = drag;
+        let new_auto = new_drag ? false : auto;
+        let new_spin = new_auto ? spin : false;
+        let change = this.mouse_drag != new_drag || this.auto_rotate != new_auto || this.auto_spin != new_spin; 
+        if (!change)
+            return;
+        if (new_drag && !this.mouse_drag) {
+            this.drag_start_T = this.time;
+            this.mouse_drag_angle = 0.0;
+            this.mouse_drag_time = 0;
+        }
+        if (new_auto && !this.auto_rotate)
+            this.rotate_start_T = this.time;
+        this.mouse_drag = new_drag; 
+        this.auto_rotate = new_auto;  
+        this.auto_spin = new_spin;
+        this.orbit_mat = Multiply(this.current_orbit_mat, this.orbit_mat);
+        this.current_orbit_mat = IdentM44();
+        this.model_mat = Multiply(this.current_model_mat, this.model_mat);
+        this.current_model_mat = IdentM44();
+    }
+
+    OnMouseDown( event ) {
+        let rect = gl.canvas.getBoundingClientRect();
+        if ( event.clientX < rect.left || event.clientX > rect.right ) return;
+        if ( event.clientY < rect.top || event.clientY > rect.bottom ) return;
+        if (event.button == 0) { // left button
+            this.mouse_start = [event.clientX, event.clientY]; 
+            this.ChangeMotionMode( true, false, false );
+        }
+    }
+
+    OnMouseUp( event ) {
+        if (event.button == 0) { // left button
+            this.ChangeMotionMode( false, true, true );
+        } else if (event.button == 1) {// middle button
+            this.ChangeMotionMode( false, false, !this.auto_rotate );
+        }
+    }
+
+    OnMouseMove( event ) {
+        let dx = (event.clientX-this.mouse_start[0]) / this.vp[0];
+        let dy = (event.clientY-this.mouse_start[1]) / this.vp[1];
+        let len = Math.sqrt(dx*dx + dy*dy);
+        if (this.mouse_drag && len > 0) {
+            this.mouse_drag_angle = Math.PI*len;
+            this.mouse_drag_axis = [dy/len, 0, -dx/len];
+            this.mouse_drag_time = this.time - this.drag_start_T;
+        }
+    }
+}
+
+initScene();
+
+})();
+</script>
+
+</body>
