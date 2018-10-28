@@ -399,7 +399,7 @@ std::string sh_vert = R"(
 #version 460 core
 
 layout (location = 0) in vec3 inPos;
-layout (location = 1) in vec4 inTex;
+layout (location = 1) in vec4 inAttr;
 
 out vec3  vertPos;
 out vec4  vertTex;
@@ -421,7 +421,7 @@ layout (std140, binding = 2) uniform UB_RUBIKS
 
 void main()
 {
-    vec4 tex     = inTex;
+    vec4 tex     = inAttr;
     int  cube_i  = gl_InstanceID;
     int  color_i = int(tex.z + 0.5); 
     int  x_i     = cube_i % 3;
@@ -442,15 +442,15 @@ void main()
         tex.z = z_i == 2 ? tex.z : 0.0;
 
     mat4 model_view = u_view * u_model * u_rubiks_model[cube_i];
-    vec4 vertx_pos  = model_view * vec4(inPos, 1.0);
+    vec4 vertex_pos = model_view * vec4(inPos, 1.0);
 
-    vertPos     = vertx_pos.xyz;
+    vertPos     = vertex_pos.xyz;
     vertTex     = tex;
     //highlight   = tex.z > 0.5 && cube_i == u_cube_hit ? 1.0 : 0.0;	
     //highlight   = tex.z > 0.5 && color_i == u_side_hit ? 1.0 : 0.0;
     highlight   = tex.z > 0.5 && cube_i == u_cube_hit && color_i == u_side_hit ? 1.0 : 0.0;		
 
-		gl_Position = u_projection * vertx_pos;
+		gl_Position = u_projection * vertex_pos;
 }
 )";
 
@@ -541,7 +541,7 @@ void CWindow_Glfw::InitScene( void )
        4,  5,  6,  4,  6,  7, // back
        8,  9, 10,  8, 10, 11, // left
       12, 13, 14, 12, 14, 15, // right
-      16, 17, 18, 16, 18, 19,  // bottom
+      16, 17, 18, 16, 18, 19, // bottom
       20, 21, 22, 20, 22, 23  // top
     };
 
