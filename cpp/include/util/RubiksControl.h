@@ -45,9 +45,9 @@ enum class TDirection { left=0, right=1 };
 
 inline int AxisIndex( TAxis axis )     { return static_cast<int>(axis); }
 inline int RowIndex( TRow row )        { return static_cast<int>(row); }
-inline TAxis Axis( int axis )          { return static_cast<TAxis>(std::max(0, std::min(3, axis))); }
-inline TRow Row( int row )             { return static_cast<TRow>(std::max(0, std::min(3, row))); }
-inline TDirection Direction( int dir ) { return static_cast<TDirection>(std::max(0, std::min(2, dir))); }
+inline TAxis Axis( int axis )          { return static_cast<TAxis>(std::max(0, std::min(2, axis))); }
+inline TRow Row( int row )             { return static_cast<TRow>(std::max(0, std::min(2, row))); }
+inline TDirection Direction( int dir ) { return static_cast<TDirection>(std::max(0, std::min(1, dir))); }
 
 glm::vec3 AxisVector( int index )
 {
@@ -279,9 +279,9 @@ CCube & CCube::Shuffle(
       // check if not 3 equal operations in a row
       if ( valid && shuffle_ops.size() > 1 )
       {
-        valid = shuffle_ops.front()._axis            != op._axis ||
-                shuffle_ops.front()._row             != op._row ||
-                shuffle_ops.front()._direction       != op._direction;
+        valid = shuffle_ops.back()._axis             != op._axis ||
+                shuffle_ops.back()._row              != op._row ||
+                shuffle_ops.back()._direction        != op._direction;
                 (shuffle_ops.rbegin()+1)->_axis      != op._axis ||
                 (shuffle_ops.rbegin()+1)->_row       != op._row ||
                 (shuffle_ops.rbegin()+1)->_direction != op._direction; 
