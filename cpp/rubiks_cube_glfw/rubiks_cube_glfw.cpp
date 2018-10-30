@@ -665,7 +665,7 @@ void CWindow_Glfw::UpdateRenderData( void )
     double ndc_y = 1.0 - 2.0 * y/h;
     
     THitInfo new_hit{ -1, -1, -1, -1 };
-    if ( fabs( ndc_x ) < 1.0f && fabs( ndc_y ) )
+    if ( fabs( ndc_x ) < 1.0f && fabs( ndc_y ) < 1.0f )
     {
         // calculate a ray from the eye position along the line of sight through the cursor position
 

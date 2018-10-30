@@ -30,6 +30,10 @@
 
 ## HTML
 
+### App
+
+[Rubiks](https://rabbid76.github.io/graphics-snippets/html/app/rubiks_cube.html)
+
 ### WebGL tools
 
 [Light Model](https://rabbid76.github.io/graphics-snippets/html/tools/light_model_view.html)

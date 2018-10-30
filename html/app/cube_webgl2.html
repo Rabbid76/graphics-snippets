@@ -407,7 +407,7 @@ class Camera {
         let len = Math.sqrt(dx*dx + dy*dy);
         if (this.mouse_drag && len > 0) {
             this.mouse_drag_angle = Math.PI*len;
-            this.mouse_drag_axis = [dy/len, 0, -dx/len];
+            this.mouse_drag_axis = [-dy/len, 0, dx/len];
             this.mouse_drag_time = this.time - this.drag_start_T;
         }
     }
@@ -456,14 +456,14 @@ rotateAxis: function(matA, angRad, axis) {
   return matB;
 },
 rotate: function(matA, angRad, axis) {
-  var s = Math.sin(angRad), c = Math.cos(angRad);
-  var x = axis[0], y = axis[1], z = axis[2]; 
-  matB = [
-      x*x*(1-c)+c,   x*y*(1-c)-z*s, x*z*(1-c)+y*s, 0,
-      y*x*(1-c)+z*s, y*y*(1-c)+c,   y*z*(1-c)-x*s, 0,
-      z*x*(1-c)-y*s, z*y*(1-c)+x*s, z*z*(1-c)+c,   0,
-      0,             0,             0,             1 ];
-  return this.multiply(matA, matB);
+    var s = Math.sin(-angRad), c = Math.cos(-angRad);
+    var x = axis[0], y = axis[1], z = axis[2]; 
+    matB = [
+        x*x*(1-c)+c,   x*y*(1-c)-z*s, x*z*(1-c)+y*s, 0,
+        y*x*(1-c)+z*s, y*y*(1-c)+c,   y*z*(1-c)-x*s, 0,
+        z*x*(1-c)-y*s, z*y*(1-c)+x*s, z*z*(1-c)+c,   0,
+        0,             0,             0,             1 ];
+    return this.multiply(matA, matB);
 },
 multiply: function(matA, matB) {
   matC = this.ident();
