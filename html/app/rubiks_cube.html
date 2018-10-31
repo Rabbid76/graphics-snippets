@@ -209,15 +209,23 @@ class App {
     }
 
     updateHelpText() {
-        if (this.rubiks.pending_queue && this.rubiks.pending_queue.length > 0 && this.rubiks.pending_queue[0].shuffle) {
-            document.getElementById( "line_0" ).innerHTML = "shuffle " +  + this.rubiks.pending_queue.length + " / " + this.shuffles;
+        let on_shuffle = this.rubiks.pending_queue && this.rubiks.pending_queue.length > 0 && this.rubiks.pending_queue[0].shuffle;
+        let on_rotate  = this.camera.auto_rotate_mode;
+        let act_state = on_shuffle ? this.rubiks.pending_queue.length + 10 : on_rotate ? 1 : 0
+        
+        if ( this.last_state && act_state == this.last_state )
+            return;
+            this.last_state = act_state;
+
+        if (on_shuffle) {
+            document.getElementById( "line_0" ).innerHTML = "shuffle " + this.rubiks.pending_queue.length + " / " + this.shuffles;
             document.getElementById( "line_1" ).innerHTML = ""; 
-        } else if (this.camera.auto_rotate_mode ) {
+        } else if (this.camera.auto_rotate_mode) {
             document.getElementById( "line_0" ).innerHTML = "left drag:   rotate cube";
-            document.getElementById( "line_1" ).innerHTML = "right click: switch to change mode"; 
+            document.getElementById( "line_1" ).innerHTML = "middle or right click: switch to change mode"; 
         } else {
             document.getElementById( "line_0" ).innerHTML = "left drag:   change";
-            document.getElementById( "line_1" ).innerHTML = "right click: switch to rotate mode"; 
+            document.getElementById( "line_1" ).innerHTML = "middle or right click: switch to rotate mode"; 
         }
     }
 
@@ -368,7 +376,7 @@ class App {
         this.rubiks.cube_hit = new_hit.mapped_cube;
         this.rubiks.side_hit = new_hit.cube_side + 1;
 
-        if ( this.camera.hit )
+        if ( isect && this.camera.hit )
         {
             this.start_hit = new_hit;
             this.hit_pt    = isect.pt;
@@ -900,7 +908,7 @@ class Camera {
         if (event.button == 0) { // left button
             if ( this.auto_rotate_mode )
                 this.ChangeMotionMode( false, true, true );
-        } else if (event.button == 2) {// right button
+        } else if (event.button == 1 || event.button == 2) {// middle or right button
             this.ChangeMotionMode( false, false, !this.auto_rotate );
             this.auto_rotate_mode = this.auto_rotate;
         }
