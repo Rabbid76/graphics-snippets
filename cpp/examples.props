@@ -3,7 +3,7 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros">
     <TempBuildDir>c:\temp\_devenv</TempBuildDir>
-    <GlmDir>..\..\_cpp_extern\glm-0.9.8.5\glm</GlmDir>
+    <GlmDir>..\..\_cpp_extern\glm-0.9.9.3\glm</GlmDir>
     <SdlDir>..\..\_cpp_extern_extern\SDL2-2.0.6\</SdlDir>
     <FreeGlutDir>..\..\_cpp_extern\freeglut\freeglut-3.0.0\</FreeGlutDir>
     <GlfwDir>..\..\_cpp_extern\glfw-3.2.1.bin.WIN64\</GlfwDir>
