@@ -50,10 +50,9 @@ html,body { margin: 0; overflow: hidden; }
 <div><form id="gui" name="inputs"><table>
     <tr> <td> <font color=#40f040>form</font> </td> <td>
         <select id="mesh">
-            <option value="0" selected="selected">tetrahedron</option>
+            <option value="0">tetrahedron</option>
             <option value="1">cube</option>
-            <!--option value="2">sphere</option-->
-            <!--option value="3">torus</option-->
+            <option value="2" selected="selected">icosahedron</option>
         </select>
     </td> </tr>
 </table></form></div>
@@ -99,7 +98,7 @@ class App {
         this.progDraw.inNV  = this.progDraw.AttrI("inNV");
         this.progDraw.inCol = this.progDraw.AttrI("inCol");
 
-        let meshes = [ new MeshTetrahedron(), new MeshCube() ];
+        let meshes = [ new MeshTetrahedron(), new MeshCube(), new MeshIcosahedron() ];
 
         this.meshes = [];
         for (let i = 0; i < meshes.length; ++ i ) {
@@ -111,7 +110,7 @@ class App {
         }
 
         this.resize(); 
-        this.camera = new Camera( [0, 3, 0.0], [0, 0, 0], [0, 0, 1], 90, this.vp_size, 0.5, 100 );
+        this.camera = new Camera( [0, 2, 0], [0, 0, 0], [0, 0, 1], 90, this.vp_size, 0.5, 100 );
 
         var self = this;
         window.onresize = function() { self.resize(); }
@@ -147,15 +146,15 @@ class App {
         // draw scene
         this.meshes[mesh].Draw();
     }
-
 }
-
 
 class MeshTetrahedron {
     constructor() {
         //TODO $$$ (tangents), (binormals)
-        let s120 = 0.866;
-        let v = [ 0,0,1,  0,-s120,-0.5,  s120*s120,0.5*s120,-0.5, -s120*s120,0.5*s120,-0.5 ];
+        let s_8_9 = Math.sqrt(8/9);
+        let s_2_9 = Math.sqrt(2/9);
+        let s_2_3 = Math.sqrt(2/3);
+        let v = [ 0,0,1, s_8_9,0,-1/3, -s_2_9,s_2_3,-1/3, -s_2_9,-s_2_3,-1/3 ]
         let c = [ 1.0, 0.0, 0.0,  1.0, 1.0, 0.0,  0.0, 0.0, 1.0,  0.0, 1.0, 0.0 ];
         let t = [ 1,1, 0,0, 1,0, 0,1 ];
         let ni = [ 3, 1, 2, 0 ];
@@ -173,7 +172,6 @@ class MeshTetrahedron {
     }
 };
 
-
 class MeshCube {
     constructor() {
         //TODO $$$ (tangents), (binormals)
@@ -183,7 +181,7 @@ class MeshCube {
         let t = [ 0,0, 1,0, 1,1, 0,1 ];
         let e = [ 0, 1, 2, 3, 1, 5, 6, 2, 5, 4, 7, 6, 4, 0, 3, 7, 3, 2, 6, 7, 1, 0, 4, 5 ];  
         this.v = [];
-        for ( let i = 0; i < e.length; ++ i ) this.v.push( v[e[i]*3], v[e[i]*3+1], v[e[i]*3+2] );
+        for ( let i = 0; i < e.length; ++ i ) this.v.push( v[e[i]*3]*0.707, v[e[i]*3+1]*0.707, v[e[i]*3+2]*0.707 );
         this.n = []; this.c = []; this.t = [];
         for ( let is = 0; is < 6; ++ is ) {
             for ( let ip = 0; ip < 4; ++ ip ) { 
@@ -197,8 +195,40 @@ class MeshCube {
     }
 };
 
+
+class MeshIcosahedron{
+    constructor() {
+        //TODO $$$ (tangents), (binormals), texture coordiantes
+        let v = [ 0,0,1, 0.894,0,0.447, 0.276,0.851,0.447, -0.724,0.526,0.447, -0.724,-0.526,0.447, 0.276,-0.851, 0.447,
+                  0.724,0.526,-0.447, -0.276,0.851,-0.447, -0.894,0,-0.447, -0.276,-0.851,-0.447, 0.724,-0.526,-0.447, 0,0,-1 ];
+        let c = [ 1.0,0.0,0.0, 0.0,1.0,0.0, 0.0,0.0,1.0, 1.0,1.0,0.0, 1.0,0.0,1.0, 1.0,0.5,0.0, 0.0,1.0,1.0 ];
+        let e = [ 2,0,1, 3,0,2, 4,0,3, 5,0,4, 1,0,5, 11,7,6, 11,8,7, 11,9,8, 11,10,9, 11,6,10,
+                  1,6,2, 2,7,3, 3,8,4, 4,9,5, 5,10,1, 2,6,7, 3,7,8, 4,8,9, 5,9,10, 1,10,6 ]
+        this.v = [];
+        for ( let i = 0; i < e.length; ++ i ) this.v.push( v[e[i]*3], v[e[i]*3+1], v[e[i]*3+2] );
+        this.n = []; this.c = []; this.t = [];
+        for ( let i = 0; i < e.length; ++ i ) {
+           this.v.push( v[e[i]*3], v[e[i]*3+1], v[e[i]*3+2] );
+        }
+        for ( let fi = 0; fi < this.v.length/9; ++ fi ) {
+            let nv = [0, 0, 0];
+            for ( let ti = 0; ti < 3; ++ ti ) {
+                nv[0] += this.v[(fi*3+ti)*3];
+                nv[1] += this.v[(fi*3+ti)*3+1];
+                nv[2] += this.v[(fi*3+ti)*3+2];
+            }
+            nv = Vec3.normalize(nv);
+            let ci = fi % (c.length/3);
+            for ( let ti = 0; ti < 3; ++ ti ) {
+                this.n.push( nv[0], nv[1], nv[2] );
+                this.c.push( c[ci*3], c[ci*3+1], c[ci*3+2] );
+            }
+        }
+    }
+};
+
 /* TODO $$$ mesh classes
-   e.g. sphere_slice, sphere_tessellated, tetrahedron, icosahedron, torus, trefoil-knot  
+   e.g. sphere_slice, sphere_tessellated, icosahedron, torus, trefoil-knot  
 */
 
 class ShProg {
@@ -370,7 +400,8 @@ class Camera {
         let f_n = this.far - this.near;
         let w = this.vp[0];
         let h = this.vp[1];
-        return [ 2/w, 0, 0, 0, 0, 2/h, 0, 0, 0, 0, -2/f_n, 0, 0, 0, -fn/f_n, 1 ];
+        let a = w/h;
+        return [ 2/a, 0, 0, 0, 0, 2, 0, 0, 0, 0, -2/f_n, 0, 0, 0, -fn/f_n, 1 ];
     }  
 
     get perspective() {
@@ -503,9 +534,10 @@ ellipticalPosition : function( a, b, angRag ) {
 Vec3 = {
 cross: function( a, b ) { return [ a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0], 0.0 ]; },
 dot: function( a, b ) { return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; },
+len: function( v ) { return Math.sqrt( v[0] * v[0] + v[1] * v[1] + v[2] * v[2] ); },
 normalize: function( v ) {
-  var len = Math.sqrt( v[0] * v[0] + v[1] * v[1] + v[2] * v[2] );
-  return [ v[0] / len, v[1] / len, v[2] / len ];
+    var len = this.len( v );
+    return [ v[0] / len, v[1] / len, v[2] / len ];
 }
 }
 
@@ -538,6 +570,12 @@ multiply: function(matA, matB) {
       for (var i1=0; i1<4; ++i1 )
           matC[i0*4+i1] = matB[i0*4+0] * matA[0*4+i1] + matB[i0*4+1] * matA[1*4+i1] + matB[i0*4+2] * matA[2*4+i1] + matB[i0*4+3] * matA[3*4+i1]  
   return matC;
+},
+transformVec3: function(mat, vec) {
+    return [
+        vec[0] * mat[0*4+0] + vec[1] * mat[1*4+0] + vec[2] * mat[2*4+0],
+        vec[0] * mat[0*4+1] + vec[1] * mat[1*4+1] + vec[2] * mat[2*4+1],
+        vec[0] * mat[0*4+2] + vec[1] * mat[1*4+2] + vec[2] * mat[2*4+2] ]
 }
 }
 
