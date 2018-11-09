@@ -47,14 +47,16 @@ html,body { margin: 0; overflow: hidden; }
 
 <body>
 
-<!--div>
-<form id="gui" name="inputs">
-  <table>
-      <tr> <td> <font color= #CCF></font> </td> 
-              <td> <input type="range" id="" min="0" max="100" value="50" onchange="changeEventHandler(event);"/></td> </tr>
-  </table>
-</form>
-</div-->
+<div><form id="gui" name="inputs"><table>
+    <tr> <td> <font color=#40f040>form</font> </td> <td>
+        <select id="mesh">
+            <option value="0" selected="selected">tetrahedron</option>
+            <option value="1">cube</option>
+            <!--option value="2">sphere</option-->
+            <!--option value="3">torus</option-->
+        </select>
+    </td> </tr>
+</table></form></div>
 
 <!--div id="ref-link">
   <a href=""> 
@@ -87,7 +89,6 @@ class App {
         //if (!ext_vao)
         //    console.log('no vertex array objects support');
        
-
         this.progDraw = new ShProg( 
             [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },
                 { source : "draw-shader-fs", stage : gl.FRAGMENT_SHADER }
@@ -98,41 +99,16 @@ class App {
         this.progDraw.inNV  = this.progDraw.AttrI("inNV");
         this.progDraw.inCol = this.progDraw.AttrI("inCol");
 
-        // create cube
-        let cubePos = [
-            -1.0, -1.0,  1.0,  1.0, -1.0,  1.0,  1.0,  1.0,  1.0, -1.0,  1.0,  1.0,
-            -1.0, -1.0, -1.0,  1.0, -1.0, -1.0,  1.0,  1.0, -1.0, -1.0,  1.0, -1.0 ];
-        let cubeCol = [ 1.0, 0.0, 0.0, 1.0, 0.5, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 ];
-        let cubeHlpInx = [ 0, 1, 2, 3, 1, 5, 6, 2, 5, 4, 7, 6, 4, 0, 3, 7, 3, 2, 6, 7, 1, 0, 4, 5 ];  
-        let cubePosData = [];
-        for ( let i = 0; i < cubeHlpInx.length; ++ i ) {
-            cubePosData.push( cubePos[cubeHlpInx[i]*3], cubePos[cubeHlpInx[i]*3+1], cubePos[cubeHlpInx[i]*3+2] );
+        let meshes = [ new MeshTetrahedron(), new MeshCube() ];
+
+        this.meshes = [];
+        for (let i = 0; i < meshes.length; ++ i ) {
+            this.meshes.push( new VertexBuffer( gl,
+                    [ { data : meshes[i].v, attrSize : 3, attrLoc : this.progDraw.inPos },
+                      { data : meshes[i].n, attrSize : 3, attrLoc : this.progDraw.inNV },
+                      { data : meshes[i].c, attrSize : 3, attrLoc : this.progDraw.inCol } ],
+                    meshes[i].e ) );
         }
-        let cubeNVData = [];
-        for ( let i1 = 0; i1 < cubeHlpInx.length; i1 += 4 ) {
-            let nv = [0, 0, 0];
-            for ( let i2 = 0; i2 < 4; ++ i2 ) {
-                let i = i1 + i2;
-                nv[0] += cubePosData[i*3]; nv[1] += cubePosData[i*3+1]; nv[2] += cubePosData[i*3+2];
-        }
-        for ( let i2 = 0; i2 < 4; ++ i2 )
-            cubeNVData.push( nv[0], nv[1], nv[2] );
-        }
-        let cubeColData = [];
-        for ( let is = 0; is < 6; ++ is ) {
-            for ( let ip = 0; ip < 4; ++ ip ) {
-                cubeColData.push( cubeCol[is*3], cubeCol[is*3+1], cubeCol[is*3+2] ); 
-            }
-        }
-        let cubeInxData = [];
-        for ( let i = 0; i < cubeHlpInx.length; i += 4 ) {
-            cubeInxData.push( i, i+1, i+2, i, i+2, i+3 );   
-        }
-        this.bufCube = new VertexBuffer( gl,
-            [ { data : cubePosData, attrSize : 3, attrLoc : this.progDraw.inPos },
-              { data : cubeNVData,  attrSize : 3, attrLoc : this.progDraw.inNV },
-              { data : cubeColData, attrSize : 3, attrLoc : this.progDraw.inCol } ],
-            cubeInxData );
 
         this.resize(); 
         this.camera = new Camera( [0, 3, 0.0], [0, 0, 0], [0, 0, 1], 90, this.vp_size, 0.5, 100 );
@@ -150,6 +126,8 @@ class App {
 
     draw(deltaMS){
         
+        var mesh = document.getElementById( "mesh" ).value;
+
         // setup view projection and model
         this.camera.Update( this.vp_size );
         var modelMat = Mat44.ident();
@@ -167,15 +145,60 @@ class App {
         this.progDraw.SetM44("u_modelMat44", modelMat);
         
         // draw scene
-        this.bufCube.Draw();
+        this.meshes[mesh].Draw();
     }
 
 }
 
-/* TODO $$$ mesh classes
-   properties, indices, vertices, normals, (tangents), (binormals), texture-coordinates, colors
 
-   e.g. cube, sphere_slice, sphere_tessellated, tetrahedron, icosahedron, torus, trefoil-knot  
+class MeshTetrahedron {
+    constructor() {
+        //TODO $$$ (tangents), (binormals)
+        let s120 = 0.866;
+        let v = [ 0,0,1,  0,-s120,-0.5,  s120*s120,0.5*s120,-0.5, -s120*s120,0.5*s120,-0.5 ];
+        let c = [ 1.0, 0.0, 0.0,  1.0, 1.0, 0.0,  0.0, 0.0, 1.0,  0.0, 1.0, 0.0 ];
+        let t = [ 1,1, 0,0, 1,0, 0,1 ];
+        let ni = [ 3, 1, 2, 0 ];
+        let e = [ 0, 1, 2, 0, 2, 3, 0, 3, 1, 1, 3, 2 ];  
+        this.v = [], this.n = []; this.c = []; this.t = [];
+        for ( let is = 0; is < 4; ++ is ) {
+            for ( let ip = 0; ip < 3; ++ ip ) { 
+                let i = is*3+ip;
+                this.v.push( v[e[i]*3], v[e[i]*3+1], v[e[i]*3+2] ); 
+                this.n.push( -v[ni[is]*3], -v[ni[is]*3+1], -v[ni[is]*3+2] ); 
+                this.c.push( c[is*3], c[is*3+1], c[is*3+2] ); 
+                this.t.push( t[e[i]*2], t[e[i]*2]+1 ); 
+            } 
+        }
+    }
+};
+
+
+class MeshCube {
+    constructor() {
+        //TODO $$$ (tangents), (binormals)
+        let v = [ -1,-1,1,  1,-1,1,  1,1,1, -1,1,1, -1,-1,-1,  1,-1,-1,  1,1,-1, -1,1,-1 ];
+        let c = [ 1.0, 0.0, 0.0,   1.0, 0.5, 0.0,    1.0, 0.0, 1.0,   1.0, 1.0, 0.0,   0.0, 1.0, 0.0,   0.0, 0.0, 1.0 ];
+        let n = [ 0,0,1, 1,0,0, 0,0,-1, -1,0,0, 0,1,0, 0,-1,1 ];
+        let t = [ 0,0, 1,0, 1,1, 0,1 ];
+        let e = [ 0, 1, 2, 3, 1, 5, 6, 2, 5, 4, 7, 6, 4, 0, 3, 7, 3, 2, 6, 7, 1, 0, 4, 5 ];  
+        this.v = [];
+        for ( let i = 0; i < e.length; ++ i ) this.v.push( v[e[i]*3], v[e[i]*3+1], v[e[i]*3+2] );
+        this.n = []; this.c = []; this.t = [];
+        for ( let is = 0; is < 6; ++ is ) {
+            for ( let ip = 0; ip < 4; ++ ip ) { 
+                this.n.push( n[is*3], n[is*3+1], n[is*3+2] ); 
+                this.c.push( c[is*3], c[is*3+1], c[is*3+2] ); 
+                this.t.push( t[ip*2], t[ip*2+1] ); 
+            } 
+        }
+        this.e = [];
+        for ( let i = 0; i < e.length; i += 4 ) { this.e.push( i, i+1, i+2, i, i+2, i+3 ); }   
+    }
+};
+
+/* TODO $$$ mesh classes
+   e.g. sphere_slice, sphere_tessellated, tetrahedron, icosahedron, torus, trefoil-knot  
 */
 
 class ShProg {
@@ -241,7 +264,8 @@ class VertexBuffer {
         this.gl = gl;
         this.buf = [];
         this.attr = [];
-        this.inxLen = indices.length;
+        if ( indices )
+            this.inxLen = indices.length;
         this.primitive_type = type ? type : gl.TRIANGLES;
         if ( this.gl.createVertexArray )
         {
@@ -309,6 +333,8 @@ class VertexBuffer {
     }
 }
 
+
+// TODO $$$ attenuation
 class Camera {
     constructor( pos, target, up, fov_y, vp, near, far ) {
         this.pos = pos;

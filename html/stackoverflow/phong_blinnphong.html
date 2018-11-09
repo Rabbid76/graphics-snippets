@@ -96,11 +96,11 @@ html,body { margin: 0; overflow: hidden; }
                 <option value="1">Blinn-Phong</option>
             </select>
         </td> </tr>
-        <tr> <td> <font color=#40f040>form</font> </td> <td>
-            <select id="form">>
+        <tr> <td> <font color=#40f040>mesh</font> </td> <td>
+            <select id="mesh">>
                 <option value="0">cube</option>
                 <option value="1">sphere</option>
-                <option value="2">torus</option>
+                <option value="2" selected="selected">torus</option>
             </select>
         </td> </tr>
     </table>
@@ -135,7 +135,7 @@ function render(deltaMS){
     var specular = document.getElementById( "specular" ).value / sliderScale;
     var shininess = Math.max(1, document.getElementById( "shininess" ).value);
     var model = document.getElementById( "model" ).value;
-    var form = document.getElementById( "form" ).value;
+    var mesh = document.getElementById( "mesh" ).value;
     document.getElementById( "ambient_val" ).innerHTML = ambient;
     document.getElementById( "diffuse_val" ).innerHTML = diffuse;
     document.getElementById( "specular_val" ).innerHTML = specular;
@@ -168,7 +168,7 @@ function render(deltaMS){
     ShProg.SetM44( progDraw, "u_modelMat44", modelMat );
 
     // draw scene
-    bufObj = form == 0 ? bufCube : form == 1 ? bufSphere : bufTorus;
+    bufObj = mesh == 0 ? bufCube : mesh == 1 ? bufSphere : bufTorus;
     VertexBuffer.Draw( bufObj );
 
     requestAnimationFrame(render);
@@ -181,7 +181,6 @@ function initScene() {
     document.getElementById( "specular" ).value = 0.8 * sliderScale;
     document.getElementById( "shininess" ).value = 10.0;
     document.getElementById( "model" ).value = 0;
-    document.getElementById( "form" ).value = 2;
     
     canvas = document.getElementById( "phong-canvas");
     vp_size = [canvas.width, canvas.height];
