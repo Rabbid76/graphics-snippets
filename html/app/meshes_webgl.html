@@ -1,44 +1,42 @@
-<script id="draw-shader-vs" type="x-shader/x-vertex">#version 300 es
-precision highp float;
+<script id="draw-shader-vs" type="x-shader/x-vertex">
+  precision highp float;
+  
+  attribute vec3 inPos;
+  attribute vec3 inNV;
+  attribute vec3 inCol;
 
-in vec3 inPos;
-in vec3 inNV;
-in vec3 inCol;
-
-out vec3  vertPos;
-out vec3  vertNV;
-out vec3  vertCol;
-
-uniform mat4 u_projectionMat44;
-uniform mat4 u_viewMat44;
-uniform mat4 u_modelMat44;
-uniform vec4 u_clipPlane;
-
-void main()
-{   
-    mat4 mv       = u_viewMat44 * u_modelMat44; 
-    vertCol       = inCol;
-    vertNV        = normalize(mat3(mv) * inNV);
-    vec4 viewPos  = mv * vec4( inPos, 1.0 );
-    vertPos       = viewPos.xyz;
-    gl_Position   = u_projectionMat44 * viewPos;
-}
+  varying vec3  vertPos;
+  varying vec3  vertNV;
+  varying vec3  vertCol;
+   
+  uniform mat4 u_projectionMat44;
+  uniform mat4 u_viewMat44;
+  uniform mat4 u_modelMat44;
+  uniform vec4 u_clipPlane;
+  
+  void main()
+  {   
+      mat4 mv       = u_viewMat44 * u_modelMat44; 
+      vertCol       = inCol;
+      vertNV        = normalize(mat3(mv) * inNV);
+      vec4 viewPos  = mv * vec4( inPos, 1.0 );
+      vertPos       = viewPos.xyz;
+      gl_Position   = u_projectionMat44 * viewPos;
+  }
 </script>
 
-<script id="draw-shader-fs" type="x-shader/x-fragment">#version 300 es
-precision mediump float;
+<script id="draw-shader-fs" type="x-shader/x-fragment">
+  precision mediump float;
 
-in vec3  vertPos;
-in vec3  vertNV;
-in vec3  vertCol;
-
-out vec4 fragColor;
-
-void main()
-{
-    vec3 color = vertCol;
-    fragColor  = vec4( color.rgb, 1.0 );
-} 
+  varying vec3  vertPos;
+  varying vec3  vertNV;
+  varying vec3  vertCol;
+  
+  void main()
+  {
+      vec3 color   = vertCol;
+      gl_FragColor = vec4( color.rgb, 1.0 );
+  } 
 </script>
 
 <style>
@@ -75,18 +73,21 @@ class App {
 
     constructor() {
         this.canvas = document.getElementById( "canvas");
-        //gl = canvas.getContext( "webgl" );
-        //gl = canvas.getContext( "experimental-webgl" );
-        gl = canvas.getContext( "webgl2" );
+        //gl = canvas.getContext( "webgl2" );
+        //if ( !gl )
+        //    gl = canvas.getContext( "experimental-webgl" );
+        if ( !gl )
+            gl = canvas.getContext( "webgl" );
         if ( !gl )
             return null;
+        
         //let ext_standard_derivatives = gl.getExtension("OES_standard_derivatives");  // dFdx, dFdy
         //if (!ext_standard_derivatives)
         //    console.log('no standard derivatives support (no dFdx, dFdy)');
-        //let ext_vao = gl.getExtension("OES_vertex_array_object"); 
         //if (!ext_vao)
         //    console.log('no vertex array objects support');
-         
+       
+
         this.progDraw = new ShProg( 
             [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },
                 { source : "draw-shader-fs", stage : gl.FRAGMENT_SHADER }
@@ -127,7 +128,7 @@ class App {
         for ( let i = 0; i < cubeHlpInx.length; i += 4 ) {
             cubeInxData.push( i, i+1, i+2, i, i+2, i+3 );   
         }
-        this.bufCube = new VertexBuffer(
+        this.bufCube = new VertexBuffer( gl,
             [ { data : cubePosData, attrSize : 3, attrLoc : this.progDraw.inPos },
               { data : cubeNVData,  attrSize : 3, attrLoc : this.progDraw.inNV },
               { data : cubeColData, attrSize : 3, attrLoc : this.progDraw.inCol } ],
@@ -170,6 +171,12 @@ class App {
     }
 
 }
+
+/* TODO $$$ mesh classes
+   properties, indices, vertices, normals, (tangents), (binormals), texture-coordinates, colors
+
+   e.g. cube, sphere_slice, sphere_tessellated, tetrahedron, icosahedron, torus, trefoil-knot  
+*/
 
 class ShProg {
     constructor(shaderList) {
@@ -230,41 +237,75 @@ class ShProg {
 }
 
 class VertexBuffer {
-    constructor(attribs, indices, type) {
+    constructor(gl, attribs, indices, type) {
+        this.gl = gl;
         this.buf = [];
         this.attr = [];
         this.inxLen = indices.length;
         this.primitive_type = type ? type : gl.TRIANGLES;
-        this.vao = gl.createVertexArray();
-        gl.bindVertexArray(this.vao);
+        if ( this.gl.createVertexArray )
+        {
+            this.vao = this.gl.createVertexArray();
+            this.gl.bindVertexArray(this.vao);
+            this.Prepare = function() { this.gl.bindVertexArray(this.vao); };
+            this.Release = function() { this.gl.bindVertexArray(null); };
+        }
+        else 
+        if ( this.ext_vao = gl.getExtension("OES_vertex_array_object") ) {
+            this.vao = this.ext_vao .createVertexArrayOES();
+            this.ext_vao.bindVertexArrayOES(this.vao);
+            this.Prepare = function() { this.ext_vao.bindVertexArrayOES(this.vao); };
+            this.Release = function() { this.ext_vao.bindVertexArrayOES(null); };
+        }
+        else {
+            this.Prepare = function() { 
+                this.DefineVBOs(); 
+                if ( this.inxLen > 0 ) this.gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.inx); 
+            };
+            this.Release = function() { 
+                if ( this.inxLen > 0 )
+                    this.gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+                for (let i=0; i<this.buf.length; ++i)
+                    this.gl.disableVertexAttribArray(this.attr[i].loc);
+            };
+        }
+
         for (let i=0; i<attribs.length; ++i) {
-            this.buf.push(gl.createBuffer());
+            this.buf.push(this.gl.createBuffer());
             this.attr.push({ size : attribs[i].attrSize, loc : attribs[i].attrLoc, no_of: attribs[i].data.length/attribs[i].attrSize });
-            gl.bindBuffer(gl.ARRAY_BUFFER, this.buf[i]);
-            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array( attribs[i].data ), gl.STATIC_DRAW);
+            this.gl.bindBuffer(gl.ARRAY_BUFFER, this.buf[i]);
+            this.gl.bufferData(gl.ARRAY_BUFFER, new Float32Array( attribs[i].data ), gl.STATIC_DRAW);
         }
-        gl.bindBuffer(gl.ARRAY_BUFFER, null);
+        this.gl.bindBuffer(gl.ARRAY_BUFFER, null);
         if ( this.inxLen > 0 ) {
-            this.inx = gl.createBuffer();
-            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.inx);
-            gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( indices ), gl.STATIC_DRAW);
+            this.inx = this. gl.createBuffer();
+            this.gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.inx);
+            this.gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( indices ), gl.STATIC_DRAW);
+            if ( !this.vao )
+                this.gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
         }
-        for (let i=0; i<this.buf.length; ++i) {
-            gl.bindBuffer(gl.ARRAY_BUFFER, this.buf[i]);
-            gl.vertexAttribPointer(this.attr[i].loc, this.attr[i].size, gl.FLOAT, false, 0, 0);
-            gl.enableVertexAttribArray(this.attr[i].loc);
+        if ( this.ext_vao || this.vao ) {
+            this.DefineVBOs();
+            this.Release()
         }
-        gl.bindBuffer(gl.ARRAY_BUFFER, null);
-        gl.bindVertexArray(null);
     }
 
     Draw() {
-        gl.bindVertexArray(this.vao);
+        this.Prepare();
         if (this.inxLen > 0)
-            gl.drawElements(this.primitive_type, this.inxLen, gl.UNSIGNED_SHORT, 0);
+            this.gl.drawElements(this.primitive_type, this.inxLen, gl.UNSIGNED_SHORT, 0);
         else
-            gl.drawArrays(this.primitive_type, 0, this.attr[0].no_of);
-        gl.bindVertexArray(null);
+            this.gl.drawArrays(this.primitive_type, 0, this.attr[0].no_of);
+        this.Release();
+    }
+
+    DefineVBOs() {
+        for (let i=0; i<this.buf.length; ++i) {
+            this.gl.bindBuffer(gl.ARRAY_BUFFER, this.buf[i]);
+            this.gl.vertexAttribPointer(this.attr[i].loc, this.attr[i].size, gl.FLOAT, false, 0, 0);
+            this.gl.enableVertexAttribArray(this.attr[i].loc);
+        }
+        this.gl.bindBuffer(gl.ARRAY_BUFFER, null);
     }
 }
 
