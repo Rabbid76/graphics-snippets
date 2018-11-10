@@ -34,7 +34,9 @@
   
   void main()
   {
-      vec3 color   = vertCol;
+      vec3  vl     = vec3(0.0, 0.0, 1.0);
+      float kd     = max(0.0, dot(vertNV, vl)); 
+      vec3 color   = vertCol * (0.1 + kd * 1.2);
       gl_FragColor = vec4( color.rgb, 1.0 );
   } 
 </script>
@@ -52,7 +54,9 @@ html,body { margin: 0; overflow: hidden; }
         <select id="mesh">
             <option value="0">tetrahedron</option>
             <option value="1">cube</option>
-            <option value="2" selected="selected">icosahedron</option>
+            <option value="2">icosahedron</option>
+            <option value="3">sphere sliced</option>
+            <option value="4" selected="selected">torus</option>
         </select>
     </td> </tr>
 </table></form></div>
@@ -98,7 +102,12 @@ class App {
         this.progDraw.inNV  = this.progDraw.AttrI("inNV");
         this.progDraw.inCol = this.progDraw.AttrI("inCol");
 
-        let meshes = [ new MeshTetrahedron(), new MeshCube(), new MeshIcosahedron() ];
+        let meshes = [ 
+            new MeshTetrahedron(),
+            new MeshCube(),
+            new MeshIcosahedron(),
+            new MeshSphereSlice(16, 32),
+            new MeshTorus(32, 32) ];
 
         this.meshes = [];
         for (let i = 0; i < meshes.length; ++ i ) {
@@ -180,9 +189,8 @@ class MeshCube {
         let n = [ 0,0,1, 1,0,0, 0,0,-1, -1,0,0, 0,1,0, 0,-1,1 ];
         let t = [ 0,0, 1,0, 1,1, 0,1 ];
         let e = [ 0, 1, 2, 3, 1, 5, 6, 2, 5, 4, 7, 6, 4, 0, 3, 7, 3, 2, 6, 7, 1, 0, 4, 5 ];  
-        this.v = [];
+        this.v = []; this.n = []; this.c = []; this.t = [];
         for ( let i = 0; i < e.length; ++ i ) this.v.push( v[e[i]*3]*0.707, v[e[i]*3+1]*0.707, v[e[i]*3+2]*0.707 );
-        this.n = []; this.c = []; this.t = [];
         for ( let is = 0; is < 6; ++ is ) {
             for ( let ip = 0; ip < 4; ++ ip ) { 
                 this.n.push( n[is*3], n[is*3+1], n[is*3+2] ); 
@@ -204,9 +212,8 @@ class MeshIcosahedron{
         let c = [ 1.0,0.0,0.0, 0.0,1.0,0.0, 0.0,0.0,1.0, 1.0,1.0,0.0, 1.0,0.0,1.0, 1.0,0.5,0.0, 0.0,1.0,1.0 ];
         let e = [ 2,0,1, 3,0,2, 4,0,3, 5,0,4, 1,0,5, 11,7,6, 11,8,7, 11,9,8, 11,10,9, 11,6,10,
                   1,6,2, 2,7,3, 3,8,4, 4,9,5, 5,10,1, 2,6,7, 3,7,8, 4,8,9, 5,9,10, 1,10,6 ]
-        this.v = [];
+        this.v = []; this.n = []; this.c = [];
         for ( let i = 0; i < e.length; ++ i ) this.v.push( v[e[i]*3], v[e[i]*3+1], v[e[i]*3+2] );
-        this.n = []; this.c = []; this.t = [];
         for ( let i = 0; i < e.length; ++ i ) {
            this.v.push( v[e[i]*3], v[e[i]*3+1], v[e[i]*3+2] );
         }
@@ -227,8 +234,84 @@ class MeshIcosahedron{
     }
 };
 
+class MeshSphereSlice{
+    constructor(nl, nc, r, c) {
+        //TODO $$$ (tangents), (binormals)
+        r = r || 1;
+        c = c || [0.7, 0.7, 0.2];
+        this.v = []; this.n = []; this.c = [];  this.t = [];
+        let nc_2 = nc / 2;
+        for ( let tbI = 0; tbI <= nl; tbI ++ )
+        {
+            var v = ( 1.0 - tbI / nl );
+            var z = Math.sin( ( 1.0 - 2.0 * tbI / nl ) * Math.PI/2.0 );
+            var cU = Math.sqrt( 1.0 - z*z );
+            // create 2 hemispheres, so would be possible to wrap 1 texture at both hemispheres 
+            for ( let hi = 0; hi < 2; ++ hi ) {
+                for ( let i = 0; i <= nc_2; i ++ ) {
+                    var u = i / nc_2;
+                    var a = Math.PI * u + hi * Math.PI;
+                    var x = Math.cos( a ) * cU;
+                    var y = Math.sin( a ) * cU;
+                    this.v.push( r*x, r*y, r*z );
+                    this.n.push( x, y, z );
+                    this.t.push( hi*0.5+u*0.5, v );
+                    this.c.push( c[0], c[1], c[2] );
+                }
+            }
+        }
+         
+        this.e = [];
+        
+        // bottom cap
+        var cs_2 = nc_2 + 1;
+        var cs = cs_2 * 2;
+        for ( let i = 0; i < nc_2; i ++ ) { this.e.push( cs + i, cs + i + 1, i ); }
+        for ( let i = nc_2+1; i < 2*nc_2+1; i ++ ) { this.e.push( cs+i, cs+i+1, i ); }
+        // discs
+        for ( let tbI = 1; tbI < nl - 1; tbI ++ ) {
+            for ( let hi = 0; hi < 2; ++ hi ) {
+                var rsi = tbI*cs + hi*cs_2;
+                var nrsi = (tbI+1)*cs + hi*cs_2;
+                for ( var i = 0; i < nc_2; i ++ ) { this.e.push( rsi+i, nrsi+i, nrsi+i+1, rsi+i, nrsi+i+1, rsi+i+1 ); }
+            }
+        }
+        // top cap
+        var si = (nl-1) * cs;
+        for ( let i = 0; i < nc_2; i ++ ) { this.e.push( si + i + 1, si + i, si + i + cs ); }
+        for ( let i = nc_2+1; i < 2*nc_2+1; i ++ ) { this.e.push( si+i+1, si+i, si+i+cs ); }
+    }
+};
+
+class MeshTorus{
+    constructor(nl, nc, r, rt, c) {
+        //TODO $$$ (tangents), (binormals), texture coordiantes
+        c = c || [0.9, 0.5, 0.1];
+        r = r || 0.7;
+        rt = rt || 0.3;
+        this.v = []; this.n = []; this.c = []; this.e = [];
+        for ( var i_c = 0; i_c < nl; ++ i_c ) {
+            var tcpt = [Math.cos(2 * Math.PI * i_c / nl), Math.sin(2 * Math.PI * i_c / nl) ];
+            for ( var i_t = 0; i_t < nc; ++ i_t ) {
+                var tX = Math.cos(2 * Math.PI * i_t / nc);
+                var tY = Math.sin(2 * Math.PI * i_t / nc);
+                var p  = [ tcpt[0] * (r + tX*rt), tcpt[1] * (r + tX*rt), tY*rt ];
+                var n  = [ p[0] - tcpt[0]*r, p[1] - tcpt[1]*r, p[2] ];
+                this.v.push( p[0], p[1], p[2] );
+                this.n.push( n[0], n[1], n[2] );
+                this.c.push( c[0], c[1], c[2] );
+                var i_cn = (i_c+1) % nl;
+                var i_tn = (i_t+1) % nc;
+                var i_c0 = i_c * nc; 
+                var i_c1 = i_cn * nc; 
+                this.e.push( i_c0+i_t, i_c1+i_t, i_c0+i_tn, i_c0+i_tn, i_c1+i_t, i_c1+i_tn );
+            }
+        }
+    }
+};
+
 /* TODO $$$ mesh classes
-   e.g. sphere_slice, sphere_tessellated, icosahedron, torus, trefoil-knot  
+   e.g. sphere_tessellated, tube, trefoil-knot  
 */
 
 class ShProg {

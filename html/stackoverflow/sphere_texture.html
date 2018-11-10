@@ -146,7 +146,7 @@ function initScene() {
           var angle = Math.PI * u;
           var x = Math.cos( angle ) * cosUp;
           var y = Math.sin( angle ) * cosUp;
-          AddVertex( x * radius, y * radius, z * radius, x, y, z, u, v );
+          AddVertex( x * radius, y * radius, z * radius, x, y, z, u*0.5, v );
         }
         for ( var i = 0; i <= circCnt_2; i ++ )
         {
@@ -154,7 +154,7 @@ function initScene() {
           var angle = Math.PI * u + Math.PI;
           var x = Math.cos( angle ) * cosUp;
           var y = Math.sin( angle ) * cosUp;
-          AddVertex( x * radius, y * radius, z * radius, x, y, z, u, v );
+          AddVertex( x * radius, y * radius, z * radius, x, y, z, 0.5+u*0.5, v );
         }
     }
     
