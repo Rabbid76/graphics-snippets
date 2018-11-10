@@ -46,7 +46,23 @@ enum class TImageKind : t_byte
   displacement_map,        //!< displacement map; 1 channel (red)
   normal_map,              //!< normal map; 3 channels (RGB)
   normal_displacement_map, //!< normal map; 3 channels (RGB) + displacement map; 1 channel (alpha)
-  displacement_cone_map    //!< displacement map; 1 channel (red) + cone map; 1 channel (green) 
+  displacement_cone_map,   //!< displacement map; 1 channel (red) + cone map; 1 channel (green) 
+};
+
+
+/******************************************************************//**
+* \brief Projection format of the image
+* 
+* \author  gernot
+* \date    2018-11-10
+* \version 1.0
+**********************************************************************/
+enum class TImageProjection : t_byte 
+{
+  plane,       //!< 2 dimensional plane image
+  cubmap,      //!< 6 side cube map of the environment
+  cylindrical, //!< cylindrical projection of the environment
+  spheric      //!< spheric projection of the environment  
 };
 
 

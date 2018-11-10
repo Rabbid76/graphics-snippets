@@ -3,11 +3,13 @@
   
   attribute vec3 inPos;
   attribute vec3 inNV;
+  attribute vec2 inUV;
   attribute vec3 inCol;
 
-  varying vec3  vertPos;
-  varying vec3  vertNV;
-  varying vec3  vertCol;
+  varying vec3 vertPos;
+  varying vec3 vertNV;
+  varying vec2 vertUV;
+  varying vec3 vertCol;
    
   uniform mat4 u_projectionMat44;
   uniform mat4 u_viewMat44;
@@ -19,6 +21,7 @@
       mat4 mv       = u_viewMat44 * u_modelMat44; 
       vertCol       = inCol;
       vertNV        = normalize(mat3(mv) * inNV);
+      vertUV        = inUV;
       vec4 viewPos  = mv * vec4( inPos, 1.0 );
       vertPos       = viewPos.xyz;
       gl_Position   = u_projectionMat44 * viewPos;
@@ -28,16 +31,26 @@
 <script id="draw-shader-fs" type="x-shader/x-fragment">
   precision mediump float;
 
-  varying vec3  vertPos;
-  varying vec3  vertNV;
-  varying vec3  vertCol;
+  varying vec3 vertPos;
+  varying vec3 vertNV;
+  varying vec2 vertUV;
+  varying vec3 vertCol;
+
+  uniform sampler2D u_texture;
+  uniform float     u_mix_color;
+  uniform float     u_mix_normal;
   
   void main()
   {
-      vec3  vl     = vec3(0.0, 0.0, 1.0);
-      float kd     = max(0.0, dot(vertNV, vl)); 
-      vec3 color   = vertCol * (0.1 + kd * 1.2);
-      gl_FragColor = vec4( color.rgb, 1.0 );
+      vec3  vl        = vec3(0.0, 0.0, 1.0);
+      float kd        = max(0.0, dot(vertNV, vl)); 
+      vec4 texColor   = texture2D(u_texture, vertUV);
+      vec3 view_nv    = normalize(vertNV);
+      vec3 nv_color   = abs(view_nv); 
+      nv_color       /= max(view_nv.x, max(view_nv.y, view_nv.z));
+      vec3 baseColor  = mix(mix(vertCol, texColor.rgb, u_mix_color), nv_color, u_mix_normal);
+      vec3 color      = baseColor * (0.1 + kd * 1.2);
+      gl_FragColor    = vec4( color.rgb, 1.0 );
   } 
 </script>
 
@@ -61,6 +74,11 @@ html,body { margin: 0; overflow: hidden; }
             <option value="6">torus knot</option-->
         </select>
     </td> </tr>
+    <tr> <td> <font color= #40f040>color / texture</font> </td> 
+        <td> <input type="range" id="mix_color" min="0" max="100" value="0"/>
+    </td> </tr>
+    <tr> <td> <font color=#40f040>normal vector</font> </td> 
+        <td> <input type="checkbox" id="mix_normal" value="0" /></td></tr>
 </table></form></div>
 
 <!--div id="ref-link">
@@ -93,6 +111,8 @@ class App {
         //    console.log('no standard derivatives support (no dFdx, dFdy)');
         //if (!ext_vao)
         //    console.log('no vertex array objects support');
+
+        this.texture = new Texture( "https://raw.githubusercontent.com/Rabbid76/graphics-snippets/master/resource/texture/test1_texture.bmp" ); 
        
         this.progDraw = new ShProg( 
             [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },
@@ -103,6 +123,7 @@ class App {
         this.progDraw.inPos = this.progDraw.AttrI("inPos");
         this.progDraw.inNV  = this.progDraw.AttrI("inNV");
         this.progDraw.inCol = this.progDraw.AttrI("inCol");
+        this.progDraw.inUV  = this.progDraw.AttrI("inUV");
 
         let meshes = [ 
             new MeshTetrahedron(),
@@ -115,14 +136,18 @@ class App {
         ];
 
         document.getElementById( "mesh" ).value = Math.floor((Math.random() * meshes.length));
+        let state = Math.random();
+        document.getElementById( "mix_color" ).value = state < 0.33 ? 100 : 0;
+        document.getElementById( "mix_normal" ).checked  = state >= 0.67 ? 1 : 0;
 
         this.meshes = [];
         for (let i = 0; i < meshes.length; ++ i ) {
             this.meshes.push( new VertexBuffer( gl,
                     [ { data : meshes[i].v, attrSize : 3, attrLoc : this.progDraw.inPos },
                       { data : meshes[i].n, attrSize : 3, attrLoc : this.progDraw.inNV },
-                      { data : meshes[i].c, attrSize : 3, attrLoc : this.progDraw.inCol } ],
-                    meshes[i].e ) );
+                      { data : meshes[i].c, attrSize : 3, attrLoc : this.progDraw.inCol }, 
+                      { data : meshes[i].t, attrSize : 2, attrLoc : this.progDraw.inUV } 
+                    ], meshes[i].e ) );
         }
 
         this.resize(); 
@@ -142,6 +167,8 @@ class App {
     draw(deltaMS){
         
         var mesh = document.getElementById( "mesh" ).value;
+        var mix_color = document.getElementById( "mix_color" ).value / 100.0;
+        var mix_normal = document.getElementById( "mix_normal" ).checked;
 
         // setup view projection and model
         this.camera.Update( this.vp_size );
@@ -153,11 +180,17 @@ class App {
         gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
         gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
 
+        // bind the texture
+        this.texture.Bind( 0 );
+
         // set up draw shader
         this.progDraw.Use();
         this.progDraw.SetM44("u_projectionMat44", this.camera.perspective);
         this.progDraw.SetM44("u_viewMat44", this.camera.orbit);
         this.progDraw.SetM44("u_modelMat44", modelMat);
+        this.progDraw.SetI1("u_texture", 0);
+        this.progDraw.SetF1("u_mix_color", mix_color);
+        this.progDraw.SetF1("u_mix_normal", mix_normal);
         
         // draw scene
         this.meshes[mesh].Draw();
@@ -176,7 +209,7 @@ class MeshTetrahedron {
         let s_2_3 = Math.sqrt(2/3);
         let v = [ 0,0,1, s_8_9,0,-1/3, -s_2_9,s_2_3,-1/3, -s_2_9,-s_2_3,-1/3 ]
         let c = [ 1.0, 0.0, 0.0,  1.0, 1.0, 0.0,  0.0, 0.0, 1.0,  0.0, 1.0, 0.0 ];
-        let t = [ 1,1, 0,0, 1,0, 0,1 ];
+        let t = [ 0,0, 0,1, 1,1, 1,0 ];
         let ni = [ 3, 1, 2, 0 ];
         let e = [ 0, 1, 2, 0, 2, 3, 0, 3, 1, 1, 3, 2 ];  
         this.v = [], this.n = []; this.c = []; this.t = [];
@@ -186,7 +219,7 @@ class MeshTetrahedron {
                 this.v.push( v[e[i]*3], v[e[i]*3+1], v[e[i]*3+2] ); 
                 this.n.push( -v[ni[is]*3], -v[ni[is]*3+1], -v[ni[is]*3+2] ); 
                 this.c.push( c[is*3], c[is*3+1], c[is*3+2] ); 
-                this.t.push( t[e[i]*2], t[e[i]*2]+1 ); 
+                this.t.push( t[e[i]*2], t[e[i]*2+1] ); 
             } 
         }
     }
@@ -216,28 +249,31 @@ class MeshCube {
 
 class MeshIcosahedron{
     constructor() {
-        //TODO $$$ (tangents), (binormals), texture coordiantes
+        //TODO $$$ (tangents), (binormals), improve texture coordiantes
         let v = [ 0,0,1, 0.894,0,0.447, 0.276,0.851,0.447, -0.724,0.526,0.447, -0.724,-0.526,0.447, 0.276,-0.851, 0.447,
                   0.724,0.526,-0.447, -0.276,0.851,-0.447, -0.894,0,-0.447, -0.276,-0.851,-0.447, 0.724,-0.526,-0.447, 0,0,-1 ];
         let c = [ 1.0,0.0,0.0, 0.0,1.0,0.0, 0.0,0.0,1.0, 1.0,1.0,0.0, 1.0,0.0,1.0, 1.0,0.5,0.0, 0.0,1.0,1.0 ];
         let e = [ 2,0,1, 3,0,2, 4,0,3, 5,0,4, 1,0,5, 11,7,6, 11,8,7, 11,9,8, 11,10,9, 11,6,10,
                   1,6,2, 2,7,3, 3,8,4, 4,9,5, 5,10,1, 2,6,7, 3,7,8, 4,8,9, 5,9,10, 1,10,6 ]
-        this.v = []; this.n = []; this.c = [];
-        for ( let i = 0; i < e.length; ++ i ) this.v.push( v[e[i]*3], v[e[i]*3+1], v[e[i]*3+2] );
+        this.v = []; this.n = []; this.c = [], this.t = [];
         for ( let i = 0; i < e.length; ++ i ) {
-           this.v.push( v[e[i]*3], v[e[i]*3+1], v[e[i]*3+2] );
+           let x = v[e[i]*3];
+           let y = v[e[i]*3+1];
+           let z = v[e[i]*3+2];
+           this.v.push( x, y, z );
+           this.t.push( Math.atan2(y, x) / 2 / Math.PI, 0.5 + Math.asin(z) / Math.PI  );
         }
         for ( let fi = 0; fi < this.v.length/9; ++ fi ) {
-            let nv = [0, 0, 0];
+            let n = [0, 0, 0];
             for ( let ti = 0; ti < 3; ++ ti ) {
-                nv[0] += this.v[(fi*3+ti)*3];
-                nv[1] += this.v[(fi*3+ti)*3+1];
-                nv[2] += this.v[(fi*3+ti)*3+2];
+                n[0] += this.v[(fi*3+ti)*3];
+                n[1] += this.v[(fi*3+ti)*3+1];
+                n[2] += this.v[(fi*3+ti)*3+2];
             }
-            nv = Vec3.normalize(nv);
+            n = Vec3.normalize(n);
             let ci = fi % (c.length/3);
             for ( let ti = 0; ti < 3; ++ ti ) {
-                this.n.push( nv[0], nv[1], nv[2] );
+                this.n.push( n[0], n[1], n[2] );
                 this.c.push( c[ci*3], c[ci*3+1], c[ci*3+2] );
             }
         }
@@ -297,28 +333,28 @@ class MeshSphereSlice{
 
 class MeshTorus{
     constructor(nl, nc, r, rt, c) {
-        //TODO $$$ (tangents), (binormals), texture coordiantes
+        //TODO $$$ (tangents), (binormals)
         nl = nl || 32;
         nc = nc || 32;
         c = c || [0.9, 0.5, 0.1];
         r = r || 0.7;
         rt = rt || 0.3;
-        this.v = []; this.n = []; this.c = []; this.e = [];
-        for ( let i_c = 0; i_c < nl; ++ i_c ) {
-            let tcpt = [Math.cos(2 * Math.PI * i_c / nl), Math.sin(2 * Math.PI * i_c / nl) ];
-            for ( let i_t = 0; i_t < nc; ++ i_t ) {
-                let tX = Math.cos(2 * Math.PI * i_t / nc);
-                let tY = Math.sin(2 * Math.PI * i_t / nc);
+        this.v = []; this.n = []; this.c = [];  this.t = []; this.e = [];
+        for ( let i_l = 0; i_l <= nl; ++ i_l ) {
+            let tcpt = [Math.cos(2 * Math.PI * i_l / nl), Math.sin(2 * Math.PI * i_l / nl) ];
+            for ( let i_c = 0; i_c <= nc; ++ i_c ) {
+                let tX = Math.cos(2 * Math.PI * i_c / nc);
+                let tY = Math.sin(2 * Math.PI * i_c / nc);
                 let p  = [ tcpt[0] * (r + tX*rt), tcpt[1] * (r + tX*rt), tY*rt ];
                 let n  = [ p[0] - tcpt[0]*r, p[1] - tcpt[1]*r, p[2] ];
                 this.v.push( p[0], p[1], p[2] );
                 this.n.push( n[0], n[1], n[2] );
                 this.c.push( c[0], c[1], c[2] );
-                let i_cn = (i_c+1) % nl;
-                let i_tn = (i_t+1) % nc;
-                let i_c0 = i_c * nc; 
-                let i_c1 = i_cn * nc; 
-                this.e.push( i_c0+i_t, i_c1+i_t, i_c0+i_tn, i_c0+i_tn, i_c1+i_t, i_c1+i_tn );
+                this.t.push( 3*i_l/nl, i_c/nc );
+                let i_l0 = i_l * (nc+1); 
+                let i_l1 = (i_l+1) * (nc+1); 
+                if (i_c < nc && i_l < nl)
+                    this.e.push( i_l0+i_c, i_l1+i_c, i_l0+(i_c+1), i_l0+(i_c+1), i_l1+i_c, i_l1+(i_c+1) );
             }
         }
     }
@@ -338,9 +374,9 @@ class MeshTrefoilKnot{
         
         let ds = 1.0 / slices;
         let dt = 1.0 / stacks;
-        for ( let s = 0; s < 1 - ds / 2; s += ds) {
-            for ( let t = 0; t < 1 - dt / 2; t += dt ) {
-                let E = 0.01;
+        let E = 0.01;
+        for ( let s = 0; s < 1 + ds / 2; s += ds) {
+            for ( let t = 0; t < 1 + dt / 2; t += dt ) {
                 let p = this.compute( s, t );
                 let u = this.compute( s + E, t );
                 u = Vec3.sub( u, p );
@@ -359,10 +395,10 @@ class MeshTrefoilKnot{
         let n = 0;
         for ( let i = 0; i < slices; ++ i ) {
             for ( let j = 0; j < stacks; ++ j ) { 
-                this.e.push( n + j, n + (j + 1) % stacks, (n + j + stacks) % vertexCount );
-                this.e.push( (n + j + stacks) % vertexCount, (n + (j + 1) % stacks) % vertexCount, (n + (j + 1) % stacks + stacks) % vertexCount );
+                this.e.push( n + j, n + j + 1, (n + j + stacks + 1) % vertexCount );
+                this.e.push( (n + j + stacks + 1) % vertexCount, (n + j + 1) % vertexCount, (n + j + 1 + stacks + 1) % vertexCount );
             }
-            n += stacks;
+            n += stacks+1;
         }
     }
 
@@ -410,8 +446,8 @@ class MeshTorusKnot{
         
         let ds = 1.0 / slices;
         let dt = 1.0 / stacks;
-        for ( let s = 0; s < 1 - ds / 2; s += ds) {
-            for ( let t = 0; t < 1 - dt / 2; t += dt ) {
+        for ( let s = 0; s < 1 + ds / 2; s += ds) {
+            for ( let t = 0; t < 1 + dt / 2; t += dt ) {
                 let E = 0.001;
                 let p = this.compute( s, t, p_, q_ );
                 let u = this.compute( s - E, t, p_, q_ );
@@ -432,10 +468,10 @@ class MeshTorusKnot{
         for ( let i = 0; i < slices; ++ i ) {
             for ( let j = 0; j < stacks; ++ j ) {
                 
-                this.e.push( n + j, n + (j + 1) % stacks, (n + j + stacks) % vertexCount );
-                this.e.push( (n + j + stacks) % vertexCount, (n + (j + 1) % stacks) % vertexCount, (n + (j + 1) % stacks + stacks) % vertexCount );
+                this.e.push( n + j, n + j + 1, (n + j + stacks + 1) % vertexCount );
+                this.e.push( (n + j + stacks + 1) % vertexCount, (n + j + 1) % vertexCount, (n + j + 1 + stacks + 1) % vertexCount );
             }
-            n += stacks;
+            n += stacks + 1;
         }
     }
 
@@ -599,10 +635,12 @@ class VertexBuffer {
         }
 
         for (let i=0; i<attribs.length; ++i) {
-            this.buf.push(this.gl.createBuffer());
-            this.attr.push({ size : attribs[i].attrSize, loc : attribs[i].attrLoc, no_of: attribs[i].data.length/attribs[i].attrSize });
-            this.gl.bindBuffer(gl.ARRAY_BUFFER, this.buf[i]);
-            this.gl.bufferData(gl.ARRAY_BUFFER, new Float32Array( attribs[i].data ), gl.STATIC_DRAW);
+            if ( attribs[i].attrLoc != undefined && attribs[i].attrLoc >= 0 ) {
+                this.buf.push(this.gl.createBuffer());
+                this.attr.push({ size : attribs[i].attrSize, loc : attribs[i].attrLoc, no_of: attribs[i].data.length/attribs[i].attrSize });
+                this.gl.bindBuffer(gl.ARRAY_BUFFER, this.buf[i]);
+                this.gl.bufferData(gl.ARRAY_BUFFER, new Float32Array( attribs[i].data ), gl.STATIC_DRAW);
+            }
         }
         this.gl.bindBuffer(gl.ARRAY_BUFFER, null);
         if ( this.inxLen > 0 ) {
@@ -637,6 +675,38 @@ class VertexBuffer {
     }
 }
 
+class Texture {
+    constructor( name ) {
+        let texture = this;
+        this.textureObj = gl.createTexture();
+        this.image = new Image(64,64);
+        this.image.setAttribute('crossorigin', 'anonymous');
+        this.image.onload = function () {
+            var canvas = document.createElement( 'canvas' );
+            canvas.width = 512;
+            canvas.height = 256;
+            var context = canvas.getContext( '2d' );
+            context.drawImage( texture.image, 0, 0, canvas.width, canvas.height );
+            texture.HandleLoadedTexture2D( canvas, texture.textureObj, true )
+        }
+        this.image.src = name;
+    }
+    HandleLoadedTexture2D( image, texture, flipY ) {
+        gl.activeTexture( gl.TEXTURE0 );
+        gl.bindTexture( gl.TEXTURE_2D, texture );
+        gl.pixelStorei( gl.UNPACK_FLIP_Y_WEBGL, flipY != undefined && flipY == true );
+        gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image );
+        gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR );
+        gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR );
+        gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT );
+        gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT );
+        gl.bindTexture( gl.TEXTURE_2D, null );
+    }
+    Bind( texUnit = 0 ) {
+        gl.activeTexture( gl.TEXTURE0 + texUnit );
+        gl.bindTexture( gl.TEXTURE_2D, this.textureObj );
+    }
+};
 
 // TODO $$$ attenuation
 class Camera {
