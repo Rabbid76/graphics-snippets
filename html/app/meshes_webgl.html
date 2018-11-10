@@ -56,7 +56,9 @@ html,body { margin: 0; overflow: hidden; }
             <option value="1">cube</option>
             <option value="2">icosahedron</option>
             <option value="3">sphere sliced</option>
-            <option value="4" selected="selected">torus</option>
+            <option value="4">torus</option>
+            <option value="5" selected="selected">trefoil knot</option>
+            <!--option value="6" selected="selected">torus knot</option-->
         </select>
     </td> </tr>
 </table></form></div>
@@ -107,7 +109,10 @@ class App {
             new MeshCube(),
             new MeshIcosahedron(),
             new MeshSphereSlice(16, 32),
-            new MeshTorus(32, 32) ];
+            new MeshTorus(32, 32),
+            new MeshTrefoilKnot(256, 32),
+            //new MeshTorusKnot(512, 32, 3, 7),
+        ];
 
         this.meshes = [];
         for (let i = 0; i < meshes.length; ++ i ) {
@@ -157,6 +162,10 @@ class App {
     }
 }
 
+/* TODO $$$ mesh classes
+   e.g. sphere_tessellated, tube 
+*/
+
 class MeshTetrahedron {
     constructor() {
         //TODO $$$ (tangents), (binormals)
@@ -202,7 +211,6 @@ class MeshCube {
         for ( let i = 0; i < e.length; i += 4 ) { this.e.push( i, i+1, i+2, i, i+2, i+3 ); }   
     }
 };
-
 
 class MeshIcosahedron{
     constructor() {
@@ -290,29 +298,95 @@ class MeshTorus{
         r = r || 0.7;
         rt = rt || 0.3;
         this.v = []; this.n = []; this.c = []; this.e = [];
-        for ( var i_c = 0; i_c < nl; ++ i_c ) {
-            var tcpt = [Math.cos(2 * Math.PI * i_c / nl), Math.sin(2 * Math.PI * i_c / nl) ];
-            for ( var i_t = 0; i_t < nc; ++ i_t ) {
-                var tX = Math.cos(2 * Math.PI * i_t / nc);
-                var tY = Math.sin(2 * Math.PI * i_t / nc);
-                var p  = [ tcpt[0] * (r + tX*rt), tcpt[1] * (r + tX*rt), tY*rt ];
-                var n  = [ p[0] - tcpt[0]*r, p[1] - tcpt[1]*r, p[2] ];
+        for ( let i_c = 0; i_c < nl; ++ i_c ) {
+            let tcpt = [Math.cos(2 * Math.PI * i_c / nl), Math.sin(2 * Math.PI * i_c / nl) ];
+            for ( let i_t = 0; i_t < nc; ++ i_t ) {
+                let tX = Math.cos(2 * Math.PI * i_t / nc);
+                let tY = Math.sin(2 * Math.PI * i_t / nc);
+                let p  = [ tcpt[0] * (r + tX*rt), tcpt[1] * (r + tX*rt), tY*rt ];
+                let n  = [ p[0] - tcpt[0]*r, p[1] - tcpt[1]*r, p[2] ];
                 this.v.push( p[0], p[1], p[2] );
                 this.n.push( n[0], n[1], n[2] );
                 this.c.push( c[0], c[1], c[2] );
-                var i_cn = (i_c+1) % nl;
-                var i_tn = (i_t+1) % nc;
-                var i_c0 = i_c * nc; 
-                var i_c1 = i_cn * nc; 
+                let i_cn = (i_c+1) % nl;
+                let i_tn = (i_t+1) % nc;
+                let i_c0 = i_c * nc; 
+                let i_c1 = i_cn * nc; 
                 this.e.push( i_c0+i_t, i_c1+i_t, i_c0+i_tn, i_c0+i_tn, i_c1+i_t, i_c1+i_tn );
             }
         }
     }
 };
 
-/* TODO $$$ mesh classes
-   e.g. sphere_tessellated, tube, trefoil-knot  
-*/
+class MeshTrefoilKnot{
+    constructor(slices, stacks, ra, rb, rc, rd, c) {
+        //TODO $$$ (tangents), (binormals)
+        this.ra = ra || 0.6;
+        this.rb = ra || 0.2;
+        this.rc = ra || 0.4;
+        this.rd = rd || 0.175;
+        c = c || [0.9, 0.5, 0.1];
+        this.v = []; this.n = []; this.c = []; this.e = []; this.t = [];
+        let ds = 1.0 / slices;
+        let dt = 1.0 / stacks;
+        for ( let s = 0; s < 1 - ds / 2; s += ds) {
+            for ( let t = 0; t < 1 - dt / 2; t += dt ) {
+                let E = 0.01;
+                let p = this.evaluate( s, t );
+                let u = this.evaluate( s + E, t );
+                u = Vec3.sub( u, p );
+                let v = this.evaluate( s, t + E );
+                v = Vec3.sub( v, p );
+                let n = Vec3.normalize(Vec3.cross( u, v ));
+                this.v.push( p[0], p[1], p[2] );
+                this.n.push( n[0], n[1], n[2] );
+                this.t.push( s * 18.0, t );
+                this.c.push( c[0], c[1], c[2] );
+            }
+        }
+
+        this.e = [];
+        var vertexCount = this.v.length/3;
+        let n = 0;
+        for ( let i = 0; i < slices; ++ i ) {
+            for ( let j = 0; j < stacks; ++ j ) { 
+                this.e.push( n + j, n + (j + 1) % stacks, (n + j + stacks) % vertexCount );
+                this.e.push( (n + j + stacks) % vertexCount, (n + (j + 1) % stacks) % vertexCount, (n + (j + 1) % stacks + stacks) % vertexCount );
+            }
+            n += stacks;
+        }
+    }
+
+    evaluate( s, t ) {
+        let TwoPi = Math.PI * 2;
+        let a = this.ra;
+        let b = this.rb;
+        let c = this.rc;
+        let d = this.rd;
+        let u = ( 1 - s ) * 2 * TwoPi;
+        let v = t * TwoPi;
+        let r = a + b * Math.cos( 1.5 * u );
+        let x = r * Math.cos( u );
+        let y = r * Math.sin( u );
+        let z = c * Math.sin( 1.5 * u );
+
+        let dv = [
+            -1.5 * b * Math.sin( 1.5 * u ) * Math.cos( u ) - ( a + b * Math.cos( 1.5 * u ) ) * Math.sin( u ),
+            -1.5 * b * Math.sin( 1.5 * u ) * Math.sin( u ) + ( a + b * Math.cos( 1.5 * u ) ) * Math.cos( u ),
+            1.5 * c * Math.cos( 1.5 * u )
+        ];
+        let q = Vec3.normalize( dv );
+        let qvn = Vec3.normalize( [ q[1], -q[0], 0 ] );
+        let ww = Vec3.cross( q, qvn );
+        let range = [
+            x + d * ( qvn[0] * Math.cos( v ) + ww[0] * Math.sin( v ) ),
+            y + d * ( qvn[1] * Math.cos( v ) + ww[1] * Math.sin( v ) ),
+            z + d * ww[2] * Math.sin( v )
+        ]    
+        return range;
+    }
+};
+
 
 class ShProg {
     constructor(shaderList) {
@@ -615,13 +689,16 @@ ellipticalPosition : function( a, b, angRag ) {
 }
 
 Vec3 = {
-cross: function( a, b ) { return [ a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0], 0.0 ]; },
-dot: function( a, b ) { return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; },
-len: function( v ) { return Math.sqrt( v[0] * v[0] + v[1] * v[1] + v[2] * v[2] ); },
-normalize: function( v ) {
-    var len = this.len( v );
-    return [ v[0] / len, v[1] / len, v[2] / len ];
-}
+    mul_s: function( v, s ) { return [v[0]*s, v[1]*s, v[2]*s]; },
+    add: function( a, b ) { return [a[0]+b[0], a[1]+b[1], a[2]+b[2]]; },
+    sub: function( a, b ) { return [a[0]-b[0], a[1]-b[1], a[2]-b[2]]; },
+    cross: function( a, b ) { return [ a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0] ]; },
+    dot: function( a, b ) { return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; },
+    len: function( v ) { return Math.sqrt( v[0] * v[0] + v[1] * v[1] + v[2] * v[2] ); },
+    normalize: function( v ) {
+        var len = this.len( v );
+        return [ v[0] / len, v[1] / len, v[2] / len ];
+    }
 }
 
 Mat44 = {
