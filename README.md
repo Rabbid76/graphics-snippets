@@ -32,7 +32,7 @@
 
 ### Basic
 
-[Mesh](https://rabbid76.github.io/graphics-snippets/html/app/mesh.html)
+[Mesh](https://rabbid76.github.io/graphics-snippets/html/basic/mesh.html)
 
 ### App
 
