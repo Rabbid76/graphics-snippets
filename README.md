@@ -30,6 +30,10 @@
 
 ## HTML
 
+### Basic
+
+[Meshes](https://rabbid76.github.io/graphics-snippets/html/app/meshes.html)
+
 ### App
 
 [Rubiks](https://rabbid76.github.io/graphics-snippets/html/app/rubiks_cube.html)

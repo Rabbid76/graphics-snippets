@@ -58,7 +58,7 @@ html,body { margin: 0; overflow: hidden; }
             <option value="3">sphere sliced</option>
             <option value="4">torus</option>
             <option value="5" selected="selected">trefoil knot</option>
-            <!--option value="6" selected="selected">torus knot</option-->
+            <option value="6">torus knot</option-->
         </select>
     </td> </tr>
 </table></form></div>
@@ -111,8 +111,10 @@ class App {
             new MeshSphereSlice(16, 32),
             new MeshTorus(32, 32),
             new MeshTrefoilKnot(256, 32),
-            //new MeshTorusKnot(512, 32, 3, 7),
+            new MeshTorusKnot(512, 32, 3, 7),
         ];
+
+        document.getElementById( "mesh" ).value = Math.floor((Math.random() * meshes.length));
 
         this.meshes = [];
         for (let i = 0; i < meshes.length; ++ i ) {
@@ -245,6 +247,8 @@ class MeshIcosahedron{
 class MeshSphereSlice{
     constructor(nl, nc, r, c) {
         //TODO $$$ (tangents), (binormals)
+        nl = nl || 16;
+        nc = nc || 32;
         r = r || 1;
         c = c || [0.7, 0.7, 0.2];
         this.v = []; this.n = []; this.c = [];  this.t = [];
@@ -294,6 +298,8 @@ class MeshSphereSlice{
 class MeshTorus{
     constructor(nl, nc, r, rt, c) {
         //TODO $$$ (tangents), (binormals), texture coordiantes
+        nl = nl || 32;
+        nc = nc || 32;
         c = c || [0.9, 0.5, 0.1];
         r = r || 0.7;
         rt = rt || 0.3;
@@ -321,21 +327,24 @@ class MeshTorus{
 class MeshTrefoilKnot{
     constructor(slices, stacks, ra, rb, rc, rd, c) {
         //TODO $$$ (tangents), (binormals)
+        slices = slices || 256;
+        stacks = stacks || 32;
         this.ra = ra || 0.6;
         this.rb = ra || 0.2;
         this.rc = ra || 0.4;
         this.rd = rd || 0.175;
         c = c || [0.9, 0.5, 0.1];
         this.v = []; this.n = []; this.c = []; this.e = []; this.t = [];
+        
         let ds = 1.0 / slices;
         let dt = 1.0 / stacks;
         for ( let s = 0; s < 1 - ds / 2; s += ds) {
             for ( let t = 0; t < 1 - dt / 2; t += dt ) {
                 let E = 0.01;
-                let p = this.evaluate( s, t );
-                let u = this.evaluate( s + E, t );
+                let p = this.compute( s, t );
+                let u = this.compute( s + E, t );
                 u = Vec3.sub( u, p );
-                let v = this.evaluate( s, t + E );
+                let v = this.compute( s, t + E );
                 v = Vec3.sub( v, p );
                 let n = Vec3.normalize(Vec3.cross( u, v ));
                 this.v.push( p[0], p[1], p[2] );
@@ -346,7 +355,7 @@ class MeshTrefoilKnot{
         }
 
         this.e = [];
-        var vertexCount = this.v.length/3;
+        let vertexCount = this.v.length/3;
         let n = 0;
         for ( let i = 0; i < slices; ++ i ) {
             for ( let j = 0; j < stacks; ++ j ) { 
@@ -357,7 +366,7 @@ class MeshTrefoilKnot{
         }
     }
 
-    evaluate( s, t ) {
+    compute( s, t ) {
         let TwoPi = Math.PI * 2;
         let a = this.ra;
         let b = this.rb;
@@ -384,6 +393,114 @@ class MeshTrefoilKnot{
             z + d * ww[2] * Math.sin( v )
         ]    
         return range;
+    }
+};
+
+class MeshTorusKnot{
+    constructor(slices, stacks, p_, q_, ra, rb, c) {
+        //TODO $$$ (tangents), (binormals)
+        slices = slices || 512;
+        stacks = stacks || 32;
+        p_ = p_ || 7;
+        q_ = q_ || 3; 
+        this.ra = ra || 0.35;
+        this.rb = ra || 0.3;
+        c = c || [0.9, 0.5, 0.1];
+        this.v = []; this.n = []; this.c = []; this.e = []; this.t = [];
+        
+        let ds = 1.0 / slices;
+        let dt = 1.0 / stacks;
+        for ( let s = 0; s < 1 - ds / 2; s += ds) {
+            for ( let t = 0; t < 1 - dt / 2; t += dt ) {
+                let E = 0.001;
+                let p = this.compute( s, t, p_, q_ );
+                let u = this.compute( s - E, t, p_, q_ );
+                u = Vec3.sub( u, p );
+                let v = this.compute( s, t + E, p_, q_ );
+                v = Vec3.sub( v, p );
+                let n = Vec3.normalize(Vec3.cross( u, v ));
+                this.v.push( p[0], p[1], p[2] );
+                this.n.push( n[0], n[1], n[2] );
+                this.t.push( s * 3.0 * p_ * q_, t );
+                this.c.push( c[0], c[1], c[2] );
+            }
+        }
+
+        this.e = [];
+        let vertexCount = this.v.length/3;
+        let n = 0;
+        for ( let i = 0; i < slices; ++ i ) {
+            for ( let j = 0; j < stacks; ++ j ) {
+                
+                this.e.push( n + j, n + (j + 1) % stacks, (n + j + stacks) % vertexCount );
+                this.e.push( (n + j + stacks) % vertexCount, (n + (j + 1) % stacks) % vertexCount, (n + (j + 1) % stacks + stacks) % vertexCount );
+            }
+            n += stacks;
+        }
+    }
+
+    compute( s, t, p, q ) {
+        var tube_rad = this.ra;
+        var torus_rad = this.rb;
+
+        /*
+        var phi1 = ( s - 1 / ( q * Math.PI ) ) * Math.PI * 2;
+        var r1 = Math.cos( q * phi1 ) + 2;
+        var x1 = r1 * Math.cos( p * phi1 );
+        var y1 = r1 * Math.sin( p * phi1 );
+        var z1 = - Math.sin( q * phi1 );
+
+        var phi2 = ( s + 1 / ( q * Math.PI ) ) * Math.PI * 2;
+        var r2 = Math.cos( q * phi2 ) + 2;
+        var x2 = r2 * Math.cos( p * phi2 );
+        var y2 = r2 * Math.sin( p * phi2 );
+        var z2 = - Math.sin( q * phi2 );
+
+        var dir = vec3.create( [ x2 - x1, y2 - y1, z2 - z1 ] );
+        vec3.normalize( dir );
+        var dir_xy = vec3.create( [ dir[0], dir[1], 0 ] );
+        vec3.normalize( dir_xy );
+        var dir_xy_len = Math.sqrt( dir[0] * dir[0] + dir[1] + dir[1] );
+
+        var phi = s * Math.PI * 2;
+        var r = Math.cos( q * phi ) + 2;
+        var x = r * Math.cos( p * phi );
+        var y = r * Math.sin( p * phi );
+        var z = - Math.sin( q * phi );
+        
+        var beta = t * Math.PI * 2;
+        var tube_x = Math.sin( beta );
+        var tube_y = Math.cos( beta );
+
+        var vertex = vec3.create();
+        vertex[0] = x + tube_rad * tube_x * -dir_xy[1] + tube_rad * tube_y * dir_xy_len * dir_xy[0]; 
+        vertex[1] = y + tube_rad * tube_x * dir_xy[0] + tube_rad * tube_y * dir_xy_len * dir_xy[1]; 
+        vertex[2] = z + tube_rad * tube_y * dir[2]; 
+        */
+
+        var phi = s * Math.PI * 2;
+        var r = Math.cos( q * phi ) + 2;
+        var dir_x = Math.cos( p * phi );
+        var dir_y = Math.sin( p * phi );
+        var x = r * dir_x;
+        var y = r * dir_y;
+        var z = - Math.sin( q * phi );
+        
+        var beta = t * Math.PI * 2;
+        var tube_x = Math.sin( beta );
+        var tube_y = Math.cos( beta );
+
+        var dir_circle = Vec3.normalize( [ -y, x, 0 ] );
+        var dir_up = Vec3.normalize( [ 0, Math.cos( q * phi ), 1 ] );
+        var vertex = [
+            x + tube_rad * tube_x * dir_x + tube_rad * tube_y * dir_up[1] * dir_circle[0],
+            y + tube_rad * tube_x * dir_y + tube_rad * tube_y * dir_up[1] * dir_circle[1], 
+            z + tube_rad * tube_y * dir_up[2]
+        ]; 
+        vertex[0] *= torus_rad;  
+        vertex[1] *= torus_rad;
+        vertex[2] *= torus_rad;
+        return vertex;
     }
 };
 
