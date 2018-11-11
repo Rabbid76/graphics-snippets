@@ -112,8 +112,10 @@ class App {
         //if (!ext_vao)
         //    console.log('no vertex array objects support');
 
+        //this.texture = new Texture( "https://raw.githubusercontent.com/Rabbid76/graphics-snippets/master/resource/texture/tree.jpg" );
         this.texture = new Texture( "https://raw.githubusercontent.com/Rabbid76/graphics-snippets/master/resource/texture/test1_texture.bmp" ); 
-       
+        this.texture.bound = false;
+
         this.progDraw = new ShProg( 
             [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },
                 { source : "draw-shader-fs", stage : gl.FRAGMENT_SHADER }
@@ -139,6 +141,10 @@ class App {
         let state = Math.random();
         document.getElementById( "mix_color" ).value = state < 0.33 ? 100 : 0;
         document.getElementById( "mix_normal" ).checked  = state >= 0.67 ? 1 : 0;
+
+        //document.getElementById( "mesh" ).value = 2;
+        //document.getElementById( "mix_color" ).value = 100;
+        //document.getElementById( "mix_normal" ).checked = 0;
 
         this.meshes = [];
         for (let i = 0; i < meshes.length; ++ i ) {
@@ -181,7 +187,8 @@ class App {
         gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
 
         // bind the texture
-        this.texture.Bind( 0 );
+        if (this.texture.loaded && !this.texture.bound)
+            this.texture.bound = this.texture.Bind( 0 );
 
         // set up draw shader
         this.progDraw.Use();
@@ -189,7 +196,7 @@ class App {
         this.progDraw.SetM44("u_viewMat44", this.camera.orbit);
         this.progDraw.SetM44("u_modelMat44", modelMat);
         this.progDraw.SetI1("u_texture", 0);
-        this.progDraw.SetF1("u_mix_color", mix_color);
+        this.progDraw.SetF1("u_mix_color", this.texture.bound ? mix_color : 0);
         this.progDraw.SetF1("u_mix_normal", mix_normal);
         
         // draw scene
@@ -253,15 +260,21 @@ class MeshIcosahedron{
         let v = [ 0,0,1, 0.894,0,0.447, 0.276,0.851,0.447, -0.724,0.526,0.447, -0.724,-0.526,0.447, 0.276,-0.851, 0.447,
                   0.724,0.526,-0.447, -0.276,0.851,-0.447, -0.894,0,-0.447, -0.276,-0.851,-0.447, 0.724,-0.526,-0.447, 0,0,-1 ];
         let c = [ 1.0,0.0,0.0, 0.0,1.0,0.0, 0.0,0.0,1.0, 1.0,1.0,0.0, 1.0,0.0,1.0, 1.0,0.5,0.0, 0.0,1.0,1.0 ];
-        let e = [ 2,0,1, 3,0,2, 4,0,3, 5,0,4, 1,0,5, 11,7,6, 11,8,7, 11,9,8, 11,10,9, 11,6,10,
-                  1,6,2, 2,7,3, 3,8,4, 4,9,5, 5,10,1, 2,6,7, 3,7,8, 4,8,9, 5,9,10, 1,10,6 ]
+        let e = [ 1,2,0, 2,3,0, 3,4,0, 4,5,0, 5,1,0, 7,6,11, 8,7,11, 9,8,11, 10,9,11, 6,10,11,
+                  1,6,2, 2,7,3, 3,8,4, 4,9,5, 5,10,1, 7,2,6, 8,3,7, 9,4,8, 10,5,9,  6,1,10 ];
+        let t = [0,0, 1,0, 1,1, 0,1];
         this.v = []; this.n = []; this.c = [], this.t = [];
         for ( let i = 0; i < e.length; ++ i ) {
            let x = v[e[i]*3];
            let y = v[e[i]*3+1];
            let z = v[e[i]*3+2];
            this.v.push( x, y, z );
-           this.t.push( Math.atan2(y, x) / 2 / Math.PI, 0.5 + Math.asin(z) / Math.PI  );
+           let ti = i % 3;
+           let fi = i / 3;
+           if ( Math.floor(fi) >= 10 || ti == 0)
+               this.t.push( t[ti*2], t[ti*2+1] );
+           else
+               this.t.push( t[ti*2+2], t[ti*2+3] );
         }
         for ( let fi = 0; fi < this.v.length/9; ++ fi ) {
             let n = [0, 0, 0];
@@ -678,6 +691,7 @@ class VertexBuffer {
 class Texture {
     constructor( name ) {
         let texture = this;
+        this.loaded = false;
         this.textureObj = gl.createTexture();
         this.image = new Image(64,64);
         this.image.setAttribute('crossorigin', 'anonymous');
@@ -688,6 +702,7 @@ class Texture {
             var context = canvas.getContext( '2d' );
             context.drawImage( texture.image, 0, 0, canvas.width, canvas.height );
             texture.HandleLoadedTexture2D( canvas, texture.textureObj, true )
+            texture.loaded = true;
         }
         this.image.src = name;
     }
@@ -705,6 +720,7 @@ class Texture {
     Bind( texUnit = 0 ) {
         gl.activeTexture( gl.TEXTURE0 + texUnit );
         gl.bindTexture( gl.TEXTURE_2D, this.textureObj );
+        return true;
     }
 };
 
