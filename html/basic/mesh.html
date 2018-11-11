@@ -187,8 +187,7 @@ class App {
         gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
 
         // bind the texture
-        if (this.texture.loaded && !this.texture.bound)
-            this.texture.bound = this.texture.Bind( 0 );
+        this.texture.bound = this.texture.bound || this.texture.Bind( 0 );
 
         // set up draw shader
         this.progDraw.Use();
@@ -196,7 +195,7 @@ class App {
         this.progDraw.SetM44("u_viewMat44", this.camera.orbit);
         this.progDraw.SetM44("u_modelMat44", modelMat);
         this.progDraw.SetI1("u_texture", 0);
-        this.progDraw.SetF1("u_mix_color", this.texture.bound ? mix_color : 0);
+        this.progDraw.SetF1("u_mix_color", mix_color);
         this.progDraw.SetF1("u_mix_normal", mix_normal);
         
         // draw scene
@@ -691,36 +690,51 @@ class VertexBuffer {
 class Texture {
     constructor( name ) {
         let texture = this;
-        this.loaded = false;
-        this.textureObj = gl.createTexture();
         this.image = new Image(64,64);
         this.image.setAttribute('crossorigin', 'anonymous');
         this.image.onload = function () {
+            let cx = 1 << 31 - Math.clz32(texture.image.width);
+            if ( cx < texture.image.naturalWidth ) cx *= 2;
+            let cy = 1 << 31 - Math.clz32(texture.image.height);
+            if ( cy < texture.image.naturalHeight ) cy *= 2;
             var canvas = document.createElement( 'canvas' );
-            canvas.width = 512;
-            canvas.height = 256;
+            canvas.width  = cx;
+            canvas.height = cy;
             var context = canvas.getContext( '2d' );
             context.drawImage( texture.image, 0, 0, canvas.width, canvas.height );
-            texture.HandleLoadedTexture2D( canvas, texture.textureObj, true )
-            texture.loaded = true;
+            texture.textureObj = Texture.CreateTexture2D( canvas, true )
         }
         this.image.src = name;
     }
-    HandleLoadedTexture2D( image, texture, flipY ) {
+    static CreateTexture2D( image, flipY ) {
+        let t = gl.createTexture();
         gl.activeTexture( gl.TEXTURE0 );
-        gl.bindTexture( gl.TEXTURE_2D, texture );
+        gl.bindTexture( gl.TEXTURE_2D, t );
         gl.pixelStorei( gl.UNPACK_FLIP_Y_WEBGL, flipY != undefined && flipY == true );
-        gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image );
+        if ( image.cx && image.cy && image.plane )
+            gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, image.cx, image.cy, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(image.plane) );
+        else
+            gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image );
         gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR );
         gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR );
         gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT );
         gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT );
         gl.bindTexture( gl.TEXTURE_2D, null );
+        return t;
     }
     Bind( texUnit = 0 ) {
         gl.activeTexture( gl.TEXTURE0 + texUnit );
-        gl.bindTexture( gl.TEXTURE_2D, this.textureObj );
-        return true;
+        if ( this.textureObj ) { 
+            gl.bindTexture( gl.TEXTURE_2D, this.textureObj );
+            return true;
+        }
+        if ( !this.dummyObj )
+        {
+            let image = { "cx": 1, "cy": 1, "plane": [128,128,128,255] };
+            this.dummyObj = Texture.CreateTexture2D( image, true )
+        }
+        gl.bindTexture( gl.TEXTURE_2D, this.dummyObj );
+        return false;
     }
 };
 
