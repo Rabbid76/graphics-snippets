@@ -68,10 +68,12 @@ html,body { margin: 0; overflow: hidden; }
             <option value="0">tetrahedron</option>
             <option value="1">cube</option>
             <option value="2">icosahedron</option>
-            <option value="3">sphere sliced</option>
-            <option value="4">torus</option>
-            <option value="5" selected="selected">trefoil knot</option>
-            <option value="6">torus knot</option-->
+            <option value="3">tube</option>
+            <!--option value="3">cone</option-->
+            <option value="4">sphere sliced</option>
+            <option value="5">torus</option>
+            <option value="6" selected="selected">trefoil knot</option>
+            <option value="7">torus knot</option-->
         </select>
     </td> </tr>
     <tr> <td> <font color= #40f040>color / texture</font> </td> 
@@ -131,6 +133,8 @@ class App {
             new MeshTetrahedron(),
             new MeshCube(),
             new MeshIcosahedron(),
+            new MeshTube(32),
+            //new MeshCone(32),
             new MeshSphereSlice(16, 32),
             new MeshTorus(32, 32),
             new MeshTrefoilKnot(256, 32),
@@ -142,7 +146,7 @@ class App {
         document.getElementById( "mix_color" ).value = state < 0.33 ? 100 : 0;
         document.getElementById( "mix_normal" ).checked  = state >= 0.67 ? 1 : 0;
 
-        //document.getElementById( "mesh" ).value = 2;
+        //document.getElementById( "mesh" ).value = 3;
         //document.getElementById( "mix_color" ).value = 100;
         //document.getElementById( "mix_normal" ).checked = 0;
 
@@ -204,11 +208,16 @@ class App {
 }
 
 /* TODO $$$ mesh classes
-   e.g. sphere_tessellated, tube, cone, arrow 
+   e.g. sphere tessellated, cone, arrow 
 */
 
-class MeshTetrahedron {
+class MeshObject {
+    constructor() {}
+};
+
+class MeshTetrahedron extends MeshObject {
     constructor() {
+        super();
         //TODO $$$ (tangents), (binormals)
         let s_8_9 = Math.sqrt(8/9);
         let s_2_9 = Math.sqrt(2/9);
@@ -231,8 +240,9 @@ class MeshTetrahedron {
     }
 };
 
-class MeshCube {
+class MeshCube extends MeshObject {
     constructor() {
+        super();
         //TODO $$$ (tangents), (binormals)
         let v = [ -1,-1,1,  1,-1,1,  1,1,1, -1,1,1, -1,-1,-1,  1,-1,-1,  1,1,-1, -1,1,-1 ];
         let c = [ 1.0, 0.0, 0.0,   1.0, 0.5, 0.0,    1.0, 0.0, 1.0,   1.0, 1.0, 0.0,   0.0, 1.0, 0.0,   0.0, 0.0, 1.0 ];
@@ -253,9 +263,10 @@ class MeshCube {
     }
 };
 
-class MeshIcosahedron{
+class MeshIcosahedron extends MeshObject {
     constructor() {
-        //TODO $$$ (tangents), (binormals), improve texture coordiantes
+        super();
+        //TODO $$$ (tangents), (binormals)
         let v = [ 0,0,1, 0.894,0,0.447, 0.276,0.851,0.447, -0.724,0.526,0.447, -0.724,-0.526,0.447, 0.276,-0.851, 0.447,
                   0.724,0.526,-0.447, -0.276,0.851,-0.447, -0.894,0,-0.447, -0.276,-0.851,-0.447, 0.724,-0.526,-0.447, 0,0,-1 ];
         let c = [ 1.0,0.0,0.0, 0.0,1.0,0.0, 0.0,0.0,1.0, 1.0,1.0,0.0, 1.0,0.0,1.0, 1.0,0.5,0.0, 0.0,1.0,1.0 ];
@@ -292,8 +303,80 @@ class MeshIcosahedron{
     }
 };
 
-class MeshSphereSlice{
+class MeshTube extends MeshObject {
+    constructor(nc, nl, r, h, c) {
+        super();
+        //TODO $$$ (tangents), (binormals)
+        nl = nl || 1;
+        nc = nc || 32;
+        h = h || 2;
+        r = r || h/Math.PI;
+        c = c || [0.7, 0.7, 0.2];
+        // bottom cap
+        this.v = [0,0,h/2]; this.n = [0,0,1]; this.c = c.slice(0);  this.t = [0.5,0.5]; this.e = [];
+        for ( let i = 0; i <= nc; i ++ ) {
+            var a = 2 * Math.PI * i / nc;
+            var x = Math.cos( a );
+            var y = Math.sin( a );
+            this.v.push( r*x, r*y, h/2 );
+            this.n.push( 0, 0, 1 );
+            this.t.push( x*0.5+0.5, y*0.5+0.5 );
+            this.c.push( c[0], c[1], c[2] );
+            if ( i < nc)
+                this.e.push( 0, i+1, i+2 );
+        }
+        // discs
+        let st = this.v.length/3;
+        let nc_2 = nc / 2;
+        for ( let tbI = 0; tbI <= nl; tbI ++ )
+        {
+            var v = ( 1.0 - tbI / nl );
+            var z =   h*v- h/2;
+            // create 2 hemispheres, so would be possible to wrap 1 texture at both hemispheres 
+            for ( let hi = 0; hi < 2; ++ hi ) {
+                for ( let i = 0; i <= nc_2; i ++ ) {
+                    var u = i / nc_2;
+                    var a = Math.PI * u + hi * Math.PI;
+                    var x = Math.cos( a );
+                    var y = Math.sin( a );
+                    this.v.push( r*x, r*y, z );
+                    this.n.push( x, y, 0 );
+                    this.t.push( u /*hi*0.5+u*0.5*/, v );
+                    this.c.push( c[0], c[1], c[2] );
+                }
+            }
+        }
+        let cs_2 = nc_2 + 1;
+        for ( let tbI = 0; tbI < nl; tbI ++ ) {
+            for ( let hi = 0; hi < 2; ++ hi ) {
+                let rsi = st +tbI*2*cs_2 + hi*cs_2;
+                let nrsi = rsi + 2*cs_2;
+                for ( let i = 0; i < nc_2; i ++ ) { this.e.push( rsi+i, nrsi+i, nrsi+i+1, rsi+i, nrsi+i+1, rsi+i+1 ); }
+            }
+        }
+        // bottom cap
+        st = this.v.length/3;
+        for ( let i = 0; i <= nc; i ++ ) {
+            var a = 2 * Math.PI * i / nc;
+            var x = Math.cos( a );
+            var y = Math.sin( a );
+            this.v.push( r*x, r*y, -h/2 );
+            this.n.push( 0, 0, -1 );
+            this.t.push( x*0.5+0.5, y*0.5+0.5 );
+            this.c.push( c[0], c[1], c[2] );
+            if ( i < nc)
+                this.e.push( st+nc+1, st+i, st+i+1 );
+        } 
+        this.v.push( 0, 0, -h/2 );
+        this.n.push( 0, 0, -1 );
+        this.t.push( 0.5, 0.5 );
+        this.c.push( c[0], c[1], c[2] );
+    }
+};
+
+class MeshSphereSlice extends MeshObject {
     constructor(nl, nc, r, c) {
+        super();
         //TODO $$$ (tangents), (binormals)
         nl = nl || 16;
         nc = nc || 32;
@@ -322,7 +405,6 @@ class MeshSphereSlice{
         }
          
         this.e = [];
-        
         // bottom cap
         var cs_2 = nc_2 + 1;
         var cs = cs_2 * 2;
@@ -343,8 +425,9 @@ class MeshSphereSlice{
     }
 };
 
-class MeshTorus{
+class MeshTorus extends MeshObject {
     constructor(nl, nc, r, rt, c) {
+        super();
         //TODO $$$ (tangents), (binormals)
         nl = nl || 32;
         nc = nc || 32;
@@ -372,8 +455,9 @@ class MeshTorus{
     }
 };
 
-class MeshTrefoilKnot{
+class MeshTrefoilKnot extends MeshObject {
     constructor(slices, stacks, ra, rb, rc, rd, c) {
+        super();
         //TODO $$$ (tangents), (binormals)
         slices = slices || 256;
         stacks = stacks || 32;
@@ -444,8 +528,9 @@ class MeshTrefoilKnot{
     }
 };
 
-class MeshTorusKnot{
+class MeshTorusKnot extends MeshObject {
     constructor(slices, stacks, p_, q_, ra, rb, c) {
+        super();
         //TODO $$$ (tangents), (binormals)
         slices = slices || 512;
         stacks = stacks || 32;
