@@ -73,7 +73,8 @@ html,body { margin: 0; overflow: hidden; }
             <option value="5">sphere sliced</option>
             <option value="6">torus</option>
             <option value="7" selected="selected">trefoil knot</option>
-            <option value="8">torus knot</option-->
+            <option value="8">torus knot</option>
+            <option value="9">arrow</option>
         </select>
     </td> </tr>
     <tr> <td> <font color= #40f040>color / texture</font> </td> 
@@ -139,6 +140,7 @@ class App {
             new MeshTorus(32, 32),
             new MeshTrefoilKnot(256, 32),
             new MeshTorusKnot(512, 32, 3, 7),
+            new MeshArrow(2, 8, 32)
         ];
 
         document.getElementById( "mesh" ).value = Math.floor((Math.random() * meshes.length));
@@ -146,7 +148,7 @@ class App {
         document.getElementById( "mix_color" ).value = state < 0.33 ? 100 : 0;
         document.getElementById( "mix_normal" ).checked  = state >= 0.67 ? 1 : 0;
 
-        //document.getElementById( "mesh" ).value = 4;
+        //document.getElementById( "mesh" ).value = 9;
         //document.getElementById( "mix_color" ).value = 100;
         //document.getElementById( "mix_normal" ).checked = 0;
 
@@ -208,7 +210,7 @@ class App {
 }
 
 /* TODO $$$ mesh classes
-   e.g. sphere tessellated, cone, arrow 
+   e.g. sphere tessellated, arrow 
 */
 
 class MeshObject {
@@ -311,7 +313,7 @@ class MeshTube extends MeshObject {
         nc = nc || 32;
         h = h || 2;
         r = r || h/Math.PI;
-        c = c || [0.7, 0.7, 0.2];
+        c = c || [0.2, 0.4, 0.8];
         // bottom cap
         this.v = [0,0,h/2]; this.n = [0,0,1]; this.c = c.slice(0);  this.t = [0.5,0.5]; this.e = [];
         for ( let i = 0; i <= nc; i ++ ) {
@@ -328,10 +330,11 @@ class MeshTube extends MeshObject {
         // discs
         let st = this.v.length/3;
         let nc_2 = nc / 2;
+        let ratio = 2*h / (r*2*Math.PI);
         for ( let tbI = 0; tbI <= nl; tbI ++ )
         {
-            var v = ( 1.0 - tbI / nl );
-            var z =   h*v- h/2;
+            var v = ( 1.0 - tbI / nl ) * ratio;
+            var z =   h/2 - h * tbI / nl;
             // create 2 hemispheres, so would be possible to wrap 1 texture at both hemispheres 
             for ( let hi = 0; hi < 2; ++ hi ) {
                 for ( let i = 0; i <= nc_2; i ++ ) {
@@ -382,15 +385,16 @@ class MeshCone extends MeshObject {
         nc = nc || 32;
         h = h || 2;
         r = r || h/Math.PI*1.5;
-        c = c || [0.7, 0.7, 0.2];
+        c = c || [0.2, 0.7, 0.3];
         this.v = []; this.n = []; this.c = []; this.t = []; this.e = [];
         // discs
         let st = 0;
         let nc_2 = nc / 2;
+        let ratio = 2*h / (r*2*Math.PI);
         for ( let tbI = 0; tbI <= nl; tbI ++ )
         {
-            var v = ( 1.0 - tbI / nl );
-            var z = h*v - h*1/3;
+            var v = ( 1.0 - tbI / nl ) * ratio * 3 / 2;
+            var z = h*2/3 - h * tbI / nl;
             var d = tbI / nl;
             // create 2 hemispheres, so would be possible to wrap 1 texture at both hemispheres 
             for ( let hi = 0; hi < 2; ++ hi ) {
@@ -698,6 +702,115 @@ class MeshTorusKnot extends MeshObject {
     }
 };
 
+class MeshArrow extends MeshObject {
+    constructor(nlp, nls, nc, ls, lp, rs, rp, c) {
+        super();
+        //TODO $$$ (tangents), (binormals)
+        nlp = nlp || 2;
+        nls = nls || 8;
+        nc = nc || 32;
+        lp = lp || 0.25;
+        ls = ls || 0.75;
+        rp = rp || lp/Math.PI*1.5;
+        rs = rs || lp/Math.PI*0.75;
+        c = c || [0.7, 0.2, 0.3];
+        this.v = []; this.n = []; this.c = []; this.t = []; this.e = [];
+        // cone discs
+        let st = 0;
+        let nc_2 = nc / 2;
+        let p_ratio = 2*lp / (rp*2*Math.PI);
+        for ( let tbI = 0; tbI <= nls; tbI ++ )
+        {
+            var v = ( 1.0 - tbI / nls ) * p_ratio * 3 / 2;
+            var z = -lp * tbI / nls;
+            var d = tbI / nls;
+            // create 2 hemispheres, so would be possible to wrap 1 texture at both hemispheres 
+            for ( let hi = 0; hi < 2; ++ hi ) {
+                for ( let i = 0; i <= nc_2; i ++ ) {
+                    var u = i / nc_2;
+                    var a = Math.PI * u + hi * Math.PI;
+                    var x = Math.cos( a );
+                    var y = Math.sin( a );
+                    var n = Vec3.normalize( [x, y, rp/lp] );
+                    this.v.push( d * rp*x, d* rp*y, z );
+                    this.n.push( n[0], n[1], n[2] );
+                    this.t.push( u /*hi*0.5+u*0.5*/, v );
+                    this.c.push( c[0], c[1], c[2] );
+                }
+            }
+        }
+        let cs_2 = nc_2 + 1;
+        for ( let tbI = 0; tbI < nls; tbI ++ ) {
+            for ( let hi = 0; hi < 2; ++ hi ) {
+                let rsi = st +tbI*2*cs_2 + hi*cs_2;
+                let nrsi = rsi + 2*cs_2;
+                for ( let i = 0; i < nc_2; i ++ ) { this.e.push( rsi+i, nrsi+i, nrsi+i+1, rsi+i, nrsi+i+1, rsi+i+1 ); }
+            }
+        }
+        // cone bottom cap
+        st = this.v.length/3;
+        for ( let i = 0; i <= nc; i ++ ) {
+            var a = 2 * Math.PI * i / nc;
+            var x = Math.cos( a );
+            var y = Math.sin( a );
+            this.v.push( rp*x, rp*y, -lp );
+            this.n.push( 0, 0, -1 );
+            this.t.push( x*0.5+0.5, y*0.5+0.5 );
+            this.c.push( c[0], c[1], c[2] );
+            if ( i < nc)
+                this.e.push( st+nc+1, st+i, st+i+1 );
+        } 
+        this.v.push( 0, 0, -lp );
+        this.n.push( 0, 0, -1 );
+        this.t.push( 0.5, 0.5 );
+        this.c.push( c[0], c[1], c[2] );
+        // shaft discs
+        st = this.v.length/3;
+        let s_ratio = 2*ls / (rs*2*Math.PI);
+        for ( let tbI = 0; tbI <= nls; tbI ++ )
+        {
+            var v = ( 1.0 - tbI / nls ) * s_ratio;
+            var z =   -lp - ls * tbI / nls;
+            // create 2 hemispheres, so would be possible to wrap 1 texture at both hemispheres 
+            for ( let hi = 0; hi < 2; ++ hi ) {
+                for ( let i = 0; i <= nc_2; i ++ ) {
+                    var u = i / nc_2;
+                    var a = Math.PI * u + hi * Math.PI;
+                    var x = Math.cos( a );
+                    var y = Math.sin( a );
+                    this.v.push( rs*x, rs*y, z );
+                    this.n.push( x, y, 0 );
+                    this.t.push( u /*hi*0.5+u*0.5*/, v );
+                    this.c.push( c[0], c[1], c[2] );
+                }
+            }
+        }
+        for ( let tbI = 0; tbI < nls; tbI ++ ) {
+            for ( let hi = 0; hi < 2; ++ hi ) {
+                let rsi = st +tbI*2*cs_2 + hi*cs_2;
+                let nrsi = rsi + 2*cs_2;
+                for ( let i = 0; i < nc_2; i ++ ) { this.e.push( rsi+i, nrsi+i, nrsi+i+1, rsi+i, nrsi+i+1, rsi+i+1 ); }
+            }
+        }
+        // bottom cap
+        st = this.v.length/3;
+        for ( let i = 0; i <= nc; i ++ ) {
+            var a = 2 * Math.PI * i / nc;
+            var x = Math.cos( a );
+            var y = Math.sin( a );
+            this.v.push( rs*x, rs*y, -lp-ls );
+            this.n.push( 0, 0, -1 );
+            this.t.push( x*0.5+0.5, y*0.5+0.5 );
+            this.c.push( c[0], c[1], c[2] );
+            if ( i < nc)
+                this.e.push( st+nc+1, st+i, st+i+1 );
+        } 
+        this.v.push( 0, 0, -lp-ls );
+        this.n.push( 0, 0, -1 );
+        this.t.push( 0.5, 0.5 );
+        this.c.push( c[0], c[1], c[2] );
+    }
+};
 
 class ShProg {
     constructor(shaderList) {
