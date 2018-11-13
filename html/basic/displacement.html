@@ -334,15 +334,12 @@ class MeshObject {
                 let _dpt = dp1; dp1 = dp2; dp2 = _dpt;
                 let _duvt = duv1; duv1 = duv2; duv2 = _duvt;
             }
-            //let det = Mat22.determinant([duv1[0],duv1[1],duv2[0],duv2[1]]); 
             for ( let j=0; j < 3; ++j )  {
                 let n = this.n.slice(et[j]*3, et[j]*3+3);
                 let dp2perp = Vec3.cross(dp2, n); 
                 let dp1perp = Vec3.cross(n, dp1);
                 let tv = Vec3.normalize(Vec3.add(Vec3.mul_s(dp2perp, duv1[0]), Vec3.mul_s(dp1perp, duv2[0])));
                 let bv = Vec3.normalize(Vec3.add(Vec3.mul_s(dp2perp, duv1[1]), Vec3.mul_s(dp1perp, duv2[1])));
-                //tv = Vec3.mul_s(tv,det);
-                //bv = Vec3.mul_s(bv,det);
                 this.tv.push( tv[0], tv[1], tv[2] );
                 this.bv.push( bv[0], bv[1], bv[2] );
             }

@@ -244,6 +244,10 @@ class MeshObject {
             let dp2  = Vec3.sub(v2,v0);
             let duv1 = Vec3.sub(t1,t0);
             let duv2 = Vec3.sub(t2,t0);
+            if ( Vec3.dot(Vec3.cross(dp1, dp2), this.n.slice(et[0]*3, et[0]*3+3)) < 0.0 ) {
+                let _dpt = dp1; dp1 = dp2; dp2 = _dpt;
+                let _duvt = duv1; duv1 = duv2; duv2 = _duvt;
+            }
             for ( let j=0; j < 3; ++j )  {
                 let n = this.n.slice(et[j]*3, et[j]*3+3);
                 let dp2perp = Vec3.cross(dp2, n); 
