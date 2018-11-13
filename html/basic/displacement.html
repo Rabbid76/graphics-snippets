@@ -2,11 +2,15 @@
 precision highp float;
 
 attribute vec3 inPos;
+attribute vec3 inTV;
+attribute vec3 inBV;
 attribute vec3 inNV;
 attribute vec2 inUV;
 attribute vec3 inCol;
 
 varying vec3 vertPos;
+varying vec3 vertTV;
+varying vec3 vertBV;
 varying vec3 vertNV;
 varying vec2 vertUV;
 varying vec3 vertCol;
@@ -20,6 +24,8 @@ void main()
 {   
     mat4 mv       = u_viewMat44 * u_modelMat44; 
     vertCol       = inCol;
+    vertTV        = normalize(mat3(mv) * inTV);
+    vertBV        = normalize(mat3(mv) * inBV);
     vertNV        = normalize(mat3(mv) * inNV);
     vertUV        = inUV;
     vec4 viewPos  = mv * vec4( inPos, 1.0 );
@@ -29,24 +35,93 @@ void main()
 </script>
 
 <script id="draw-shader-fs" type="x-shader/x-fragment">
+#extension GL_OES_standard_derivatives : enable
 precision mediump float;
 
 varying vec3 vertPos;
+varying vec3 vertTV;
+varying vec3 vertBV;
 varying vec3 vertNV;
 varying vec2 vertUV;
 varying vec3 vertCol;
 
 uniform sampler2D u_texture;
+uniform sampler2D u_displacement_map;
+uniform vec2      u_displacement_map_size;
+uniform float     u_displacement_scale;
 uniform float     u_mix_color;
 uniform float     u_mix_normal;
+uniform float     u_height;
+
+float CalculateHeight( in vec2 texCoords )
+{
+    float height = texture2D( u_displacement_map, texCoords ).x;
+    return clamp( height, 0.0, 1.0 );
+}
+
+//#define NORMAL_MAP_TEXTURE
+#define NORMAL_MAP_QUALITY 0
+
+vec4 CalculateNormal( in vec2 texCoords )
+{
+#if defined(NORMAL_MAP_TEXTURE)
+    float height = CalculateHeight( texCoords );
+    vec3  tempNV = texture2D( u_normal_map, texCoords ).xyz * 2.0 / 1.0;
+    return vec4( normalize( tempNV ), height );
+#else
+    vec2 texOffs = 1.0 / u_displacement_map_size;
+    vec2 scale   = 1.0 / texOffs;
+#if NORMAL_MAP_QUALITY > 0
+    float hx[9];
+    hx[0] = texture2D( u_displacement_map, texCoords.st + texOffs * vec2(-1.0, -1.0) ).r;
+    hx[1] = texture2D( u_displacement_map, texCoords.st + texOffs * vec2( 0.0, -1.0) ).r;
+    hx[2] = texture2D( u_displacement_map, texCoords.st + texOffs * vec2( 1.0, -1.0) ).r;
+    hx[3] = texture2D( u_displacement_map, texCoords.st + texOffs * vec2(-1.0,  0.0) ).r;
+    hx[4] = texture2D( u_displacement_map, texCoords.st ).r;
+    hx[5] = texture2D( u_displacement_map, texCoords.st + texOffs * vec2( 1.0, 0.0) ).r;
+    hx[6] = texture2D( u_displacement_map, texCoords.st + texOffs * vec2(-1.0, 1.0) ).r;
+    hx[7] = texture2D( u_displacement_map, texCoords.st + texOffs * vec2( 0.0, 1.0) ).r;
+    hx[8] = texture2D( u_displacement_map, texCoords.st + texOffs * vec2( 1.0, 1.0) ).r;
+    vec2  deltaH = vec2(hx[0]-hx[2] + 2.0*(hx[3]-hx[5]) + hx[6]-hx[8], hx[0]-hx[6] + 2.0*(hx[1]-hx[7]) + hx[2]-hx[8]);
+    float h_mid  = hx[4];
+    #else
+    float h_mid  = texture2D( u_displacement_map, texCoords.st ).r;
+    float h_xa   = texture2D( u_displacement_map, texCoords.st + texOffs * vec2(-1.0,  0.0) ).r;
+    float h_xb   = texture2D( u_displacement_map, texCoords.st + texOffs * vec2( 1.0,  0.0) ).r;
+    float h_ya   = texture2D( u_displacement_map, texCoords.st + texOffs * vec2( 0.0, -1.0) ).r;
+    float h_yb   = texture2D( u_displacement_map, texCoords.st + texOffs * vec2( 0.0,  1.0) ).r;
+    vec2  deltaH = vec2(h_xa-h_xb, h_ya-h_yb);
+#endif
+    return vec4( normalize( vec3( deltaH * scale, 1.0 ) ), h_mid );
+#endif
+}
 
 void main()
 {
+    float face_sign   = sign(dot(vertNV, -vertPos));
+    vec3  N           = normalize(vertNV);
+    vec3  dp1         = dFdx( vertPos );
+    vec3  dp2         = dFdy( vertPos );
+    vec2  duv1        = dFdx( vertUV );
+    vec2  duv2        = dFdy( vertUV );
+    vec3  dp2perp     = cross(dp2, N);
+    vec3  dp1perp     = cross(N, dp1);
+    vec3  T           = dp2perp * duv1.x + dp1perp * duv2.x;
+    vec3  B           = dp2perp * duv1.y + dp1perp * duv2.y;
+    //vec3  T           = normalize(vertTV);
+    //vec3  B           = normalize(vertBV);
+    float invmax      = inversesqrt(max(dot(T, T), dot(B, B)));
+    mat3  tbnMat      = mat3(T * invmax, B * invmax, N * u_displacement_scale);
+
+    vec4 normalVec    = CalculateNormal( vertUV );
+    tbnMat[2]         = face_sign * N / u_displacement_scale;
+    vec3 nvMappedEs   = normalize( tbnMat * normalVec.xyz );
+
     vec3  vl        = vec3(0.0, 0.0, 1.0);
-    float kd        = max(0.0, dot(vertNV, vl)); 
+    float kd        = max(0.0, dot(nvMappedEs, vl)); 
     vec4 texColor   = texture2D(u_texture, vertUV);
-    vec3 view_nv    = normalize(vertNV);
-    vec3 nv_color   = abs(view_nv); 
+    vec3 view_nv    = normalize(nvMappedEs);
+    vec3 nv_color   = abs(nvMappedEs); 
     nv_color       /= max(nv_color.x, max(nv_color.y, nv_color.z));
     vec3 baseColor  = mix(mix(vertCol, texColor.rgb, u_mix_color), nv_color, u_mix_normal);
     vec3 color      = baseColor * (0.1 + kd * 1.2);
@@ -80,11 +155,14 @@ html,body { margin: 0; overflow: hidden; }
         </select>
     </td> </tr>
     <tr> <td> <font color= #40f040>color / texture</font> </td> 
-        <td> <input type="range" id="mix_color" min="0" max="100" value="0"/>
+        <td> <input type="range" id="mix_color" min="0" max="100" value="100"/>
     </td> </tr>
     <tr> <td> <font color=#40f040>normal vector</font> </td> 
         <td> <input type="checkbox" id="mix_normal" value="0" />
     </td></tr>
+    <tr> <td> <font color= #40f040>displacement height</font> </td> 
+        <td> <input type="range" id="height" min="0" max="100" value="50"/>
+    </td> </tr>
 </table></form></div>
 
 <!--div id="ref-link">
@@ -105,22 +183,25 @@ class App {
     constructor() {
         this.canvas = document.getElementById( "canvas");
         //gl = canvas.getContext( "webgl2" );
-        //if ( !gl )
-        //    gl = canvas.getContext( "experimental-webgl" );
+        if ( !gl )
+            gl = canvas.getContext( "experimental-webgl" );
         if ( !gl )
             gl = canvas.getContext( "webgl" );
         if ( !gl )
             return null;
         
-        //let ext_standard_derivatives = gl.getExtension("OES_standard_derivatives");  // dFdx, dFdy
-        //if (!ext_standard_derivatives)
-        //    console.log('no standard derivatives support (no dFdx, dFdy)');
+        let ext_standard_derivatives = gl.getExtension("OES_standard_derivatives");  // dFdx, dFdy
+        if (!ext_standard_derivatives)
+            console.log('no standard derivatives support (no dFdx, dFdy)');
         //if (!ext_vao)
         //    console.log('no vertex array objects support');
 
-        //this.texture = new Texture( "https://raw.githubusercontent.com/Rabbid76/graphics-snippets/master/resource/texture/tree.jpg" );
-        this.texture = new Texture( "https://raw.githubusercontent.com/Rabbid76/graphics-snippets/master/resource/texture/test1_texture.bmp" ); 
+        this.texture = new Texture( "https://raw.githubusercontent.com/Rabbid76/graphics-snippets/master/resource/texture/example_1_texture.bmp" ); 
+        this.texture.unit = 1;
         this.texture.bound = false;
+        this.displacement = new Texture( "https://raw.githubusercontent.com/Rabbid76/graphics-snippets/master/resource/texture/example_1_heightmap.bmp" ); 
+        this.displacement.unit = 2;
+        this.displacement.bound = false;
 
         this.progDraw = new ShProg( 
             [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },
@@ -129,6 +210,8 @@ class App {
         if ( !this.progDraw.progObj )
             return null;
         this.progDraw.inPos = this.progDraw.AttrI("inPos");
+        this.progDraw.inTV  = this.progDraw.AttrI("inTV");
+        this.progDraw.inBV  = this.progDraw.AttrI("inBV");
         this.progDraw.inNV  = this.progDraw.AttrI("inNV");
         this.progDraw.inCol = this.progDraw.AttrI("inCol");
         this.progDraw.inUV  = this.progDraw.AttrI("inUV");
@@ -148,21 +231,19 @@ class App {
         ];
 
         document.getElementById( "mesh" ).value = Math.floor((Math.random() * meshes.length));
-        let state = Math.random();
-        document.getElementById( "mix_color" ).value = state < 0.33 ? 100 : 0;
-        document.getElementById( "mix_normal" ).checked  = state >= 0.67 ? 1 : 0;
-
-        //document.getElementById( "mesh" ).value = 9;
-        //document.getElementById( "mix_color" ).value = 100;
-        //document.getElementById( "mix_normal" ).checked = 0;
+        //let state = Math.random();
+        //document.getElementById( "mix_color" ).value = state < 0.33 ? 100 : 0;
+        //document.getElementById( "mix_normal" ).checked  = state >= 0.67 ? 1 : 0;
 
         this.meshes = [];
         for (let i = 0; i < meshes.length; ++ i ) {
             this.meshes.push( new VertexBuffer( gl,
-                    [ { data : meshes[i].v, attrSize : 3, attrLoc : this.progDraw.inPos },
-                      { data : meshes[i].n, attrSize : 3, attrLoc : this.progDraw.inNV },
-                      { data : meshes[i].c, attrSize : 3, attrLoc : this.progDraw.inCol }, 
-                      { data : meshes[i].t, attrSize : 2, attrLoc : this.progDraw.inUV } 
+                    [ { data : meshes[i].v,  attrSize : 3, attrLoc : this.progDraw.inPos },
+                      { data : meshes[i].tv, attrSize : 3, attrLoc : this.progDraw.inTV },
+                      { data : meshes[i].bv, attrSize : 3, attrLoc : this.progDraw.inBV },
+                      { data : meshes[i].n,  attrSize : 3, attrLoc : this.progDraw.inNV },
+                      { data : meshes[i].c,  attrSize : 3, attrLoc : this.progDraw.inCol }, 
+                      { data : meshes[i].t,  attrSize : 2, attrLoc : this.progDraw.inUV } 
                     ], meshes[i].e ) );
         }
 
@@ -186,7 +267,8 @@ class App {
         var mesh = document.getElementById( "mesh" ).value;
         var mix_color = document.getElementById( "mix_color" ).value / 100.0;
         var mix_normal = document.getElementById( "mix_normal" ).checked;
-
+        var height = document.getElementById( "height" ).value / 100.0;
+        
         // setup view projection and model
         this.camera.update( this.vp_size );
         var modelMat = Mat44.ident();
@@ -202,14 +284,18 @@ class App {
         gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
 
         // bind the texture
-        this.texture.bound = this.texture.bound || this.texture.bind( 0 );
+        this.texture.bound = this.texture.bound || this.texture.bind( this.texture.unit );
+        this.displacement.bound = this.displacement.bound || this.displacement.bind( this.displacement.unit );
 
         // set up draw shader
         this.progDraw.Use();
         this.progDraw.SetM44("u_projectionMat44", this.camera.perspective);
         this.progDraw.SetM44("u_viewMat44", this.camera.orbit);
         this.progDraw.SetM44("u_modelMat44", modelMat);
-        this.progDraw.SetI1("u_texture", 0);
+        this.progDraw.SetI1("u_texture", this.texture.unit);
+        this.progDraw.SetI1("u_displacement_map", this.displacement.unit);
+        this.progDraw.SetF2("u_displacement_map_size", this.displacement.size);
+        this.progDraw.SetF1("u_displacement_scale", height);
         this.progDraw.SetF1("u_mix_color", mix_color);
         this.progDraw.SetF1("u_mix_normal", mix_normal);
         
@@ -244,12 +330,19 @@ class MeshObject {
             let dp2  = Vec3.sub(v2,v0);
             let duv1 = Vec3.sub(t1,t0);
             let duv2 = Vec3.sub(t2,t0);
+            if ( Vec3.dot(Vec3.cross(dp1, dp2), this.n.slice(et[0]*3, et[0]*3+3)) < 0.0 ) {
+                let _dpt = dp1; dp1 = dp2; dp2 = _dpt;
+                let _duvt = duv1; duv1 = duv2; duv2 = _duvt;
+            }
+            //let det = Mat22.determinant([duv1[0],duv1[1],duv2[0],duv2[1]]); 
             for ( let j=0; j < 3; ++j )  {
                 let n = this.n.slice(et[j]*3, et[j]*3+3);
                 let dp2perp = Vec3.cross(dp2, n); 
                 let dp1perp = Vec3.cross(n, dp1);
                 let tv = Vec3.normalize(Vec3.add(Vec3.mul_s(dp2perp, duv1[0]), Vec3.mul_s(dp1perp, duv2[0])));
                 let bv = Vec3.normalize(Vec3.add(Vec3.mul_s(dp2perp, duv1[1]), Vec3.mul_s(dp1perp, duv2[1])));
+                //tv = Vec3.mul_s(tv,det);
+                //bv = Vec3.mul_s(bv,det);
                 this.tv.push( tv[0], tv[1], tv[2] );
                 this.bv.push( bv[0], bv[1], bv[2] );
             }
@@ -960,7 +1053,8 @@ class Texture {
             canvas.height = cy;
             var context = canvas.getContext( '2d' );
             context.drawImage( texture.image, 0, 0, canvas.width, canvas.height );
-            texture.textureObj = Texture.createTexture2D( canvas, true )
+            texture.textureObj = Texture.createTexture2D( canvas, true );
+            texture.size = [cx, cy];
         }
         this.image.src = name;
     }
@@ -981,20 +1075,18 @@ class Texture {
         return t;
     }
     bind( texUnit = 0 ) {
+        gl.activeTexture( gl.TEXTURE0 + texUnit );
         if ( this.textureObj ) { 
-            gl.activeTexture( gl.TEXTURE0 + texUnit );
             gl.bindTexture( gl.TEXTURE_2D, this.textureObj );
-            gl.activeTexture( 0 );
             return true;
         }
         if ( !this.dummyObj )
         {
             let image = { "cx": this.dflt.w || 1, "cy": this.dflt.h || 1, "plane": this.dflt.p || this.dflt };
+            this.size = [image.cx, image.cy];
             this.dummyObj = Texture.createTexture2D( image, true )
         }
-        gl.activeTexture( gl.TEXTURE0 + texUnit );
         gl.bindTexture( gl.TEXTURE_2D, this.dummyObj );
-        gl.activeTexture( 0 );
         return false;
     }
 };
@@ -1180,6 +1272,10 @@ Vec3 = {
         var len = this.len( v );
         return [ v[0] / len, v[1] / len, v[2] / len ];
     }
+}
+
+Mat22 = {
+    determinant: function(m) { return m[0]*m[3]-m[1]*m[2]; }
 }
 
 Mat44 = {

@@ -266,7 +266,7 @@ class App {
 
         // this.rubiks.update( Data.now() );
         this.rubiks.update( deltaMS );
-        this.camera.Update( this.vp_size );
+        this.camera.update( this.vp_size );
 
         this.projection = this.camera.perspective;
         this.view       = this.camera.lookAt;
@@ -785,9 +785,9 @@ class Camera {
 
         this.domElement = document;
         var cam = this;
-        this.domElement.addEventListener( 'mousedown', function(e) { cam.OnMouseDown(e) }, false );
-        this.domElement.addEventListener( 'mouseup', function(e) { cam.OnMouseUp(e) }, false );
-        this.domElement.addEventListener( 'mousemove', function(e) { cam.OnMouseMove(e) }, false );
+        this.domElement.addEventListener( 'mousedown', function(e) { cam.onMouseDown(e) }, false );
+        this.domElement.addEventListener( 'mouseup', function(e) { cam.onMouseUp(e) }, false );
+        this.domElement.addEventListener( 'mousemove', function(e) { cam.onMouseMove(e) }, false );
         //this.domElement.addEventListener( 'contextmenu', function(e) { event.preventDefault(); }, false );
         //this.domElement.addEventListener( 'mousewheel', hid_events.onMouseWheel, false );
         //this.domElement.addEventListener( 'DOMMouseScroll', hid_events.onMouseWheel, false ); // firefox
@@ -837,7 +837,7 @@ class Camera {
 
     attenuation( att_const, att_linear, att_quad ) { this.attenuation = [att_const, att_linear || 0, att_quad || 0]; }
 
-    Update(vp_size) {
+    update(vp_size) {
         if (vp_size)
             this.vp = vp_size;
         let current_T = this.time;
@@ -861,7 +861,7 @@ class Camera {
         }
     }
 
-    ChangeMotionMode(drag, spin, auto) {
+    changeMotionMode(drag, spin, auto) {
         let new_drag = drag;
         let new_auto = new_drag ? false : auto;
         let new_spin = new_auto ? spin : false;
@@ -884,7 +884,7 @@ class Camera {
         this.current_model_mat = Mat44.ident();
     }
 
-    OnMouseDown( event ) {
+    onMouseDown( event ) {
         this.mouse_x = event.clientX;
         this.mouse_y = event.clientY;
         let rect = gl.canvas.getBoundingClientRect();
@@ -894,27 +894,27 @@ class Camera {
         if (event.button == 0) { // left button
             if ( this.auto_rotate_mode ) {
                 this.mouse_start = [event.clientX, event.clientY]; 
-                this.ChangeMotionMode( true, false, false );
+                this.changeMotionMode( true, false, false );
             } else {
                 this.hit = true;
             }
         }
     }
 
-    OnMouseUp( event ) {
+    onMouseUp( event ) {
         this.mouse_x = event.clientX;
         this.mouse_y = event.clientY;
         this.hit = false;
         if (event.button == 0) { // left button
             if ( this.auto_rotate_mode )
-                this.ChangeMotionMode( false, true, true );
+                this.changeMotionMode( false, true, true );
         } else if (event.button == 1 || event.button == 2) {// middle or right button
-            this.ChangeMotionMode( false, false, !this.auto_rotate );
+            this.changeMotionMode( false, false, !this.auto_rotate );
             this.auto_rotate_mode = this.auto_rotate;
         }
     }
 
-    OnMouseMove( event ) {
+    onMouseMove( event ) {
         this.mouse_x = event.clientX;
         this.mouse_y = event.clientY;
         let dx = (event.clientX-this.mouse_start[0]) / this.vp[0];
