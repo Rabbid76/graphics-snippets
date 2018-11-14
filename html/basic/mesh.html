@@ -230,7 +230,7 @@ class MeshObject {
     }
     CreateTangentAndBinormal() {
         // calculate face tangent and binormal
-        this.tv = [], this.bv = [];
+        this.tv = new Array(this.n.length), this.bv = new Array(this.n.length);
         let len = this.e ? this.e.length : this.v.length/3;
         for ( let i=0; i < len; i += 3 ) {
             let et = this.e ? [this.e[i], this.e[i+1], this.e[i+2]] : [i, i+1, i+2];
@@ -242,20 +242,30 @@ class MeshObject {
             let t2 = this.t.slice(et[2]*2, et[2]*2+2); 
             let dp1  = Vec3.sub(v1,v0);
             let dp2  = Vec3.sub(v2,v0);
-            let duv1 = Vec3.sub(t1,t0);
-            let duv2 = Vec3.sub(t2,t0);
+            let duv1 = Vec2.sub(t1,t0);
+            let duv2 = Vec2.sub(t2,t0);
             if ( Vec3.dot(Vec3.cross(dp1, dp2), this.n.slice(et[0]*3, et[0]*3+3)) < 0.0 ) {
                 let _dpt = dp1; dp1 = dp2; dp2 = _dpt;
                 let _duvt = duv1; duv1 = duv2; duv2 = _duvt;
             }
+            // 3*3 matrix which transforms from texture space to scaled texture "wrap" space
+            // transforms a normal vector generated from an height map to the texture coordinates
+            //let tw_m33 = [duv1[0],duv1[1],0, duv2[0],duv2[1],0, 0,0,1];
             for ( let j=0; j < 3; ++j )  {
                 let n = this.n.slice(et[j]*3, et[j]*3+3);
                 let dp2perp = Vec3.cross(dp2, n); 
                 let dp1perp = Vec3.cross(n, dp1);
+                // 3*3 matrix which transforms from texture "wrap" space to model space
+                // transforms a wrapped normal vector to the model space  
+                //let f_m33 = [dp2perp[0],dp2perp[1],dp2perp[2], dp1perp[0],dp1perp[1],dp1perp[2], n[0],n[1],n[2]];
+                // transformation from texture space to triangle face space
+                //let m33 = Mat33.multiply(f_m33, tw_m33);
+                //this.tv[et[j]*3] = m33[0]; this.tv[et[j]*3+1] = m33[1]; this.tv[et[j]*3+2] = m33[2];
+                //this.bv[et[j]*3] = m33[4]; this.bv[et[j]*3+1] = m33[4]; this.bv[et[j]*3+2] = m33[5];
                 let tv = Vec3.normalize(Vec3.add(Vec3.mul_s(dp2perp, duv1[0]), Vec3.mul_s(dp1perp, duv2[0])));
                 let bv = Vec3.normalize(Vec3.add(Vec3.mul_s(dp2perp, duv1[1]), Vec3.mul_s(dp1perp, duv2[1])));
-                this.tv.push( tv[0], tv[1], tv[2] );
-                this.bv.push( bv[0], bv[1], bv[2] );
+                this.tv[et[j]*3] = tv[0]; this.tv[et[j]*3+1] = tv[1]; this.tv[et[j]*3+2] = tv[2];
+                this.bv[et[j]*3] = bv[0]; this.bv[et[j]*3+1] = bv[1]; this.bv[et[j]*3+2] = bv[2];
             }
         }
         
@@ -271,7 +281,7 @@ class MeshTetrahedron extends MeshObject {
         let c = [ 1.0, 0.0, 0.0,  1.0, 1.0, 0.0,  0.0, 0.0, 1.0,  0.0, 1.0, 0.0 ];
         let t = [ 0,0, 0,1, 1,1, 1,0 ];
         let ni = [ 3, 1, 2, 0 ];
-        let e = [ 0, 1, 2, 0, 2, 3, 0, 3, 1, 1, 3, 2 ];  
+        let e = [ 0,1,2, 0,2,3, 0,3,1, 1,3,2 ];  
         this.r = 1;
         for ( let is = 0; is < 4; ++ is ) {
             for ( let ip = 0; ip < 3; ++ ip ) { 
@@ -291,7 +301,7 @@ class MeshCube extends MeshObject {
         let c = [ 1.0, 0.0, 0.0,   1.0, 0.5, 0.0,    1.0, 0.0, 1.0,   1.0, 1.0, 0.0,   0.0, 1.0, 0.0,   0.0, 0.0, 1.0 ];
         let n = [ 0,0,1, 1,0,0, 0,0,-1, -1,0,0, 0,1,0, 0,-1,0 ];
         let t = [ 0,0, 1,0, 1,1, 0,1 ];
-        let e = [ 0, 1, 2, 3, 1, 5, 6, 2, 5, 4, 7, 6, 4, 0, 3, 7, 3, 2, 6, 7, 1, 0, 4, 5 ];  
+        let e = [ 0,1,2,3, 1,5,6,2, 5,4,7,6, 4,0,3,7, 3,2,6,7, 1,0,4,5 ];  
         for ( let i = 0; i < e.length; ++ i ) this.v.push( v[e[i]*3]*0.707, v[e[i]*3+1]*0.707, v[e[i]*3+2]*0.707 );
         for ( let is = 0; is < 6; ++ is ) {
             for ( let ip = 0; ip < 4; ++ ip ) { 
@@ -1173,6 +1183,18 @@ ellipticalPosition : function( a, b, angRag ) {
 }
 }
 
+Vec2 = {
+    mul_s: function( v, s ) { return [v[0]*s, v[1]*s]; },
+    add: function( a, b ) { return [a[0]+b[0], a[1]+b[1]]; },
+    sub: function( a, b ) { return [a[0]-b[0], a[1]-b[1]]; },
+    dot: function( a, b ) { return a[0]*b[0] + a[1]*b[1]; },
+    len: function( v ) { return Math.sqrt( v[0] * v[0] + v[1] * v[1] ); },
+    normalize: function( v ) {
+        var len = this.len( v );
+        return [ v[0] / len, v[1] / len ];
+    }
+}
+
 Vec3 = {
     mul_s: function( v, s ) { return [v[0]*s, v[1]*s, v[2]*s]; },
     add: function( a, b ) { return [a[0]+b[0], a[1]+b[1], a[2]+b[2]]; },
@@ -1186,8 +1208,23 @@ Vec3 = {
     }
 }
 
+Mat22 = {
+    determinant: function(m) { return m[0]*m[3]-m[1]*m[2]; }
+}
+
+Mat33 = {
+    ident: function() { return [1,0,0, 0,1,0, 0,0,1]; },
+    multiply: function(matA, matB) {
+        matC = this.ident();
+        for (var i0=0; i0<3; ++i0 )
+            for (var i1=0; i1<3; ++i1 )
+                matC[i0*3+i1] = matB[i0*3+0]*matA[0*3+i1] + matB[i0*3+1]*matA[1*3+i1] + matB[i0*3+2]*matA[2*3+i1];  
+        return matC;
+    }
+}
+
 Mat44 = {
-ident: function() { return [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]; },
+ident: function() { return [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]; },
 rotateAxis: function(matA, angRad, axis) {
   var aMap = [ [1, 2], [2, 0], [0, 1] ];
   var a0 = aMap[axis][0], a1 = aMap[axis][1]; 
@@ -1213,7 +1250,7 @@ multiply: function(matA, matB) {
   matC = this.ident();
   for (var i0=0; i0<4; ++i0 )
       for (var i1=0; i1<4; ++i1 )
-          matC[i0*4+i1] = matB[i0*4+0] * matA[0*4+i1] + matB[i0*4+1] * matA[1*4+i1] + matB[i0*4+2] * matA[2*4+i1] + matB[i0*4+3] * matA[3*4+i1]  
+          matC[i0*4+i1] = matB[i0*4+0]*matA[0*4+i1] + matB[i0*4+1]*matA[1*4+i1] + matB[i0*4+2]*matA[2*4+i1] + matB[i0*4+3]*matA[3*4+i1];  
   return matC;
 },
 transformVec3: function(mat, vec) {
