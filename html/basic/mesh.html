@@ -410,7 +410,7 @@ class MeshTube extends MeshObject {
 class MeshCone extends MeshObject {
     constructor(nc, nl, r, h, c) {
         super();
-        nl = nl || 1;
+        nl = nl || 2;
         nc = nc || 32;
         h = h || 2;
         r = r || h/Math.PI*1.5;
@@ -441,7 +441,11 @@ class MeshCone extends MeshObject {
             for ( let hi = 0; hi < 2; ++ hi ) {
                 let rsi = st +tbI*2*cs_2 + hi*cs_2;
                 let nrsi = rsi + 2*cs_2;
-                for ( let i = 0; i < nc_2; i ++ ) { this.e.push( rsi+i, nrsi+i, nrsi+i+1, rsi+i, nrsi+i+1, rsi+i+1 ); }
+                for ( let i = 0; i < nc_2; i ++ ) { 
+                    this.e.push( rsi+i, nrsi+i, nrsi+i+1 );
+                    if ( tbI > 0 ) 
+                        this.e.push( rsi+i, nrsi+i+1, rsi+i+1 ); 
+                }
             }
         }
         // bottom cap
@@ -749,11 +753,11 @@ class MeshArrow extends MeshObject {
         let st = 0;
         let nc_2 = nc / 2;
         let p_ratio = 2*lp / (rp*2*Math.PI);
-        for ( let tbI = 0; tbI <= nls; tbI ++ )
+        for ( let tbI = 0; tbI <= nlp; tbI ++ )
         {
-            var v = ( 1.0 - tbI / nls ) * p_ratio * 3 / 2;
-            var z = -lp * tbI / nls;
-            var d = tbI / nls;
+            var v = ( 1.0 - tbI / nlp ) * p_ratio * 3 / 2;
+            var z = -lp * tbI / nlp;
+            var d = tbI / nlp;
             // create 2 hemispheres, so would be possible to wrap 1 texture at both hemispheres 
             for ( let hi = 0; hi < 2; ++ hi ) {
                 for ( let i = 0; i <= nc_2; i ++ ) {
@@ -771,7 +775,11 @@ class MeshArrow extends MeshObject {
             for ( let hi = 0; hi < 2; ++ hi ) {
                 let rsi = st +tbI*2*cs_2 + hi*cs_2;
                 let nrsi = rsi + 2*cs_2;
-                for ( let i = 0; i < nc_2; i ++ ) { this.e.push( rsi+i, nrsi+i, nrsi+i+1, rsi+i, nrsi+i+1, rsi+i+1 ); }
+                for ( let i = 0; i < nc_2; i ++ ) { 
+                    this.e.push( rsi+i, nrsi+i, nrsi+i+1 );
+                    if ( tbI > 0 ) 
+                        this.e.push( rsi+i, nrsi+i+1, rsi+i+1 ); 
+                }
             }
         }
         // cone bottom cap
