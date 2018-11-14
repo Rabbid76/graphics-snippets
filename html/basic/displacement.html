@@ -15,13 +15,17 @@ varying vec3 vertNV;
 varying vec2 vertUV;
 varying vec3 vertCol;
 
-uniform mat4 u_projectionMat44;
-uniform mat4 u_viewMat44;
-uniform mat4 u_modelMat44;
-uniform vec4 u_clipPlane;
+uniform mat4  u_projectionMat44;
+uniform mat4  u_viewMat44;
+uniform mat4  u_modelMat44;
+
+uniform sampler2D u_vertDispMap;
+uniform float     u_vertDisplScale;
 
 void main()
 {   
+    float height  = texture2D(u_vertDispMap, inUV).x * u_vertDisplScale;
+
     vertCol       = inCol;
     vertUV        = inUV;
 
@@ -33,6 +37,7 @@ void main()
     vertNV        = normalize(tbn[2]);
     
     vec4 viewPos  = mv * vec4( inPos, 1.0 );
+    viewPos.xyz  += vertNV * height;
     vertPos       = viewPos.xyz;
     gl_Position   = u_projectionMat44 * viewPos;
 }
@@ -284,7 +289,7 @@ class App {
         var mesh = document.getElementById( "mesh" ).value;
         var mix_color = document.getElementById( "mix_color" ).value / 100.0;
         var mix_normal = document.getElementById( "mix_normal" ).checked;
-        var height = document.getElementById( "height" ).value / 100.0;
+        var height = 0.2 * document.getElementById( "height" ).value / 100.0;
         
         // setup view projection and model
         this.camera.update( this.vp_size );
@@ -309,6 +314,8 @@ class App {
         this.progDraw.SetM44("u_projectionMat44", this.camera.perspective);
         this.progDraw.SetM44("u_viewMat44", this.camera.orbit);
         this.progDraw.SetM44("u_modelMat44", modelMat);
+        this.progDraw.SetI1("u_vertDispMap", this.texture.unit);
+        this.progDraw.SetF1("u_vertDisplScale", height);
         this.progDraw.SetI1("u_texture", this.texture.unit);
         this.progDraw.SetI1("u_displacement_map", this.displacement.unit);
         this.progDraw.SetF2("u_displacement_map_size", this.displacement.size);
