@@ -287,7 +287,7 @@ class App {
         var mix_normal = document.getElementById( "mix_normal" ).checked;
         var height = 0.2 * document.getElementById( "height" ).value / 100.0;
 
-        this.tessellates[i_mesh].prepare(0.025);
+        this.tessellates[i_mesh].prepare(0.05);
         
         // setup view projection and model
         this.camera.update( this.vp_size );
@@ -379,12 +379,12 @@ class MeshTessellate {
                         this.split(et[1], et[2]);
                         let _e = (l12/2 > maxDist || l20 > maxDist || l01 > maxDist) ? en : this.e;
                         _e.push(et[0], et[1], next, et[0], next, et[2]);
-                    } else if (l20 > maxDist ) {
+                    } else if (l20 > maxDist) {
                         this.split(et[2], et[0]);
                         let _e = (l20/2 > maxDist || l01 > maxDist || l12 > maxDist) ? en : this.e;
                         _e.push(next, et[1], et[2], et[0], et[1], next);
                     } else {
-                        this.e.push( et[0], et[1], et[2]);
+                        this.e.push(et[0], et[1], et[2]);
                     }
                 }
                 e = en;

@@ -34,6 +34,8 @@
 
 [Mesh](https://rabbid76.github.io/graphics-snippets/html/basic/mesh.html)
 
+[Displacement - vertex displacement on tessellated mesh](https://rabbid76.github.io/graphics-snippets/html/basic/displacement.html)
+
 ### App
 
 [Rubiks](https://rabbid76.github.io/graphics-snippets/html/app/rubiks_cube.html)
