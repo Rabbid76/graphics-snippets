@@ -37,7 +37,7 @@ void main()
     vertNV        = normalize(tbn[2]);
     
     vec4 viewPos  = mv * vec4( inPos, 1.0 );
-    viewPos.xyz  += vertNV * height;
+    viewPos.xyz  += normalize(vertNV) * height;
     vertPos       = viewPos.xyz;
     gl_Position   = u_projectionMat44 * viewPos;
 }
@@ -263,7 +263,7 @@ class App {
         //document.getElementById( "mix_color" ).value = state < 0.33 ? 100 : 0;
         //document.getElementById( "mix_normal" ).checked  = state >= 0.67 ? 1 : 0;
 
-        document.getElementById( "mesh" ).value = 1;
+        document.getElementById( "mesh" ).value = 0;
 
         this.resize(); 
         this.camera = new Camera( [0, 2, 0], [0, 0, 0], [0, 0, 1], 90, this.vp_size, 0.5, 100 );
@@ -287,7 +287,7 @@ class App {
         var mix_normal = document.getElementById( "mix_normal" ).checked;
         var height = 0.2 * document.getElementById( "height" ).value / 100.0;
 
-        this.tessellates[i_mesh].prepare(0.05);
+        this.tessellates[i_mesh].prepare(0.025);
         
         // setup view projection and model
         this.camera.update( this.vp_size );
@@ -312,7 +312,7 @@ class App {
         this.progDraw.SetM44("u_projectionMat44", this.camera.perspective);
         this.progDraw.SetM44("u_viewMat44", this.camera.orbit);
         this.progDraw.SetM44("u_modelMat44", modelMat);
-        this.progDraw.SetI1("u_vertDispMap", this.texture.unit);
+        this.progDraw.SetI1("u_vertDispMap", this.displacement.unit);
         this.progDraw.SetF1("u_vertDisplScale", height);
         this.progDraw.SetI1("u_texture", this.texture.unit);
         this.progDraw.SetI1("u_displacement_map", this.displacement.unit);
@@ -355,7 +355,7 @@ class MeshTessellate {
             if ( !e ) {
                 e = [];
                 for ( let i=0; i < this.v.length/3; ++i )
-                    e.push[i];
+                    e.push(i);
             }
             this.e = [];
 
@@ -373,15 +373,15 @@ class MeshTessellate {
                     let next = this.v.length/3;
                     if (l01 > l12 && l01 > l20 && l01 > maxDist) {
                         this.split(et[0], et[1]);
-                        let _e = (l01/2 > maxDist || l12 > maxDist || l20 > maxDist) ? e : this.e;
+                        let _e = (l01/2 > maxDist || l12 > maxDist || l20 > maxDist) ? en : this.e;
                         _e.push(et[0], next, et[2], next, et[1], et[2]);
                     } else if (l12 > l20 && l12 > maxDist) {
                         this.split(et[1], et[2]);
-                        let _e = (l12/2 > maxDist || l20 > maxDist || l01 > maxDist) ? e : this.e;
+                        let _e = (l12/2 > maxDist || l20 > maxDist || l01 > maxDist) ? en : this.e;
                         _e.push(et[0], et[1], next, et[0], next, et[2]);
                     } else if (l20 > maxDist ) {
                         this.split(et[2], et[0]);
-                        let _e = (l20/2 > maxDist || l01 > maxDist || l12 > maxDist) ? e : this.e;
+                        let _e = (l20/2 > maxDist || l01 > maxDist || l12 > maxDist) ? en : this.e;
                         _e.push(next, et[1], et[2], et[0], et[1], next);
                     } else {
                         this.e.push( et[0], et[1], et[2]);
