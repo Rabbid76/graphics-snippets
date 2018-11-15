@@ -115,7 +115,7 @@ mat3 TBN( vec3 N)
 {
     float face_sign   = sign(dot(vertNV, -vertPos));
 #if defined(TANGENT_BINORMAL)
-    mat3  tbnMat      = mat3(vertTV, vertBV, N * face_sign * u_displacement_scale);
+    mat3  tbnMat      = mat3(vertTV, vertBV, N * face_sign);
 #else
     vec3  dp1         = dFdx( vertPos );
     vec3  dp2         = dFdy( vertPos );
@@ -126,7 +126,7 @@ mat3 TBN( vec3 N)
     vec3  T           = dp2perp * duv1.x + dp1perp * duv2.x;
     vec3  B           = dp2perp * duv1.y + dp1perp * duv2.y;
     float invmax      = inversesqrt(max(dot(T, T), dot(B, B)));
-    mat3  tbnMat      = mat3(T * invmax, B * invmax, N * face_sign * u_displacement_scale);
+    mat3  tbnMat      = mat3(T * invmax, B * invmax, N * face_sign);
 #endif
     return tbnMat;
 }
@@ -137,6 +137,7 @@ void main()
     vec3 N          = normalize(vertNV);
     mat3 tbnMat     = TBN(N); 
     vec4 normalVec  = CalculateNormal( vertUV );
+    normalVec.xy   *= u_displacement_scale;
     vec3 nvMappedEs = normalize( tbnMat * normalVec.xyz );
 
     vec3  vl        = vec3(0.0, 0.0, 1.0);
@@ -238,7 +239,7 @@ class App {
         this.progDraw.inCol = this.progDraw.AttrI("inCol");
         this.progDraw.inUV  = this.progDraw.AttrI("inUV");
 
-        let meshes = [ 
+        this.meshDefs = [ 
             new MeshTetrahedron(),
             new MeshCube(),
             new MeshIcosahedron(),
@@ -252,22 +253,17 @@ class App {
             new MeshArrow(2, 8, 32)
         ];
 
-        document.getElementById( "mesh" ).value = Math.floor((Math.random() * meshes.length));
+        this.tessellates = [];
+        for (let i=0; i < this.meshDefs.length; ++i ) {
+            this.tessellates.push( new MeshTessellate( this.meshDefs[i], this.progDraw ) );
+        }
+
+        document.getElementById( "mesh" ).value = Math.floor((Math.random() * this.meshDefs.length));
         //let state = Math.random();
         //document.getElementById( "mix_color" ).value = state < 0.33 ? 100 : 0;
         //document.getElementById( "mix_normal" ).checked  = state >= 0.67 ? 1 : 0;
 
-        this.meshes = [];
-        for (let i = 0; i < meshes.length; ++ i ) {
-            this.meshes.push( new VertexBuffer( gl,
-                    [ { data : meshes[i].v,  attrSize : 3, attrLoc : this.progDraw.inPos },
-                      { data : meshes[i].tv, attrSize : 3, attrLoc : this.progDraw.inTV },
-                      { data : meshes[i].bv, attrSize : 3, attrLoc : this.progDraw.inBV },
-                      { data : meshes[i].n,  attrSize : 3, attrLoc : this.progDraw.inNV },
-                      { data : meshes[i].c,  attrSize : 3, attrLoc : this.progDraw.inCol }, 
-                      { data : meshes[i].t,  attrSize : 2, attrLoc : this.progDraw.inUV } 
-                    ], meshes[i].e ) );
-        }
+        document.getElementById( "mesh" ).value = 1;
 
         this.resize(); 
         this.camera = new Camera( [0, 2, 0], [0, 0, 0], [0, 0, 1], 90, this.vp_size, 0.5, 100 );
@@ -286,10 +282,12 @@ class App {
 
     draw(deltaMS){
         
-        var mesh = document.getElementById( "mesh" ).value;
+        var i_mesh = document.getElementById( "mesh" ).value;
         var mix_color = document.getElementById( "mix_color" ).value / 100.0;
         var mix_normal = document.getElementById( "mix_normal" ).checked;
         var height = 0.2 * document.getElementById( "height" ).value / 100.0;
+
+        this.tessellates[i_mesh].prepare(0.05);
         
         // setup view projection and model
         this.camera.update( this.vp_size );
@@ -324,8 +322,102 @@ class App {
         this.progDraw.SetF1("u_mix_normal", mix_normal);
         
         // draw scene
-        this.meshes[mesh].Draw();
+        this.tessellates[i_mesh].draw();
     }
+}
+
+class MeshTessellate {
+    constructor(meshDef, program) {
+        this.meshDef = meshDef;
+        this.program = program;
+    }
+    prepare(maxDist) {
+        maxDist = !maxDist || maxDist < 0.0 ? 0.0 : maxDist;
+        if (!this.mesh || this.maxDist == undefined || this.maxDist != maxDist) {
+            this.tessellate(maxDist);
+        }
+    }
+
+    tessellate(maxDist) {
+        this.maxDist = maxDist;
+        
+        if (this.meshDef.v) { this.v = this.meshDef.v.slice(0); }
+        if (this.meshDef.tv) { this.tv = this.meshDef.tv.slice(0); }
+        if (this.meshDef.bv) { this.bv = this.meshDef.bv.slice(0); }
+        if (this.meshDef.n) { this.n = this.meshDef.n.slice(0); }
+        if (this.meshDef.c) { this.c = this.meshDef.c.slice(0); }
+        if (this.meshDef.t) { this.t = this.meshDef.t.slice(0); }
+        if (this.meshDef.e) { this.e = this.meshDef.e.slice(0); }
+
+        if ( maxDist > 0.0 )
+        {
+            let e = this.e;
+            if ( !e ) {
+                e = [];
+                for ( let i=0; i < this.v.length/3; ++i )
+                    e.push[i];
+            }
+            this.e = [];
+
+            while ( e.length > 0 ) {
+                let en = [];
+                for ( let i=0; i < e.length; i += 3 ) {
+                    let et = [e[i], e[i+1], e[i+2]];
+                    let v0 = this.v.slice(et[0]*3, et[0]*3+3);
+                    let v1 = this.v.slice(et[1]*3, et[1]*3+3); 
+                    let v2 = this.v.slice(et[2]*3, et[2]*3+3);
+                    let l01  = Vec3.len(Vec3.sub(v1,v0));
+                    let l12  = Vec3.len(Vec3.sub(v2,v1));
+                    let l20  = Vec3.len(Vec3.sub(v0,v2));
+
+                    let next = this.v.length/3;
+                    if (l01 > l12 && l01 > l20 && l01 > maxDist) {
+                        this.split(et[0], et[1]);
+                        let _e = (l01/2 > maxDist || l12 > maxDist || l20 > maxDist) ? e : this.e;
+                        _e.push(et[0], next, et[2], next, et[1], et[2]);
+                    } else if (l12 > l20 && l12 > maxDist) {
+                        this.split(et[1], et[2]);
+                        let _e = (l12/2 > maxDist || l20 > maxDist || l01 > maxDist) ? e : this.e;
+                        _e.push(et[0], et[1], next, et[0], next, et[2]);
+                    } else if (l20 > maxDist ) {
+                        this.split(et[2], et[0]);
+                        let _e = (l20/2 > maxDist || l01 > maxDist || l12 > maxDist) ? e : this.e;
+                        _e.push(next, et[1], et[2], et[0], et[1], next);
+                    } else {
+                        this.e.push( et[0], et[1], et[2]);
+                    }
+                }
+                e = en;
+                en = [];
+            }
+        }
+
+        this.mesh = new VertexBuffer( gl,
+            [ { data : this.v,  attrSize : 3, attrLoc : this.program.inPos },
+              { data : this.tv, attrSize : 3, attrLoc : this.program.inTV },
+              { data : this.bv, attrSize : 3, attrLoc : this.program.inBV },
+              { data : this.n,  attrSize : 3, attrLoc : this.program.inNV },
+              { data : this.c,  attrSize : 3, attrLoc : this.program.inCol }, 
+              { data : this.t,  attrSize : 2, attrLoc : this.program.inUV } 
+            ], this.e );
+    }
+
+    split(i0, i1) {
+        let v = Vec3.mix([this.v[i0*3], this.v[i0*3+1], this.v[i0*3+2]], [this.v[i1*3], this.v[i1*3+1], this.v[i1*3+2]], 0.5)
+        this.v.push( v[0], v[1], v[2] );
+        let tv = Vec3.mix([this.tv[i0*3], this.tv[i0*3+1], this.tv[i0*3+2]], [this.tv[i1*3], this.tv[i1*3+1], this.tv[i1*3+2]], 0.5);
+        this.tv.push( tv[0], tv[1], tv[2] );
+        let bv = Vec3.mix([this.bv[i0*3], this.bv[i0*3+1], this.bv[i0*3+2]], [this.bv[i1*3], this.bv[i1*3+1], this.bv[i1*3+2]], 0.5);
+        this.bv.push( bv[0], bv[1], bv[2] );
+        let n = Vec3.mix([this.n[i0*3], this.n[i0*3+1], this.n[i0*3+2]], [this.n[i1*3], this.n[i1*3+1], this.n[i1*3+2]], 0.5);
+        this.n.push( n[0], n[1], n[2] );
+        let t = Vec2.mix([this.t[i0*2], this.t[i0*2+1]], [this.t[i1*2], this.t[i1*2+1]], 0.5);
+        this.t.push( t[0], t[1] );
+        let c = Vec3.mix([this.c[i0*3], this.c[i0*3+1], this.c[i0*3+2]], [this.c[i1*3], this.c[i1*3+1], this.c[i1*3+2]], 0.5);
+        this.c.push( c[0], c[1], c[2] );
+    }
+    
+    draw() { return this.mesh.Draw(); }
 }
 
 class MeshObject {
@@ -1309,6 +1401,11 @@ Vec2 = {
     normalize: function( v ) {
         var len = this.len( v );
         return [ v[0] / len, v[1] / len ];
+    },
+    mix: function( a, b, w ) {
+        let wa = 1.0-w;
+        let wb = w;
+        return [a[0]*wa + b[0]*wb, a[1]*wa + b[1]*wb];
     }
 }
 
@@ -1322,6 +1419,11 @@ Vec3 = {
     normalize: function( v ) {
         var len = this.len( v );
         return [ v[0] / len, v[1] / len, v[2] / len ];
+    },
+    mix: function( a, b, w ) {
+        let wa = 1.0-w;
+        let wb = w;
+        return [a[0]*wa + b[0]*wb, a[1]*wa + b[1]*wb, a[2]*wa + b[2]*wb];
     }
 }
 

@@ -133,7 +133,7 @@ class App {
         this.progDraw.inCol = this.progDraw.AttrI("inCol");
         this.progDraw.inUV  = this.progDraw.AttrI("inUV");
 
-        let meshes = [ 
+        this.meshDefs = [ 
             new MeshTetrahedron(),
             new MeshCube(),
             new MeshIcosahedron(),
@@ -146,8 +146,9 @@ class App {
             new MeshTorusKnot(512, 32, 3, 7),
             new MeshArrow(2, 8, 32)
         ];
+        this.meshes = new Array(this.meshDefs.length);
 
-        document.getElementById( "mesh" ).value = Math.floor((Math.random() * meshes.length));
+        document.getElementById( "mesh" ).value = Math.floor((Math.random() * this.meshDefs.length));
         let state = Math.random();
         document.getElementById( "mix_color" ).value = state < 0.33 ? 100 : 0;
         document.getElementById( "mix_normal" ).checked  = state >= 0.67 ? 1 : 0;
@@ -155,16 +156,6 @@ class App {
         //document.getElementById( "mesh" ).value = 9;
         //document.getElementById( "mix_color" ).value = 100;
         //document.getElementById( "mix_normal" ).checked = 0;
-
-        this.meshes = [];
-        for (let i = 0; i < meshes.length; ++ i ) {
-            this.meshes.push( new VertexBuffer( gl,
-                    [ { data : meshes[i].v, attrSize : 3, attrLoc : this.progDraw.inPos },
-                      { data : meshes[i].n, attrSize : 3, attrLoc : this.progDraw.inNV },
-                      { data : meshes[i].c, attrSize : 3, attrLoc : this.progDraw.inCol }, 
-                      { data : meshes[i].t, attrSize : 2, attrLoc : this.progDraw.inUV } 
-                    ], meshes[i].e ) );
-        }
 
         this.resize(); 
         this.camera = new Camera( [0, 2, 0], [0, 0, 0], [0, 0, 1], 90, this.vp_size, 0.5, 100 );
@@ -186,6 +177,17 @@ class App {
         var mesh = document.getElementById( "mesh" ).value;
         var mix_color = document.getElementById( "mix_color" ).value / 100.0;
         var mix_normal = document.getElementById( "mix_normal" ).checked;
+
+        if ( !this.meshes[mesh] ) {
+            let i = mesh;
+            this.meshes[i] = 
+                new VertexBuffer( gl,
+                    [ { data : this.meshDefs[i].v,  attrSize : 3, attrLoc : this.progDraw.inPos },
+                      { data : this.meshDefs[i].n,  attrSize : 3, attrLoc : this.progDraw.inNV },
+                      { data : this.meshDefs[i].c,  attrSize : 3, attrLoc : this.progDraw.inCol }, 
+                      { data : this.meshDefs[i].t,  attrSize : 2, attrLoc : this.progDraw.inUV } 
+                    ], this.meshDefs[i].e );
+        }
 
         // setup view projection and model
         this.camera.update( this.vp_size );
