@@ -272,7 +272,7 @@ class App {
         //document.getElementById( "mix_color" ).value = state < 0.33 ? 100 : 0;
         //document.getElementById( "mix_normal" ).checked  = state >= 0.67 ? 1 : 0;
 
-        document.getElementById( "mesh" ).value = 4;
+        //document.getElementById( "mesh" ).value = 4;
 
         this.resize(); 
         this.camera = new Camera( [0, 2, 0], [0, 0, 0], [0, 0, 1], 90, this.vp_size, 0.5, 100 );
@@ -362,9 +362,8 @@ class MeshTessellate {
         {
             let e = this.e;
             if ( !e ) {
-                e = [];
-                for ( let i=0; i < this.v.length/3; ++i )
-                    e.push(i);
+                e = new Array(this.v.length/3);
+                for ( let i=0; i < this.v.length/3; ++i ) { e[i]=i; }
             }
             this.e = [];
 
@@ -455,13 +454,48 @@ class MeshObject {
     
     V_EQ(i0, i1) { return Vec3.equal(this.V(i0), this.V(i1), this.eps); }
     N_EQ(i0, i1) { return Vec3.equal(this.N(i0), this.N(i1), this.eps); }
+
+    // find equal vertices and associate equal vertices to equal id 
+    equalIds() {
+        if (this.vid) return;
+        this.vid = new Array(this.v.length/3);
+        for ( let i=0; i<this.v.length/3; ++i ) {
+            let eq_i = -1;
+            for (let j=0; eq_i < 0 && j<i; ++j) { eq_i = this.V_EQ(i,j) ? j : -1; } 
+            this.vid[i] = eq_i >= 0 ? eq_i : i;    
+        }
+    }
+
+    // create triangle indices if not existing
+    indices() {
+        if (this.e) return;
+        this.e = new Array(this.v.length/3);
+        for ( let i=0; i < this.v.length/3; ++i ) {this.e[i]=i; }
+    }
+
+    edges() {
+        if (this.edg)
+            return;
+        this.indices();
+        this.edg = Array(this.v.length/3);
+        for (let i=0; i < this.e.length; ++ i ) { this.edg[i] = []; }
+        for (let i=0; i < this.e.length; i += 3 ) {
+            let et = [this.e[i], this.e[i+1], this.e[i+2]];
+            if ( this.edg[et[0]].indexOf(et[1]) === -1 ) { this.edg[et[0]].push(et[1]); } 
+            if ( this.edg[et[0]].indexOf(et[2]) === -1 ) { this.edg[et[0]].push(et[2]); } 
+            if ( this.edg[et[1]].indexOf(et[0]) === -1 ) { this.edg[et[1]].push(et[0]); } 
+            if ( this.edg[et[1]].indexOf(et[2]) === -1 ) { this.edg[et[1]].push(et[2]); } 
+            if ( this.edg[et[2]].indexOf(et[0]) === -1 ) { this.edg[et[2]].push(et[0]); } 
+            if ( this.edg[et[2]].indexOf(et[1]) === -1 ) { this.edg[et[2]].push(et[1]); } 
+        }
+    }
     
+    // calculate face tangent and binormal
     createTangentAndBinormal() {
-        // calculate face tangent and binormal
+        this.indices();
         this.tv = new Array(this.n.length), this.bv = new Array(this.n.length);
-        let len = this.e ? this.e.length : this.v.length/3;
-        for ( let i=0; i < len; i += 3 ) {
-            let et = this.e ? [this.e[i], this.e[i+1], this.e[i+2]] : [i, i+1, i+2];
+        for ( let i=0; i < this.e.length; i += 3 ) {
+            let et = [this.e[i], this.e[i+1], this.e[i+2]];
             let v0 = this.V(et[0]), v1 = this.V(et[1]), v2 = this.V(et[2]);
             let t0 = this.TC(et[0]), t1 = this.TC(et[1]), t2 = this.TC(et[2]); 
             let dp1  = Vec3.sub(v1,v0);
@@ -496,19 +530,11 @@ class MeshObject {
         // TODO $$$ interpolated tangents
     }
 
-    uniqueIds() {
-        if (this.uni)
-            return;
-        this.uni = Array(this.v.length/3);
-        for ( let i=0; i<this.v.length/3; ++i ) {
-            let eq_i = -1;
-            for (let j=0; eq_i < 0 && j<i; ++j) { eq_i = this.V_EQ(i,j) ? j : -1; } 
-            this.uni[i] = eq_i >= 0 ? eq_i : i;    
-        }
-    }
+    
 
     createWedges() {
-        this.uniqueIds();
+        this.equalIds();
+        this.edges();
         //TODO $$$
     }
 };
