@@ -272,7 +272,7 @@ class App {
         //document.getElementById( "mix_color" ).value = state < 0.33 ? 100 : 0;
         //document.getElementById( "mix_normal" ).checked  = state >= 0.67 ? 1 : 0;
 
-        //document.getElementById( "mesh" ).value = 4;
+        document.getElementById( "mesh" ).value = 0;
 
         this.resize(); 
         this.camera = new Camera( [0, 2, 0], [0, 0, 0], [0, 0, 1], 90, this.vp_size, 0.5, 100 );
@@ -453,7 +453,7 @@ class MeshObject {
     C( i ) { return this.c.slice(i*3, i*3+3); } 
     
     V_EQ(i0, i1) { return Vec3.equal(this.V(i0), this.V(i1), this.eps); }
-    N_EQ(i0, i1) { return Vec3.equal(this.N(i0), this.N(i1), this.eps); }
+    NV_EQ(i0, i1) { return Vec3.equal(this.NV(i0), this.NV(i1), this.eps); }
 
     // find equal vertices and associate equal vertices to equal id 
     equalIds() {
@@ -464,6 +464,9 @@ class MeshObject {
             for (let j=0; eq_i < 0 && j<i; ++j) { eq_i = this.V_EQ(i,j) ? j : -1; } 
             this.vid[i] = eq_i >= 0 ? eq_i : i;    
         }
+        this.eqv = new Array(this.v.length/3);
+        for (let i=0; i < this.v.length/3; ++ i ) { this.eqv[i] = []; }
+        for (let i=0; i < this.v.length/3; ++ i ) { this.eqv[this.vid[i]].push(i); }
     }
 
     // create triangle indices if not existing
@@ -530,12 +533,50 @@ class MeshObject {
         // TODO $$$ interpolated tangents
     }
 
-    
-
     createWedges() {
+        this.indices();
         this.equalIds();
         this.edges();
-        //TODO $$$
+
+        // find edges with diverging normal vectors
+        let wdg = []
+        let wdg_s = []
+        for (let i=0; i<this.v.length/3; ++i ) {
+            if (this.eqv[i].length<2) continue;
+            for ( let i0=0; i0 < this.eqv[i].length-1; ++i0) {
+                for ( let i1=1; i1 < this.eqv[i].length; ++i1) {
+                    let a = this.eqv[i][i0], b = this.eqv[i][i1]; 
+                    if ( this.NV_EQ(a, b) )
+                        continue;
+                    let ea = this.edg[a], eb = this.edg[b];
+                    for ( let j0=0; j0<ea.length; ++j0 ) {
+                        for ( let j1=0; j1<eb.length; ++j1 ) {
+                            let c = ea[j0], d = eb[j1];
+                            if ( c != d && !this.V_EQ(c, d) )
+                                continue;
+                            let w = [a, b, c, d];
+                            let ws = [a, b, c, d];
+                            ws.sort();
+                            let exists = false;
+                            for (let k0=0; exists == false && k0 < wdg_s.length; ++k0) {
+                                exists = wdg_s[k0][0] == ws[0] && wdg_s[k0][1] == ws[1] && wdg_s[k0][2] == ws[2] && wdg_s[k0][3] == ws[3];
+                            }
+                            if ( exists )
+                                continue;
+                            wdg.push(w);
+                            wdg_s.push(ws);
+                        }
+                    }
+                }   
+            }
+        }
+        wdg_s=[];
+        
+        // create the wedges
+        for (let i=0; i < wdg.length; ++i) {
+            let w = wdg[i];
+            this.e.push(w[1],w[0],w[2],w[1],w[2],w[3]);
+        }
     }
 };
 
@@ -556,8 +597,8 @@ class MeshTetrahedron extends MeshObject {
                 [-v[ni[is]*3], -v[ni[is]*3+1], -v[ni[is]*3+2]], [t[e[i]*2], t[e[i]*2+1]], [c[is*3], c[is*3+1], c[is*3+2]] );
             } 
         }
-        this.createWedges();
         this.createTangentAndBinormal();
+        this.createWedges();
     }
 };
 
@@ -579,8 +620,8 @@ class MeshCube extends MeshObject {
         }
         this.e = [];
         for ( let i = 0; i < e.length; i += 4 ) { this.e.push( i, i+1, i+2, i, i+2, i+3 ); }
-        this.createWedges();
         this.createTangentAndBinormal();   
+        this.createWedges();
     }
 };
 
@@ -613,8 +654,8 @@ class MeshIcosahedron extends MeshObject {
                 this.c.push( c[ci*3], c[ci*3+1], c[ci*3+2] );
             }
         }
-        this.createWedges();
         this.createTangentAndBinormal();
+        this.createWedges();
     }
 };
 
@@ -672,8 +713,8 @@ class MeshTube extends MeshObject {
                 this.e.push( st+nc+1, st+i+1, st+i );
         } 
         this.addAttr( [0, 0, -h/2], [0, 0, -1], [0.5, 0.5], c );
-        this.createWedges();
         this.createTangentAndBinormal();
+        this.createWedges();
     }
 };
 
@@ -728,8 +769,8 @@ class MeshCone extends MeshObject {
                 this.e.push( st+nc+1, st+i+1, st+i );
         } 
         this.addAttr( [0, 0, -h/3], [0, 0, -1], [0.5, 0.5], c );
-        this.createWedges();
         this.createTangentAndBinormal();
+        this.createWedges();
     }
 };
 
@@ -1100,8 +1141,8 @@ class MeshArrow extends MeshObject {
                 this.e.push( st+nc+1, st+i+1, st+i );
         } 
         this.addAttr( [0, 0, -lp-ls], [0, 0, -1], [0.5, 0.5], c );
-        this.createWedges();
         this.createTangentAndBinormal();
+        this.createWedges();
     }
 };
 
