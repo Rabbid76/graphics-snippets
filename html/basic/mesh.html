@@ -239,49 +239,6 @@ class MeshObject {
         this.t.push( t[0],t[1] );
         this.c.push( c[0],c[1],c[2] );
     }
-    CreateTangentAndBinormal() {
-        // calculate face tangent and binormal
-        this.tv = new Array(this.n.length), this.bv = new Array(this.n.length);
-        let len = this.e ? this.e.length : this.v.length/3;
-        for ( let i=0; i < len; i += 3 ) {
-            let et = this.e ? [this.e[i], this.e[i+1], this.e[i+2]] : [i, i+1, i+2];
-            let v0 = this.v.slice(et[0]*3, et[0]*3+3);
-            let v1 = this.v.slice(et[1]*3, et[1]*3+3); 
-            let v2 = this.v.slice(et[2]*3, et[2]*3+3);
-            let t0 = this.t.slice(et[0]*2, et[0]*2+2);
-            let t1 = this.t.slice(et[1]*2, et[1]*2+2); 
-            let t2 = this.t.slice(et[2]*2, et[2]*2+2); 
-            let dp1  = Vec3.sub(v1,v0);
-            let dp2  = Vec3.sub(v2,v0);
-            let duv1 = Vec2.sub(t1,t0);
-            let duv2 = Vec2.sub(t2,t0);
-            if ( Vec3.dot(Vec3.cross(dp1, dp2), this.n.slice(et[0]*3, et[0]*3+3)) < 0.0 ) {
-                let _dpt = dp1; dp1 = dp2; dp2 = _dpt;
-                let _duvt = duv1; duv1 = duv2; duv2 = _duvt;
-            }
-            // 3*3 matrix which transforms from texture space to scaled texture "wrap" space
-            // transforms a normal vector generated from an height map to the texture coordinates
-            //let tw_m33 = [duv1[0],duv1[1],0, duv2[0],duv2[1],0, 0,0,1];
-            for ( let j=0; j < 3; ++j )  {
-                let n = this.n.slice(et[j]*3, et[j]*3+3);
-                let dp2perp = Vec3.cross(dp2, n); 
-                let dp1perp = Vec3.cross(n, dp1);
-                // 3*3 matrix which transforms from texture "wrap" space to model space
-                // transforms a wrapped normal vector to the model space  
-                //let f_m33 = [dp2perp[0],dp2perp[1],dp2perp[2], dp1perp[0],dp1perp[1],dp1perp[2], n[0],n[1],n[2]];
-                // transformation from texture space to triangle face space
-                //let m33 = Mat33.multiply(f_m33, tw_m33);
-                //this.tv[et[j]*3] = m33[0]; this.tv[et[j]*3+1] = m33[1]; this.tv[et[j]*3+2] = m33[2];
-                //this.bv[et[j]*3] = m33[4]; this.bv[et[j]*3+1] = m33[4]; this.bv[et[j]*3+2] = m33[5];
-                let tv = Vec3.normalize(Vec3.add(Vec3.mul_s(dp2perp, duv1[0]), Vec3.mul_s(dp1perp, duv2[0])));
-                let bv = Vec3.normalize(Vec3.add(Vec3.mul_s(dp2perp, duv1[1]), Vec3.mul_s(dp1perp, duv2[1])));
-                this.tv[et[j]*3] = tv[0]; this.tv[et[j]*3+1] = tv[1]; this.tv[et[j]*3+2] = tv[2];
-                this.bv[et[j]*3] = bv[0]; this.bv[et[j]*3+1] = bv[1]; this.bv[et[j]*3+2] = bv[2];
-            }
-        }
-        
-        // TODO $$$ interpolated tangents
-    }
 };
 
 class MeshTetrahedron extends MeshObject {
@@ -301,7 +258,6 @@ class MeshTetrahedron extends MeshObject {
                 [-v[ni[is]*3], -v[ni[is]*3+1], -v[ni[is]*3+2]], [t[e[i]*2], t[e[i]*2+1]], [c[is*3], c[is*3+1], c[is*3+2]] );
             } 
         }
-        this.CreateTangentAndBinormal();
     }
 };
 
@@ -322,8 +278,7 @@ class MeshCube extends MeshObject {
             } 
         }
         this.e = [];
-        for ( let i = 0; i < e.length; i += 4 ) { this.e.push( i, i+1, i+2, i, i+2, i+3 ); }
-        this.CreateTangentAndBinormal();   
+        for ( let i = 0; i < e.length; i += 4 ) { this.e.push( i, i+1, i+2, i, i+2, i+3 ); }  
     }
 };
 
@@ -356,7 +311,6 @@ class MeshIcosahedron extends MeshObject {
                 this.c.push( c[ci*3], c[ci*3+1], c[ci*3+2] );
             }
         }
-        this.CreateTangentAndBinormal();
     }
 };
 
@@ -414,7 +368,6 @@ class MeshTube extends MeshObject {
                 this.e.push( st+nc+1, st+i+1, st+i );
         } 
         this.AddAttr( [0, 0, -h/2], [0, 0, -1], [0.5, 0.5], c );
-        this.CreateTangentAndBinormal();
     }
 };
 
@@ -469,7 +422,6 @@ class MeshCone extends MeshObject {
                 this.e.push( st+nc+1, st+i+1, st+i );
         } 
         this.AddAttr( [0, 0, -h/3], [0, 0, -1], [0.5, 0.5], c );
-        this.CreateTangentAndBinormal();
     }
 };
 
@@ -515,7 +467,6 @@ class MeshSphereSlice extends MeshObject {
         var si = (nl-1) * cs;
         for ( let i = 0; i < nc_2; i ++ ) { this.e.push( si + i + 1, si + i, si + i + cs ); }
         for ( let i = nc_2+1; i < 2*nc_2+1; i ++ ) { this.e.push( si+i+1, si+i, si+i+cs ); }
-        this.CreateTangentAndBinormal();
     }
 };
 
@@ -529,7 +480,6 @@ class MeshSphereTessellated extends MeshTetrahedron {
         this.e = [0,1,2,3,4,5,6,7,8,9,10,11];
         for ( let i = 0; i < tc; ++ i )
            this.SplitTriangle();
-        this.CreateTangentAndBinormal();
     }
     SplitLine( i0, i1 ) {
         let v = Vec3.mul_s(Vec3.normalize([ (this.v[i0*3]+this.v[i1*3])/2, (this.v[i0*3+1]+this.v[i1*3+1])/2, (this.v[i0*3+2]+this.v[i1*3+2])/2 ]),this.r);
@@ -578,7 +528,6 @@ class MeshTorus extends MeshObject {
                     this.e.push( i_l0+i_c, i_l1+i_c, i_l0+(i_c+1), i_l0+(i_c+1), i_l1+i_c, i_l1+(i_c+1) );
             }
         }
-        this.CreateTangentAndBinormal();
     }
 };
 
@@ -616,7 +565,6 @@ class MeshTrefoilKnot extends MeshObject {
             }
             n += stacks+1;
         }
-        this.CreateTangentAndBinormal();
     }
 
     compute( s, t ) {
@@ -682,7 +630,6 @@ class MeshTorusKnot extends MeshObject {
             }
             n += stacks + 1;
         }
-        this.CreateTangentAndBinormal();
     }
 
     compute( s, t, p, q ) {
@@ -840,7 +787,6 @@ class MeshArrow extends MeshObject {
                 this.e.push( st+nc+1, st+i+1, st+i );
         } 
         this.AddAttr( [0, 0, -lp-ls], [0, 0, -1], [0.5, 0.5], c );
-        this.CreateTangentAndBinormal();
     }
 };
 

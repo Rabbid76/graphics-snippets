@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset='UTF-8'>
-<title>mesh</title>
+<title>displacement</title>
 
 
 </head>
@@ -272,6 +272,8 @@ class App {
         //document.getElementById( "mix_color" ).value = state < 0.33 ? 100 : 0;
         //document.getElementById( "mix_normal" ).checked  = state >= 0.67 ? 1 : 0;
 
+        document.getElementById( "mesh" ).value = 4;
+
         this.resize(); 
         this.camera = new Camera( [0, 2, 0], [0, 0, 0], [0, 0, 1], 90, this.vp_size, 0.5, 100 );
         this.camera.attenuation( 1.0, 0.05, 0.0 );
@@ -370,9 +372,9 @@ class MeshTessellate {
                 let en = [];
                 for ( let i=0; i < e.length; i += 3 ) {
                     let et = [e[i], e[i+1], e[i+2]];
-                    let v0 = this.v.slice(et[0]*3, et[0]*3+3);
-                    let v1 = this.v.slice(et[1]*3, et[1]*3+3); 
-                    let v2 = this.v.slice(et[2]*3, et[2]*3+3);
+                    let v0 = this.V(et[0]);
+                    let v1 = this.V(et[1]); 
+                    let v2 = this.V(et[2]);
                     let l01  = Vec3.len(Vec3.sub(v1,v0));
                     let l12  = Vec3.len(Vec3.sub(v2,v1));
                     let l20  = Vec3.len(Vec3.sub(v0,v2));
@@ -409,18 +411,24 @@ class MeshTessellate {
             ], this.e );
     }
 
+    V( i ) { return this.v.slice(i*3, i*3+3); } 
+    BV( i ) { return this.bv.slice(i*3, i*3+3); } 
+    TV( i ) { return this.tv.slice(i*3, i*3+3); } 
+    NV( i ) { return this.n.slice(i*3, i*3+3); }
+    TC( i ) { return this.t.slice(i*2, i*2+2); } 
+    C( i ) { return this.c.slice(i*3, i*3+3); } 
     split(i0, i1) {
-        let v = Vec3.mix([this.v[i0*3], this.v[i0*3+1], this.v[i0*3+2]], [this.v[i1*3], this.v[i1*3+1], this.v[i1*3+2]], 0.5)
+        let v = Vec3.mix(this.V(i0), this.V(i1), 0.5);
         this.v.push( v[0], v[1], v[2] );
-        let tv = Vec3.mix([this.tv[i0*3], this.tv[i0*3+1], this.tv[i0*3+2]], [this.tv[i1*3], this.tv[i1*3+1], this.tv[i1*3+2]], 0.5);
+        let tv = Vec3.mix(this.TV(i0), this.TV(i1), 0.5);
         this.tv.push( tv[0], tv[1], tv[2] );
-        let bv = Vec3.mix([this.bv[i0*3], this.bv[i0*3+1], this.bv[i0*3+2]], [this.bv[i1*3], this.bv[i1*3+1], this.bv[i1*3+2]], 0.5);
+        let bv = Vec3.mix(this.BV(i0), this.BV(i1), 0.5);
         this.bv.push( bv[0], bv[1], bv[2] );
-        let n = Vec3.mix([this.n[i0*3], this.n[i0*3+1], this.n[i0*3+2]], [this.n[i1*3], this.n[i1*3+1], this.n[i1*3+2]], 0.5);
+        let n = Vec3.mix(this.NV(i0), this.NV(i1), 0.5);
         this.n.push( n[0], n[1], n[2] );
-        let t = Vec2.mix([this.t[i0*2], this.t[i0*2+1]], [this.t[i1*2], this.t[i1*2+1]], 0.5);
+        let t = Vec2.mix(this.TC(i0), this.TC(i1), 0.5);
         this.t.push( t[0], t[1] );
-        let c = Vec3.mix([this.c[i0*3], this.c[i0*3+1], this.c[i0*3+2]], [this.c[i1*3], this.c[i1*3+1], this.c[i1*3+2]], 0.5);
+        let c = Vec3.mix(this.C(i0), this.C(i1), 0.5);
         this.c.push( c[0], c[1], c[2] );
     }
     
@@ -430,25 +438,32 @@ class MeshTessellate {
 class MeshObject {
     constructor() {
         this.v = [], this.n = []; this.t = []; this.c = [];
+        this.eps = 0.0001;
     }
-    AddAttr( v, n, t, c ) {
+    addAttr( v, n, t, c ) {
         this.v.push( v[0],v[1],v[2] );
         this.n.push( n[0],n[1],n[2] );
         this.t.push( t[0],t[1] );
         this.c.push( c[0],c[1],c[2] );
     }
-    CreateTangentAndBinormal() {
+    V( i ) { return this.v.slice(i*3, i*3+3); } 
+    BV( i ) { return this.bv.slice(i*3, i*3+3); } 
+    TV( i ) { return this.tv.slice(i*3, i*3+3); } 
+    NV( i ) { return this.n.slice(i*3, i*3+3); }
+    TC( i ) { return this.t.slice(i*2, i*2+2); } 
+    C( i ) { return this.c.slice(i*3, i*3+3); } 
+    
+    V_EQ(i0, i1) { return Vec3.equal(this.V(i0), this.V(i1), this.eps); }
+    N_EQ(i0, i1) { return Vec3.equal(this.N(i0), this.N(i1), this.eps); }
+    
+    createTangentAndBinormal() {
         // calculate face tangent and binormal
         this.tv = new Array(this.n.length), this.bv = new Array(this.n.length);
         let len = this.e ? this.e.length : this.v.length/3;
         for ( let i=0; i < len; i += 3 ) {
             let et = this.e ? [this.e[i], this.e[i+1], this.e[i+2]] : [i, i+1, i+2];
-            let v0 = this.v.slice(et[0]*3, et[0]*3+3);
-            let v1 = this.v.slice(et[1]*3, et[1]*3+3); 
-            let v2 = this.v.slice(et[2]*3, et[2]*3+3);
-            let t0 = this.t.slice(et[0]*2, et[0]*2+2);
-            let t1 = this.t.slice(et[1]*2, et[1]*2+2); 
-            let t2 = this.t.slice(et[2]*2, et[2]*2+2); 
+            let v0 = this.V(et[0]), v1 = this.V(et[1]), v2 = this.V(et[2]);
+            let t0 = this.TC(et[0]), t1 = this.TC(et[1]), t2 = this.TC(et[2]); 
             let dp1  = Vec3.sub(v1,v0);
             let dp2  = Vec3.sub(v2,v0);
             let duv1 = Vec2.sub(t1,t0);
@@ -480,6 +495,22 @@ class MeshObject {
         
         // TODO $$$ interpolated tangents
     }
+
+    uniqueIds() {
+        if (this.uni)
+            return;
+        this.uni = Array(this.v.length/3);
+        for ( let i=0; i<this.v.length/3; ++i ) {
+            let eq_i = -1;
+            for (let j=0; eq_i < 0 && j<i; ++j) { eq_i = this.V_EQ(i,j) ? j : -1; } 
+            this.uni[i] = eq_i >= 0 ? eq_i : i;    
+        }
+    }
+
+    createWedges() {
+        this.uniqueIds();
+        //TODO $$$
+    }
 };
 
 class MeshTetrahedron extends MeshObject {
@@ -495,11 +526,12 @@ class MeshTetrahedron extends MeshObject {
         for ( let is = 0; is < 4; ++ is ) {
             for ( let ip = 0; ip < 3; ++ ip ) { 
                 let i = is*3+ip;
-                this.AddAttr( [this.r*v[e[i]*3], this.r*v[e[i]*3+1], this.r*v[e[i]*3+2]], 
+                this.addAttr( [this.r*v[e[i]*3], this.r*v[e[i]*3+1], this.r*v[e[i]*3+2]], 
                 [-v[ni[is]*3], -v[ni[is]*3+1], -v[ni[is]*3+2]], [t[e[i]*2], t[e[i]*2+1]], [c[is*3], c[is*3+1], c[is*3+2]] );
             } 
         }
-        this.CreateTangentAndBinormal();
+        this.createWedges();
+        this.createTangentAndBinormal();
     }
 };
 
@@ -521,7 +553,8 @@ class MeshCube extends MeshObject {
         }
         this.e = [];
         for ( let i = 0; i < e.length; i += 4 ) { this.e.push( i, i+1, i+2, i, i+2, i+3 ); }
-        this.CreateTangentAndBinormal();   
+        this.createWedges();
+        this.createTangentAndBinormal();   
     }
 };
 
@@ -554,7 +587,8 @@ class MeshIcosahedron extends MeshObject {
                 this.c.push( c[ci*3], c[ci*3+1], c[ci*3+2] );
             }
         }
-        this.CreateTangentAndBinormal();
+        this.createWedges();
+        this.createTangentAndBinormal();
     }
 };
 
@@ -568,11 +602,11 @@ class MeshTube extends MeshObject {
         c = c || [0.2, 0.4, 0.8];
         // bottom cap
         this.e = [];
-        this.AddAttr( [0, 0, h/2], [0, 0, 1], [0.5, 0.5], c );
+        this.addAttr( [0, 0, h/2], [0, 0, 1], [0.5, 0.5], c );
         for ( let i = 0; i <= nc; i ++ ) {
             var a = 2 * Math.PI * i / nc;
             var x = Math.cos( a ), y = Math.sin( a );
-            this.AddAttr( [r*x, r*y, h/2], [0, 0, 1], [x*0.5+0.5, y*0.5+0.5], [c[0], c[1], c[2]] ); 
+            this.addAttr( [r*x, r*y, h/2], [0, 0, 1], [x*0.5+0.5, y*0.5+0.5], [c[0], c[1], c[2]] ); 
             if ( i < nc)
                 this.e.push( 0, i+1, i+2 );
         }
@@ -590,7 +624,7 @@ class MeshTube extends MeshObject {
                     var u = i / nc_2;
                     var a = Math.PI * u + hi * Math.PI;
                     var x = Math.cos( a ), y = Math.sin( a );
-                    this.AddAttr( [r*x, r*y, z], [x, y, 0], [u /*hi*0.5+u*0.5*/, v], c );
+                    this.addAttr( [r*x, r*y, z], [x, y, 0], [u /*hi*0.5+u*0.5*/, v], c );
                 }
             }
         }
@@ -607,19 +641,20 @@ class MeshTube extends MeshObject {
         for ( let i = 0; i <= nc; i ++ ) {
             var a = 2 * Math.PI * i / nc;
             var x = Math.cos( a ), y = Math.sin( a );
-            this.AddAttr( [r*x, r*y, -h/2], [0, 0, -1], [x*0.5+0.5, y*0.5+0.5], c );
+            this.addAttr( [r*x, r*y, -h/2], [0, 0, -1], [x*0.5+0.5, y*0.5+0.5], c );
             if ( i < nc)
                 this.e.push( st+nc+1, st+i+1, st+i );
         } 
-        this.AddAttr( [0, 0, -h/2], [0, 0, -1], [0.5, 0.5], c );
-        this.CreateTangentAndBinormal();
+        this.addAttr( [0, 0, -h/2], [0, 0, -1], [0.5, 0.5], c );
+        this.createWedges();
+        this.createTangentAndBinormal();
     }
 };
 
 class MeshCone extends MeshObject {
     constructor(nc, nl, r, h, c) {
         super();
-        nl = nl || 2;
+        nl = nl || 4;
         nc = nc || 32;
         h = h || 2;
         r = r || h/Math.PI*1.5;
@@ -641,7 +676,7 @@ class MeshCone extends MeshObject {
                     var a = Math.PI * u + hi * Math.PI;
                     var x = Math.cos( a ), y = Math.sin( a );
                     var n = Vec3.normalize( [x, y, r/h] );
-                    this.AddAttr( [d * r*x, d* r*y, z], n, [u /*hi*0.5+u*0.5*/, v], c );
+                    this.addAttr( [d * r*x, d* r*y, z], n, [u /*hi*0.5+u*0.5*/, v], c );
                 }
             }
         }
@@ -662,12 +697,13 @@ class MeshCone extends MeshObject {
         for ( let i = 0; i <= nc; i ++ ) {
             var a = 2 * Math.PI * i / nc;
             var x = Math.cos( a ), y = Math.sin( a );
-            this.AddAttr( [r*x, r*y, -h/3], [0, 0, -1], [x*0.5+0.5, y*0.5+0.5], c );
+            this.addAttr( [r*x, r*y, -h/3], [0, 0, -1], [x*0.5+0.5, y*0.5+0.5], c );
             if ( i < nc)
                 this.e.push( st+nc+1, st+i+1, st+i );
         } 
-        this.AddAttr( [0, 0, -h/3], [0, 0, -1], [0.5, 0.5], c );
-        this.CreateTangentAndBinormal();
+        this.addAttr( [0, 0, -h/3], [0, 0, -1], [0.5, 0.5], c );
+        this.createWedges();
+        this.createTangentAndBinormal();
     }
 };
 
@@ -691,7 +727,7 @@ class MeshSphereSlice extends MeshObject {
                     var u = i / nc_2;
                     var a = Math.PI * u + hi * Math.PI;
                     var x = Math.cos( a ) * cU, y = Math.sin( a ) * cU;
-                    this.AddAttr( [r*x, r*y, r*z], [x, y, z], [hi*0.5+u*0.5, v], c );
+                    this.addAttr( [r*x, r*y, r*z], [x, y, z], [hi*0.5+u*0.5, v], c );
                 }
             }
         }
@@ -713,7 +749,7 @@ class MeshSphereSlice extends MeshObject {
         var si = (nl-1) * cs;
         for ( let i = 0; i < nc_2; i ++ ) { this.e.push( si + i + 1, si + i, si + i + cs ); }
         for ( let i = nc_2+1; i < 2*nc_2+1; i ++ ) { this.e.push( si+i+1, si+i, si+i+cs ); }
-        this.CreateTangentAndBinormal();
+        this.createTangentAndBinormal();
     }
 };
 
@@ -727,14 +763,14 @@ class MeshSphereTessellated extends MeshTetrahedron {
         this.e = [0,1,2,3,4,5,6,7,8,9,10,11];
         for ( let i = 0; i < tc; ++ i )
            this.SplitTriangle();
-        this.CreateTangentAndBinormal();
+        this.createTangentAndBinormal();
     }
     SplitLine( i0, i1 ) {
         let v = Vec3.mul_s(Vec3.normalize([ (this.v[i0*3]+this.v[i1*3])/2, (this.v[i0*3+1]+this.v[i1*3+1])/2, (this.v[i0*3+2]+this.v[i1*3+2])/2 ]),this.r);
         let n = Vec3.normalize([ (this.n[i0*3]+this.n[i1*3])/2, (this.n[i0*3+1]+this.n[i1*3+1])/2, (this.n[i0*3+2]+this.n[i1*3+2])/2 ]);
         let t = [ (this.t[i0*2]+this.t[i1*2])/2, (this.t[i0*2+1]+this.t[i1*2+1])/2 ];
         let c = [ (this.c[i0*3]+this.c[i1*3])/2, (this.c[i0*3+1]+this.c[i1*3+1])/2, (this.c[i0*3+2]+this.c[i1*3+2])/2 ];
-        this.AddAttr( v, n, t, c );
+        this.addAttr( v, n, t, c );
     }
     SplitTriangle() {
         var faces = this.e;
@@ -770,13 +806,13 @@ class MeshTorus extends MeshObject {
                 let tX = Math.cos(2 * Math.PI * i_c / nc), tY = Math.sin(2 * Math.PI * i_c / nc);
                 let p  = [ tcpt[0] * (r + tX*rt), tcpt[1] * (r + tX*rt), tY*rt ];
                 let n  = [ p[0] - tcpt[0]*r, p[1] - tcpt[1]*r, p[2] ];
-                this.AddAttr( p, n, [3*i_l/nl, i_c/nc], c );
+                this.addAttr( p, n, [3*i_l/nl, i_c/nc], c );
                 let i_l0 = i_l * (nc+1), i_l1 = (i_l+1) * (nc+1); 
                 if (i_c < nc && i_l < nl)
                     this.e.push( i_l0+i_c, i_l1+i_c, i_l0+(i_c+1), i_l0+(i_c+1), i_l1+i_c, i_l1+(i_c+1) );
             }
         }
-        this.CreateTangentAndBinormal();
+        this.createTangentAndBinormal();
     }
 };
 
@@ -801,7 +837,7 @@ class MeshTrefoilKnot extends MeshObject {
                 let v = this.compute( s, t + E );
                 v = Vec3.sub( v, p );
                 let n = Vec3.normalize(Vec3.cross( u, v ));
-                this.AddAttr( p, n, [s * 18.0, t], c );
+                this.addAttr( p, n, [s * 18.0, t], c );
             }
         }
         this.e = [];
@@ -814,7 +850,7 @@ class MeshTrefoilKnot extends MeshObject {
             }
             n += stacks+1;
         }
-        this.CreateTangentAndBinormal();
+        this.createTangentAndBinormal();
     }
 
     compute( s, t ) {
@@ -867,7 +903,7 @@ class MeshTorusKnot extends MeshObject {
                 let v = this.compute( s, t + E, p_, q_ );
                 v = Vec3.sub( v, p );
                 let n = Vec3.normalize(Vec3.cross( u, v ));
-                this.AddAttr( p, n, [s * 3.0 * p_ * q_, t], c );
+                this.addAttr( p, n, [s * 3.0 * p_ * q_, t], c );
             }
         }
         this.e = [];
@@ -880,7 +916,7 @@ class MeshTorusKnot extends MeshObject {
             }
             n += stacks + 1;
         }
-        this.CreateTangentAndBinormal();
+        this.createTangentAndBinormal();
     }
 
     compute( s, t, p, q ) {
@@ -975,7 +1011,7 @@ class MeshArrow extends MeshObject {
                     var x = Math.cos( a );
                     var y = Math.sin( a );
                     var n = Vec3.normalize( [x, y, rp/lp] );
-                    this.AddAttr( [d * rp*x, d* rp*y, z], n, [u /*hi*0.5+u*0.5*/, v], c );
+                    this.addAttr( [d * rp*x, d* rp*y, z], n, [u /*hi*0.5+u*0.5*/, v], c );
                 }
             }
         }
@@ -997,11 +1033,11 @@ class MeshArrow extends MeshObject {
             var a = 2 * Math.PI * i / nc;
             var x = Math.cos( a );
             var y = Math.sin( a );
-            this.AddAttr( [rp*x, rp*y, -lp], [0, 0, -1], [x*0.5+0.5, y*0.5+0.5], c );
+            this.addAttr( [rp*x, rp*y, -lp], [0, 0, -1], [x*0.5+0.5, y*0.5+0.5], c );
             if ( i < nc)
                 this.e.push( st+nc+1, st+i+1, st+i );
         } 
-        this.AddAttr( [0, 0, -lp], [0, 0, -1], [0.5, 0.5], c );
+        this.addAttr( [0, 0, -lp], [0, 0, -1], [0.5, 0.5], c );
         // shaft discs
         st = this.v.length/3;
         let s_ratio = 2*ls / (rs*2*Math.PI);
@@ -1016,7 +1052,7 @@ class MeshArrow extends MeshObject {
                     var a = Math.PI * u + hi * Math.PI;
                     var x = Math.cos( a );
                     var y = Math.sin( a );
-                    this.AddAttr( [rs*x, rs*y, z], [x, y, 0], [u /*hi*0.5+u*0.5*/, v], c );
+                    this.addAttr( [rs*x, rs*y, z], [x, y, 0], [u /*hi*0.5+u*0.5*/, v], c );
                 }
             }
         }
@@ -1033,12 +1069,13 @@ class MeshArrow extends MeshObject {
             var a = 2 * Math.PI * i / nc;
             var x = Math.cos( a );
             var y = Math.sin( a );
-            this.AddAttr( [rs*x, rs*y, -lp-ls], [0, 0, -1], [x*0.5+0.5, y*0.5+0.5], c );
+            this.addAttr( [rs*x, rs*y, -lp-ls], [0, 0, -1], [x*0.5+0.5, y*0.5+0.5], c );
             if ( i < nc)
                 this.e.push( st+nc+1, st+i+1, st+i );
         } 
-        this.AddAttr( [0, 0, -lp-ls], [0, 0, -1], [0.5, 0.5], c );
-        this.CreateTangentAndBinormal();
+        this.addAttr( [0, 0, -lp-ls], [0, 0, -1], [0.5, 0.5], c );
+        this.createWedges();
+        this.createTangentAndBinormal();
     }
 };
 
@@ -1428,7 +1465,8 @@ Vec3 = {
         let wa = 1.0-w;
         let wb = w;
         return [a[0]*wa + b[0]*wb, a[1]*wa + b[1]*wb, a[2]*wa + b[2]*wb];
-    }
+    },
+    equal: function( a, b, e ) { return Math.abs(a[0]-b[0]) < e && Math.abs(a[1]-b[1]) < e && Math.abs(a[2]-b[2]) < e; }
 }
 
 Mat22 = {
