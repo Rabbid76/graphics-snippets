@@ -1,3 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='UTF-8'>
+<title>mesh</title>
+
+
+</head>
+<body>
+
 <script id="draw-shader-vs" type="x-shader/x-vertex">
 precision highp float;
 
@@ -60,10 +70,9 @@ html,body { margin: 0; overflow: hidden; }
 #ref-link { position : absolute; bottom : 0; left : 0; }  
 </style>
 
-<body>
-
-<div><form id="gui" name="inputs"><table>
-    <font color=#40f040>Hold the left mouse button pressed and drag to rotate. Release the button to spin.
+<div><form id="gui" name="inputs">
+    <font color=#40f040>Hold the left mouse button pressed and drag to rotate. Release the button to spin.</font>
+    <table>
     <tr> <td> <font color=#40f040>form</font> </td> <td>
         <select id="mesh">
             <option value="0">tetrahedron</option>
@@ -972,6 +981,9 @@ class Texture {
     constructor( name, dflt ) {
         let texture = this;
         this.dflt = dflt || [128,128,128,255]
+        let image = { "cx": this.dflt.w || 1, "cy": this.dflt.h || 1, "plane": this.dflt.p || this.dflt };
+        this.size = [image.cx, image.cy];
+        this.dummyObj = Texture.createTexture2D( image, true )
         this.image = new Image(64,64);
         this.image.setAttribute('crossorigin', 'anonymous');
         this.image.onload = function () {
@@ -984,7 +996,8 @@ class Texture {
             canvas.height = cy;
             var context = canvas.getContext( '2d' );
             context.drawImage( texture.image, 0, 0, canvas.width, canvas.height );
-            texture.textureObj = Texture.createTexture2D( canvas, true )
+            texture.textureObj = Texture.createTexture2D( canvas, true );
+            texture.size = [cx, cy];
         }
         this.image.src = name;
     }
@@ -1005,20 +1018,12 @@ class Texture {
         return t;
     }
     bind( texUnit = 0 ) {
+        gl.activeTexture( gl.TEXTURE0 + texUnit );
         if ( this.textureObj ) { 
-            gl.activeTexture( gl.TEXTURE0 + texUnit );
             gl.bindTexture( gl.TEXTURE_2D, this.textureObj );
-            gl.activeTexture( 0 );
             return true;
         }
-        if ( !this.dummyObj )
-        {
-            let image = { "cx": this.dflt.w || 1, "cy": this.dflt.h || 1, "plane": this.dflt.p || this.dflt };
-            this.dummyObj = Texture.createTexture2D( image, true )
-        }
-        gl.activeTexture( gl.TEXTURE0 + texUnit );
         gl.bindTexture( gl.TEXTURE_2D, this.dummyObj );
-        gl.activeTexture( 0 );
         return false;
     }
 };
@@ -1284,3 +1289,4 @@ requestAnimationFrame(render);
 </script>
 
 </body>
+</html>
