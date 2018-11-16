@@ -46,7 +46,7 @@ enum class TImageKind : t_byte
   displacement_map,        //!< displacement map; 1 channel (red)
   normal_map,              //!< normal map; 3 channels (RGB)
   normal_displacement_map, //!< normal map; 3 channels (RGB) + displacement map; 1 channel (alpha)
-  displacement_cone_map,   //!< displacement map; 1 channel (red) + cone map; 1 channel (green) 
+  displacement_cone_map    //!< displacement map; 1 channel (red) + cone map; 1 channel (green) 
 };
 
 
