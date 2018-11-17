@@ -272,7 +272,7 @@ class App {
         //document.getElementById( "mix_color" ).value = state < 0.33 ? 100 : 0;
         //document.getElementById( "mix_normal" ).checked  = state >= 0.67 ? 1 : 0;
 
-        document.getElementById( "mesh" ).value = 0;
+        //document.getElementById( "mesh" ).value = 1;
 
         this.resize(); 
         this.camera = new Camera( [0, 2, 0], [0, 0, 0], [0, 0, 1], 90, this.vp_size, 0.5, 100 );
@@ -573,9 +573,41 @@ class MeshObject {
         wdg_s=[];
         
         // create the wedges
+        // Note, at the wedges the texture coordinates of vertices with identically 
+        // texture coordinates have to be ident, too (be aware of a 0 to 1 coordinate transition).
+        // So the vertices w[1] and w[2] possibly have to duplicated, but with the texture coordinates of w[0] respectively w[3]  
         for (let i=0; i < wdg.length; ++i) {
             let w = wdg[i];
-            this.e.push(w[1],w[0],w[2],w[1],w[2],w[3]);
+            let t0 = this.TC(w[0]);
+            let t1 = this.TC(w[1]);
+            let ni = w[1];
+
+            // TODO $$$ improve logic change coordinate 0 to 1 or 1 to 0 if necessary (tube, cone)
+            if ( !Vec2.equal(t0, t1, 0.99) ) {
+                ni = this.v.length/3;
+                let v = this.V(w[1]); this.v.push(v[0],v[1],v[2]);
+                let tv = this.TV(w[1]); this.tv.push(tv[0],tv[1],tv[2]);
+                let bv = this.BV(w[1]); this.bv.push(bv[0],bv[1],bv[2]);
+                let n = this.NV(w[1]); this.n.push(n[0],n[1],n[2]);
+                let c = this.C([1]); this.c.push(c[0],c[1],c[2]);
+                this.t.push(t0[0],t0[1]);
+            }
+            this.e.push(ni,w[0],w[2]);
+            if ( !this.NV_EQ(w[2],w[3]) ) {
+                let t2 = this.TC(w[2]);
+                let t3 = this.TC(w[3]);
+                let nni = w[3];
+                if ( !Vec2.equal(t2, t3, 0.99) ) {
+                    nni = this.v.length/3;
+                    let v = this.V(w[3]); this.v.push(v[0],v[1],v[2]);
+                    let tv = this.TV(w[3]); this.tv.push(tv[0],tv[1],tv[2]);
+                    let bv = this.BV(w[3]); this.bv.push(bv[0],bv[1],bv[2]);
+                    let n = this.NV(w[3]); this.n.push(n[0],n[1],n[2]);
+                    let c = this.C([3]); this.c.push(c[0],c[1],c[2]);
+                    this.t.push(t2[0],t2[1]);
+                }
+                this.e.push(ni,w[2],nni);
+            }
         }
     }
 };
@@ -817,6 +849,7 @@ class MeshSphereSlice extends MeshObject {
         for ( let i = 0; i < nc_2; i ++ ) { this.e.push( si + i + 1, si + i, si + i + cs ); }
         for ( let i = nc_2+1; i < 2*nc_2+1; i ++ ) { this.e.push( si+i+1, si+i, si+i+cs ); }
         this.createTangentAndBinormal();
+        this.createWedges();
     }
 };
 
@@ -1514,7 +1547,8 @@ Vec2 = {
         let wa = 1.0-w;
         let wb = w;
         return [a[0]*wa + b[0]*wb, a[1]*wa + b[1]*wb];
-    }
+    },
+    equal: function( a, b, e ) { return Math.abs(a[0]-b[0]) < e && Math.abs(a[1]-b[1]) < e; }
 }
 
 Vec3 = {

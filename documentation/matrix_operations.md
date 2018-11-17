@@ -250,6 +250,28 @@ glTranslatef(-1.0f, 0.0f, 0.0f);
 
 ![arm_10](image/roboterarm/arm_10.png)
 
+### Matrix stack and Shader
+
+In GLSL (1.10) there are provided a bunch of Built-In Uniforms. See [OpenGL Shading Language 1.10 Specification; 7.5 Built-In Uniform State; page 45](https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.1.10.pdf).  
+One of them is `gl_ModelViewProjectionMatrix` of type `mat4`, which provides the transformation by the model view and projection matrix. Separated `gl_ModelViewMatrix` and `gl_ProjectionMatrix` exists as well.
+
+To use them, it has to be switch down the GLSL version in the fragment shader. It is sufficient to change the version in the vertex shader, it would be possible to use a different (higher) version in the fragment shader. Of course this won't be possible with a core profile context,  but the fixed function matrix stack can't be use in the core profile, too:
+
+    #version 120
+
+    void main()
+    {
+        gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
+    }
+
+A handy function is `ftransform`, which is described in [OpenGL Shading Language 1.10 Specification; 8.4 Geometric Functions; page 54](https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.1.10.pdf):
+
+> For vertex shaders only. This function will ensure that the incoming vertex value will be transformed in a way that produces exactly the same result as would be produced by OpenGL’s fixed functionality transform. It is intended to be used to compute `gl_Position`, e.g., 
+
+>    gl_Position = ftransform();
+
+> This function should be used, for example, when an application is rendering the same geometry in separate passes, and one pass uses the fixed functionality path to render and another pass uses programmable shaders.
+
 <br/><hr/>
 
 ## Matrix operations
