@@ -849,10 +849,11 @@ class ShProg {
 }
 
 class VertexBuffer {
-    constructor(gl, attribs, indices, type) {
+    constructor(gl, attribs, indices, type, ext_unit) {
         this.gl = gl;
         this.buf = [];
         this.attr = [];
+        this.ext_uint = ext_unit;
         if ( indices )
             this.inxLen = indices.length;
         this.primitive_type = type ? type : gl.TRIANGLES;
@@ -894,7 +895,18 @@ class VertexBuffer {
         if ( this.inxLen > 0 ) {
             this.inx = this. gl.createBuffer();
             this.gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.inx);
-            this.gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( indices ), gl.STATIC_DRAW);
+            let indArray;
+            if ( indices.length > 65536 && this.ext_uint) {
+                this.index_type = gl.UNSIGNED_INT;
+                indArray = new Uint32Array( indices );
+            } else if ( indices.length > 256 ) {
+                this.index_type = gl.UNSIGNED_SHORT;
+                indArray = new Uint16Array( indices );
+            } else {
+                this.index_type = gl.UNSIGNED_BYTE;
+                indArray = new Uint8Array( indices );
+            }
+            this.gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indArray, gl.STATIC_DRAW);
             if ( !this.vao )
                 this.gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
         }
@@ -907,7 +919,7 @@ class VertexBuffer {
     Draw() {
         this.Prepare();
         if (this.inxLen > 0)
-            this.gl.drawElements(this.primitive_type, this.inxLen, gl.UNSIGNED_SHORT, 0);
+            this.gl.drawElements(this.primitive_type, this.inxLen, this.index_type, 0);
         else
             this.gl.drawArrays(this.primitive_type, 0, this.attr[0].no_of);
         this.Release();

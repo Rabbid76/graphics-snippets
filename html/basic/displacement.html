@@ -169,7 +169,7 @@ html,body { margin: 0; overflow: hidden; }
 </style>
 
 <div><form id="gui" name="inputs">
-    <font color=#40f040>Hold the left mouse button pressed and drag to rotate. Release the button to spin.</font>
+    <font color=#40f040><span id="instruction">Hold the left mouse button pressed and drag to rotate. Release the button to spin.</span></font>
     <table>
     <tr> <td> <font color=#40f040>form</font> </td> <td>
         <select id="mesh">
@@ -195,7 +195,12 @@ html,body { margin: 0; overflow: hidden; }
     <tr> <td> <font color= #40f040>displacement height</font> </td> 
         <td> <input type="range" id="height" min="0" max="100" value="50"/>
     </td> </tr>
-</table></form></div>
+    <tr> <td> <font color= #40f040>tessellation</font> </td> 
+        <td> <input type="range" id="tessellation" min="10" max="100" value="25"/>
+    </td> </tr>
+    </table>
+    <font color=#40f040><span id="info">:</span></font>
+</form></div>
 
 <!--div id="ref-link">
   <a href=""> 
@@ -215,14 +220,18 @@ class App {
     constructor() {
         this.canvas = document.getElementById( "canvas");
         //gl = canvas.getContext( "webgl2" );
-        //if ( !gl )
-        //    gl = canvas.getContext( "experimental-webgl" );
+        if ( gl )
+            this.ext_uint = true;
+        if ( !gl )
+            gl = canvas.getContext( "experimental-webgl" );
         if ( !gl )
             gl = canvas.getContext( "webgl" );
         if ( !gl )
             return null;
         
-        let ext_standard_derivatives = gl.getExtension("OES_standard_derivatives");  // dFdx, dFdy
+        if ( gl.getExtension('OES_element_index_uint') )
+            this.ext_uint = true;
+        this.ext_standard_derivatives = gl.getExtension("OES_standard_derivatives");  // dFdx, dFdy
         //if (!ext_standard_derivatives)
         //    console.log('no standard derivatives support (no dFdx, dFdy)');
         //if (!ext_vao)
@@ -264,7 +273,7 @@ class App {
 
         this.tessellates = [];
         for (let i=0; i < this.meshDefs.length; ++i ) {
-            this.tessellates.push( new MeshTessellate( this.meshDefs[i], this.progDraw ) );
+            this.tessellates.push( new MeshTessellate( this.meshDefs[i], this.progDraw, this.ext_uint ) );
         }
 
         document.getElementById( "mesh" ).value = Math.floor((Math.random() * this.meshDefs.length));
@@ -295,8 +304,13 @@ class App {
         var mix_color = document.getElementById( "mix_color" ).value / 100.0;
         var mix_normal = document.getElementById( "mix_normal" ).checked;
         var height = 0.2 * document.getElementById( "height" ).value / 100.0;
+        var tessellation = document.getElementById( "tessellation" ).value / 100.0;
+        var max_dist = Math.max(0.01, tessellation * tessellation).toFixed(4);
 
-        this.tessellates[i_mesh].prepare(0.05);
+        let changed = this.tessellates[i_mesh].prepare(max_dist);
+        if ( changed ) {
+            document.getElementById("info").innerHTML = "tessellation distance: " + max_dist + "  vertices: " + this.tessellates[i_mesh].no_of_vertices;
+        }
         
         // setup view projection and model
         this.camera.update( this.vp_size );
@@ -336,20 +350,24 @@ class App {
 }
 
 class MeshTessellate {
-    constructor(meshDef, program) {
+    constructor(meshDef, program, ext_uint) {
         this.meshDef = meshDef;
         this.program = program;
+        this.ext_uint = ext_uint;
     }
     prepare(maxDist) {
         maxDist = !maxDist || maxDist < 0.0 ? 0.0 : maxDist;
         if (!this.mesh || this.maxDist == undefined || this.maxDist != maxDist) {
             this.tessellate(maxDist);
+            this.no_of_vertices = this.v.length / 3;
+            return true;
         }
+        return false;
     }
 
     tessellate(maxDist) {
         this.maxDist = maxDist;
-        
+
         if (this.meshDef.v) { this.v = this.meshDef.v.slice(0); }
         if (this.meshDef.tv) { this.tv = this.meshDef.tv.slice(0); }
         if (this.meshDef.bv) { this.bv = this.meshDef.bv.slice(0); }
@@ -407,7 +425,7 @@ class MeshTessellate {
               { data : this.n,  attrSize : 3, attrLoc : this.program.inNV },
               { data : this.c,  attrSize : 3, attrLoc : this.program.inCol }, 
               { data : this.t,  attrSize : 2, attrLoc : this.program.inUV } 
-            ], this.e );
+            ], this.e, gl.TRIANGLES, this.ext_uint );
     }
 
     V( i ) { return this.v.slice(i*3, i*3+3); } 
@@ -1238,10 +1256,11 @@ class ShProg {
 }
 
 class VertexBuffer {
-    constructor(gl, attribs, indices, type) {
+    constructor(gl, attribs, indices, type, ext_unit) {
         this.gl = gl;
         this.buf = [];
         this.attr = [];
+        this.ext_uint = ext_unit;
         if ( indices )
             this.inxLen = indices.length;
         this.primitive_type = type ? type : gl.TRIANGLES;
@@ -1283,7 +1302,18 @@ class VertexBuffer {
         if ( this.inxLen > 0 ) {
             this.inx = this. gl.createBuffer();
             this.gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.inx);
-            this.gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( indices ), gl.STATIC_DRAW);
+            let indArray;
+            if ( indices.length > 65536 && this.ext_uint) {
+                this.index_type = gl.UNSIGNED_INT;
+                indArray = new Uint32Array( indices );
+            } else if ( indices.length > 256 ) {
+                this.index_type = gl.UNSIGNED_SHORT;
+                indArray = new Uint16Array( indices );
+            } else {
+                this.index_type = gl.UNSIGNED_BYTE;
+                indArray = new Uint8Array( indices );
+            }
+            this.gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indArray, gl.STATIC_DRAW);
             if ( !this.vao )
                 this.gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
         }
@@ -1296,7 +1326,7 @@ class VertexBuffer {
     Draw() {
         this.Prepare();
         if (this.inxLen > 0)
-            this.gl.drawElements(this.primitive_type, this.inxLen, gl.UNSIGNED_SHORT, 0);
+            this.gl.drawElements(this.primitive_type, this.inxLen, this.index_type, 0);
         else
             this.gl.drawArrays(this.primitive_type, 0, this.attr[0].no_of);
         this.Release();
