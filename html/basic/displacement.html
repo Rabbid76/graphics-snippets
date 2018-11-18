@@ -195,6 +195,9 @@ html,body { margin: 0; overflow: hidden; }
     <tr> <td> <font color= #40f040>displacement height</font> </td> 
         <td> <input type="range" id="height" min="0" max="100" value="50"/>
     </td> </tr>
+    <tr> <td> <font color=#40f040>hull</font> </td> 
+        <td> <input type="checkbox" id="hull" value="0" />
+    </td></tr>
     <tr> <td> <font color= #40f040>tessellation</font> </td> 
         <td> <input type="range" id="tessellation" min="10" max="100" value="25"/>
     </td> </tr>
@@ -240,7 +243,7 @@ class App {
         this.texture = new Texture( "https://raw.githubusercontent.com/Rabbid76/graphics-snippets/master/resource/texture/example_1_texture.bmp" ); 
         this.texture.unit = 1;
         this.texture.bound = false;
-        this.displacement = new Texture( "https://raw.githubusercontent.com/Rabbid76/graphics-snippets/master/resource/texture/example_1_heightmap.bmp" ); 
+        this.displacement = new Texture( "https://raw.githubusercontent.com/Rabbid76/graphics-snippets/master/resource/texture/example_1_heightmap.bmp", [255,255,255,255] ); 
         this.displacement.unit = 2;
         this.displacement.bound = false;
 
@@ -304,6 +307,7 @@ class App {
         var mix_color = document.getElementById( "mix_color" ).value / 100.0;
         var mix_normal = document.getElementById( "mix_normal" ).checked;
         var height = 0.2 * document.getElementById( "height" ).value / 100.0;
+        var hull = document.getElementById( "hull" ).checked;
         var tessellation = document.getElementById( "tessellation" ).value / 100.0;
         var max_dist = Math.max(0.01, tessellation * tessellation).toFixed(4);
 
@@ -327,8 +331,18 @@ class App {
         gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
 
         // bind the texture
-        this.texture.bound = this.texture.bound || this.texture.bind( this.texture.unit );
-        this.displacement.bound = this.displacement.bound || this.displacement.bind( this.displacement.unit );
+        if ( hull != this.hull ) {
+            this.texture.bound = false;
+            this.displacement.bound = false;
+            this.hull = hull
+        }
+        if ( this.hull  ) {
+            this.texture.bound = this.texture.bound || this.texture.bindDflt( this.texture.unit );
+            this.displacement.bound = this.displacement.bound || this.displacement.bindDflt( this.displacement.unit );
+        } else {
+            this.texture.bound = this.texture.bound || this.texture.bind( this.texture.unit );
+            this.displacement.bound = this.displacement.bound || this.displacement.bind( this.displacement.unit );
+        }
 
         // set up draw shader
         this.progDraw.Use();
@@ -1394,12 +1408,17 @@ class Texture {
         gl.bindTexture( gl.TEXTURE_2D, null );
         return t;
     }
-    bind( texUnit = 0 ) {
+    bind( texUnit ) {
         gl.activeTexture( gl.TEXTURE0 + texUnit );
         if ( this.textureObj ) { 
             gl.bindTexture( gl.TEXTURE_2D, this.textureObj );
             return true;
         }
+        gl.bindTexture( gl.TEXTURE_2D, this.dummyObj );
+        return false;
+    }
+    bindDflt( texUnit ) {
+        gl.activeTexture( gl.TEXTURE0 + texUnit );
         gl.bindTexture( gl.TEXTURE_2D, this.dummyObj );
         return false;
     }
