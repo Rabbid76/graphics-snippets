@@ -246,7 +246,7 @@ class App {
 
         this.progDraw = new ShProg( 
             [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },
-                { source : "draw-shader-fs", stage : gl.FRAGMENT_SHADER }
+              { source : "draw-shader-fs", stage : gl.FRAGMENT_SHADER }
             ] );
         if ( !this.progDraw.progObj )
             return null;
@@ -281,7 +281,7 @@ class App {
         //document.getElementById( "mix_color" ).value = state < 0.33 ? 100 : 0;
         //document.getElementById( "mix_normal" ).checked  = state >= 0.67 ? 1 : 0;
 
-        //document.getElementById( "mesh" ).value = 1;
+        document.getElementById( "mesh" ).value = 10;
 
         this.resize(); 
         this.camera = new Camera( [0, 2, 0], [0, 0, 0], [0, 0, 1], 90, this.vp_size, 0.5, 100 );
@@ -457,11 +457,15 @@ class MeshObject {
         this.v = [], this.n = []; this.t = []; this.c = [];
         this.eps = 0.0001;
     }
-    addAttr( v, n, t, c ) {
+    addAttr( v, n, t, c, tv, bv ) {
+        let i = this.v.length / 3;
         this.v.push( v[0],v[1],v[2] );
         this.n.push( n[0],n[1],n[2] );
         this.t.push( t[0],t[1] );
         this.c.push( c[0],c[1],c[2] );
+        if ( tv && this.tv ) { this.tv.push( tv[0],tv[1],tv[2] ); }
+        if ( bv && this.bv ) { this.bv.push( bv[0],bv[1],bv[2] ); }
+        return i;
     }
     V( i ) { return this.v.slice(i*3, i*3+3); } 
     BV( i ) { return this.bv.slice(i*3, i*3+3); } 
@@ -469,6 +473,7 @@ class MeshObject {
     NV( i ) { return this.n.slice(i*3, i*3+3); }
     TC( i ) { return this.t.slice(i*2, i*2+2); } 
     C( i ) { return this.c.slice(i*3, i*3+3); } 
+    IsBorder(tc) { return Math.abs(tc) < 0.0001 || Math.abs(tc-1) < 0.0001; }
     
     V_EQ(i0, i1) { return Vec3.equal(this.V(i0), this.V(i1), this.eps); }
     NV_EQ(i0, i1) { return Vec3.equal(this.NV(i0), this.NV(i1), this.eps); }
@@ -595,36 +600,28 @@ class MeshObject {
         // texture coordinates have to be ident, too (be aware of a 0 to 1 coordinate transition).
         // So the vertices w[1] and w[2] possibly have to duplicated, but with the texture coordinates of w[0] respectively w[3]  
         for (let i=0; i < wdg.length; ++i) {
-            let w = wdg[i];
+            let w = wdg[i].slice(0);
             let t0 = this.TC(w[0]);
             let t1 = this.TC(w[1]);
-            let ni = w[1];
-
-            // TODO $$$ improve logic change coordinate 0 to 1 or 1 to 0 if necessary (tube, cone)
-            if ( !Vec2.equal(t0, t1, 0.99) ) {
-                ni = this.v.length/3;
-                let v = this.V(w[1]); this.v.push(v[0],v[1],v[2]);
-                let tv = this.TV(w[1]); this.tv.push(tv[0],tv[1],tv[2]);
-                let bv = this.BV(w[1]); this.bv.push(bv[0],bv[1],bv[2]);
-                let n = this.NV(w[1]); this.n.push(n[0],n[1],n[2]);
-                let c = this.C([1]); this.c.push(c[0],c[1],c[2]);
-                this.t.push(t0[0],t0[1]);
-            }
-            this.e.push(ni,w[0],w[2]);
+            let bd = [ this.IsBorder(t0[0]), this.IsBorder(t0[1]), this.IsBorder(t1[0]),this.IsBorder(t1[1]) ];
+            if ( !Vec2.equal(t0, t1, 0.99) || (bd[0] && bd[3]) || (bd[1] && bd[2]) )
+                w[1] = this.addAttr( this.V(w[1]), this.NV(w[1]), t0, this.C(w[1]), this.TV(w[1]), this.BV(w[1]) );
+            else if ( bd[2] && bd[3] )
+                w[0] = this.addAttr( this.V(w[0]), this.NV(w[0]), t1, this.C(w[0]), this.TV(w[0]), this.BV(w[0]) );
+            else if ( bd[0] && bd[1] )
+                w[1] = this.addAttr( this.V(w[1]), this.NV(w[1]), t0, this.C(w[1]), this.TV(w[1]), this.BV(w[1]) );
+            this.e.push(w[1],w[0],w[2]);
             if ( !this.NV_EQ(w[2],w[3]) ) {
                 let t2 = this.TC(w[2]);
                 let t3 = this.TC(w[3]);
-                let nni = w[3];
-                if ( !Vec2.equal(t2, t3, 0.99) ) {
-                    nni = this.v.length/3;
-                    let v = this.V(w[3]); this.v.push(v[0],v[1],v[2]);
-                    let tv = this.TV(w[3]); this.tv.push(tv[0],tv[1],tv[2]);
-                    let bv = this.BV(w[3]); this.bv.push(bv[0],bv[1],bv[2]);
-                    let n = this.NV(w[3]); this.n.push(n[0],n[1],n[2]);
-                    let c = this.C([3]); this.c.push(c[0],c[1],c[2]);
-                    this.t.push(t2[0],t2[1]);
-                }
-                this.e.push(ni,w[2],nni);
+                let bd = [ this.IsBorder(t2[0]), this.IsBorder(t2[1]), this.IsBorder(t3[0]),this.IsBorder(t3[1]) ];
+                if ( !Vec2.equal(t2, t3, 0.99) || (bd[0] && bd[3]) || (bd[1] && bd[2]) )
+                    w[3] = this.addAttr( this.V(w[3]), this.NV(w[3]), t2, this.C(w[3]), this.TV(w[3]), this.BV(w[3]) );
+                else if ( bd[2] && bd[3] )
+                    w[2] = this.addAttr( this.V(w[2]), this.NV(w[2]), t3, this.C(w[2]), this.TV(w[2]), this.BV(w[2]) );
+                else if ( bd[0] && bd[1] )
+                    w[3] = this.addAttr( this.V(w[3]), this.NV(w[3]), t2, this.C(w[3]), this.TV(w[3]), this.BV(w[3]) );
+                this.e.push(w[1],w[2],w[3]);
             }
         }
     }
@@ -721,9 +718,12 @@ class MeshTube extends MeshObject {
         this.e = [];
         this.addAttr( [0, 0, h/2], [0, 0, 1], [0.5, 0.5], c );
         for ( let i = 0; i <= nc; i ++ ) {
-            var a = 2 * Math.PI * i / nc;
-            var x = Math.cos( a ), y = Math.sin( a );
-            this.addAttr( [r*x, r*y, h/2], [0, 0, 1], [x*0.5+0.5, y*0.5+0.5], [c[0], c[1], c[2]] ); 
+            let a = 2 * Math.PI * i / nc;
+            let x = Math.cos( a ), y = Math.sin( a );
+            let uvs = 1/Math.abs(Math.abs(x)>Math.abs(y) ? x : y);
+            let u = uvs*x*0.5+0.5;
+            let v = uvs*y*0.5+0.5;
+            this.addAttr( [r*x, r*y, h/2], [0, 0, 1], [u, v], [c[0], c[1], c[2]] ); 
             if ( i < nc)
                 this.e.push( 0, i+1, i+2 );
         }
@@ -733,14 +733,14 @@ class MeshTube extends MeshObject {
         let ratio = 2*h / (r*2*Math.PI);
         for ( let tbI = 0; tbI <= nl; tbI ++ )
         {
-            var v = ( 1.0 - tbI / nl ) * ratio;
-            var z =   h/2 - h * tbI / nl;
+            let v = ( 1.0 - tbI / nl ) * ratio;
+            let z =   h/2 - h * tbI / nl;
             // create 2 hemispheres, so would be possible to wrap 1 texture at both hemispheres 
             for ( let hi = 0; hi < 2; ++ hi ) {
                 for ( let i = 0; i <= nc_2; i ++ ) {
-                    var u = i / nc_2;
-                    var a = Math.PI * u + hi * Math.PI;
-                    var x = Math.cos( a ), y = Math.sin( a );
+                    let u = i / nc_2;
+                    let a = Math.PI * u + hi * Math.PI;
+                    let x = Math.cos( a ), y = Math.sin( a );
                     this.addAttr( [r*x, r*y, z], [x, y, 0], [u /*hi*0.5+u*0.5*/, v], c );
                 }
             }
@@ -756,9 +756,12 @@ class MeshTube extends MeshObject {
         // bottom cap
         st = this.v.length/3;
         for ( let i = 0; i <= nc; i ++ ) {
-            var a = 2 * Math.PI * i / nc;
-            var x = Math.cos( a ), y = Math.sin( a );
-            this.addAttr( [r*x, r*y, -h/2], [0, 0, -1], [x*0.5+0.5, y*0.5+0.5], c );
+            let a = 2 * Math.PI * i / nc;
+            let x = Math.cos( a ), y = Math.sin( a );
+            let uvs = 1/Math.abs(Math.abs(x)>Math.abs(y) ? x : y);
+            let u = uvs*x*0.5+0.5;
+            let v = uvs*y*0.5+0.5;
+            this.addAttr( [r*x, r*y, -h/2], [0, 0, -1], [u, v], c );
             if ( i < nc)
                 this.e.push( st+nc+1, st+i+1, st+i );
         } 
@@ -814,7 +817,10 @@ class MeshCone extends MeshObject {
         for ( let i = 0; i <= nc; i ++ ) {
             var a = 2 * Math.PI * i / nc;
             var x = Math.cos( a ), y = Math.sin( a );
-            this.addAttr( [r*x, r*y, -h/3], [0, 0, -1], [x*0.5+0.5, y*0.5+0.5], c );
+            let uvs = 1/Math.abs(Math.abs(x)>Math.abs(y) ? x : y);
+            let u_ = uvs*x*0.5+0.5;
+            let v_ = uvs*y*0.5+0.5;
+            this.addAttr( [r*x, r*y, -h/3], [0, 0, -1], [u_, v_], c );
             if ( i < nc)
                 this.e.push( st+nc+1, st+i+1, st+i );
         } 
@@ -1134,14 +1140,14 @@ class MeshArrow extends MeshObject {
             }
         }
         let cs_2 = nc_2 + 1;
-        for ( let tbI = 0; tbI < nls; tbI ++ ) {
+        for ( let tbI = 0; tbI < nlp; tbI ++ ) {
             for ( let hi = 0; hi < 2; ++ hi ) {
-                let rsi = st +tbI*2*cs_2 + hi*cs_2;
-                let nrsi = rsi + 2*cs_2;
+                let rpi = st +tbI*2*cs_2 + hi*cs_2;
+                let nrpi = rpi + 2*cs_2;
                 for ( let i = 0; i < nc_2; i ++ ) { 
-                    this.e.push( rsi+i, nrsi+i, nrsi+i+1 );
+                    this.e.push( rpi+i, nrpi+i, nrpi+i+1 );
                     if ( tbI > 0 ) 
-                        this.e.push( rsi+i, nrsi+i+1, rsi+i+1 ); 
+                        this.e.push( rpi+i, nrpi+i+1, rpi+i+1 ); 
                 }
             }
         }
@@ -1151,7 +1157,10 @@ class MeshArrow extends MeshObject {
             var a = 2 * Math.PI * i / nc;
             var x = Math.cos( a );
             var y = Math.sin( a );
-            this.addAttr( [rp*x, rp*y, -lp], [0, 0, -1], [x*0.5+0.5, y*0.5+0.5], c );
+            let uvs = 1/Math.abs(Math.abs(x)>Math.abs(y) ? x : y);
+            let u_ = uvs*x*0.5+0.5;
+            let v_ = uvs*y*0.5+0.5;
+            this.addAttr( [rp*x, rp*y, -lp], [0, 0, -1], [u_, v_], c );
             if ( i < nc)
                 this.e.push( st+nc+1, st+i+1, st+i );
         } 
@@ -1187,7 +1196,10 @@ class MeshArrow extends MeshObject {
             var a = 2 * Math.PI * i / nc;
             var x = Math.cos( a );
             var y = Math.sin( a );
-            this.addAttr( [rs*x, rs*y, -lp-ls], [0, 0, -1], [x*0.5+0.5, y*0.5+0.5], c );
+            let uvs = 1/Math.abs(Math.abs(x)>Math.abs(y) ? x : y);
+            let u_ = uvs*x*0.5+0.5;
+            let v_ = uvs*y*0.5+0.5;
+            this.addAttr( [rs*x, rs*y, -lp-ls], [0, 0, -1], [u_, v_], c );
             if ( i < nc)
                 this.e.push( st+nc+1, st+i+1, st+i );
         } 
