@@ -28,9 +28,9 @@
 
 ---
 
-## HTML
+## WebGL
 
-### Basic
+### Geometry
 
 [Mesh](https://rabbid76.github.io/graphics-snippets/html/basic/mesh.html)
 
@@ -38,27 +38,9 @@
 
 ### App
 
-[Rubiks](https://rabbid76.github.io/graphics-snippets/html/app/rubiks_cube.html)
+[Rubiks cube](https://rabbid76.github.io/graphics-snippets/html/app/rubiks_cube.html)
 
-### WebGL tools
-
-[Light Model](https://rabbid76.github.io/graphics-snippets/html/tools/light_model_view.html)
-
-[Height Map Generator](https://rabbid76.github.io/graphics-snippets/html/tools/height_map_generator.html)
-
-[Function Plotter](https://rabbid76.github.io/graphics-snippets/html/tools/function_plotter.html)
-
-### Special
-
-[Fire](https://rabbid76.github.io/graphics-snippets/html/effect/fire.html)
-
-### Technique
-
-#### SSAO
-
-[SSAO](https://rabbid76.github.io/graphics-snippets/html/technique/ssao.html)
-
-#### Normal and Parallax Mapping
+### Normal and Parallax Mapping
 
 [No Mapping](https://rabbid76.github.io/graphics-snippets/html/technique/parallax_001_no_parallax_mapping.html)
 
@@ -73,6 +55,22 @@
 [Cone Step Mapping](https://rabbid76.github.io/graphics-snippets/html/technique/parallax_006_cone_step_mapping_derivative_tbn.html)
 
 [Compare of different "bump" mapping techniques](https://rabbid76.github.io/graphics-snippets/html/technique/parallax_mapping.html)
+
+### Ambient occlusion
+
+[SSAO (Screen Space Ambient Occlusion)](https://rabbid76.github.io/graphics-snippets/html/technique/ssao.html)
+
+### Special
+
+[Fire](https://rabbid76.github.io/graphics-snippets/html/effect/fire.html)
+
+### Tools
+
+[Light Model](https://rabbid76.github.io/graphics-snippets/html/tools/light_model_view.html)
+
+[Height Map Generator](https://rabbid76.github.io/graphics-snippets/html/tools/height_map_generator.html)
+
+[Function Plotter](https://rabbid76.github.io/graphics-snippets/html/tools/function_plotter.html)
 
 ### StackOverflow examples
 

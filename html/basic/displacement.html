@@ -452,10 +452,13 @@ class MeshTessellate {
         let v = Vec3.mix(this.V(i0), this.V(i1), 0.5);
         this.v.push( v[0], v[1], v[2] );
         let tv = Vec3.mix(this.TV(i0), this.TV(i1), 0.5);
+        //let tv = Vec3.normalize(Vec3.add(this.TV(i0), this.TV(i1)));
         this.tv.push( tv[0], tv[1], tv[2] );
         let bv = Vec3.mix(this.BV(i0), this.BV(i1), 0.5);
+        //let bv = Vec3.normalize(Vec3.add(this.BV(i0), this.BV(i1)));
         this.bv.push( bv[0], bv[1], bv[2] );
         let n = Vec3.mix(this.NV(i0), this.NV(i1), 0.5);
+        //let n = Vec3.normalize(Vec3.add(this.NV(i0), this.NV(i1)));
         this.n.push( n[0], n[1], n[2] );
         let t = Vec2.mix(this.TC(i0), this.TC(i1), 0.5);
         this.t.push( t[0], t[1] );
