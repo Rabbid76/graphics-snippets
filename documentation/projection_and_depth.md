@@ -97,6 +97,7 @@ perspective projection: field of view (y) of *100 degrees*, near plane at *0.1*,
 
 ### Normalized device coordinates
 
+The normalized device space is a cube, with right, bottom, front of (-1, -1, -1) and a left, top, back of (1, 1, 1).
 The normalized device coordinates are the clip space coordinates divide by the `w` component of the clip coordinates. This is called [Perspective divide](https://www.khronos.org/opengl/wiki/Vertex_Post-Processing#Perspective_divide)
 
 ![normalized device coordinates](image/NDC.png)
