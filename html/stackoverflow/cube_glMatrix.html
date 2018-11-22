@@ -1,0 +1,270 @@
+<script id="draw-shader-vs" type="x-shader/x-vertex">
+precision highp float;
+
+attribute vec3 inPos;
+attribute vec3 inCol;
+
+varying vec3 vertCol;
+
+uniform mat4 mWorld;
+uniform mat4 mView;
+uniform mat4 mProj;
+
+void main()
+{   
+    vertCol     = inCol;
+    gl_Position = mProj * mView * mWorld * vec4( inPos, 1.0 );
+}
+</script>
+
+<script id="draw-shader-fs" type="x-shader/x-fragment">
+precision mediump float;
+
+varying vec3 vertCol;
+
+uniform float u_shininess;
+
+void main()
+{
+    vec3 color   = vertCol;
+    gl_FragColor = vec4( color.rgb, 1.0 );
+} 
+</script>
+
+<style>
+
+html,body { height: 100%; width: 100%; margin: 0; overflow: hidden; }
+#gui { position : absolute; top : 0; left : 0; }
+#ref-link { position : absolute; bottom : 0; left : 0; }
+
+</style>
+
+<body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.7.1/gl-matrix-min.js"></script>
+
+<canvas id="canvas" style="border: none;"></canvas>
+
+<a id="ref-link" href="https://stackoverflow.com/questions/52971138/webgl-translate-javascript/52972774?noredirect=1#comment92854518_52972774">
+<font color= #CCF>webgl translate javaScript</font> 
+</a>
+
+<script type="text/javascript">
+
+// https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.7.1/gl-matrix-min.js
+// mat4 documentation: http://glmatrix.net/docs/module-mat4.html
+
+var readInput = true;
+function changeEventHandler(event){
+    readInput = true;
+}
+
+(function loadscene() {
+
+var gl, progDraw, vp_size;
+var bufCube = {};
+
+function render(deltaMS){
+
+    var worldMatrix = new Float32Array(16);
+    var viewMatrix = new Float32Array(16);
+    var projMatrix = new Float32Array(16);
+
+    mat4.identity(worldMatrix);
+    mat4.lookAt(viewMatrix, [0, 0, -8], [0, 0, 0], [0, 1, 0]);
+    mat4.perspective(projMatrix, glMatrix.toRadian(45), canvas.clientWidth / canvas.clientHeight, 0.1, 1000.0);
+
+    var xRotationMatrix = new Float32Array(16);
+    var yRotationMatrix = new Float32Array(16);
+    var identityMatrix = new Float32Array(16); 
+    mat4.identity(identityMatrix);
+
+    angle = deltaMS / 1000 / 6 * 2 * Math.PI;
+
+    var translationMat = mat4.create();
+
+    var translation = vec3.create();
+    vec3.set (translation, Math.sin(deltaMS/1000.0) * 1.5, 0, 0); 
+    mat4.translate(translationMat, translationMat, translation);
+
+    mat4.rotate(yRotationMatrix, identityMatrix, angle, [0, 1, 0]);
+    mat4.rotate(xRotationMatrix, identityMatrix, angle / 4, [1, 0, 0]);
+
+    worldMatrix = mat4.clone(translationMat);
+    mat4.mul(worldMatrix, worldMatrix, xRotationMatrix);
+    mat4.mul(worldMatrix, worldMatrix, yRotationMatrix);
+
+    gl.viewport( 0, 0, vp_size[0], vp_size[1] );
+    gl.enable( gl.DEPTH_TEST );
+    gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
+    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+
+    ShProg.Use( progDraw );
+    ShProg.SetM44( progDraw, "mProj", projMatrix );
+    ShProg.SetM44( progDraw, "mView", viewMatrix );
+    ShProg.SetM44( progDraw, "mWorld", worldMatrix );
+    VertexBuffer.Draw( bufCube );
+
+    requestAnimationFrame(render);
+}
+
+function resize() {
+    //vp_size = [gl.drawingBufferWidth, gl.drawingBufferHeight];
+    vp_size = [window.innerWidth, window.innerHeight]
+    canvas.width = vp_size[0];
+    canvas.height = vp_size[1];
+}
+
+function initScene() {
+
+    canvas = document.getElementById( "canvas");
+    gl = canvas.getContext( "experimental-webgl" );
+    if ( !gl )
+        return null;
+    
+    progDraw = ShProg.Create( 
+    [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },
+        { source : "draw-shader-fs", stage : gl.FRAGMENT_SHADER }
+    ] );
+    if ( !progDraw.progObj )
+        return null;
+    progDraw.inPos = gl.getAttribLocation( progDraw.progObj, "inPos" );
+    progDraw.inNV  = gl.getAttribLocation( progDraw.progObj, "inNV" );
+    progDraw.inCol = gl.getAttribLocation( progDraw.progObj, "inCol" );
+    
+    // create cube
+    var cubePos = [
+        -1.0, -1.0,  1.0,  1.0, -1.0,  1.0,  1.0,  1.0,  1.0, -1.0,  1.0,  1.0,
+        -1.0, -1.0, -1.0,  1.0, -1.0, -1.0,  1.0,  1.0, -1.0, -1.0,  1.0, -1.0 ];
+    var cubeCol = [ 1.0, 0.0, 0.0, 1.0, 0.5, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 ];
+    var cubeHlpInx = [ 0, 1, 2, 3, 1, 5, 6, 2, 5, 4, 7, 6, 4, 0, 3, 7, 3, 2, 6, 7, 1, 0, 4, 5 ];  
+    var cubePosData = [];
+    for ( var i = 0; i < cubeHlpInx.length; ++ i ) {
+        cubePosData.push( cubePos[cubeHlpInx[i]*3], cubePos[cubeHlpInx[i]*3+1], cubePos[cubeHlpInx[i]*3+2] );
+    }
+    var cubeNVData = [];
+    for ( var i1 = 0; i1 < cubeHlpInx.length; i1 += 4 ) {
+    var nv = [0, 0, 0];
+    for ( i2 = 0; i2 < 4; ++ i2 ) {
+        var i = i1 + i2;
+        nv[0] += cubePosData[i*3]; nv[1] += cubePosData[i*3+1]; nv[2] += cubePosData[i*3+2];
+    }
+    for ( i2 = 0; i2 < 4; ++ i2 )
+        cubeNVData.push( nv[0], nv[1], nv[2] );
+    }
+    var cubeColData = [];
+    for ( var is = 0; is < 6; ++ is ) {
+        for ( var ip = 0; ip < 4; ++ ip ) {
+        cubeColData.push( cubeCol[is*3], cubeCol[is*3+1], cubeCol[is*3+2] ); 
+        }
+    }
+    var cubeInxData = [];
+    for ( var i = 0; i < cubeHlpInx.length; i += 4 ) {
+        cubeInxData.push( i, i+1, i+2, i, i+2, i+3 );   
+    }
+    bufCube = VertexBuffer.Create(
+    [ { data : cubePosData, attrSize : 3, attrLoc : progDraw.inPos },
+        { data : cubeNVData,  attrSize : 3, attrLoc : progDraw.inNV },
+        { data : cubeColData, attrSize : 3, attrLoc : progDraw.inCol } ],
+        cubeInxData ); 
+
+    window.onresize = resize;
+    resize();
+    requestAnimationFrame(render);
+}
+
+var ShProg = {
+Create: function (shaderList) {
+    var shaderObjs = [];
+    for (var i_sh = 0; i_sh < shaderList.length; ++i_sh) {
+        var shderObj = this.Compile(shaderList[i_sh].source, shaderList[i_sh].stage);
+        if (shderObj) shaderObjs.push(shderObj);
+    }
+    var prog = {}
+    prog.progObj = this.Link(shaderObjs)
+    if (prog.progObj) {
+        prog.attrInx = {};
+        var noOfAttributes = gl.getProgramParameter(prog.progObj, gl.ACTIVE_ATTRIBUTES);
+        for (var i_n = 0; i_n < noOfAttributes; ++i_n) {
+            var name = gl.getActiveAttrib(prog.progObj, i_n).name;
+            prog.attrInx[name] = gl.getAttribLocation(prog.progObj, name);
+        }
+        prog.uniLoc = {};
+        var noOfUniforms = gl.getProgramParameter(prog.progObj, gl.ACTIVE_UNIFORMS);
+        for (var i_n = 0; i_n < noOfUniforms; ++i_n) {
+            var name = gl.getActiveUniform(prog.progObj, i_n).name;
+            prog.uniLoc[name] = gl.getUniformLocation(prog.progObj, name);
+        }
+    }
+    return prog;
+},
+AttrI: function (prog, name) { return prog.attrInx[name]; },
+UniformL: function (prog, name) { return prog.uniLoc[name]; },
+Use: function (prog) { gl.useProgram(prog.progObj); },
+SetI1: function (prog, name, val) { if (prog.uniLoc[name]) gl.uniform1i(prog.uniLoc[name], val); },
+SetF1: function (prog, name, val) { if (prog.uniLoc[name]) gl.uniform1f(prog.uniLoc[name], val); },
+SetF2: function (prog, name, arr) { if (prog.uniLoc[name]) gl.uniform2fv(prog.uniLoc[name], arr); },
+SetF3: function (prog, name, arr) { if (prog.uniLoc[name]) gl.uniform3fv(prog.uniLoc[name], arr); },
+SetF4: function (prog, name, arr) { if (prog.uniLoc[name]) gl.uniform4fv(prog.uniLoc[name], arr); },
+SetM33: function (prog, name, mat) { if (prog.uniLoc[name]) gl.uniformMatrix3fv(prog.uniLoc[name], false, mat); },
+SetM44: function (prog, name, mat) { if (prog.uniLoc[name]) gl.uniformMatrix4fv(prog.uniLoc[name], false, mat); },
+Compile: function (source, shaderStage) {
+    var shaderScript = document.getElementById(source);
+    if (shaderScript)
+        source = shaderScript.text;
+    var shaderObj = gl.createShader(shaderStage);
+    gl.shaderSource(shaderObj, source);
+    gl.compileShader(shaderObj);
+    var status = gl.getShaderParameter(shaderObj, gl.COMPILE_STATUS);
+    if (!status) alert(gl.getShaderInfoLog(shaderObj));
+    return status ? shaderObj : null;
+},
+Link: function (shaderObjs) {
+    var prog = gl.createProgram();
+    for (var i_sh = 0; i_sh < shaderObjs.length; ++i_sh)
+        gl.attachShader(prog, shaderObjs[i_sh]);
+    gl.linkProgram(prog);
+    status = gl.getProgramParameter(prog, gl.LINK_STATUS);
+    if ( !status ) alert(gl.getProgramInfoLog(prog));
+    return status ? prog : null;
+} };
+
+var VertexBuffer = {};
+VertexBuffer.Create = function( attributes, indices ) {
+    var buffer = {};
+    buffer.buf = [];
+    buffer.attr = []
+    for ( var i = 0; i < attributes.length; ++ i ) {
+        buffer.buf.push( gl.createBuffer() );
+        buffer.attr.push( { size : attributes[i].attrSize, loc : attributes[i].attrLoc } );
+        gl.bindBuffer( gl.ARRAY_BUFFER, buffer.buf[i] );
+        gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( attributes[i].data ), gl.STATIC_DRAW );
+    }
+    buffer.inx = gl.createBuffer();
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, buffer.inx );
+    gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( indices ), gl.STATIC_DRAW );
+    buffer.inxLen = indices.length;
+    gl.bindBuffer( gl.ARRAY_BUFFER, null );
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, null );
+    return buffer;
+}
+VertexBuffer.Draw = function( bufObj ) {
+    for ( var i = 0; i < bufObj.buf.length; ++ i ) {
+        gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.buf[i] );
+        gl.vertexAttribPointer( bufObj.attr[i].loc, bufObj.attr[i].size, gl.FLOAT, false, 0, 0 );
+        gl.enableVertexAttribArray( bufObj.attr[i].loc );
+    }
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufObj.inx );
+    gl.drawElements( gl.TRIANGLES, bufObj.inxLen, gl.UNSIGNED_SHORT, 0 );
+    for ( var i = 0; i < bufObj.buf.length; ++ i )
+        gl.disableVertexAttribArray( bufObj.attr[i].loc );
+    gl.bindBuffer( gl.ARRAY_BUFFER, null );
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, null );
+}
+
+initScene();
+
+})();
+</script>
+
+</body>

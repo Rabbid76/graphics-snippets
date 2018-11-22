@@ -102,6 +102,8 @@
 
 [Textured cube](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/cube_texture.html)
 
+[Cube - `glMatrix`](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/cube_glMatrix.html) - [glMatrix documentation](http://glmatrix.net/docs/)
+
 [Globe](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/sphere_texture.html)
 
 [Translation and rotation](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/axis_rotation.html)
