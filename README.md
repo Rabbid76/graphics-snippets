@@ -102,7 +102,7 @@
 
 [Textured cube](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/cube_texture.html)
 
-[Cube - `glMatrix`](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/glMatrix_cube.html) - [glMatrix documentation](http://glmatrix.net/docs/)
+[Cube - `glMatrix`](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/glMatrix_cube.html)
 
 [Globe](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/sphere_texture.html)
 
