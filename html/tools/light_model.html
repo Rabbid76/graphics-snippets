@@ -183,7 +183,6 @@ html,body { margin: 0; overflow: hidden; }
             <option value="7">torus</option>
             <option value="8" selected="selected">trefoil knot</option>
             <option value="9">torus knot</option>
-            <option value="10">arrow</option>
         </select>
     </td> </tr>
     <tr> <td> <font color= #40f040>field of view</font> </td> 
@@ -192,15 +191,9 @@ html,body { margin: 0; overflow: hidden; }
     <tr> <td> <font color= #40f040>color / texture</font> </td> 
         <td> <input type="range" id="mix_color" min="0" max="100" value="100"/>
     </td> </tr>
-    <tr> <td> <font color=#40f040>normal vector</font> </td> 
-        <td> <input type="checkbox" id="mix_normal" value="0" />
-    </td></tr>
     <tr> <td> <font color= #40f040>displacement height</font> </td> 
         <td> <input type="range" id="height" min="0" max="100" value="50"/>
     </td> </tr>
-    <tr> <td> <font color=#40f040>hull</font> </td> 
-        <td> <input type="checkbox" id="hull" value="0" />
-    </td></tr>
     <tr> <td> <font color= #40f040>tessellation</font> </td> 
         <td> <input type="range" id="tessellation" min="10" max="100" value="25"/>
     </td> </tr>
@@ -287,8 +280,6 @@ class App {
         //document.getElementById( "mix_color" ).value = state < 0.33 ? 100 : 0;
         //document.getElementById( "mix_normal" ).checked  = state >= 0.67 ? 1 : 0;
 
-        //document.getElementById( "mesh" ).value = 10;
-
         this.resize(); 
         this.camera = new Camera( [0, 2, 0], [0, 0, 0], [0, 0, 1], 90, this.vp_size, 0.5, 100 );
         this.camera.attenuation( 1.0, 0.05, 0.0 );
@@ -309,9 +300,7 @@ class App {
         var i_mesh = document.getElementById( "mesh" ).value;
         var fov_val = document.getElementById( "fov" ).value / 100.0;
         var mix_color = document.getElementById( "mix_color" ).value / 100.0;
-        var mix_normal = document.getElementById( "mix_normal" ).checked;
         var height = 0.2 * document.getElementById( "height" ).value / 100.0;
-        var hull = document.getElementById( "hull" ).checked;
         var tessellation = document.getElementById( "tessellation" ).value / 100.0;
         var max_dist = Math.max(0.01, tessellation * tessellation).toFixed(4);
 
@@ -336,19 +325,9 @@ class App {
         gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
 
         // bind the texture
-        if ( hull != this.hull ) {
-            this.texture.bound = false;
-            this.displacement.bound = false;
-            this.hull = hull
-        }
-        if ( this.hull  ) {
-            this.texture.bound = this.texture.bound || this.texture.bindDflt( this.texture.unit );
-            this.displacement.bound = this.displacement.bound || this.displacement.bindDflt( this.displacement.unit );
-        } else {
-            this.texture.bound = this.texture.bound || this.texture.bind( this.texture.unit );
-            this.displacement.bound = this.displacement.bound || this.displacement.bind( this.displacement.unit );
-        }
-
+        this.texture.bound = this.texture.bound || this.texture.bind( this.texture.unit );
+        this.displacement.bound = this.displacement.bound || this.displacement.bind( this.displacement.unit );
+        
         // set up draw shader
         this.progDraw.Use();
         this.progDraw.SetM44("u_projectionMat44", this.camera.perspective);
@@ -361,7 +340,7 @@ class App {
         this.progDraw.SetF2("u_displacement_map_size", this.displacement.size);
         this.progDraw.SetF1("u_displacement_scale", height);
         this.progDraw.SetF1("u_mix_color", mix_color);
-        this.progDraw.SetF1("u_mix_normal", mix_normal);
+        this.progDraw.SetF1("u_mix_normal", 0);
         
         // draw scene
         this.tessellates[i_mesh].draw();

@@ -88,6 +88,9 @@ html,body { margin: 0; overflow: hidden; }
             <option value="10">arrow</option>
         </select>
     </td> </tr>
+    <tr> <td> <font color= #40f040>field of view</font> </td> 
+        <td> <input type="range" id="fov" min="0" max="100" value="50"/>
+    </td> </tr>
     <tr> <td> <font color= #40f040>color / texture</font> </td> 
         <td> <input type="range" id="mix_color" min="0" max="100" value="0"/>
     </td> </tr>
@@ -184,6 +187,7 @@ class App {
     draw(deltaMS){
         
         var mesh = document.getElementById( "mesh" ).value;
+        var fov_val = document.getElementById( "fov" ).value / 100.0;
         var mix_color = document.getElementById( "mix_color" ).value / 100.0;
         var mix_normal = document.getElementById( "mix_normal" ).checked;
 
@@ -199,6 +203,7 @@ class App {
         }
 
         // setup view projection and model
+        this.camera.fov_y = 160.0 - 110 * fov_val;
         this.camera.update( this.vp_size );
         var modelMat = Mat44.ident();
         modelMat = this.camera.autoModelMatrix;
