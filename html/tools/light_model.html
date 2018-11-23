@@ -79,7 +79,6 @@ uniform float     u_mix_color;
 uniform float     u_mix_normal;
 uniform float     u_height;
 
-
 float CalculateHeight( in vec2 texCoords )
 {
     float height = texture2D( u_displacement_map, texCoords ).x;
@@ -121,6 +120,160 @@ vec4 CalculateNormal( in vec2 texCoords )
 }
 
 
+// light model uniforms
+uniform vec4  u_lightPosition;
+uniform vec4  u_lightColor;
+uniform float u_ambient;
+uniform float u_diffuse;
+uniform float u_specular;
+uniform float u_specular_tint;
+uniform float u_roughness;
+uniform float u_metallic;
+uniform float u_sheen;
+uniform float u_sheen_tint;
+uniform float u_subsurface;
+uniform float u_clear_coat;
+uniform float u_clear_coat_gloss;
+uniform float u_anisotropic;
+
+const float PI = 3.14159265358979323846;
+
+float Fresnel_Schlick( float theta )
+{
+    float m = clamp( 1.0 - theta, 0.0, 1.0 );
+    float m2 = m * m;
+    return m2 * m2 * m; // pow( m, 5.0 )
+}
+
+float GTR_Berrey( float NdotH, float al ) // GTR gamma=1
+{
+    if ( al >= 1.0 ) return 1.0 / PI;
+    float al2 = al * al;
+    float t = 1.0 + ( al2 - 1.0 ) * NdotH * NdotH;
+    return ( al2 - 1.0 ) / ( PI * log( al2 ) * t );
+}
+
+float GTR_2_anisotropic( float NdotH, float HdotX, float HdotY, float alx, float aly )
+{
+    float tx = HdotX / alx;
+    float ty = HdotY / aly;
+    float t = tx * tx + ty * ty + NdotH * NdotH;
+    return 1.0 / ( PI * alx * aly * t * t );
+}
+
+float G_Schlick( float cosTheta, float m )
+{
+    float k = m * 0.7979; // 0.7979 ~ sqrt( 2.0 / 3.14159 );
+    return cosTheta / ( cosTheta * ( 1.0 - k ) + k );
+}
+
+float G_GGX_anisotropic( float NdotV, float VdotX, float VdotY, float alx, float aly )
+{
+    float tx = VdotX * alx;
+    float ty = VdotY / aly;
+    return 1.0 / ( NdotV + sqrt( tx * tx + ty * ty + NdotV * NdotV ) );
+}
+
+vec3 LightModel(vec3 esPt, vec3 TV, vec3 BV, vec3 esPtNV)
+{
+    vec3 ambientCol = u_lightColor.rgb * u_ambient;
+    vec3 diffuseCol = u_lightColor.rgb;
+    vec3 specularCol = u_lightColor.rgb;
+    vec3 finalLightColor = ambientCol;
+    
+    vec3 esVEye = normalize(-esPt);
+    vec3 vec_X  = normalize( TV );
+    vec3 vec_Y  = normalize( BV );
+  
+    float m2            = u_roughness * u_roughness;
+    float NdotV         = dot(esPtNV, esVEye);
+    float NdotV_clamped = clamp(NdotV, 0.0, 1.0);
+    float VdotX         = dot(esVEye, vec_X);
+    float VdotY         = dot(esVEye, vec_Y);
+    float F_NdotV       = Fresnel_Schlick(NdotV);
+    NdotV = clamp(NdotV, 0.0, 1.0);
+
+    vec3  esVLight   = u_lightPosition.xyz;
+    float localLight = u_lightPosition.w; 
+
+    esVLight = esVLight - esPt * localLight;
+    float lightDist = length(esVLight);
+    esVLight /= lightDist;
+    
+    float lightIntensity = 1.0;
+    if (localLight != 0.0)
+    {
+        // TODO $$$ spotlight, attenuation
+    }
+
+    float NdotL = dot(esPtNV, esVLight);
+    float VdotL = dot(esVEye, esVLight);
+    
+    vec3 halfVector = normalize(esVEye + esVLight);
+    float NdotH = dot(esPtNV, halfVector);
+    float HdotL = dot(halfVector, esVLight); // == VdotH == dot( esVEye, halfVector )
+    
+    float LdotX = dot(esVLight, vec_X);
+    float LdotY = dot(esVLight, vec_Y);
+    float HdotX = dot(halfVector, vec_X);
+    float HdotY = dot(halfVector, vec_Y);
+    
+    float FSS90 = HdotL * HdotL * u_roughness;
+    float FD90 = 0.5 + 2.0 * FSS90;
+    float F_NdotL = Fresnel_Schlick(NdotL);
+    float F_HdotL = Fresnel_Schlick(HdotL);
+    float err_d = step(0.0, NdotL) + step(NdotL, 0.0) * pow(1.0 + NdotL, 5.0);
+    float err_s = err_d;
+    NdotL = abs(NdotL);
+    
+    float k_diffuse = max(0.0, NdotL);
+    
+    // luminance approximation
+    float spec_lum     = specularCol.r * 0.3 + specularCol.g * 0.6 + specularCol.b * 0.1;
+    vec3 col_spec_tint = spec_lum > 0.0 ? specularCol.rgb / spec_lum : vec3(1.0); // normalize luminance to isolate hue+sat
+    vec3 col_spec      = mix(vec3(1.0), col_spec_tint, u_specular_tint);  
+    vec3 col_spec_0    = mix(u_specular * 0.08 * col_spec, specularCol.rgb, u_metallic);
+    vec3 col_sheen     = mix(vec3(1.0), col_spec_tint, u_sheen_tint);
+    // diffuse energy ratio Burley at Disney
+    //float Fd           = mix(1.0, FD90, F_NdotL) * mix(1.0, FD90, F_NdotV);
+    float Fd           = (1.0 + (1.0 - FD90) * F_NdotL) * (1.0 + (1.0 - FD90) * F_NdotV); // ??? similar but not identically : FD90 + (1.0 - FD90) * F_NdotL
+    // Based on Hanrahan-Krueger BRDF approximation of isotropic BSSRDF
+    // 1.25 scale is used to (roughly) preserve albedo
+    // FSS90 used to "flatten" retroreflection based on roughness
+    //float Fss          = mix(1.0, FSS90, F_NdotL) * mix(1.0, FSS90, F_NdotV);
+    float Fss          = (1.0 + (1.0 - FSS90) * F_NdotL) * (1.0 + (1.0 - FSS90) * F_NdotV); // ??? similar but not identically
+    float ss           = 1.25 * (Fss * (1.0 / (NdotL + NdotV + 0.0001) - 0.5) + 0.5);
+    // sheen
+    vec3 Fsheen        = F_HdotL * u_sheen * col_sheen;
+    // diffuse material color
+    vec3 diff_mat     = u_diffuse * k_diffuse * diffuseCol.rgb + ((1.0/PI) * mix(Fd, ss, u_subsurface) * diffuseCol.rgb + Fsheen) * (1.0 - u_metallic);
+    
+    vec3 Fs      = col_spec_0 + (1.0 - col_spec_0) * F_HdotL;
+    float m_ggx  = (0.5 + u_roughness / 2.0);
+    float m2_ggx = m_ggx * m_ggx;
+    
+    float an_val    = (u_anisotropic - 0.5) * 1.98; // anisotropic from range [0.0, 1.0] -> [-0.99, 0.99]
+    float aspect    = sqrt(1.0 - abs(an_val)); 
+    vec2  aspect_xy = an_val < 0.0 ? vec2(aspect, 1.0 / aspect) : vec2(1.0 / aspect, aspect);
+    vec2  al_m2     = vec2(max(0.00001, m2 * aspect_xy.x), max(0.00001, m2 * aspect_xy.y));
+    vec2  al_ggx    = vec2(max(0.00001, m2_ggx * aspect_xy.x), max(0.00001, m2_ggx * aspect_xy.y));
+    float Ds        = GTR_2_anisotropic(NdotH, HdotX, HdotY, al_m2.x, al_m2.y);
+    float Gs        = G_GGX_anisotropic(NdotL, LdotX, LdotY, al_ggx.x, al_ggx.y) * G_GGX_anisotropic(NdotV, VdotX, VdotY, al_ggx.x, al_ggx.y);
+    
+    // clearcoat (ior = 1.5 -> F0 = 0.04)
+    float Dr       = GTR_Berrey(NdotH, mix(0.1, 0.001, u_clear_coat_gloss));
+    float Fr       = mix(0.04, 1.0, F_HdotL);
+    float Gr       = G_Schlick(NdotL, 0.25) * G_Schlick(NdotV, 0.25);
+    // specualr material color
+    vec3 spec_mat = Gs * Fs * Ds + 0.25 * u_clear_coat * Gr * Fr * Dr;
+
+    finalLightColor += err_d * diff_mat;
+    finalLightColor += err_s * spec_mat;
+      
+    return finalLightColor;
+} 
+
+
 mat3 TBN( vec3 N)
 {
     float face_sign   = sign(dot(vertNV, -vertPos));
@@ -150,28 +303,30 @@ void main()
     normalVec.xy   *= u_displacement_scale;
     vec3 nvMappedEs = normalize( tbnMat * normalVec.xyz );
 
-    vec3  vl        = vec3(0.0, 0.0, 1.0);
-    float kd        = max(0.0, dot(nvMappedEs, vl)); 
+    vec3 lightColor = LightModel(vertPos, vertTV, vertBV, nvMappedEs);
+
     vec4 texColor   = texture2D(u_texture, vertUV);
     vec3 view_nv    = normalize(nvMappedEs);
-    vec3 nv_color   = abs(nvMappedEs); 
+    vec3 nv_color   = abs(view_nv); 
     nv_color       /= max(nv_color.x, max(nv_color.y, nv_color.z));
     vec3 baseColor  = mix(mix(vertCol, texColor.rgb, u_mix_color), nv_color, u_mix_normal);
-    vec3 color      = baseColor * (0.1 + kd * 1.2);
+    
+    vec3 color      = baseColor * lightColor;
     gl_FragColor    = vec4( color.rgb, 1.0 );
 } 
 </script>
 
 <style>
 html,body { margin: 0; overflow: hidden; }
-#gui { position : absolute; top : 0; left : 0; }
-#ref-link { position : absolute; bottom : 0; left : 0; }  
+#gui-left { position: absolute; top: 0; left: 0; color: #40f040; }
+#gui-right { position: absolute; top: 0; right: 0; color: #d0d040;  }
+#ref-link { position: absolute; bottom: 0; left: 0; }  
 </style>
 
-<div><form id="gui" name="inputs">
-    <font color=#40f040><span id="instruction">Hold the left mouse button pressed and drag to rotate. Release the button to spin.</span></font>
+<div id="gui-left"><form name="inputs">
+    <span id="instruction">Hold the left mouse button pressed and drag to rotate. Release the button to spin.</span>
     <table>
-    <tr> <td> <font color=#40f040>form</font> </td> <td>
+    <tr><td>form</td> <td>
         <select id="mesh">
             <option value="0">tetrahedron</option>
             <option value="1">cube</option>
@@ -185,21 +340,30 @@ html,body { margin: 0; overflow: hidden; }
             <option value="9">torus knot</option>
         </select>
     </td> </tr>
-    <tr> <td> <font color= #40f040>field of view</font> </td> 
-        <td> <input type="range" id="fov" min="0" max="100" value="50"/>
-    </td> </tr>
-    <tr> <td> <font color= #40f040>color / texture</font> </td> 
-        <td> <input type="range" id="mix_color" min="0" max="100" value="100"/>
-    </td> </tr>
-    <tr> <td> <font color= #40f040>displacement height</font> </td> 
-        <td> <input type="range" id="height" min="0" max="100" value="50"/>
-    </td> </tr>
-    <tr> <td> <font color= #40f040>tessellation</font> </td> 
-        <td> <input type="range" id="tessellation" min="10" max="100" value="25"/>
-    </td> </tr>
+    <tr><td>field of view</td><td><input type="range" id="fov" min="0" max="100" value="90"/></td></tr>
+    <tr><td>color / texture</td><td><input type="range" id="mix_color" min="0" max="100" value="0"/></td></tr>
+    <tr><td>displacement height</td><td><input type="range" id="height" min="0" max="100" value="5"/></td></tr>
+    <tr><td>tessellation</td><td><input type="range" id="tessellation" min="10" max="100" value="25"/></td></tr>
     </table>
-    <font color=#40f040><span id="info">:</span></font>
+    <span id="info">:</span>
 </form></div>
+
+<div id="gui-right"><form name="inputs2"></form>
+    <table>
+    <tr><td>ambient</td><td><input type="range" id="ambient" min="0" max="100" value="20"/></td></tr>
+    <tr><td>diffuse</td><td><input type="range" id="diffuse" min="0" max="100" value="50"/></td></tr>
+    <tr><td>specular</td><td><input type="range" id="specular" min="0" max="100" value="60"/></td></tr>
+    <tr><td>specular tint</td><td><input type="range" id="specular_tint" min="0" max="100" value="33"/></td></tr>
+    <tr><td>roughness</td><td><input type="range" id="roughness" min="0" max="100" value="50"/></td></tr>
+    <tr><td>metallic</td><td><input type="range" id="metallic" min="0" max="100" value="00"/></td></tr>
+    <tr><td>sheen</td><td><input type="range" id="sheen" min="0" max="100" value="50"/></td></tr>
+    <tr><td>sheen tint</td><td><input type="range" id="sheen_tint" min="0" max="100" value="50"/></td></tr>
+    <tr><td>subsurface</td><td><input type="range" id="subsurface" min="0" max="100" value="5"/></td></tr>
+    <tr><td>clear coat</td><td><input type="range" id="clear_coat" min="0" max="100" value="70"/></td></tr>
+    <tr><td>clear coat gloss</td><td><input type="range" id="clear_coat_gloss" min="0" max="100" value="70"/></td></tr>
+    <tr><td>anisotropic</td><td><input type="range" id="anisotropic" min="0" max="100" value="50"/></td></tr>
+</table>
+</form></div>    
 
 <!--div id="ref-link">
   <a href=""> 
@@ -275,7 +439,7 @@ class App {
             this.tessellates.push( new MeshTessellate( this.meshDefs[i], this.progDraw, this.ext_uint ) );
         }
 
-        document.getElementById( "mesh" ).value = Math.floor((Math.random() * this.meshDefs.length));
+        //document.getElementById( "mesh" ).value = Math.floor((Math.random() * this.meshDefs.length));
         //let state = Math.random();
         //document.getElementById( "mix_color" ).value = state < 0.33 ? 100 : 0;
         //document.getElementById( "mix_normal" ).checked  = state >= 0.67 ? 1 : 0;
@@ -283,6 +447,9 @@ class App {
         this.resize(); 
         this.camera = new Camera( [0, 2, 0], [0, 0, 0], [0, 0, 1], 90, this.vp_size, 0.5, 100 );
         this.camera.attenuation( 1.0, 0.05, 0.0 );
+
+        this.lm = ["ambient", "diffuse", "specular", "specular_tint", "roughness", "metallic", "sheen", "sheen_tint", "subsurface", "clear_coat", "clear_coat_gloss", "anisotropic"];
+        this.lmv = new Array(this.lm.length);
 
         var self = this;
         window.onresize = function() { self.resize(); }
@@ -303,6 +470,9 @@ class App {
         var height = 0.2 * document.getElementById( "height" ).value / 100.0;
         var tessellation = document.getElementById( "tessellation" ).value / 100.0;
         var max_dist = Math.max(0.01, tessellation * tessellation).toFixed(4);
+
+        for (let i = 0; i < this.lmv.length; ++ i)
+            this.lmv[i] = document.getElementById( this.lm[i] ).value / 100.0;    
 
         let changed = this.tessellates[i_mesh].prepare(max_dist);
         if ( changed ) {
@@ -341,6 +511,13 @@ class App {
         this.progDraw.SetF1("u_displacement_scale", height);
         this.progDraw.SetF1("u_mix_color", mix_color);
         this.progDraw.SetF1("u_mix_normal", 0);
+
+        this.progDraw.SetF4("u_lightPosition", [0.5, 0.5, 1, 0]);
+        this.progDraw.SetF4("u_lightColor", [1, 1, 1, 1]);
+        for (let i = 0; i < this.lmv.length; ++ i)
+            this.progDraw.SetF1("u_" + this.lm[i], this.lmv[i]);
+        
+        // ambient specular specular_tint roughness metallic sheen sheen_tint subsurface clear_coat clear_coat_gloss anisotropic
         
         // draw scene
         this.tessellates[i_mesh].draw();
