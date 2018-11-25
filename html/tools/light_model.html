@@ -446,7 +446,8 @@ class App {
 
         this.resize(); 
         this.camera = new Camera( [0, 2, 0], [0, 0, 0], [0, 0, 1], 90, this.vp_size, 0.5, 100 );
-        this.camera.attenuation( 1.0, 0.05, 0.0 );
+        this.track = new TrackControl( this.vp_size );
+        this.track.attenuation( 1.0, 0.05, 0.0 );
 
         this.lm = ["ambient", "diffuse", "specular", "specular_tint", "roughness", "metallic", "sheen", "sheen_tint", "subsurface", "clear_coat", "clear_coat_gloss", "anisotropic"];
         this.lmv = new Array(this.lm.length);
@@ -480,10 +481,10 @@ class App {
         }
         
         // setup view projection and model
-        this.camera.fov_y = 160.0 - 110 * fov_val;
-        this.camera.update( this.vp_size );
+        this.camera.update( this.vp_size, 160.0 - 110 * fov_val );
+        this.track.update( this.vp_size );
         var modelMat = Mat44.ident();
-        modelMat = this.camera.autoModelMatrix;
+        modelMat = this.track.autoModelMatrix;
             
         //gl.enable(gl.CULL_FACE);
         gl.frontFace(gl.CCW);
@@ -501,7 +502,7 @@ class App {
         // set up draw shader
         this.progDraw.Use();
         this.progDraw.SetM44("u_projectionMat44", this.camera.perspective);
-        this.progDraw.SetM44("u_viewMat44", this.camera.orbit);
+        this.progDraw.SetM44("u_viewMat44", Mat44.multiply(this.camera.lookAt, this.track.orbit));
         this.progDraw.SetM44("u_modelMat44", modelMat);
         this.progDraw.SetI1("u_vertDispMap", this.displacement.unit);
         this.progDraw.SetF1("u_vertDisplScale", height);
@@ -1597,27 +1598,8 @@ class Camera {
         this.vp = vp;
         this.near = near;
         this.far = far;
-        this.orbit_mat = this.current_orbit_mat = this.model_mat = this.current_model_mat = Mat44.ident();
-        this.mouse_drag = this.auto_spin = false;
-        this.auto_rotate = true;
-        this.mouse_start = [0, 0];
-        this.mouse_drag_axis = [0, 0, 0];
-        this.mouse_drag_angle = 0;
-        this.mouse_drag_time = 0;
-        this.drag_start_T = this.rotate_start_T = this.time;
-
-        this.domElement = document;
-        var cam = this;
-        this.domElement.addEventListener( 'mousedown', function(e) { cam.onMouseDown(e) }, false );
-        this.domElement.addEventListener( 'mouseup', function(e) { cam.onMouseUp(e) }, false );
-        this.domElement.addEventListener( 'mousemove', function(e) { cam.onMouseMove(e) }, false );
-        //this.domElement.addEventListener( 'contextmenu', function(e) { event.preventDefault(); }, false );
-        //this.domElement.addEventListener( 'mousewheel', hid_events.onMouseWheel, false );
-        //this.domElement.addEventListener( 'DOMMouseScroll', hid_events.onMouseWheel, false ); // firefox
     }
 
-    get time() { return Date.now(); }
-        
     get ortho() {
         let fn = this.far + this.near;
         let f_n = this.far - this.near;
@@ -1647,8 +1629,40 @@ class Camera {
         return [mx[0], my[0], mz[0], 0, mx[1], my[1], mz[1], 0, mx[2], my[2], mz[2], 0, tx, ty, tz, 1]; 
     }
 
+    update(vp_size, fov_y) {
+        if (vp_size)
+            this.vp = vp_size;
+        if (fov_y)
+            this.fov_y = fov_y;
+    }
+}
+
+class TrackControl {
+    constructor( vp ) {
+        this.vp = vp;
+        this.orbit_mat = this.current_orbit_mat = this.model_mat = this.current_model_mat = Mat44.ident();
+        this.mouse_drag = this.auto_spin = false;
+        this.auto_rotate = true;
+        this.mouse_start = [0, 0];
+        this.mouse_drag_axis = [0, 0, 0];
+        this.mouse_drag_angle = 0;
+        this.mouse_drag_time = 0;
+        this.drag_start_T = this.rotate_start_T = this.time;
+
+        this.domElement = document;
+        var track = this;
+        this.domElement.addEventListener( 'mousedown', function(e) { track.onMouseDown(e) }, false );
+        this.domElement.addEventListener( 'mouseup', function(e) { track.onMouseUp(e) }, false );
+        this.domElement.addEventListener( 'mousemove', function(e) { track.onMouseMove(e) }, false );
+        //this.domElement.addEventListener( 'contextmenu', function(e) { event.preventDefault(); }, false );
+        //this.domElement.addEventListener( 'mousewheel', hid_events.onMouseWheel, false );
+        //this.domElement.addEventListener( 'DOMMouseScroll', hid_events.onMouseWheel, false ); // firefox
+    }
+
+    get time() { return Date.now(); }
+        
     get orbit() {
-      return Mat44.multiply(this.lookAt, this.orbitMatrix);
+      return this.orbitMatrix;
     }
 
     get orbitMatrix() {
