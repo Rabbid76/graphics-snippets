@@ -1,0 +1,151 @@
+<html>
+
+<head>
+<title>[help]After using the threeBSP method, the created spheres are not smooth</title>
+<style>
+
+#ref-link { position : absolute; bottom : 0; left : 0; }
+
+</style>
+
+</head>
+
+<body>
+<script src="https://threejs.org/build/three.min.js"></script>
+<!--script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/97/three.min.js"></script-->
+<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+
+<div id="container"></div>
+
+<a id="ref-link" href="https://stackoverflow.com/questions/53391303/using-webglrenderer-with-logarithmicdepthbufferset-option-set-to-true-together-w/53467637#53467637">
+Using WebGLRenderer with logarithmicDepthBufferset option set to true together with ShaderMaterial 
+</a>
+
+<script>
+(function onLoad() {
+  var container, camera, scene, renderer, orbitControls;
+  
+  init();
+  animate();
+
+  function createModel() {
+    var material = new THREE.ShaderMaterial({
+    uniforms: {
+      color1: {
+        value: new THREE.Color('#3a0000')
+      },
+      color2: {
+        value: new THREE.Color('#ffa9b0')
+      }
+    },
+    vertexShader: `
+    #ifdef USE_LOGDEPTHBUF
+    #define EPSILON 1e-6
+    #ifdef USE_LOGDEPTHBUF_EXT
+    varying float vFragDepth;
+    #endif
+    uniform float logDepthBufFC;
+    #endif
+
+    varying vec3 vNormal;
+
+    void main(void){
+        vNormal      = normalMatrix * normalize(normal);
+        gl_Position  = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+
+    #ifdef USE_LOGDEPTHBUF
+        gl_Position.z = log2(max( EPSILON, gl_Position.w + 1.0 )) * logDepthBufFC;
+    #ifdef USE_LOGDEPTHBUF_EXT
+        vFragDepth = 1.0 + gl_Position.w;
+    #else
+        gl_Position.z = (gl_Position.z - 1.0) * gl_Position.w;
+    #endif
+    #endif
+    }`,
+
+    fragmentShader: `
+    #ifdef USE_LOGDEPTHBUF
+    #ifdef USE_LOGDEPTHBUF_EXT
+    #extension GL_EXT_frag_depth : enable
+    varying float vFragDepth;
+    #endif
+    uniform float logDepthBufFC;
+    #endif
+
+    uniform vec3 color1;
+    uniform vec3 color2;
+    varying vec3 vNormal;
+    void main(void){
+        vec3 view_nv  = normalize(vNormal);
+        vec3 nv_color = view_nv * 0.5 + 0.5;
+        vec3 c = mix(color1, color2, nv_color.r);
+        gl_FragColor  = vec4(c, 1.0);
+        
+    #if defined(USE_LOGDEPTHBUF) && defined(USE_LOGDEPTHBUF_EXT)
+        gl_FragDepthEXT = log2(vFragDepth) * logDepthBufFC * 0.5;
+    #endif
+    }`,
+    side: THREE.DoubleSide,
+    });
+
+    //var material = new THREE.MeshPhongMaterial({color:'#b090b0'});
+    var geometry = new THREE.BoxGeometry( 1, 1, 1 );
+    var mesh = new THREE.Mesh(geometry, material);
+
+    scene.add(mesh);
+  }
+
+  function init() {
+    container = document.getElementById('container');
+    
+    renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      logarithmicDepthBuffer: true
+    });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    container.appendChild(renderer.domElement);
+
+    camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 100);
+    camera.position.set(0, 1, -2);
+
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xffffff);
+    scene.add(camera);
+    window.onresize = resize;
+
+    orbitControls = new THREE.OrbitControls(camera);
+    
+    var helper = new THREE.GridHelper(100, 100);
+    helper.material.opacity = 0.25;
+    helper.material.transparent = true;
+    scene.add(helper);
+
+    var axis = new THREE.AxesHelper(1000);
+    scene.add(axis);
+
+    createModel();
+  }
+
+  function resize() {  
+    var aspect = window.innerWidth / window.innerHeight;
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = aspect;
+    camera.updateProjectionMatrix();
+  }
+
+  function animate() {
+    requestAnimationFrame(animate);
+    orbitControls.update();
+    render();
+  }
+
+  function render() {
+    renderer.render(scene, camera);
+  }
+})();
+</script>
+
+</body>
+</html>

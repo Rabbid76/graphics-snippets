@@ -138,3 +138,4 @@
 
 [BSP geometry - subtract](https://rabbid76.github.io/graphics-snippets/html/stackoverrflow_threejs/geometry_bsp_subtrac.html)
 
+[Logarithmic depth buffer (cube)](https://rabbid76.github.io/graphics-snippets/html/stackoverrflow_threejs/logarithmic_depth_cube.html)
