@@ -66,7 +66,7 @@
 
 ### Tools
 
-[Light Model](https://rabbid76.github.io/graphics-snippets/html/tools/light_model.html)
+[Light Model](https://rabbid76.github.io/graphics-snippets/html/tools/light_model_view.html)
 
 [Height Map Generator](https://rabbid76.github.io/graphics-snippets/html/tools/height_map_generator.html)
 

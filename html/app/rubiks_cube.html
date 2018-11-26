@@ -87,7 +87,7 @@ void main()
 
 <style>
 html,body { margin: 0; overflow: hidden; }
-#gui { position : absolute; top : 0; left : 0; }
+#gui { position : absolute; top : 0; left : 0; color: #CCF; }
 #ref-link { position : absolute; bottom : 0; left : 0; }  
 </style>
 
@@ -96,8 +96,8 @@ html,body { margin: 0; overflow: hidden; }
 <div>
 <form id="gui" name="inputs">
   <table>
-      <tr> <td> <font color= #CCF><spawn id="line_0"></spawn></font> </td> </tr> 
-      <tr> <td> <font color= #CCF><spawn id="line_1"></spawn></font> </td>  </tr>
+      <tr> <td> <spawn id="line_0"> </td> </tr> 
+      <tr> <td> <spawn id="line_1"> </td>  </tr>
   </table>
 </form>
 </div>
@@ -187,7 +187,8 @@ class App {
 
         this.resize(); 
         this.camera = new Camera( [0, 3, 0.0], [0, 0, 0], [0, 0, 1], 90, this.vp_size, 0.5, 100 );
-        this.camera.attenuation( 1.0, 0.05, 0.0 );
+        this.track = new TrackControl( this.vp_size );
+        this.track.attenuation( 1.0, 0.05, 0.0 );
         
         this.rubiks = new Rubiks(2.0 * 1.1, 1.0 / 3.0);
         this.shuffles = 11;
@@ -210,7 +211,7 @@ class App {
 
     updateHelpText() {
         let on_shuffle = this.rubiks.pending_queue && this.rubiks.pending_queue.length > 0 && this.rubiks.pending_queue[0].shuffle;
-        let on_rotate  = this.camera.auto_rotate_mode;
+        let on_rotate  = this.track.auto_rotate_mode;
         let act_state = on_shuffle ? this.rubiks.pending_queue.length + 10 : on_rotate ? 1 : 0
         
         if ( this.last_state && act_state == this.last_state )
@@ -220,7 +221,7 @@ class App {
         if (on_shuffle) {
             document.getElementById( "line_0" ).innerHTML = "shuffle " + this.rubiks.pending_queue.length + " / " + this.shuffles;
             document.getElementById( "line_1" ).innerHTML = ""; 
-        } else if (this.camera.auto_rotate_mode) {
+        } else if (this.track.auto_rotate_mode) {
             document.getElementById( "line_0" ).innerHTML = "left drag:   rotate cube";
             document.getElementById( "line_1" ).innerHTML = "middle or right click: switch to change mode"; 
         } else {
@@ -267,10 +268,11 @@ class App {
         // this.rubiks.update( Data.now() );
         this.rubiks.update( deltaMS );
         this.camera.update( this.vp_size );
+        this.track.update( this.vp_size );
 
         this.projection = this.camera.perspective;
         this.view       = this.camera.lookAt;
-        this.model      = Mat44.multiply(this.camera.orbitMatrix, this.camera.autoModelMatrix);
+        this.model      = Mat44.multiply(this.track.orbitMatrix, this.track.autoModelMatrix);
 
         let modelview          = Mat44.multiply(this.view, this.model);
         let inverse_modelview  = Mat44.inverse(modelview);
@@ -278,11 +280,11 @@ class App {
 
         this.rubiks.resetHit();
 
-        if ( this.rubiks.animationPending || this.camera.auto_rotate_mode || !this.camera.hit )
+        if ( this.rubiks.animationPending || this.track.auto_rotate_mode || !this.track.hit )
             this.start_hit = this.init_hit();
 
-        if ( this.rubiks.animationPending || this.camera.auto_rotate_mode ) {
-            this.camera.hit = false;
+        if ( this.rubiks.animationPending || this.track.auto_rotate_mode ) {
+            this.track.hit = false;
             this.rubiks.resetHit();
             return;
         }
@@ -293,8 +295,8 @@ class App {
         // calculate the NDC position of the cursor on the far plane and the camera position
         let w = this.vp_size[0];
         let h = this.vp_size[1];
-        let x = this.camera.mouse_x;
-        let y = this.camera.mouse_y;
+        let x = this.track.mouse_x;
+        let y = this.track.mouse_y;
         let ndc_x = 2.0 * x/w - 1.0;
         let ndc_y = 1.0 - 2.0 * y/h;
 
@@ -315,7 +317,7 @@ class App {
         let r0_ray = model_r0;
         let d_ray  = Vec3.normalize(Vec3.sub(model_r1, r0_ray));
 
-        if ( this.camera.hit && this.start_hit.mapped_cube >= 0 ) {
+        if ( this.track.hit && this.start_hit.mapped_cube >= 0 ) {
 
             this.rubiks.cube_hit = this.start_hit.mapped_cube;
             this.rubiks.side_hit = this.start_hit.cube_side + 1;
@@ -376,7 +378,7 @@ class App {
         this.rubiks.cube_hit = new_hit.mapped_cube;
         this.rubiks.side_hit = new_hit.cube_side + 1;
 
-        if ( isect && this.camera.hit )
+        if ( isect && this.track.hit )
         {
             this.start_hit = new_hit;
             this.hit_pt    = isect.pt;
@@ -770,37 +772,15 @@ class Camera {
         this.vp = vp;
         this.near = near;
         this.far = far;
-        this.orbit_mat = this.current_orbit_mat = this.model_mat = this.current_model_mat = Mat44.ident();
-        this.mouse_drag = this.auto_spin = false;
-        this.auto_rotate = true;
-        this.mouse_start = [0, 0];
-        this.mouse_drag_axis = [0, 0, 0];
-        this.mouse_drag_angle = 0;
-        this.mouse_drag_time = 0;
-        this.drag_start_T = this.rotate_start_T = this.time;
-        this.auto_rotate_mode = true;
-        this.hit = false;
-        this.mouse_x = 0;
-        this.mouse_y = 0;
-
-        this.domElement = document;
-        var cam = this;
-        this.domElement.addEventListener( 'mousedown', function(e) { cam.onMouseDown(e) }, false );
-        this.domElement.addEventListener( 'mouseup', function(e) { cam.onMouseUp(e) }, false );
-        this.domElement.addEventListener( 'mousemove', function(e) { cam.onMouseMove(e) }, false );
-        //this.domElement.addEventListener( 'contextmenu', function(e) { event.preventDefault(); }, false );
-        //this.domElement.addEventListener( 'mousewheel', hid_events.onMouseWheel, false );
-        //this.domElement.addEventListener( 'DOMMouseScroll', hid_events.onMouseWheel, false ); // firefox
     }
 
-    get time() { return Date.now(); }
-        
     get ortho() {
         let fn = this.far + this.near;
         let f_n = this.far - this.near;
         let w = this.vp[0];
         let h = this.vp[1];
-        return [ 2/w, 0, 0, 0, 0, 2/h, 0, 0, 0, 0, -2/f_n, 0, 0, 0, -fn/f_n, 1 ];
+        let a = w/h;
+        return [ 2/a, 0, 0, 0, 0, 2, 0, 0, 0, 0, -2/f_n, 0, 0, 0, -fn/f_n, 1 ];
     }  
 
     get perspective() {
@@ -823,8 +803,44 @@ class Camera {
         return [mx[0], my[0], mz[0], 0, mx[1], my[1], mz[1], 0, mx[2], my[2], mz[2], 0, tx, ty, tz, 1]; 
     }
 
+    update(vp_size, fov_y) {
+        if (vp_size)
+            this.vp = vp_size;
+        if (fov_y)
+            this.fov_y = fov_y;
+    }
+}
+
+class TrackControl {
+    constructor( vp ) {
+        this.vp = vp;
+        this.orbit_mat = this.current_orbit_mat = this.model_mat = this.current_model_mat = Mat44.ident();
+        this.mouse_drag = this.auto_spin = false;
+        this.auto_rotate = true;
+        this.mouse_start = [0, 0];
+        this.mouse_drag_axis = [0, 0, 0];
+        this.mouse_drag_angle = 0;
+        this.mouse_drag_time = 0;
+        this.drag_start_T = this.rotate_start_T = this.time;
+        this.auto_rotate_mode = true;
+        this.hit = false;
+        this.mouse_x = 0;
+        this.mouse_y = 0;
+
+        this.domElement = document;
+        var track = this;
+        this.domElement.addEventListener( 'mousedown', function(e) { track.onMouseDown(e) }, false );
+        this.domElement.addEventListener( 'mouseup', function(e) { track.onMouseUp(e) }, false );
+        this.domElement.addEventListener( 'mousemove', function(e) { track.onMouseMove(e) }, false );
+        //this.domElement.addEventListener( 'contextmenu', function(e) { event.preventDefault(); }, false );
+        //this.domElement.addEventListener( 'mousewheel', hid_events.onMouseWheel, false );
+        //this.domElement.addEventListener( 'DOMMouseScroll', hid_events.onMouseWheel, false ); // firefox
+    }
+
+    get time() { return Date.now(); }
+        
     get orbit() {
-      return Mat44.multiply(this.lookAt, this.orbitMatrix);
+      return this.orbitMatrix;
     }
 
     get orbitMatrix() {
@@ -861,7 +877,7 @@ class Camera {
         }
     }
 
-    changeMotionMode(drag, spin, auto) {
+    changeMotionMode(drag, spin, auto ) {
         let new_drag = drag;
         let new_auto = new_drag ? false : auto;
         let new_spin = new_auto ? spin : false;
