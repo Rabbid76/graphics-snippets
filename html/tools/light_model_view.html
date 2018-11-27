@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
 <meta charset='UTF-8'>
@@ -318,11 +318,14 @@ void main()
 
 <style>
 html,body { margin: 0; overflow: hidden; }
+#main-view { position: relative }
 #gui-left { position: absolute; top: 0; left: 0; color: #40f040; }
 #gui-right { position: absolute; top: 0; right: 0; color: #d0d040;  }
 #instruction { color: #CCF }
 #ref-link { position: absolute; bottom: 0; left: 0; }  
 </style>
+
+<div id="main-view">
 
 <div id="gui-left"><form name="inputs">
     <dif id="instruction">
@@ -2002,5 +2005,6 @@ requestAnimationFrame(render);
 })();
 </script>
 
+</div>
 </body>
 </html>
