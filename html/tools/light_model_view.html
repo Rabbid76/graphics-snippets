@@ -318,9 +318,10 @@ void main()
 
 <style>
 html,body { margin: 0; overflow: hidden; }
-#main-view { position: relative }
+#main-view { position: relative; }
 #gui-left { position: absolute; top: 0; left: 0; color: #40f040; }
 #gui-right { position: absolute; top: 0; right: 0; color: #d0d040;  }
+#gui-bottom { position: absolute; bottom: 0; left: 0; }  
 #instruction { color: #CCF }
 #ref-link { position: absolute; bottom: 0; left: 0; }  
 </style>
@@ -328,10 +329,6 @@ html,body { margin: 0; overflow: hidden; }
 <div id="main-view">
 
 <div id="gui-left"><form name="inputs">
-    <dif id="instruction">
-    <span>Hold the left mouse button pressed and drag to rotate. Release the button to spin.</span><br/>
-    <span>Press the right mouse button to switch tack and light mode.</span>
-    </dif>
     <table>
     <tr><td>form</td> <td>
         <select id="mesh">
@@ -355,7 +352,7 @@ html,body { margin: 0; overflow: hidden; }
     <span id="info">:</span>
 </form></div>
 
-<div id="gui-right"><form name="inputs2"></form>
+<div id="gui-right"><form name="inputs2">
     <table>
     <tr><td>ambient</td><td><input type="range" id="ambient" min="0" max="100" value="20"/></td></tr>
     <tr><td>diffuse</td><td><input type="range" id="diffuse" min="0" max="100" value="50"/></td></tr>
@@ -370,7 +367,14 @@ html,body { margin: 0; overflow: hidden; }
     <tr><td>clear coat gloss</td><td><input type="range" id="clear_coat_gloss" min="0" max="100" value="70"/></td></tr>
     <tr><td>anisotropic</td><td><input type="range" id="anisotropic" min="0" max="100" value="50"/></td></tr>
 </table>
-</form></div>    
+</form></div>  
+
+<div id="gui-bottom"><form name="info">
+<dif id="instruction">
+<span>Hold the left mouse button pressed and drag to rotate. Release the button to spin.</span><br/>
+<span>Press the right mouse button to switch tack and light mode.</span>
+</dif>
+</form></div> 
 
 <!--div id="ref-link">
   <a href=""> 
@@ -388,7 +392,7 @@ let gl;
 class App {
 
     constructor() {
-        this.canvas = document.getElementById( "canvas");
+        this.canvas = document.getElementById("canvas");
         //gl = canvas.getContext( "webgl2" );
         if ( gl )
             this.ext_uint = true;
@@ -468,7 +472,8 @@ class App {
 
     resize() {
         //vp_size = [gl.drawingBufferWidth, gl.drawingBufferHeight];
-        this.vp_size = [window.innerWidth, window.innerHeight]
+        let view = document.getElementById( "main-view" )
+        this.vp_size = view ? [view.clientWidth, window.innerHeight] : [window.innerWidth, window.innerHeight]
         this.canvas.width = this.vp_size[0];
         this.canvas.height = this.vp_size[1];
     }
