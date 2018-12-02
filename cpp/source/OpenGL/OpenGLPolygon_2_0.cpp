@@ -33,7 +33,7 @@
 * \brief General namespace for OpenGL implementation.  
 * 
 * \author  gernot
-* \date    2018-09-28
+* \date    2018-12-03
 * \version 1.0
 **********************************************************************/
 namespace OpenGL
@@ -44,7 +44,7 @@ namespace OpenGL
 * \brief Namespace for drawing polygons with the use of OpenGL.  
 * 
 * \author  gernot
-* \date    2018-09-28
+* \date    2018-12-03
 * \version 1.0
 **********************************************************************/
 namespace Polygon
@@ -55,7 +55,7 @@ namespace Polygon
 * \brief ctor  
 * 
 * \author  gernot
-* \date    2018-09-28
+* \date    2018-12-03
 * \version 1.0
 **********************************************************************/
 CPolygonOpenGL_2_00::CPolygonOpenGL_2_00( void )
@@ -66,7 +66,7 @@ CPolygonOpenGL_2_00::CPolygonOpenGL_2_00( void )
 * \brief ctor  
 * 
 * \author  gernot
-* \date    2018-09-28
+* \date    2018-12-03
 * \version 1.0
 **********************************************************************/
 CPolygonOpenGL_2_00::~CPolygonOpenGL_2_00()
@@ -77,7 +77,7 @@ CPolygonOpenGL_2_00::~CPolygonOpenGL_2_00()
 * \brief Initialize the polygon renderer.  
 * 
 * \author  gernot
-* \date    2018-09-07
+* \date    2018-12-03
 * \version 1.0
 **********************************************************************/
 void CPolygonOpenGL_2_00::Init( void )
@@ -89,7 +89,7 @@ void CPolygonOpenGL_2_00::Init( void )
 * instructions
 * 
 * \author  gernot
-* \date    2018-09-28
+* \date    2018-12-03
 * \version 1.0
 **********************************************************************/
 Render::Polygon::IRender & CPolygonOpenGL_2_00::SetColor(
@@ -107,7 +107,7 @@ Render::Polygon::IRender & CPolygonOpenGL_2_00::SetColor(
 * instructions
 * 
 * \author  gernot
-* \date    2018-09-28
+* \date    2018-12-03
 * \version 1.0
 **********************************************************************/
 Render::Polygon::IRender & CPolygonOpenGL_2_00::SetColor( 
@@ -124,7 +124,7 @@ Render::Polygon::IRender & CPolygonOpenGL_2_00::SetColor(
 * \brief Set the polygon style.
 * 
 * \author  gernot
-* \date    2018-09-28
+* \date    2018-12-03
 * \version 1.0
 **********************************************************************/
 Render::Polygon::IRender & CPolygonOpenGL_2_00::SetStyle( 
@@ -150,7 +150,7 @@ Render::Polygon::IRender & CPolygonOpenGL_2_00::SetStyle(
 * \brief Draw a single line sequence.  
 * 
 * \author  gernot
-* \date    2018-09-28
+* \date    2018-12-03
 * \version 1.0
 **********************************************************************/
 bool CPolygonOpenGL_2_00::Draw( 
@@ -199,7 +199,7 @@ bool CPolygonOpenGL_2_00::Draw(
 * \brief Draw a single polygon sequence.  
 * 
 * \author  gernot
-* \date    2018-09-28
+* \date    2018-12-03
 * \version 1.0
 **********************************************************************/
 bool CPolygonOpenGL_2_00::Draw( 
@@ -248,7 +248,7 @@ bool CPolygonOpenGL_2_00::Draw(
 * \brief Draw a single polygon sequence.  
 * 
 * \author  gernot
-* \date    2018-09-28
+* \date    2018-12-03
 * \version 1.0
 **********************************************************************/
 bool CPolygonOpenGL_2_00::Draw( 
@@ -283,7 +283,7 @@ bool CPolygonOpenGL_2_00::Draw(
 * \brief Draw a single polygon sequence.  
 * 
 * \author  gernot
-* \date    2018-09-28
+* \date    2018-12-03
 * \version 1.0
 **********************************************************************/
 bool CPolygonOpenGL_2_00::Draw( 
@@ -318,7 +318,7 @@ bool CPolygonOpenGL_2_00::Draw(
 * \brief Start a new polygon sequence.  
 * 
 * \author  gernot
-* \date    2018-09-28
+* \date    2018-12-03
 * \version 1.0
 **********************************************************************/
 bool CPolygonOpenGL_2_00::StartSequence( 
@@ -348,7 +348,7 @@ bool CPolygonOpenGL_2_00::StartSequence(
 * \brief Complete an active polygon sequence.  
 * 
 * \author  gernot
-* \date    2018-09-28
+* \date    2018-12-03
 * \version 1.0
 **********************************************************************/
 bool CPolygonOpenGL_2_00::EndSequence( void )
@@ -374,7 +374,7 @@ bool CPolygonOpenGL_2_00::EndSequence( void )
 * \brief Specify a new vertex coordinate in an active polygon sequence.  
 * 
 * \author  gernot
-* \date    2018-09-28
+* \date    2018-12-03
 * \version 1.0
 **********************************************************************/
 bool CPolygonOpenGL_2_00::DrawSequence( 
@@ -400,7 +400,7 @@ bool CPolygonOpenGL_2_00::DrawSequence(
 * \brief Specify a new vertex coordinate in an active polygon sequence.  
 * 
 * \author  gernot
-* \date    2018-09-28
+* \date    2018-12-03
 * \version 1.0
 **********************************************************************/
 bool CPolygonOpenGL_2_00::DrawSequence( 
@@ -427,7 +427,7 @@ bool CPolygonOpenGL_2_00::DrawSequence(
 * polygon sequence.  
 * 
 * \author  gernot
-* \date    2018-09-28
+* \date    2018-12-03
 * \version 1.0
 **********************************************************************/
 bool CPolygonOpenGL_2_00::DrawSequence( 
@@ -467,7 +467,7 @@ bool CPolygonOpenGL_2_00::DrawSequence(
 * polygon sequence.  
 * 
 * \author  gernot
-* \date    2018-09-28
+* \date    2018-12-03
 * \version 1.0
 **********************************************************************/
 bool CPolygonOpenGL_2_00::DrawSequence( 
