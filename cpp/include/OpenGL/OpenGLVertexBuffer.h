@@ -19,6 +19,7 @@
 #include <tuple>
 #include <vector>
 #include <map>
+#include <unordered_map>
 
 
 // class declarations
@@ -65,8 +66,9 @@ public: // public types
   using TIBO         = std::tuple<TGPUObj, size_t, size_t, size_t>; //!< <GPU name> of an element array buffer, size of the element buffer, number of array elements, size of one array element
   using TVAO         = std::tuple<TGPUObj, TDescription>;           //!< <GPU name> of a vertex array object and the description of its content
   using TVBOs        = std::vector<TVBO>;                           //!< array buffer container type 
-  using TIBOs        = std::map<size_t, TIBO>;                      //!< element array buffer container type
-  using TVAOs        = std::map<THashCode, TVAO>;                   //!< vertex array object container type 
+  using TIBOs        = std::unordered_map<size_t, TIBO>;            //!< element array buffer container type
+  using TVAOs        = std::unordered_map<THashCode, TVAO>;         //!< vertex array object container type
+  using TVAOShortcut = std::unordered_map<TShortcut, THashCode>;    //!< associate vertex array object to shortcut
 
   constexpr static const int c_obj   = 0; //!< tuple index for GPU object
   constexpr static const int c_descr = 1; //!< tuple index for description
@@ -90,6 +92,8 @@ public: // public operations
   virtual size_t NoOf( void ) const { return _vaos.size(); }
   virtual bool   Selected( void ) const { return _currentVAO != 0; }
 
+  virtual bool AddSortcut( TShortcut shortcut, size_t description_size, const char *description ) override;
+  virtual bool SelectVA( TShortcut shortcut ) override;
   virtual void SpecifyVA( size_t description_size, const char *description ) override;
   virtual bool UpdateVB( size_t id, size_t element_size, size_t no_of_elements, const void *data ) override;
   virtual bool UpdateIB( size_t id, size_t element_size, size_t no_of_elements, const void *data ) override;
@@ -129,14 +133,15 @@ protected: // protected operations
  
 protected: // protected attributes
 
-  size_t                 _minVboSize   = 0;                                   //!< minimum size for a array buffer
+  size_t                   _minVboSize   = 0;                                     //!< minimum size for a array buffer
   Render::TDrawBufferUsage _usage        = Render::TDrawBufferUsage::stream_draw; //!< usage of drawing buffer
-  TGPUObj                _currentVAO   = 0;                                   //!< current selected vertex array object <GPU name>
-  size_t                 _currNoElems  = 0;                                   //!< number of elements in the currently selected vertex array object
-  size_t                 _currElemSize = 0;                                   //!< size of an element in the currently selected vertex array object
-  TVBOs                  _vbos;                                               //!< map description -> (vertex array object <GPU name>, description)
-  TIBOs                  _ibos;                                               //!< map index -> ( element array buffer <GPU name>, size <count> of element array buffer )
-  TVAOs                  _vaos;                                               //!< list of array buffers ( array buffer <GPU name>, size <count> of array buffer )
+  TGPUObj                  _currentVAO   = 0;                                     //!< current selected vertex array object <GPU name>
+  size_t                   _currNoElems  = 0;                                     //!< number of elements in the currently selected vertex array object
+  size_t                   _currElemSize = 0;                                     //!< size of an element in the currently selected vertex array object
+  TVBOs                    _vbos;                                                 //!< map description -> (vertex array object <GPU name>, description)
+  TIBOs                    _ibos;                                                 //!< map index -> ( element array buffer <GPU name>, size <count> of element array buffer )
+  TVAOs                    _vaos;                                                 //!< list of array buffers ( array buffer <GPU name>, size <count> of array buffer )
+  TVAOShortcut             _shortcuts;                                            //!< vertex array object specification shortcuts
 };
 
 

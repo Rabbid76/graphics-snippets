@@ -1,14 +1,15 @@
 /******************************************************************//**
 * \brief Implementation of OpenGL polygon renderer,
-* for OpenGL version 1.00 - "Software-OpenGL".
+* with the use of very simple and highly optimized shaders,
+* for OpenGL version 2.00 and GLSL version 1.10 (`#version 110`).
 * 
 * \author  gernot
-* \date    2018-09-28
+* \date    2018-12-03
 * \version 1.0
 **********************************************************************/
 #pragma once
-#ifndef OpenGLPolygon_1_00_h_INCLUDED
-#define OpenGLPolygon_1_00_h_INCLUDED
+#ifndef OpenGLPolygon_2_00_h_INCLUDED
+#define OpenGLPolygon_2_00_h_INCLUDED
 
 // includes
 
@@ -23,7 +24,7 @@
 * \brief General namespace for OpenGL implementation.  
 * 
 * \author  gernot
-* \date    2018-09-28
+* \date    2018-12-03
 * \version 1.0
 **********************************************************************/
 namespace OpenGL
@@ -34,7 +35,7 @@ namespace OpenGL
 * \brief Namespace for drawing polygons with the use of OpenGL.  
 * 
 * \author  gernot
-* \date    2018-09-28
+* \date    2018-12-03
 * \version 1.0
 **********************************************************************/
 namespace Polygon
@@ -42,26 +43,30 @@ namespace Polygon
 
 
 /******************************************************************//**
-* \brief Implementation of OpenGL polygon renderer,
-* for OpenGL version 1.00 - "Software-OpenGL".
+* \brief Implementation of OpenGL polygon renderer
+* with the use of very simple and highly optimized shaders,
+* for OpenGL version 2.00 and GLSL version 1.10 (`#version 110`).
 *
-* See [The OpenGL Graphics System A Specification (Version 1.0)[](https://www.khronos.org/registry/OpenGL/specs/gl/glspec10.pdf).
+* The goal of this implementation is to be most efficient and to do the
+* minimal requirements, that are necessary for drawing uniform colored
+* polygons by the use of OpenGL compatibility profile,
+* down to OpenGL version 2.00. 
 * 
-* The goal of this implementation is not high performance, but it is
-* to succeed on any hardware, by the use of the lowest possible
-* OpenGL version 1.00.
+* `glBegin` \ `glEnd` sequences are emulated and by caching the vertices
+* to a buffer, which stays persistent and is initialized by a minimum
+* size provided to the constructor.
 *
 * \author  gernot
-* \date    2018-08-01
+* \date    2018-12-03
 * \version 1.0
 **********************************************************************/
-class CPolygonOpenGL_1_00
+class CPolygonOpenGL_2_00
   : public Render::Polygon::IRender
 {
 public:
 
-  CPolygonOpenGL_1_00( void );
-  virtual ~CPolygonOpenGL_1_00();
+  CPolygonOpenGL_2_00( void );
+  virtual ~CPolygonOpenGL_2_00();
 
   //! Initialize the line renderer
   virtual void Init( void ) override;
@@ -115,4 +120,5 @@ private:
 } // OpenGL
 
 
-#endif // OpenGLLine_1_00_h_INCLUDED
+#endif // OpenGLLine_2_00_h_INCLUDED
+

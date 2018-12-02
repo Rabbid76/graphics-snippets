@@ -59,6 +59,8 @@ namespace Line
 // Line stipple specification
 // TODO #version 420 core / #version 300 es
 
+// TODO get rid of matrix stack
+
 // TODO $$$ depth attenuation
 
 const std::string CLineOpenGL_core_and_es::_line_vert_110 = R"(
@@ -637,6 +639,8 @@ bool CLineOpenGL_core_and_es::EndSequence( void )
     glDisableVertexAttribArray( _line_attrib_y_inx );
     _attribute_case = 0;
   }
+
+  // TODO vertex array object
 
   //  set vertex attribute pointer and draw the line
   glVertexAttribPointer( _line_attrib_xyzw_inx, _tuple_size, GL_FLOAT, GL_FALSE, 0, _elem_cache.data() );

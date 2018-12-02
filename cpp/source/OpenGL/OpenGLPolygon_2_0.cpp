@@ -1,6 +1,7 @@
 /******************************************************************//**
 * \brief Implementation of OpenGL polygon renderer,
-* for OpenGL version 1.00 - "Software-OpenGL".
+* with the use of very simple and highly optimized shaders,
+* for OpenGL version 2.00 and GLSL version 1.10 (`#version 110`).
 * 
 * \author  gernot
 * \date    2018-08-01
@@ -11,7 +12,7 @@
 
 // includes
 
-#include <OpenGLPolygon_1_0.h>
+#include <OpenGLPolygon_2_0.h>
 
 
 // OpenGL wrapper
@@ -57,7 +58,7 @@ namespace Polygon
 * \date    2018-09-28
 * \version 1.0
 **********************************************************************/
-CPolygonOpenGL_1_00::CPolygonOpenGL_1_00( void )
+CPolygonOpenGL_2_00::CPolygonOpenGL_2_00( void )
 {}
 
 
@@ -68,7 +69,7 @@ CPolygonOpenGL_1_00::CPolygonOpenGL_1_00( void )
 * \date    2018-09-28
 * \version 1.0
 **********************************************************************/
-CPolygonOpenGL_1_00::~CPolygonOpenGL_1_00()
+CPolygonOpenGL_2_00::~CPolygonOpenGL_2_00()
 {}
 
 
@@ -79,7 +80,7 @@ CPolygonOpenGL_1_00::~CPolygonOpenGL_1_00()
 * \date    2018-09-07
 * \version 1.0
 **********************************************************************/
-void CPolygonOpenGL_1_00::Init( void )
+void CPolygonOpenGL_2_00::Init( void )
 {}
 
 
@@ -91,7 +92,7 @@ void CPolygonOpenGL_1_00::Init( void )
 * \date    2018-09-28
 * \version 1.0
 **********************************************************************/
-Render::Polygon::IRender & CPolygonOpenGL_1_00::SetColor(
+Render::Polygon::IRender & CPolygonOpenGL_2_00::SetColor(
   const Render::TColor & color ) //!< I - the new color
 {
   // change the vertex color
@@ -109,7 +110,7 @@ Render::Polygon::IRender & CPolygonOpenGL_1_00::SetColor(
 * \date    2018-09-28
 * \version 1.0
 **********************************************************************/
-Render::Polygon::IRender & CPolygonOpenGL_1_00::SetColor( 
+Render::Polygon::IRender & CPolygonOpenGL_2_00::SetColor( 
   const Render::TColor8 & color ) //!< I - the new color
 {
   // change the vertex color
@@ -126,7 +127,7 @@ Render::Polygon::IRender & CPolygonOpenGL_1_00::SetColor(
 * \date    2018-09-28
 * \version 1.0
 **********************************************************************/
-Render::Polygon::IRender & CPolygonOpenGL_1_00::SetStyle( 
+Render::Polygon::IRender & CPolygonOpenGL_2_00::SetStyle( 
   const Render::Polygon::TStyle & style )
 {
   //! This is impossible, while an drawing sequence is active.  
@@ -152,7 +153,7 @@ Render::Polygon::IRender & CPolygonOpenGL_1_00::SetStyle(
 * \date    2018-09-28
 * \version 1.0
 **********************************************************************/
-bool CPolygonOpenGL_1_00::Draw( 
+bool CPolygonOpenGL_2_00::Draw( 
   Render::TPrimitive primitive_type, //!< in: primitive type of the coordinates - triangles, triangle strip, triangle fan, triangle adjacency or triangle strip adjacency
   unsigned int       tuple_size,     //!< in: kind of the coordinates - 2: 2D (x, y), 3: 3D (x, y, z), 4: homogeneous (x, y, z, w)   
   size_t             coords_size,    //!< in: number of elements (size) of the coordinate array - `coords_size` = `tuple_size` * "number of coordinates" 
@@ -201,7 +202,7 @@ bool CPolygonOpenGL_1_00::Draw(
 * \date    2018-09-28
 * \version 1.0
 **********************************************************************/
-bool CPolygonOpenGL_1_00::Draw( 
+bool CPolygonOpenGL_2_00::Draw( 
   Render::TPrimitive primitive_type, //!< in: primitive type of the coordinates - triangles, triangle strip, triangle fan, triangle adjacency or triangle strip adjacency
   unsigned int       tuple_size,     //!< in: kind of the coordinates - 2: 2D (x, y), 3: 3D (x, y, z), 4: homogeneous (x, y, z, w)   
   size_t             coords_size,    //!< in: number of elements (size) of the coordinate array - `coords_size` = `tuple_size` * "number of coordinates" 
@@ -250,7 +251,7 @@ bool CPolygonOpenGL_1_00::Draw(
 * \date    2018-09-28
 * \version 1.0
 **********************************************************************/
-bool CPolygonOpenGL_1_00::Draw( 
+bool CPolygonOpenGL_2_00::Draw( 
   Render::TPrimitive primitive_type, //!< in: primitive type of the coordinates - triangles, triangle strip, triangle fan, triangle adjacency or triangle strip adjacency
   size_t             no_of_coords,   //!< in: number of coordinates and number of elements (size) of the coordinate array
   const float       *x_coords,       //!< int pointer to an array of the x coordinates
@@ -285,7 +286,7 @@ bool CPolygonOpenGL_1_00::Draw(
 * \date    2018-09-28
 * \version 1.0
 **********************************************************************/
-bool CPolygonOpenGL_1_00::Draw( 
+bool CPolygonOpenGL_2_00::Draw( 
   Render::TPrimitive primitive_type, //!< in: primitive type of the coordinates - triangles, triangle strip, triangle fan, triangle adjacency or triangle strip adjacency
   size_t             no_of_coords,   //!< in: number of coordinates and number of elements (size) of the coordinate array
   const double      *x_coords,       //!< int pointer to an array of the x coordinates
@@ -320,7 +321,7 @@ bool CPolygonOpenGL_1_00::Draw(
 * \date    2018-09-28
 * \version 1.0
 **********************************************************************/
-bool CPolygonOpenGL_1_00::StartSequence( 
+bool CPolygonOpenGL_2_00::StartSequence( 
   Render::TPrimitive primitive_type, //!< in: primitive type of the coordinates - triangles, triangle strip, triangle fan, triangle adjacency or triangle strip adjacency
   unsigned int       tuple_size )    //!< in: kind of the coordinates - 2: 2D (x, y), 3: 3D (x, y, z), 4: homogeneous (x, y, z, w)   
 {
@@ -350,7 +351,7 @@ bool CPolygonOpenGL_1_00::StartSequence(
 * \date    2018-09-28
 * \version 1.0
 **********************************************************************/
-bool CPolygonOpenGL_1_00::EndSequence( void )
+bool CPolygonOpenGL_2_00::EndSequence( void )
 {
   // A sequence can't be completed if there is no active sequence
   if ( _active_sequence == false )
@@ -376,7 +377,7 @@ bool CPolygonOpenGL_1_00::EndSequence( void )
 * \date    2018-09-28
 * \version 1.0
 **********************************************************************/
-bool CPolygonOpenGL_1_00::DrawSequence( 
+bool CPolygonOpenGL_2_00::DrawSequence( 
   float x,  //!< in: x coordinate
   float y,  //!< in: y coordinate
   float z ) //!< in: z coordinate
@@ -402,7 +403,7 @@ bool CPolygonOpenGL_1_00::DrawSequence(
 * \date    2018-09-28
 * \version 1.0
 **********************************************************************/
-bool CPolygonOpenGL_1_00::DrawSequence( 
+bool CPolygonOpenGL_2_00::DrawSequence( 
   double x,  //!< in: x coordinate
   double y,  //!< in: y coordinate
   double z ) //!< in: z coordinate
@@ -429,7 +430,7 @@ bool CPolygonOpenGL_1_00::DrawSequence(
 * \date    2018-09-28
 * \version 1.0
 **********************************************************************/
-bool CPolygonOpenGL_1_00::DrawSequence( 
+bool CPolygonOpenGL_2_00::DrawSequence( 
   size_t             coords_size, //!< in: number of elements (size) of the coordinate array - `coords_size` = `tuple_size` * "number of coordinates" 
   const float       *coords )     //!< in: pointer to an array of the vertex coordinates
 {
@@ -469,7 +470,7 @@ bool CPolygonOpenGL_1_00::DrawSequence(
 * \date    2018-09-28
 * \version 1.0
 **********************************************************************/
-bool CPolygonOpenGL_1_00::DrawSequence( 
+bool CPolygonOpenGL_2_00::DrawSequence( 
   size_t             coords_size, //!< in: number of elements (size) of the coordinate array - `coords_size` = `tuple_size` * "number of coordinates" 
   const double      *coords )     //!< in: pointer to an array of the vertex coordinates
 {

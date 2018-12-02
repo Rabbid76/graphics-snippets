@@ -227,6 +227,8 @@ public:
     eAttributeSize
   };
 
+  using TShortcut = int;
+
   // abstract operations
 
   virtual ~IDrawBuffer() {}
@@ -234,13 +236,20 @@ public:
   virtual size_t NoOf( void ) const = 0;
   virtual bool   Selected( void ) const = 0;
 
-  /*
-  TODO $$$
+  bool SpecifyVA( TVA description_id )
+  {
+    if ( SelectVA( description_id ) )
+      return true;
 
-  AddSortcut( TShortcur, size_t description_size, const char *description )
-  SpecifyVA( TShortcur ); 
+    const auto &description = VADescription(description_id); 
+    SpecifyVA( description.size(), description.data() );
+    return AddSortcut( (int)description_id, description.size(), description.data() );
+  }
 
-  */
+  bool AddSortcut( TShortcut shortcut, const std::vector<char> & description )
+  {
+    return AddSortcut( shortcut, description.size(), description.data() );
+  }
 
   void SpecifyVA( const std::vector<char> & description )
   {
@@ -252,6 +261,8 @@ public:
     UpdateVB( id, element_size, buffer.size(), buffer.data() );
   }
 
+  virtual bool AddSortcut( TShortcut shortcut, size_t description_size, const char *description ) = 0;
+  virtual bool SelectVA( TShortcut shortcut ) = 0;
   virtual void SpecifyVA( size_t description_size, const char *description ) = 0;
   virtual bool UpdateVB( size_t id, size_t element_size, size_t no_of_elements, const void *data ) = 0;
   virtual bool UpdateIB( size_t id, size_t element_size, size_t no_of_elements, const void *data ) = 0;

@@ -81,6 +81,7 @@ CDrawBuffer::CDrawBuffer(
   _vbos         = std::move( src._vbos );
   _ibos         = std::move( src._ibos );
   _vaos         = std::move( src._vaos );
+  _shortcuts    = std::move( src._shortcuts );
 }
 
 
@@ -102,6 +103,7 @@ CDrawBuffer & CDrawBuffer::operator = (
   _vbos         = std::move( src._vbos );
   _ibos         = std::move( src._ibos );
   _vaos         = std::move( src._vaos );
+  _shortcuts    = std::move( src._shortcuts );
 
   return * this;
 }
@@ -455,6 +457,63 @@ size_t CDrawBuffer::UpdateBuffer(
   glBindBuffer( type, 0 );
   OPENGL_CHECK_GL_ERROR
   return curr_size;
+}
+
+
+/******************************************************************//**
+* \brief Add a shortcut to a vertex array object specification.  
+* 
+* \author  gernot
+* \date    2018-12-03
+* \version 1.0
+**********************************************************************/
+bool CDrawBuffer::AddSortcut( 
+  TShortcut   shortcut,
+  size_t      description_size,
+  const char *description )
+{
+  // Create description key array
+  THashCode hashCode = HashDescription( description_size, description );
+
+  // check if the shortcut already exists
+  auto it = _shortcuts.find( shortcut );
+  if ( it != _shortcuts.end() )
+    return hashCode = it->second; // check if the hash code is the same
+  
+  // add the new shortcut
+  _shortcuts[shortcut] = hashCode;
+
+  return true;
+}
+
+
+/******************************************************************//**
+* \brief Find a vertex array object by its shortcut and  make it 
+* current. 
+* 
+* \author  gernot
+* \date    2018-12-03
+* \version 1.0
+**********************************************************************/
+bool CDrawBuffer::SelectVA(
+   TShortcut shortcut ) //!< vertex array object shortcut
+{
+  // find the description hash code to the shortcut 
+  auto it = _shortcuts.find( shortcut );
+  if ( it == _shortcuts.end() )
+    return false;
+  
+  THashCode hashC = it->second;
+
+  // Check if a proper vertex array object already exists
+  auto vaoIt = _vaos.find( hashC );
+  if ( vaoIt != _vaos.end() )
+  {
+    _currentVAO = std::get<c_obj>( vaoIt->second );
+    return true;
+  }
+
+  return false;
 }
 
 

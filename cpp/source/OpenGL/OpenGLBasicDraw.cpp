@@ -823,8 +823,7 @@ bool CSimpleLineRenderer::Draw(
 
   // buffer specification
   Render::TVA va_id = tuple_size == 2 ? Render::TVA::b0_xy : (tuple_size == 3 ? Render::TVA::b0_xyz : Render::TVA::b0_xyzw);
-  const std::vector<char> bufferdescr = Render::IDrawBuffer::VADescription( va_id );
-
+  
   // set style and context
   glEnable( GL_POLYGON_OFFSET_LINE );
   glPolygonOffset( 1.0, 1.0 );
@@ -832,7 +831,7 @@ bool CSimpleLineRenderer::Draw(
 
   // create buffer
   Render::IDrawBuffer &buffer = _buffer_provider.DrawBuffer();
-  buffer.SpecifyVA( bufferdescr.size(), bufferdescr.data() );
+  buffer.SpecifyVA( va_id );
   if ( arrow_from || arrow_to )
   {
     std::vector<Render::t_fp> temp_coords( coords_size );
@@ -890,12 +889,11 @@ bool CSimpleLineRenderer::Draw(
 
     // TODO $$$ beautify arrow
     static const std::vector<float>arrow_vertices{ 0.0f, 0.0f, -1.0f, -0.5f, -1.0f, 0.5f };
-    static const std::vector<char> arrow_buffer_decr = Render::IDrawBuffer::VADescription( Render::TVA::b0_xy );
     static const size_t no_arrow_vertices = 3;
 
     // create arrow buffer
     Render::IDrawBuffer &buffer = _buffer_provider.DrawBuffer();
-    buffer.SpecifyVA( arrow_buffer_decr.size(), arrow_buffer_decr.data() );
+    buffer.SpecifyVA( Render::TVA::b0_xy );
     buffer.UpdateVB( 0, sizeof(float), arrow_vertices.size(), arrow_vertices.data() );
 
     glm::mat4 model = ToGLM( _draw_library._uniforms._model );
@@ -1539,11 +1537,10 @@ bool CBasicDraw::SetModelUniform(
 **********************************************************************/
 void CBasicDraw::DrawScereenspace( void )
 {
-  const std::vector<char>  bufferdescr = Render::IDrawBuffer::VADescription( Render::TVA::b0_xy );
   const std::vector<float> coords{ -1.0f, -1.0f, 1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 1.0f };
 
   Render::IDrawBuffer &buffer = DrawBuffer();
-  buffer.SpecifyVA( bufferdescr.size(), bufferdescr.data() );
+  buffer.SpecifyVA( Render::TVA::b0_xy );
   buffer.UpdateVB( 0, sizeof(float), coords.size(), coords.data() );
 
   buffer.DrawArray( Render::TPrimitive::trianglestrip, 0, 4, true );
@@ -1920,8 +1917,7 @@ bool CBasicDraw::Draw(
   
   // buffer specification
   Render::TVA va_id = size == 2 ? Render::TVA::b0_xy : (size == 3 ? Render::TVA::b0_xyz : Render::TVA::b0_xyzw);
-  const std::vector<char> bufferdescr = Render::IDrawBuffer::VADescription( va_id );
-
+  
   // set style and context
   if ( is_point )
   {
@@ -1934,7 +1930,7 @@ bool CBasicDraw::Draw(
 
   // create buffer
   Render::IDrawBuffer &buffer = DrawBuffer();
-  buffer.SpecifyVA( bufferdescr.size(), bufferdescr.data() );
+  buffer.SpecifyVA( va_id );
   buffer.UpdateVB( 0, sizeof(float), coords_size, coords );
   
   // set program

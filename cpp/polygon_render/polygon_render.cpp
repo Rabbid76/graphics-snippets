@@ -27,6 +27,7 @@
 #include <Render_IProgram.h>
 #include <Render_IDrawPolygon.h>
 #include <OpenGLPolygon_1_0.h>
+#include <OpenGLPolygon_2_0.h>
 #include <OpenGL_Matrix_Camera.h>
 #include <OpenGL_SimpleShaderProgram.h>
 
@@ -229,12 +230,12 @@ void CWindow_Glfw::MainLoop ( void )
 
 void CWindow_Glfw::InitScene( void )
 {
-  _polygon_1 = std::make_unique<OpenGL::Line::CPolygonOpenGL_1_00>();
-  //_polygon_2 = std::make_unique<OpenGL::Line::CLineOpenGL_2_00>( 0 );
+  _polygon_1 = std::make_unique<OpenGL::Polygon::CPolygonOpenGL_1_00>();
+  _polygon_2 = std::make_unique<OpenGL::Polygon::CPolygonOpenGL_2_00>();
   //_polygon_3 = std::make_unique<OpenGL::Line::CLineOpenGL_core_and_es>( _view_data_ptr, 0 );
 
   _polygon_1->Init();
-  //_polygon_2->Init();
+  _polygon_2->Init();
   //_polygon_3->Init();
 }
 
