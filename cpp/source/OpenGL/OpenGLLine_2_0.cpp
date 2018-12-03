@@ -13,7 +13,7 @@
 // includes
 
 #include <OpenGLLine_2_0.h>
-#include <OpenGLProgram.h>
+#include <OpenGLPrimitive_2_0.h>
 
 
 // OpenGL wrapper
@@ -64,59 +64,6 @@ namespace Line
 {
 
 
-
-/*!
-
-Vertex attributes:
-
-- case 1: 1 attribute with 2 to 4 components: x, y, z, w coordinates
-
-- case 2: 2 attributes, which are: 1. x coordinates; 2. y coordinates
-
-It is more efficient, to combine the different vertex attribute representations in one vertex shader and to switch between them by uniform conditions,
-instead of using 2 different vertex shaders, which would lead to 2 different shader programs.
-Since the vertex shader is executed per vertex only, one additional uniform condition should not gain a notifiable performance loss.
-Note, with a modern hardware, a uniform condition would be evaluated once and different code dependent on the uniform would be generated and executed.
-But this would give the chance to avoid shader program switches, which probably are more time consuming operations. 
-
-*/
-
-const std::string CLineOpenGL_2_00::_line_vert_110 = R"(
-#version 110
-
-attribute vec4  attr_xyzw;
-attribute float attr_y;
-
-varying vec4 v_color;
-
-uniform int   u_attr_case;
-uniform vec4  u_color;
-uniform float u_depth_att;
-
-void main()
-{
-  vec4 vert_pos = u_attr_case == 0 ? attr_xyzw : vec4(attr_xyzw.x, attr_y, 0.0, 1.0);
-  gl_Position   = gl_ModelViewProjectionMatrix * vert_pos;
-  gl_ClipVertex = gl_Position;
-
-  float depth   = 0.5 + 0.5 * gl_Position.z / gl_Position.w;
-  v_color       = vec4( mix(u_color.rgb, vec3(0.0), depth * u_depth_att), u_color.a );
-}
-)";
-
-
-const std::string CLineOpenGL_2_00::_line_frag_110 = R"(
-#version 110
-
-varying vec4 v_color;
-
-void main()
-{
-  gl_FragColor = v_color;
-}
-)";
-
-
 /******************************************************************//**
 * \brief ctor  
 * 
@@ -143,21 +90,6 @@ CLineOpenGL_2_00::~CLineOpenGL_2_00()
 
 
 /******************************************************************//**
-* \brief Trace error message.  
-* 
-* \author  gernot
-* \date    2018-09-07
-* \version 1.0
-**********************************************************************/
-void CLineOpenGL_2_00::Error( 
-  const std::string &kind,     //!< in: message kind
-  const std::string &message ) //!< in: error message
-{
-  std::cout << kind << ": " << message;
-}
-
-
-/******************************************************************//**
 * \brief Initialize the line renderer. 
 *
 * For the initialization a current and valid OpenGL context is required. 
@@ -168,40 +100,11 @@ void CLineOpenGL_2_00::Error(
 **********************************************************************/
 void CLineOpenGL_2_00::Init( void )
 {
-  if ( _initilized )
+  if ( _primitive_prog != nullptr )
     return;
-  _initilized = true;
 
-  std::string msg;
-
-
-  // compile shader objects
-
-  auto _line_vert_shader = std::make_shared<CShaderObject>( Render::Program::TShaderType::vertex );
-  *_line_vert_shader << _line_vert_110;
-  _line_vert_shader->Compile();
-  if ( _line_vert_shader->Verify( msg ) == false )
-    Error( "compile error", msg );
-
-  auto _line_frag_shader = std::make_shared<CShaderObject>( Render::Program::TShaderType::fragment );
-  *_line_frag_shader << _line_frag_110;
-   _line_frag_shader->Compile();
-  if ( _line_frag_shader->Verify( msg ) == false )
-    Error( "compile error", msg );
-
-
-  // link shader programs
-
-  _line_prog = std::make_shared<CShaderProgram>();
-  *_line_prog << _line_vert_shader << _line_frag_shader;
-  _line_prog->Link();
-  if ( _line_prog->Verify( msg ) == false )
-    Error( "link error", msg );
-  _line_color_loc             = glGetUniformLocation( (GLuint)_line_prog->ObjectHandle(), "u_color" );
-  _line_case_loc              = glGetUniformLocation( (GLuint)_line_prog->ObjectHandle(), "u_attr_case" );
-  _line_depth_attenuation_loc = glGetUniformLocation( (GLuint)_line_prog->ObjectHandle(), "u_depth_att" );
-  _line_attrib_xyzw_inx       = glGetAttribLocation(  (GLuint)_line_prog->ObjectHandle(), "attr_xyzw" );
-  _line_attrib_y_inx          = glGetAttribLocation(  (GLuint)_line_prog->ObjectHandle(), "attr_y" );
+  _primitive_prog = std::make_unique<CPrimitiveOpenGL_2_00>();
+  _primitive_prog->Init();
 }
 
 
@@ -219,27 +122,12 @@ void CLineOpenGL_2_00::Init( void )
 **********************************************************************/
 bool CLineOpenGL_2_00::StartSuccessiveLineDrawings( void )
 {
-  if ( _active_sequence )
+  if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() )
   {
-    assert( false );
+    ASSERT( false );
     return false;
   }
-  if ( _successive_drawing )
-    return true;
-
-  // activate the shader program
-  _line_prog->Use();
-
-  // initialize uniforms
-  UpdateParameterUniforms();
-  glUniform1i(  _line_case_loc,  0 );
-
-  // enable and disable vertex attributes
-  glEnableVertexAttribArray( _line_attrib_xyzw_inx );
-  glDisableVertexAttribArray( _line_attrib_y_inx );
-
-  _attribute_case     = 0;
-  _successive_drawing = true;
+  _primitive_prog->StartSuccessivePrimitiveDrawings();
   return true;
 }
 
@@ -254,23 +142,12 @@ bool CLineOpenGL_2_00::StartSuccessiveLineDrawings( void )
 **********************************************************************/
 bool CLineOpenGL_2_00::FinishSuccessiveLineDrawings( void )
 {
-  if ( _active_sequence )
+  if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() )
   {
-    assert( false );
+    ASSERT( false );
     return false;
   }
-  if ( _successive_drawing == false )
-    return true;
-
-  // disable vertex attributes
-  glDisableVertexAttribArray( _line_attrib_xyzw_inx );
-  glDisableVertexAttribArray( _line_attrib_y_inx );
-
-  // activate the shader program 0
-  glUseProgram( 0 );
-
-  _attribute_case     = 0;
-  _successive_drawing = false;
+  _primitive_prog->FinishSuccessivePrimitiveDrawings();
   return true;
 }
 
@@ -285,11 +162,8 @@ bool CLineOpenGL_2_00::FinishSuccessiveLineDrawings( void )
 Render::Line::IRender & CLineOpenGL_2_00::SetColor( 
   const Render::TColor & color ) //!< in: new color
 { 
-  _line_color = color; 
-
-  if ( _successive_drawing )
-    glUniform4fv( _line_color_loc, 1, _line_color.data() );
-  
+  if ( _primitive_prog != nullptr )
+    _primitive_prog->SetColor( color );
   return *this; 
 }
 
@@ -304,11 +178,8 @@ Render::Line::IRender & CLineOpenGL_2_00::SetColor(
 Render::Line::IRender & CLineOpenGL_2_00::SetColor( 
   const Render::TColor8 & color ) //!< in: new color
 { 
-  _line_color = Render::toColor( color );
-
-  if ( _successive_drawing )
-    glUniform4fv( _line_color_loc, 1, _line_color.data() );
-  
+  if ( _primitive_prog != nullptr )
+    _primitive_prog->SetColor( color );
   return *this; 
 }
 
@@ -331,11 +202,12 @@ Render::Line::IRender & CLineOpenGL_2_00::SetStyle(
   //! The only possible operations within a `glBegin`/`glEnd` sequence are those operations,
   //! which directly change fixed function attributes or specify a new vertex coordinate.  
   //! See [`glBegin`](https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glBegin.xml)
-  if ( _active_sequence )
+  if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() )
   {
-    assert( false );
+    ASSERT( false );
     return *this;
   }
+  _primitive_prog->SetDeptAttenuation( _line_style._depth_attenuation );
 
   _line_style = style;
 
@@ -372,7 +244,7 @@ Render::Line::IRender & CLineOpenGL_2_00::SetStyle(
 Render::Line::IRender & CLineOpenGL_2_00::SetArrowStyle( 
   const Render::Line::TArrowStyle & style ) //! I - new style of the arrows at the endings of coherently lines
 {
-  assert( false );
+  ASSERT( false );
   return *this;
 }
 
@@ -391,41 +263,24 @@ bool CLineOpenGL_2_00::Draw(
   const float       *coords )        //!< in: pointer to an array of the vertex coordinates
 { 
   // A new sequence can't be started within an active sequence
-  if ( _active_sequence )
+  if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() )
   {
     ASSERT( false );
     return false;
   }
   ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::line );
   ASSERT( tuple_size == 2 || tuple_size == 3 || tuple_size == 4 );
+  auto &prog = *_primitive_prog;
 
   // activate program, update uniforms and enable vertex attributes
-  if ( _successive_drawing == false )
-  {
-    _line_prog->Use();
-   
-    UpdateParameterUniforms();
-    glUniform1i( _line_case_loc,  0 );
-    glEnableVertexAttribArray( _line_attrib_xyzw_inx );
-    glDisableVertexAttribArray( _line_attrib_y_inx );
-  }
-  else if ( _attribute_case != 0 )
-  {
-    glUniform1i(  _line_case_loc,  0 );
-    glDisableVertexAttribArray( _line_attrib_y_inx );
-    _attribute_case = 0;
-  }
+  prog.ActivateProgram( false );
 
   // set vertex attribute pointer and draw the line
-  glVertexAttribPointer( _line_attrib_xyzw_inx, tuple_size, GL_FLOAT, GL_FALSE, 0, coords );
+  glVertexAttribPointer( prog.Attrib_xyzw_inx(), tuple_size, GL_FLOAT, GL_FALSE, 0, coords );
   glDrawArrays( OpenGL::Primitive( primitive_type ), 0, (GLsizei)(coords_size / tuple_size) );
   
   // disable vertex attributes and activate program 0
-  if ( _successive_drawing == false )
-  {
-    glDisableVertexAttribArray( _line_attrib_xyzw_inx );
-    glUseProgram( 0 );
-  }
+  prog.DeactivateProgram();
 
   return true;
 }
@@ -444,42 +299,25 @@ bool CLineOpenGL_2_00::Draw(
   size_t             coords_size,    //!< in: number of elements (size) of the coordinate array - `coords_size` = `tuple_size` * "number of coordinates" 
   const double      *coords )        //!< in: pointer to an array of the vertex coordinates
 {
-   // A new sequence can't be started within an active sequence
-  if ( _active_sequence )
+  // A new sequence can't be started within an active sequence
+  if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() )
   {
     ASSERT( false );
     return false;
   }
   ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::line );
   ASSERT( tuple_size == 2 || tuple_size == 3 || tuple_size == 4 );
+  auto &prog = *_primitive_prog;
 
   // activate program, update uniforms and enable vertex attributes
-  if ( _successive_drawing == false )
-  {
-    _line_prog->Use();
-   
-    UpdateParameterUniforms();
-    glUniform1i( _line_case_loc,  0 );
-    glEnableVertexAttribArray( _line_attrib_xyzw_inx );
-    glDisableVertexAttribArray( _line_attrib_y_inx );
-  }
-  else if ( _attribute_case != 0 )
-  {
-    glUniform1i(  _line_case_loc,  0 );
-    glDisableVertexAttribArray( _line_attrib_y_inx );
-    _attribute_case = 0;
-  }
+  _primitive_prog->ActivateProgram( false );
 
   // set vertex attribute pointer and draw the line
-  glVertexAttribPointer( _line_attrib_xyzw_inx, tuple_size, GL_DOUBLE, GL_FALSE, 0, coords );
+  glVertexAttribPointer( prog.Attrib_xyzw_inx(), tuple_size, GL_DOUBLE, GL_FALSE, 0, coords );
   glDrawArrays( OpenGL::Primitive( primitive_type ), 0, (GLsizei)(coords_size / tuple_size) );
  
   // disable vertex attributes and activate program 0
-  if ( _successive_drawing == false )
-  {
-    glDisableVertexAttribArray( _line_attrib_xyzw_inx );
-    glUseProgram( 0 );
-  }
+  prog.DeactivateProgram();
 
   return true;
 }
@@ -499,42 +337,24 @@ bool CLineOpenGL_2_00::Draw(
   const float       *y_coords )      //!< int pointer to an array of the y coordinates
 {
   // A new sequence can't be started within an active sequence
-  if ( _active_sequence )
+  if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() )
   {
     ASSERT( false );
     return false;
   }
   ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::line );
+  auto &prog = *_primitive_prog;
 
   // activate program, update uniforms and enable vertex attributes
-  if ( _successive_drawing == false )
-  {
-    _line_prog->Use();
-   
-    UpdateParameterUniforms();
-    glUniform1i( _line_case_loc,  1 );
-    glEnableVertexAttribArray( _line_attrib_xyzw_inx );
-    glEnableVertexAttribArray( _line_attrib_y_inx );
-  }
-  else if ( _attribute_case == 0 )
-  {
-    glUniform1i( _line_case_loc,  1 );
-    glEnableVertexAttribArray( _line_attrib_y_inx );
-    _attribute_case = 1;
-  }
+  prog.ActivateProgram( true );
 
   // set vertex attribute pointers and draw the line
-  glVertexAttribPointer( _line_attrib_xyzw_inx, 1, GL_FLOAT, GL_FALSE, 0, x_coords );
-  glVertexAttribPointer( _line_attrib_y_inx, 1, GL_FLOAT, GL_FALSE, 0, y_coords );
+  glVertexAttribPointer( prog.Attrib_xyzw_inx(), 1, GL_FLOAT, GL_FALSE, 0, x_coords );
+  glVertexAttribPointer( prog.Attrib_y_inx(), 1, GL_FLOAT, GL_FALSE, 0, y_coords );
   glDrawArrays( OpenGL::Primitive( primitive_type ), 0, (GLsizei)no_of_coords );
    
   // disable vertex attributes and activate program 0
-  if ( _successive_drawing == false )
-  {
-    glDisableVertexAttribArray( _line_attrib_xyzw_inx );
-    glDisableVertexAttribArray( _line_attrib_y_inx );
-    glUseProgram( 0 );
-  }
+  prog.DeactivateProgram();
 
   return true;
 }
@@ -554,42 +374,24 @@ bool CLineOpenGL_2_00::Draw(
   const double      *y_coords )      //!< int pointer to an array of the y coordinates
 {
   // A new sequence can't be started within an active sequence
-  if ( _active_sequence )
+  if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() )
   {
     ASSERT( false );
     return false;
   }
   ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::line );
+  auto &prog = *_primitive_prog;
 
   // activate program, update uniforms and enable vertex attributes
-  if ( _successive_drawing == false )
-  {
-    _line_prog->Use();
-   
-    UpdateParameterUniforms();
-    glUniform1i(  _line_case_loc,  1 );
-    glEnableVertexAttribArray( _line_attrib_xyzw_inx );
-    glEnableVertexAttribArray( _line_attrib_y_inx );
-  }
-  else if ( _attribute_case == 0 )
-  {
-    glUniform1i( _line_case_loc,  1 );
-    glEnableVertexAttribArray( _line_attrib_y_inx );
-    _attribute_case = 1;
-  }
+  prog.ActivateProgram( true );
 
   // set vertex attribute pointers and draw the line
-  glVertexAttribPointer( _line_attrib_xyzw_inx, 1, GL_DOUBLE, GL_FALSE, 0, x_coords );
-  glVertexAttribPointer( _line_attrib_y_inx, 1, GL_DOUBLE, GL_FALSE, 0, y_coords );
+  glVertexAttribPointer( prog.Attrib_xyzw_inx(), 1, GL_DOUBLE, GL_FALSE, 0, x_coords );
+  glVertexAttribPointer( prog.Attrib_y_inx(), 1, GL_DOUBLE, GL_FALSE, 0, y_coords );
   glDrawArrays( OpenGL::Primitive( primitive_type ), 0, (GLsizei)no_of_coords );
 
   // disable vertex attributes and activate program 0
-  if ( _successive_drawing == false )
-  {
-    glDisableVertexAttribArray( _line_attrib_xyzw_inx );
-    glDisableVertexAttribArray( _line_attrib_y_inx );
-    glUseProgram( 0 );
-  }
+  prog.DeactivateProgram();
 
   return true;
 }
@@ -607,16 +409,19 @@ bool CLineOpenGL_2_00::StartSequence(
   unsigned int       tuple_size )    //!< in: kind of the coordinates - 2: 2D (x, y), 3: 3D (x, y, z), 4: homogeneous (x, y, z, w)   
 {
   // A new sequence can't be started within an active sequence
-  if ( _active_sequence )
+  if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() )
   {
     ASSERT( false );
     return false;
   }
   ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::line );
+  auto &prog = *_primitive_prog;
   
-  _active_sequence = true;
-  _squence_type    = primitive_type;
-  _tuple_size      = tuple_size;
+  prog.StartSequence();
+  
+  _squence_type = primitive_type;
+  _tuple_size   = tuple_size;
+
   return true;
 }
   
@@ -631,45 +436,27 @@ bool CLineOpenGL_2_00::StartSequence(
 bool CLineOpenGL_2_00::EndSequence( void )
 {
   // A sequence can't be completed if there is no active sequence
-  if ( _active_sequence == false )
+  if ( _primitive_prog == nullptr || _primitive_prog->EndSequence() == false )
   {
     ASSERT( false );
     return false;
   }
+  auto &prog = *_primitive_prog;
 
   // draw the line
 
   // activate program, update uniforms and enable vertex attributes
-  if ( _successive_drawing == false )
-  {
-    _line_prog->Use();
-   
-    UpdateParameterUniforms();
-    glUniform1i(  _line_case_loc,  0 );
-    glEnableVertexAttribArray( _line_attrib_xyzw_inx );
-    glDisableVertexAttribArray( _line_attrib_y_inx );
-  }
-  else if ( _attribute_case != 0 )
-  {
-    glUniform1i( _line_case_loc,  0 );
-    glDisableVertexAttribArray( _line_attrib_y_inx );
-    _attribute_case = 0;
-  }
+  prog.ActivateProgram( false );
 
   //  set vertex attribute pointer and draw the line
-  glVertexAttribPointer( _line_attrib_xyzw_inx, _tuple_size, GL_FLOAT, GL_FALSE, 0, _elem_cache.data() );
+  glVertexAttribPointer( prog.Attrib_xyzw_inx(), _tuple_size, GL_FLOAT, GL_FALSE, 0, _elem_cache.data() );
   glDrawArrays( OpenGL::Primitive( _squence_type ), 0, (GLsizei)(_sequence_size / _tuple_size) );
   
   // disable vertex attributes and activate program 0
-  if ( _successive_drawing == false )
-  {
-    glDisableVertexAttribArray( _line_attrib_xyzw_inx );
-    glUseProgram( 0 );
-  }
-
-  _active_sequence = false;
-  _tuple_size      = 0;
-  _sequence_size   = 0;
+  prog.DeactivateProgram();
+  
+  _tuple_size    = 0;
+  _sequence_size = 0;
   
   return true;
 }
@@ -688,7 +475,7 @@ bool CLineOpenGL_2_00::DrawSequence(
   float z ) //!< in: z coordinate
 {
   // A sequence has to be active, to specify a new vertex coordinate
-  if ( _active_sequence == false )
+  if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() == false )
   {
     ASSERT( false );
     return false;
@@ -724,7 +511,7 @@ bool CLineOpenGL_2_00::DrawSequence(
   double z ) //!< in: z coordinate
 {
   // A sequence has to be active, to specify a new vertex coordinate
-  if ( _active_sequence == false )
+  if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() == false )
   {
     ASSERT( false );
     return false;
@@ -759,7 +546,7 @@ bool CLineOpenGL_2_00::DrawSequence(
   const float       *coords )     //!< in: pointer to an array of the vertex coordinates
 {
   // A sequence has to be active, to specify new vertex coordinates
-  if ( _active_sequence == false )
+  if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() == false )
   {
     ASSERT( false );
     return false;
@@ -790,7 +577,7 @@ bool CLineOpenGL_2_00::DrawSequence(
   const double      *coords )     //!< in: pointer to an array of the vertex coordinates
 {
   // A sequence has to be active, to specify new vertex coordinates
-  if ( _active_sequence == false )
+  if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() == false )
   {
     ASSERT( false );
     return false;
@@ -808,20 +595,6 @@ bool CLineOpenGL_2_00::DrawSequence(
   _sequence_size += coords_size;
 
   return true;
-}
-
-
-/******************************************************************//**
-* \brief Set style and color parameter uniforms.  
-* 
-* \author  gernot
-* \date    2018-09-21
-* \version 1.0
-**********************************************************************/
-void CLineOpenGL_2_00::UpdateParameterUniforms( void )
-{
-  glUniform4fv( _line_color_loc, 1, _line_color.data() );
-  glUniform1f( _line_depth_attenuation_loc, _line_style._depth_attenuation );
 }
 
 

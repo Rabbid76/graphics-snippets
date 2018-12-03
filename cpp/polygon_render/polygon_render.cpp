@@ -231,7 +231,7 @@ void CWindow_Glfw::MainLoop ( void )
 void CWindow_Glfw::InitScene( void )
 {
   _polygon_1 = std::make_unique<OpenGL::Polygon::CPolygonOpenGL_1_00>();
-  _polygon_2 = std::make_unique<OpenGL::Polygon::CPolygonOpenGL_2_00>();
+  _polygon_2 = std::make_unique<OpenGL::Polygon::CPolygonOpenGL_2_00>( 0 );
   //_polygon_3 = std::make_unique<OpenGL::Line::CLineOpenGL_core_and_es>( _view_data_ptr, 0 );
 
   _polygon_1->Init();
@@ -287,7 +287,7 @@ void CWindow_Glfw::Render( double time_ms )
 
 void CWindow_Glfw::RenderTestScene( Render::Polygon::IRender &line_render )
 {
-    line_render.StartSuccessiveLineDrawings();
+    line_render.StartSuccessivePolygonDrawings();
 
     line_render.SetStyle( { 0.0f } );
     
@@ -309,5 +309,5 @@ void CWindow_Glfw::RenderTestScene( Render::Polygon::IRender &line_render )
     static const std::vector<double> line_y_test_2{ -0.5,  0.5,  0.5 };
     line_render.Draw( Render::TPrimitive::trianglefan, line_x_test_2.size(), line_x_test_2.data(), line_y_test_2.data() );
 
-    line_render.FinishSuccessiveLineDrawings();
+    line_render.FinishSuccessivePolygonDrawings();
 }

@@ -15,7 +15,6 @@
 
 #include <Render_IDrawType.h>
 #include <Render_IDrawLine.h>
-#include <Render_IProgram.h>
 
 
 // STL
@@ -36,6 +35,8 @@
 **********************************************************************/
 namespace OpenGL
 {
+
+class CPrimitiveOpenGL_2_00;
 
 
 /******************************************************************//**
@@ -71,6 +72,8 @@ class CLineOpenGL_2_00
   : public Render::Line::IRender
 {
 public:
+
+  using TProgramPtr = std::unique_ptr<CPrimitiveOpenGL_2_00>;
 
   CLineOpenGL_2_00( size_t min_cache_elems );
   virtual ~CLineOpenGL_2_00();
@@ -115,38 +118,18 @@ public:
   virtual bool DrawSequence( size_t coords_size, const float *coords ) override;
   virtual bool DrawSequence( size_t coords_size, const double *coords ) override;
 
-protected:
-
-  //! set style and color parameter uniforms
-  void UpdateParameterUniforms( void );
-
-  //! Trace error message
-  virtual void Error( const std::string &kind, const std::string &message );
-
 private:
 
-  static const std::string     _line_vert_110;                             //!< default vertex shader for consecutive vertex attributes
-  static const std::string     _line_frag_110;                             //!< fragment shader for uniform colored lines 
-                                                                           
-  Render::Program::TProgramPtr _line_prog;                                 //!< shader program for consecutive vertex attributes
-  int                          _line_color_loc{ -1 };                      //!< uniform location of color  
-  int                          _line_depth_attenuation_loc{ -1 };          //!< uniform location of depth attenuation parameter
-  int                          _line_case_loc{ -1 };                       //!< uniform location of attribute case  
-  int                          _line_attrib_xyzw_inx{ -1 };                //!< attribute index of the vertex coordinate 
-  int                          _line_attrib_y_inx{ -1 };                   //!< attribute index of the vertex separated y coordinate 
-                                                                           
-  bool                         _initilized{ false };                       //!< initialization flag of the object
-  bool                         _successive_drawing{ false };               //!< true: optimized successive drawing of lines is enabled
-  int                          _attribute_case{ 0 };                       //!< vertex attribute case for successive drawing of lines
-  Render::TColor               _line_color{ 1.0f };                        //!< uniform color of the pending lines
-  Render::Line::TStyle         _line_style;                                //!< line style parameters: line width and stippling
-                                                                           
-  bool                         _active_sequence{ false };                  //!< true: an draw sequence was started, but not finished yet
-  Render::TPrimitive           _squence_type{ Render::TPrimitive::NO_OF }; //!< primitive type pf the sequence
-  unsigned int                 _tuple_size{ 0 };                           //!< tuple size (2, 3 or 4) for a sequence
-  size_t                       _min_cache_elems{ 0 };                      //!< minimum element size of the sequence cache
-  size_t                       _sequence_size{ 0 };                        //!< current size of the sequence cache
-  std::vector<float>           _elem_cache;                                //!< the sequence cache - the tuple size of the cache elements is always 3 (x, y, z coordinate)
+  TProgramPtr             _primitive_prog;                            //!< primitive render program
+  Render::Line::TStyle    _line_style;                                //!< line style parameters: line width and stippling
+                                                                      
+  // TODO $$$ cache class
+  Render::TPrimitive      _squence_type{ Render::TPrimitive::NO_OF }; //!< primitive type pf the sequence
+  unsigned int            _tuple_size{ 0 };                           //!< tuple size (2, 3 or 4) for a sequence
+  size_t                  _min_cache_elems{ 0 };                      //!< minimum element size of the sequence cache
+  size_t                  _sequence_size{ 0 };                        //!< current size of the sequence cache
+  std::vector<float>      _elem_cache;                                //!< the sequence cache - the tuple size of the cache elements is always 3 (x, y, z coordinate)
+
 };
 
 

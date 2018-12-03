@@ -13,6 +13,7 @@
 // includes
 
 #include <OpenGLPolygon_2_0.h>
+#include <OpenGLPrimitive_2_0.h>
 
 
 // OpenGL wrapper
@@ -23,7 +24,19 @@
 
 // STL
 
-#include <cassert>
+#include <iostream>
+#include <algorithm>
+
+
+// preprocessor definitions
+
+#if defined(max)
+#undef max
+#endif
+
+#if defined(min)
+#undef min
+#endif
 
 
 // class definitions
@@ -58,7 +71,10 @@ namespace Polygon
 * \date    2018-12-03
 * \version 1.0
 **********************************************************************/
-CPolygonOpenGL_2_00::CPolygonOpenGL_2_00( void )
+CPolygonOpenGL_2_00::CPolygonOpenGL_2_00( 
+  size_t min_cache_elems ) //! I - size of the element cache
+  : _min_cache_elems( min_cache_elems )
+  , _elem_cache( min_cache_elems, 0.0f )
 {}
 
 
@@ -81,12 +97,61 @@ CPolygonOpenGL_2_00::~CPolygonOpenGL_2_00()
 * \version 1.0
 **********************************************************************/
 void CPolygonOpenGL_2_00::Init( void )
-{}
+{
+  if ( _primitive_prog != nullptr )
+    return;
+
+  _primitive_prog = std::make_unique<CPrimitiveOpenGL_2_00>();
+  _primitive_prog->Init();
+}
 
 
 /******************************************************************//**
-* \brief Change the current polygon color, for the pending line drawing
-* instructions
+* \brief Notify the render that a sequence of successive polygons will
+* follow, that is not interrupted by any other drawing operation.
+* This allows the render to do some performance optimizations and to
+* prepare for the polygon rendering.
+* The render can keep states persistent from one polygon drawing to the
+* other, without initializing and restoring them.  
+* 
+* \author  gernot
+* \date    2018-09-12
+* \version 1.0
+**********************************************************************/
+bool CPolygonOpenGL_2_00::StartSuccessivePolygonDrawings( void )
+{
+  if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() )
+  {
+    ASSERT( false );
+    return false;
+  }
+  _primitive_prog->StartSuccessivePrimitiveDrawings();
+  return true;
+}
+
+
+/******************************************************************//**
+* \brief Notify the renderer that a sequence of polygons has been
+* finished, and that the internal states have to be restored.  
+* 
+* \author  gernot
+* \date    2018-09-12
+* \version 1.0
+**********************************************************************/
+bool CPolygonOpenGL_2_00::FinishSuccessivePolygonDrawings( void )
+{
+  if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() )
+  {
+    ASSERT( false );
+    return false;
+  }
+  _primitive_prog->FinishSuccessivePrimitiveDrawings();
+  return true;
+}
+
+
+/******************************************************************//**
+* \brief Set the stroke color of the polygon.
 * 
 * \author  gernot
 * \date    2018-12-03
@@ -95,16 +160,14 @@ void CPolygonOpenGL_2_00::Init( void )
 Render::Polygon::IRender & CPolygonOpenGL_2_00::SetColor(
   const Render::TColor & color ) //!< I - the new color
 {
-  // change the vertex color
-  glColor4fv( color.data() );
-
-  return *this;
+  if ( _primitive_prog != nullptr )
+    _primitive_prog->SetColor( color );
+  return *this; 
 }
 
 
 /******************************************************************//**
-* \brief Change the current polygon color, for the pending line drawing
-* instructions
+* \brief Set the stroke color of the polygon.
 * 
 * \author  gernot
 * \date    2018-12-03
@@ -113,10 +176,9 @@ Render::Polygon::IRender & CPolygonOpenGL_2_00::SetColor(
 Render::Polygon::IRender & CPolygonOpenGL_2_00::SetColor( 
   const Render::TColor8 & color ) //!< I - the new color
 {
-  // change the vertex color
-  glColor4ubv( color.data() );
-
-  return *this;
+  if ( _primitive_prog != nullptr )
+    _primitive_prog->SetColor( color );
+  return *this; 
 }
 
 
@@ -134,11 +196,14 @@ Render::Polygon::IRender & CPolygonOpenGL_2_00::SetStyle(
   //! The only possible operations within a `glBegin`/`glEnd` sequence are those operations,
   //! which directly change fixed function attributes or specify a new vertex coordinate.  
   //! See [`glBegin`](https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glBegin.xml)
-  if ( _active_sequence )
+  if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() )
   {
     assert( false );
     return *this;
   }
+  _primitive_prog->SetDeptAttenuation( _polygon_style._depth_attenuation );
+
+  _polygon_style = style;
 
   // ...
   
@@ -147,7 +212,7 @@ Render::Polygon::IRender & CPolygonOpenGL_2_00::SetStyle(
 
 
 /******************************************************************//**
-* \brief Draw a single line sequence.  
+* \brief Draw a single polygon sequence.  
 * 
 * \author  gernot
 * \date    2018-12-03
@@ -160,36 +225,24 @@ bool CPolygonOpenGL_2_00::Draw(
   const float       *coords )        //!< in: pointer to an array of the vertex coordinates
 { 
   // A new sequence can't be started within an active sequence
-  if ( _active_sequence )
+  if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() )
   {
     ASSERT( false );
     return false;
   }
   ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::polygon );
   ASSERT( tuple_size == 2 || tuple_size == 3 || tuple_size == 4 );
+  auto &prog = *_primitive_prog;
 
-  // start `glBegin` / `glEnd` sequence
-  glBegin( OpenGL::Primitive(primitive_type) );
+  // activate program, update uniforms and enable vertex attributes
+  prog.ActivateProgram( false );
 
-  // draw the line sequence
-  if ( tuple_size == 2 )
-  {
-    for ( const float *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 2 )
-      glVertex2fv( ptr );
-  }
-  else if ( tuple_size == 3 )
-  {
-    for ( const float *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 3 )
-      glVertex3fv( ptr );
-  }
-  else if ( tuple_size == 4 )
-  {
-    for ( const float *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 4 )
-      glVertex4fv( ptr );
-  }
-
-  // complete sequence
-  glEnd();
+  // set vertex attribute pointer and draw the line
+  glVertexAttribPointer( prog.Attrib_xyzw_inx(), tuple_size, GL_FLOAT, GL_FALSE, 0, coords );
+  glDrawArrays( OpenGL::Primitive( primitive_type ), 0, (GLsizei)(coords_size / tuple_size) );
+  
+  // disable vertex attributes and activate program 0
+  prog.DeactivateProgram();
 
   return true;
 }
@@ -208,37 +261,25 @@ bool CPolygonOpenGL_2_00::Draw(
   size_t             coords_size,    //!< in: number of elements (size) of the coordinate array - `coords_size` = `tuple_size` * "number of coordinates" 
   const double      *coords )        //!< in: pointer to an array of the vertex coordinates
 {
-   // A new sequence can't be started within an active sequence
-  if ( _active_sequence )
+  // A new sequence can't be started within an active sequence
+  if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() )
   {
     ASSERT( false );
     return false;
   }
   ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::polygon );
   ASSERT( tuple_size == 2 || tuple_size == 3 || tuple_size == 4 );
+  auto &prog = *_primitive_prog;
 
-  // start `glBegin` / `glEnd` sequence
-  glBegin( OpenGL::Primitive(primitive_type) );
+  // activate program, update uniforms and enable vertex attributes
+  _primitive_prog->ActivateProgram( false );
 
-  // draw the line sequence
-  if ( tuple_size == 2 )
-  {
-    for ( const double *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 2 )
-      glVertex2dv( ptr );
-  }
-  else if ( tuple_size == 3 )
-  {
-    for ( const double *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 3 )
-      glVertex3dv( ptr );
-  }
-  else if ( tuple_size == 4 )
-  {
-    for ( const double *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 4 )
-      glVertex4dv( ptr );
-  }
-
-  // complete sequence
-  glEnd();
+  // set vertex attribute pointer and draw the line
+  glVertexAttribPointer( prog.Attrib_xyzw_inx(), tuple_size, GL_DOUBLE, GL_FALSE, 0, coords );
+  glDrawArrays( OpenGL::Primitive( primitive_type ), 0, (GLsizei)(coords_size / tuple_size) );
+ 
+  // disable vertex attributes and activate program 0
+  prog.DeactivateProgram();
 
   return true;
 }
@@ -258,22 +299,24 @@ bool CPolygonOpenGL_2_00::Draw(
   const float       *y_coords )      //!< int pointer to an array of the y coordinates
 {
   // A new sequence can't be started within an active sequence
-  if ( _active_sequence )
+  if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() )
   {
     ASSERT( false );
     return false;
   }
   ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::polygon );
-  
-  // start `glBegin` / `glEnd` sequence
-  glBegin( OpenGL::Primitive(primitive_type) );
+  auto &prog = *_primitive_prog;
 
-  // draw the line sequence
-  for ( size_t i = 0; i < no_of_coords; ++ i )
-    glVertex2f( x_coords[i], y_coords[i] );
+  // activate program, update uniforms and enable vertex attributes
+  prog.ActivateProgram( true );
 
-  // complete sequence
-  glEnd();
+  // set vertex attribute pointers and draw the line
+  glVertexAttribPointer( prog.Attrib_xyzw_inx(), 1, GL_FLOAT, GL_FALSE, 0, x_coords );
+  glVertexAttribPointer( prog.Attrib_y_inx(), 1, GL_FLOAT, GL_FALSE, 0, y_coords );
+  glDrawArrays( OpenGL::Primitive( primitive_type ), 0, (GLsizei)no_of_coords );
+   
+  // disable vertex attributes and activate program 0
+  prog.DeactivateProgram();
 
   return true;
 }
@@ -293,22 +336,24 @@ bool CPolygonOpenGL_2_00::Draw(
   const double      *y_coords )      //!< int pointer to an array of the y coordinates
 {
   // A new sequence can't be started within an active sequence
-  if ( _active_sequence )
+  if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() )
   {
     ASSERT( false );
     return false;
   }
   ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::polygon );
-  
-  // start `glBegin` / `glEnd` sequence
-  glBegin( OpenGL::Primitive(primitive_type) );
+  auto &prog = *_primitive_prog;
 
-  // draw the line sequence
-  for ( size_t i = 0; i < no_of_coords; ++ i )
-    glVertex2d( x_coords[i], y_coords[i] );
+  // activate program, update uniforms and enable vertex attributes
+  prog.ActivateProgram( true );
 
-  // complete sequence
-  glEnd();
+  // set vertex attribute pointers and draw the line
+  glVertexAttribPointer( prog.Attrib_xyzw_inx(), 1, GL_DOUBLE, GL_FALSE, 0, x_coords );
+  glVertexAttribPointer( prog.Attrib_y_inx(), 1, GL_DOUBLE, GL_FALSE, 0, y_coords );
+  glDrawArrays( OpenGL::Primitive( primitive_type ), 0, (GLsizei)no_of_coords );
+
+  // disable vertex attributes and activate program 0
+  prog.DeactivateProgram();
 
   return true;
 }
@@ -326,19 +371,18 @@ bool CPolygonOpenGL_2_00::StartSequence(
   unsigned int       tuple_size )    //!< in: kind of the coordinates - 2: 2D (x, y), 3: 3D (x, y, z), 4: homogeneous (x, y, z, w)   
 {
   // A new sequence can't be started within an active sequence
-  if ( _active_sequence )
+  if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() )
   {
     ASSERT( false );
     return false;
   }
   ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::polygon );
-  ASSERT( tuple_size == 2 || tuple_size == 3 || tuple_size == 4 );
+  auto &prog = *_primitive_prog;
   
-  _active_sequence = true;
-  _tuple_size      = tuple_size;
-
-  // start `glBegin` / `glEnd` sequence
-  glBegin( OpenGL::Primitive(primitive_type) );
+  prog.StartSequence();
+  
+  _squence_type = primitive_type;
+  _tuple_size   = tuple_size;
 
   return true;
 }
@@ -354,18 +398,28 @@ bool CPolygonOpenGL_2_00::StartSequence(
 bool CPolygonOpenGL_2_00::EndSequence( void )
 {
   // A sequence can't be completed if there is no active sequence
-  if ( _active_sequence == false )
+  if ( _primitive_prog == nullptr || _primitive_prog->EndSequence() == false )
   {
     ASSERT( false );
     return false;
   }
- 
-  _active_sequence = false;
-  _tuple_size      = 0;
+  auto &prog = *_primitive_prog;
 
-  // complete sequence
-  glEnd();
+  // draw the line
 
+  // activate program, update uniforms and enable vertex attributes
+  prog.ActivateProgram( false );
+
+  //  set vertex attribute pointer and draw the line
+  glVertexAttribPointer( prog.Attrib_xyzw_inx(), _tuple_size, GL_FLOAT, GL_FALSE, 0, _elem_cache.data() );
+  glDrawArrays( OpenGL::Primitive( _squence_type ), 0, (GLsizei)(_sequence_size / _tuple_size) );
+  
+  // disable vertex attributes and activate program 0
+  prog.DeactivateProgram();
+  
+  _tuple_size    = 0;
+  _sequence_size = 0;
+  
   return true;
 }
 
@@ -383,14 +437,24 @@ bool CPolygonOpenGL_2_00::DrawSequence(
   float z ) //!< in: z coordinate
 {
   // A sequence has to be active, to specify a new vertex coordinate
-  if ( _active_sequence == false )
+  if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() == false )
   {
     ASSERT( false );
     return false;
   }
 
-  // specify the vertex coordinate
-  glVertex3f( x, y, z );
+  // reserve the cache
+  if ( _elem_cache.size() < _sequence_size + _tuple_size )
+    _elem_cache.resize( _elem_cache.size() + std::max((size_t)_tuple_size, _min_cache_elems) );
+
+  // add the vertex coordinate to the cache
+
+  _elem_cache.data()[_sequence_size++] = x;
+  _elem_cache.data()[_sequence_size++] = y;
+  if ( _tuple_size >= 3 )
+    _elem_cache.data()[_sequence_size++] = z;
+  if ( _tuple_size == 4 )
+    _elem_cache.data()[_sequence_size++] = 1.0f;
 
   return true;
 }
@@ -409,14 +473,24 @@ bool CPolygonOpenGL_2_00::DrawSequence(
   double z ) //!< in: z coordinate
 {
   // A sequence has to be active, to specify a new vertex coordinate
-  if ( _active_sequence == false )
+  if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() == false )
   {
     ASSERT( false );
     return false;
   }
 
-  // specify the vertex coordinate
-  glVertex3d( x, y, z );
+  // reserve the cache
+  if ( _elem_cache.size() < _sequence_size + _tuple_size )
+    _elem_cache.resize( _elem_cache.size() + std::max((size_t)_tuple_size, _min_cache_elems) );
+
+  // add the vertex coordinate to the cache
+
+  _elem_cache.data()[_sequence_size++] = (float)x;
+  _elem_cache.data()[_sequence_size++] = (float)y;
+  if ( _tuple_size >= 3 )
+    _elem_cache.data()[_sequence_size++] = (float)z;
+  if ( _tuple_size == 4 )
+    _elem_cache.data()[_sequence_size++] = 1.0f;
 
   return true;
 }
@@ -435,29 +509,21 @@ bool CPolygonOpenGL_2_00::DrawSequence(
   const float       *coords )     //!< in: pointer to an array of the vertex coordinates
 {
   // A sequence has to be active, to specify new vertex coordinates
-  if ( _active_sequence == false )
+  if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() == false )
   {
     ASSERT( false );
     return false;
   }
 
-  // draw the line sequence
-  if ( _tuple_size == 2 )
-  {
-    for ( const float *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 2 )
-      glVertex2fv( ptr );
-  }
-  else if ( _tuple_size == 3 )
-  {
-    for ( const float *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 3 )
-      glVertex3fv( ptr );
-  }
-  else if ( _tuple_size == 4 )
-  {
-    for ( const float *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 4 )
-      glVertex4fv( ptr );
-  }
+  // reserve the cache
+  if ( _elem_cache.size() < _sequence_size + coords_size )
+    _elem_cache.resize( _elem_cache.size() + std::max(coords_size, _min_cache_elems) );
 
+  // add the vertex coordinate to the cache
+
+  std::memcpy( _elem_cache.data() + _sequence_size, coords, coords_size * sizeof( float ) );
+  _sequence_size += coords_size;
+  
   return true;
 }
 
@@ -475,28 +541,22 @@ bool CPolygonOpenGL_2_00::DrawSequence(
   const double      *coords )     //!< in: pointer to an array of the vertex coordinates
 {
   // A sequence has to be active, to specify new vertex coordinates
-  if ( _active_sequence == false )
+  if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() == false )
   {
     ASSERT( false );
     return false;
   }
 
-  // draw the line sequence
-  if ( _tuple_size == 2 )
-  {
-    for ( const double *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 2 )
-      glVertex2dv( ptr );
-  }
-  else if ( _tuple_size == 3 )
-  {
-    for ( const double *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 3 )
-      glVertex3dv( ptr );
-  }
-  else if ( _tuple_size == 4 )
-  {
-    for ( const double *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 4 )
-      glVertex4dv( ptr );
-  }
+  // reserve the cache
+  if ( _elem_cache.size() < _sequence_size + coords_size )
+    _elem_cache.resize( _elem_cache.size() + std::max(coords_size, _min_cache_elems) );
+
+  // add the vertex coordinate to the cache
+
+  float *cache_ptr = _elem_cache.data() + _sequence_size;
+  for ( const double *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr ++, cache_ptr ++ )
+    *cache_ptr = (float)(*ptr);
+  _sequence_size += coords_size;
 
   return true;
 }

@@ -84,7 +84,7 @@ void CPolygonOpenGL_1_00::Init( void )
 
 
 /******************************************************************//**
-* \brief Change the current polygon color, for the pending line drawing
+* \brief Change the current polygon color, for the pending polygon drawing
 * instructions
 * 
 * \author  gernot
@@ -102,7 +102,7 @@ Render::Polygon::IRender & CPolygonOpenGL_1_00::SetColor(
 
 
 /******************************************************************//**
-* \brief Change the current polygon color, for the pending line drawing
+* \brief Change the current polygon color, for the pending polygon drawing
 * instructions
 * 
 * \author  gernot
@@ -146,7 +146,7 @@ Render::Polygon::IRender & CPolygonOpenGL_1_00::SetStyle(
 
 
 /******************************************************************//**
-* \brief Draw a single line sequence.  
+* \brief Draw a single polygon sequence.  
 * 
 * \author  gernot
 * \date    2018-09-28
@@ -170,7 +170,7 @@ bool CPolygonOpenGL_1_00::Draw(
   // start `glBegin` / `glEnd` sequence
   glBegin( OpenGL::Primitive(primitive_type) );
 
-  // draw the line sequence
+  // draw the polygon sequence
   if ( tuple_size == 2 )
   {
     for ( const float *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 2 )
@@ -219,7 +219,7 @@ bool CPolygonOpenGL_1_00::Draw(
   // start `glBegin` / `glEnd` sequence
   glBegin( OpenGL::Primitive(primitive_type) );
 
-  // draw the line sequence
+  // draw the polygon sequence
   if ( tuple_size == 2 )
   {
     for ( const double *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 2 )
@@ -267,7 +267,7 @@ bool CPolygonOpenGL_1_00::Draw(
   // start `glBegin` / `glEnd` sequence
   glBegin( OpenGL::Primitive(primitive_type) );
 
-  // draw the line sequence
+  // draw the polygon sequence
   for ( size_t i = 0; i < no_of_coords; ++ i )
     glVertex2f( x_coords[i], y_coords[i] );
 
@@ -302,7 +302,7 @@ bool CPolygonOpenGL_1_00::Draw(
   // start `glBegin` / `glEnd` sequence
   glBegin( OpenGL::Primitive(primitive_type) );
 
-  // draw the line sequence
+  // draw the polygon sequence
   for ( size_t i = 0; i < no_of_coords; ++ i )
     glVertex2d( x_coords[i], y_coords[i] );
 
@@ -440,7 +440,7 @@ bool CPolygonOpenGL_1_00::DrawSequence(
     return false;
   }
 
-  // draw the line sequence
+  // draw the polygon sequence
   if ( _tuple_size == 2 )
   {
     for ( const float *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 2 )
@@ -480,7 +480,7 @@ bool CPolygonOpenGL_1_00::DrawSequence(
     return false;
   }
 
-  // draw the line sequence
+  // draw the polygon sequence
   if ( _tuple_size == 2 )
   {
     for ( const double *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr += 2 )

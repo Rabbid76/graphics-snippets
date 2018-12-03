@@ -63,7 +63,7 @@ public:
   CPolygonOpenGL_1_00( void );
   virtual ~CPolygonOpenGL_1_00();
 
-  //! Initialize the line renderer
+  //! Initialize the polygon renderer
   virtual void Init( void ) override;
 
   //! Notify the render that a sequence of successive polygons will follow, which is not interrupted by any other drawing operation.
@@ -71,12 +71,12 @@ public:
   //! The render can keep states persistent from one polygon drawing to the other, without initializing and restoring them.
   //!
   //! Not implemented (Software OpenGL).
-  virtual bool StartSuccessiveLineDrawings( void ) override { return false; } 
+  virtual bool StartSuccessivePolygonDrawings( void ) override { return false; } 
 
  //! Notify the renderer that a sequence of polygons has been finished, and that the internal states have to be restored.
   //!
   //! Not implemented (Software OpenGL).
-  virtual bool FinishSuccessiveLineDrawings( void ) override { return false; }
+  virtual bool FinishSuccessivePolygonDrawings( void ) override { return false; }
 
   virtual Render::Polygon::IRender & SetColor( const Render::TColor & color ) override;
   virtual Render::Polygon::IRender & SetColor( const Render::TColor8 & color ) override;
@@ -115,4 +115,4 @@ private:
 } // OpenGL
 
 
-#endif // OpenGLLine_1_00_h_INCLUDED
+#endif // OpenGLPolygon_1_00_h_INCLUDED

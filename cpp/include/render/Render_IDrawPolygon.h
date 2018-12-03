@@ -72,7 +72,7 @@ public:
 
 struct TStyle
 {
-  t_fp _depth_attenuation = 0.0f; //!< attenuation of the line color by depth
+  t_fp _depth_attenuation = 0.0f; //!< attenuation of the polygon color by depth
 };
 
 
@@ -82,7 +82,7 @@ struct TStyle
 
 
 /******************************************************************//**
-* @brief   Generic interface for drawing lines.
+* @brief   Generic interface for drawing polygons.
 *
 * @author  gernot
 * @date    2018-02-06
@@ -94,16 +94,16 @@ public:
 
   virtual ~IRender() = default;
 
-  //! Initialize the line renderer
+  //! Initialize the polygon renderer
   virtual void Init( void ) = 0;
 
   //! Notify the render that a sequence of successive polygons will follow, which is not interrupted by any other drawing operation.
   //! This allows the render to do some performance optimizations and to prepare for the polygon rendering.
   //! The render can keep states persistent from one polygon drawing to the other, without initializing and restoring them.
-  virtual bool StartSuccessiveLineDrawings( void ) = 0;
+  virtual bool StartSuccessivePolygonDrawings( void ) = 0;
 
   //! Notify the renderer that a sequence of polygons has been finished, and that the internal states have to be restored.
-  virtual bool FinishSuccessiveLineDrawings( void ) = 0;
+  virtual bool FinishSuccessivePolygonDrawings( void ) = 0;
 
   virtual IRender & SetColor( const TColor & color ) = 0;
   virtual IRender & SetColor( const TColor8 & color ) = 0;
@@ -144,7 +144,7 @@ public:
   //! Start a new polygon sequence
   virtual bool StartSequence( Render::TPrimitive primitive_type, unsigned int tuple_size ) = 0;
   
-  //! Complete an active line sequence
+  //! Complete an active polygon sequence
   virtual bool EndSequence( void ) = 0;
 
   //! Specify a new vertex coordinate in an active polygon sequence

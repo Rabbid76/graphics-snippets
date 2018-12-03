@@ -30,6 +30,8 @@
 namespace OpenGL
 {
 
+class CPrimitiveOpenGL_2_00;
+
 
 /******************************************************************//**
 * \brief Namespace for drawing polygons with the use of OpenGL.  
@@ -65,10 +67,15 @@ class CPolygonOpenGL_2_00
 {
 public:
 
-  CPolygonOpenGL_2_00( void );
+  using TProgramPtr = std::unique_ptr<CPrimitiveOpenGL_2_00>;
+
+  CPolygonOpenGL_2_00( size_t min_cache_elems );
   virtual ~CPolygonOpenGL_2_00();
 
-  //! Initialize the line renderer
+  const Render::Polygon::TStyle & PoylgonStyle( void ) const { return _polygon_style; }
+  void PoylgonStyle( const Render::Polygon::TStyle &style ) { _polygon_style = style; }
+
+  //! Initialize the polygon renderer
   virtual void Init( void ) override;
 
   //! Notify the render that a sequence of successive polygons will follow, which is not interrupted by any other drawing operation.
@@ -76,12 +83,12 @@ public:
   //! The render can keep states persistent from one polygon drawing to the other, without initializing and restoring them.
   //!
   //! Not implemented (Software OpenGL).
-  virtual bool StartSuccessiveLineDrawings( void ) override { return false; } 
+  virtual bool StartSuccessivePolygonDrawings( void ) override;
 
  //! Notify the renderer that a sequence of polygons has been finished, and that the internal states have to be restored.
   //!
   //! Not implemented (Software OpenGL).
-  virtual bool FinishSuccessiveLineDrawings( void ) override { return false; }
+  virtual bool FinishSuccessivePolygonDrawings( void ) override;
 
   virtual Render::Polygon::IRender & SetColor( const Render::TColor & color ) override;
   virtual Render::Polygon::IRender & SetColor( const Render::TColor8 & color ) override;
@@ -109,8 +116,15 @@ public:
 
 private:
 
-  bool         _active_sequence{ false }; //!< true: an draw sequence was started, but not finished yet
-  unsigned int _tuple_size{ 0 };          //!< tuple size (2, 3 or 4) for a sequence
+  TProgramPtr             _primitive_prog;                            //!< primitive render program
+  Render::Polygon::TStyle _polygon_style;                             //!< polygon style parameters
+                       
+  // TODO $$$ cache class
+  Render::TPrimitive      _squence_type{ Render::TPrimitive::NO_OF }; //!< primitive type pf the sequence
+  unsigned int            _tuple_size{ 0 };                           //!< tuple size (2, 3 or 4) for a sequence
+  size_t                  _min_cache_elems{ 0 };                      //!< minimum element size of the sequence cache
+  size_t                  _sequence_size{ 0 };                        //!< current size of the sequence cache
+  std::vector<float>      _elem_cache;                                //!< the sequence cache - the tuple size of the cache elements is always 3 (x, y, z coordinate)
 };
 
 
