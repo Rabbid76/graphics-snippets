@@ -67,7 +67,7 @@ class CPolygonOpenGL_2_00
 {
 public:
 
-  using TProgramPtr = std::unique_ptr<CPrimitiveOpenGL_2_00>;
+  using TProgramPtr = std::shared_ptr<CPrimitiveOpenGL_2_00>;
 
   CPolygonOpenGL_2_00( size_t min_cache_elems );
   virtual ~CPolygonOpenGL_2_00();
@@ -77,6 +77,7 @@ public:
 
   //! Initialize the polygon renderer
   virtual void Init( void ) override;
+  // TODO $$$ virtual void Init( TProgramPtr &program ) override;
 
   //! Notify the render that a sequence of successive polygons will follow, which is not interrupted by any other drawing operation.
   //! This allows the render to do some performance optimizations and to prepare for the polygon rendering.
@@ -117,14 +118,9 @@ public:
 private:
 
   TProgramPtr             _primitive_prog;                            //!< primitive render program
-  Render::Polygon::TStyle _polygon_style;                             //!< polygon style parameters
-                       
-  // TODO $$$ cache class
+  Render::Polygon::TStyle _polygon_style;                             //!< polygon style parameters                     
   Render::TPrimitive      _squence_type{ Render::TPrimitive::NO_OF }; //!< primitive type pf the sequence
-  unsigned int            _tuple_size{ 0 };                           //!< tuple size (2, 3 or 4) for a sequence
-  size_t                  _min_cache_elems{ 0 };                      //!< minimum element size of the sequence cache
-  size_t                  _sequence_size{ 0 };                        //!< current size of the sequence cache
-  std::vector<float>      _elem_cache;                                //!< the sequence cache - the tuple size of the cache elements is always 3 (x, y, z coordinate)
+  Render::TVertexCache    _vertex_cache;                              //!< cache for vertex coordinates
 };
 
 

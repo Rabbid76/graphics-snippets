@@ -402,6 +402,8 @@ bool CPrimitiveOpenGL_2_00::ActivateProgram(
     else
       glDisableVertexAttribArray( _attrib_y_inx );
   }
+
+  return true;
 }
 
 

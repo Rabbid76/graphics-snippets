@@ -17,6 +17,7 @@
 #include <cmath>
 #include <bitset>
 #include <array>
+#include <vector>
 #include <tuple>
 
 
@@ -243,6 +244,125 @@ inline TBasePrimitive BasePrimitive( TPrimitive primitive )
   return primitive_map[(int)primitive];
 }
 
+
+//---------------------------------------------------------------------
+// VertexCache
+//---------------------------------------------------------------------
+
+
+/******************************************************************//**
+* \brief Simple cache for vertices.  
+* 
+* \author  gernot
+* \date    2018-12-04
+* \version 1.0
+**********************************************************************/
+class  TVertexCache
+{
+public:
+
+  TVertexCache(void) = default;
+  TVertexCache(const TVertexCache &) = default;
+  TVertexCache(TVertexCache &&) = default;
+
+  TVertexCache(size_t min_cache_elems)
+  : _min_cache_elems( min_cache_elems )
+  , _cache( min_cache_elems, 0.0f )
+  {}
+
+  virtual ~TVertexCache() = default;
+
+  TVertexCache & operator = (const TVertexCache &) = default;
+  TVertexCache & operator = (TVertexCache &&) = default;
+
+  TVertexCache & clear( void )
+  {
+    _cache = std::vector<t_fp>( _min_cache_elems, 0.0f );
+    _sequence_size = 0;
+    return *this;
+  }
+
+  TVertexCache & Reset( void )
+  {
+    _sequence_size = 0;
+    return *this;
+  }
+
+  TVertexCache & TupleSize( unsigned int tuple_size ) { _tuple_size = tuple_size; return *this; }
+ 
+  unsigned int TupleSize( void )    const { return _tuple_size; }
+  size_t       SequenceSize( void ) const { return _sequence_size; }
+  const t_fp * VertexData( void )   const { return _cache.data(); }
+ 
+  TVertexCache & Add( t_fp x, t_fp y, t_fp z )
+  {
+    // reserve the cache
+    if ( _cache.size() < _sequence_size + _tuple_size )
+      _cache.resize( _cache.size() + std::max((size_t)_tuple_size, _min_cache_elems) );
+
+    // add the vertex coordinate to the cache
+    _cache.data()[_sequence_size++] = x;
+    _cache.data()[_sequence_size++] = y;
+    if ( _tuple_size >= 3 )
+      _cache.data()[_sequence_size++] = z;
+    if ( _tuple_size == 4 )
+      _cache.data()[_sequence_size++] = 1.0f;
+
+    return *this;
+  }
+  
+  TVertexCache & Add( double x, double y, double z )
+  {
+    // reserve the cache
+    if ( _cache.size() < _sequence_size + _tuple_size )
+      _cache.resize( _cache.size() + std::max((size_t)_tuple_size, _min_cache_elems) );
+
+    // add the vertex coordinate to the cache
+    _cache.data()[_sequence_size++] = (float)x;
+    _cache.data()[_sequence_size++] = (float)y;
+    if ( _tuple_size >= 3 )
+      _cache.data()[_sequence_size++] = (float)z;
+    if ( _tuple_size == 4 )
+      _cache.data()[_sequence_size++] = 1.0f;
+
+    return *this;
+  }
+  
+  TVertexCache & Add( size_t coords_size, const t_fp *coords )
+  {
+    // reserve the cache
+    if ( _cache.size() < _sequence_size + coords_size )
+      _cache.resize( _cache.size() + std::max(coords_size, _min_cache_elems) );
+
+    // add the vertex coordinates to the cache
+    std::memcpy( _cache.data() + _sequence_size, coords, coords_size * sizeof( float ) );
+    _sequence_size += coords_size;
+
+    return *this;
+  }
+
+  TVertexCache & Add( size_t coords_size, const double *coords )
+  {
+    // reserve the cache
+    if ( _cache.size() < _sequence_size + coords_size )
+      _cache.resize( _cache.size() + std::max(coords_size, _min_cache_elems) );
+
+    // add the vertex coordinate to the cache
+    float *cache_ptr = _cache.data() + _sequence_size;
+    for ( const double *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr ++, cache_ptr ++ )
+      *cache_ptr = (float)(*ptr);
+    _sequence_size += coords_size;
+
+    return *this;
+  }
+
+private:
+
+  unsigned int      _tuple_size{ 0 };      //!< tuple size (2, 3 or 4) for a sequence
+  size_t            _min_cache_elems{ 0 }; //!< minimum element size of the sequence cache
+  size_t            _sequence_size{ 0 };   //!< current size of the sequence cache
+  std::vector<t_fp> _cache;                //!< the sequence cache
+};
 
 } // Draw
 

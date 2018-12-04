@@ -73,8 +73,7 @@ namespace Line
 **********************************************************************/
 CLineOpenGL_2_00::CLineOpenGL_2_00( 
   size_t min_cache_elems ) //! I - size of the element cache
-  : _min_cache_elems( min_cache_elems )
-  , _elem_cache( min_cache_elems, 0.0f )
+  : _vertex_cache( min_cache_elems )
 {}
 
 
@@ -418,9 +417,8 @@ bool CLineOpenGL_2_00::StartSequence(
   auto &prog = *_primitive_prog;
   
   prog.StartSequence();
-  
+  _vertex_cache.TupleSize( tuple_size );
   _squence_type = primitive_type;
-  _tuple_size   = tuple_size;
 
   return true;
 }
@@ -449,14 +447,13 @@ bool CLineOpenGL_2_00::EndSequence( void )
   prog.ActivateProgram( false );
 
   //  set vertex attribute pointer and draw the line
-  glVertexAttribPointer( prog.Attrib_xyzw_inx(), _tuple_size, GL_FLOAT, GL_FALSE, 0, _elem_cache.data() );
-  glDrawArrays( OpenGL::Primitive( _squence_type ), 0, (GLsizei)(_sequence_size / _tuple_size) );
+  GLsizei tuple_size = (GLsizei)_vertex_cache.TupleSize();
+  glVertexAttribPointer( prog.Attrib_xyzw_inx(), tuple_size, GL_FLOAT, GL_FALSE, 0, _vertex_cache.VertexData() );
+  glDrawArrays( OpenGL::Primitive( _squence_type ), 0, (GLsizei)(_vertex_cache.SequenceSize() / tuple_size) );
   
   // disable vertex attributes and activate program 0
   prog.DeactivateProgram();
-  
-  _tuple_size    = 0;
-  _sequence_size = 0;
+  _vertex_cache.Reset();
   
   return true;
 }
@@ -481,19 +478,8 @@ bool CLineOpenGL_2_00::DrawSequence(
     return false;
   }
 
-  // reserve the cache
-  if ( _elem_cache.size() < _sequence_size + _tuple_size )
-    _elem_cache.resize( _elem_cache.size() + std::max((size_t)_tuple_size, _min_cache_elems) );
-
-  // add the vertex coordinate to the cache
-
-  _elem_cache.data()[_sequence_size++] = x;
-  _elem_cache.data()[_sequence_size++] = y;
-  if ( _tuple_size >= 3 )
-    _elem_cache.data()[_sequence_size++] = z;
-  if ( _tuple_size == 4 )
-    _elem_cache.data()[_sequence_size++] = 1.0f;
-
+  // add vertex coordinate to cache
+  _vertex_cache.Add( x, y, z );
   return true;
 }
 
@@ -517,19 +503,8 @@ bool CLineOpenGL_2_00::DrawSequence(
     return false;
   }
 
-  // reserve the cache
-  if ( _elem_cache.size() < _sequence_size + _tuple_size )
-    _elem_cache.resize( _elem_cache.size() + std::max((size_t)_tuple_size, _min_cache_elems) );
-
-  // add the vertex coordinate to the cache
-
-  _elem_cache.data()[_sequence_size++] = (float)x;
-  _elem_cache.data()[_sequence_size++] = (float)y;
-  if ( _tuple_size >= 3 )
-    _elem_cache.data()[_sequence_size++] = (float)z;
-  if ( _tuple_size == 4 )
-    _elem_cache.data()[_sequence_size++] = 1.0f;
-
+  // add vertex coordinate to cache
+  _vertex_cache.Add( x, y, z );
   return true;
 }
   
@@ -552,15 +527,8 @@ bool CLineOpenGL_2_00::DrawSequence(
     return false;
   }
 
-  // reserve the cache
-  if ( _elem_cache.size() < _sequence_size + coords_size )
-    _elem_cache.resize( _elem_cache.size() + std::max(coords_size, _min_cache_elems) );
-
-  // add the vertex coordinate to the cache
-
-  std::memcpy( _elem_cache.data() + _sequence_size, coords, coords_size * sizeof( float ) );
-  _sequence_size += coords_size;
-  
+  // add the vertex coordinates to the cache
+  _vertex_cache.Add( coords_size, coords );
   return true;
 }
 
@@ -583,17 +551,8 @@ bool CLineOpenGL_2_00::DrawSequence(
     return false;
   }
 
-  // reserve the cache
-  if ( _elem_cache.size() < _sequence_size + coords_size )
-    _elem_cache.resize( _elem_cache.size() + std::max(coords_size, _min_cache_elems) );
-
-  // add the vertex coordinate to the cache
-
-  float *cache_ptr = _elem_cache.data() + _sequence_size;
-  for ( const double *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr ++, cache_ptr ++ )
-    *cache_ptr = (float)(*ptr);
-  _sequence_size += coords_size;
-
+  // add the vertex coordinates to the cache
+  _vertex_cache.Add( coords_size, coords );
   return true;
 }
 
