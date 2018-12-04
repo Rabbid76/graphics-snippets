@@ -72,6 +72,13 @@ public:
 
 struct TStyle
 {
+  TStyle( void ) = default;
+  TStyle( const TStyle & ) = default;
+
+  TStyle( t_fp depth_attenuation )
+    : _depth_attenuation( depth_attenuation )
+  {}
+
   t_fp _depth_attenuation = 0.0f; //!< attenuation of the polygon color by depth
 };
 

@@ -17,6 +17,7 @@
 #include <Render_IBuffer.h>
 #include <Render_IRenderPass.h>
 #include <Render_IDrawLine.h>
+#include <Render_IDrawPolygon.h>
 
 
 // type declarations
@@ -45,6 +46,7 @@ class IProvider
   , public IRenderProcessProvider
   , public ITextureLoaderProvider
   , public Line::IRenderProvider
+  , public Polygon::IRenderProvider
 {
 public:
 
