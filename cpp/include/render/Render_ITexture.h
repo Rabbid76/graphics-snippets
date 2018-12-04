@@ -60,7 +60,7 @@ enum class TImageKind : t_byte
 enum class TImageProjection : t_byte 
 {
   plane,       //!< 2 dimensional plane image
-  cubmap,      //!< 6 side cube map of the environment
+  cubemap,      //!< 6 side cube map of the environment
   cylindrical, //!< cylindrical projection of the environment
   spheric      //!< spheric projection of the environment  
 };
