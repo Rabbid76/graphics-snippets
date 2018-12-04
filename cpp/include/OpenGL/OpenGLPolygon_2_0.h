@@ -77,7 +77,7 @@ public:
 
   //! Initialize the polygon renderer
   virtual void Init( void ) override;
-  // TODO $$$ virtual void Init( TProgramPtr &program ) override;
+  virtual void Init( TProgramPtr &program );
 
   //! Notify the render that a sequence of successive polygons will follow, which is not interrupted by any other drawing operation.
   //! This allows the render to do some performance optimizations and to prepare for the polygon rendering.
@@ -117,6 +117,7 @@ public:
 
 private:
 
+  bool                    _successive_draw_started{ false };          //!< successive drawing was started by this renderer
   TProgramPtr             _primitive_prog;                            //!< primitive render program
   Render::Polygon::TStyle _polygon_style;                             //!< polygon style parameters                     
   Render::TPrimitive      _squence_type{ Render::TPrimitive::NO_OF }; //!< primitive type pf the sequence

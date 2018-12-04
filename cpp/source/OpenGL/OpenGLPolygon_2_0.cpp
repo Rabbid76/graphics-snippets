@@ -106,6 +106,26 @@ void CPolygonOpenGL_2_00::Init( void )
 
 
 /******************************************************************//**
+* \brief Initialize the line renderer. 
+*
+* For the initialization a current and valid OpenGL context is required. 
+* 
+* \author  gernot
+* \date    2018-09-07
+* \version 1.0
+**********************************************************************/
+void CPolygonOpenGL_2_00::Init( 
+  TProgramPtr &program ) // shader program
+{
+  if ( _primitive_prog != nullptr )
+    return;
+
+  _primitive_prog = program;
+  _primitive_prog->Init();
+}
+
+
+/******************************************************************//**
 * \brief Notify the render that a sequence of successive polygons will
 * follow, that is not interrupted by any other drawing operation.
 * This allows the render to do some performance optimizations and to
@@ -124,7 +144,19 @@ bool CPolygonOpenGL_2_00::StartSuccessivePolygonDrawings( void )
     ASSERT( false );
     return false;
   }
-  _primitive_prog->StartSuccessivePrimitiveDrawings();
+
+  if ( _successive_draw_started )
+  {
+    ASSERT( false );
+    return true;
+  }
+
+  if ( _primitive_prog->SuccessiveDrawing() == false )
+  {
+    _primitive_prog->StartSuccessivePrimitiveDrawings(); 
+    _successive_draw_started = true;
+  }
+  
   return true;
 }
 
@@ -144,7 +176,13 @@ bool CPolygonOpenGL_2_00::FinishSuccessivePolygonDrawings( void )
     ASSERT( false );
     return false;
   }
-  _primitive_prog->FinishSuccessivePrimitiveDrawings();
+  
+  if ( _successive_draw_started )
+  {
+    _primitive_prog->FinishSuccessivePrimitiveDrawings();
+    _successive_draw_started = false;
+  }
+
   return true;
 }
 

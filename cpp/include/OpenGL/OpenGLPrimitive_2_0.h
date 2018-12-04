@@ -55,9 +55,11 @@ public:
   CPrimitiveOpenGL_2_00( void );
   virtual ~CPrimitiveOpenGL_2_00();
 
-  bool ActiveSequence( void )  const { return _active_sequence; }
-  int  Attrib_xyzw_inx( void ) const { return _attrib_xyzw_inx; } 
-  int  Attrib_y_inx( void )    const { return _attrib_y_inx; } 
+
+  bool SuccessiveDrawing( void ) const { return _successive_drawing; }
+  bool ActiveSequence( void )    const { return _active_sequence; }
+  int  Attrib_xyzw_inx( void )   const { return _attrib_xyzw_inx; } 
+  int  Attrib_y_inx( void )      const { return _attrib_y_inx; } 
 
   //! Initialize the primitive renderer
   virtual void Init( void );
