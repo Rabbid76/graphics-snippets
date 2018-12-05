@@ -118,6 +118,7 @@ public:
   virtual Render::IRenderProcessPtr   NewRenderProcess( void ) override;
   virtual Render::ITextureLoaderPtr   NewTextureLoader( size_t loader_binding_id ) override;
   virtual Render::Line::IRender     & LineRender( void ) override;
+  virtual Render::Polygon::IRender  & PolygonRender( void ) override;
 
   virtual const TMat44 & Projection( void ) const override { return _uniforms._projection; } //!< get the projection matrix
   virtual const TMat44 & View( void )       const override { return _uniforms._view; }       //!< get the view matrix

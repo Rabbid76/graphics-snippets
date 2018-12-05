@@ -556,7 +556,7 @@ void CFreetypeTexturedFont::DebugFontTexture(
   float t_1 = 0.4f;
   float h = 10.0f * (float)_font->_max_height / (float)_font->_width;
 
-  // setup vertex atributes (x y z u v)
+  // setup vertex attributes (x y z u v)
   std::vector<float> vertex_attributes{
     -1.0f,  -1.0f, 0.0f, t_0, 1.0f,
      1.0f,  -1.0f, 0.0f, t_1, 1.0f,

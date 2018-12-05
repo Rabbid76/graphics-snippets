@@ -1092,6 +1092,21 @@ Render::Line::IRender & CBasicDraw::LineRender( void )
 
 
 /******************************************************************//**
+* \brief  Return polygon renderer interface
+* 
+* \author  gernot
+* \date    2018-12-05
+* \version 1.0
+**********************************************************************/
+Render::Polygon::IRender & CBasicDraw::PolygonRender( void )
+{
+  Render::Polygon::IRender *ptr = nullptr;
+  // TODO $$$ not yet implemented
+  return *ptr;
+}
+
+
+/******************************************************************//**
 * @brief   destroy internal GPU objects
 *
 * @author  gernot
