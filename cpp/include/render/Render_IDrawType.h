@@ -21,6 +21,24 @@
 #include <tuple>
 
 
+//---------------------------------------------------------------------
+// suppress '#define' of 'min' and 'max'
+//---------------------------------------------------------------------
+
+
+#if defined( min )
+#define cutil__define_min_pushed
+#pragma push_macro( "min" )
+#undef min
+#endif
+
+#if defined( max )
+#define cutil__define_max_pushed
+#pragma push_macro( "max" )
+#undef max
+#endif
+
+
 /******************************************************************//**
 * \brief namespace for generic interface of drawing operations
 **********************************************************************/
@@ -147,27 +165,6 @@ inline constexpr TMat44 Identity( void )
                    TVec4{ 0.0f, 0.0f, 1.0f, 0.0f },
                    TVec4{ 0.0f, 0.0f, 0.0f, 1.0f } } );
 }
-
-
-//! sketch mode
-enum class TSketchMode
-{
-  NON,
-  lead_pencil,          //! lead pencil
-  //edge,                 //! edge only
-  sketch_1,             //! sketch hatch
-  sketch_2,             //! sketch hatch
-  perlin_hatch,         //! perlin hatch
-  perlin_hatch_spotted, //! spotted perlin hatch
-  texture_hatch,        //! texture hatch
-  toon,                 //! toon effect specular light source
-  toon_opaque,          //! toon effect opaque color source
-  toon_opaque_mapped,   //! toon effect opaque color source and luminosity map 
-  toon_flat,            //! toon effect flat opaque color source
-  // ...
-  NUMBER_OF
-};
-
 
 //---------------------------------------------------------------------
 // Primitives
@@ -365,5 +362,14 @@ private:
 };
 
 } // Draw
+
+
+#if defined( cutil__define_min_pushed )
+#pragma pop_macro( "min" )
+#endif
+
+#if defined( cutil__define_max_pushed )
+#pragma pop_macro( "max" )
+#endif
 
 #endif // Render_ILight_h_INCLUDED
