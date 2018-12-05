@@ -100,8 +100,8 @@ void main()
 * \version 1.0
 **********************************************************************/
 CLineOpenGL_core_and_es::CLineOpenGL_core_and_es( 
-  Render::Program::TViewDataPtr view_data,        //! I - view data provider (mode, view and projection)
-  size_t                        min_cache_elems ) //! I - size of the element cache
+  Render::TModelAndViewPtr view_data,        //! I - view data provider (mode, view and projection)
+  size_t                   min_cache_elems ) //! I - size of the element cache
   : _view_data( view_data )
   , _min_cache_elems( min_cache_elems )
   , _elem_cache( min_cache_elems, 0.0f )

@@ -371,62 +371,94 @@ private:
 
 /******************************************************************//**
 * \brief Data buffer which contains all the information which are
-*  necessary to transform a vertex coordinate form the model space
-* to the normalized device space and window coordinates to normalized 
-* device coordinates.
-* 
-* The `_model` matrix transforms a coordinate from model space to world space.
-*
-* The `_view` matrix transforms a coordinate from world space to view space.
-*
-* The `_projection` matrix transforms a coordinate from view space to clip space.
-* The result is a homogeneous coordinate, which is transformed by a perspective 
-* divide to a cartesian coordinate in normalized device space.
-*
-* With the viewport size (`_vp_size`) and the and the `_near` and `_far` plane
-* a window coordinate can be transformed to normalized device space.
-*
-* For further informations about the coordinate transformations see \ref pagShaderProjectionModelViewDepth.
-*
-* \attention This data is not allowed to be changed, because it has to proper fit the corresponding types
-* of uniform blocks or shader storage buffer objects in the GLSL code.
-*
-* The data structure completely full fills the requirements of the GLSL `std140` and `std340` layout.  
-*
-* *std140*
-* 
-* [OpenGL 4.6 API Core Profile Specification; 7.6.2.2 Standard Uniform Block Layout; page 144](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf),  
-* [OpenGL 4.6 API Compatibility Profile Specification; 7.6.2.2 Standard Uniform Block Layout; page 145](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.compatibility.pdf)  
-* [OpenGL ES 3.2 Specification; 7.6.2.2 Standard Uniform Block Layout; page 113](https://www.khronos.org/registry/OpenGL/specs/es/3.2/es_spec_3.2.pdf):
-*
-* > When using the `std140` storage layout, structures will be laid out in buffer storage with their members stored in monotonically increasing order based on their location in the declaration.
-> A structure and each structure member have a base offset and a base alignment, from which an aligned offset is computed by rounding the base offset up to a multiple of the base alignment.
-> The base offset of the first member of a structure is taken from the aligned offset of the structure itself.
-> The base offset of all other structure members is derived by taking the offset of the last basic machine unit consumed by the previous member and adding one. 
-> Each structure member is stored in memory at its aligned offset. The members of a toplevel uniform block are laid out in buffer storage by treating the uniform block as a structure with a base offset of zero.
-* >
-* > 1. If the member is a scalar consuming N basic machine units, the base alignment is N.
-* > 2. If the member is a two- or four-component vector with components consuming N basic machine units, the base alignment is 2N or 4N, respectively.
-* > 3. If the member is a three-component vector with components consuming N basic machine units, the base alignment is 4N.
-* > 4. If the member is an array of scalars or vectors, the base alignment and array stride are set to match the base alignment of a single array element, according to rules (1), (2), and (3), and rounded up to the base alignment of a `vec4`.
-* >    The array may have padding at the end; the base offset of the member following the array is rounded up to the next multiple of the base alignment.
-* > 5. If the member is a column-major matrix with C columns and R rows, the matrix is stored identically to an array of C column vectors with R components each, according to rule (4).
-* > 6. If the member is an array of S column-major matrices with C columns and R rows, the matrix is stored identically to a row of S × C column vectors with R components each, according to rule (4).
-* > 7. If the member is a row-major matrix with C columns and R rows, the matrix is stored identically to an array of R row vectors with C components each, according to rule (4).
-* > 8. If the member is an array of S row-major matrices with C columns and R rows, the matrix is stored identically to a row of S × R row vectors with C components each, according to rule (4).
-* > 9. If the member is a structure, the base alignment of the structure is N, where N is the largest base alignment value of any of its members, and rounded up to the base alignment of a `vec4`.
-* >    The individual members of this substructure are then assigned offsets by applying this set of rules recursively, where the base offset of the first member of the sub-structure is equal to the aligned offset of the structure.
-* >    The structure may have padding at the end; the base offset of the member following the sub-structure is rounded up to the next multiple of the base alignment of the structure.
-* > 10. If the member is an array of S structures, the S elements of the array are laid out in order, according to rule (9).
-*
-* *std340*
-* 
-* [OpenGL 4.6 API Compatibility Profile Specification; 7.6.2.2 Standard Uniform Block Layout; page 144](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.compatibility.pdf)
-*
-* > Shader storage blocks (see section 7.8) also support the `std140` layout qualifier, as well as a `std430` qualifier not supported for uniform blocks. When using the `std430` storage layout,
-* > shader storage blocks will be laid out in buffer storage identically to uniform and shader storage blocks using the `std140` layout,
-* > except that the base alignment and stride of arrays of scalars and vectors in rule 4 and of structures in rule 9 are not rounded up a multiple of the base alignment of a `vec4`.
-* 
+ necessary to transform a vertex coordinate form the model space
+to the normalized device space and window coordinates to normalized 
+device coordinates.
+
+The `_model` matrix transforms a coordinate from model space to world space.
+
+The `_view` matrix transforms a coordinate from world space to view space.
+
+The `_projection` matrix transforms a coordinate from view space to clip space.
+The result is a homogeneous coordinate, which is transformed by a perspective 
+divide to a cartesian coordinate in normalized device space.
+
+With the viewport size (`_vp_size`) and the and the `_near` and `_far` plane
+a window coordinate can be transformed to normalized device space.
+
+For further informations about the coordinate transformations see \ref pagShaderProjectionModelViewDepth.
+
+\attention This data is not allowed to be changed, because it has to proper fit the corresponding types
+of uniform blocks or shader storage buffer objects in the GLSL code.
+
+The data structure completely full fills the requirements of the GLSL `std140` and `std340` layout.  
+
+*std140*
+
+[OpenGL 4.6 API Core Profile Specification; 7.6.2.2 Standard Uniform Block Layout; page 144](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf),  
+[OpenGL 4.6 API Compatibility Profile Specification; 7.6.2.2 Standard Uniform Block Layout; page 145](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.compatibility.pdf)  
+[OpenGL ES 3.2 Specification; 7.6.2.2 Standard Uniform Block Layout; page 113](https://www.khronos.org/registry/OpenGL/specs/es/3.2/es_spec_3.2.pdf):
+
+> When using the `std140` storage layout, structures will be laid out in buffer storage with their members stored in monotonically increasing order based on their location in the declaration.
+A structure and each structure member have a base offset and a base alignment, from which an aligned offset is computed by rounding the base offset up to a multiple of the base alignment.
+The base offset of the first member of a structure is taken from the aligned offset of the structure itself.
+The base offset of all other structure members is derived by taking the offset of the last basic machine unit consumed by the previous member and adding one. 
+Each structure member is stored in memory at its aligned offset. The members of a toplevel uniform block are laid out in buffer storage by treating the uniform block as a structure with a base offset of zero.
+>
+> 1. If the member is a scalar consuming N basic machine units, the base alignment is N.
+> 2. If the member is a two- or four-component vector with components consuming N basic machine units, the base alignment is 2N or 4N, respectively.
+> 3. If the member is a three-component vector with components consuming N basic machine units, the base alignment is 4N.
+> 4. If the member is an array of scalars or vectors, the base alignment and array stride are set to match the base alignment of a single array element, according to rules (1), (2), and (3), and rounded up to the base alignment of a `vec4`.
+>    The array may have padding at the end; the base offset of the member following the array is rounded up to the next multiple of the base alignment.
+> 5. If the member is a column-major matrix with C columns and R rows, the matrix is stored identically to an array of C column vectors with R components each, according to rule (4).
+> 6. If the member is an array of S column-major matrices with C columns and R rows, the matrix is stored identically to a row of S × C column vectors with R components each, according to rule (4).
+> 7. If the member is a row-major matrix with C columns and R rows, the matrix is stored identically to an array of R row vectors with C components each, according to rule (4).
+> 8. If the member is an array of S row-major matrices with C columns and R rows, the matrix is stored identically to a row of S × R row vectors with C components each, according to rule (4).
+> 9. If the member is a structure, the base alignment of the structure is N, where N is the largest base alignment value of any of its members, and rounded up to the base alignment of a `vec4`.
+>    The individual members of this substructure are then assigned offsets by applying this set of rules recursively, where the base offset of the first member of the sub-structure is equal to the aligned offset of the structure.
+>    The structure may have padding at the end; the base offset of the member following the sub-structure is rounded up to the next multiple of the base alignment of the structure.
+> 10. If the member is an array of S structures, the S elements of the array are laid out in order, according to rule (9).
+
+*std340*
+
+[OpenGL 4.6 API Compatibility Profile Specification; 7.6.2.2 Standard Uniform Block Layout; page 144](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.compatibility.pdf)
+
+> Shader storage blocks (see section 7.8) also support the `std140` layout qualifier, as well as a `std430` qualifier not supported for uniform blocks. When using the `std430` storage layout,
+> shader storage blocks will be laid out in buffer storage identically to uniform and shader storage blocks using the `std140` layout,
+> except that the base alignment and stride of arrays of scalars and vectors in rule 4 and of structures in rule 9 are not rounded up a multiple of the base alignment of a `vec4`.
+
+Corresponding GLSL data structures
+
+Uniform block:
+
+\code{.glsl}
+layout (std140) uniform TViewData
+{
+    mat4  _model;      // model matrix
+    mat4  _view;       // view matrix
+    mat4  _projection; // projection matrix
+    vec4  _vp_rect;    // viewport rectangle
+    float _near;       // near plane 
+    float _far;        // far plane 
+
+} view_data;
+\endcode
+
+Shader storage block:
+
+\code{.glsl}
+layout (std340) buffer TViewData
+{
+    mat4  _model;      // model matrix
+    mat4  _view;       // view matrix
+    mat4  _projection; // projection matrix
+    vec4  _vp_rect;    // viewport rectangle
+    float _near;       // near plane 
+    float _far;        // far plane 
+
+} view_data;
+\endcode
+
 * \author  gernot
 * \date    2018-12-05
 * \version 1.0
@@ -479,6 +511,8 @@ private:
   unsigned int  _data_modifier{ 0 };  //!< every time when any data (except the model matrix) is modified this is incremented 
   unsigned int  _model_modifier{ 0 }; //!< every time when the model matrix is modified, then this is incremented 
 };
+using TModelAndViewPtr = std::shared_ptr<CModelAndView>;
+
 
 } // Draw
 

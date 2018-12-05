@@ -60,7 +60,7 @@ class CLineOpenGL_core_and_es
 {
 public: 
 
-  CLineOpenGL_core_and_es( Render::Program::TViewDataPtr view_data, size_t min_cache_elems );
+  CLineOpenGL_core_and_es( Render::TModelAndViewPtr view_data, size_t min_cache_elems );
   virtual ~CLineOpenGL_core_and_es();
 
   //! Initialize the line renderer
@@ -111,7 +111,7 @@ private:
   static const std::string     _line_frag_110;                             //!< fragment shader for uniform colored lines 
 
 
-  Render::Program::TViewDataPtr _view_data;                                 //!< model view and projection, to be applied to the shader program
+  Render::TModelAndViewPtr      _view_data;                                 //!< model view and projection, to be applied to the shader program
   Render::Program::TProgramPtr  _line_prog;                                 //!< shader program for consecutive vertex attributes
   int                           _line_color_loc;                            //!< uniform location of color  
   int                           _line_case_loc;                             //!< uniform location of attribute case  
