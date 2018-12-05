@@ -148,10 +148,7 @@ bool CLineOpenGL_2_00::StartSuccessiveLineDrawings( void )
   }
 
   if ( _successive_draw_started )
-  {
-    ASSERT( false );
-    return true;
-  }
+    return false;
 
   if ( _primitive_prog->SuccessiveDrawing() == false )
   {
@@ -267,21 +264,6 @@ Render::Line::IRender & CLineOpenGL_2_00::SetStyle(
   GLushort pattern = style._stipple_type >= 0 && style._stipple_type < patterns.size() ? patterns[style._stipple_type] : 0xFFFF;
   glLineStipple( (GLint)(style._width + 0.5f), pattern );
 
-  return *this;
-}
-
-
-/******************************************************************//**
-* \brief TODO: not yet implemented!  
-* 
-* \author  gernot
-* \date    2018-09-07
-* \version 1.0
-**********************************************************************/
-Render::Line::IRender & CLineOpenGL_2_00::SetArrowStyle( 
-  const Render::Line::TArrowStyle & style ) //! I - new style of the arrows at the endings of coherently lines
-{
-  ASSERT( false );
   return *this;
 }
 

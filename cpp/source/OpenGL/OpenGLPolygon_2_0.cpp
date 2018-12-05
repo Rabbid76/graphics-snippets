@@ -146,10 +146,7 @@ bool CPolygonOpenGL_2_00::StartSuccessivePolygonDrawings( void )
   }
 
   if ( _successive_draw_started )
-  {
-    ASSERT( false );
-    return true;
-  }
+    return false;
 
   if ( _primitive_prog->SuccessiveDrawing() == false )
   {
