@@ -27,6 +27,17 @@
 #include <iostream>
 
 
+// preprocessor definitions
+
+#if defined(max)
+#undef max
+#endif
+
+#if defined(min)
+#undef min
+#endif
+
+
 /******************************************************************//**
 * @brief   Namespace for renderer.
 *
