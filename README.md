@@ -2,32 +2,6 @@
 
 # Interior
 
-## Documentation
-
-[Intersection](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/intersection.md)
-
-[Draw geometry](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/draw_mesh.md)
-
-[Model View Projection and Depth](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/projection_and_depth.md)
-
-[Matrix operations](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/matrix_operations.md)
-
-[Tangent space](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/tangent_space.md)
-
-[Geometry](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/geometry.md)
-
-[Tessellation](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/tessellation.md)
-
-[Lambertian (diffuse) reflectance model](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/light_lambertian_diffuse.md)
-
-[Phong reflection model](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/light_phong.md)
-
-[Blinn-Phong reflection model](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/light_blinn_phong.md)
-
-[Normal, Parallax and Relief mapping (under construction)](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/normal_parallax_relief.md)
-
----
-
 ## WebGL
 
 ### Geometry
@@ -139,3 +113,29 @@
 [BSP geometry - subtract](https://rabbid76.github.io/graphics-snippets/html/stackoverrflow_threejs/geometry_bsp_subtrac.html)
 
 [Logarithmic depth buffer (cube)](https://rabbid76.github.io/graphics-snippets/html/stackoverrflow_threejs/logarithmic_depth_cube.html)
+
+---
+
+## Documentation
+
+[Intersection](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/intersection.md)
+
+[Draw geometry](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/draw_mesh.md)
+
+[Model View Projection and Depth](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/projection_and_depth.md)
+
+[Matrix operations](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/matrix_operations.md)
+
+[Tangent space](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/tangent_space.md)
+
+[Geometry](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/geometry.md)
+
+[Tessellation](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/tessellation.md)
+
+[Lambertian (diffuse) reflectance model](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/light_lambertian_diffuse.md)
+
+[Phong reflection model](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/light_phong.md)
+
+[Blinn-Phong reflection model](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/light_blinn_phong.md)
+
+[Normal, Parallax and Relief mapping (under construction)](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/normal_parallax_relief.md)
