@@ -60,7 +60,7 @@ public:
   virtual bool CalculateTextSize( const char *str, float height, float &box_x, float &box_btm, float &box_top ) override;
 
   //! render a texture based text
-  virtual bool DrawText( Render::IDrawBufferProvider &buffer_provider, size_t textur_binding_id, const char *str, float height, float width_scale, const Render::TPoint3 &pos ) override;
+  virtual bool Draw( Render::IDrawBufferProvider &buffer_provider, size_t textur_binding_id, const char *str, float height, float width_scale, const Render::TPoint3 &pos ) override;
 
 private:
 

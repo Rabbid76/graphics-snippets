@@ -361,6 +361,11 @@ bool CFreetypeTexturedFont::Load(
 
   // load glyphs and copy glyphs to texture
 
+
+  // $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+  // TODO $$$ load fonts in different resolutions to mipmap layers
+  // $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
   for ( int i = data._min_char; i < data._max_char; ++ i )
   {
     TFreetypeGlyph &glyph_data = data._glyphs[i-data._min_char];
@@ -434,7 +439,7 @@ bool CFreetypeTexturedFont::CalculateTextSize(
 * \date    2018-03-18
 * \version 1.0
 **********************************************************************/
-bool CFreetypeTexturedFont::DrawText( 
+bool CFreetypeTexturedFont::Draw( 
   Render::IDrawBufferProvider &buffer_provider,   //!< in: draw library
   size_t                       textur_binding_id, //!< in: texture unit index
   const char                  *str,               //!< in: the text
