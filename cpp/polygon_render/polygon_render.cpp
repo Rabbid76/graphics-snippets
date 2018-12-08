@@ -28,6 +28,7 @@
 #include <Render_IDrawPolygon.h>
 #include <OpenGLPolygon_1_0.h>
 #include <OpenGLPolygon_2_0.h>
+#include <OpenGLPolygon_core_and_es.h>
 #include <OpenGL_Matrix_Camera.h>
 #include <OpenGL_SimpleShaderProgram.h>
 
@@ -72,7 +73,7 @@ private:
     std::unique_ptr<Render::Polygon::IRender> _polygon_2;
     std::unique_ptr<Render::Polygon::IRender> _polygon_3;
 
-    Render::Program::TViewDataPtr _view_data_ptr;
+    Render::TModelAndViewPtr _view_data_ptr;
 };
 
 int main(int argc, char** argv)
@@ -120,21 +121,10 @@ int main(int argc, char** argv)
     return 0;
 }
 
-struct CViewData
-  : public Render::Program::IViewData
-{
-    virtual const Render::Program::TViewData & Data( void ) const
-    {
-        assert( false );
-        return _view_data;
-    }
-
-     Render::Program::TViewData _view_data;
-};
 
 CWindow_Glfw::CWindow_Glfw( void )
 {
-  _view_data_ptr = std::make_shared<CViewData>();
+  _view_data_ptr = std::make_shared<Render::CModelAndView>();
 }
 
 CWindow_Glfw::~CWindow_Glfw()
@@ -232,11 +222,11 @@ void CWindow_Glfw::InitScene( void )
 {
   _polygon_1 = std::make_unique<OpenGL::Polygon::CPolygonOpenGL_1_00>();
   _polygon_2 = std::make_unique<OpenGL::Polygon::CPolygonOpenGL_2_00>( 0 );
-  //_polygon_3 = std::make_unique<OpenGL::Line::CLineOpenGL_core_and_es>( _view_data_ptr, 0 );
+  _polygon_3 = std::make_unique<OpenGL::Polygon::CPolygonOpenGL_core_and_es>( 0 );
 
   _polygon_1->Init();
   _polygon_2->Init();
-  //_polygon_3->Init();
+  _polygon_3->Init();
 }
 
 

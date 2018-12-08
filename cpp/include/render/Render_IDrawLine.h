@@ -144,7 +144,7 @@ public:
   virtual IRender & SetColor( const TColor & color ) = 0;
   virtual IRender & SetColor( const TColor8 & color ) = 0;
   virtual IRender & SetStyle( const TStyle & style ) = 0;
-  virtual IRender & SetArrowStyle( const TArrowStyle & style ) = 0;
+  virtual IRender & SetArrowStyle( const TArrowStyle & style ) { return *this; };
 
   //! Draw a line sequence
   virtual bool Draw( 

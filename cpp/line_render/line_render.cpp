@@ -72,7 +72,7 @@ private:
     std::unique_ptr<Render::Line::IRender> _line_2;
     std::unique_ptr<Render::Line::IRender> _line_3;
 
-    Render::Program::TViewDataPtr _view_data_ptr;
+    Render::TModelAndViewPtr _view_data_ptr;
 };
 
 int main(int argc, char** argv)
@@ -120,21 +120,10 @@ int main(int argc, char** argv)
     return 0;
 }
 
-struct CViewData
-  : public Render::Program::IViewData
-{
-    virtual const Render::Program::TViewData & Data( void ) const
-    {
-        assert( false );
-        return _view_data;
-    }
-
-     Render::Program::TViewData _view_data;
-};
 
 CWindow_Glfw::CWindow_Glfw( void )
 {
-  _view_data_ptr = std::make_shared<CViewData>();
+  _view_data_ptr = std::make_shared<Render::CModelAndView>();
 }
 
 CWindow_Glfw::~CWindow_Glfw()

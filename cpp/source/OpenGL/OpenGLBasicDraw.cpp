@@ -2029,7 +2029,7 @@ bool CBasicDraw::DrawText2D(
   }
 
   // draw the text
-  bool ret = font->DrawText( *this, 0, text, height, width_scale, pos );
+  bool ret = font->Draw( *this, 0, text, height, width_scale, pos );
 
   // reset blending
   if ( set_depth_and_belnding )

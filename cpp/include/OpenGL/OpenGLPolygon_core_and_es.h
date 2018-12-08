@@ -16,7 +16,6 @@
 
 #include <Render_IDrawType.h>
 #include <Render_IDrawPolygon.h>
-#include <Render_IProgram.h>
 
 
 // class definitions
@@ -31,6 +30,8 @@
 **********************************************************************/
 namespace OpenGL
 {
+
+class CPrimitiveOpenGL_2_00;
 
 
 /******************************************************************//**
@@ -59,17 +60,67 @@ namespace Polygon
 class CPolygonOpenGL_core_and_es
   : public Render::Polygon::IRender
 {
-public: 
+public:
+
+  using TProgramPtr = std::shared_ptr<CPrimitiveOpenGL_2_00>;
 
   CPolygonOpenGL_core_and_es( size_t min_cache_elems );
   virtual ~CPolygonOpenGL_core_and_es();
 
-// TODO $$$
+  const Render::Polygon::TStyle & PoylgonStyle( void ) const { return _polygon_style; }
+  void PoylgonStyle( const Render::Polygon::TStyle &style ) { _polygon_style = style; }
+
+  //! Initialize the polygon renderer
+  virtual void Init( void ) override;
+  virtual void Init( TProgramPtr &program );
+
+  //! Notify the render that a sequence of successive polygons will follow, which is not interrupted by any other drawing operation.
+  //! This allows the render to do some performance optimizations and to prepare for the polygon rendering.
+  //! The render can keep states persistent from one polygon drawing to the other, without initializing and restoring them.
+  //!
+  //! Not implemented (Software OpenGL).
+  virtual bool StartSuccessivePolygonDrawings( void ) override;
+
+ //! Notify the renderer that a sequence of polygons has been finished, and that the internal states have to be restored.
+  //!
+  //! Not implemented (Software OpenGL).
+  virtual bool FinishSuccessivePolygonDrawings( void ) override;
+
+  virtual Render::Polygon::IRender & SetColor( const Render::TColor & color ) override;
+  virtual Render::Polygon::IRender & SetColor( const Render::TColor8 & color ) override;
+  virtual Render::Polygon::IRender & SetStyle( const Render::Polygon::TStyle & style ) override;
+  
+  //! Draw a polygon sequence
+  virtual bool Draw( Render::TPrimitive primitive_type, unsigned int tuple_size, size_t coords_size, const float *coords ) override;
+  virtual bool Draw( Render::TPrimitive primitive_type, unsigned int tuple_size, size_t coords_size, const double *coords ) override;
+  virtual bool Draw( Render::TPrimitive primitive_type, size_t no_of_coords, const float *x_coords, const float *y_coords ) override;
+  virtual bool Draw( Render::TPrimitive primitive_type, size_t no_of_coords, const double *x_coords, const double *y_coords ) override;
+
+  //! Start a new polygon sequence
+  virtual bool StartSequence( Render::TPrimitive primitive_type, unsigned int tuple_size ) override;
+  
+  //! Complete an active polygon sequence
+  virtual bool EndSequence( void ) override;
+
+  //! Specify a new vertex coordinate in an active polygon sequence
+  virtual bool DrawSequence( float x, float y, float z ) override;
+  virtual bool DrawSequence( double x, double y, double z ) override;
+  
+  //! Specify a sequence of new vertex coordinates in an active polygon sequence
+  virtual bool DrawSequence( size_t coords_size, const float *coords ) override;
+  virtual bool DrawSequence( size_t coords_size, const double *coords ) override;
 
 
+private:
+
+  bool                    _successive_draw_started{ false };          //!< successive drawing was started by this renderer
+  TProgramPtr             _primitive_prog;                            //!< primitive render program
+  Render::Polygon::TStyle _polygon_style;                             //!< polygon style parameters                     
+  Render::TPrimitive      _squence_type{ Render::TPrimitive::NO_OF }; //!< primitive type pf the sequence
+  Render::TVertexCache    _vertex_cache;                              //!< cache for vertex coordinates
 };
 
-} // Poylgon
+} // Polygon
 
 } // OpenGL
 

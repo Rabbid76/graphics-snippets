@@ -347,21 +347,6 @@ Render::Line::IRender & CLineOpenGL_core_and_es::SetStyle(
 
 
 /******************************************************************//**
-* \brief TODO: not yet implemented!  
-* 
-* \author  gernot
-* \date    2018-09-07
-* \version 1.0
-**********************************************************************/
-Render::Line::IRender & CLineOpenGL_core_and_es::SetArrowStyle( 
-  const Render::Line::TArrowStyle & style ) //! I - new style of the arrows at the endings of coherently lines
-{
-  assert( false );
-  return *this;
-}
-
-
-/******************************************************************//**
 * \brief Draw a single line sequence.  
 * 
 * \author  gernot

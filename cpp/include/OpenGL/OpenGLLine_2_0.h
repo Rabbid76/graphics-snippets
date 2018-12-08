@@ -97,8 +97,7 @@ public:
   virtual Render::Line::IRender & SetColor( const Render::TColor8 & color ) override;
 
   virtual Render::Line::IRender & SetStyle( const Render::Line::TStyle & style ) override;
-  virtual Render::Line::IRender & SetArrowStyle( const Render::Line::TArrowStyle & style ) override;
-
+ 
   //! Draw a line sequence
   virtual bool Draw( Render::TPrimitive primitive_type, unsigned int tuple_size, size_t coords_size, const float *coords ) override;
   virtual bool Draw( Render::TPrimitive primitive_type, unsigned int tuple_size, size_t coords_size, const double *coords ) override;

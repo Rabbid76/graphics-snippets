@@ -19,6 +19,7 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "draw_library_scenes", "draw_library_scenes\draw_library_scenes.vcxproj", "{1B15D0AF-5D95-4EE7-990E-AA2B8B507D1E}"
 	ProjectSection(ProjectDependencies) = postProject
 		{664E6F0D-6784-4760-9565-D54F8EB1EDF4} = {664E6F0D-6784-4760-9565-D54F8EB1EDF4}
+		{287C92C5-1D7E-4214-8DB9-39C6F645087C} = {287C92C5-1D7E-4214-8DB9-39C6F645087C}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "example_map_generator", "example_map_generator\example_map_generator.vcxproj", "{E50E95FE-9805-4099-85E0-FB048A60D863}"
