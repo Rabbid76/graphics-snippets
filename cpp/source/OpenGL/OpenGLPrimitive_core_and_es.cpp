@@ -178,7 +178,7 @@ void CPrimitiveOpenGL_core_and_es::Init(
 void CPrimitiveOpenGL_core_and_es::InitBuffer( 
   size_t min_buffer_size ) //! minimum buffer size
 {
-  if ( _mesh_buffer == nullptr )
+  if ( _mesh_buffer != nullptr )
     return;
 
   _mesh_buffer = std::make_unique<OpenGL::CDrawBuffer>( Render::TDrawBufferUsage::stream_draw, min_buffer_size );
@@ -306,7 +306,7 @@ CPrimitiveOpenGL_core_and_es CPrimitiveOpenGL_core_and_es::SetDeptAttenuation(
 **********************************************************************/
 bool CPrimitiveOpenGL_core_and_es::StartSuccessivePrimitiveDrawings( void )
 {
-  if ( _active_sequence )
+  if ( _active_sequence || _initilized == false )
   {
     assert( false );
     return false;
@@ -322,8 +322,8 @@ bool CPrimitiveOpenGL_core_and_es::StartSuccessivePrimitiveDrawings( void )
   glUniform1i( _case_loc,  0 );
 
   // enable and disable vertex attributes
-  glEnableVertexAttribArray( _attrib_xyzw_inx );
-  glDisableVertexAttribArray( _attrib_y_inx );
+  _mesh_buffer->SpecifyVA( Render::b0_xyz );
+  _mesh_buffer->Prepare();
 
   _attribute_case     = 0;
   _successive_drawing = true;
@@ -341,7 +341,7 @@ bool CPrimitiveOpenGL_core_and_es::StartSuccessivePrimitiveDrawings( void )
 **********************************************************************/
 bool CPrimitiveOpenGL_core_and_es::FinishSuccessivePrimitiveDrawings( void )
 {
-  if ( _active_sequence )
+  if ( _active_sequence || _initilized == false )
   {
     assert( false );
     return false;
@@ -350,8 +350,7 @@ bool CPrimitiveOpenGL_core_and_es::FinishSuccessivePrimitiveDrawings( void )
     return true;
 
   // disable vertex attributes
-  glDisableVertexAttribArray( _attrib_xyzw_inx );
-  glDisableVertexAttribArray( _attrib_y_inx );
+  _mesh_buffer->Release();
 
   // activate the shader program 0
   glUseProgram( 0 );
@@ -424,28 +423,16 @@ bool CPrimitiveOpenGL_core_and_es::ActivateProgram(
 
   // activate program, update uniforms and enable vertex attributes
   bool set_case = false;
-  if ( _successive_drawing == false )
+  if ( _successive_drawing == false || _attribute_case != case_val )
   {
+    _mesh_buffer->SelectVA( case_val ? Render::b0_x__b1_y : Render::b0_xyz );
+    _mesh_buffer->Prepare();
     _prog->Use();
    
     UpdateParameterUniforms();
-    _attribute_case = case_val;
-    set_case = true;
-    glEnableVertexAttribArray( _attrib_xyzw_inx );
-  }
-  else if ( _attribute_case != case_val )
-  {
-    _attribute_case = case_val;
-    set_case = true;
-  }
-
-  if ( set_case )
-  {
     glUniform1i( _case_loc,  case_val );
-    if ( _attribute_case == 1 )
-      glEnableVertexAttribArray( _attrib_y_inx );
-    else
-      glDisableVertexAttribArray( _attrib_y_inx );
+
+    _attribute_case = case_val;
   }
 
   return true;
@@ -465,9 +452,7 @@ bool CPrimitiveOpenGL_core_and_es::DeactivateProgram( void )
     return false;
  
   // disable vertex attributes and activate program 0
-  glDisableVertexAttribArray( _attrib_xyzw_inx );
-  if ( _attribute_case == 1 )
-    glDisableVertexAttribArray( _attrib_y_inx );
+  _mesh_buffer->Release();
   glUseProgram( 0 );
   
   return true;

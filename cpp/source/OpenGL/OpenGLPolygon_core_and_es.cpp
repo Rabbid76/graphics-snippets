@@ -260,14 +260,15 @@ bool CPolygonOpenGL_core_and_es::Draw(
     return false;
   }
   ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::polygon );
-  ASSERT( tuple_size == 2 || tuple_size == 3 || tuple_size == 4 );
+  ASSERT( tuple_size == 3 ); // TODO $$$
   auto &prog = *_primitive_prog;
 
   // activate program, update uniforms and enable vertex attributes
   prog.ActivateProgram( false );
 
   // set vertex attribute pointer and draw the line
-  glVertexAttribPointer( prog.Attrib_xyzw_inx(), tuple_size, GL_FLOAT, GL_FALSE, 0, coords );
+  if ( auto *buffer = prog.Buffer() )
+    buffer->UpdateVB( 0, 3, coords_size, coords );
   glDrawArrays( OpenGL::Primitive( primitive_type ), 0, (GLsizei)(coords_size / tuple_size) );
   
   // disable vertex attributes and activate program 0
@@ -297,14 +298,15 @@ bool CPolygonOpenGL_core_and_es::Draw(
     return false;
   }
   ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::polygon );
-  ASSERT( tuple_size == 2 || tuple_size == 3 || tuple_size == 4 );
+  ASSERT( false ); // TDOD $$$
   auto &prog = *_primitive_prog;
 
   // activate program, update uniforms and enable vertex attributes
   _primitive_prog->ActivateProgram( false );
 
   // set vertex attribute pointer and draw the line
-  glVertexAttribPointer( prog.Attrib_xyzw_inx(), tuple_size, GL_DOUBLE, GL_FALSE, 0, coords );
+  if ( auto *buffer = prog.Buffer() )
+    buffer->UpdateVB( 0, 3, coords_size, coords );
   glDrawArrays( OpenGL::Primitive( primitive_type ), 0, (GLsizei)(coords_size / tuple_size) );
  
   // disable vertex attributes and activate program 0
@@ -340,8 +342,11 @@ bool CPolygonOpenGL_core_and_es::Draw(
   prog.ActivateProgram( true );
 
   // set vertex attribute pointers and draw the line
-  glVertexAttribPointer( prog.Attrib_xyzw_inx(), 1, GL_FLOAT, GL_FALSE, 0, x_coords );
-  glVertexAttribPointer( prog.Attrib_y_inx(), 1, GL_FLOAT, GL_FALSE, 0, y_coords );
+  if ( auto *buffer = prog.Buffer() )
+  {
+    buffer->UpdateVB( 0, 1, no_of_coords, x_coords );
+    buffer->UpdateVB( 1, 1, no_of_coords, y_coords );
+  }
   glDrawArrays( OpenGL::Primitive( primitive_type ), 0, (GLsizei)no_of_coords );
    
   // disable vertex attributes and activate program 0
@@ -375,10 +380,14 @@ bool CPolygonOpenGL_core_and_es::Draw(
 
   // activate program, update uniforms and enable vertex attributes
   prog.ActivateProgram( true );
+  ASSERT( false );
 
   // set vertex attribute pointers and draw the line
-  glVertexAttribPointer( prog.Attrib_xyzw_inx(), 1, GL_DOUBLE, GL_FALSE, 0, x_coords );
-  glVertexAttribPointer( prog.Attrib_y_inx(), 1, GL_DOUBLE, GL_FALSE, 0, y_coords );
+  if ( auto *buffer = prog.Buffer() )
+  {
+    buffer->UpdateVB( 0, 1, no_of_coords, x_coords );
+    buffer->UpdateVB( 1, 1, no_of_coords, y_coords );
+  }
   glDrawArrays( OpenGL::Primitive( primitive_type ), 0, (GLsizei)no_of_coords );
 
   // disable vertex attributes and activate program 0
@@ -440,7 +449,8 @@ bool CPolygonOpenGL_core_and_es::EndSequence( void )
 
   //  set vertex attribute pointer and draw the line
   GLsizei tuple_size = (GLsizei)_vertex_cache.TupleSize();
-  glVertexAttribPointer( prog.Attrib_xyzw_inx(), tuple_size, GL_FLOAT, GL_FALSE, 0, _vertex_cache.VertexData() );
+  if ( auto *buffer = prog.Buffer() )
+    buffer->UpdateVB( 0, 3, _vertex_cache.SequenceSize(),_vertex_cache.VertexData() );
   glDrawArrays( OpenGL::Primitive( _squence_type ), 0, (GLsizei)(_vertex_cache.SequenceSize() / tuple_size) );
   
   // disable vertex attributes and activate program 0

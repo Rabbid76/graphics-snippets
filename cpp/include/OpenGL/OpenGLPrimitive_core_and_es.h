@@ -64,6 +64,8 @@ public:
   int  Attrib_xyzw_inx( void )   const { return _attrib_xyzw_inx; } 
   int  Attrib_y_inx( void )      const { return _attrib_y_inx; } 
 
+  Render::IDrawBuffer* Buffer( void ) const { return _mesh_buffer.get(); }
+
   //! Initialize the primitive renderer
   virtual void Init( size_t min_buffer_size );
 
@@ -89,7 +91,7 @@ public:
   bool EndSequence( void );
 
   //! activate program, update uniforms and enable vertex attributes
-  bool ActivateProgram( bool x_y_case );
+  bool ActivateProgram( bool x_y_case ); // TODO $$$ different buffer types!
 
   //! install the default program
   bool DeactivateProgram( void );
