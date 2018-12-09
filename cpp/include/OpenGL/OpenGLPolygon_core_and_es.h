@@ -1,7 +1,7 @@
 /******************************************************************//**
 * \brief Implementation of OpenGL polygon renderer,
 * with the use of "modern" OpenGL 4+ core and
-* GLSL version 4.20 (`#version 420 core`) or
+* GLSL version 4.30 (`#version 4230 core`) or
 * OpenGL es 3(+) and GLSL ES version 3.00 (`#version 300 es`).
 * 
 * \author  gernot
@@ -16,6 +16,7 @@
 
 #include <Render_IDrawType.h>
 #include <Render_IDrawPolygon.h>
+#include <Render_IBuffer.h>
 
 
 // class definitions
@@ -31,7 +32,7 @@
 namespace OpenGL
 {
 
-class CPrimitiveOpenGL_2_00;
+class CPrimitiveOpenGL_core_and_es;
 
 
 /******************************************************************//**
@@ -62,7 +63,7 @@ class CPolygonOpenGL_core_and_es
 {
 public:
 
-  using TProgramPtr = std::shared_ptr<CPrimitiveOpenGL_2_00>;
+  using TProgramPtr = std::shared_ptr<CPrimitiveOpenGL_core_and_es>;
 
   CPolygonOpenGL_core_and_es( size_t min_cache_elems );
   virtual ~CPolygonOpenGL_core_and_es();
@@ -113,7 +114,9 @@ public:
 
 private:
 
+  bool                    _initialized{ false };                      //!< initialization state of the object               
   bool                    _successive_draw_started{ false };          //!< successive drawing was started by this renderer
+  size_t                  _min_buffer_size;                           //!< minimum size of the vertex buffer
   TProgramPtr             _primitive_prog;                            //!< primitive render program
   Render::Polygon::TStyle _polygon_style;                             //!< polygon style parameters                     
   Render::TPrimitive      _squence_type{ Render::TPrimitive::NO_OF }; //!< primitive type pf the sequence

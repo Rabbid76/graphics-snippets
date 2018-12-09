@@ -1,7 +1,7 @@
 /******************************************************************//**
 * \brief Implementation of OpenGL polygon renderer,
 * with the use of "modern" OpenGL 4+ core and
-* GLSL version 4.20 (`#version 420 core`) or
+* GLSL version 4.30 (`#version 430 core`) or
 * OpenGL es 3(+) and GLSL ES version 3.00 (`#version 300 es`).
 * 
 * \author  gernot
@@ -14,7 +14,7 @@
 // includes
 
 #include <OpenGLPolygon_core_and_es.h>
-#include <OpenGLPrimitive_2_0.h>
+#include <OpenGLPrimitive_core_and_es.h>
 
 
 // OpenGL wrapper
@@ -63,7 +63,8 @@ namespace Polygon
 **********************************************************************/
 CPolygonOpenGL_core_and_es::CPolygonOpenGL_core_and_es( 
   size_t min_cache_elems ) //! I - size of the element cache
-  : _vertex_cache( min_cache_elems )
+  : _min_buffer_size( min_cache_elems )
+  , _vertex_cache( min_cache_elems )
 {}
   
 
@@ -87,11 +88,14 @@ CPolygonOpenGL_core_and_es::~CPolygonOpenGL_core_and_es()
 **********************************************************************/
 void CPolygonOpenGL_core_and_es::Init( void )
 {
-  if ( _primitive_prog != nullptr )
+  if ( _initialized )
     return;
+   _initialized = true;
 
-  _primitive_prog = std::make_unique<CPrimitiveOpenGL_2_00>();
-  _primitive_prog->Init();
+  TProgramPtr program = std::make_unique<CPrimitiveOpenGL_core_and_es>();
+
+  _primitive_prog = program;
+  _primitive_prog->Init( _min_buffer_size );
 }
 
 
@@ -107,11 +111,12 @@ void CPolygonOpenGL_core_and_es::Init( void )
 void CPolygonOpenGL_core_and_es::Init( 
   TProgramPtr &program ) // shader program
 {
-  if ( _primitive_prog != nullptr )
+  if ( _initialized )
     return;
+  _initialized = true;
 
   _primitive_prog = program;
-  _primitive_prog->Init();
+  _primitive_prog->Init( _min_buffer_size );
 }
 
 

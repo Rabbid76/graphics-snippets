@@ -33,6 +33,12 @@
     <ClCompile Include="..\source\OpenGL\OpenGLPrimitive_2_0.cpp">
       <Filter>OpenGL</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\OpenGL\OpenGLVertexBuffer.cpp">
+      <Filter>OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\OpenGL\OpenGLPrimitive_core_and_es.cpp">
+      <Filter>OpenGL</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -72,6 +78,12 @@
       <Filter>OpenGL</Filter>
     </ClInclude>
     <ClInclude Include="..\include\OpenGL\OpenGLPrimitive_2_0.h">
+      <Filter>OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenGL\OpenGLVertexBuffer.h">
+      <Filter>OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenGL\OpenGLPrimitive_core_and_es.h">
       <Filter>OpenGL</Filter>
     </ClInclude>
   </ItemGroup>

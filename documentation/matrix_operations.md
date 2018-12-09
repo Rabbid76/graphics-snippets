@@ -88,7 +88,7 @@ and [OpenGL ES Shading Language 3.20 Specification, 5.4.2 Vector and Matrix Cons
 >      float, float, float, float); // fourth column
 > ```
 
-Note, in compare to a mathematical matrix where the columns are written from top to bottom, which feels natural, at the initialization of an OpenGL matrix, the columns are written from the left to the right. This lead sto the benefit, that the x, y, z components of an axis or of the translation are in direct succession in the memory. This is a big advantage when accessing the axis vectors or the translation vector of the matrix.<br/>
+Note, in compare to a mathematical matrix where the columns are written from top to bottom, which feels natural, at the initialization of an OpenGL matrix, the columns are written from the left to the right. This leads to the benefit, that the x, y, z components of an axis or of the translation are in direct succession in the memory. This is a big advantage when accessing the axis vectors or the translation vector of the matrix.<br/>
 See also [Data Type (GLSL) - Matrix constructors](https://www.khronos.org/opengl/wiki/Data_Type_(GLSL)#Matrix_constructors).
 
 <br/>
