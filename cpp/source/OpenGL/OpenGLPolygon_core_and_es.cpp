@@ -260,15 +260,18 @@ bool CPolygonOpenGL_core_and_es::Draw(
     return false;
   }
   ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::polygon );
-  ASSERT( tuple_size == 3 ); // TODO $$$
   auto &prog = *_primitive_prog;
 
   // activate program, update uniforms and enable vertex attributes
-  prog.ActivateProgram( false );
+  Render::TVA va_type = tuple_size == 4 ? Render::b0_xyzw : (tuple_size == 2 ? Render::b0_xy : Render::b0_xyz);
+  prog.ActivateProgram( va_type );
 
   // set vertex attribute pointer and draw the line
   if ( auto *buffer = prog.Buffer() )
-    buffer->UpdateVB( 0, 3, coords_size, coords );
+    buffer->UpdateVB( 0, tuple_size*sizeof(float), coords_size, coords );
+  
+  // TODO $$$ append to cache and delays the drawing until it is absolutely necessary.
+  //          dependent on VAO specification and `_successive_draw_started`
   glDrawArrays( OpenGL::Primitive( primitive_type ), 0, (GLsizei)(coords_size / tuple_size) );
   
   // disable vertex attributes and activate program 0
@@ -298,15 +301,18 @@ bool CPolygonOpenGL_core_and_es::Draw(
     return false;
   }
   ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::polygon );
-  ASSERT( false ); // TDOD $$$
   auto &prog = *_primitive_prog;
 
   // activate program, update uniforms and enable vertex attributes
-  _primitive_prog->ActivateProgram( false );
+  Render::TVA va_type = tuple_size == 4 ? Render::d__b0_xyzw : (tuple_size == 2 ? Render::d__b0_xy : Render::d__b0_xyz);
+  prog.ActivateProgram( va_type );
 
   // set vertex attribute pointer and draw the line
   if ( auto *buffer = prog.Buffer() )
-    buffer->UpdateVB( 0, 3, coords_size, coords );
+    buffer->UpdateVB( 0, 3, coords_size*sizeof(double), coords );
+
+  // TODO $$$ append to cache and delays the drawing until it is absolutely necessary.
+  //          dependent on VAO specification and `_successive_draw_started`
   glDrawArrays( OpenGL::Primitive( primitive_type ), 0, (GLsizei)(coords_size / tuple_size) );
  
   // disable vertex attributes and activate program 0
@@ -339,14 +345,17 @@ bool CPolygonOpenGL_core_and_es::Draw(
   auto &prog = *_primitive_prog;
 
   // activate program, update uniforms and enable vertex attributes
-  prog.ActivateProgram( true );
+  prog.ActivateProgram( Render::b0_x__b1_y );
 
   // set vertex attribute pointers and draw the line
   if ( auto *buffer = prog.Buffer() )
   {
-    buffer->UpdateVB( 0, 1, no_of_coords, x_coords );
-    buffer->UpdateVB( 1, 1, no_of_coords, y_coords );
+    buffer->UpdateVB( 0, sizeof(float), no_of_coords, x_coords );
+    buffer->UpdateVB( 1, sizeof(float), no_of_coords, y_coords );
   }
+
+  // TODO $$$ append to cache and delays the drawing until it is absolutely necessary.
+  //          dependent on VAO specification and `_successive_draw_started`
   glDrawArrays( OpenGL::Primitive( primitive_type ), 0, (GLsizei)no_of_coords );
    
   // disable vertex attributes and activate program 0
@@ -379,15 +388,17 @@ bool CPolygonOpenGL_core_and_es::Draw(
   auto &prog = *_primitive_prog;
 
   // activate program, update uniforms and enable vertex attributes
-  prog.ActivateProgram( true );
-  ASSERT( false );
+  prog.ActivateProgram( Render::d__b0_x__b1_y );
 
   // set vertex attribute pointers and draw the line
   if ( auto *buffer = prog.Buffer() )
   {
-    buffer->UpdateVB( 0, 1, no_of_coords, x_coords );
-    buffer->UpdateVB( 1, 1, no_of_coords, y_coords );
+    buffer->UpdateVB( 0, sizeof(double), no_of_coords, x_coords );
+    buffer->UpdateVB( 1, sizeof(double), no_of_coords, y_coords );
   }
+
+  // TODO $$$ append to cache and delays the drawing until it is absolutely necessary.
+  //          dependent on VAO specification and `_successive_draw_started`
   glDrawArrays( OpenGL::Primitive( primitive_type ), 0, (GLsizei)no_of_coords );
 
   // disable vertex attributes and activate program 0
@@ -445,12 +456,16 @@ bool CPolygonOpenGL_core_and_es::EndSequence( void )
   // draw the line
 
   // activate program, update uniforms and enable vertex attributes
-  prog.ActivateProgram( false );
+  GLsizei tuple_size = (GLsizei)_vertex_cache.TupleSize();
+  Render::TVA va_type = tuple_size == 4 ? Render::b0_xyzw : (tuple_size == 2 ? Render::b0_xy : Render::b0_xyz);
+  prog.ActivateProgram( va_type );
 
   //  set vertex attribute pointer and draw the line
-  GLsizei tuple_size = (GLsizei)_vertex_cache.TupleSize();
   if ( auto *buffer = prog.Buffer() )
-    buffer->UpdateVB( 0, 3, _vertex_cache.SequenceSize(),_vertex_cache.VertexData() );
+    buffer->UpdateVB( 0, tuple_size*sizeof(float), _vertex_cache.SequenceSize(),_vertex_cache.VertexData() );
+
+  // TODO $$$ append to cache and delays the drawing until it is absolutely necessary.
+  //          dependent on VAO specification and `_successive_draw_started`
   glDrawArrays( OpenGL::Primitive( _squence_type ), 0, (GLsizei)(_vertex_cache.SequenceSize() / tuple_size) );
   
   // disable vertex attributes and activate program 0

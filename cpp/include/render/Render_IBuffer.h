@@ -109,11 +109,19 @@ enum TIndexType : char
 
 enum TVA
 {
+  unknown,                   // unknown: dummy for initialization
+
   b0_xy,                     // 1 vertex buffer (no index buffer): 2 component vertex coordinate
   b0_xyz,                    // 1 vertex buffer (no index buffer): 3 component vertex coordinate
   b0_xyzw,                   // 1 vertex buffer (no index buffer): 4 component vertex coordinate
 
-  b0_x__b1_y,                 // 2 vertex buffer (no index buffer): x component vertex coordinate and separated y component vertex coordinate
+  b0_x__b1_y,                // 2 vertex buffer (no index buffer): x component vertex coordinate and separated y component vertex coordinate
+
+  d__b0_xy,                  // double precision: 1 vertex buffer (no index buffer): 2 component vertex coordinate
+  d__b0_xyz,                 // double precision: 1 vertex buffer (no index buffer): 3 component vertex coordinate
+  d__b0_xyzw,                // double precision: 1 vertex buffer (no index buffer): 4 component vertex coordinate
+
+  d__b0_x__b1_y,             // double precision: 2 vertex buffer (no index buffer): x component vertex coordinate and separated y component vertex coordinate
                   
   b0_xyz_uv,                 // 1 vertex buffer record (no index buffer): 3 component vertex coordinate, 2 component texture coordinates
   b0_xyz_nnn,                // 1 vertex buffer record (no index buffer): 3 component vertex coordinate, normal vector
@@ -290,6 +298,9 @@ public:
   {
     static const TDescription spec_table[] = {
     
+      // unknown
+      TDescription(),
+
       // b0_xy
       TDescription{
         -1, 1, 
@@ -316,6 +327,34 @@ public:
         -1, 2, 
         0, 0, 1, 0, 1, Render::TAttributeType::eFloat32, 0,
         1, 0, 1, 1, 1, Render::TAttributeType::eFloat32, 0,
+      },
+
+      // d__b0_xy
+      TDescription{
+        -1, 1, 
+        0, 0, 1, 
+        0, 2, Render::TAttributeType::eFloat64, 0
+      },
+
+      // d__b0_xyz
+      TDescription{
+        -1, 1, 
+        0, 0, 1, 
+        0, 3, Render::TAttributeType::eFloat64, 0
+      },
+
+      // d__b0_xyzw
+      TDescription{
+        -1, 1, 
+        0, 0, 1, 
+        0, 4, Render::TAttributeType::eFloat64, 0
+      },
+
+      // d__b0_x__b1_y
+      TDescription{
+        -1, 2, 
+        0, 0, 1, 0, 1, Render::TAttributeType::eFloat64, 0,
+        1, 0, 1, 1, 1, Render::TAttributeType::eFloat64, 0,
       },
 
       // b0_xyz_uv

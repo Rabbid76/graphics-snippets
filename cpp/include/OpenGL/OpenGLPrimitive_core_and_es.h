@@ -91,7 +91,7 @@ public:
   bool EndSequence( void );
 
   //! activate program, update uniforms and enable vertex attributes
-  bool ActivateProgram( bool x_y_case ); // TODO $$$ different buffer types!
+  bool ActivateProgram( Render::TVA requested_va_type );
 
   //! install the default program
   bool DeactivateProgram( void );
@@ -120,6 +120,7 @@ private:
   int                          _attrib_xyzw_inx{ -1 };       //!< attribute index of the vertex coordinate 
   int                          _attrib_y_inx{ -1 };          //!< attribute index of the vertex separated y coordinate 
   
+  Render::TVA                  _va_type{ Render::unknown };  //!< vertex array object type
   TBufferPtr                   _mesh_buffer;                 //!< vertex array object and array buffer 
   size_t                       _min_buffer_size;             //!< minimum size of the vertex buffer
 

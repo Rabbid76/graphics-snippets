@@ -321,10 +321,6 @@ bool CPrimitiveOpenGL_core_and_es::StartSuccessivePrimitiveDrawings( void )
   UpdateParameterUniforms();
   glUniform1i( _case_loc,  0 );
 
-  // enable and disable vertex attributes
-  _mesh_buffer->SpecifyVA( Render::b0_xyz );
-  _mesh_buffer->Prepare();
-
   _attribute_case     = 0;
   _successive_drawing = true;
   return true;
@@ -409,7 +405,7 @@ bool CPrimitiveOpenGL_core_and_es::EndSequence( void )
 * \version 1.0
 **********************************************************************/
 bool CPrimitiveOpenGL_core_and_es::ActivateProgram( 
-  bool x_y_case ) //! I - true: separate x and y coordinate attribute; false: one attribute fro x, y, z and w coordinate
+  Render::TVA requested_va_type ) //! I - vertex array object specification
 {
   // A new sequence can't be started within an active sequence
   if ( _initilized == false )
@@ -418,23 +414,31 @@ bool CPrimitiveOpenGL_core_and_es::ActivateProgram(
     return false;
   }
 
-  // set attribute mode value
-  int case_val = x_y_case ? 1 : 0;
-
-  // activate program, update uniforms and enable vertex attributes
+  // activate program  
   bool set_case = false;
-  if ( _successive_drawing == false || _attribute_case != case_val )
-  {
-    _mesh_buffer->SelectVA( case_val ? Render::b0_x__b1_y : Render::b0_xyz );
-    _mesh_buffer->Prepare();
+  if ( _successive_drawing == false )
     _prog->Use();
-   
+
+  // set attribute mode value: 1 : separated x y mode, 0: single attribute 
+  int case_val = requested_va_type == Render::b0_x__b1_y || requested_va_type == Render::d__b0_x__b1_y ? 1 : 0;
+  
+  // update uniforms
+  if ( _attribute_case != case_val )
+  {
     UpdateParameterUniforms();
     glUniform1i( _case_loc,  case_val );
-
     _attribute_case = case_val;
   }
 
+  // and enable vertex attributes
+  if ( _va_type != requested_va_type )
+  {
+    // TODO $$$: get a mesh buffer from provider
+    _mesh_buffer->SpecifyVA( requested_va_type );
+    _mesh_buffer->Prepare();
+    _va_type = requested_va_type;
+  }
+ 
   return true;
 }
 
