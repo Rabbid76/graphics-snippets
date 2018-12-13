@@ -478,7 +478,7 @@ bool CDrawBuffer::AddSortcut(
   // check if the shortcut already exists
   auto it = _shortcuts.find( shortcut );
   if ( it != _shortcuts.end() )
-    return hashCode = it->second; // check if the hash code is the same
+    return hashCode == it->second; // check if the hash code is the same
   
   // add the new shortcut
   _shortcuts[shortcut] = hashCode;
