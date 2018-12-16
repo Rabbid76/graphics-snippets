@@ -177,6 +177,7 @@
     <ClInclude Include="..\include\OpenGL\OpenGLVertexBuffer.h" />
     <ClInclude Include="..\include\OpenGL\OpenGLVertexBufferCompatibility.h" />
     <ClInclude Include="..\include\OpenGL\OpenGLVertexBuffer_2_0.h" />
+    <ClInclude Include="..\include\OpenGL\OpenGLDataBuffer_std140.h" />
     <ClInclude Include="..\include\OpenGL\OpenGL_enumconst.h" />
     <ClInclude Include="..\include\OpenGL\OpenGL_include.h" />
     <ClInclude Include="..\include\OpenGL\OpenGL_Matrix_Camera.h" />
@@ -217,6 +218,7 @@
     <ClCompile Include="..\source\OpenGL\OpenGLVertexBuffer.cpp" />
     <ClCompile Include="..\source\OpenGL\OpenGLVertexBufferCompatibility.cpp" />
     <ClCompile Include="..\source\OpenGL\OpenGLVertexBuffer_2_0.cpp" />
+    <ClCompile Include="..\source\OpenGL\OpenGLDataBuffer_std140.cpp" />
     <ClCompile Include="..\source\render\Render_IProgram.cpp" />
     <ClCompile Include="..\source\util\RenderUtil_FreetypeFont.cpp" />
     <ClCompile Include="..\source\util\RenderUtil_ObjLoader.cpp" />

@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\source\OpenGL\OpenGLDataBuffer_std140.cpp" />
     <ClCompile Include="..\source\OpenGL\OpenGLPolygon_1_0.cpp" />
     <ClCompile Include="..\source\OpenGL\OpenGLPolygon_2_0.cpp" />
     <ClCompile Include="..\source\OpenGL\OpenGLPolygon_core_and_es.cpp" />
@@ -35,6 +36,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\include\OpenGL\OpenGLDataBuffer_std140.h" />
     <ClInclude Include="..\include\OpenGL\OpenGLPolygon_1_0.h" />
     <ClInclude Include="..\include\OpenGL\OpenGLPolygon_2_0.h" />
     <ClInclude Include="..\include\OpenGL\OpenGLPolygon_core_and_es.h" />

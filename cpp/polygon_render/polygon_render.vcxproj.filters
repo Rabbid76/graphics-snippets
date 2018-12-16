@@ -39,6 +39,9 @@
     <ClCompile Include="..\source\OpenGL\OpenGLPrimitive_core_and_es.cpp">
       <Filter>OpenGL</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\OpenGL\OpenGLDataBuffer_std140.cpp">
+      <Filter>OpenGL</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -84,6 +87,9 @@
       <Filter>OpenGL</Filter>
     </ClInclude>
     <ClInclude Include="..\include\OpenGL\OpenGLPrimitive_core_and_es.h">
+      <Filter>OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenGL\OpenGLDataBuffer_std140.h">
       <Filter>OpenGL</Filter>
     </ClInclude>
   </ItemGroup>

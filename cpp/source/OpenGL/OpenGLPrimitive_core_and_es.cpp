@@ -1,5 +1,4 @@
 /******************************************************************//**
-/******************************************************************//**
 * \brief Implementation of OpenGL primitive renderer,
 * with the use of "modern" OpenGL 4+ core and
 * GLSL version 4.30 (`#version 430 core`) or
