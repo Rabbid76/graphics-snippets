@@ -92,6 +92,8 @@
 
 [Load texture](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/texture_load.html)
 
+[Saturate texture](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/texture_saturate.html)
+
 [Retro distortion](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/retro_distortion.html)
 
 [Blending](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/blending.html)
