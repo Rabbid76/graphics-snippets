@@ -42,6 +42,8 @@
 
 [Light Model](https://rabbid76.github.io/graphics-snippets/html/tools/light_model_view.html)
 
+[Light Model - property transitions](https://rabbid76.github.io/graphics-snippets/html/tools/light_model_transition.html)
+
 [Height Map Generator](https://rabbid76.github.io/graphics-snippets/html/tools/height_map_generator.html)
 
 [Function Plotter](https://rabbid76.github.io/graphics-snippets/html/tools/function_plotter.html)
