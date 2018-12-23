@@ -16,6 +16,7 @@
 #include <OpenGLPrimitive_core_and_es.h>
 #include <OpenGLProgram.h>
 #include <OpenGLVertexBuffer.h>
+#include <OpenGLDataBuffer_std140.h>
 
 
 // OpenGL wrapper
@@ -156,14 +157,36 @@ void CPrimitiveOpenGL_core_and_es::Error(
 * \version 1.0
 **********************************************************************/
 void CPrimitiveOpenGL_core_and_es::Init( 
-  size_t min_buffer_size ) //! minimum buffer size
+  size_t min_buffer_size,    //! minimum buffer size
+  TMVPBufferPtr mvp_buffer ) //!< I - model, view, projection and window data buffer 
 {
   if ( _initilized )
     return;
   _initilized = true;
 
-  InitBuffer( min_buffer_size );
+  InitMVPBuffer( mvp_buffer );
+  InitDrawBuffer( min_buffer_size );
   InitProgram();
+}
+
+
+/******************************************************************//**
+* \brief Initialize model, view, projection and window data buffer. 
+* 
+* \author  gernot
+* \date    2018-12-10
+* \version 1.0
+**********************************************************************/
+void CPrimitiveOpenGL_core_and_es::InitMVPBuffer( 
+  TMVPBufferPtr mvp_buffer ) //!< I - model, view, projection and window data buffer 
+{
+  static const size_t c_default_binding = 1;
+
+  if ( _mvp_buffer != nullptr )
+    return;
+ 
+  _mvp_buffer = mvp_buffer != nullptr ? mvp_buffer : std::make_unique<CModelAndViewBuffer_std140>();
+  _mvp_buffer->Init( c_default_binding ); // `c_default_binding` is applied only, if the buffer was not initialized yet
 }
 
 
@@ -174,7 +197,7 @@ void CPrimitiveOpenGL_core_and_es::Init(
 * \date    2018-12-10
 * \version 1.0
 **********************************************************************/
-void CPrimitiveOpenGL_core_and_es::InitBuffer( 
+void CPrimitiveOpenGL_core_and_es::InitDrawBuffer( 
   size_t min_buffer_size ) //! minimum buffer size
 {
   if ( _mesh_buffer != nullptr )
@@ -486,8 +509,12 @@ CPrimitiveOpenGL_core_and_es & CPrimitiveOpenGL_core_and_es::Use( void )
 **********************************************************************/
 CPrimitiveOpenGL_core_and_es & CPrimitiveOpenGL_core_and_es::UpdateParameterUniforms( void )
 {
+  // update properties
   glUniform4fv( _color_loc, 1, _color.data() );
   glUniform1f( _depth_attenuation_loc, _depth_attenuation );
+
+  // update model, view and projection data
+  _mvp_buffer->Update();
 
   return *this;
 }

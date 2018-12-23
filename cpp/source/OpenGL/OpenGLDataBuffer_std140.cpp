@@ -41,6 +41,12 @@
 #include <OpenGLDataBuffer_std140.h>
 
 
+// OpenGL wrapper
+
+#include <OpenGL_include.h>
+#include <OpenGL_enumconst.h>
+
+
 /******************************************************************//**
 * \brief General namespace for OpenGL implementation.  
 * 
@@ -71,23 +77,8 @@ CModelAndViewBuffer_std140::CModelAndViewBuffer_std140( void )
 * \version 1.0
 **********************************************************************/
 CModelAndViewBuffer_std140::~CModelAndViewBuffer_std140()
-{}
-
-
-/******************************************************************//**
-* \brief Initialization of the object.   
-* 
-* \author  gernot
-* \date    2018-12-17
-* \version 1.0
-**********************************************************************/
-bool CModelAndViewBuffer_std140::Init( void )
 {
-  if ( _initialized )
-    return false;
-
-  auto data_resource = std::make_shared<Render::CModelAndView>();
-  return Init(data_resource);
+  Destroy();
 }
 
 
@@ -99,11 +90,47 @@ bool CModelAndViewBuffer_std140::Init( void )
 * \version 1.0
 **********************************************************************/
 bool CModelAndViewBuffer_std140::Init( 
+  size_t binding ) //!< I - binding point
+{
+  if ( _initialized )
+    return false;
+
+  auto data_resource = std::make_shared<Render::CModelAndView>();
+  return Init(binding, data_resource);
+}
+
+
+/******************************************************************//**
+* \brief Initialization of the object.   
+* 
+* \author  gernot
+* \date    2018-12-17
+* \version 1.0
+**********************************************************************/
+bool CModelAndViewBuffer_std140::Init( 
+  size_t                   binding,   //!< I - binding point
   Render::TModelAndViewPtr data_ptr ) //!< I - data resource pointer 
 {
-  // TODO $$$
+  if ( _initialized || data_ptr == nullptr )
+    return false;
 
-  // _initialized = true;
+  _data           = data_ptr;
+  _buffer_binding = binding;
+  _data_stamp     = _data->DataModifier();
+  _model_stamp    = _data->ModelModifier();
+
+  const Render::TModelAndView *data = _data->Data();
+
+  // create buffer
+  glGenBuffers( 1, &_buffer_object );
+  glBindBuffer( GL_UNIFORM_BUFFER, _buffer_object );
+  glBufferData( GL_UNIFORM_BUFFER, sizeof(*data), data, GL_DYNAMIC_DRAW );
+  glBindBuffer( GL_UNIFORM_BUFFER, 0 );
+
+  // set buffer binding point
+  glBindBufferBase( GL_UNIFORM_BUFFER, (GLuint)_buffer_binding, _buffer_object );
+
+  _initialized = true;
   return false;
 }
 
@@ -117,7 +144,48 @@ bool CModelAndViewBuffer_std140::Init(
 **********************************************************************/
 void CModelAndViewBuffer_std140::Destroy( void )
 {
-  // TODO $$$
+  if ( _initialized == false )
+    return;
+
+  // destroy buffer
+  glDeleteBuffers( 1, &_buffer_object );
+  _buffer_object = 0;
+}
+
+
+/******************************************************************//**
+* \brief Update buffer data.  
+* 
+* \author  gernot
+* \date    2018-12-17
+* \version 1.0
+**********************************************************************/
+bool CModelAndViewBuffer_std140::Update( void )
+{
+  if ( _initialized == false )
+    return false;
+
+  const Render::TModelAndView *data = _data->Data();
+
+  // update date
+  if ( _data_stamp != _data->DataModifier() )
+  {
+    glBindBuffer( GL_UNIFORM_BUFFER, _buffer_object );
+    glBufferSubData( GL_UNIFORM_BUFFER, 0, sizeof(*data), data );
+    glBindBuffer( GL_UNIFORM_BUFFER, 0 );
+  }
+  else if ( _model_stamp != _data->ModelModifier() )
+  {
+    glBindBuffer( GL_UNIFORM_BUFFER, _buffer_object );
+    glBufferSubData( GL_UNIFORM_BUFFER, offsetof(Render::TModelAndView, _model), sizeof(data->_model), &data->_model );
+    glBindBuffer( GL_UNIFORM_BUFFER, 0 );
+  }
+
+  // synchronice modification stamps
+  _data_stamp  = _data->DataModifier();
+  _model_stamp = _data->ModelModifier();
+
+  return true;
 }
 
 

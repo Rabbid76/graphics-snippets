@@ -67,17 +67,22 @@ public:
 
   CModelAndViewBuffer_std140 & operator = ( const CModelAndViewBuffer_std140 & ) = delete;
 
+  size_t BufferBinding( void ) const { return _buffer_binding; }
 
-  bool Init( void );                              //!< initialization of the object
-  bool Init( Render::TModelAndViewPtr data_ptr ); //!< initialization of the object
-  void Destroy( void );                           //!< destroy the object resources
+  bool Init( size_t binding );                                    //!< initialization of the object
+  bool Init( size_t binding, Render::TModelAndViewPtr data_ptr ); //!< initialization of the object
+  void Destroy( void );                                           //!< destroy the object resources
 
-
+  bool Update( void );                                            //!< Update buffer data
 
 private:
 
   bool                     _initialized{ false }; //!< initialization state
   Render::TModelAndViewPtr _data;                 //!< data structure 
+  size_t                   _buffer_binding{ 0 };  //!< binding point of the buffer
+  unsigned int             _buffer_object{ 0 };   //!< named OpenGL buffer object
+  unsigned int             _data_stamp{ 0 };      //!< modification and synchronization stamp of the data 
+  unsigned int             _model_stamp{ 0 };     //!< modification and synchronization stamp of the model matrix
 };
 
 

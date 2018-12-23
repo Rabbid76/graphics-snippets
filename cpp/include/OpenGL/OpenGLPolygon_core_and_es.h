@@ -19,6 +19,8 @@
 #include <Render_IBuffer.h>
 
 
+
+
 // class definitions
 
 
@@ -64,7 +66,7 @@ class CPolygonOpenGL_core_and_es
 public:
 
   using TProgramPtr = std::shared_ptr<CPrimitiveOpenGL_core_and_es>;
-
+  
   CPolygonOpenGL_core_and_es( size_t min_cache_elems );
   virtual ~CPolygonOpenGL_core_and_es();
 
@@ -73,7 +75,7 @@ public:
 
   //! Initialize the polygon renderer
   virtual void Init( void ) override;
-  virtual void Init( TProgramPtr &program );
+  virtual void Init( TProgramPtr program );
 
   //! Notify the render that a sequence of successive polygons will follow, which is not interrupted by any other drawing operation.
   //! This allows the render to do some performance optimizations and to prepare for the polygon rendering.

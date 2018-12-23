@@ -505,6 +505,9 @@ public:
 
   const TModelAndView * Data( void ) const { return &_data; }
 
+  unsigned int DataModifier( void )  const { return _data_modifier; }
+  unsigned int ModelModifier( void ) const { return _model_modifier; }
+
 private:
 
   TModelAndView _data;                //!< buffer of the transformation data

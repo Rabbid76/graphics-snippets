@@ -15,6 +15,7 @@
 
 #include <OpenGLPolygon_core_and_es.h>
 #include <OpenGLPrimitive_core_and_es.h>
+#include <OpenGLDataBuffer_std140.h>
 
 
 // OpenGL wrapper
@@ -90,12 +91,7 @@ void CPolygonOpenGL_core_and_es::Init( void )
 {
   if ( _initialized )
     return;
-   _initialized = true;
-
-  TProgramPtr program = std::make_unique<CPrimitiveOpenGL_core_and_es>();
-
-  _primitive_prog = program;
-  _primitive_prog->Init( _min_buffer_size );
+  return Init( nullptr );
 }
 
 
@@ -109,14 +105,14 @@ void CPolygonOpenGL_core_and_es::Init( void )
 * \version 1.0
 **********************************************************************/
 void CPolygonOpenGL_core_and_es::Init( 
-  TProgramPtr &program ) // shader program
+  TProgramPtr program ) //!< I - shader program
 {
   if ( _initialized )
     return;
   _initialized = true;
 
-  _primitive_prog = program;
-  _primitive_prog->Init( _min_buffer_size );
+  _primitive_prog = program != nullptr ?  program : std::make_unique<CPrimitiveOpenGL_core_and_es>();
+  _primitive_prog->Init( _min_buffer_size, nullptr );
 }
 
 
@@ -267,7 +263,7 @@ bool CPolygonOpenGL_core_and_es::Draw(
   prog.ActivateProgram( va_type );
 
   // set vertex attribute pointer and draw the line
-  if ( auto *buffer = prog.Buffer() )
+  if ( auto *buffer = prog.DrawBuffer() )
     buffer->UpdateVB( 0, tuple_size*sizeof(float), coords_size, coords );
   
   // TODO $$$ append to cache and delays the drawing until it is absolutely necessary.
@@ -308,7 +304,7 @@ bool CPolygonOpenGL_core_and_es::Draw(
   prog.ActivateProgram( va_type );
 
   // set vertex attribute pointer and draw the line
-  if ( auto *buffer = prog.Buffer() )
+  if ( auto *buffer = prog.DrawBuffer() )
     buffer->UpdateVB( 0, 3, coords_size*sizeof(double), coords );
 
   // TODO $$$ append to cache and delays the drawing until it is absolutely necessary.
@@ -348,7 +344,7 @@ bool CPolygonOpenGL_core_and_es::Draw(
   prog.ActivateProgram( Render::b0_x__b1_y );
 
   // set vertex attribute pointers and draw the line
-  if ( auto *buffer = prog.Buffer() )
+  if ( auto *buffer = prog.DrawBuffer() )
   {
     buffer->UpdateVB( 0, sizeof(float), no_of_coords, x_coords );
     buffer->UpdateVB( 1, sizeof(float), no_of_coords, y_coords );
@@ -391,7 +387,7 @@ bool CPolygonOpenGL_core_and_es::Draw(
   prog.ActivateProgram( Render::d__b0_x__b1_y );
 
   // set vertex attribute pointers and draw the line
-  if ( auto *buffer = prog.Buffer() )
+  if ( auto *buffer = prog.DrawBuffer() )
   {
     buffer->UpdateVB( 0, sizeof(double), no_of_coords, x_coords );
     buffer->UpdateVB( 1, sizeof(double), no_of_coords, y_coords );
@@ -461,7 +457,7 @@ bool CPolygonOpenGL_core_and_es::EndSequence( void )
   prog.ActivateProgram( va_type );
 
   //  set vertex attribute pointer and draw the line
-  if ( auto *buffer = prog.Buffer() )
+  if ( auto *buffer = prog.DrawBuffer() )
     buffer->UpdateVB( 0, tuple_size*sizeof(float), _vertex_cache.SequenceSize(),_vertex_cache.VertexData() );
 
   // TODO $$$ append to cache and delays the drawing until it is absolutely necessary.
