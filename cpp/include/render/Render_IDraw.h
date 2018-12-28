@@ -134,6 +134,16 @@ public:
     return DrawPolyline( tuple_size, corrds.size(), corrds.data(), color, thickness, closed );
   }
 
+  bool DrawPolyline( size_t tuple_size, const TBuffer &corrds, const TColor &color, TStyle style, bool closed )
+  {
+    return DrawPolyline( tuple_size, corrds.size(), corrds.data(), color, style, closed );
+  }
+
+  virtual bool DrawPolyline( size_t tuple_size, size_t coords_size, const t_fp *coords, const TColor &color, TStyle style, bool closed )
+  {
+    return Draw( closed ? TPrimitive::lineloop : TPrimitive::linestrip, tuple_size, coords_size, coords, color, style );
+  }
+
   virtual bool DrawPolyline( size_t tuple_size, size_t coords_size, const t_fp *coords, const TColor &color, float thickness, bool closed )
   {
     TStyle style;

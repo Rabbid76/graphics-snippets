@@ -33,40 +33,46 @@
 #include <OpenGLError.h>
 
 
-enum TScene
+enum class TScene
 {
-  e_test_1,
-  e_test_2,
-  e_test_perspective,
+    e_undefined,
 
-  // transformation
-  e_text_rotate,
+    e_test_1,
+    e_test_2,
+    e_test_perspective,
 
-  // intersection
-  e_isect_line_line,
-  e_isect_line_plane,
-  e_isect_plane_cone,
+    // transformation
+    e_text_rotate,
+
+    // intersection
+    e_isect_line_line,
+    e_isect_line_plane,
+    e_isect_plane_cone,
       
-  // depth, model, view, projection, clip space, NDC and viewport
-  e_viewport_coordsys,
-  e_model,
-  e_world,
-  e_view,
-  e_projection,
-  e_perspective_distortion,
-  e_NDC,
-  e_orthographic_volume,
+    // depth, model, view, projection, clip space, NDC and viewport
+    e_viewport_coordsys,
+    e_perspective_distortion,
+    e_NDC,
+    e_orthographic_volume,
+    e_model,
+    e_world,
+    e_view,
+    e_projection,
 
-  // parallax
-  e_cone_step
+    // parallax
+    e_cone_step,
+
+    e_NUMBER_OF
 };
 
 
-static TScene g_scene = e_orthographic_volume;
+#define RENDER_BITMAP 4 
 
-#define RENDER_BITMAP 0 
-
-#if defined(RENDER_BITMAP) && RENDER_BITMAP == 3
+#if defined(RENDER_BITMAP) && RENDER_BITMAP == 4
+static int          c_window_cx = 680;
+static int          c_window_cy = 500;
+static bool         c_frameless = true;
+#elif defined(RENDER_BITMAP) && RENDER_BITMAP == 3
 static int          c_window_cx = 600;
 static int          c_window_cy = 450;
 static bool         c_frameless = true;
@@ -128,6 +134,10 @@ private:
     static constexpr const Render::TColor Color_paper_line( void )   { return { 0.8f, 0.9f, 0.9f, 1.0f }; }
    
     void Resize( int cx, int cy );
+    void Key( int key, int scancode, int action, int mods );
+    void CursorPos( double xpos, double ypos );
+    void CursorEnter( int entered );
+    void MouseButton( int button, int action, int mods );
 
     std::chrono::high_resolution_clock::time_point _start_time;
     std::chrono::high_resolution_clock::time_point _current_time;
@@ -137,13 +147,14 @@ private:
     float  _aspect = 1.0;
     float  _scale_x = 1.0;
     float  _scale_y = 1.0;
-    TScene _scene   = g_scene;
+    TScene _scene   = TScene::e_undefined;
 
     Render::TPoint2 BL( void ) const { return{ -_scale_x, -_scale_y}; }
     Render::TPoint2 TL( void ) const { return{  _scale_x, -_scale_y}; }
     Render::TPoint2 BR( void ) const { return{ -_scale_x,  _scale_y}; }
     Render::TPoint2 TR( void ) const { return{  _scale_x,  _scale_y}; }
 
+    TScene SelectScene( void );
     void InitScene( void );
     void Render( double time_ms );
 
@@ -182,6 +193,10 @@ public:
     void Init( int width, int height, bool doubleBuffer );
     void InitDebug( void );
     static void CallbackResize(GLFWwindow* window, int cx, int cy);
+    static void CallbackKey(GLFWwindow* window, int key, int scancode, int action, int mods);
+    static void CallbackCursorPos(GLFWwindow* window, double xpos, double ypos);
+    static void CallbackCursorEnter(GLFWwindow* window, int entered);
+    static void CallbackMouseButton(GLFWwindow* window, int button, int action, int mods);
     void MainLoop( void );
 };
 
@@ -248,6 +263,39 @@ void CWindow_Glfw::CallbackResize(GLFWwindow* window, int cx, int cy)
         wndPtr->Resize( cx, cy );
 }
 
+
+void CWindow_Glfw::CallbackKey(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    void *ptr = glfwGetWindowUserPointer( window );
+    if ( CWindow_Glfw *wndPtr = static_cast<CWindow_Glfw*>( ptr ) )
+        wndPtr->Key( key, scancode, action, mods );
+}
+
+
+void CWindow_Glfw::CallbackCursorPos(GLFWwindow* window, double xpos, double ypos)
+{
+    void *ptr = glfwGetWindowUserPointer( window );
+    if ( CWindow_Glfw *wndPtr = static_cast<CWindow_Glfw*>( ptr ) )
+        wndPtr->CursorPos( xpos, ypos );
+}
+
+
+void CWindow_Glfw::CallbackCursorEnter(GLFWwindow* window, int entered)
+{
+    void *ptr = glfwGetWindowUserPointer( window );
+    if ( CWindow_Glfw *wndPtr = static_cast<CWindow_Glfw*>( ptr ) )
+        wndPtr->CursorEnter( entered );
+}
+
+
+void CWindow_Glfw::CallbackMouseButton(GLFWwindow* window, int button, int action, int mods)
+{
+    void *ptr = glfwGetWindowUserPointer( window );
+    if ( CWindow_Glfw *wndPtr = static_cast<CWindow_Glfw*>( ptr ) )
+        wndPtr->MouseButton( button, action, mods );
+}
+
+
 void CWindow_Glfw::InitDebug( void ) // has to be done after GLEW initialization!
 {
  #if defined(_DEBUG)
@@ -301,6 +349,10 @@ void CWindow_Glfw::Init( int width, int height, bool doubleBuffer )
 
     glfwSetWindowUserPointer( _wnd, this );
     glfwSetWindowSizeCallback( _wnd, CWindow_Glfw::CallbackResize );
+    glfwSetKeyCallback( _wnd, CWindow_Glfw::CallbackKey );
+    glfwSetCursorPosCallback( _wnd, CWindow_Glfw::CallbackCursorPos );
+    glfwSetCursorEnterCallback( _wnd, CWindow_Glfw::CallbackCursorEnter );
+    glfwSetMouseButtonCallback( _wnd, CWindow_Glfw::CallbackMouseButton );
 
     _monitor =  glfwGetPrimaryMonitor();
     glfwGetWindowSize( _wnd, &_wndSize[0], &_wndSize[1] );
@@ -310,13 +362,49 @@ void CWindow_Glfw::Init( int width, int height, bool doubleBuffer )
     _draw = std::make_unique<OpenGL::CBasicDraw>( c_core, c_samples, c_scale, c_fxaa );
 }
 
+
 void CWindow_Glfw::Resize( int cx, int cy )
 {
     _updateViewport = true;
 }
 
-void CWindow_Glfw::MainLoop ( void )
+
+void CWindow_Glfw::Key( int key, int scancode, int action, int mods )
 {
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+    {
+        TScene new_scene = SelectScene();
+        if ( new_scene != _scene )
+        {
+            _scene = new_scene;
+            InitScene();
+        }
+    }
+}
+
+
+void CWindow_Glfw::CursorPos( double xpos, double ypos )
+{
+    // ...
+}
+    
+
+void CWindow_Glfw::CursorEnter( int entered )
+{
+    // ...
+}
+
+
+void CWindow_Glfw::MouseButton( int button, int action, int mods )
+{
+    // ...
+}
+
+
+void CWindow_Glfw::MainLoop( void )
+{
+    if ( _scene == TScene::e_undefined )
+        _scene = SelectScene();
     InitScene();
 
     _start_time = std::chrono::high_resolution_clock::now();
@@ -337,15 +425,66 @@ void CWindow_Glfw::MainLoop ( void )
         Render( time_ms );
 
         if ( _doubleBuffer )
-          glfwSwapBuffers( _wnd );
+            glfwSwapBuffers( _wnd );
         else
-          glFinish();
+            glFinish();
         
         glfwPollEvents();
     }
 
     _draw.reset( nullptr );
 } 
+
+
+TScene CWindow_Glfw::SelectScene( void )
+{
+    std::map<int, std::string> scene_names
+    {
+        { (int)TScene::e_test_1,                 "Test 1" },
+        { (int)TScene::e_test_2,                 "Test 2" },
+        { (int)TScene::e_test_perspective,       "Perspective test" },
+        { (int)TScene::e_text_rotate,            "Rotate text" },
+        { (int)TScene::e_isect_line_line,        "Intersect line line" },
+        { (int)TScene::e_isect_line_plane,       "Intersect line plane" },
+        { (int)TScene::e_isect_plane_cone,       "Intersect plane cone" },
+        { (int)TScene::e_viewport_coordsys,      "Viewport coordinate system" },
+        { (int)TScene::e_perspective_distortion, "Perspective distortion" },
+        { (int)TScene::e_NDC,                    "Normalized device space" },
+        { (int)TScene::e_orthographic_volume,    "Orthographic volume" },
+        { (int)TScene::e_model,                  "Model 2D" },
+        { (int)TScene::e_world,                  "World 2D" },
+        { (int)TScene::e_view,                   "View 2D" },
+        { (int)TScene::e_projection,             "Projection 2D" },
+        { (int)TScene::e_cone_step,              "Cone step" }
+    };
+
+    for ( int i = (int)TScene::e_undefined+1; i < (int)TScene::e_NUMBER_OF; ++ i )
+        assert(scene_names.find(i) != scene_names.end());
+
+    int i_scene = 0;
+    while (scene_names.find(i_scene) == scene_names.end())
+    {
+        static const std::string indent = "\t";
+
+        std::cout << std::endl << "Select model:" << std::endl; 
+        for ( auto scenes : scene_names )
+        {
+          std::cout << indent << scenes.first << ": " << scenes.second << std::endl;
+        }
+    
+        std::cout << "Enter number: "; 
+
+        std::cin.clear();
+        fflush( stdin );
+        int number;
+        std::cin >> number;
+        std::cout << std::endl;
+
+        i_scene = number;
+    }
+
+    return (TScene)i_scene;
+}
 
 
 void CWindow_Glfw::InitScene( void )
@@ -368,6 +507,9 @@ void CWindow_Glfw::Render( double time_ms )
   _draw->View( OpenGL::Identity() );
   _draw->Model( OpenGL::Identity() );
 
+  if ( _scene == TScene::e_orthographic_volume )
+    _draw->BackgroundColor( Color_white() );
+
   _draw->Begin();
 
   // TODO $$$ loop all 2 seconds per scene
@@ -375,23 +517,23 @@ void CWindow_Glfw::Render( double time_ms )
   switch (_scene)
   {
 
-    default:
-    case e_test_1:                 TestScene_1( time_ms ); break;
-    case e_test_2:                 TestScene_2( time_ms ); break;
-    case e_test_perspective:       TestScene_Perspecitve( time_ms ); break;
-    case e_text_rotate:            TextRotate( time_ms ); break;
-    case e_isect_line_line:        IsectLineLine( time_ms ); break;
-    case e_isect_line_plane:       IsectLinePlane( time_ms ); break;
-    case e_isect_plane_cone:       IsectPlaneCone( time_ms ); break;
-    case e_viewport_coordsys:      ViewportCoordsys( time_ms ); break;
-    case e_model:                  Model( time_ms ); break;
-    case e_world:                  World( time_ms ); break;
-    case e_view:                   View( time_ms ); break;
-    case e_projection:             Projection( time_ms ); break;
-    case e_perspective_distortion: PerspectiveDistortion ( time_ms ); break;
-    case e_NDC:                    NDC( time_ms ); break;
-    case e_orthographic_volume:    OrthographicVolume( time_ms ); break;
-    case e_cone_step:              ConeStep( time_ms ); break;
+    default: assert( false );
+    case TScene::e_test_1:                 TestScene_1( time_ms ); break;
+    case TScene::e_test_2:                 TestScene_2( time_ms ); break;
+    case TScene::e_test_perspective:       TestScene_Perspecitve( time_ms ); break;
+    case TScene::e_text_rotate:            TextRotate( time_ms ); break;
+    case TScene::e_isect_line_line:        IsectLineLine( time_ms ); break;
+    case TScene::e_isect_line_plane:       IsectLinePlane( time_ms ); break;
+    case TScene::e_isect_plane_cone:       IsectPlaneCone( time_ms ); break;
+    case TScene::e_viewport_coordsys:      ViewportCoordsys( time_ms ); break;
+    case TScene::e_perspective_distortion: PerspectiveDistortion ( time_ms ); break;
+    case TScene::e_NDC:                    NDC( time_ms ); break;
+    case TScene::e_orthographic_volume:    OrthographicVolume( time_ms ); break;
+    case TScene::e_model:                  Model( time_ms ); break;
+    case TScene::e_world:                  World( time_ms ); break;
+    case TScene::e_view:                   View( time_ms ); break;
+    case TScene::e_projection:             Projection( time_ms ); break;
+    case TScene::e_cone_step:              ConeStep( time_ms ); break;
   }
 
   _draw->Finish();
@@ -460,6 +602,12 @@ void CWindow_Glfw::AxisCrossText( float len_x, float len_y, float len_z, int ori
 }
 
 
+
+//-------------------------------------------------------------------------------------------------
+// e_test_1
+//-------------------------------------------------------------------------------------------------
+
+
 void CWindow_Glfw::TestScene_1( double time_ms )
 {
     // TODO $$$ SSOA (3 frequences)
@@ -506,6 +654,12 @@ void CWindow_Glfw::TestScene_1( double time_ms )
 }
 
 
+
+//-------------------------------------------------------------------------------------------------
+// e_test_2
+//-------------------------------------------------------------------------------------------------
+
+
 void CWindow_Glfw::TestScene_2( double time_ms )
 {
     _draw->ActivateBackground();
@@ -521,6 +675,12 @@ void CWindow_Glfw::TestScene_2( double time_ms )
     const char *text = "Hello, a long text with a lot of different letters.";
     _draw->DrawText2D( OpenGL::CBasicDraw::font_pixslim_2, text, text_height, text_scale_y, { _scale_x * -0.96f, 0.3f, -0.01f }, Color_orange() );
 }
+
+
+
+//-------------------------------------------------------------------------------------------------
+// e_test_perspective
+//-------------------------------------------------------------------------------------------------
 
 
 void CWindow_Glfw::TestScene_Perspecitve( double time_ms )
@@ -561,6 +721,12 @@ void CWindow_Glfw::TestScene_Perspecitve( double time_ms )
   //_draw->ActivateOpaque();
   //_draw->ClearDepth();
 }
+
+
+
+//-------------------------------------------------------------------------------------------------
+// e_text_rotate
+//-------------------------------------------------------------------------------------------------
 
 
 void CWindow_Glfw::TextRotate( double time_ms )
@@ -632,6 +798,12 @@ void CWindow_Glfw::TextRotate( double time_ms )
 
     _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, text, text_height, text_scale_x, { 0.0f, 0.0f, -0.01f }, Color_ink() );
 }
+
+
+
+//-------------------------------------------------------------------------------------------------
+// e_isect_line_line
+//-------------------------------------------------------------------------------------------------
 
 
 void CWindow_Glfw::IsectLineLine( double time_ms )
@@ -707,6 +879,13 @@ void CWindow_Glfw::IsectLineLine( double time_ms )
   _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, "h", 4, text_height, text_scale_y, 0.035f, {h_mid[0], h_mid[1], 0.0f}, color_result );  
 }
 
+
+
+//-------------------------------------------------------------------------------------------------
+// e_isect_line_plane
+//-------------------------------------------------------------------------------------------------
+
+
 void CWindow_Glfw::IsectLinePlane( double time_ms )
 {
   // TODO $$$
@@ -714,10 +893,24 @@ void CWindow_Glfw::IsectLinePlane( double time_ms )
 
 // TODO $$$ intersect LOS viewport -> in documentation as example for intersection of a line and a plane
 
+
+
+//-------------------------------------------------------------------------------------------------
+// e_isect_plane_cone
+//-------------------------------------------------------------------------------------------------
+
+
 void CWindow_Glfw::IsectPlaneCone( double time_ms )
 {
   // TODO $$$
 }
+
+
+
+//-------------------------------------------------------------------------------------------------
+// e_viewport_coordsys
+//-------------------------------------------------------------------------------------------------
+
 
 void CWindow_Glfw::ViewportCoordsys( double time_ms )
 {
@@ -748,10 +941,7 @@ void CWindow_Glfw::ViewportCoordsys( double time_ms )
 
   _draw->ActivateOpaque();
 
-  // TODO $$$ draw matrix coordinate system
-  _draw->DrawArrow( 3, {0.0f, 0.0f, 0.0f, axis_len, 0.0f, 0.0f }, Color_red_2(), 3, arr_size, false, true );
-  _draw->DrawArrow( 3, {0.0f, 0.0f, 0.0f, 0.0f, axis_len, 0.0f }, Color_green_2(), 3, arr_size, false, true );
-  _draw->DrawArrow( 3, {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, axis_len }, Color_blue_2(), 3, arr_size, false, true );
+  AxisCross( axis_len, axis_len, axis_len, 3.0f, arr_size );
 
   _draw->DrawRectangle2D( vp_bl, vp_tr, 0.0f, vp_col, 3 );
   _draw->DrawArrow( 3, { 0.0f, 0.0f, 2.5f, 0.0f, 0.0f, -6.0f }, { 0.0f, 0.0f, 0.0f, 1.0f }, 1, arr_los_size, false, true );
@@ -775,262 +965,10 @@ void CWindow_Glfw::ViewportCoordsys( double time_ms )
 }
 
 
-void CWindow_Glfw::Model( double time_ms )
-{
-  std::vector<std::array<int, 3>> pts_orig{
-    { -1, -2, 9 },
-    {  1, -2, 7 },
-    {  1,  0, 7 },
-    {  2,  0, 1 },
-    {  0,  2, 2 },
-    { -2,  0, 3 },
-    { -1,  0, 9 }
-  };
 
-  std::vector<float> poly;
-  for ( auto & pt : pts_orig )
-  {
-    poly.push_back( (float)pt[0] / 10.0f );
-    poly.push_back( (float)pt[1] / 10.0f );
-  }
-
-  _draw->ActivateBackground();
-  Checkered( BL(), TR() );
-
-  _draw->ActivateOpaque();
-
-  _draw->DrawPolyline( 2, poly, Color_ink(), 3.0f, true );
-
-  _draw->ActivateOpaque();
-  _draw->ClearDepth();
-
-  static float text_height  = 0.05f;
-  static float text_scale_y = 1.0f;
-  for ( size_t i=0; i < pts_orig.size(); ++ i )
-  {               
-    auto & pt = pts_orig[i];
-    std::stringstream strstr;
-    strstr << "(" << pt[0] << ", " << pt[1] << ")";
-    Render::TPoint3 pos{ (float)pt[0]/10.0f, (float)pt[1]/10.0f, 0.0f };
-    pos[0] += ( pos[0] < -0.001f ) ? -0.02f : ( pos[0] > 0.001f ) ? 0.02f : 0.0f;
-    pos[1] += ( pos[1] < -0.001f || i==2 || i==6 ) ? -0.02f : ( pos[1] > 0.001f || i==3 || i==5 ) ? 0.02f : 0.0f;
-    _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, strstr.str().c_str(), pt[2], text_height, text_scale_y, 0.0f, pos, Color_darkgray() );
-  }
-}
-
-
-void CWindow_Glfw::World( double time_ms )
-{
-  std::vector<std::array<int, 3>> pts_orig{
-    { -1, -2, 9 },
-    {  1, -2, 3 },
-    {  1,  0, 3 },
-    {  2,  0, 1 },
-    {  0,  2, 4 },
-    { -2,  0, 7 },
-    { -1,  0, 9 }
-  };
-
-  std::vector<float> poly;
-  for ( auto & pt : pts_orig )
-  {
-    poly.push_back( (float)pt[0] / 10.0f );
-    poly.push_back( (float)pt[1] / 10.0f );
-  }
-
-  _draw->ActivateBackground();
-  Checkered( BL(), TR() );
-
-  _draw->ActivateOpaque();
-
-  _draw->Model( Render::Identity() );
-  _draw->DrawPolyline( 2, poly, Color_lightgray(), 3.0f, true );
-
-  _draw->ActivateOpaque();
-  _draw->ClearDepth();
-
-  Render::TMat44 model_mat = Render::Identity();
-  model_mat[0][0] = 0.0f;
-  model_mat[0][1] = -0.5f;
-  model_mat[1][0] = 2.0f;
-  model_mat[1][1] = 0.0f;
-  model_mat[3][0] = 0.4f;
-
-  _draw->Model( model_mat );
-  _draw->DrawPolyline( 2, poly, Color_ink(), 3.0f, true );
-
-  _draw->ActivateOpaque();
-  _draw->ClearDepth();
-  _draw->Model( Render::Identity() );
-
-  static float text_height  = 0.05f;
-  static float text_scale_y = 1.0f;
-  for ( size_t i=0; i < pts_orig.size(); ++ i )
-  {               
-    auto & pt = pts_orig[i];
-    float p[]{ (float)pt[0], (float)pt[1] };
-    std::swap( p[0], p[1] );
-    p[0] *= 2.0;
-    p[0] += 4.0;
-    p[1] *= 0.5f;
-
-    std::stringstream strstr;
-    strstr << "(" << p[0] << ", " << p[1] << ")";
-    Render::TPoint3 pos{ (float)p[0]/10.0f, (float)p[1]/10.0f, 0.0f };
-    pos[0] += ( pos[0] < -0.001f  || i==2 || i==6 ) ? -0.02f : ( pos[0] > 0.001f ) ? 0.02f : 0.0f;
-    pos[1] += ( pos[1] < -0.001f ) ? -0.02f : ( pos[1] > 0.001f ) ? 0.02f : 0.0f;
-    _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, strstr.str().c_str(), pt[2], text_height, text_scale_y, 0.0f, pos, Color_darkgray() );
-  }
-}
-
-
-void CWindow_Glfw::View( double time_ms )
-{
-  // TODO $$$
-
-  std::vector<std::array<int, 3>> pts_orig{
-    { -1, -2, 3 },
-    {  1, -2, 9 },
-    {  1,  0, 9 },
-    {  2,  0, 7 },
-    {  0,  2, 4 },
-    { -2,  0, 1 },
-    { -1,  0, 9 }
-  };
-
-  std::vector<float> poly;
-  for ( auto & pt : pts_orig )
-  {
-    poly.push_back( (float)pt[0] );
-    poly.push_back( (float)pt[1] );
-  }
-
-  _draw->ActivateBackground();
-  Checkered( BL(), TR() );
-
-  OpenGL::Camera polyCamera;
-  polyCamera._vp     = { (int)_vpSize[0], (int)_vpSize[1] };
-  polyCamera._near   = 0.5f;
-  polyCamera._far    = 20.0f;
-  polyCamera._pos    = { -2.5f, -1.5f, 3.5f };
-  polyCamera._target = { 2.0f, 0.0f, 0.0f };
-  polyCamera._up     = { 0.0f, 1.0f, 0.0f };
-  polyCamera._fov_y  = 100.0f;
-  Render::TMat44 polyView = polyCamera.LookAt();
-
-  OpenGL::Camera camera;
-  camera._vp     = { (int)_vpSize[0], (int)_vpSize[1] };
-  camera._near   = 0.5f;
-  camera._far    = 20.0f;
-  camera._pos    = { 0.0f, 2.0f, 4.0f };
-  camera._target = { 0.0f, 0.0f, 0.0f };
-  camera._up     = { 0.0f, 1.0f, 0.0f };
-  camera._fov_y  = 100.0f;
-  Render::TMat44 prj = OpenGL::Camera::Orthopraphic( _scale_x*10.0f, _scale_y*10.0f, { 0.0f, 20.0f } );
-  Render::TMat44 view = camera.LookAt();
-
-  Render::TMat44 model_mat = Render::Identity();
-  model_mat[0][0] = 0.0f;
-  model_mat[0][1] = -0.5f;
-  model_mat[1][0] = 2.0f;
-  model_mat[1][1] = 0.0f;
-  model_mat[3][0] = 0.4f;
-
-
-  _draw->Projection( prj );
-  _draw->View( view );
-  _draw->Model( model_mat );
-
-  _draw->ActivateOpaque();
-
-  _draw->DrawPolyline( 2, poly, Color_ink(), 3.0f, true );
-
-  _draw->Model( Render::Identity() );
-
-  Render::TVec2 arr_size{ 0.2f, 0.12f };
-  Render::TVec3 origin = polyCamera._pos;
-  float a_len = 2.0f;
-  Render::TVec3 ax{ ( origin[0] + a_len * polyView[0][0] ), ( origin[1] + a_len * polyView[0][1] ), ( origin[2] + a_len * polyView[0][2] ) };
-  Render::TVec3 ay{ ( origin[0] + a_len * polyView[1][0] ), ( origin[1] + a_len * polyView[1][1] ), ( origin[2] + a_len * polyView[1][2] ) };
-  Render::TVec3 az{ ( origin[0] - a_len * polyView[2][0] ), ( origin[1] - a_len * polyView[2][1] ), ( origin[2] - a_len * polyView[2][2] ) };
-  _draw->DrawArrow( 3, {origin[0], origin[1], origin[2], ax[0], ax[1], ax[2] }, Color_red_2(), 3, arr_size, false, true );
-  _draw->DrawArrow( 3, {origin[0], origin[1], origin[2], ay[0], ay[1], ay[2] }, Color_green_2(), 3, arr_size, false, true );
-  _draw->DrawArrow( 3, {origin[0], origin[1], origin[2], az[0], az[1], az[2] }, Color_blue_2(), 3, arr_size, false, true );
-
-  _draw->ActivateOpaque();
-  _draw->ClearDepth();
-}
-
-
-void CWindow_Glfw::Projection( double time_ms )
-{
-  std::vector<std::array<int, 3>> pts_orig{
-    { -1, -2, 3 },
-    {  1, -2, 9 },
-    {  1,  0, 9 },
-    {  2,  0, 7 },
-    {  0,  2, 4 },
-    { -2,  0, 1 },
-    { -1,  0, 9 }
-  };
-
-  std::vector<float> poly;
-  for ( auto & pt : pts_orig )
-  {
-    poly.push_back( (float)pt[0] );
-    poly.push_back( (float)pt[1] );
-  }
-
-  _draw->ActivateBackground();
-  Checkered( BL(), TR() );
-
-  OpenGL::Camera camera;
-  camera._vp     = { (int)_vpSize[0], (int)_vpSize[1] };
-  camera._near   = 0.5f;
-  camera._far    = 20.0f;
-  camera._pos    = { -2.5f, -1.5f, 3.5f };
-  camera._target = { 2.0f, 0.0f, 0.0f };
-  camera._up     = { 0.0f, 1.0f, 0.0f };
-  camera._fov_y  = 100.0f;
-  Render::TMat44 polyView = camera.LookAt();
-
-  Render::TMat44 model_mat = Render::Identity();
-  model_mat[0][0] = 0.0f;
-  model_mat[0][1] = -0.5f;
-  model_mat[1][0] = 2.0f;
-  model_mat[1][1] = 0.0f;
-  model_mat[3][0] = 0.4f;
-
-  _draw->Projection( camera.Perspective() );
-  _draw->View( camera.LookAt() );
-  _draw->Model( model_mat );
-
-  _draw->ActivateOpaque();
-
-  _draw->DrawPolyline( 2, poly, Color_ink(), 3.0f, true );
-
-  _draw->ActivateOpaque();
-  _draw->ClearDepth();
-
-  static float text_height  = 0.05f;
-  static float text_scale_y = 1.0f;
-  for ( size_t i=0; i < pts_orig.size(); ++ i )
-  {               
-    auto & pt = pts_orig[i];
-    Render::TPoint3 pos{ (float)pt[0], (float)pt[1] };
-    Render::TPoint3 pos_prj = _draw->Project( pos );
-
-    float p[]{ (float)pt[0], (float)pt[1] };
-
-    std::stringstream strstr;
-    strstr.precision( 2 );
-    strstr << std::fixed << "(" << pos_prj[0] << ", " << pos_prj[1] << ", " << pos_prj[2] << ")";
-    
-    pos[0] += ( pos[0] < -0.001f ) ? -0.02f : ( pos[0] > 0.001f ) ? 0.02f : 0.0f;
-    pos[1] += ( pos[1] < -0.001f ) ? -0.02f : ( pos[1] > 0.001f ) ? 0.02f : 0.0f;
-    _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, strstr.str().c_str(), pt[2], text_height, text_scale_y, 0.0f, pos, Color_darkgray() );
-  }
-}
+//-------------------------------------------------------------------------------------------------
+// e_perspective_distortion
+//-------------------------------------------------------------------------------------------------
 
 
 void CWindow_Glfw::PerspectiveDistortion( double time_ms )
@@ -1170,6 +1108,12 @@ void CWindow_Glfw::PerspectiveDistortion( double time_ms )
 }
 
 
+
+//-------------------------------------------------------------------------------------------------
+// e_NDC
+//-------------------------------------------------------------------------------------------------
+
+
 void CWindow_Glfw::NDC( double time_ms )
 {
   Render::TVec2   arr_size{ 0.2f, 0.12f };
@@ -1177,7 +1121,7 @@ void CWindow_Glfw::NDC( double time_ms )
   float           axis_len = 2.2f;
   static float    axis_text_height  = 0.126f;
   static float    axis_text_scale_y = 0.9f;
-  static float    ndc_text_height  = 0.09f;
+  static float    ndc_text_height  = 0.08f;
   static float    ndc_text_scale_y = 1.0f;
 
   OpenGL::Camera camera;
@@ -1218,23 +1162,40 @@ void CWindow_Glfw::NDC( double time_ms )
 }
 
 
+
+//-------------------------------------------------------------------------------------------------
+// e_orthographic_volume
+//-------------------------------------------------------------------------------------------------
+
+
 void CWindow_Glfw::OrthographicVolume( double time_ms )
 {
-  Render::TVec2        arr_size{ 0.2f, 0.12f };
-  Render::TVec2        arr_los_size{ arr_size[0]*2.0f, arr_size[1]*2.0f };
-  float                axis_len = 2.2f;
-  static float         axis_text_height  = 0.126f;
-  static float         axis_text_scale_y = 0.9f;
+  static Render::TVec2 arr_size{ 0.4f, 0.24f };
+  static Render::TVec2 arr_los_size{ arr_size[0]*2.0f, arr_size[1]*2.0f };
+  static float         axis_len = 2.6f;
+  static float         view_axis_len = 3.0f;
+  static float         view_axis_text_height  = 0.08f;
+  static float         view_axis_text_scale_y = 0.8f;
+  static float         view_text_height  = 0.07f;
+  static float         view_text_scale_y = 0.7f;
+  static float         axis_text_height  = 0.08f;
+  static float         axis_text_scale_y = 0.8f;
   static float         ndc_text_height  = 0.07f;
   static float         ndc_text_scale_y = 1.0f;
   static float         ndc_scale = 0.7f;
-  static float         left   = -1.0f * 16.0f / 9.0f;
-  static float         right  =  1.0f * 16.0f / 9.0f;
-  static float         top    = -1.0f;
-  static float         bottom =  1.0f;
-  static float         near   = -1.0f;
-  static float         far    =  1.0f;
-  static Render::TVec3 camer_pos{ 0.0f, 6.0f, 8.0f };
+  static float         left   = -1.25f * 16.0f / 9.0f;
+  static float         right  =  1.25f * 16.0f / 9.0f;
+  static float         top    =  1.25f;
+  static float         bottom = -1.25f;
+  static float         near   =  2.0f;
+  static float         far    = -2.0f;
+  static Render::TVec3 camer_pos{ 4.2f, 5.4f, 4.8f };
+  static float         vp_z   = 0.0f;
+  static float         line_th_1 = 2.0f;
+  static float         line_th_2 = 1.5f;
+  Render::TColor       trans_col = Color_darkred();
+  Render::TColor       vp_col = Color_darkblue();
+  Render::TColor       vp_col_t{ vp_col[0], vp_col[1], vp_col[2], 0.5f };
 
   OpenGL::Camera camera;
   camera._vp     = { (int)_vpSize[0], (int)_vpSize[1] };
@@ -1251,27 +1212,72 @@ void CWindow_Glfw::OrthographicVolume( double time_ms )
   Render::TMat44 model_volume = OpenGL::Mat44().Translate( { -3.0f, 0.0f, 0.0f } );
   Render::TMat44 model_ndc    = OpenGL::Mat44().Translate( { 3.0f, 0.0f, 0.0f } ).Scale( {ndc_scale, ndc_scale, ndc_scale} );
 
+  glm::mat4 mview;
+  glm::mat4 mndc;
+               
+  std::memcpy( glm::value_ptr(mview), model_volume.data()->data(), sizeof( glm::mat4) );
+  std::memcpy( glm::value_ptr(mndc), model_ndc.data()->data(), sizeof( glm::mat4) );
+
+  glm::mat4 ndc_to_view = glm::inverse(mview) * mndc;
+  glm::vec4 nv_lbn = ndc_to_view * glm::vec4( -1.0f, -1.0f,  1.0f, 1.0f );
+  glm::vec4 nv_ltn = ndc_to_view * glm::vec4( -1.0f,  1.0f,  1.0f, 1.0f );
+  glm::vec4 nv_lbf = ndc_to_view * glm::vec4( -1.0f, -1.0f, -1.0f, 1.0f );
+  glm::vec4 nv_ltf = ndc_to_view * glm::vec4( -1.0f,  1.0f, -1.0f, 1.0f );
+
   _draw->Projection( prj );
   _draw->View( view );
   _draw->Model( Render::Identity() );
 
-  _draw->ActivateOpaque();
+  //-------------------------------------------------------
+  // draw opaque geometry
+  //-------------------------------------------------------
 
+  _draw->ActivateOpaque();
 
   // view volume geometry
 
   _draw->Model( model_volume );
 
-  BoxWired( left, right, bottom, top, near, far, Color_darkgray(), 1.0f );
+  _draw->DrawPolyline( 3, { right, bottom, near, nv_lbn.x, nv_lbn.y, nv_lbn.z }, trans_col, line_th_2, false );
+  _draw->DrawPolyline( 3, { right, top, near, nv_ltn.x, nv_ltn.y, nv_ltn.z }, trans_col, line_th_2, false );
+  _draw->DrawPolyline( 3, { right, bottom, far, nv_lbf.x, nv_lbf.y, nv_lbf.z }, trans_col, line_th_2, false );
+  _draw->DrawPolyline( 3, { right, top, far, nv_ltf.x, nv_ltf.y, nv_ltf.z }, trans_col, line_th_2, false );
+
+
+  BoxWired( left, right, bottom, top, near, far, Color_darkgray(), line_th_1 );
+
+  AxisCross( view_axis_len*0.9f, view_axis_len, view_axis_len * 1.05f, 3.0f, arr_size );
+
+  _draw->DrawPolyline( 3, { left, bottom, vp_z, right, bottom, vp_z, right, top, vp_z, left, top, vp_z }, vp_col, line_th_1, true );
 
 
   // NDC geometry
 
   _draw->Model( model_ndc );
   
-  BoxWired( -1, 1, -1, 1, -1, 1, Color_darkgray(), 1.0f );
-  AxisCross( axis_len, axis_len, -axis_len, 3.0f, arr_size );
+  BoxWired( -1, 1, -1, 1, -1, 1, Color_darkgray(), line_th_1 );
+  AxisCross( axis_len*0.9f, axis_len, -axis_len * 1.05f, 3.0f, arr_size );
 
+
+  //-------------------------------------------------------
+  // draw transparent geometry
+  //-------------------------------------------------------
+
+   _draw->ActivateTransparent();
+
+   // view volume geometry
+
+   _draw->Model( model_volume ); 
+
+   _draw->DrawConvexPolygon( 3, { left, bottom, vp_z, right, bottom, vp_z, right, top, vp_z, left, top, vp_z }, vp_col_t );
+
+   // NDC geometry
+
+   _draw->Model( model_ndc );
+
+  //-------------------------------------------------------
+  // draw text
+  //-------------------------------------------------------
 
   _draw->ActivateOpaque();
   _draw->ClearDepth();
@@ -1281,16 +1287,315 @@ void CWindow_Glfw::OrthographicVolume( double time_ms )
 
   _draw->Model( model_volume );
 
+  AxisCrossText( view_axis_len*0.9f, view_axis_len, view_axis_len * 1.05f, 1, 1, 7, view_axis_text_height, view_axis_text_scale_y );
+
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(right, top, far)", 1, view_text_height*0.8, view_text_scale_y, 0.0f, {right, top, far}, Color_darkgray() );
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(left, bottom, near)", 9, view_text_height*0.85f, view_text_scale_y, 0.0f, {left, bottom, near}, Color_darkgray() );
+
+  const char *view_title_text = "View volume";
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, view_title_text, 8, 0.07f, 0.7f, 0.0f, { 0.0f, 3.7f, 0.0f }, Color_black() ); 
 
   // NDC text
 
   _draw->Model(model_ndc );
   
-  AxisCrossText( axis_len, axis_len, -axis_len, 7, 1, 1, axis_text_height, axis_text_scale_y );
+  AxisCrossText( axis_len*0.9f, axis_len, -axis_len * 1.05f, 7, 1, 1, axis_text_height, axis_text_scale_y );
 
   _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(1, 1, 1)", 1, ndc_text_height*0.8f, ndc_text_scale_y, 0.0f, {1.0f, 1.1f, -1.0f}, Color_darkgray() );
   _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, "(-1, -1, -1)", 9, ndc_text_height*0.9f, ndc_text_scale_y, 0.0f, {-1.0f, -1.1f, 1.0f}, Color_darkgray() );
+
+  const char *ndc_title_text = "Normalized device coordinates (NDC)";
+  _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, ndc_title_text, 8, 0.07f, 0.7f, 0.0f, { 0.0f, -4.5f, 0.0f }, Color_black() ); 
+
 }
+
+
+
+//-------------------------------------------------------------------------------------------------
+// e_model
+//-------------------------------------------------------------------------------------------------
+
+
+void CWindow_Glfw::Model( double time_ms )
+{
+  std::vector<std::array<int, 3>> pts_orig{
+    { -1, -2, 9 },
+    {  1, -2, 7 },
+    {  1,  0, 7 },
+    {  2,  0, 1 },
+    {  0,  2, 2 },
+    { -2,  0, 3 },
+    { -1,  0, 9 }
+  };
+
+  std::vector<float> poly;
+  for ( auto & pt : pts_orig )
+  {
+    poly.push_back( (float)pt[0] / 10.0f );
+    poly.push_back( (float)pt[1] / 10.0f );
+  }
+
+  _draw->ActivateBackground();
+  Checkered( BL(), TR() );
+
+  _draw->ActivateOpaque();
+
+  _draw->DrawPolyline( 2, poly, Color_ink(), 3.0f, true );
+
+  _draw->ActivateOpaque();
+  _draw->ClearDepth();
+
+  static float text_height  = 0.05f;
+  static float text_scale_y = 1.0f;
+  for ( size_t i=0; i < pts_orig.size(); ++ i )
+  {               
+    auto & pt = pts_orig[i];
+    std::stringstream strstr;
+    strstr << "(" << pt[0] << ", " << pt[1] << ")";
+    Render::TPoint3 pos{ (float)pt[0]/10.0f, (float)pt[1]/10.0f, 0.0f };
+    pos[0] += ( pos[0] < -0.001f ) ? -0.02f : ( pos[0] > 0.001f ) ? 0.02f : 0.0f;
+    pos[1] += ( pos[1] < -0.001f || i==2 || i==6 ) ? -0.02f : ( pos[1] > 0.001f || i==3 || i==5 ) ? 0.02f : 0.0f;
+    _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, strstr.str().c_str(), pt[2], text_height, text_scale_y, 0.0f, pos, Color_darkgray() );
+  }
+}
+
+
+
+//-------------------------------------------------------------------------------------------------
+// e_world
+//-------------------------------------------------------------------------------------------------
+
+
+void CWindow_Glfw::World( double time_ms )
+{
+  std::vector<std::array<int, 3>> pts_orig{
+    { -1, -2, 9 },
+    {  1, -2, 3 },
+    {  1,  0, 3 },
+    {  2,  0, 1 },
+    {  0,  2, 4 },
+    { -2,  0, 7 },
+    { -1,  0, 9 }
+  };
+
+  std::vector<float> poly;
+  for ( auto & pt : pts_orig )
+  {
+    poly.push_back( (float)pt[0] / 10.0f );
+    poly.push_back( (float)pt[1] / 10.0f );
+  }
+
+  _draw->ActivateBackground();
+  Checkered( BL(), TR() );
+
+  _draw->ActivateOpaque();
+
+  _draw->Model( Render::Identity() );
+  _draw->DrawPolyline( 2, poly, Color_lightgray(), 3.0f, true );
+
+  _draw->ActivateOpaque();
+  _draw->ClearDepth();
+
+  Render::TMat44 model_mat = Render::Identity();
+  model_mat[0][0] = 0.0f;
+  model_mat[0][1] = -0.5f;
+  model_mat[1][0] = 2.0f;
+  model_mat[1][1] = 0.0f;
+  model_mat[3][0] = 0.4f;
+
+  _draw->Model( model_mat );
+  _draw->DrawPolyline( 2, poly, Color_ink(), 3.0f, true );
+
+  _draw->ActivateOpaque();
+  _draw->ClearDepth();
+  _draw->Model( Render::Identity() );
+
+  static float text_height  = 0.05f;
+  static float text_scale_y = 1.0f;
+  for ( size_t i=0; i < pts_orig.size(); ++ i )
+  {               
+    auto & pt = pts_orig[i];
+    float p[]{ (float)pt[0], (float)pt[1] };
+    std::swap( p[0], p[1] );
+    p[0] *= 2.0;
+    p[0] += 4.0;
+    p[1] *= 0.5f;
+
+    std::stringstream strstr;
+    strstr << "(" << p[0] << ", " << p[1] << ")";
+    Render::TPoint3 pos{ (float)p[0]/10.0f, (float)p[1]/10.0f, 0.0f };
+    pos[0] += ( pos[0] < -0.001f  || i==2 || i==6 ) ? -0.02f : ( pos[0] > 0.001f ) ? 0.02f : 0.0f;
+    pos[1] += ( pos[1] < -0.001f ) ? -0.02f : ( pos[1] > 0.001f ) ? 0.02f : 0.0f;
+    _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, strstr.str().c_str(), pt[2], text_height, text_scale_y, 0.0f, pos, Color_darkgray() );
+  }
+}
+
+
+
+//-------------------------------------------------------------------------------------------------
+// e_view
+//-------------------------------------------------------------------------------------------------
+
+
+void CWindow_Glfw::View( double time_ms )
+{
+  // TODO $$$
+
+  std::vector<std::array<int, 3>> pts_orig{
+    { -1, -2, 3 },
+    {  1, -2, 9 },
+    {  1,  0, 9 },
+    {  2,  0, 7 },
+    {  0,  2, 4 },
+    { -2,  0, 1 },
+    { -1,  0, 9 }
+  };
+
+  std::vector<float> poly;
+  for ( auto & pt : pts_orig )
+  {
+    poly.push_back( (float)pt[0] );
+    poly.push_back( (float)pt[1] );
+  }
+
+  _draw->ActivateBackground();
+  Checkered( BL(), TR() );
+
+  OpenGL::Camera polyCamera;
+  polyCamera._vp     = { (int)_vpSize[0], (int)_vpSize[1] };
+  polyCamera._near   = 0.5f;
+  polyCamera._far    = 20.0f;
+  polyCamera._pos    = { -2.5f, -1.5f, 3.5f };
+  polyCamera._target = { 2.0f, 0.0f, 0.0f };
+  polyCamera._up     = { 0.0f, 1.0f, 0.0f };
+  polyCamera._fov_y  = 100.0f;
+  Render::TMat44 polyView = polyCamera.LookAt();
+
+  OpenGL::Camera camera;
+  camera._vp     = { (int)_vpSize[0], (int)_vpSize[1] };
+  camera._near   = 0.5f;
+  camera._far    = 20.0f;
+  camera._pos    = { 0.0f, 2.0f, 4.0f };
+  camera._target = { 0.0f, 0.0f, 0.0f };
+  camera._up     = { 0.0f, 1.0f, 0.0f };
+  camera._fov_y  = 100.0f;
+  Render::TMat44 prj = OpenGL::Camera::Orthopraphic( _scale_x*10.0f, _scale_y*10.0f, { 0.0f, 20.0f } );
+  Render::TMat44 view = camera.LookAt();
+
+  Render::TMat44 model_mat = Render::Identity();
+  model_mat[0][0] = 0.0f;
+  model_mat[0][1] = -0.5f;
+  model_mat[1][0] = 2.0f;
+  model_mat[1][1] = 0.0f;
+  model_mat[3][0] = 0.4f;
+
+
+  _draw->Projection( prj );
+  _draw->View( view );
+  _draw->Model( model_mat );
+
+  _draw->ActivateOpaque();
+
+  _draw->DrawPolyline( 2, poly, Color_ink(), 3.0f, true );
+
+  _draw->Model( Render::Identity() );
+
+  Render::TVec2 arr_size{ 0.2f, 0.12f };
+  Render::TVec3 origin = polyCamera._pos;
+  float a_len = 2.0f;
+  Render::TVec3 ax{ ( origin[0] + a_len * polyView[0][0] ), ( origin[1] + a_len * polyView[0][1] ), ( origin[2] + a_len * polyView[0][2] ) };
+  Render::TVec3 ay{ ( origin[0] + a_len * polyView[1][0] ), ( origin[1] + a_len * polyView[1][1] ), ( origin[2] + a_len * polyView[1][2] ) };
+  Render::TVec3 az{ ( origin[0] - a_len * polyView[2][0] ), ( origin[1] - a_len * polyView[2][1] ), ( origin[2] - a_len * polyView[2][2] ) };
+  _draw->DrawArrow( 3, {origin[0], origin[1], origin[2], ax[0], ax[1], ax[2] }, Color_red_2(), 3, arr_size, false, true );
+  _draw->DrawArrow( 3, {origin[0], origin[1], origin[2], ay[0], ay[1], ay[2] }, Color_green_2(), 3, arr_size, false, true );
+  _draw->DrawArrow( 3, {origin[0], origin[1], origin[2], az[0], az[1], az[2] }, Color_blue_2(), 3, arr_size, false, true );
+
+  _draw->ActivateOpaque();
+  _draw->ClearDepth();
+}
+
+
+
+//-------------------------------------------------------------------------------------------------
+// e_projection
+//-------------------------------------------------------------------------------------------------
+
+
+void CWindow_Glfw::Projection( double time_ms )
+{
+  std::vector<std::array<int, 3>> pts_orig{
+    { -1, -2, 3 },
+    {  1, -2, 9 },
+    {  1,  0, 9 },
+    {  2,  0, 7 },
+    {  0,  2, 4 },
+    { -2,  0, 1 },
+    { -1,  0, 9 }
+  };
+
+  std::vector<float> poly;
+  for ( auto & pt : pts_orig )
+  {
+    poly.push_back( (float)pt[0] );
+    poly.push_back( (float)pt[1] );
+  }
+
+  _draw->ActivateBackground();
+  Checkered( BL(), TR() );
+
+  OpenGL::Camera camera;
+  camera._vp     = { (int)_vpSize[0], (int)_vpSize[1] };
+  camera._near   = 0.5f;
+  camera._far    = 20.0f;
+  camera._pos    = { -2.5f, -1.5f, 3.5f };
+  camera._target = { 2.0f, 0.0f, 0.0f };
+  camera._up     = { 0.0f, 1.0f, 0.0f };
+  camera._fov_y  = 100.0f;
+  Render::TMat44 polyView = camera.LookAt();
+
+  Render::TMat44 model_mat = Render::Identity();
+  model_mat[0][0] = 0.0f;
+  model_mat[0][1] = -0.5f;
+  model_mat[1][0] = 2.0f;
+  model_mat[1][1] = 0.0f;
+  model_mat[3][0] = 0.4f;
+
+  _draw->Projection( camera.Perspective() );
+  _draw->View( camera.LookAt() );
+  _draw->Model( model_mat );
+
+  _draw->ActivateOpaque();
+
+  _draw->DrawPolyline( 2, poly, Color_ink(), 3.0f, true );
+
+  _draw->ActivateOpaque();
+  _draw->ClearDepth();
+
+  static float text_height  = 0.05f;
+  static float text_scale_y = 1.0f;
+  for ( size_t i=0; i < pts_orig.size(); ++ i )
+  {               
+    auto & pt = pts_orig[i];
+    Render::TPoint3 pos{ (float)pt[0], (float)pt[1] };
+    Render::TPoint3 pos_prj = _draw->Project( pos );
+
+    float p[]{ (float)pt[0], (float)pt[1] };
+
+    std::stringstream strstr;
+    strstr.precision( 2 );
+    strstr << std::fixed << "(" << pos_prj[0] << ", " << pos_prj[1] << ", " << pos_prj[2] << ")";
+    
+    pos[0] += ( pos[0] < -0.001f ) ? -0.02f : ( pos[0] > 0.001f ) ? 0.02f : 0.0f;
+    pos[1] += ( pos[1] < -0.001f ) ? -0.02f : ( pos[1] > 0.001f ) ? 0.02f : 0.0f;
+    _draw->DrawText2DProjected( OpenGL::CBasicDraw::font_sans, strstr.str().c_str(), pt[2], text_height, text_scale_y, 0.0f, pos, Color_darkgray() );
+  }
+}
+
+
+
+//-------------------------------------------------------------------------------------------------
+// e_cone_step
+//-------------------------------------------------------------------------------------------------
 
 
 void CWindow_Glfw::ConeStep( double time_ms )
@@ -1406,3 +1711,4 @@ void CWindow_Glfw::ConeStep( double time_ms )
   _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, "Height field", 3, text_height, text_scale_y, text_margin, {*(height_field.rbegin()+1), height_field.back(), 0.0f}, color_height_filed );
   _draw->DrawText2D( OpenGL::CBasicDraw::font_sans, "Height map texture ", 7, text_height, text_scale_y, text_margin, {left, btm, 0.0f}, color_height_map );
 }
+
