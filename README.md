@@ -96,6 +96,8 @@
 
 [Saturate texture](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/texture_saturate.html)
 
+[Cylindrical projected texture](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/texture_cylindrical_projection.html)
+
 [Retro distortion](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/retro_distortion.html)
 
 [Blending](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/blending.html)
