@@ -64,7 +64,7 @@ public:
   virtual ~CPolygonOpenGL_1_00();
 
   //! Initialize the polygon renderer
-  virtual void Init( void ) override;
+  virtual bool Init( void ) override;
 
   //! Notify the render that a sequence of successive polygons will follow, which is not interrupted by any other drawing operation.
   //! This allows the render to do some performance optimizations and to prepare for the polygon rendering.

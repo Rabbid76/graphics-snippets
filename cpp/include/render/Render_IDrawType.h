@@ -432,7 +432,7 @@ Corresponding GLSL data structures
 Uniform block:
 
 \code{.glsl}
-layout (std140) uniform TViewData
+layout (std140) uniform UB_ViewData
 {
     mat4  _model;      // model matrix
     mat4  _view;       // view matrix
@@ -447,7 +447,7 @@ layout (std140) uniform TViewData
 Shader storage block:
 
 \code{.glsl}
-layout (std340) buffer TViewData
+layout (std340) buffer SSBO_ViewData
 {
     mat4  _model;      // model matrix
     mat4  _view;       // view matrix
@@ -497,11 +497,14 @@ public:
   CModelAndView & operator = ( const CModelAndView & ) = default;
   CModelAndView & operator = ( CModelAndView && ) = default;
 
-  void Model( const TMat44 & m )                  { _data._model = m;                  ++ _model_modifier; }
-  void View( const TMat44 & v )                   { _data._view = v;                   ++ _data_modifier; }
-  void Projection( const TMat44 & p )             { _data._projection = p;             ++ _data_modifier; }
-  void Viewport( t_fp x, t_fp y, t_fp w, t_fp h ) { _data._vp_rect = {x, y, w, h};     ++ _data_modifier; }
-  void DepthRage( t_fp np, t_fp fp )              { _data._near = np; _data._far = fp; ++ _data_modifier; }
+  void Model( const TMat44 & m )                  { _data._model = m;                               ++ _model_modifier; }
+  void Model( const t_fp * m )                    { memcpy(&_data._model[0][0], m, sizeof(TMat44)); ++ _model_modifier; }
+  void View( const TMat44 & v )                   { _data._view = v;                                ++ _data_modifier; }
+  void View( const t_fp * v )                     { memcpy(&_data._model[0][0], v, sizeof(TMat44)); ++ _data_modifier; }
+  void Projection( const TMat44 & p )             { _data._projection = p;                          ++ _data_modifier; }
+  void Projection( const t_fp * p )               { memcpy(&_data._model[0][0], p, sizeof(TMat44)); ++ _data_modifier; }
+  void Viewport( t_fp x, t_fp y, t_fp w, t_fp h ) { _data._vp_rect = {x, y, w, h};                  ++ _data_modifier; }
+  void DepthRage( t_fp np, t_fp fp )              { _data._near = np; _data._far = fp;              ++ _data_modifier; }
 
   const TModelAndView * Data( void ) const { return &_data; }
 

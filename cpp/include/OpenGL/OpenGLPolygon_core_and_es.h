@@ -18,7 +18,7 @@
 #include <Render_IDrawPolygon.h>
 #include <Render_IBuffer.h>
 
-
+#include <OpenGLDataBuffer_std140.h>
 
 
 // class definitions
@@ -74,8 +74,10 @@ public:
   void PoylgonStyle( const Render::Polygon::TStyle &style ) { _polygon_style = style; }
 
   //! Initialize the polygon renderer
-  virtual void Init( void ) override;
-  virtual void Init( TProgramPtr program );
+  virtual bool Init( void ) override;
+  virtual bool Init( Render::TModelAndViewPtr mvp_data );
+  virtual bool Init( TMVPBufferPtr mvp_buffer );
+  virtual bool Init( TProgramPtr program );
 
   //! Notify the render that a sequence of successive polygons will follow, which is not interrupted by any other drawing operation.
   //! This allows the render to do some performance optimizations and to prepare for the polygon rendering.

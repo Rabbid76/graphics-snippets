@@ -79,8 +79,10 @@ CPolygonOpenGL_1_00::~CPolygonOpenGL_1_00()
 * \date    2018-09-07
 * \version 1.0
 **********************************************************************/
-void CPolygonOpenGL_1_00::Init( void )
-{}
+bool CPolygonOpenGL_1_00::Init( void )
+{
+  return true;
+}
 
 
 /******************************************************************//**

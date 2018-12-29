@@ -66,7 +66,7 @@ enum class TScene
 };
 
 
-#define RENDER_BITMAP 4 
+#define RENDER_BITMAP 0 
 
 #if defined(RENDER_BITMAP) && RENDER_BITMAP == 4
 static int          c_window_cx = 680;
@@ -403,8 +403,6 @@ void CWindow_Glfw::MouseButton( int button, int action, int mods )
 
 void CWindow_Glfw::MainLoop( void )
 {
-    if ( _scene == TScene::e_undefined )
-        _scene = SelectScene();
     InitScene();
 
     _start_time = std::chrono::high_resolution_clock::now();
@@ -430,6 +428,9 @@ void CWindow_Glfw::MainLoop( void )
             glFinish();
         
         glfwPollEvents();
+
+        if ( _scene == TScene::e_undefined )
+            _scene = SelectScene();
     }
 
     _draw.reset( nullptr );
@@ -517,7 +518,7 @@ void CWindow_Glfw::Render( double time_ms )
   switch (_scene)
   {
 
-    default: assert( false );
+    default:
     case TScene::e_test_1:                 TestScene_1( time_ms ); break;
     case TScene::e_test_2:                 TestScene_2( time_ms ); break;
     case TScene::e_test_perspective:       TestScene_Perspecitve( time_ms ); break;

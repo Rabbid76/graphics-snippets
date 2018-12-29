@@ -43,6 +43,9 @@
 namespace OpenGL
 {
 
+class CModelAndViewBuffer_std140;
+using TMVPBufferPtr = std::shared_ptr<CModelAndViewBuffer_std140>;
+
 
 /***************************************************************************//**
 * \brief OpenGL `std140` layout Uniform Block implementation for

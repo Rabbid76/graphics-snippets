@@ -102,7 +102,7 @@ public:
   virtual ~IRender() = default;
 
   //! Initialize the polygon renderer
-  virtual void Init( void ) = 0;
+  virtual bool Init( void ) = 0;
 
   //! Notify the render that a sequence of successive polygons will follow, which is not interrupted by any other drawing operation.
   //! This allows the render to do some performance optimizations and to prepare for the polygon rendering.

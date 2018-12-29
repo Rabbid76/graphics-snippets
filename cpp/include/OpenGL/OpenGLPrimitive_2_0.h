@@ -62,7 +62,7 @@ public:
   int  Attrib_y_inx( void )      const { return _attrib_y_inx; } 
 
   //! Initialize the primitive renderer
-  virtual void Init( void );
+  virtual bool Init( void );
 
   //! set the primitive color
   CPrimitiveOpenGL_2_00 & SetColor( const Render::TColor & color );

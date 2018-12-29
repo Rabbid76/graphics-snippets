@@ -708,7 +708,7 @@ public:
 
   ~CSimpleLineRenderer() {}
 
-  virtual void Init( void ) override {};                
+  virtual bool Init( void ) override { return true; }                
 
   virtual bool StartSuccessiveLineDrawings( void ) { return false; }
   virtual bool FinishSuccessiveLineDrawings( void ) { return false; }

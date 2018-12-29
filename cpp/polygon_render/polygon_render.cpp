@@ -54,6 +54,12 @@ private:
     void Render( double time_ms );
     void RenderTestScene( Render::Polygon::IRender &line_render );
 
+    void SetViewport( int x, int y, int w, int h );
+    void SetDepthRange( float n, float f );
+    void SetProjection( const float p[] );
+    void SetView( const float v[] );
+    void SetModel( const float m[] );
+
     std::array< int, 2 > _wndPos         {0, 0};
     std::array< int, 2 > _wndSize        {0, 0};
     std::array< int, 2 > _vpSize         {0, 0};
@@ -72,6 +78,7 @@ private:
     std::unique_ptr<Render::Polygon::IRender> _polygon_1;
     std::unique_ptr<Render::Polygon::IRender> _polygon_2;
     std::unique_ptr<Render::Polygon::IRender> _polygon_3;
+    std::unique_ptr<Render::Polygon::IRender> _polygon_4;
 
     Render::TModelAndViewPtr _view_data_ptr;
 };
@@ -187,6 +194,53 @@ void CWindow_Glfw::Resize( int cx, int cy )
     _updateViewport = true;
 }
 
+
+void CWindow_Glfw::SetViewport( int x, int y, int w, int h )
+{
+    glViewport( x, y, w, h );
+
+    if ( _view_data_ptr != nullptr )
+        _view_data_ptr->Viewport( (float)x, (float)y, (float)w, (float)h );
+}
+
+
+void CWindow_Glfw::SetDepthRange( float n, float f )
+{
+    if ( _view_data_ptr != nullptr )
+        _view_data_ptr->DepthRage( n, f );
+}
+
+
+void CWindow_Glfw::SetProjection( const float p[] )
+{
+   glMatrixMode( GL_PROJECTION );
+   glLoadMatrixf( p );
+
+   if ( _view_data_ptr != nullptr )
+        _view_data_ptr->Projection( p );
+}
+
+
+void CWindow_Glfw::SetView( const float v[] )
+{
+    glMatrixMode( GL_MODELVIEW );
+    glLoadMatrixf( v );
+
+    if ( _view_data_ptr != nullptr )
+        _view_data_ptr->View( v );
+}
+
+
+void CWindow_Glfw::SetModel( const float m[] )
+{
+    glMatrixMode( GL_MODELVIEW );
+    glMultMatrixf( m );
+
+    if ( _view_data_ptr != nullptr )
+        _view_data_ptr->Model( m );
+}
+
+
 void CWindow_Glfw::MainLoop ( void )
 {
     InitScene();
@@ -198,7 +252,7 @@ void CWindow_Glfw::MainLoop ( void )
         if ( _updateViewport )
         {
             glfwGetFramebufferSize( _wnd, &_vpSize[0], &_vpSize[1] );
-            glViewport( 0, 0, _vpSize[0], _vpSize[1] );
+            SetViewport( 0, 0, _vpSize[0], _vpSize[1] );
             _updateViewport = false;
         }
 
@@ -221,12 +275,14 @@ void CWindow_Glfw::MainLoop ( void )
 void CWindow_Glfw::InitScene( void )
 {
   _polygon_1 = std::make_unique<OpenGL::Polygon::CPolygonOpenGL_1_00>();
-  _polygon_2 = std::make_unique<OpenGL::Polygon::CPolygonOpenGL_2_00>( 0 );
-  _polygon_3 = std::make_unique<OpenGL::Polygon::CPolygonOpenGL_core_and_es>( 0 );
-
   _polygon_1->Init();
+
+  _polygon_2 = std::make_unique<OpenGL::Polygon::CPolygonOpenGL_2_00>( 0 );
   _polygon_2->Init();
-  _polygon_3->Init();
+
+  auto polygon_core = std::make_unique<OpenGL::Polygon::CPolygonOpenGL_core_and_es>( 0 );
+  polygon_core->Init( _view_data_ptr );
+  _polygon_3 = std::move( polygon_core );
 }
 
 
@@ -237,14 +293,20 @@ void CWindow_Glfw::Render( double time_ms )
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);  
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
       
-    glMatrixMode( GL_MODELVIEW );
-    glLoadIdentity();
+    glm::mat4 proj( 1.0f );
+    SetProjection( glm::value_ptr(proj) );
+    SetDepthRange( -1.0f, 1.0f );
+
+    glm::mat4 view( 1.0f );
+    SetView( glm::value_ptr(view) );
 
     if ( _polygon_1 != nullptr )
     {
       glPushMatrix();
-      glTranslatef( -0.5f, 0.5f, 0.0f );
-      glScalef( 0.5f, 0.5f, 0.5f );
+
+      glm::mat4 model = glm::translate( glm::mat4(1.0f), glm::vec3( -0.5f, 0.5f, 0.0f ) );
+      model = glm::scale( model, glm::vec3( 0.5f ) );
+      SetModel( glm::value_ptr(model) );
 
       RenderTestScene( *_polygon_1.get() );
 
@@ -254,8 +316,10 @@ void CWindow_Glfw::Render( double time_ms )
     if ( _polygon_2 != nullptr )
     {
       glPushMatrix();
-      glTranslatef( 0.5f, 0.5f, 0.0f );
-      glScalef( 0.5f, 0.5f, 0.5f );
+
+      glm::mat4 model = glm::translate( glm::mat4(1.0f), glm::vec3( 0.5f, 0.5f, 0.0f ) );
+      model = glm::scale( model, glm::vec3( 0.5f ) );
+      SetModel( glm::value_ptr(model) );
 
       RenderTestScene( *_polygon_2.get() );
 
@@ -265,9 +329,24 @@ void CWindow_Glfw::Render( double time_ms )
     if ( _polygon_3 != nullptr )
     {
       glPushMatrix();
-      glTranslatef( -0.5f, -0.5f, 0.0f );
-      glScalef( 0.5f, 0.5f, 0.5f );
 
+      glm::mat4 model = glm::translate( glm::mat4(1.0f), glm::vec3( -0.5f, -0.5f, 0.0f ) );
+      model = glm::scale( model, glm::vec3( 0.5f ) );
+      SetModel( glm::value_ptr(model) );
+      
+      RenderTestScene( *_polygon_3.get() );
+
+      glPopMatrix();
+    }
+
+    if ( _polygon_4 != nullptr )
+    {
+      glPushMatrix();
+
+      glm::mat4 model = glm::translate( glm::mat4(1.0f), glm::vec3( 0.5f, -0.5f, 0.0f ) );
+      model = glm::scale( model, glm::vec3( 0.5f ) );
+      SetModel( glm::value_ptr(model) );
+      
       RenderTestScene( *_polygon_3.get() );
 
       glPopMatrix();

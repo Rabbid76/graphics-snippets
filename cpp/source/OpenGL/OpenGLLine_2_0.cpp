@@ -97,13 +97,13 @@ CLineOpenGL_2_00::~CLineOpenGL_2_00()
 * \date    2018-09-07
 * \version 1.0
 **********************************************************************/
-void CLineOpenGL_2_00::Init( void )
+bool CLineOpenGL_2_00::Init( void )
 {
   if ( _primitive_prog != nullptr )
-    return;
+    return true;
 
   _primitive_prog = std::make_unique<CPrimitiveOpenGL_2_00>();
-  _primitive_prog->Init();
+  return _primitive_prog->Init();
 }
 
 
@@ -116,14 +116,14 @@ void CLineOpenGL_2_00::Init( void )
 * \date    2018-09-07
 * \version 1.0
 **********************************************************************/
-void CLineOpenGL_2_00::Init( 
+bool CLineOpenGL_2_00::Init( 
   TProgramPtr &program ) // shader program
 {
   if ( _primitive_prog != nullptr )
-    return;
+    return true;
 
   _primitive_prog = program;
-  _primitive_prog->Init();
+  return _primitive_prog->Init();
 }
 
 

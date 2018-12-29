@@ -18,6 +18,7 @@
 #include <Render_IProgram.h>
 #include <Render_IBuffer.h>
 
+#include <OpenGLDataBuffer_std140.h>
 
 // STL
 
@@ -34,8 +35,6 @@
 **********************************************************************/
 namespace OpenGL
 {
-
-class CModelAndViewBuffer_std140;
 
 
 /******************************************************************//**
@@ -57,8 +56,6 @@ class CPrimitiveOpenGL_core_and_es
 public:
 
   using TDrawBufferPtr = std::shared_ptr<Render::IDrawBuffer>;
-  using TMVPBufferPtr  = std::shared_ptr<CModelAndViewBuffer_std140>;
-
 
   CPrimitiveOpenGL_core_and_es( void );
   virtual ~CPrimitiveOpenGL_core_and_es();
@@ -72,7 +69,8 @@ public:
   TMVPBufferPtr        MVPBuffer( void ) { return _mvp_buffer; }
 
   //! Initialize the primitive renderer
-  virtual void Init( size_t min_buffer_size, TMVPBufferPtr mvp_buffer );
+  virtual bool Init( size_t min_buffer_size, Render::TModelAndViewPtr mvp_data );
+  virtual bool Init( size_t min_buffer_size, TMVPBufferPtr mvp_buffer );
 
   //! set the primitive color
   CPrimitiveOpenGL_core_and_es & SetColor( const Render::TColor & color );
@@ -116,11 +114,13 @@ private:
   void InitDrawBuffer( size_t min_buffer_size );
   void InitProgram( void );
 
+  static const size_t          _default_binding;             //!< default binding for model view and projection data buffer
   static const std::string     _vert_430;                    //!< default vertex shader for consecutive vertex attributes
   static const std::string     _frag_430;                    //!< fragment shader for uniform colored primitives 
                                                                            
   TMVPBufferPtr                _mvp_buffer;                  //!< model, view, projection and viewport data
   Render::Program::TProgramPtr _prog;                        //!< shader program for consecutive vertex attributes
+  int                          _view_data_loc{ -1 };         //!< uniform block index for model view projection data  
   int                          _color_loc{ -1 };             //!< uniform location of color  
   int                          _depth_attenuation_loc{ -1 }; //!< uniform location of depth attenuation parameter
   int                          _case_loc{ -1 };              //!< uniform location of attribute case  
@@ -128,6 +128,10 @@ private:
   int                          _attrib_y_inx{ -1 };          //!< attribute index of the vertex separated y coordinate 
   
   Render::TVA                  _va_type{ Render::unknown };  //!< vertex array object type
+  
+  // TODO $$$
+  // Omit draw buffer and directly use vertex buffer.
+  // For this the vertex buffer has to be extended by an extend mechanism and a capacity query.  
   TDrawBufferPtr               _mesh_buffer;                 //!< vertex array object and array buffer 
   size_t                       _min_buffer_size;             //!< minimum size of the vertex buffer
 

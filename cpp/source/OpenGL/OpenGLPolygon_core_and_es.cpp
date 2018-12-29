@@ -15,7 +15,6 @@
 
 #include <OpenGLPolygon_core_and_es.h>
 #include <OpenGLPrimitive_core_and_es.h>
-#include <OpenGLDataBuffer_std140.h>
 
 
 // OpenGL wrapper
@@ -87,11 +86,13 @@ CPolygonOpenGL_core_and_es::~CPolygonOpenGL_core_and_es()
 * \date    2018-12-03
 * \version 1.0
 **********************************************************************/
-void CPolygonOpenGL_core_and_es::Init( void )
+bool CPolygonOpenGL_core_and_es::Init( void )
 {
   if ( _initialized )
-    return;
-  return Init( nullptr );
+    return true;
+
+  TProgramPtr prpgram;
+  return Init( prpgram );
 }
 
 
@@ -104,15 +105,69 @@ void CPolygonOpenGL_core_and_es::Init( void )
 * \date    2018-09-07
 * \version 1.0
 **********************************************************************/
-void CPolygonOpenGL_core_and_es::Init( 
+bool CPolygonOpenGL_core_and_es::Init( 
+  Render::TModelAndViewPtr mvp_data ) //!< I - model, view, projection and window data buffer 
+{
+  if ( _initialized )
+    return true;
+ 
+  TMVPBufferPtr mvp_buffer;
+  if ( mvp_data != nullptr )
+  {
+    static const size_t c_default_binding = 1; 
+    mvp_buffer = std::make_unique<CModelAndViewBuffer_std140>();
+    mvp_buffer->Init( c_default_binding, mvp_data );
+  }
+
+  return Init( mvp_buffer );
+}
+
+
+/******************************************************************//**
+* \brief Initialize the line renderer. 
+*
+* For the initialization a current and valid OpenGL context is required. 
+* 
+* \author  gernot
+* \date    2018-09-07
+* \version 1.0
+**********************************************************************/
+bool CPolygonOpenGL_core_and_es::Init( 
+  TMVPBufferPtr mvp_buffer ) //!< I - model, view, projection and window data buffer 
+{
+  if ( _initialized )
+    return true;
+ 
+  TProgramPtr prpgram;
+  if ( mvp_buffer != nullptr )
+  {
+    prpgram = std::make_unique<CPrimitiveOpenGL_core_and_es>();
+    prpgram->Init( _min_buffer_size, mvp_buffer );
+  }
+
+  return Init( prpgram );
+}
+
+
+/******************************************************************//**
+* \brief Initialize the line renderer. 
+*
+* For the initialization a current and valid OpenGL context is required. 
+* 
+* \author  gernot
+* \date    2018-09-07
+* \version 1.0
+**********************************************************************/
+bool CPolygonOpenGL_core_and_es::Init( 
   TProgramPtr program ) //!< I - shader program
 {
   if ( _initialized )
-    return;
+    return true;
   _initialized = true;
 
   _primitive_prog = program != nullptr ?  program : std::make_unique<CPrimitiveOpenGL_core_and_es>();
-  _primitive_prog->Init( _min_buffer_size, nullptr );
+  TMVPBufferPtr mvp_buffer;
+  return _primitive_prog->Init( _min_buffer_size, mvp_buffer );
 }
 
 

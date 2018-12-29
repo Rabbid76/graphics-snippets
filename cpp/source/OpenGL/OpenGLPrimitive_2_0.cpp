@@ -151,10 +151,10 @@ void CPrimitiveOpenGL_2_00::Error(
 * \date    2018-12-03
 * \version 1.0
 **********************************************************************/
-void CPrimitiveOpenGL_2_00::Init( void )
+bool CPrimitiveOpenGL_2_00::Init( void )
 {
   if ( _initilized )
-    return;
+    return true;
   _initilized = true;
 
   std::string msg;
@@ -187,6 +187,8 @@ void CPrimitiveOpenGL_2_00::Init( void )
   _depth_attenuation_loc = glGetUniformLocation( (GLuint)_prog->ObjectHandle(), "u_depth_att" );
   _attrib_xyzw_inx       = glGetAttribLocation(  (GLuint)_prog->ObjectHandle(), "attr_xyzw" );
   _attrib_y_inx          = glGetAttribLocation(  (GLuint)_prog->ObjectHandle(), "attr_y" );
+
+  return true;
 }
 
 

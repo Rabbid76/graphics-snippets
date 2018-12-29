@@ -16,7 +16,6 @@
 #include <OpenGLPrimitive_core_and_es.h>
 #include <OpenGLProgram.h>
 #include <OpenGLVertexBuffer.h>
-#include <OpenGLDataBuffer_std140.h>
 
 
 // OpenGL wrapper
@@ -55,6 +54,8 @@
 namespace OpenGL
 {
 
+const size_t CPrimitiveOpenGL_core_and_es::_default_binding = 1;
+
 
 /*!
 
@@ -74,12 +75,23 @@ But this would give the chance to avoid shader program switches, which probably 
 
 // TODO $$$
 const std::string CPrimitiveOpenGL_core_and_es::_vert_430 = R"(
-#version 110
+#version 420
 
-attribute vec4  attr_xyzw;
-attribute float attr_y;
+in vec4  attr_xyzw;
+in float attr_y;
 
-varying vec4 v_color;
+out vec4 v_color;
+
+layout (std140, binding = 1) uniform UB_ViewData
+{
+    mat4  _model;      // model matrix
+    mat4  _view;       // view matrix
+    mat4  _projection; // projection matrix
+    vec4  _vp_rect;    // viewport rectangle
+    float _near;       // near plane 
+    float _far;        // far plane 
+
+} view_data;
 
 uniform int   u_attr_case;
 uniform vec4  u_color;
@@ -88,8 +100,10 @@ uniform float u_depth_att;
 void main()
 {
   vec4 vert_pos = u_attr_case == 0 ? attr_xyzw : vec4(attr_xyzw.x, attr_y, 0.0, 1.0);
-  gl_Position   = gl_ModelViewProjectionMatrix * vert_pos;
-  gl_ClipVertex = gl_Position;
+  gl_Position   = view_data._projection * view_data._view * view_data._model * vert_pos;
+  
+  // TODO $$$
+  //gl_ClipVertex = gl_Position;
 
   float depth   = 0.5 + 0.5 * gl_Position.z / gl_Position.w;
   v_color       = vec4( mix(u_color.rgb, vec3(0.0), depth * u_depth_att), u_color.a );
@@ -99,13 +113,14 @@ void main()
 
 // TODO $$$
 const std::string CPrimitiveOpenGL_core_and_es::_frag_430 = R"(
-#version 110
+#version 420
 
-varying vec4 v_color;
+in  vec4 v_color;
+out vec4 frag_color;
 
 void main()
 {
-  gl_FragColor = v_color;
+  frag_color = v_color;
 }
 )";
 
@@ -156,17 +171,46 @@ void CPrimitiveOpenGL_core_and_es::Error(
 * \date    2018-12-10
 * \version 1.0
 **********************************************************************/
-void CPrimitiveOpenGL_core_and_es::Init( 
-  size_t min_buffer_size,    //! minimum buffer size
-  TMVPBufferPtr mvp_buffer ) //!< I - model, view, projection and window data buffer 
+bool CPrimitiveOpenGL_core_and_es::Init( 
+  size_t                   min_buffer_size, //!< I - minimum buffer size
+  Render::TModelAndViewPtr mvp_data )       //!< I - model, view, projection and window data
 {
   if ( _initilized )
-    return;
+    return true;
+ 
+  TMVPBufferPtr mvp_buffer;
+  if ( mvp_data != nullptr )
+  {
+    mvp_buffer = std::make_unique<CModelAndViewBuffer_std140>();
+    _mvp_buffer->Init( _default_binding, mvp_data );
+  }
+
+  return Init( min_buffer_size, mvp_buffer );
+}
+
+
+/******************************************************************//**
+* \brief Initialize the primitive renderer. 
+*
+* For the initialization a current and valid OpenGL context is required. 
+* 
+* \author  gernot
+* \date    2018-12-10
+* \version 1.0
+**********************************************************************/
+bool CPrimitiveOpenGL_core_and_es::Init( 
+  size_t        min_buffer_size, //!< I - minimum buffer size
+  TMVPBufferPtr mvp_buffer )     //!< I - model, view, projection and window data buffer 
+{
+  if ( _initilized )
+    return true;
   _initilized = true;
 
   InitMVPBuffer( mvp_buffer );
   InitDrawBuffer( min_buffer_size );
   InitProgram();
+
+  return true;
 }
 
 
@@ -180,13 +224,11 @@ void CPrimitiveOpenGL_core_and_es::Init(
 void CPrimitiveOpenGL_core_and_es::InitMVPBuffer( 
   TMVPBufferPtr mvp_buffer ) //!< I - model, view, projection and window data buffer 
 {
-  static const size_t c_default_binding = 1;
-
   if ( _mvp_buffer != nullptr )
     return;
  
   _mvp_buffer = mvp_buffer != nullptr ? mvp_buffer : std::make_unique<CModelAndViewBuffer_std140>();
-  _mvp_buffer->Init( c_default_binding ); // `c_default_binding` is applied only, if the buffer was not initialized yet
+  _mvp_buffer->Init( _default_binding ); // `c_default_binding` is applied only, if the buffer was not initialized yet
 }
 
 
@@ -249,11 +291,20 @@ void CPrimitiveOpenGL_core_and_es::InitProgram( void ) // shader program
   _prog->Link();
   if ( _prog->Verify( msg ) == false )
     Error( "link error", msg );
-  _color_loc             = glGetUniformLocation( (GLuint)_prog->ObjectHandle(), "u_color" );
-  _case_loc              = glGetUniformLocation( (GLuint)_prog->ObjectHandle(), "u_attr_case" );
-  _depth_attenuation_loc = glGetUniformLocation( (GLuint)_prog->ObjectHandle(), "u_depth_att" );
-  _attrib_xyzw_inx       = glGetAttribLocation(  (GLuint)_prog->ObjectHandle(), "attr_xyzw" );
-  _attrib_y_inx          = glGetAttribLocation(  (GLuint)_prog->ObjectHandle(), "attr_y" );
+  
+  _view_data_loc         = glGetUniformBlockIndex( (GLuint)_prog->ObjectHandle(), "UB_ViewData" );
+  _color_loc             = glGetUniformLocation(   (GLuint)_prog->ObjectHandle(), "u_color" );
+  _case_loc              = glGetUniformLocation(   (GLuint)_prog->ObjectHandle(), "u_attr_case" );
+  _depth_attenuation_loc = glGetUniformLocation(   (GLuint)_prog->ObjectHandle(), "u_depth_att" );
+  _attrib_xyzw_inx       = glGetAttribLocation(    (GLuint)_prog->ObjectHandle(), "attr_xyzw" );
+  _attrib_y_inx          = glGetAttribLocation(    (GLuint)_prog->ObjectHandle(), "attr_y" );
+
+  if ( _mvp_buffer != nullptr )
+  {
+    GLuint binding_point = (GLuint)_mvp_buffer->BufferBinding();
+    GLuint progrma_obj = _prog->ObjectHandle();
+    glUniformBlockBinding( progrma_obj, _view_data_loc, binding_point );
+  }
 }
 
 

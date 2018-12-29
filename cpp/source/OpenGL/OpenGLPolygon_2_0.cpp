@@ -95,13 +95,13 @@ CPolygonOpenGL_2_00::~CPolygonOpenGL_2_00()
 * \date    2018-12-03
 * \version 1.0
 **********************************************************************/
-void CPolygonOpenGL_2_00::Init( void )
+bool CPolygonOpenGL_2_00::Init( void )
 {
   if ( _primitive_prog != nullptr )
-    return;
+    return true;
 
   _primitive_prog = std::make_unique<CPrimitiveOpenGL_2_00>();
-  _primitive_prog->Init();
+  return _primitive_prog->Init();
 }
 
 
@@ -114,14 +114,14 @@ void CPolygonOpenGL_2_00::Init( void )
 * \date    2018-09-07
 * \version 1.0
 **********************************************************************/
-void CPolygonOpenGL_2_00::Init( 
+bool CPolygonOpenGL_2_00::Init( 
   TProgramPtr &program ) // shader program
 {
   if ( _primitive_prog != nullptr )
-    return;
+    return true;
 
   _primitive_prog = program;
-  _primitive_prog->Init();
+  return _primitive_prog->Init();
 }
 
 

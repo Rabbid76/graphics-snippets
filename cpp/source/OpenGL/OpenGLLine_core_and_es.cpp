@@ -143,10 +143,10 @@ void CLineOpenGL_core_and_es::Error(
 * \date    2018-09-07
 * \version 1.0
 **********************************************************************/
-void CLineOpenGL_core_and_es::Init( void )
+bool CLineOpenGL_core_and_es::Init( void )
 {
   if ( _initilized )
-    return;
+    return true;
   _initilized = true;
 
   std::string msg;
@@ -178,6 +178,8 @@ void CLineOpenGL_core_and_es::Init( void )
   _line_case_loc        = glGetUniformLocation( (GLuint)_line_prog->ObjectHandle(), "u_attr_case" );
   _line_attrib_xyzw_inx = glGetAttribLocation(  (GLuint)_line_prog->ObjectHandle(), "attr_xyzw" );
   _line_attrib_y_inx    = glGetAttribLocation(  (GLuint)_line_prog->ObjectHandle(), "attr_y" );
+
+  return true;
 }
 
 
