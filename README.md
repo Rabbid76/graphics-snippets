@@ -50,66 +50,97 @@
 
 ### StackOverflow examples
 
+![](html/stackoverflow/image/shadow_map.png)
 [Shadow map](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/shadow_map.html)
 
+![](html/stackoverflow/image/ssao_simple_b.png)
 [Simple fixed SSAO](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/ssao_simple_b.html)
 
+![](html/stackoverflow/image/ssao_simple.png)
 [SSAO - random noise and kernel](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/ssao_simple.html)
 
+![](html/stackoverflow/image/blur_cube_color.png)
 [Simple blur - Blur cube](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/blur_cube_color.html)
 
+![](html/stackoverflow/image/blur_sphere_texture.png)
 [Blur sphere](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/blur_sphere_texture.html)
 
-[Glow](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/glow.html)
+![](html/stackoverflow/image/glow.png)
+[Glow](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/glow.html)  
 
+![](html/stackoverflow/image/lambertian_sphere.png)
 [Lambertian diffuse sphere](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/lambertian_sphere.html)
 
+![](html/stackoverflow/image/lambertian_fake.png)
 [Lambertian diffuse fake light](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/lambertian_fake.html)
 
+![](html/stackoverflow/image/gouraud_phong.png)
 [Gouraud shading / Phong shading](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/gouraud_phong.html)
 
+![](html/stackoverflow/image/phong_blinnphong.png)
 [Phong light model / Blinn Phong light model](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/phong_blinnphong.html)
 
+![](html/stackoverflow/image/light_cone.png)
 [Light cone](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/light_cone.html)
 
+![](html/stackoverflow/image/clip_cube.png)
 [Clipping](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/clip_cube.html)
 
+![](html/stackoverflow/image/cube_color.png)
 [Cube color](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/cube_color.html)
 
+![](html/stackoverflow/image/cube_texture.png)
 [Textured cube](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/cube_texture.html)
 
+![](html/stackoverflow/image/glMatrix_cube.png)
 [Cube - `glMatrix`](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/glMatrix_cube.html)
 
+![](html/stackoverflow/image/sphere_texture.png)
 [Globe](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/sphere_texture.html)
 
+![](html/stackoverflow/image/axis_rotation.png)
 [Translation and rotation](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/axis_rotation.html)
 
+![](html/stackoverflow/image/model_view_projection.png)
 [Model View Projection](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/model_view_projection.html)
 
+![](html/stackoverflow/image/unproject_2d.png)
 [Unproject 2D - Screen coordinate to world](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/unproject_2d.html)
 
+![](html/stackoverflow/image/unproject_perspective.png)
 [Unproject perspective - Intersect world by line of sight](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/unproject_perspective.html)
 
+![](html/stackoverflow/image/spherical_projection.png)
 [Spherical projection](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/spherical_projection.html)
 
+![](html/stackoverflow/image/texture_load.png)
 [Load texture](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/texture_load.html)
 
+![](html/stackoverflow/image/texture_saturate.png)
 [Saturate texture](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/texture_saturate.html)
 
+![](html/stackoverflow/image/texture_cylindrical_projection.png)
 [Cylindrical projected texture](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/texture_cylindrical_projection.html)
 
+![](html/stackoverflow/image/retro_distortion.png)
 [Retro distortion](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/retro_distortion.html)
 
+![](html/stackoverflow/image/blending.png)
 [Blending](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/blending.html)
 
+![](html/stackoverflow/image/texture_flashlight.png)
 [Texture flashlight](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/texture_flashlight.html)
 
+![](html/stackoverflow/image/silhouette.png)
 [Toon silhouette](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/silhouette.html)
 
+![](html/stackoverflow/image/voronoi.png)
 [Voronoi](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/voronoi.html)
 
+![](html/stackoverflow/image/normalmap1.png)
 [Normal map 1](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/normalmap1.html)
 
+![](html/stackoverflow/image/background_cube_poor_webgl.png)
 [Background](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/background_cube_poor_webgl.html)
 
 ### StackOverflow examples - three.js

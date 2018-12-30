@@ -249,7 +249,8 @@ function render(deltaMS){
 
 function resize() {
     //vp_size = [gl.drawingBufferWidth, gl.drawingBufferHeight];
-    vp_size = [window.innerWidth, window.innerHeight]
+    vp_size = [window.innerWidth, window.innerHeight];
+    //vp_size = [256, 256]
     canvas.width = vp_size[0];
     canvas.height = vp_size[1];
     gl.viewport( 0, 0, vp_size[0], vp_size[1] );

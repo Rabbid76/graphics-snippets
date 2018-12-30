@@ -133,7 +133,8 @@ class App {
 
     resize() {
         //vp_size = [gl.drawingBufferWidth, gl.drawingBufferHeight];
-        this.vp_size = [window.innerWidth, window.innerHeight]
+        this.vp_size = [window.innerWidth, window.innerHeight];
+        //this.vp_size = [256, 256];
         this.canvas.width = this.vp_size[0];
         this.canvas.height = this.vp_size[1];
     }

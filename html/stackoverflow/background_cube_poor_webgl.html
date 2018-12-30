@@ -269,6 +269,8 @@ function drawScene(){
     var canvas = document.getElementById( "draw-canvas" );
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
+    //canvas.width = 256;
+    //canvas.height = 256;
     Camera.create();
     Camera.vp = [canvas.width, canvas.height];
     var currentTime = Date.now();   
