@@ -4,7 +4,6 @@
 <meta charset='UTF-8'>
 <title>mesh</title>
 
-
 </head>
 <body>
 
@@ -965,9 +964,9 @@ class Texture {
         this.image = new Image(64,64);
         this.image.setAttribute('crossorigin', 'anonymous');
         this.image.onload = function () {
-            let cx = 1 << 31 - Math.clz32(texture.image.width);
+            let cx = 1 << 31 - Math.clz32(texture.image.naturalWidth);
             if ( cx < texture.image.naturalWidth ) cx *= 2;
-            let cy = 1 << 31 - Math.clz32(texture.image.height);
+            let cy = 1 << 31 - Math.clz32(texture.image.naturalHeight);
             if ( cy < texture.image.naturalHeight ) cy *= 2;
             var canvas = document.createElement( 'canvas' );
             canvas.width  = cx;

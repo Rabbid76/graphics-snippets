@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset='UTF-8'>
-<title>texture load</title>
+<title>sketch: basic template for image sketch filter</title>
 
 </head>
 <body>
@@ -32,26 +32,107 @@ void main()
 </script>
 
 <script id="draw-shader-fs" type="x-shader/x-fragment">
-precision mediump float;
+precision highp float;
 
 varying vec3  vertPos;
 varying vec2  vertUV;
 
-uniform vec2      u_vp_size;
+uniform vec2      u_resolution;
+uniform float     u_time;
 uniform sampler2D u_texture;
+uniform vec2      u_textureSize;
+uniform vec2      u_dpi_ratio;
+
+uniform float u_sketch_flurry;
+uniform float u_sketch_displacement;
+uniform float u_sketch_dispersal;
+uniform float u_sketch_edge;
+uniform vec3  u_paper_color;
+uniform vec3  u_pen_color;
+
+float Luma( in vec3 color )
+{
+  return dot(vec3(0.2126, 0.7152, 0.0722), color.rgb); 
+}
+
+float EdgeDist( in sampler2D texSampler, in vec2 texCoord, in vec2 texOffs )
+{
+    float dx = texOffs.x;
+    float dy = texOffs.y;
+    
+    float s00 = Luma( texture2D(texSampler, texCoord.st + vec2( -dx,  dy )).rgb );
+    float s10 = Luma( texture2D(texSampler, texCoord.st + vec2( -dx, 0.0 )).rgb );
+    float s20 = Luma( texture2D(texSampler, texCoord.st + vec2( -dx, -dy )).rgb );
+    float s01 = Luma( texture2D(texSampler, texCoord.st + vec2( 0.0,  dy )).rgb );
+    float s21 = Luma( texture2D(texSampler, texCoord.st + vec2( 0.0, -dy )).rgb );
+    float s02 = Luma( texture2D(texSampler, texCoord.st + vec2(  dx,  dy )).rgb );
+    float s12 = Luma( texture2D(texSampler, texCoord.st + vec2(  dx, 0.0 )).rgb );
+    float s22 = Luma( texture2D(texSampler, texCoord.st + vec2(  dx, -dy )).rgb );
+    float sx = s00 + 2.0 * s10 + s20 - (s02 + 2.0 * s12 + s22);
+    float sy = s00 + 2.0 * s01 + s02 - (s20 + 2.0 * s21 + s22);
+    return sx * sx + sy * sy;
+}
+
+float SketchTriangle( in float x )
+{
+    return abs( 1.0 - mod( abs( x ), 2.0 ) ) * 2.0 - 1.0;
+}
+
+float SketchRand( in float x )
+{
+    return fract( sin( x ) * 43758.5453 );
+}
+
+vec3 SketchColor( in vec2 texCoord, in vec3 fragColor )
+{
+    vec3 mixCol      = fragColor.rgb;
+    float timeVal    = float(u_time) * u_sketch_flurry / 50000000.0;
+    float time       = (u_sketch_flurry <= 0.0) ? 1.0 : ( timeVal - floor(timeVal) ) * 3.1416;
+    vec2 dpiTexScale = u_dpi_ratio * 0.1;
+    float randX0     = SketchRand( time );
+    float randX1     = SketchRand( time * 1.9 );
+    float randY0     = SketchRand( time * 3.4 );
+    float randY1     = SketchRand( time * 2.1 );
+    
+    vec2 p = texCoord.st * 2.0 - 1.0;
+    p += vec2( SketchTriangle( p.y * randX0 * 4.0 ) * randX1, SketchTriangle( p.x * randY0 * 4.0 ) * randY1 ) * 1.5 * dpiTexScale * u_sketch_displacement;
+    p += vec2( SketchRand( p.x * 3.1 + p.y * 8.7 ), SketchRand( p.x * 1.1 + p.y * 6.7 ) ) * dpiTexScale * u_sketch_dispersal;
+    vec2 texRand = ( p + 1.0 ) * 0.5;
+  
+    vec2 texOffs   = min(vec2( 1.0 ), 2.0) / u_resolution.xy;
+    float edgeDist = EdgeDist(u_texture, texRand.st, texOffs.xy);
+  
+    return mix(u_paper_color, u_pen_color.rgb, clamp( abs( edgeDist ) * 50.0, 0.0, 1.0 ) * u_sketch_edge);
+}
 
 void main()
 {
-    vec4 texColor = texture2D(u_texture, vertUV.st);
-    gl_FragColor  = vec4(texColor.rgb, 1.0);
+    float u = clamp(vertUV.s, 0.0, 1.0);
+    float v = clamp(vertUV.t, 0.0, 1.0);
+    float attenuation = (1.0 - abs(vertUV.s - u)) * (1.0 - abs(vertUV.t - v));
+
+    vec4 texColor = texture2D(u_texture, vec2(u, v));
+    vec3 sketchColor = SketchColor(vertUV.st, texColor.rgb);
+    gl_FragColor  = vec4(sketchColor.rgb * attenuation, 1.0);
 } 
 </script>
 
 <style>
 html,body { margin: 0; overflow: hidden; }
-#gui { position : absolute; top : 0; left : 0; }
+#gui { position : absolute; top : 0; left : 0; color : #20c020 }
 #ref-link { position : absolute; bottom : 0; left : 0; }  
 </style>
+
+<div><form id="gui" name="inputs">
+    <table>
+    <tr> <td> flurry </td> <td> <input type="range" id="flurry" min="0" max="100" value="50"/> </td> </tr>
+    <tr> <td> displacement </td> <td> <input type="range" id="displacement" min="0" max="100" value="5"/> </td> </tr>
+    <tr> <td> dispersal </td> <td> <input type="range" id="dispersal" min="0" max="100" value="15" /> </td></tr>
+    <tr> <td> edge </td> <td> <input type="range" id="edge" min="0" max="100" value="70"/> </td> </tr>
+    <tr> <td> paper color </td> <td> <input type="color" id="paper" value="#ffe0e0"></td>
+    <tr> <td> pen color </td> <td> <input type="color" id="pen" value="#001040"></td>
+    </table>
+</form></div>
 
 <!--div id="ref-link">
 <a href=""> 
@@ -65,6 +146,21 @@ html,body { margin: 0; overflow: hidden; }
 (function loadscene() {
 
 let gl;
+
+function hexToRgb (hex) {
+    // Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
+    var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+    hex = hex.replace(shorthandRegex, function(m, r, g, b) {
+        return r + r + g + g + b + b;
+    });
+
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+    } : null;
+}
 
 class App {
 
@@ -101,13 +197,21 @@ class App {
 
     resize() {
         //vp_size = [gl.drawingBufferWidth, gl.drawingBufferHeight];
-        this.vp_size = [window.innerWidth, window.innerHeight]
+        this.vp_size = [window.innerWidth, window.innerHeight];
+        //this.vp_size = [256, 256];
         this.canvas.width = this.vp_size[0];
         this.canvas.height = this.vp_size[1];
     }
 
     draw(deltaMS){
-        
+
+        var sketch_flurry = document.getElementById( "flurry" ).value / 100.0;
+        var sketch_displacement = document.getElementById( "displacement" ).value / 100.0;
+        var sketch_dispersal = document.getElementById( "dispersal" ).value / 100.0;
+        var sketch_edge = document.getElementById( "edge" ).value / 100.0;
+        var paper_color = hexToRgb( document.getElementById( "paper" ).value );
+        var pen_color = hexToRgb( document.getElementById( "pen" ).value );
+
         gl.viewport( 0, 0, this.vp_size[0], this.vp_size[1] );
         gl.enable( gl.DEPTH_TEST );
         gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
@@ -120,10 +224,31 @@ class App {
             this.progDraw.SetM44("u_projectionMat44", Mat44.ident());
             this.progDraw.SetM44("u_viewMat44", Mat44.ident());
             this.progDraw.SetM44("u_modelMat44", Mat44.ident());
-            this.progDraw.SetM44("u_textureMat44", Mat44.ident());
             this.progDraw.SetI1("u_texture", 0);
         }
-        this.progDraw.SetF2("u_vp_size", this.vp_size);
+        this.progDraw.SetF2("u_resolution", this.vp_size);
+        this.progDraw.SetF1("u_time", deltaMS);
+
+        let textureMat = Mat44.ident();
+        let view_aspect = this.vp_size[0] / this.vp_size[1]; 
+        let aspect = this.texture.aspect / view_aspect;
+        if ( aspect > 1 ) {
+            textureMat[5] = aspect;
+            textureMat[13] = -(aspect - 1) / 4;
+        } else {
+            textureMat[0] = 1/aspect;
+            textureMat[12] = -(1/aspect - 1) / 4;
+        }
+        this.progDraw.SetM44("u_textureMat44", textureMat);
+        this.progDraw.SetF2("u_textureSize", this.texture.size);
+        this.progDraw.SetF2("u_dpi_ratio", [1, 1]);
+
+        this.progDraw.SetF1("u_sketch_flurry", sketch_flurry);
+        this.progDraw.SetF1("u_sketch_displacement", sketch_displacement);
+        this.progDraw.SetF1("u_sketch_dispersal", sketch_dispersal);
+        this.progDraw.SetF1("u_sketch_edge", sketch_edge);
+        this.progDraw.SetF3("u_paper_color", [paper_color.r/255, paper_color.g/255, paper_color.b/255]);
+        this.progDraw.SetF3("u_pen_color", [pen_color.r/255, pen_color.g/255, pen_color.b/255]);
         
         // bind the texture
         this.texture.bound = this.texture.bound || this.texture.bind( 0 );
@@ -253,6 +378,7 @@ class Texture {
             context.drawImage( texture.image, 0, 0, canvas.width, canvas.height );
             texture.textureObj = Texture.createTexture2D( canvas, true );
             texture.size = [cx, cy];
+            texture.aspect = texture.image.naturalWidth / texture.image.naturalHeight;
         }
         this.image.src = name;
     }
@@ -267,8 +393,8 @@ class Texture {
             gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image );
         gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR );
         gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR );
-        gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT );
-        gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT );
+        gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE );
+        gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE );
         gl.bindTexture( gl.TEXTURE_2D, null );
         return t;
     }

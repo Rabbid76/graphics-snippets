@@ -4,7 +4,6 @@
 <meta charset='UTF-8'>
 <title>displacement</title>
 
-
 </head>
 <body>
 
@@ -164,14 +163,14 @@ void main()
 
 <style>
 html,body { margin: 0; overflow: hidden; }
-#gui { position : absolute; top : 0; left : 0; }
+#gui { position : absolute; top : 0; left : 0; color : #40f040 }
 #ref-link { position : absolute; bottom : 0; left : 0; }  
 </style>
 
 <div><form id="gui" name="inputs">
-    <font color=#40f040><span id="instruction">Hold the left mouse button pressed and drag to rotate. Release the button to spin.</span></font>
+    <span id="instruction">Hold the left mouse button pressed and drag to rotate. Release the button to spin.</span>
     <table>
-    <tr> <td> <font color=#40f040>form</font> </td> <td>
+    <tr> <td> form </td> <td>
         <select id="mesh">
             <option value="0">tetrahedron</option>
             <option value="1">cube</option>
@@ -186,26 +185,26 @@ html,body { margin: 0; overflow: hidden; }
             <option value="10">arrow</option>
         </select>
     </td> </tr>
-    <tr> <td> <font color= #40f040>field of view</font> </td> 
+    <tr> <td> field of view </td> 
         <td> <input type="range" id="fov" min="0" max="100" value="50"/>
     </td> </tr>
-    <tr> <td> <font color= #40f040>color / texture</font> </td> 
+    <tr> <td> color / texture </td> 
         <td> <input type="range" id="mix_color" min="0" max="100" value="100"/>
     </td> </tr>
-    <tr> <td> <font color=#40f040>normal vector</font> </td> 
+    <tr> <td> normal vector </td> 
         <td> <input type="checkbox" id="mix_normal" value="0" />
     </td></tr>
-    <tr> <td> <font color= #40f040>displacement height</font> </td> 
+    <tr> <td> displacement height </td> 
         <td> <input type="range" id="height" min="0" max="100" value="50"/>
     </td> </tr>
-    <tr> <td> <font color=#40f040>hull</font> </td> 
+    <tr> <td> hull </td> 
         <td> <input type="checkbox" id="hull" value="0" />
     </td></tr>
-    <tr> <td> <font color= #40f040>tessellation</font> </td> 
+    <tr> <td> tessellation </td> 
         <td> <input type="range" id="tessellation" min="10" max="100" value="25"/>
     </td> </tr>
     </table>
-    <font color=#40f040><span id="info">:</span></font>
+    <span id="info">:</span>
 </form></div>
 
 <!--div id="ref-link">
@@ -1386,9 +1385,9 @@ class Texture {
         this.image = new Image(64,64);
         this.image.setAttribute('crossorigin', 'anonymous');
         this.image.onload = function () {
-            let cx = 1 << 31 - Math.clz32(texture.image.width);
+            let cx = 1 << 31 - Math.clz32(texture.image.naturalWidth);
             if ( cx < texture.image.naturalWidth ) cx *= 2;
-            let cy = 1 << 31 - Math.clz32(texture.image.height);
+            let cy = 1 << 31 - Math.clz32(texture.image.naturalHeight);
             if ( cy < texture.image.naturalHeight ) cy *= 2;
             var canvas = document.createElement( 'canvas' );
             canvas.width  = cx;

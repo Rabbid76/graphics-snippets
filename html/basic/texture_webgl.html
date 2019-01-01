@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset='UTF-8'>
-<title>texture load</title>
+<title>texture WebGL 1.0</title>
 
 </head>
 <body>
@@ -11,11 +11,15 @@
 precision highp float;
 
 attribute vec3 inPos;
+attribute vec3 inNV;
+attribute vec4 inCol;
 attribute vec2 inUV;
 
 varying vec3  vertPos;
+varying vec3  vertNV;
+varying vec4  vertCol;
 varying vec2  vertUV;
-    
+  
 uniform mat4 u_projectionMat44;
 uniform mat4 u_viewMat44;
 uniform mat4 u_modelMat44;
@@ -24,6 +28,8 @@ uniform mat4 u_textureMat44;
 void main()
 {   
     mat4 mv       = u_viewMat44 * u_modelMat44; 
+    vertCol       = inCol;
+    vertNV        = normalize(mat3(mv) * inNV);
     vertUV        = (u_textureMat44 * vec4(inUV, 0.0, 2.0)).st;
     vec4 viewPos  = mv * vec4( inPos, 1.0 );
     vertPos       = viewPos.xyz;
@@ -35,13 +41,17 @@ void main()
 precision mediump float;
 
 varying vec3  vertPos;
+varying vec3  vertNV;
+varying vec4  vertCol;
 varying vec2  vertUV;
 
-uniform vec2      u_vp_size;
+uniform vec2      u_resolution;
+uniform vec2      u_time;
 uniform sampler2D u_texture;
 
 void main()
 {
+    //vec4 color    = vertCol;
     vec4 texColor = texture2D(u_texture, vertUV.st);
     gl_FragColor  = vec4(texColor.rgb, 1.0);
 } 
@@ -53,9 +63,18 @@ html,body { margin: 0; overflow: hidden; }
 #ref-link { position : absolute; bottom : 0; left : 0; }  
 </style>
 
+<!--div>
+<form id="gui" name="inputs">
+  <table>
+      <tr> <td> <font color= #CCF></font> </td> 
+              <td> <input type="range" id="" min="0" max="100" value="50" onchange="changeEventHandler(event);"/></td> </tr>
+  </table>
+</form>
+</div-->
+
 <!--div id="ref-link">
-<a href=""> 
-</a>
+  <a href=""> 
+  </a>
 </div-->
 
 <canvas id="canvas" style="border: none;"></canvas>
@@ -85,13 +104,17 @@ class App {
         if ( !this.progDraw.progObj )
             return null;
         this.progDraw.inPos = this.progDraw.AttrI("inPos");
+        this.progDraw.inNV  = this.progDraw.AttrI("inNV");
+        this.progDraw.inCol = this.progDraw.AttrI("inCol");
         this.progDraw.inUV  = this.progDraw.AttrI("inUV");
         this.progDraw.invalid = true;
 
         this.bufQuad = new VertexBuffer(
             [ { data : [ -1, -1, 0, 1, -1, 0, 1, 1, 0, -1, 1, 0 ], attrSize : 3, attrLoc : this.progDraw.inPos },
-            { data : [0, 0, 1, 0, 1, 1, 0, 1], attrSize : 2, attrLoc : this.progDraw.inUV } ],
-            [ 0, 1, 2, 0, 2, 3 ] );
+              { data : [ 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1 ],  attrSize : 3, attrLoc : this.progDraw.inNV },
+              { data : [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], attrSize : 4, attrLoc : this.progDraw.inCol },
+              { data : [0, 0, 1, 0, 1, 1, 0, 1], attrSize : 2, attrLoc : this.progDraw.inUV } ],
+              [ 0, 1, 2, 0, 2, 3 ] );
 
         this.resize(); 
         
@@ -123,7 +146,8 @@ class App {
             this.progDraw.SetM44("u_textureMat44", Mat44.ident());
             this.progDraw.SetI1("u_texture", 0);
         }
-        this.progDraw.SetF2("u_vp_size", this.vp_size);
+        this.progDraw.SetF2("u_resolution", this.vp_size);
+        this.progDraw.SetF1("u_time", deltaMS);
         
         // bind the texture
         this.texture.bound = this.texture.bound || this.texture.bind( 0 );
@@ -285,21 +309,21 @@ class Texture {
 
 let Util = {
 fract : function( val ) { 
-return val - Math.trunc( val );
+  return val - Math.trunc( val );
 },
 angle : function( deltaTime, intervall ) {
-return this.fract( deltaTime / (1000*intervall) ) * 2.0 * Math.PI;
+  return this.fract( deltaTime / (1000*intervall) ) * 2.0 * Math.PI;
 },
 move : function( deltaTime, intervall, range ) {
-var pos = this.fract( deltaTime / (1000*intervall) ) * 2.0
-var pos = pos < 1.0 ? pos : (2.0-pos)
-return range[0] + (range[1] - range[0]) * pos;
+  var pos = this.fract( deltaTime / (1000*intervall) ) * 2.0
+  var pos = pos < 1.0 ? pos : (2.0-pos)
+  return range[0] + (range[1] - range[0]) * pos;
 },    
 ellipticalPosition : function( a, b, angRag ) {
-var a_b = a * a - b * b
-var ea = (a_b <= 0) ? 0 : Math.sqrt( a_b );
-var eb = (a_b >= 0) ? 0 : Math.sqrt( -a_b );
-return [ a * Math.sin( angRag ) - ea, b * Math.cos( angRag ) - eb, 0 ];
+  var a_b = a * a - b * b
+  var ea = (a_b <= 0) ? 0 : Math.sqrt( a_b );
+  var eb = (a_b >= 0) ? 0 : Math.sqrt( -a_b );
+  return [ a * Math.sin( angRag ) - ea, b * Math.cos( angRag ) - eb, 0 ];
 }
 }
 
@@ -307,23 +331,23 @@ Vec3 = {
 cross: function( a, b ) { return [ a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0], 0.0 ]; },
 dot: function( a, b ) { return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; },
 normalize: function( v ) {
-var len = Math.sqrt( v[0] * v[0] + v[1] * v[1] + v[2] * v[2] );
-return [ v[0] / len, v[1] / len, v[2] / len ];
+  var len = Math.sqrt( v[0] * v[0] + v[1] * v[1] + v[2] * v[2] );
+  return [ v[0] / len, v[1] / len, v[2] / len ];
 }
 }
 
 Mat44 = {
 ident: function() { return [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]; },
 rotateAxis: function(matA, angRad, axis) {
-var aMap = [ [1, 2], [2, 0], [0, 1] ];
-var a0 = aMap[axis][0], a1 = aMap[axis][1]; 
-var sinAng = Math.sin(angRad), cosAng = Math.cos(angRad);
-var matB = matA.slice(0);
-for ( var i = 0; i < 3; ++ i ) {
-    matB[a0*4+i] = matA[a0*4+i] * cosAng + matA[a1*4+i] * sinAng;
-    matB[a1*4+i] = matA[a0*4+i] * -sinAng + matA[a1*4+i] * cosAng;
-}
-return matB;
+  var aMap = [ [1, 2], [2, 0], [0, 1] ];
+  var a0 = aMap[axis][0], a1 = aMap[axis][1]; 
+  var sinAng = Math.sin(angRad), cosAng = Math.cos(angRad);
+  var matB = matA.slice(0);
+  for ( var i = 0; i < 3; ++ i ) {
+      matB[a0*4+i] = matA[a0*4+i] * cosAng + matA[a1*4+i] * sinAng;
+      matB[a1*4+i] = matA[a0*4+i] * -sinAng + matA[a1*4+i] * cosAng;
+  }
+  return matB;
 },
 rotate: function(matA, angRad, axis) {
     var s = Math.sin(-angRad), c = Math.cos(-angRad);
@@ -336,11 +360,11 @@ rotate: function(matA, angRad, axis) {
     return this.multiply(matA, matB);
 },
 multiply: function(matA, matB) {
-matC = this.ident();
-for (var i0=0; i0<4; ++i0 )
-    for (var i1=0; i1<4; ++i1 )
-        matC[i0*4+i1] = matB[i0*4+0] * matA[0*4+i1] + matB[i0*4+1] * matA[1*4+i1] + matB[i0*4+2] * matA[2*4+i1] + matB[i0*4+3] * matA[3*4+i1]  
-return matC;
+  matC = this.ident();
+  for (var i0=0; i0<4; ++i0 )
+      for (var i1=0; i1<4; ++i1 )
+          matC[i0*4+i1] = matB[i0*4+0] * matA[0*4+i1] + matB[i0*4+1] * matA[1*4+i1] + matB[i0*4+2] * matA[2*4+i1] + matB[i0*4+3] * matA[3*4+i1]  
+  return matC;
 }
 }
 
