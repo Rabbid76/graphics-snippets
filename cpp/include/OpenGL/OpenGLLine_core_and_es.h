@@ -16,7 +16,9 @@
 
 #include <Render_IDrawType.h>
 #include <Render_IDrawLine.h>
-#include <Render_IProgram.h>
+#include <Render_IBuffer.h>
+
+#include <OpenGLDataBuffer_std140.h>
 
 
 // class definitions
@@ -33,6 +35,9 @@ namespace OpenGL
 {
 
 
+class CPrimitiveOpenGL_core_and_es;
+
+
 /******************************************************************//**
 * \brief Namespace for drawing lines with the use of OpenGL.  
 * 
@@ -42,6 +47,7 @@ namespace OpenGL
 **********************************************************************/
 namespace Line
 {
+
 
 /******************************************************************//**
 * \brief Implementation of OpenGL line renderer,
@@ -60,11 +66,19 @@ class CLineOpenGL_core_and_es
 {
 public: 
 
-  CLineOpenGL_core_and_es( Render::TModelAndViewPtr view_data, size_t min_cache_elems );
+  using TProgramPtr = std::shared_ptr<CPrimitiveOpenGL_core_and_es>;
+
+  CLineOpenGL_core_and_es( size_t min_cache_elems );
   virtual ~CLineOpenGL_core_and_es();
+
+  const Render::Line::TStyle & LineStyle( void ) const { return _line_style; }
+  void LineStyle( const Render::Line::TStyle &style ) { _line_style = style; }
 
   //! Initialize the line renderer
   virtual bool Init( void ) override;
+  virtual bool Init( Render::TModelAndViewPtr mvp_data );
+  virtual bool Init( TMVPBufferPtr mvp_buffer );
+  virtual bool Init( TProgramPtr program );
 
   //! Notify the render that a sequence of successive lines will follow, that is not interrupted by any other drawing operation.
   //! This allows the render to do some performance optimizations and to prepare for the line rendering.
@@ -76,7 +90,6 @@ public:
 
   virtual Render::Line::IRender & SetColor( const Render::TColor & color )  override;
   virtual Render::Line::IRender & SetColor( const Render::TColor8 & color ) override;
-
   virtual Render::Line::IRender & SetStyle( const Render::Line::TStyle & style ) override;
   
   //! Draw a line sequence
@@ -99,36 +112,15 @@ public:
   virtual bool DrawSequence( size_t coords_size, const float *coords ) override;
   virtual bool DrawSequence( size_t coords_size, const double *coords ) override;
 
-protected:
-
-  //! Trace error message
-  virtual void Error( const std::string &kind, const std::string &message );
-
 private:
 
-  static const std::string     _line_vert_110;                             //!< default vertex shader for consecutive vertex attributes
-  static const std::string     _line_frag_110;                             //!< fragment shader for uniform colored lines 
-
-
-  Render::TModelAndViewPtr      _view_data;                                 //!< model view and projection, to be applied to the shader program
-  Render::Program::TProgramPtr  _line_prog;                                 //!< shader program for consecutive vertex attributes
-  int                           _line_color_loc;                            //!< uniform location of color  
-  int                           _line_case_loc;                             //!< uniform location of attribute case  
-  int                           _line_attrib_xyzw_inx;                      //!< attribute index of the vertex coordinate 
-  int                           _line_attrib_y_inx;                         //!< attribute index of the vertex separated y coordinate 
-                                                                            
-  bool                          _initilized{ false };                       //!< initialization flag of the object
-  bool                          _successive_drawing{ false };               //!< true: optimized successive drawing of lines is enabled
-  int                           _attribute_case{ 0 };                       //!< vertex attribute case for successive drawing of lines
-  Render::TColor                _line_color{ 1.0f };                        //!< uniform color of the pending lines
-  Render::Line::TStyle          _line_style;                                //!< line style parameters: line width and stippling
-                                                                            
-  bool                          _active_sequence{ false };                  //!< true: an draw sequence was started, but not finished yet
-  Render::TPrimitive            _squence_type{ Render::TPrimitive::NO_OF }; //!< primitive type pf the sequence
-  unsigned int                  _tuple_size{ 0 };                           //!< tuple size (2, 3 or 4) for a sequence
-  size_t                        _min_cache_elems{ 0 };                      //!< minimum element size of the sequence cache
-  size_t                        _sequence_size{ 0 };                        //!< current size of the sequence cache
-  std::vector<float>            _elem_cache;                                //!< the sequence cache - the tuple size of the cache elements is always 3 (x, y, z coordinate)
+  bool                    _initialized{ false };                      //!< initialization state of the object               
+  bool                    _successive_draw_started{ false };          //!< successive drawing was started by this renderer
+  size_t                  _min_buffer_size;                           //!< minimum size of the vertex buffer
+  TProgramPtr             _primitive_prog;                            //!< primitive render program
+  Render::Line::TStyle    _line_style;                                //!< line style parameters: line width and stippling               
+  Render::TPrimitive      _squence_type{ Render::TPrimitive::NO_OF }; //!< primitive type pf the sequence
+  Render::TVertexCache    _vertex_cache;                              //!< cache for vertex coordinates
 };
 
 

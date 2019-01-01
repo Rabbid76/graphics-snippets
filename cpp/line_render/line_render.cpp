@@ -275,12 +275,14 @@ void CWindow_Glfw::MainLoop ( void )
 void CWindow_Glfw::InitScene( void )
 {
   _line_1 = std::make_unique<OpenGL::Line::CLineOpenGL_1_00>();
-  _line_2 = std::make_unique<OpenGL::Line::CLineOpenGL_2_00>( 0 );
-  _line_3 = std::make_unique<OpenGL::Line::CLineOpenGL_core_and_es>( _view_data_ptr, 0 );
-
   _line_1->Init();
+  
+  _line_2 = std::make_unique<OpenGL::Line::CLineOpenGL_2_00>( 0 );
   _line_2->Init();
-  _line_3->Init();
+  
+  auto line_core = std::make_unique<OpenGL::Line::CLineOpenGL_core_and_es>( 0 );
+  line_core->Init( _view_data_ptr );
+  _line_3 = std::move( line_core );
 }
 
 

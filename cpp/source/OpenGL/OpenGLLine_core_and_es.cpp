@@ -14,7 +14,7 @@
 // includes
 
 #include <OpenGLLine_core_and_es.h>
-#include <OpenGLProgram.h>
+#include <OpenGLPrimitive_core_and_es.h>
 
 
 // OpenGL wrapper
@@ -54,44 +54,6 @@ namespace Line
 {
 
 
-// TODO : comments
-// The implementation is based on the OpenGL X.XX core mode specification [link] - line tipple etc.
-// Line stipple specification
-// TODO #version 420 core / #version 300 es
-
-// TODO get rid of matrix stack
-
-// TODO $$$ depth attenuation
-
-const std::string CLineOpenGL_core_and_es::_line_vert_110 = R"(
-#version 110
-
-attribute vec4  attr_xyzw;
-attribute float attr_y;
-
-uniform int u_attr_case;
-
-void main()
-{
-  vec4 vert_pos = u_attr_case == 0 ? attr_xyzw : vec4(attr_xyzw.x, attr_y, 0.0, 1.0);
-  gl_Position   = gl_ModelViewProjectionMatrix * vert_pos;
-  gl_ClipVertex = gl_Position;
-}
-)";
-
-
-const std::string CLineOpenGL_core_and_es::_line_frag_110 = R"(
-#version 110
-
-uniform vec4 u_color;
-
-void main()
-{
-  gl_FragColor = u_color;
-}
-)";
-
-
 /******************************************************************//**
 * \brief ctor  
 * 
@@ -100,11 +62,9 @@ void main()
 * \version 1.0
 **********************************************************************/
 CLineOpenGL_core_and_es::CLineOpenGL_core_and_es( 
-  Render::TModelAndViewPtr view_data,        //! I - view data provider (mode, view and projection)
-  size_t                   min_cache_elems ) //! I - size of the element cache
-  : _view_data( view_data )
-  , _min_cache_elems( min_cache_elems )
-  , _elem_cache( min_cache_elems, 0.0f )
+  size_t min_cache_elems ) //!< I - size of the element cache
+  : _min_buffer_size( min_cache_elems )
+  , _vertex_cache( min_cache_elems )
 {}
 
 
@@ -120,17 +80,19 @@ CLineOpenGL_core_and_es::~CLineOpenGL_core_and_es()
 
 
 /******************************************************************//**
-* \brief Trace error message.  
+* \brief Initialize the polygon renderer.  
 * 
 * \author  gernot
-* \date    2018-09-07
+* \date    2018-12-03
 * \version 1.0
 **********************************************************************/
-void CLineOpenGL_core_and_es::Error( 
-  const std::string &kind,     //!< in: message kind
-  const std::string &message ) //!< in: error message
+bool CLineOpenGL_core_and_es::Init( void )
 {
-  std::cout << kind << ": " << message;
+  if ( _initialized )
+    return true;
+
+  TProgramPtr prpgram;
+  return Init( prpgram );
 }
 
 
@@ -143,43 +105,69 @@ void CLineOpenGL_core_and_es::Error(
 * \date    2018-09-07
 * \version 1.0
 **********************************************************************/
-bool CLineOpenGL_core_and_es::Init( void )
+bool CLineOpenGL_core_and_es::Init( 
+  Render::TModelAndViewPtr mvp_data ) //!< I - model, view, projection and window data buffer 
 {
-  if ( _initilized )
+  if ( _initialized )
     return true;
-  _initilized = true;
+ 
+  TMVPBufferPtr mvp_buffer;
+  if ( mvp_data != nullptr )
+  {
+    static const size_t c_default_binding = 1; 
+    mvp_buffer = std::make_unique<CModelAndViewBuffer_std140>();
+    mvp_buffer->Init( c_default_binding, mvp_data );
+  }
 
-  std::string msg;
-
-
-  // compile shader objects
-
-  auto _line_vert_shader = std::make_shared<CShaderObject>( Render::Program::TShaderType::vertex );
-  *_line_vert_shader << _line_vert_110;
-  _line_vert_shader->Compile();
-  if ( _line_vert_shader->Verify( msg ) == false )
-    Error( "compile error", msg );
-
-  auto _line_frag_shader = std::make_shared<CShaderObject>( Render::Program::TShaderType::fragment );
-  *_line_frag_shader << _line_frag_110;
-   _line_frag_shader->Compile();
-  if ( _line_frag_shader->Verify( msg ) == false )
-    Error( "compile error", msg );
+  return Init( mvp_buffer );
+}
 
 
-  // link shader programs
+/******************************************************************//**
+* \brief Initialize the line renderer. 
+*
+* For the initialization a current and valid OpenGL context is required. 
+* 
+* \author  gernot
+* \date    2018-09-07
+* \version 1.0
+**********************************************************************/
+bool CLineOpenGL_core_and_es::Init( 
+  TMVPBufferPtr mvp_buffer ) //!< I - model, view, projection and window data buffer 
+{
+  if ( _initialized )
+    return true;
+ 
+  TProgramPtr prpgram;
+  if ( mvp_buffer != nullptr )
+  {
+    prpgram = std::make_unique<CPrimitiveOpenGL_core_and_es>();
+    prpgram->Init( _min_buffer_size, mvp_buffer );
+  }
 
-  _line_prog = std::make_shared<CShaderProgram>();
-  *_line_prog << _line_vert_shader << _line_frag_shader;
-  _line_prog->Link();
-  if ( _line_prog->Verify( msg ) == false )
-    Error( "link error", msg );
-  _line_color_loc       = glGetUniformLocation( (GLuint)_line_prog->ObjectHandle(), "u_color" );
-  _line_case_loc        = glGetUniformLocation( (GLuint)_line_prog->ObjectHandle(), "u_attr_case" );
-  _line_attrib_xyzw_inx = glGetAttribLocation(  (GLuint)_line_prog->ObjectHandle(), "attr_xyzw" );
-  _line_attrib_y_inx    = glGetAttribLocation(  (GLuint)_line_prog->ObjectHandle(), "attr_y" );
+  return Init( prpgram );
+}
 
-  return true;
+
+/******************************************************************//**
+* \brief Initialize the line renderer. 
+*
+* For the initialization a current and valid OpenGL context is required. 
+* 
+* \author  gernot
+* \date    2018-09-07
+* \version 1.0
+**********************************************************************/
+bool CLineOpenGL_core_and_es::Init( 
+  TProgramPtr program ) //!< I - shader program
+{
+  if ( _initialized )
+    return true;
+  _initialized = true;
+
+  _primitive_prog = program != nullptr ?  program : std::make_unique<CPrimitiveOpenGL_core_and_es>();
+  TMVPBufferPtr mvp_buffer;
+  return _primitive_prog->Init( _min_buffer_size, mvp_buffer );
 }
 
 
@@ -197,29 +185,21 @@ bool CLineOpenGL_core_and_es::Init( void )
 **********************************************************************/
 bool CLineOpenGL_core_and_es::StartSuccessiveLineDrawings( void )
 {
-  if ( _active_sequence )
+  if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() )
   {
-    assert( false );
+    ASSERT( false );
     return false;
   }
-  if ( _successive_drawing )
-    return true;
 
-  // activate the shader program
-  _line_prog->Use();
+  if ( _successive_draw_started )
+    return false;
 
-  // initialize uniforms
-  glUniform4fv( _line_color_loc, 1, _line_color.data() );
-  glUniform1i(  _line_case_loc,  0 );
-
-  // TODO $$$ buffer / vertex array object
-
-  // enable and disable vertex attributes
-  glEnableVertexAttribArray( _line_attrib_xyzw_inx );
-  glDisableVertexAttribArray( _line_attrib_y_inx );
-
-  _attribute_case     = 0;
-  _successive_drawing = true;
+  if ( _primitive_prog->SuccessiveDrawing() == false )
+  {
+    _primitive_prog->StartSuccessivePrimitiveDrawings(); 
+    _successive_draw_started = true;
+  }
+  
   return true;
 }
 
@@ -234,25 +214,18 @@ bool CLineOpenGL_core_and_es::StartSuccessiveLineDrawings( void )
 **********************************************************************/
 bool CLineOpenGL_core_and_es::FinishSuccessiveLineDrawings( void )
 {
-  if ( _active_sequence )
+  if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() )
   {
-    assert( false );
+    ASSERT( false );
     return false;
   }
-  if ( _successive_drawing == false )
-    return true;
+  
+  if ( _successive_draw_started )
+  {
+    _primitive_prog->FinishSuccessivePrimitiveDrawings();
+    _successive_draw_started = false;
+  }
 
-  // TODO $$$ buffer / vertex array object
-
-  // disable vertex attributes
-  glDisableVertexAttribArray( _line_attrib_xyzw_inx );
-  glDisableVertexAttribArray( _line_attrib_y_inx );
-
-  // activate the shader program 0
-  glUseProgram( 0 );
-
-  _attribute_case     = 0;
-  _successive_drawing = false;
   return true;
 }
 
@@ -267,11 +240,8 @@ bool CLineOpenGL_core_and_es::FinishSuccessiveLineDrawings( void )
 Render::Line::IRender & CLineOpenGL_core_and_es::SetColor( 
   const Render::TColor & color ) //!< in: new color
 { 
-  _line_color = color; 
-
-  if ( _successive_drawing )
-    glUniform4fv( _line_color_loc, 1, _line_color.data() );
-  
+  if ( _primitive_prog != nullptr )
+    _primitive_prog->SetColor( color );
   return *this; 
 }
 
@@ -286,11 +256,8 @@ Render::Line::IRender & CLineOpenGL_core_and_es::SetColor(
 Render::Line::IRender & CLineOpenGL_core_and_es::SetColor( 
   const Render::TColor8 & color ) //!< in: new color
 { 
-  _line_color = Render::toColor( color );
-
-  if ( _successive_drawing )
-    glUniform4fv( _line_color_loc, 1, _line_color.data() );
-  
+  if ( _primitive_prog != nullptr )
+    _primitive_prog->SetColor( color );
   return *this; 
 }
 
@@ -309,21 +276,20 @@ Render::Line::IRender & CLineOpenGL_core_and_es::SetColor(
 Render::Line::IRender & CLineOpenGL_core_and_es::SetStyle( 
   const Render::Line::TStyle & style )
 {
-  // TODO $$$ in sahder
-
   //! This is impossible, while an drawing sequence is active.  
   //! The only possible operations within a `glBegin`/`glEnd` sequence are those operations,
   //! which directly change fixed function attributes or specify a new vertex coordinate.  
   //! See [`glBegin`](https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glBegin.xml)
-  if ( _active_sequence )
+  if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() )
   {
     assert( false );
     return *this;
   }
-
-  // TODO $$$ set depth attenuation
+  _primitive_prog->SetDeptAttenuation( _line_style._depth_attenuation );
 
   _line_style = style;
+
+  // TODO $$$ implement in shader stippling algorithm and line thickness
 
   // set line width
   glLineWidth( style._width );
@@ -362,41 +328,28 @@ bool CLineOpenGL_core_and_es::Draw(
   const float       *coords )        //!< in: pointer to an array of the vertex coordinates
 { 
   // A new sequence can't be started within an active sequence
-  if ( _active_sequence )
+  if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() )
   {
     ASSERT( false );
     return false;
   }
-  ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::line );
-  ASSERT( tuple_size == 2 || tuple_size == 3 || tuple_size == 4 );
+  ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::polygon );
+  auto &prog = *_primitive_prog;
 
   // activate program, update uniforms and enable vertex attributes
-  if ( _successive_drawing == false )
-  {
-    _line_prog->Use();
-   
-    glUniform4fv( _line_color_loc, 1, _line_color.data() );
-    glUniform1i(  _line_case_loc,  0 );
-    glEnableVertexAttribArray( _line_attrib_xyzw_inx );
-    glDisableVertexAttribArray( _line_attrib_y_inx );
-  }
-  else if ( _attribute_case != 0 )
-  {
-    glUniform1i(  _line_case_loc,  0 );
-    glDisableVertexAttribArray( _line_attrib_y_inx );
-    _attribute_case = 0;
-  }
+  Render::TVA va_type = tuple_size == 4 ? Render::b0_xyzw : (tuple_size == 2 ? Render::b0_xy : Render::b0_xyz);
+  prog.ActivateProgram( va_type );
 
   // set vertex attribute pointer and draw the line
-  glVertexAttribPointer( _line_attrib_xyzw_inx, tuple_size, GL_FLOAT, GL_FALSE, 0, coords );
+  if ( auto *buffer = prog.DrawBuffer() )
+    buffer->UpdateVB( 0, tuple_size*sizeof(float), coords_size, coords );
+  
+  // TODO $$$ append to cache and delays the drawing until it is absolutely necessary.
+  //          dependent on VAO specification and `_successive_draw_started`
   glDrawArrays( OpenGL::Primitive( primitive_type ), 0, (GLsizei)(coords_size / tuple_size) );
   
   // disable vertex attributes and activate program 0
-  if ( _successive_drawing == false )
-  {
-    glDisableVertexAttribArray( _line_attrib_xyzw_inx );
-    glUseProgram( 0 );
-  }
+  prog.DeactivateProgram();
 
   return true;
 }
@@ -415,42 +368,29 @@ bool CLineOpenGL_core_and_es::Draw(
   size_t             coords_size,    //!< in: number of elements (size) of the coordinate array - `coords_size` = `tuple_size` * "number of coordinates" 
   const double      *coords )        //!< in: pointer to an array of the vertex coordinates
 {
-   // A new sequence can't be started within an active sequence
-  if ( _active_sequence )
+  // A new sequence can't be started within an active sequence
+  if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() )
   {
     ASSERT( false );
     return false;
   }
-  ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::line );
-  ASSERT( tuple_size == 2 || tuple_size == 3 || tuple_size == 4 );
+  ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::polygon );
+  auto &prog = *_primitive_prog;
 
   // activate program, update uniforms and enable vertex attributes
-  if ( _successive_drawing == false )
-  {
-    _line_prog->Use();
-   
-    glUniform4fv( _line_color_loc, 1, _line_color.data() );
-    glUniform1i(  _line_case_loc,  0 );
-    glEnableVertexAttribArray( _line_attrib_xyzw_inx );
-    glDisableVertexAttribArray( _line_attrib_y_inx );
-  }
-  else if ( _attribute_case != 0 )
-  {
-    glUniform1i(  _line_case_loc,  0 );
-    glDisableVertexAttribArray( _line_attrib_y_inx );
-    _attribute_case = 0;
-  }
+  Render::TVA va_type = tuple_size == 4 ? Render::d__b0_xyzw : (tuple_size == 2 ? Render::d__b0_xy : Render::d__b0_xyz);
+  prog.ActivateProgram( va_type );
 
   // set vertex attribute pointer and draw the line
-  glVertexAttribPointer( _line_attrib_xyzw_inx, tuple_size, GL_DOUBLE, GL_FALSE, 0, coords );
+  if ( auto *buffer = prog.DrawBuffer() )
+    buffer->UpdateVB( 0, 3, coords_size*sizeof(double), coords );
+
+  // TODO $$$ append to cache and delays the drawing until it is absolutely necessary.
+  //          dependent on VAO specification and `_successive_draw_started`
   glDrawArrays( OpenGL::Primitive( primitive_type ), 0, (GLsizei)(coords_size / tuple_size) );
  
   // disable vertex attributes and activate program 0
-  if ( _successive_drawing == false )
-  {
-    glDisableVertexAttribArray( _line_attrib_xyzw_inx );
-    glUseProgram( 0 );
-  }
+  prog.DeactivateProgram();
 
   return true;
 }
@@ -470,42 +410,30 @@ bool CLineOpenGL_core_and_es::Draw(
   const float       *y_coords )      //!< int pointer to an array of the y coordinates
 {
   // A new sequence can't be started within an active sequence
-  if ( _active_sequence )
+  if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() )
   {
     ASSERT( false );
     return false;
   }
-  ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::line );
+  ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::polygon );
+  auto &prog = *_primitive_prog;
 
   // activate program, update uniforms and enable vertex attributes
-  if ( _successive_drawing == false )
-  {
-    _line_prog->Use();
-   
-    glUniform4fv( _line_color_loc, 1, _line_color.data() );
-    glUniform1i(  _line_case_loc,  1 );
-    glEnableVertexAttribArray( _line_attrib_xyzw_inx );
-    glEnableVertexAttribArray( _line_attrib_y_inx );
-  }
-  else if ( _attribute_case == 0 )
-  {
-    glUniform1i(  _line_case_loc,  1 );
-    glEnableVertexAttribArray( _line_attrib_y_inx );
-    _attribute_case = 1;
-  }
+  prog.ActivateProgram( Render::b0_x__b1_y );
 
   // set vertex attribute pointers and draw the line
-  glVertexAttribPointer( _line_attrib_xyzw_inx, 1, GL_FLOAT, GL_FALSE, 0, x_coords );
-  glVertexAttribPointer( _line_attrib_y_inx, 1, GL_FLOAT, GL_FALSE, 0, y_coords );
+  if ( auto *buffer = prog.DrawBuffer() )
+  {
+    buffer->UpdateVB( 0, sizeof(float), no_of_coords, x_coords );
+    buffer->UpdateVB( 1, sizeof(float), no_of_coords, y_coords );
+  }
+
+  // TODO $$$ append to cache and delays the drawing until it is absolutely necessary.
+  //          dependent on VAO specification and `_successive_draw_started`
   glDrawArrays( OpenGL::Primitive( primitive_type ), 0, (GLsizei)no_of_coords );
    
   // disable vertex attributes and activate program 0
-  if ( _successive_drawing == false )
-  {
-    glDisableVertexAttribArray( _line_attrib_xyzw_inx );
-    glDisableVertexAttribArray( _line_attrib_y_inx );
-    glUseProgram( 0 );
-  }
+  prog.DeactivateProgram();
 
   return true;
 }
@@ -525,42 +453,30 @@ bool CLineOpenGL_core_and_es::Draw(
   const double      *y_coords )      //!< int pointer to an array of the y coordinates
 {
   // A new sequence can't be started within an active sequence
-  if ( _active_sequence )
+  if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() )
   {
     ASSERT( false );
     return false;
   }
-  ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::line );
+  ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::polygon );
+  auto &prog = *_primitive_prog;
 
   // activate program, update uniforms and enable vertex attributes
-  if ( _successive_drawing == false )
-  {
-    _line_prog->Use();
-   
-    glUniform4fv( _line_color_loc, 1, _line_color.data() );
-    glUniform1i(  _line_case_loc,  1 );
-    glEnableVertexAttribArray( _line_attrib_xyzw_inx );
-    glEnableVertexAttribArray( _line_attrib_y_inx );
-  }
-  else if ( _attribute_case == 0 )
-  {
-    glUniform1i(  _line_case_loc,  1 );
-    glEnableVertexAttribArray( _line_attrib_y_inx );
-    _attribute_case = 1;
-  }
+  prog.ActivateProgram( Render::d__b0_x__b1_y );
 
   // set vertex attribute pointers and draw the line
-  glVertexAttribPointer( _line_attrib_xyzw_inx, 1, GL_DOUBLE, GL_FALSE, 0, x_coords );
-  glVertexAttribPointer( _line_attrib_y_inx, 1, GL_DOUBLE, GL_FALSE, 0, y_coords );
+  if ( auto *buffer = prog.DrawBuffer() )
+  {
+    buffer->UpdateVB( 0, sizeof(double), no_of_coords, x_coords );
+    buffer->UpdateVB( 1, sizeof(double), no_of_coords, y_coords );
+  }
+
+  // TODO $$$ append to cache and delays the drawing until it is absolutely necessary.
+  //          dependent on VAO specification and `_successive_draw_started`
   glDrawArrays( OpenGL::Primitive( primitive_type ), 0, (GLsizei)no_of_coords );
 
   // disable vertex attributes and activate program 0
-  if ( _successive_drawing == false )
-  {
-    glDisableVertexAttribArray( _line_attrib_xyzw_inx );
-    glDisableVertexAttribArray( _line_attrib_y_inx );
-    glUseProgram( 0 );
-  }
+  prog.DeactivateProgram();
 
   return true;
 }
@@ -578,16 +494,18 @@ bool CLineOpenGL_core_and_es::StartSequence(
   unsigned int       tuple_size )    //!< in: kind of the coordinates - 2: 2D (x, y), 3: 3D (x, y, z), 4: homogeneous (x, y, z, w)   
 {
   // A new sequence can't be started within an active sequence
-  if ( _active_sequence )
+  if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() )
   {
     ASSERT( false );
     return false;
   }
-  ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::line );
+  ASSERT( Render::BasePrimitive(primitive_type) == Render::TBasePrimitive::polygon );
+  auto &prog = *_primitive_prog;
   
-  _active_sequence = true;
-  _squence_type    = primitive_type;
-  _tuple_size      = tuple_size;
+  prog.StartSequence();
+  _vertex_cache.TupleSize( tuple_size );
+  _squence_type = primitive_type;
+
   return true;
 }
   
@@ -602,47 +520,31 @@ bool CLineOpenGL_core_and_es::StartSequence(
 bool CLineOpenGL_core_and_es::EndSequence( void )
 {
   // A sequence can't be completed if there is no active sequence
-  if ( _active_sequence == false )
+  if ( _primitive_prog == nullptr || _primitive_prog->EndSequence() == false )
   {
     ASSERT( false );
     return false;
   }
+  auto &prog = *_primitive_prog;
 
   // draw the line
 
   // activate program, update uniforms and enable vertex attributes
-  if ( _successive_drawing == false )
-  {
-    _line_prog->Use();
-   
-    glUniform4fv( _line_color_loc, 1, _line_color.data() );
-    glUniform1i(  _line_case_loc,  0 );
-    glEnableVertexAttribArray( _line_attrib_xyzw_inx );
-    glDisableVertexAttribArray( _line_attrib_y_inx );
-  }
-  else if ( _attribute_case != 0 )
-  {
-    glUniform1i(  _line_case_loc,  0 );
-    glDisableVertexAttribArray( _line_attrib_y_inx );
-    _attribute_case = 0;
-  }
-
-  // TODO vertex array object
+  GLsizei tuple_size = (GLsizei)_vertex_cache.TupleSize();
+  Render::TVA va_type = tuple_size == 4 ? Render::b0_xyzw : (tuple_size == 2 ? Render::b0_xy : Render::b0_xyz);
+  prog.ActivateProgram( va_type );
 
   //  set vertex attribute pointer and draw the line
-  glVertexAttribPointer( _line_attrib_xyzw_inx, _tuple_size, GL_FLOAT, GL_FALSE, 0, _elem_cache.data() );
-  glDrawArrays( OpenGL::Primitive( _squence_type ), 0, (GLsizei)(_sequence_size / _tuple_size) );
+  if ( auto *buffer = prog.DrawBuffer() )
+    buffer->UpdateVB( 0, tuple_size*sizeof(float), _vertex_cache.SequenceSize(),_vertex_cache.VertexData() );
+
+  // TODO $$$ append to cache and delays the drawing until it is absolutely necessary.
+  //          dependent on VAO specification and `_successive_draw_started`
+  glDrawArrays( OpenGL::Primitive( _squence_type ), 0, (GLsizei)(_vertex_cache.SequenceSize() / tuple_size) );
   
   // disable vertex attributes and activate program 0
-  if ( _successive_drawing == false )
-  {
-    glDisableVertexAttribArray( _line_attrib_xyzw_inx );
-    glUseProgram( 0 );
-  }
-
-  _active_sequence = false;
-  _tuple_size      = 0;
-  _sequence_size   = 0;
+  prog.DeactivateProgram();
+  _vertex_cache.Reset();
   
   return true;
 }
@@ -661,25 +563,14 @@ bool CLineOpenGL_core_and_es::DrawSequence(
   float z ) //!< in: z coordinate
 {
   // A sequence has to be active, to specify a new vertex coordinate
-  if ( _active_sequence == false )
+  if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() == false )
   {
     ASSERT( false );
     return false;
   }
 
-  // reserve the cache
-  if ( _elem_cache.size() < _sequence_size + 3 )
-    _elem_cache.resize( _elem_cache.size() + std::max((size_t)3, _min_cache_elems) );
-
-  // add the vertex coordinate to the cache
-
-  _elem_cache.data()[_sequence_size++] = x;
-  _elem_cache.data()[_sequence_size++] = y;
-  if ( _tuple_size >= 3 )
-    _elem_cache.data()[_sequence_size++] = z;
-  if ( _tuple_size == 4 )
-    _elem_cache.data()[_sequence_size++] = 1.0f;
-
+  // add vertex coordinate to cache
+  _vertex_cache.Add( x, y, z );
   return true;
 }
 
@@ -697,25 +588,14 @@ bool CLineOpenGL_core_and_es::DrawSequence(
   double z ) //!< in: z coordinate
 {
   // A sequence has to be active, to specify a new vertex coordinate
-  if ( _active_sequence == false )
+  if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() == false )
   {
     ASSERT( false );
     return false;
   }
 
-  // reserve the cache
-  if ( _elem_cache.size() < _sequence_size + 3 )
-    _elem_cache.resize( _elem_cache.size() + std::max((size_t)3, _min_cache_elems) );
-
-  // add the vertex coordinate to the cache
-
-  _elem_cache.data()[_sequence_size++] = (float)x;
-  _elem_cache.data()[_sequence_size++] = (float)y;
-  if ( _tuple_size >= 3 )
-    _elem_cache.data()[_sequence_size++] = (float)z;
-  if ( _tuple_size == 4 )
-    _elem_cache.data()[_sequence_size++] = 1.0f;
-
+  // add vertex coordinate to cache
+  _vertex_cache.Add( x, y, z );
   return true;
 }
   
@@ -728,25 +608,18 @@ bool CLineOpenGL_core_and_es::DrawSequence(
 * \version 1.0
 **********************************************************************/
 bool CLineOpenGL_core_and_es::DrawSequence( 
-  size_t             coords_size, //!< in: number of elements (size) of the coordinate array - `coords_size` = `tuple_size` * "number of coordinates" 
-  const float       *coords )     //!< in: pointer to an array of the vertex coordinates
+  size_t       coords_size, //!< in: number of elements (size) of the coordinate array - `coords_size` = `tuple_size` * "number of coordinates" 
+  const float *coords )     //!< in: pointer to an array of the vertex coordinates
 {
   // A sequence has to be active, to specify new vertex coordinates
-  if ( _active_sequence == false )
+  if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() == false )
   {
     ASSERT( false );
     return false;
   }
 
-  // reserve the cache
-  if ( _elem_cache.size() < _sequence_size + coords_size )
-    _elem_cache.resize( _elem_cache.size() + std::max(coords_size, _min_cache_elems) );
-
-  // add the vertex coordinate to the cache
-
-  std::memcpy( _elem_cache.data() + _sequence_size, coords, coords_size * sizeof( float ) );
-  _sequence_size += coords_size;
-  
+  // add the vertex coordinates to the cache
+  _vertex_cache.Add( coords_size, coords );
   return true;
 }
 
@@ -759,27 +632,18 @@ bool CLineOpenGL_core_and_es::DrawSequence(
 * \version 1.0
 **********************************************************************/
 bool CLineOpenGL_core_and_es::DrawSequence( 
-  size_t             coords_size, //!< in: number of elements (size) of the coordinate array - `coords_size` = `tuple_size` * "number of coordinates" 
-  const double      *coords )     //!< in: pointer to an array of the vertex coordinates
+  size_t        coords_size, //!< in: number of elements (size) of the coordinate array - `coords_size` = `tuple_size` * "number of coordinates" 
+  const double *coords )     //!< in: pointer to an array of the vertex coordinates
 {
   // A sequence has to be active, to specify new vertex coordinates
-  if ( _active_sequence == false )
+  if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() == false )
   {
     ASSERT( false );
     return false;
   }
-
-  // reserve the cache
-  if ( _elem_cache.size() < _sequence_size + coords_size )
-    _elem_cache.resize( _elem_cache.size() + std::max(coords_size, _min_cache_elems) );
-
-  // add the vertex coordinate to the cache
-
-  float *cache_ptr = _elem_cache.data() + _sequence_size;
-  for ( const double *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr ++, cache_ptr ++ )
-    *cache_ptr = (float)(*ptr);
-  _sequence_size += coords_size;
-
+ 
+  // add the vertex coordinates to the cache
+  _vertex_cache.Add( coords_size, coords );
   return true;
 }
 

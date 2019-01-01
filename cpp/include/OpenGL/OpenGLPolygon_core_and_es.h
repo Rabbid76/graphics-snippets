@@ -86,7 +86,7 @@ public:
   //! Not implemented (Software OpenGL).
   virtual bool StartSuccessivePolygonDrawings( void ) override;
 
- //! Notify the renderer that a sequence of polygons has been finished, and that the internal states have to be restored.
+  //! Notify the renderer that a sequence of polygons has been finished, and that the internal states have to be restored.
   //!
   //! Not implemented (Software OpenGL).
   virtual bool FinishSuccessivePolygonDrawings( void ) override;
