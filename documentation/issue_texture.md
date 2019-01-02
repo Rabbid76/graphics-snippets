@@ -3,7 +3,11 @@
 
 - [Texture and Sampler - Common mistakes and issues](#texture-and-sampler---common-mistakes-and-issues)
   - [Load Texture](#load-texture)
-  - [Texture Unit](#texture-unit)
+    - [[glTexImage2D 'target is not valid'](https://stackoverflow.com/questions/48196668/glteximage2d-target-is-not-valid/48196727#48196727)](#glteximage2d-target-is-not-validhttpsstackoverflowcomquestions48196668glteximage2d-target-is-not-valid4819672748196727)
+    - [[OpenGL 3.2 Why am I getting INVALID_ENUM error for glTexStorage3D?](https://stackoverflow.com/questions/49827961/opengl-3-2-why-am-i-getting-invalid-enum-error-for-gltexstorage3d/49828443#49828443)](#opengl-32-why-am-i-getting-invalid_enum-error-for-gltexstorage3dhttpsstackoverflowcomquestions49827961opengl-3-2-why-am-i-getting-invalid-enum-error-for-gltexstorage3d4982844349828443)
+    - [[How to load a bmp on GLUT to use it as a texture?](https://stackoverflow.com/questions/12518111/how-to-load-a-bmp-on-glut-to-use-it-as-a-texture/50641676#50641676)](#how-to-load-a-bmp-on-glut-to-use-it-as-a-texturehttpsstackoverflowcomquestions12518111how-to-load-a-bmp-on-glut-to-use-it-as-a-texture5064167650641676)
+    - [[OpenGL Texture Loading issue with images that Crossed each other](https://stackoverflow.com/questions/53051066/opengl-texture-loading-issue-with-images-that-crossed-each-other/53051516#53051516)](#opengl-texture-loading-issue-with-images-that-crossed-each-otherhttpsstackoverflowcomquestions53051066opengl-texture-loading-issue-with-images-that-crossed-each-other5305151653051516)
+  - [Texture unit and texture binding](#texture-unit-and-texture-binding)
   - [Texture Coordinates](#texture-coordinates)
   - [Texture rotate and scale](#texture-rotate-and-scale)
   - [UV wrapping](#uv-wrapping)
@@ -40,7 +44,9 @@
 
 ## Load Texture
 
-**[glTexImage2D 'target is not valid'](https://stackoverflow.com/questions/48196668/glteximage2d-target-is-not-valid/48196727#48196727)** [C++]  
+### [glTexImage2D 'target is not valid'](https://stackoverflow.com/questions/48196668/glteximage2d-target-is-not-valid/48196727#48196727)
+
+[C++]
 
 The fist parameter of [`glTexImage2D`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexImage2D.xhtml) is the `target`, which must be `GL_TEXTURE_2D`, `GL_PROXY_TEXTURE_2D`, `GL_TEXTURE_1D_ARRAY` [...].  
 [`glTexImage2D`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexImage2D.xhtml) specifies the two-dimensional texture for the texture object that is bound to the current [Texture unit](https://www.khronos.org/opengl/wiki/Texture#Texture_image_units).
@@ -53,17 +59,126 @@ See [OpenGL 4.6 core profile specification - 8.5. TEXTURE IMAGE SPECIFICATION, p
 >
 >is used to specify a two-dimensional texture image. target must be one of `TEXTURE_2D` for a two-dimensional texture, `TEXTURE_1D_ARRAY` for a onedimensional array texture, `TEXTURE_RECTANGLE` for a rectangle texture, or one of the cube map face targets from table [...]
 
-[OpenGL 3.2 Why am I getting INVALID_ENUM error for glTexStorage3D?](https://stackoverflow.com/questions/49827961/opengl-3-2-why-am-i-getting-invalid-enum-error-for-gltexstorage3d/49828443#49828443)
+### [OpenGL 3.2 Why am I getting INVALID_ENUM error for glTexStorage3D?](https://stackoverflow.com/questions/49827961/opengl-3-2-why-am-i-getting-invalid-enum-error-for-gltexstorage3d/49828443#49828443)
 
-[How to load a bmp on GLUT to use it as a texture?](https://stackoverflow.com/questions/12518111/how-to-load-a-bmp-on-glut-to-use-it-as-a-texture/50641676#50641676)  
-[OpenGL Texture Loading issue with images that Crossed each other](https://stackoverflow.com/questions/53051066/opengl-texture-loading-issue-with-images-that-crossed-each-other/53051516#53051516)  
+[C++]
+
+`GL_RGBA` is not a valid enum constant for the the 3rd paramter of [`glTexStorage3D`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexStorage3D.xhtml).
+
+[OpenGL 4.6 API Core Profile Specification; 8.19. IMMUTABLE-FORMAT TEXTURE IMAGES; page 272](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf):
+
+> The `TexStorage*` commands specify properties of the texture object bound to the target parameter of each command.  
+> [...]  
+>
+> Errors  
+> An `INVALID_ENUM` error is generated if internalformat is one of the **unsized base internal formats** listed in table 8.11.
+
+### [How to load a bmp on GLUT to use it as a texture?](https://stackoverflow.com/questions/12518111/how-to-load-a-bmp-on-glut-to-use-it-as-a-texture/50641676#50641676)
+
+[C++] [GLUT]
+
+A simple solution would be to use [STB library](https://stb.handmade.network/), which can be found at [GitHub - nothings/stb](https://github.com/nothings/stb).
+
+All what is needed is one source file, the header file "stb_image.h".
+
+Include the header file and enable image reading by the setting the preprocessor define `STB_IMAGE IMPLEMENTATION`: 
+
+```cpp
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+```
+
+The image file can be read by the function `stbi_load`:
+
+```cpp
+const char *filename = .....; // path and filename
+int         req_channels = 3; // 3 color channels of BMP-file   
+
+int width = 0, height = 0, channels = 0;
+stbi_uc *image = stbi_load( filename, &width, &height, &channels, 3 );
+```
+
+When the image is loaded to a texture object, then [`GL_UNPACK_ALIGNMENT`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml) has to be set to 1,
+because the length of one line of an BMP-file is aligned to 4.  
+After loading the image, the memory on the can be freed by `stbi_image_free`:  
+
+```cpp
+GLuint texture_obj = 0;
+if ( image != nullptr )
+{
+    glGenTextures(1, &texture_obj);
+    glBindTexture(GL_TEXTURE_2D, texture_obj);
+  
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 4); // default
+
+    stbi_image_free( image );
+}
+```
+
+### [OpenGL Texture Loading issue with images that Crossed each other](https://stackoverflow.com/questions/53051066/opengl-texture-loading-issue-with-images-that-crossed-each-other/53051516#53051516)
+
+[C]
+
+A [Windows Bitmap](https://de.wikipedia.org/wiki/Windows_Bitmap) file has a file header of 54 bytes. I this header is the format of the file encoded.
 
 ---
 
-## Texture Unit
+## Texture unit and texture binding
 
-[Texture units overlap? Rendered the wrong texture](https://stackoverflow.com/questions/52657167/texture-units-overlap-rendered-the-wrong-texture/52673057#52673057)  
-[At what point is the cube drawn?](https://stackoverflow.com/questions/52678333/at-what-point-is-the-cube-drawn/52678886#52678886)  
+[Texture units overlap? Rendered the wrong texture](https://stackoverflow.com/questions/52657167/texture-units-overlap-rendered-the-wrong-texture/52673057#52673057) [C++]  
+[At what point is the cube drawn?](https://stackoverflow.com/questions/52678333/at-what-point-is-the-cube-drawn/52678886#52678886) [C++]  
+
+In your code there is a misunderstanding, how [`glUniform1i`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glUniform.xhtml) has to be used. If a values is assigned to a uniform, the the uniform has to be identified by the uniform location index. See [Uniform (GLSL)](https://www.khronos.org/opengl/wiki/Uniform_(GLSL))  
+
+The fist parameter of [`glUniform1i`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glUniform.xhtml) has to be the location of the uniform and not the named texture object.
+
+The location of a uniform can be set explicit, in shader by a [Layout Qualifier](https://www.khronos.org/opengl/wiki/Layout_Qualifier_(GLSL)#Program_separation_linkage)
+
+e.g.
+
+```glsl
+layout(location = 7) uniform sampler2D u_gloss;
+```
+
+```cpp
+initTexture(2, m_glossMapTex, "images/gloss.png");
+glUniform1i(7, 2); // uniform location 7
+```
+
+If the location of the uniform is not set by a layout qualifier, then the uniform location is set automatically when the program is linked. You can ask for this location by [`glGetUniformLocation`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGetUniformLocation.xhtml):
+
+e.g.
+
+```glsl
+uniform sampler2D u_texture;
+```
+
+```cpp
+GLuint program_obj = ... ;
+GLint tex_location = glGetUniformLocation(program_obj , "u_texture");
+
+GLuint tex_obj_A = ... ;
+GLuint tex_obj_B = ... ;
+
+int unit_tex0 = 0;
+int unit_tex1 = 1;
+
+glActiveTexture(GL_TEXTURE0 + unit_tex0);
+glBindTexture(GL_TEXTURE_2D, tex_obj_A);
+glActiveTexture(GL_TEXTURE0 + unit_tex1);
+glBindTexture(GL_TEXTURE_2D, tex_obj_B);
+```
+
+Since GLSL version 4.2 this can be done in the fragment shader by specifying binding points - See [OpenGL Shading Language 4.20 Specification - 4.4.4 Opaque-Uniform Layout Qualifiers; page 60](https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.4.20.pdf):
+
+```glsl
+#version 420
+
+layout (binding = 0) uniform sampler2D u_texture0;
+layout (binding = 1) uniform sampler2D u_texture1;
+```
 
 ---
 
@@ -458,5 +573,6 @@ Also, the following other formats must be supported for both textures and render
 
 [WebGL texImage2D parameters](https://stackoverflow.com/questions/53899162/webgl-teximage2d-parameters/53899276#53899276)  
 
-
-  [C++]: https://stackoverflow.com/search?q=user:5577765+[c%2b%2b]
+  [C++]: https://stackoverflow.com/questions/tagged/c%2b%2b
+  [C]: https://stackoverflow.com/questions/tagged/c
+  [GLUT]: https://stackoverflow.com/questions/tagged/glut
