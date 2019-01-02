@@ -1,3 +1,14 @@
+<!-- TOC -->
+
+- [Transformation of the model](#transformation-of-the-model)
+  - [Rotation matrix](#rotation-matrix)
+  - [Euler angles](#euler-angles)
+  - [Quaternion](#quaternion)
+    - [Rotate by quaternion](#rotate-by-quaternion)
+  - [Matrix calculus](#matrix-calculus)
+
+<!-- /TOC -->
+
 # Transformation of the model
 
 ## Rotation matrix

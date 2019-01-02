@@ -1,3 +1,13 @@
+<!-- TOC -->
+
+- [Creating geometry using a geometry shader](#creating-geometry-using-a-geometry-shader)
+    - [Vertex shader](#vertex-shader)
+    - [Geometry shader](#geometry-shader)
+    - [Fragment shader](#fragment-shader)
+    - [Pyhton script](#pyhton-script)
+
+<!-- /TOC -->
+
 # Creating geometry using a geometry shader
 
 A simple OGL 4.0 GLSL shader program that shows the use of geometry shaders.

@@ -1,3 +1,11 @@
+<!-- TOC -->
+
+- [Intersection](#intersection)
+  - [Intersection of 2 lines (2 dimensional)](#intersection-of-2-lines-2-dimensional)
+  - [Intersection of a line and a plane](#intersection-of-a-line-and-a-plane)
+    - [Intersection of the Line of Sight and the Viewport](#intersection-of-the-line-of-sight-and-the-viewport)
+
+<!-- /TOC -->
 
 # Intersection
 

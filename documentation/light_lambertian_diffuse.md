@@ -1,4 +1,9 @@
+<!-- TOC -->
 
+- [Lambertian reflectance model](#lambertian-reflectance-model)
+  - [How it works](#how-it-works)
+
+<!-- /TOC -->
 
 # Lambertian reflectance model
 

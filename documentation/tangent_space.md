@@ -1,3 +1,17 @@
+<!-- TOC -->
+
+- [Tangent space](#tangent-space)
+  - [Relation system](#relation-system)
+  - [Tangent and Binormal](#tangent-and-binormal)
+    - [Precomputed tangent](#precomputed-tangent)
+    - [Calculating the Tangent in the Fragment Shader](#calculating-the-tangent-in-the-fragment-shader)
+    - [Calculating the Tangent in a Geometry or Tesselation Shader](#calculating-the-tangent-in-a-geometry-or-tesselation-shader)
+  - [Tangent space matrix](#tangent-space-matrix)
+  - [Resources](#resources)
+- [TODO](#todo)
+
+<!-- /TOC -->
+
 # Tangent space
 
 ## Relation system

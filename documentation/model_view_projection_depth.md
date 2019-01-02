@@ -1,5 +1,39 @@
+<!-- TOC -->
 
-# Projection, View, Model and Depth
+- [Model, View, Projection and Depth](#model-view-projection-and-depth)
+  - [Coordinate Systems](#coordinate-systems)
+    - [Model coordinates (Object coordinates)](#model-coordinates-object-coordinates)
+    - [World coordinates](#world-coordinates)
+      - [Model matrix](#model-matrix)
+    - [View space (Eye coordinates)](#view-space-eye-coordinates)
+      - [View matrix](#view-matrix)
+    - [Clip coordinates](#clip-coordinates)
+      - [Projection matrix](#projection-matrix)
+    - [Normalized device coordinates](#normalized-device-coordinates)
+    - [Window coordinates (Screen coordinates)](#window-coordinates-screen-coordinates)
+      - [Viewport and depth range](#viewport-and-depth-range)
+  - [View](#view)
+  - [Projection](#projection)
+    - [Orthographic Clip Space](#orthographic-clip-space)
+    - [Perspective Clip Space](#perspective-clip-space)
+  - [Depth](#depth)
+  - [Orthographic Projection](#orthographic-projection)
+  - [Perspective Projection](#perspective-projection)
+    - [What the perspective projection does](#what-the-perspective-projection-does)
+  - [Depth buffer](#depth-buffer)
+  - [Unproject](#unproject)
+    - [Unproject - Orthographic Projection](#unproject---orthographic-projection)
+    - [Unproject - Perspective Projection](#unproject---perspective-projection)
+    - [Perspective Projection - Linearized depth](#perspective-projection---linearized-depth)
+  - [3 Solutions to recover view space position in perspective projection](#3-solutions-to-recover-view-space-position-in-perspective-projection)
+    - [1. With field of view and aspect](#1-with-field-of-view-and-aspect)
+    - [2. With the projection matrix](#2-with-the-projection-matrix)
+    - [3. With the inverse projection matrix](#3-with-the-inverse-projection-matrix)
+  - [Resources](#resources)
+
+<!-- /TOC -->
+
+# Model, View, Projection and Depth
 
 In a rendering, each mesh of the scene usually is transformed by the model matrix, the view matrix and the projection matrix. Finally the projected scene is mapped to the viewport.
 

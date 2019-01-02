@@ -1,3 +1,11 @@
+<!-- TOC -->
+
+- [Phong reflection model](#phong-reflection-model)
+  - [Obvious issues](#obvious-issues)
+    - [Phong Clipping](#phong-clipping)
+    - [Phong Distortion](#phong-distortion)
+
+<!-- /TOC -->
 
 # Phong reflection model
 

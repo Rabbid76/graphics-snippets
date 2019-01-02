@@ -1,3 +1,14 @@
+<!-- TOC -->
+
+- [Changing the geometry with tessellation shaders](#changing-the-geometry-with-tessellation-shaders)
+  - [Vertex shader](#vertex-shader)
+  - [Tessellation control shader](#tessellation-control-shader)
+  - [Tessellation evaluation shader](#tessellation-evaluation-shader)
+  - [Fragment shader](#fragment-shader)
+    - [Python script](#python-script)
+
+<!-- /TOC -->
+
 # Changing the geometry with tessellation shaders
 
 A simple OGL 4.0 GLSL shader program that shows that shows how to add details with tessellation shader to the geometry.

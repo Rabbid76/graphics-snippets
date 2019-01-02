@@ -1,3 +1,8 @@
+<!-- TOC -->
+
+- [Blinn-Phong model](#blinn-phong-model)
+
+<!-- /TOC -->
 
 # Blinn-Phong model
 
