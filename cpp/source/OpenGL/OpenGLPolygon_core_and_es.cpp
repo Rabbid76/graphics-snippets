@@ -61,7 +61,7 @@ namespace Polygon
 * \date    2018-12-05
 * \version 1.0
 **********************************************************************/
-CPolygonOpenGL_core_and_es::CPolygonOpenGL_core_and_es( 
+CPolygon_base_OpenGL4_OpenGLES3::CPolygon_base_OpenGL4_OpenGLES3( 
   size_t min_cache_elems ) //! I - size of the element cache
   : _min_buffer_size( min_cache_elems )
   , _vertex_cache( min_cache_elems )
@@ -75,7 +75,7 @@ CPolygonOpenGL_core_and_es::CPolygonOpenGL_core_and_es(
 * \date    2018-12-05
 * \version 1.0
 **********************************************************************/
-CPolygonOpenGL_core_and_es::~CPolygonOpenGL_core_and_es()
+CPolygon_base_OpenGL4_OpenGLES3::~CPolygon_base_OpenGL4_OpenGLES3()
 {}
 
 
@@ -86,7 +86,7 @@ CPolygonOpenGL_core_and_es::~CPolygonOpenGL_core_and_es()
 * \date    2018-12-03
 * \version 1.0
 **********************************************************************/
-bool CPolygonOpenGL_core_and_es::Init( void )
+bool CPolygon_base_OpenGL4_OpenGLES3::Init( void )
 {
   if ( _initialized )
     return true;
@@ -105,7 +105,7 @@ bool CPolygonOpenGL_core_and_es::Init( void )
 * \date    2018-09-07
 * \version 1.0
 **********************************************************************/
-bool CPolygonOpenGL_core_and_es::Init( 
+bool CPolygon_base_OpenGL4_OpenGLES3::Init( 
   Render::TModelAndViewPtr mvp_data ) //!< I - model, view, projection and window data buffer 
 {
   if ( _initialized )
@@ -132,7 +132,7 @@ bool CPolygonOpenGL_core_and_es::Init(
 * \date    2018-09-07
 * \version 1.0
 **********************************************************************/
-bool CPolygonOpenGL_core_and_es::Init( 
+bool CPolygon_base_OpenGL4_OpenGLES3::Init( 
   TMVPBufferPtr mvp_buffer ) //!< I - model, view, projection and window data buffer 
 {
   if ( _initialized )
@@ -158,7 +158,7 @@ bool CPolygonOpenGL_core_and_es::Init(
 * \date    2018-09-07
 * \version 1.0
 **********************************************************************/
-bool CPolygonOpenGL_core_and_es::Init( 
+bool CPolygon_base_OpenGL4_OpenGLES3::Init( 
   TProgramPtr program ) //!< I - shader program
 {
   if ( _initialized )
@@ -183,7 +183,7 @@ bool CPolygonOpenGL_core_and_es::Init(
 * \date    2018-09-12
 * \version 1.0
 **********************************************************************/
-bool CPolygonOpenGL_core_and_es::StartSuccessivePolygonDrawings( void )
+bool CPolygon_base_OpenGL4_OpenGLES3::StartSuccessivePolygonDrawings( void )
 {
   if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() )
   {
@@ -212,7 +212,7 @@ bool CPolygonOpenGL_core_and_es::StartSuccessivePolygonDrawings( void )
 * \date    2018-09-12
 * \version 1.0
 **********************************************************************/
-bool CPolygonOpenGL_core_and_es::FinishSuccessivePolygonDrawings( void )
+bool CPolygon_base_OpenGL4_OpenGLES3::FinishSuccessivePolygonDrawings( void )
 {
   if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() )
   {
@@ -237,7 +237,7 @@ bool CPolygonOpenGL_core_and_es::FinishSuccessivePolygonDrawings( void )
 * \date    2018-12-03
 * \version 1.0
 **********************************************************************/
-Render::Polygon::IRender & CPolygonOpenGL_core_and_es::SetColor(
+Render::Polygon::IRender & CPolygon_base_OpenGL4_OpenGLES3::SetColor(
   const Render::TColor & color ) //!< I - the new color
 {
   if ( _primitive_prog != nullptr )
@@ -253,7 +253,7 @@ Render::Polygon::IRender & CPolygonOpenGL_core_and_es::SetColor(
 * \date    2018-12-03
 * \version 1.0
 **********************************************************************/
-Render::Polygon::IRender & CPolygonOpenGL_core_and_es::SetColor( 
+Render::Polygon::IRender & CPolygon_base_OpenGL4_OpenGLES3::SetColor( 
   const Render::TColor8 & color ) //!< I - the new color
 {
   if ( _primitive_prog != nullptr )
@@ -269,7 +269,7 @@ Render::Polygon::IRender & CPolygonOpenGL_core_and_es::SetColor(
 * \date    2018-12-03
 * \version 1.0
 **********************************************************************/
-Render::Polygon::IRender & CPolygonOpenGL_core_and_es::SetStyle( 
+Render::Polygon::IRender & CPolygon_base_OpenGL4_OpenGLES3::SetStyle( 
   const Render::Polygon::TStyle & style )
 {
   //! This is impossible, while an drawing sequence is active.  
@@ -298,7 +298,7 @@ Render::Polygon::IRender & CPolygonOpenGL_core_and_es::SetStyle(
 * \date    2018-12-03
 * \version 1.0
 **********************************************************************/
-bool CPolygonOpenGL_core_and_es::Draw( 
+bool CPolygon_base_OpenGL4_OpenGLES3::Draw( 
   Render::TPrimitive primitive_type, //!< in: primitive type of the coordinates - triangles, triangle strip, triangle fan, triangle adjacency or triangle strip adjacency
   unsigned int       tuple_size,     //!< in: kind of the coordinates - 2: 2D (x, y), 3: 3D (x, y, z), 4: homogeneous (x, y, z, w)   
   size_t             coords_size,    //!< in: number of elements (size) of the coordinate array - `coords_size` = `tuple_size` * "number of coordinates" 
@@ -339,7 +339,7 @@ bool CPolygonOpenGL_core_and_es::Draw(
 * \date    2018-12-03
 * \version 1.0
 **********************************************************************/
-bool CPolygonOpenGL_core_and_es::Draw( 
+bool CPolygon_base_OpenGL4_OpenGLES3::Draw( 
   Render::TPrimitive primitive_type, //!< in: primitive type of the coordinates - triangles, triangle strip, triangle fan, triangle adjacency or triangle strip adjacency
   unsigned int       tuple_size,     //!< in: kind of the coordinates - 2: 2D (x, y), 3: 3D (x, y, z), 4: homogeneous (x, y, z, w)   
   size_t             coords_size,    //!< in: number of elements (size) of the coordinate array - `coords_size` = `tuple_size` * "number of coordinates" 
@@ -380,7 +380,7 @@ bool CPolygonOpenGL_core_and_es::Draw(
 * \date    2018-12-03
 * \version 1.0
 **********************************************************************/
-bool CPolygonOpenGL_core_and_es::Draw( 
+bool CPolygon_base_OpenGL4_OpenGLES3::Draw( 
   Render::TPrimitive primitive_type, //!< in: primitive type of the coordinates - triangles, triangle strip, triangle fan, triangle adjacency or triangle strip adjacency
   size_t             no_of_coords,   //!< in: number of coordinates and number of elements (size) of the coordinate array
   const float       *x_coords,       //!< int pointer to an array of the x coordinates
@@ -423,7 +423,7 @@ bool CPolygonOpenGL_core_and_es::Draw(
 * \date    2018-12-03
 * \version 1.0
 **********************************************************************/
-bool CPolygonOpenGL_core_and_es::Draw( 
+bool CPolygon_base_OpenGL4_OpenGLES3::Draw( 
   Render::TPrimitive primitive_type, //!< in: primitive type of the coordinates - triangles, triangle strip, triangle fan, triangle adjacency or triangle strip adjacency
   size_t             no_of_coords,   //!< in: number of coordinates and number of elements (size) of the coordinate array
   const double      *x_coords,       //!< int pointer to an array of the x coordinates
@@ -466,7 +466,7 @@ bool CPolygonOpenGL_core_and_es::Draw(
 * \date    2018-12-03
 * \version 1.0
 **********************************************************************/
-bool CPolygonOpenGL_core_and_es::StartSequence( 
+bool CPolygon_base_OpenGL4_OpenGLES3::StartSequence( 
   Render::TPrimitive primitive_type, //!< in: primitive type of the coordinates - triangles, triangle strip, triangle fan, triangle adjacency or triangle strip adjacency
   unsigned int       tuple_size )    //!< in: kind of the coordinates - 2: 2D (x, y), 3: 3D (x, y, z), 4: homogeneous (x, y, z, w)   
 {
@@ -494,7 +494,7 @@ bool CPolygonOpenGL_core_and_es::StartSequence(
 * \date    2018-12-03
 * \version 1.0
 **********************************************************************/
-bool CPolygonOpenGL_core_and_es::EndSequence( void )
+bool CPolygon_base_OpenGL4_OpenGLES3::EndSequence( void )
 {
   // A sequence can't be completed if there is no active sequence
   if ( _primitive_prog == nullptr || _primitive_prog->EndSequence() == false )
@@ -534,7 +534,7 @@ bool CPolygonOpenGL_core_and_es::EndSequence( void )
 * \date    2018-12-03
 * \version 1.0
 **********************************************************************/
-bool CPolygonOpenGL_core_and_es::DrawSequence( 
+bool CPolygon_base_OpenGL4_OpenGLES3::DrawSequence( 
   float x,  //!< in: x coordinate
   float y,  //!< in: y coordinate
   float z ) //!< in: z coordinate
@@ -559,7 +559,7 @@ bool CPolygonOpenGL_core_and_es::DrawSequence(
 * \date    2018-12-03
 * \version 1.0
 **********************************************************************/
-bool CPolygonOpenGL_core_and_es::DrawSequence( 
+bool CPolygon_base_OpenGL4_OpenGLES3::DrawSequence( 
   double x,  //!< in: x coordinate
   double y,  //!< in: y coordinate
   double z ) //!< in: z coordinate
@@ -585,7 +585,7 @@ bool CPolygonOpenGL_core_and_es::DrawSequence(
 * \date    2018-12-03
 * \version 1.0
 **********************************************************************/
-bool CPolygonOpenGL_core_and_es::DrawSequence( 
+bool CPolygon_base_OpenGL4_OpenGLES3::DrawSequence( 
   size_t             coords_size, //!< in: number of elements (size) of the coordinate array - `coords_size` = `tuple_size` * "number of coordinates" 
   const float       *coords )     //!< in: pointer to an array of the vertex coordinates
 {
@@ -610,7 +610,7 @@ bool CPolygonOpenGL_core_and_es::DrawSequence(
 * \date    2018-12-03
 * \version 1.0
 **********************************************************************/
-bool CPolygonOpenGL_core_and_es::DrawSequence( 
+bool CPolygon_base_OpenGL4_OpenGLES3::DrawSequence( 
   size_t             coords_size, //!< in: number of elements (size) of the coordinate array - `coords_size` = `tuple_size` * "number of coordinates" 
   const double      *coords )     //!< in: pointer to an array of the vertex coordinates
 {

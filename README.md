@@ -90,9 +90,9 @@
 
 [![](html/stackoverflow/image/model_view_projection.png) Model View Projection](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/model_view_projection.html)
 
-[![](html/stackoverflow/image/unproject_2d.png) Unproject 2D - Screen coordinate to world](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/unproject_2d.html)
+[![](html/stackoverflow/image/unproject_2d_cursor.png) Unproject 2D - Screen coordinate to world](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/unproject_2d.html)
 
-[![](html/stackoverflow/image/unproject_perspective.png) Unproject perspective - Intersect world by line of sight](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/unproject_perspective.html)
+[![](html/stackoverflow/image/unproject_perspective_cursor.png) Unproject perspective - Intersect world by line of sight](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/unproject_perspective.html)
 
 [![](html/stackoverflow/image/spherical_projection.png) Spherical projection](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/spherical_projection.html)
 

@@ -49,26 +49,22 @@ namespace Polygon
 
 
 /******************************************************************//**
-* \brief Implementation of OpenGL polygon renderer,
-* with the use of OpenGL core profile
-* for OpenGL version 4+ and GLSL version 4.20 (`#version 420 core`)
-* or OpenGL es 3(+) and GLSL ES version 3.00 (`#version 300 es`).
-*
-* Line stippling techniques is implemented in the shader program.
+* \brief Basic implementation of OpenGL polygon renderer,
+* with the use of OpenGL 4 core profile or OpenGL ES 3.
 * 
 * \author  gernot
-* \date    2018-08-01
+* \date    2019-01-07
 * \version 1.0
 **********************************************************************/
-class CPolygonOpenGL_core_and_es
+class CPolygon_base_OpenGL4_OpenGLES3
   : public Render::Polygon::IRender
 {
 public:
 
   using TProgramPtr = std::shared_ptr<CPrimitiveOpenGL_core_and_es>;
   
-  CPolygonOpenGL_core_and_es( size_t min_cache_elems );
-  virtual ~CPolygonOpenGL_core_and_es();
+  CPolygon_base_OpenGL4_OpenGLES3( size_t min_cache_elems );
+  virtual ~CPolygon_base_OpenGL4_OpenGLES3();
 
   const Render::Polygon::TStyle & PoylgonStyle( void ) const { return _polygon_style; }
   void PoylgonStyle( const Render::Polygon::TStyle &style ) { _polygon_style = style; }
@@ -126,6 +122,44 @@ private:
   Render::TPrimitive      _squence_type{ Render::TPrimitive::NO_OF }; //!< primitive type pf the sequence
   Render::TVertexCache    _vertex_cache;                              //!< cache for vertex coordinates
 };
+
+
+/******************************************************************//**
+* \brief Implementation of OpenGL polygon renderer,
+* with the use of OpenGL core profile with forward compatibility flag
+* set.
+* For the use of OpenGL version 4+ and GLSL version 4.20 (`#version 420 core`)
+* 
+* \author  gernot
+* \date    2019-01-07
+* \version 1.0
+**********************************************************************/
+using CPolygonOpenGL_core_forward_compatibility = CPolygon_base_OpenGL4_OpenGLES3;
+
+
+/******************************************************************//**
+* \brief Implementation of OpenGL polygon renderer,
+* with the use of OpenGL core profile.
+* For the use of OpenGL version 4+ and GLSL version 4.20 (`#version 420 core`)
+* 
+* \author  gernot
+* \date    2019-01-07
+* \version 1.0
+**********************************************************************/
+using CPolygonOpenGL_core_4 = CPolygon_base_OpenGL4_OpenGLES3;
+
+
+/******************************************************************//**
+* \brief Implementation of OpenGL polygon renderer,
+* with the use of OpenGL core profile.
+* For the use of OpenGL es 3(+) and GLSL ES version 3.00 (`#version 300 es`).
+* 
+* \author  gernot
+* \date    2019-01-07
+* \version 1.0
+**********************************************************************/
+using CPolygonOpenGL_ES_3 = CPolygon_base_OpenGL4_OpenGLES3;
+
 
 } // Polygon
 

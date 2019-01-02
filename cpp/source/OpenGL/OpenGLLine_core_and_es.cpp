@@ -61,7 +61,7 @@ namespace Line
 * \date    2018-09-07
 * \version 1.0
 **********************************************************************/
-CLineOpenGL_core_and_es::CLineOpenGL_core_and_es( 
+CLineOpenGL_base_OpenGL4_OpenGLES3::CLineOpenGL_base_OpenGL4_OpenGLES3( 
   size_t min_cache_elems ) //!< I - size of the element cache
   : _min_buffer_size( min_cache_elems )
   , _vertex_cache( min_cache_elems )
@@ -75,7 +75,7 @@ CLineOpenGL_core_and_es::CLineOpenGL_core_and_es(
 * \date    2018-09-07
 * \version 1.0
 **********************************************************************/
-CLineOpenGL_core_and_es::~CLineOpenGL_core_and_es()
+CLineOpenGL_base_OpenGL4_OpenGLES3::~CLineOpenGL_base_OpenGL4_OpenGLES3()
 {}
 
 
@@ -86,7 +86,7 @@ CLineOpenGL_core_and_es::~CLineOpenGL_core_and_es()
 * \date    2018-12-03
 * \version 1.0
 **********************************************************************/
-bool CLineOpenGL_core_and_es::Init( void )
+bool CLineOpenGL_base_OpenGL4_OpenGLES3::Init( void )
 {
   if ( _initialized )
     return true;
@@ -105,7 +105,7 @@ bool CLineOpenGL_core_and_es::Init( void )
 * \date    2018-09-07
 * \version 1.0
 **********************************************************************/
-bool CLineOpenGL_core_and_es::Init( 
+bool CLineOpenGL_base_OpenGL4_OpenGLES3::Init( 
   Render::TModelAndViewPtr mvp_data ) //!< I - model, view, projection and window data buffer 
 {
   if ( _initialized )
@@ -132,7 +132,7 @@ bool CLineOpenGL_core_and_es::Init(
 * \date    2018-09-07
 * \version 1.0
 **********************************************************************/
-bool CLineOpenGL_core_and_es::Init( 
+bool CLineOpenGL_base_OpenGL4_OpenGLES3::Init( 
   TMVPBufferPtr mvp_buffer ) //!< I - model, view, projection and window data buffer 
 {
   if ( _initialized )
@@ -158,7 +158,7 @@ bool CLineOpenGL_core_and_es::Init(
 * \date    2018-09-07
 * \version 1.0
 **********************************************************************/
-bool CLineOpenGL_core_and_es::Init( 
+bool CLineOpenGL_base_OpenGL4_OpenGLES3::Init( 
   TProgramPtr program ) //!< I - shader program
 {
   if ( _initialized )
@@ -183,7 +183,7 @@ bool CLineOpenGL_core_and_es::Init(
 * \date    2018-09-12
 * \version 1.0
 **********************************************************************/
-bool CLineOpenGL_core_and_es::StartSuccessiveLineDrawings( void )
+bool CLineOpenGL_base_OpenGL4_OpenGLES3::StartSuccessiveLineDrawings( void )
 {
   if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() )
   {
@@ -212,7 +212,7 @@ bool CLineOpenGL_core_and_es::StartSuccessiveLineDrawings( void )
 * \date    2018-09-12
 * \version 1.0
 **********************************************************************/
-bool CLineOpenGL_core_and_es::FinishSuccessiveLineDrawings( void )
+bool CLineOpenGL_base_OpenGL4_OpenGLES3::FinishSuccessiveLineDrawings( void )
 {
   if ( _primitive_prog == nullptr || _primitive_prog->ActiveSequence() )
   {
@@ -237,7 +237,7 @@ bool CLineOpenGL_core_and_es::FinishSuccessiveLineDrawings( void )
 * \date    2018-09-12
 * \version 1.0
 **********************************************************************/
-Render::Line::IRender & CLineOpenGL_core_and_es::SetColor( 
+Render::Line::IRender & CLineOpenGL_base_OpenGL4_OpenGLES3::SetColor( 
   const Render::TColor & color ) //!< in: new color
 { 
   if ( _primitive_prog != nullptr )
@@ -253,7 +253,7 @@ Render::Line::IRender & CLineOpenGL_core_and_es::SetColor(
 * \date    2018-09-12
 * \version 1.0
 **********************************************************************/
-Render::Line::IRender & CLineOpenGL_core_and_es::SetColor( 
+Render::Line::IRender & CLineOpenGL_base_OpenGL4_OpenGLES3::SetColor( 
   const Render::TColor8 & color ) //!< in: new color
 { 
   if ( _primitive_prog != nullptr )
@@ -273,7 +273,7 @@ Render::Line::IRender & CLineOpenGL_core_and_es::SetColor(
 * \date    2018-09-09
 * \version 1.0
 **********************************************************************/
-Render::Line::IRender & CLineOpenGL_core_and_es::SetStyle( 
+Render::Line::IRender & CLineOpenGL_base_OpenGL4_OpenGLES3::SetStyle( 
   const Render::Line::TStyle & style )
 {
   //! This is impossible, while an drawing sequence is active.  
@@ -321,7 +321,7 @@ Render::Line::IRender & CLineOpenGL_core_and_es::SetStyle(
 * \date    2018-09-07
 * \version 1.0
 **********************************************************************/
-bool CLineOpenGL_core_and_es::Draw( 
+bool CLineOpenGL_base_OpenGL4_OpenGLES3::Draw( 
   Render::TPrimitive primitive_type, //!< in: primitive type of the coordinates - lines, line strip, line loop, lines adjacency or line strip adjacency  
   unsigned int       tuple_size,     //!< in: kind of the coordinates - 2: 2D (x, y), 3: 3D (x, y, z), 4: homogeneous (x, y, z, w)   
   size_t             coords_size,    //!< in: number of elements (size) of the coordinate array - `coords_size` = `tuple_size` * "number of coordinates" 
@@ -362,7 +362,7 @@ bool CLineOpenGL_core_and_es::Draw(
 * \date    2018-09-07
 * \version 1.0
 **********************************************************************/
-bool CLineOpenGL_core_and_es::Draw( 
+bool CLineOpenGL_base_OpenGL4_OpenGLES3::Draw( 
   Render::TPrimitive primitive_type, //!< in: primitive type of the coordinates - lines, line strip, line loop, lines adjacency or line strip adjacency  
   unsigned int       tuple_size,     //!< in: kind of the coordinates - 2: 2D (x, y), 3: 3D (x, y, z), 4: homogeneous (x, y, z, w)   
   size_t             coords_size,    //!< in: number of elements (size) of the coordinate array - `coords_size` = `tuple_size` * "number of coordinates" 
@@ -403,7 +403,7 @@ bool CLineOpenGL_core_and_es::Draw(
 * \date    2018-09-07
 * \version 1.0
 **********************************************************************/
-bool CLineOpenGL_core_and_es::Draw( 
+bool CLineOpenGL_base_OpenGL4_OpenGLES3::Draw( 
   Render::TPrimitive primitive_type, //!< in: primitive type of the coordinates - lines, line strip, line loop, lines adjacency or line strip adjacency 
   size_t             no_of_coords,   //!< in: number of coordinates and number of elements (size) of the coordinate array
   const float       *x_coords,       //!< int pointer to an array of the x coordinates
@@ -446,7 +446,7 @@ bool CLineOpenGL_core_and_es::Draw(
 * \date    2018-09-07
 * \version 1.0
 **********************************************************************/
-bool CLineOpenGL_core_and_es::Draw( 
+bool CLineOpenGL_base_OpenGL4_OpenGLES3::Draw( 
   Render::TPrimitive primitive_type, //!< in: primitive type of the coordinates - lines, line strip, line loop, lines adjacency or line strip adjacency 
   size_t             no_of_coords,   //!< in: number of coordinates and number of elements (size) of the coordinate array
   const double      *x_coords,       //!< int pointer to an array of the x coordinates
@@ -489,7 +489,7 @@ bool CLineOpenGL_core_and_es::Draw(
 * \date    2018-09-07
 * \version 1.0
 **********************************************************************/
-bool CLineOpenGL_core_and_es::StartSequence( 
+bool CLineOpenGL_base_OpenGL4_OpenGLES3::StartSequence( 
   Render::TPrimitive primitive_type, //!< in: primitive type of the coordinates - lines, line strip, line loop, lines adjacency or line strip adjacency 
   unsigned int       tuple_size )    //!< in: kind of the coordinates - 2: 2D (x, y), 3: 3D (x, y, z), 4: homogeneous (x, y, z, w)   
 {
@@ -517,7 +517,7 @@ bool CLineOpenGL_core_and_es::StartSequence(
 * \date    2018-09-07
 * \version 1.0
 **********************************************************************/
-bool CLineOpenGL_core_and_es::EndSequence( void )
+bool CLineOpenGL_base_OpenGL4_OpenGLES3::EndSequence( void )
 {
   // A sequence can't be completed if there is no active sequence
   if ( _primitive_prog == nullptr || _primitive_prog->EndSequence() == false )
@@ -557,7 +557,7 @@ bool CLineOpenGL_core_and_es::EndSequence( void )
 * \date    2018-09-07
 * \version 1.0
 **********************************************************************/
-bool CLineOpenGL_core_and_es::DrawSequence( 
+bool CLineOpenGL_base_OpenGL4_OpenGLES3::DrawSequence( 
   float x,  //!< in: x coordinate
   float y,  //!< in: y coordinate
   float z ) //!< in: z coordinate
@@ -582,7 +582,7 @@ bool CLineOpenGL_core_and_es::DrawSequence(
 * \date    2018-09-07
 * \version 1.0
 **********************************************************************/
-bool CLineOpenGL_core_and_es::DrawSequence( 
+bool CLineOpenGL_base_OpenGL4_OpenGLES3::DrawSequence( 
   double x,  //!< in: x coordinate
   double y,  //!< in: y coordinate
   double z ) //!< in: z coordinate
@@ -607,7 +607,7 @@ bool CLineOpenGL_core_and_es::DrawSequence(
 * \date    2018-09-07
 * \version 1.0
 **********************************************************************/
-bool CLineOpenGL_core_and_es::DrawSequence( 
+bool CLineOpenGL_base_OpenGL4_OpenGLES3::DrawSequence( 
   size_t       coords_size, //!< in: number of elements (size) of the coordinate array - `coords_size` = `tuple_size` * "number of coordinates" 
   const float *coords )     //!< in: pointer to an array of the vertex coordinates
 {
@@ -631,7 +631,7 @@ bool CLineOpenGL_core_and_es::DrawSequence(
 * \date    2018-09-07
 * \version 1.0
 **********************************************************************/
-bool CLineOpenGL_core_and_es::DrawSequence( 
+bool CLineOpenGL_base_OpenGL4_OpenGLES3::DrawSequence( 
   size_t        coords_size, //!< in: number of elements (size) of the coordinate array - `coords_size` = `tuple_size` * "number of coordinates" 
   const double *coords )     //!< in: pointer to an array of the vertex coordinates
 {

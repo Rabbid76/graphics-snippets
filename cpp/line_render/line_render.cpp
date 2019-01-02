@@ -280,9 +280,13 @@ void CWindow_Glfw::InitScene( void )
   _line_2 = std::make_unique<OpenGL::Line::CLineOpenGL_2_00>( 0 );
   _line_2->Init();
   
-  auto line_core = std::make_unique<OpenGL::Line::CLineOpenGL_core_and_es>( 0 );
+  auto line_core_forward = std::make_unique<OpenGL::Line::CLinOpenGL_core_forward_compatibility>( 0 );
+  line_core_forward->Init( _view_data_ptr );
+  _line_3 = std::move( line_core_forward );
+
+  auto line_core = std::make_unique<OpenGL::Line::CLinOpenGL_core_4>( 0 );
   line_core->Init( _view_data_ptr );
-  _line_3 = std::move( line_core );
+  _line_4 = std::move( line_core );
 }
 
 

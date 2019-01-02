@@ -280,7 +280,7 @@ void CWindow_Glfw::InitScene( void )
   _polygon_2 = std::make_unique<OpenGL::Polygon::CPolygonOpenGL_2_00>( 0 );
   _polygon_2->Init();
 
-  auto polygon_core = std::make_unique<OpenGL::Polygon::CPolygonOpenGL_core_and_es>( 0 );
+  auto polygon_core = std::make_unique<OpenGL::Polygon::CPolygonOpenGL_core_4>( 0 );
   polygon_core->Init( _view_data_ptr );
   _polygon_3 = std::move( polygon_core );
 }
