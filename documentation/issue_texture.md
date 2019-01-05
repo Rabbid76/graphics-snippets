@@ -3,13 +3,12 @@
 
 - [Texture and Sampler - Common mistakes and issues](#texture-and-sampler---common-mistakes-and-issues)
   - [Load Texture](#load-texture)
-    - [[glTexImage2D 'target is not valid'](https://stackoverflow.com/questions/48196668/glteximage2d-target-is-not-valid/48196727#48196727)](#glteximage2d-target-is-not-validhttpsstackoverflowcomquestions48196668glteximage2d-target-is-not-valid4819672748196727)
-    - [[OpenGL 3.2 Why am I getting INVALID_ENUM error for glTexStorage3D?](https://stackoverflow.com/questions/49827961/opengl-3-2-why-am-i-getting-invalid-enum-error-for-gltexstorage3d/49828443#49828443)](#opengl-32-why-am-i-getting-invalid_enum-error-for-gltexstorage3dhttpsstackoverflowcomquestions49827961opengl-3-2-why-am-i-getting-invalid-enum-error-for-gltexstorage3d4982844349828443)
-    - [[How to load a bmp on GLUT to use it as a texture?](https://stackoverflow.com/questions/12518111/how-to-load-a-bmp-on-glut-to-use-it-as-a-texture/50641676#50641676)](#how-to-load-a-bmp-on-glut-to-use-it-as-a-texturehttpsstackoverflowcomquestions12518111how-to-load-a-bmp-on-glut-to-use-it-as-a-texture5064167650641676)
-    - [[OpenGL Texture Loading issue with images that Crossed each other](https://stackoverflow.com/questions/53051066/opengl-texture-loading-issue-with-images-that-crossed-each-other/53051516#53051516)](#opengl-texture-loading-issue-with-images-that-crossed-each-otherhttpsstackoverflowcomquestions53051066opengl-texture-loading-issue-with-images-that-crossed-each-other5305151653051516)
+    - [`glTexImage2D`](#glteximage2d)
+    - [`glTexStorage`](#gltexstorage)
+    - [Load Bitmap](#load-bitmap)
+    - [Windows Bitmap](#windows-bitmap)
   - [Texture unit and texture binding](#texture-unit-and-texture-binding)
   - [Texture Coordinates](#texture-coordinates)
-  - [Texture rotate and scale](#texture-rotate-and-scale)
   - [UV wrapping](#uv-wrapping)
   - [Cubemap](#cubemap)
     - [TODO verify](#todo-verify)
@@ -44,9 +43,9 @@
 
 ## Load Texture
 
-### [glTexImage2D 'target is not valid'](https://stackoverflow.com/questions/48196668/glteximage2d-target-is-not-valid/48196727#48196727)
+### `glTexImage2D`
 
-[C++]
+[glTexImage2D 'target is not valid'](https://stackoverflow.com/questions/48196668/glteximage2d-target-is-not-valid/48196727#48196727) [C++]  
 
 The fist parameter of [`glTexImage2D`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexImage2D.xhtml) is the `target`, which must be `GL_TEXTURE_2D`, `GL_PROXY_TEXTURE_2D`, `GL_TEXTURE_1D_ARRAY` [...].  
 [`glTexImage2D`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexImage2D.xhtml) specifies the two-dimensional texture for the texture object that is bound to the current [Texture unit](https://www.khronos.org/opengl/wiki/Texture#Texture_image_units).
@@ -59,9 +58,9 @@ See [OpenGL 4.6 core profile specification - 8.5. TEXTURE IMAGE SPECIFICATION, p
 >
 >is used to specify a two-dimensional texture image. target must be one of `TEXTURE_2D` for a two-dimensional texture, `TEXTURE_1D_ARRAY` for a onedimensional array texture, `TEXTURE_RECTANGLE` for a rectangle texture, or one of the cube map face targets from table [...]
 
-### [OpenGL 3.2 Why am I getting INVALID_ENUM error for glTexStorage3D?](https://stackoverflow.com/questions/49827961/opengl-3-2-why-am-i-getting-invalid-enum-error-for-gltexstorage3d/49828443#49828443)
+### `glTexStorage`
 
-[C++]
+[OpenGL 3.2 Why am I getting INVALID_ENUM error for glTexStorage3D?](https://stackoverflow.com/questions/49827961/opengl-3-2-why-am-i-getting-invalid-enum-error-for-gltexstorage3d/49828443#49828443) [C++]  
 
 `GL_RGBA` is not a valid enum constant for the the 3rd paramter of [`glTexStorage3D`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexStorage3D.xhtml).
 
@@ -73,9 +72,9 @@ See [OpenGL 4.6 core profile specification - 8.5. TEXTURE IMAGE SPECIFICATION, p
 > Errors  
 > An `INVALID_ENUM` error is generated if internalformat is one of the **unsized base internal formats** listed in table 8.11.
 
-### [How to load a bmp on GLUT to use it as a texture?](https://stackoverflow.com/questions/12518111/how-to-load-a-bmp-on-glut-to-use-it-as-a-texture/50641676#50641676)
+### Load Bitmap
 
-[C++] [GLUT]
+[How to load a bmp on GLUT to use it as a texture?](https://stackoverflow.com/questions/12518111/how-to-load-a-bmp-on-glut-to-use-it-as-a-texture/50641676#50641676) [C++] [GLUT]  
 
 A simple solution would be to use [STB library](https://stb.handmade.network/), which can be found at [GitHub - nothings/stb](https://github.com/nothings/stb).
 
@@ -117,9 +116,9 @@ if ( image != nullptr )
 }
 ```
 
-### [OpenGL Texture Loading issue with images that Crossed each other](https://stackoverflow.com/questions/53051066/opengl-texture-loading-issue-with-images-that-crossed-each-other/53051516#53051516)
+### Windows Bitmap
 
-[C]
+[OpenGL Texture Loading issue with images that Crossed each other](https://stackoverflow.com/questions/53051066/opengl-texture-loading-issue-with-images-that-crossed-each-other/53051516#53051516) [C]  
 
 A [Windows Bitmap](https://de.wikipedia.org/wiki/Windows_Bitmap) file has a file header of 54 bytes. I this header is the format of the file encoded.
 
@@ -130,7 +129,7 @@ A [Windows Bitmap](https://de.wikipedia.org/wiki/Windows_Bitmap) file has a file
 [Texture units overlap? Rendered the wrong texture](https://stackoverflow.com/questions/52657167/texture-units-overlap-rendered-the-wrong-texture/52673057#52673057) [C++]  
 [At what point is the cube drawn?](https://stackoverflow.com/questions/52678333/at-what-point-is-the-cube-drawn/52678886#52678886) [C++]  
 
-In your code there is a misunderstanding, how [`glUniform1i`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glUniform.xhtml) has to be used. If a values is assigned to a uniform, the the uniform has to be identified by the uniform location index. See [Uniform (GLSL)](https://www.khronos.org/opengl/wiki/Uniform_(GLSL))  
+If a values is assigned to a uniform, the the uniform has to be identified by the uniform location index. See [Uniform (GLSL)](https://www.khronos.org/opengl/wiki/Uniform_(GLSL))  
 
 The fist parameter of [`glUniform1i`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glUniform.xhtml) has to be the location of the uniform and not the named texture object.
 
@@ -188,7 +187,7 @@ layout (binding = 1) uniform sampler2D u_texture1;
 
 > An element *(i, j, k)* of the texture image is called a texel (for a two-dimensional texture or one-dimensional array texture, *k* is irrelevant; for a one-dimensional texture, *j* and *k* are both irrelevant). The texture value used in texturing a fragment is determined by sampling the texture in a shader, but may not correspond to any actual texel. See figure 8.3.
 >
-> ![texture coordinates](image/texture/textureimage.png)
+> ![texture coordinates](image/texture/textureimage_opengl.png)
 >
 > Figure 8.3. A texture image and the coordinates used to access it. This is a twodimensional texture with width 8 and height 4. A one-dimensional texture would consist of a single horizontal strip. ? and ?, values used in blending adjacent texels to obtain a texture value are also shown.
 
@@ -199,17 +198,15 @@ See also [OpenGL ES 3.2 Specification; 8.5. TEXTURE IMAGE SPECIFICATION; page 16
 
 ---
 
-## Texture rotate and scale
-
-[How to Rotate a Texture before drawing to the screen using OpenGL ES on the Pi](https://stackoverflow.com/questions/48961265/how-to-rotate-a-texture-before-drawing-to-the-screen-using-opengl-es-on-the-pi/48961421#48961421)  
-[Rotating vertex with different height/width](https://stackoverflow.com/questions/49843513/rotating-vertex-with-different-height-width/49843989#49843989)  
-[How do I correct the matrix's scaling when rotating when aspect ratio is not 1:1](https://stackoverflow.com/questions/49859282/how-do-i-correct-the-matrixs-scaling-when-rotating-when-aspect-ratio-is-not-11/49862620#49862620)
-
----
-
 ## UV wrapping
 
 [Cylindrical UV mapping](https://stackoverflow.com/questions/53408154/cylindrical-uv-mapping/53409228#53409228)  
+
+The vertex coordinates at the seam of the texture, where the *u* component of the texture coordinate is 0, has to be duplicated, because it has to be associated to a texture coordinate where *u==1*, too. 
+At the seam of the texture which is wrapped around the circumference of the rotation body, the u coordinate starts with the value 0, but it ends on the same point with the value 1.
+
+If you don`t do so, a transition from the last point on the circumference to the first point is generated. There is no clear seam where the texture ends and starts again, but there is linear transition from somewhere near the end of the texture to its begin. The entire texture is squeezed in this small transition area (flipped along the y axis).
+
 ![cylinder uv wrap](image/texture/wrap_cylinder.png)
 
 ---
@@ -411,7 +408,8 @@ Otherwise an offset of 0-3 bytes per line is gained, at texture lookup. This cau
 
 ## Texture read
 
-[Pixel access with glGetTexImage()?](https://stackoverflow.com/questions/48938930/pixel-access-with-glgetteximage/48941809#48941809)
+[Pixel access with glGetTexImage()?](https://stackoverflow.com/questions/48938930/pixel-access-with-glgetteximage/48941809#48941809)  
+[opengl es 2.0 android c++ glGetTexImage alternative](https://stackoverflow.com/questions/53993820/opengl-es-2-0-android-c-glgetteximage-alternative/53993894#53993894)  
 
 ---
 
