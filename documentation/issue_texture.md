@@ -11,8 +11,6 @@
   - [Texture Coordinates](#texture-coordinates)
   - [UV wrapping](#uv-wrapping)
   - [Cubemap](#cubemap)
-    - [TODO verify](#todo-verify)
-  - [Texture Object](#texture-object)
   - [Texture Filter and Wrapping](#texture-filter-and-wrapping)
   - [Texture binding and format, Texture swizzle](#texture-binding-and-format-texture-swizzle)
   - [Texture alignment (GL_UNPACK_ALIGNMENT, GL_PACK_ALIGNMENT)](#texture-alignment-gl_unpack_alignment-gl_pack_alignment)
@@ -45,7 +43,7 @@
 
 ### `glTexImage2D`
 
-[glTexImage2D 'target is not valid'](https://stackoverflow.com/questions/48196668/glteximage2d-target-is-not-valid/48196727#48196727) [C++]  
+[glTexImage2D 'target is not valid'](https://stackoverflow.com/questions/48196668/glteximage2d-target-is-not-valid/48196727#48196727), [C++]  
 
 The fist parameter of [`glTexImage2D`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexImage2D.xhtml) is the `target`, which must be `GL_TEXTURE_2D`, `GL_PROXY_TEXTURE_2D`, `GL_TEXTURE_1D_ARRAY` [...].  
 [`glTexImage2D`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexImage2D.xhtml) specifies the two-dimensional texture for the texture object that is bound to the current [Texture unit](https://www.khronos.org/opengl/wiki/Texture#Texture_image_units).
@@ -60,7 +58,7 @@ See [OpenGL 4.6 core profile specification - 8.5. TEXTURE IMAGE SPECIFICATION, p
 
 ### `glTexStorage`
 
-[OpenGL 3.2 Why am I getting INVALID_ENUM error for glTexStorage3D?](https://stackoverflow.com/questions/49827961/opengl-3-2-why-am-i-getting-invalid-enum-error-for-gltexstorage3d/49828443#49828443) [C++]  
+[OpenGL 3.2 Why am I getting INVALID_ENUM error for glTexStorage3D?](https://stackoverflow.com/questions/49827961/opengl-3-2-why-am-i-getting-invalid-enum-error-for-gltexstorage3d/49828443#49828443), [C++]  
 
 `GL_RGBA` is not a valid enum constant for the the 3rd paramter of [`glTexStorage3D`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexStorage3D.xhtml).
 
@@ -74,7 +72,7 @@ See [OpenGL 4.6 core profile specification - 8.5. TEXTURE IMAGE SPECIFICATION, p
 
 ### Load Bitmap
 
-[How to load a bmp on GLUT to use it as a texture?](https://stackoverflow.com/questions/12518111/how-to-load-a-bmp-on-glut-to-use-it-as-a-texture/50641676#50641676) [C++] [GLUT]  
+[How to load a bmp on GLUT to use it as a texture?](https://stackoverflow.com/questions/12518111/how-to-load-a-bmp-on-glut-to-use-it-as-a-texture/50641676#50641676), [C++] [GLUT]  
 
 A simple solution would be to use [STB library](https://stb.handmade.network/), which can be found at [GitHub - nothings/stb](https://github.com/nothings/stb).
 
@@ -118,7 +116,7 @@ if ( image != nullptr )
 
 ### Windows Bitmap
 
-[OpenGL Texture Loading issue with images that Crossed each other](https://stackoverflow.com/questions/53051066/opengl-texture-loading-issue-with-images-that-crossed-each-other/53051516#53051516) [C]  
+[OpenGL Texture Loading issue with images that Crossed each other](https://stackoverflow.com/questions/53051066/opengl-texture-loading-issue-with-images-that-crossed-each-other/53051516#53051516), [C]  
 
 A [Windows Bitmap](https://de.wikipedia.org/wiki/Windows_Bitmap) file has a file header of 54 bytes. I this header is the format of the file encoded.
 
@@ -126,8 +124,8 @@ A [Windows Bitmap](https://de.wikipedia.org/wiki/Windows_Bitmap) file has a file
 
 ## Texture unit and texture binding
 
-[Texture units overlap? Rendered the wrong texture](https://stackoverflow.com/questions/52657167/texture-units-overlap-rendered-the-wrong-texture/52673057#52673057) [C++]  
-[At what point is the cube drawn?](https://stackoverflow.com/questions/52678333/at-what-point-is-the-cube-drawn/52678886#52678886) [C++]  
+[Texture units overlap? Rendered the wrong texture](https://stackoverflow.com/questions/52657167/texture-units-overlap-rendered-the-wrong-texture/52673057#52673057), [C++]  
+[At what point is the cube drawn?](https://stackoverflow.com/questions/52678333/at-what-point-is-the-cube-drawn/52678886#52678886), [C++]  
 
 If a values is assigned to a uniform, the the uniform has to be identified by the uniform location index. See [Uniform (GLSL)](https://www.khronos.org/opengl/wiki/Uniform_(GLSL))  
 
@@ -181,6 +179,22 @@ layout (binding = 1) uniform sampler2D u_texture1;
 
 ---
 
+[PyOpenGL fragment shader texture sampling](https://stackoverflow.com/questions/53585040/pyopengl-fragment-shader-texture-sampling/53585187#53585187), [Python]  
+
+In glsl uniform variables are default initialized by 0 respectively 0.0. So the value of the texture sampler uniform `textureObj` is initialized by (texture unit) 0, too.
+
+Further there is the default texture object (0). If you don't create and bind a named texture object, then there is still the default texture object (0), and [`glTexImage2D`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexImage2D.xhtml) specifies the texture image of the default texture object (0).
+
+See [OpenGL 4.6 API Compatibility Profile Specification; 8.1 Texture Objects; page 179](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.compatibility.pdf)  
+
+> Textures in GL are represented by named objects. The name space for texture objects is the unsigned integers, **with zero reserved by the GL to represent the default texture object**. **The default texture object is bound to each of the** `TEXTURE_1D`, **`TEXTURE_2D`**, `TEXTURE_3D`, [...] targets during context initialization.
+
+[GLSL - The OpenGL Shading Language 4.6; 4.3.5. Uniform Variables; page 50](https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.4.60.pdf)
+
+> The uniform qualifier is used to declare global variables whose values are the same across the entire primitive being processed. **All uniform variables are read-only and are initialized externally either at link time or through the API**. **The link-time initial value is either the value of the variable’s initializer, if present, or 0 if no initializer is present**.
+
+---
+
 ## Texture Coordinates
 
 [OpenGL 4.6 API core profile specification; 8.5. TEXTURE IMAGE SPECIFICATION; page 214](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf)
@@ -193,14 +207,18 @@ layout (binding = 1) uniform sampler2D u_texture1;
 
 See also [OpenGL ES 3.2 Specification; 8.5. TEXTURE IMAGE SPECIFICATION; page 167](https://www.khronos.org/registry/OpenGL/specs/es/3.2/es_spec_3.2.pdf)
 
-[Reflection texture from FBO getting to correct image](https://stackoverflow.com/questions/50289505/reflection-texture-from-fbo-getting-to-correct-image/50291377#50291377)  
-[getting a region from texture atlas with opengl using soil](https://stackoverflow.com/questions/46983464/getting-a-region-from-texture-atlas-with-opengl-using-soil/46987206#46987206)
+---
+
+[getting a region from texture atlas with opengl using soil](https://stackoverflow.com/questions/46983464/getting-a-region-from-texture-atlas-with-opengl-using-soil/46987206#46987206), [C++] [Fixed Function]
+
+Texture coordinates map the vertices (points) of the geometry to a point in the texture image. Thereby it is specified which part of the texture is placed on an specific part of the geometry  and together with the texture parameters (see [`glTexParameter`][1]) it specifies how the geometry  is wrapped by the texture.<br/>
+In general, the lower left point of the texture is addressed by the texture coordinate (0, 0) and the upper right point of the texture is addressed by (1, 1).
 
 ---
 
 ## UV wrapping
 
-[Cylindrical UV mapping](https://stackoverflow.com/questions/53408154/cylindrical-uv-mapping/53409228#53409228)  
+[Cylindrical UV mapping](https://stackoverflow.com/questions/53408154/cylindrical-uv-mapping/53409228#53409228), [GLSL]  
 
 The vertex coordinates at the seam of the texture, where the *u* component of the texture coordinate is 0, has to be duplicated, because it has to be associated to a texture coordinate where *u==1*, too. 
 At the seam of the texture which is wrapped around the circumference of the rotation body, the u coordinate starts with the value 0, but it ends on the same point with the value 1.
@@ -240,12 +258,12 @@ is calculated as follows:
 >    Table 8.19: Selection of cube map images based on major axis direction of texture
 coordinates
 
-[OpenGL Environment mapping Reflection](https://stackoverflow.com/questions/24732653/opengl-environment-mapping-reflection/44994586#44994586)  
+---
+
+[OpenGL Environment mapping Reflection](https://stackoverflow.com/questions/24732653/opengl-environment-mapping-reflection/44994586#44994586), [C++]    
+[How to rotate Cubemap face without memory copy in OpenGL?](https://stackoverflow.com/questions/53938973/how-to-rotate-cubemap-face-without-memory-copy-in-opengl/53942886#53942886), [C++]  
+
 The line of sight direction (`LOS`) and up vector (`up`) for each of the 6 cubemap sides is:
-
-[How to rotate Cubemap face without memory copy in OpenGL?](https://stackoverflow.com/questions/53938973/how-to-rotate-cubemap-face-without-memory-copy-in-opengl/53942886#53942886)  
-
-### TODO verify
 
 - `POSITIVE_X`: `LOS = ( 1.0,  0.0,  0.0); up = ( 0.0, -1.0,  0.0)`
 - `NEGATIVE_X`: `LOS = (-1.0,  0.0,  0.0); up = ( 0.0, -1.0,  0.0)`
@@ -256,7 +274,10 @@ The line of sight direction (`LOS`) and up vector (`up`) for each of the 6 cubem
 
 ![environment](image/texture/environmentmap.svg)
 
-[Three.js and GLSL: Scaling a Texture](https://stackoverflow.com/questions/46733385/three-js-and-glsl-scaling-a-texture/46734864#46734864):  
+---
+
+[Three.js and GLSL: Scaling a Texture](https://stackoverflow.com/questions/46733385/three-js-and-glsl-scaling-a-texture/46734864#46734864), [Three.js]  
+  
 The texture coordinate of `textureCube` is a 3D direction vector, it does a 3-dimensional look up. Cube map textures are not sampled like 2D textures. The direction goes out of the center of the cube, which is surrounded by its 6 sides. The texel on the side which is hit by the direction vector is returend by `textureCube`. The length of the direction vector does not affect the result.
 
 ![cubemap 3d coordiante](image/texture/3d_texture_coordinate.svg)
@@ -267,21 +288,22 @@ The texture coordinates for cubemaps are 3D vector directions. These are concept
 
 This means that scaling the texture coordinate does **not** cause different results.
 
-[OpenGL Environment mapping Reflection](https://stackoverflow.com/questions/6458051/issues-with-z-axis-rotation-matrix-in-glsl-shader/44986176#44986176)
-
----
-
-## Texture Object
-
-[PyOpenGL fragment shader texture sampling](https://stackoverflow.com/questions/53585040/pyopengl-fragment-shader-texture-sampling/53585187#53585187)  
-
 ---
 
 ## Texture Filter and Wrapping
 
-[OpenGL. What should take glEnable for make texute transparent and with hard pixel edges](https://stackoverflow.com/questions/53012611/opengl-what-should-take-glenable-for-make-texute-transparent-and-with-hard-pixe/53012857#53012857)  
+[Reflection texture from FBO getting to correct image](https://stackoverflow.com/questions/50289505/reflection-texture-from-fbo-getting-to-correct-image/50291377#50291377) [C++]  
 
-[OpenGL - Simple 2D Texture Not Being Displayed](https://stackoverflow.com/questions/53343472/opengl-simple-2d-texture-not-being-displayed/53345784#53345784)
+I assume the you have set the texture wrap parameters for `GL_TEXTURE_WRAP_S` and `GL_TEXTURE_WRAP_T` to `GL_CLAMP_TO_EDGE`. See [`glTexParameter`](https://www.khronos.org/registry/OpenGL-Refpages/es3.0/html/glTexParameter.xhtml).
+
+This causes that any texture coordinate are clamped to the range `[0+1/(2*texturSize), 1-1/(2*textureSize)]`.
+
+[OpenGL. What should take glEnable for make texute transparent and with hard pixel edges](https://stackoverflow.com/questions/53012611/opengl-what-should-take-glenable-for-make-texute-transparent-and-with-hard-pixe/53012857#53012857) [Python]  
+
+You have to set the texture magnification function. This filter is used when the texture is magnified.  
+The magnification function can be set by [`glTexParameteri`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexParameter.xhtml). Possible values are `GL_LINEAR` and `GL_NEAREST`. The initial value is `GL_LINEAR`.
+
+[OpenGL - Simple 2D Texture Not Being Displayed](https://stackoverflow.com/questions/53343472/opengl-simple-2d-texture-not-being-displayed/53345784#53345784), [C++]  
 
 The initial value of `GL_TEXTURE_MIN_FILTER` is `GL_NEAREST_MIPMAP_LINEAR`. When using this filter, and no mipmaps are generate then the texture is not *complete*.
 
@@ -289,36 +311,68 @@ The initial value of `GL_TEXTURE_MIN_FILTER` is `GL_NEAREST_MIPMAP_LINEAR`. When
 
 >A texture is said to be *complete* if all the texture images and texture parameters
 required to utilize the texture for texture application are consistently defined.  
-> 
+>
 >... a texture is complete unless any of the following
 conditions hold true:
-> 
+>
 > - The minification filter requires a mipmap (is neither `NEAREST` nor `LINEAR`),
 and the texture is not mipmap complete.
 
-[GLSL Sampler2D tiling issue](https://stackoverflow.com/questions/46664908/glsl-sampler2d-tiling-issue/46672772#46672772):
+[GLSL Sampler2D tiling issue](https://stackoverflow.com/questions/46664908/glsl-sampler2d-tiling-issue/46672772#46672772), [Three.js] [GLSL]  
+
 > GL_CLAMP_TO_EDGE causes ss coordinates to be clamped to the range `[1/(2*N), 1 ? 1/(2*N)]`, where `N` is the size of the texture in the direction of clamping.
 >```cpp
 > glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 > glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 >```
 
-[Problems using GLTexImage3D correctly](https://stackoverflow.com/questions/52326761/problems-using-glteximage3d-correctly/52333776#52333776)  
+[Problems using GLTexImage3D correctly](https://stackoverflow.com/questions/52326761/problems-using-glteximage3d-correctly/52333776#52333776) [C#]   
+
+The texture wrap parameters `GL_TEXTURE_WRAP_S`, `GL_TEXTURE_WRAP_T` and `GL_TEXTURE_WRAP_R`  are by default `GL_REPEAT`.  
+The default parameters for the minifying function (`GL_TEXTURE_MIN_FILTER`) and magnification function are (`GL_TEXTURE_MAG_FILTER`) are `GL_NEAREST_MIPMAP_LINEAR` respectively `GL_LINEAR`.  
+See [`glTexParameter`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexParameter.xhtml).
+
+The combination of "REPEAT" and "LINEAR" causes, that the first voxel is mixed (interpolated) with the last voxel of a row, column, or depth-layer, if the the texture coordinate parameters, which is passed to the lookup function, is 0.0.
+
+If you would use the wrap parameter `GL_CLAMP_TO_EDGE`, then the first and the last voxel won't become mixed, because the texture coordinate is clamped.  
+
+Note the texture coordinate of the first voxel (or texel) is `1/(2*N)` and the coordinate of the last voxel is `1 - 1/(2*N)`, where `N` is the number of voxels in a row, column or layer. Because of that the coordinate 0.0, is exactly in the middle of the first and the last voxel. `GL_REPEAT` would clamp the coordinate 0.0 to `1/(2*N)`. 
 
 [How to properly upscale a texture in opengl?](https://stackoverflow.com/questions/53974343/how-to-properly-upscale-a-texture-in-opengl/53976359#53976359)
 
+Lets assume you have a 2x2 texture
+
+If this texture is wrapped on a grid of 6x6 fragments, the the center of a texel is on exactly on the texel in the middel of 3x3 tile of the 6x6 square:
+
 ![2x2 texture](image/texture/texture_2x2.png)
 ![2x2 texture wrapped to 6x6 quad](image/texture/texture_2x2_to_6x6.png)
+
+The color of the other fragments depends on the the texture parameters - see [`glTexParameter`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexParameter.xhtml).
+
+Since the texture is magnified, the `GL_TEXTURE_MAG_FILTER` is significant.
+
+If it is `GL_NEAREST`, then the color of the fragments is that one of the closest texel, to the texture coordinates of the fragment:
+
 ![2x2 texture filter nearest](image/texture/texture_2x2_nearest.png)
+
+If it is `GL_LINEAR`, then the color is interpolated, by the weighted average of the 4 pixels which are closest to the texture coordinates.
+
+The interpolation at the borders of the 6x6 quad depends on the wrap parameters `GL_TEXTURE_WRAP_S` and `GL_TEXTURE_WRAP_T`.
+
+If the parameters are `GL_REPEAT` (which is default), the the texture is treated as an endless texture and the interpolation of the interpolation of the color at the borders takes into account the texels on the opposite side of the texture. This is used for seamless textures and tiling:
+
 ![2x2 texture filter nearest wrap repeat](image/texture/texture_2x2_linear_repeat.png)
+
+If it is `GL_CLAMP_TO_EDGE`, then the interpolated color at the borders is clamped to the color of the texels at the border of the texture:
+
 ![2x2 texture filter nearest wrap clamp to edge](image/texture/texture_2x2_linear_clamp.png)
 
 ---
 
 ## Texture binding and format, Texture swizzle
 
-[How will it be when in glTexImage2D I choose different internal format from how I sample it in shader?](https://stackoverflow.com/questions/45141783/how-will-it-be-when-in-glteximage2d-i-choose-different-internal-format-from-how/45142605#45142605),  
-[SSAO working but has a weird Red colour overlay](https://stackoverflow.com/questions/50783034/ssao-working-but-has-a-weird-red-colour-overlay):  
+[How will it be when in glTexImage2D I choose different internal format from how I sample it in shader?](https://stackoverflow.com/questions/45141783/how-will-it-be-when-in-glteximage2d-i-choose-different-internal-format-from-how/45142605#45142605) [C++]  
+[SSAO working but has a weird Red colour overlay](https://stackoverflow.com/questions/50783034/ssao-working-but-has-a-weird-red-colour-overlay), [C++]  
 
 The [Image Format](https://www.khronos.org/opengl/wiki/Image_Format#Color_formats) specification of Khronos group says:
 
@@ -571,6 +625,16 @@ Also, the following other formats must be supported for both textures and render
 
 [WebGL texImage2D parameters](https://stackoverflow.com/questions/53899162/webgl-teximage2d-parameters/53899276#53899276)  
 
-  [C++]: https://stackoverflow.com/questions/tagged/c%2b%2b
+---
+
+<a href="https://stackexchange.com/users/7322082/rabbid76"><img src="https://stackexchange.com/users/flair/7322082.png" width="208" height="58" alt="profile for Rabbid76 on Stack Exchange, a network of free, community-driven Q&amp;A sites" title="profile for Rabbid76 on Stack Exchange, a network of free, community-driven Q&amp;A sites" /></a>
+
   [C]: https://stackoverflow.com/questions/tagged/c
+  [C++]: https://stackoverflow.com/questions/tagged/c%2b%2b
+  [C#]: https://stackoverflow.com/questions/tagged/c%23
+  [Python]: https://stackoverflow.com/questions/tagged/python
+  [GLSL]: https://stackoverflow.com/questions/tagged/glsl
   [GLUT]: https://stackoverflow.com/questions/tagged/glut
+  [Three.js]: https://stackoverflow.com/questions/tagged/three.js
+  [Fixed Function]: https://www.khronos.org/opengl/wiki/Fixed_Function_Pipeline
+
