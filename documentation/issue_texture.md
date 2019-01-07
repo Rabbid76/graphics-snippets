@@ -25,6 +25,7 @@
   - [Texture and Renderbuffer](#texture-and-renderbuffer)
   - [Texture Filtering](#texture-filtering)
   - [Texture - WebGL](#texture---webgl)
+  - [TODO](#todo)
 
 <!-- /TOC -->
 # Texture and Sampler - Common mistakes and issues
@@ -179,6 +180,16 @@ layout (binding = 1) uniform sampler2D u_texture1;
 
 ---
 
+[glActiveTexture default behavior not as anticipated](https://stackoverflow.com/questions/49542557/glactivetexture-default-behavior-not-as-anticipated/49560106#49560106), [C++]  
+[Use texture as palette in OpenGL ES 2.0 shader](https://stackoverflow.com/questions/49585086/use-texture-as-palette-in-opengl-es-2-0-shader/49585133#49585133), [Android]  
+
+See [OpenGL 4.6 API Compatibility Profile Specification; 7.10 Samplers; page 154](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.compatibility.pdf):
+
+> Samplers are special uniforms used in the OpenGL Shading Language to identify
+the texture object used for each texture lookup. The value of a sampler indicates the texture image unit being accessed. Setting a sampler’s value to `i` selects texture image unit number `i`. 
+
+---
+
 [PyOpenGL fragment shader texture sampling](https://stackoverflow.com/questions/53585040/pyopengl-fragment-shader-texture-sampling/53585187#53585187), [Python]  
 
 In glsl uniform variables are default initialized by 0 respectively 0.0. So the value of the texture sampler uniform `textureObj` is initialized by (texture unit) 0, too.
@@ -292,31 +303,13 @@ This means that scaling the texture coordinate does **not** cause different resu
 
 ## Texture Filter and Wrapping
 
-[Reflection texture from FBO getting to correct image](https://stackoverflow.com/questions/50289505/reflection-texture-from-fbo-getting-to-correct-image/50291377#50291377) [C++]  
+[Reflection texture from FBO getting to correct image](https://stackoverflow.com/questions/50289505/reflection-texture-from-fbo-getting-to-correct-image/50291377#50291377), [C++]  
 
 I assume the you have set the texture wrap parameters for `GL_TEXTURE_WRAP_S` and `GL_TEXTURE_WRAP_T` to `GL_CLAMP_TO_EDGE`. See [`glTexParameter`](https://www.khronos.org/registry/OpenGL-Refpages/es3.0/html/glTexParameter.xhtml).
 
 This causes that any texture coordinate are clamped to the range `[0+1/(2*texturSize), 1-1/(2*textureSize)]`.
 
-[OpenGL. What should take glEnable for make texute transparent and with hard pixel edges](https://stackoverflow.com/questions/53012611/opengl-what-should-take-glenable-for-make-texute-transparent-and-with-hard-pixe/53012857#53012857) [Python]  
-
-You have to set the texture magnification function. This filter is used when the texture is magnified.  
-The magnification function can be set by [`glTexParameteri`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexParameter.xhtml). Possible values are `GL_LINEAR` and `GL_NEAREST`. The initial value is `GL_LINEAR`.
-
-[OpenGL - Simple 2D Texture Not Being Displayed](https://stackoverflow.com/questions/53343472/opengl-simple-2d-texture-not-being-displayed/53345784#53345784), [C++]  
-
-The initial value of `GL_TEXTURE_MIN_FILTER` is `GL_NEAREST_MIPMAP_LINEAR`. When using this filter, and no mipmaps are generate then the texture is not *complete*.
-
-[OpenGL ES 3.2 Specification; 8.17 Texture Completeness; page 205](https://www.khronos.org/registry/OpenGL/specs/es/3.2/es_spec_3.2.pdf)  
-
->A texture is said to be *complete* if all the texture images and texture parameters
-required to utilize the texture for texture application are consistently defined.  
->
->... a texture is complete unless any of the following
-conditions hold true:
->
-> - The minification filter requires a mipmap (is neither `NEAREST` nor `LINEAR`),
-and the texture is not mipmap complete.
+---
 
 [GLSL Sampler2D tiling issue](https://stackoverflow.com/questions/46664908/glsl-sampler2d-tiling-issue/46672772#46672772), [Three.js] [GLSL]  
 
@@ -326,7 +319,39 @@ and the texture is not mipmap complete.
 > glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 >```
 
-[Problems using GLTexImage3D correctly](https://stackoverflow.com/questions/52326761/problems-using-glteximage3d-correctly/52333776#52333776) [C#]   
+In three.js the texture wrap parameters can be set as follows (see [Texture][https://threejs.org/docs/#api/textures/Texture] and [Texture Constants][https://threejs.org/docs/#api/constants/Textures]):
+
+```js
+var texture = new THREE.TextureLoader().load( textureFileName );
+texture.wrapS = THREE.ClampToEdgeWrapping;
+texture.wrapT = THREE.ClampToEdgeWrapping; 
+```
+
+This means the texture coordinates, which are passed to `texture2D` are clamped, if they are less than 0.0 or greater than 1.0. In fact, the  `u` (`x`) coordinate is clamped to `[0.5/width, (width-0.5)/width]` and the `v` (`y`) coordinate is clamped to `[0.5/height, (hight-0.5)/height]`.
+
+[OpenGL. What should take glEnable for make texute transparent and with hard pixel edges](https://stackoverflow.com/questions/53012611/opengl-what-should-take-glenable-for-make-texute-transparent-and-with-hard-pixe/53012857#53012857) [Python]  
+
+The texture magnification function is used when the texture is magnified.  
+The magnification function can be set by [`glTexParameteri`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexParameter.xhtml). Possible values are `GL_LINEAR` and `GL_NEAREST`. The initial value is `GL_LINEAR`.  
+While the parameter `GL_LINEAR `would cause that the weighted average of the 4 texture elements that are closest to the specified texture coordinates are returned, `GL_NEAREST` causes that the value of the texture element that is nearest is returned, when the texture is looked up.
+
+---
+
+[OpenGL - Simple 2D Texture Not Being Displayed](https://stackoverflow.com/questions/53343472/opengl-simple-2d-texture-not-being-displayed/53345784#53345784), [C++]  
+
+The initial value of `GL_TEXTURE_MIN_FILTER` is `GL_NEAREST_MIPMAP_LINEAR`. When using this filter, and no mipmaps are generate then the texture is not *complete*.
+
+[OpenGL ES 3.2 Specification; 8.17 Texture Completeness; page 205](https://www.khronos.org/registry/OpenGL/specs/es/3.2/es_spec_3.2.pdf)  
+
+>A texture is said to be *complete* if all the texture images and texture parameters required to utilize the texture for texture application are consistently defined.  
+>
+>... a texture is complete unless any of the following conditions hold true:
+>
+> - The minification filter requires a mipmap (is neither `NEAREST` nor `LINEAR`), and the texture is not mipmap complete.
+
+---
+
+[Problems using GLTexImage3D correctly](https://stackoverflow.com/questions/52326761/problems-using-glteximage3d-correctly/52333776#52333776), [C#]  
 
 The texture wrap parameters `GL_TEXTURE_WRAP_S`, `GL_TEXTURE_WRAP_T` and `GL_TEXTURE_WRAP_R`  are by default `GL_REPEAT`.  
 The default parameters for the minifying function (`GL_TEXTURE_MIN_FILTER`) and magnification function are (`GL_TEXTURE_MAG_FILTER`) are `GL_NEAREST_MIPMAP_LINEAR` respectively `GL_LINEAR`.  
@@ -338,7 +363,9 @@ If you would use the wrap parameter `GL_CLAMP_TO_EDGE`, then the first and the l
 
 Note the texture coordinate of the first voxel (or texel) is `1/(2*N)` and the coordinate of the last voxel is `1 - 1/(2*N)`, where `N` is the number of voxels in a row, column or layer. Because of that the coordinate 0.0, is exactly in the middle of the first and the last voxel. `GL_REPEAT` would clamp the coordinate 0.0 to `1/(2*N)`. 
 
-[How to properly upscale a texture in opengl?](https://stackoverflow.com/questions/53974343/how-to-properly-upscale-a-texture-in-opengl/53976359#53976359)
+---
+
+[How to properly upscale a texture in opengl?](https://stackoverflow.com/questions/53974343/how-to-properly-upscale-a-texture-in-opengl/53976359#53976359), [C++]
 
 Lets assume you have a 2x2 texture
 
@@ -373,6 +400,7 @@ If it is `GL_CLAMP_TO_EDGE`, then the interpolated color at the borders is clamp
 
 [How will it be when in glTexImage2D I choose different internal format from how I sample it in shader?](https://stackoverflow.com/questions/45141783/how-will-it-be-when-in-glteximage2d-i-choose-different-internal-format-from-how/45142605#45142605) [C++]  
 [SSAO working but has a weird Red colour overlay](https://stackoverflow.com/questions/50783034/ssao-working-but-has-a-weird-red-colour-overlay), [C++]  
+[OpenGL grayscale texture as float wrong format](https://stackoverflow.com/questions/52531345/opengl-grayscale-texture-as-float-wrong-format/52540263#52540263), [C++]  
 
 The [Image Format](https://www.khronos.org/opengl/wiki/Image_Format#Color_formats) specification of Khronos group says:
 
@@ -380,7 +408,8 @@ The [Image Format](https://www.khronos.org/opengl/wiki/Image_Format#Color_format
 >
 > **Note:** Texture swizzling can change what the missing values are.
 
-See [OpenGL 4.6 API Core Profile Specification; 15.2. SHADER EXECUTION; page 487](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf)]:
+See [OpenGL 4.6 API Core Profile Specification; 15.2. SHADER EXECUTION; page 487](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf)]:  
+See [OpenGL 4.6 API Compatibility Profile Specification; 16.1 Texture Environments and Texture Functions; page 595](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.compatibility.pdf):
 
 > When a texture lookup is performed in a fragment shader, the GL computes the filtered texture value ... and converts it to a texture base color Cb as shown in table 15.1, ...
 >```txt
@@ -409,21 +438,218 @@ See [OpenGL 4.6 API Core Profile Specification; 15.2. SHADER EXECUTION; page 487
 >     Cs[0] = 1; // float or int depending on texture component type
 >```
 
-[GLSL Shader going black when I try to sample a texture](https://stackoverflow.com/questions/46340027/glsl-shader-going-black-when-i-try-to-sample-a-texture/46341189#46341189)  
-[What is the meaning of s,t,p,q in Vector components?](https://stackoverflow.com/questions/47969475/what-is-the-meaning-of-s-t-p-q-in-vector-components/47970288#47970288)  
-[glActiveTexture default behavior not as anticipated](https://stackoverflow.com/questions/49542557/glactivetexture-default-behavior-not-as-anticipated/49560106#49560106)  
-[Use texture as palette in OpenGL ES 2.0 shader](https://stackoverflow.com/questions/49585086/use-texture-as-palette-in-opengl-es-2-0-shader/49585133#49585133)  
-[How do you ?free? a texture unit?](https://stackoverflow.com/questions/50113147/how-do-you-free-a-texture-unit/50113279#50113279)  
-[android bitmap pixel format for glTexImage2D](https://stackoverflow.com/questions/34705921/android-bitmap-pixel-format-for-glteximage2d/51447512#51447512)  
-[Why do the textured image colors are not the same as the origin?](https://stackoverflow.com/questions/51994952/why-do-the-textured-image-colors-are-not-the-same-as-the-origin/52000706#52000706)  
-[OpenGL grayscale texture as float wrong format](https://stackoverflow.com/questions/52531345/opengl-grayscale-texture-as-float-wrong-format/52540263#52540263)  
-[Pygame and PyOpenGL quad texturing problem](https://stackoverflow.com/questions/53400377/pygame-and-pyopengl-quad-texturing-problem/53400813#53400813)  
+---
+
+[GLSL Shader going black when I try to sample a texture](https://stackoverflow.com/questions/46340027/glsl-shader-going-black-when-i-try-to-sample-a-texture/46341189#46341189), [C] [Fixed Function]  
+
+The internal texture format `GL_BGR` is not valid. `GL_BGR` is a valid for the format of the source texture, but the internal representation has to be `GL_RGB`.  
+See [`glTexImage2D`][https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexImage2D.xhtml].
+
+See the Khronos reference page [GLAPI/glTexImage2D][https://www.khronos.org/opengl/wiki/GLAPI/glTexImage2D] which says:
+>To define texture images, call [`glTexImage2D`][https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexImage2D.xhtml]. The arguments describe the parameters of the texture image, such as height, width, width of the border, level-of-detail number (see `glTexParameter`), and number of color components provided. The last three arguments describe how the image is represented in memory.  
+>
+>`format`​ determines the composition of each element in data​. It can assume one of these symbolic values:
+>
+>`GL_BGR`: Each element is an RGB triple. The GL converts it to floating point and assembles it into an RGBA element by attaching 1 for alpha. Each component is clamped to the range [0,1].
+
+---
+
+[What is the meaning of s,t,p,q in Vector components?](https://stackoverflow.com/questions/47969475/what-is-the-meaning-of-s-t-p-q-in-vector-components/47970288#47970288), [Three.js]  
+
+See [WebGL Specification Vesion 1.0][https://www.khronos.org/registry/webgl/specs/1.0.0/#4.3]:
+
+>4.3 Supported GLSL Constructs
+>
+>A WebGL implementation must only accept shaders which conform to The OpenGL ES Shading Language, Version 1.00 ...
+
+See the [OpenGL ES Shading Language 1.00 Specification ][https://www.khronos.org/registry/OpenGL/specs/es/2.0/GLSL_ES_Specification_1.00.pdf]:
+
+>5.5 Vector Components
+>
+>The names of the components of a vector or scalar are denoted by a single letter. As a notational convenience, several letters are associated with each component based on common usage of position, color or texture coordinate vectors. The individual components can be selected by following the variable
+name with period ( . ) and then the component name.
+>
+>The component names supported are:
+>
+> - `{x, y, z, w}` Useful when accessing vectors that represent points or normals
+>
+> - `{r, g, b, a}` Useful when accessing vectors that represent colors
+>
+> - `{s, t, p, q}` Useful when accessing vectors that represent texture coordinates
+>
+> The component names `x`, `r`, and `s` are, for example, synonyms for the same (first) component in a vector.
+Note that the third component of the texture coordinate set, `r` in OpenGL ES, has been renamed `p` so as to avoid the confusion with `r` (for red) in a color.
+
+---
+
+[How do you ?free? a texture unit?](https://stackoverflow.com/questions/50113147/how-do-you-free-a-texture-unit/50113279#50113279), [C++]
+
+You can't "free" the texture unit, but you can bind the default texture object to the texture unit.
+
+> See [OpenGL 4.6 API Compatibility Profile Specification; 8.1 Texture Objects; page 178](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.compatibility.pdf):
+
+> Textures in GL are represented by named objects. The name space for texture objects is the unsigned integers, with **zero reserved by the GL to represent the default texture object**.  
+> [...]  
+> The binding is effected by calling
+>
+    void BindTexture( enum target, uint texture );
+
+> with target set to the desired texture target and texture set to the unused  name.
+
+This means
+
+```cpp
+GLuint defaultTextureObjectID = 0;
+glActiveTexture(GL_TEXTURE0);
+glBindTexture(GL_TEXTURE_2D, defaultTextureObjectID);
+```
+
+will bind the default texture object to texture unit 0.
+
+<br/>
+Since OpenGL 4.5 it can be used [`glBindTextureUnit`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glBindTextureUnit.xhtml)
+
+> The command
+>
+>     void BindTextureUnit( uint unit, uint texture );
+>
+>binds an existing texture object to the **texture unit numbered `unit`**. `texture` **must be zero or the name of an existing texture object**. When `texture` is the name of an existing texture object, that object is bound to the target, in the corresponding texture unit, that was specified when the object was created.
+
+The following too:
+
+```cpp
+glBindTextureUnit( 0, 0 ); // texture unit 0, default texture object (0)
+```
+
+---
+
+[android bitmap pixel format for glTexImage2D](https://stackoverflow.com/questions/34705921/android-bitmap-pixel-format-for-glteximage2d/51447512#51447512), [Android]  
+
+This issue can't be solved in OpenGL ES 1.1 but it would be solvable in OpenGL ES 3.0 or by OpenGL extension [`EXT_texture_swizzle`](https://www.khronos.org/registry/OpenGL/extensions/EXT/EXT_texture_swizzle.txt):
+
+Since OpenGL ES 3.0 you can use the texture swizzle parameters to swap the color channels. See [`glTexParameter`](https://www.khronos.org/registry/OpenGL-Refpages/es3.0/html/glTexParameter.xhtml):
+> `GL_TEXTURE_SWIZZLE_R`
+>
+>Sets the swizzle that will be applied to the r component of a texel before it is returned to the shader. Valid values for param are `GL_RED`, `GL_GREEN`, `GL_BLUE`, `GL_ALPHA`, `GL_ZERO` and `GL_ONE`. If `GL_TEXTURE_SWIZZLE_R` is `GL_RED`, the value for r will be taken from the first channel of the fetched texel. If `GL_TEXTURE_SWIZZLE_R` is `GL_GREEN`, the value for r will be taken from the second channel of the fetched texel. ...
+
+This means the color channels will be swapped when the texture is looked up, when you set the following texture parameters to the texture object: 
+
+```java  
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_R, GL_GREEN);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_G, GL_BLUE);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_B, GL_ALPHA);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_A, GL_RED);
+```
+
+The relevant part in the specification can be found at [OpenGL ES 3.0.5 Specification; 3.8.14 Texture State; page 162](https://www.khronos.org/registry/OpenGL/specs/es/3.0/es_spec_3.0.pdf)
+
+To check if an OpenGL extension is valid, [`glGetString(GL_EXTENSIONS)`](https://www.khronos.org/registry/OpenGL-Refpages/es1.1/xhtml/glGetString.xml) can be use, which returns a space-separated list of supported extensions.
+
+A completely different solution would be to use a [`Canvas`](https://developer.android.com/reference/android/graphics/Canvas) for the conversion. Draw the [`Bitmap`](https://developer.android.com/reference/android/graphics/Bitmap#copy(android.graphics.Bitmap))  on the canvas, and then use the target bitmap, which is hold by the canvas.<br/>
+I found this solution on GitHub: [fix android 2.3 can't decode bitmap in rgba8888 format](https://gist.github.com/kyze8439690/7408999)
+
+```java
+public static Bitmap convert(Bitmap bitmap, Bitmap.Config config) {
+    Bitmap convertedBitmap = Bitmap.createBitmap(bitmap.getWidth(), bitmap.getHeight(), config);
+    Canvas canvas          = new Canvas(convertedBitmap);
+    Paint  paint           = new Paint();
+    paint.setColor(Color.BLACK);
+    canvas.drawBitmap(bitmap, 0, 0, paint);
+    return convertedBitmap;
+}
+```
+
+---
+
+[Why do the textured image colors are not the same as the origin?](https://stackoverflow.com/questions/51994952/why-do-the-textured-image-colors-are-not-the-same-as-the-origin/52000706#52000706), [Java]  
+
+At OpenGL there is the possibility, to use the `GL_BGR` format, which specifies a internal format where the color channels are swapped (in compare to GL_`RGB`).
+
+See [OpenGL 4 Refpages - `glTexImage2D`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexImage2D.xhtml) and [OpenGL Renders texture with different color than original image?](https://stackoverflow.com/questions/4093190/opengl-renders-texture-with-different-color-than-original-image).
+
+At OpenGL ES you have to manually swap the red and blue color channel, because the internal format `GL_BGR` is missing.
+
+See [OpenGL ES 3.0 Refpages - `glTexImage2D`](https://www.khronos.org/registry/OpenGL-Refpages/es3.0/html/glTexImage2D.xhtml)
+and [lwjgl - `class GL11`](http://legacy.lwjgl.org/javadoc/org/lwjgl/opengl/GL11.html).
+
+```java
+pixels = BufferUtils.createByteBuffer(bytePixels.length);
+pixels.put(bytePixels);
+pixels.flip();
+for (int i = 0; i < pixels.length; i += 3) {
+    byte t = pixels[i];
+    pixels[i] = pixels[i+2];
+    pixels[i+2] = t;
+}
+```
+
+Another possibility would be given in OpenGL ES 3.0 or by OpenGL extension [`EXT_texture_swizzle`](https://www.khronos.org/registry/OpenGL/extensions/EXT/EXT_texture_swizzle.txt):
+
+Since OpenGL ES 3.0 you can use the texture swizzle parameters to swap the color channels. See [`glTexParameter`](https://www.khronos.org/registry/OpenGL-Refpages/es3.0/html/glTexParameter.xhtml):
+> `GL_TEXTURE_SWIZZLE_R`
+>
+>Sets the swizzle that will be applied to the r component of a texel before it is returned to the shader. Valid values for param are `GL_RED`, `GL_GREEN`, `GL_BLUE`, `GL_ALPHA`, `GL_ZERO` and `GL_ONE`. If `GL_TEXTURE_SWIZZLE_R` is `GL_RED`, the value for r will be taken from the first channel of the fetched texel. If `GL_TEXTURE_SWIZZLE_R` is `GL_GREEN`, the value for r will be taken from the second channel of the fetched texel. ...
+
+This means the color channels will be swapped when the texture is looked up, by setting the following texture parameters to the texture object: 
+
+```cpp
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_R, GL_BLUE);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_B, GL_RED);
+```
+
+The relevant part in the specification can be found at [OpenGL ES 3.0.5 Specification; 3.8.14 Texture State; page 162](https://www.khronos.org/registry/OpenGL/specs/es/3.0/es_spec_3.0.pdf)
+
+To check if an OpenGL extension is valid, [`glGetString(GL_EXTENSIONS)`](https://www.khronos.org/registry/OpenGL-Refpages/es1.1/xhtml/glGetString.xml) can be use, which returns a space-separated list of supported extensions.
+
+---
+
+[Pygame and PyOpenGL quad texturing problem](https://stackoverflow.com/questions/53400377/pygame-and-pyopengl-quad-texturing-problem/53400813#53400813) [Python]  
+
+> When I change `GL_TEXTURE_MIN_FILTER` to `GL_TEXTURE_MAG_FILTER` in `glTexParameteri` the texture disappears. Why?
+
+The initial value of `GL_TEXTURE_MIN_FILTER` is `GL_NEAREST_MIPMAP_LINEAR`. If you don't change it and you don't create mipmaps, then the texture is not "complete" and will not be "shown". See [`glTexParameter`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexParameter.xhtml).
+
+See [OpenGL 4.6 API Compatibility Profile Specification; 8.17 Texture Completeness; page 306](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.compatibility.pdf)  
+
+>A texture is said to be *complete* if all the texture images and texture parameters required to utilize the texture for texture application are consistently defined.  
+> 
+>... a texture is complete unless any of the following conditions hold true:
+> 
+> - The minification filter requires a mipmap (is neither `NEAREST` nor `LINEAR`), and the texture is not mipmap complete.
+
+---
+> When I change `GL_LINEAR` to `GL_NEAREST`, nothing happens. The used texture's resolution changed to 300x300px. Why is that?
+
+If the texture is smaller than the region where the texture is wrapped to, the the minification filter has not effect, but the magnification would have an effect. If you set the  value `GL_NEAREST` to the `GL_TEXTURE_MAG_FILTER` then the texels are not interpolated any more.
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+
+---
+> How can I make mipmaps and then using them?
+
+Mipmaps can be generated by [`glGenerateMipmap`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGenerateMipmap.xhtml):
+
+<!-- language: python -->
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR)
+    glTexImage2D(GL_TEXTURE_2D, 0, 3, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData)
+    glGenerateMipmap(GL_TEXTURE_2D)
+
+---
+> The `loadImage()` function make a texture. How knows PyOpenGL which texture should be used in the `makeQuad()` function?
+
+OpenGL is a state engine. Each state is kept until you change it again, even beyond frames. Since you have bound the texture in `loadImage`
+
+    glBindTexture(GL_TEXTURE_2D, bgImgGL)
+
+the currently named texture object, which is bound to texture unit 0 is `bgImgGL`. This texture is used for drawing.
 
 ---
 
 ## Texture alignment (GL_UNPACK_ALIGNMENT, GL_PACK_ALIGNMENT)
 
-[Failing to map a simple unsigned byte rgb texture to a quad](https://stackoverflow.com/questions/46202452/failing-to-map-a-simple-unsigned-byte-rgb-texture-to-a-quad/46203044#46203044):  
+[Failing to map a simple unsigned byte rgb texture to a quad](https://stackoverflow.com/questions/46202452/failing-to-map-a-simple-unsigned-byte-rgb-texture-to-a-quad/46203044#46203044), [C++] [GLSL]  
+
 `GL_UNPACK_ALIGNMENT` specifies the alignment requirements for the start of each pixel row in memory. By default `GL_UNPACK_ALIGNMENT` is set to 4.
 This means each row of the texture is supposed to have a lenght of 4*N bytes.
 
@@ -445,8 +671,8 @@ row 1:    red,       red,
 row 2:    green,     RGB(0, ?, ?)
 ```
 
-[Opengl texture cylinder trouble](https://stackoverflow.com/questions/47111512/opengl-texture-cylinder-trouble/47113373#47113373),  
-[OpenGL texture format, create image/texture data for OpenGL](https://stackoverflow.com/questions/46833380/opengl-texture-format-create-image-texture-data-for-opengl/46833638#46833638):  
+[Opengl texture cylinder trouble](https://stackoverflow.com/questions/47111512/opengl-texture-cylinder-trouble/47113373#47113373), [C++]  
+[OpenGL texture format, create image/texture data for OpenGL](https://stackoverflow.com/questions/46833380/opengl-texture-format-create-image-texture-data-for-opengl/46833638#46833638), [C++]  
 
 By default, each row of a texture should be aligned to 4 bytes.
 The texture is an RGB texture, which needs 24 bits or 3 bytes for each texel and the texture is tightly packed especially the rows of the texture.
@@ -627,13 +853,22 @@ Also, the following other formats must be supported for both textures and render
 
 ---
 
+## TODO
+
+[How can I map a texture image onto a shader geometry?](https://stackoverflow.com/questions/53999716/how-can-i-map-a-texture-image-onto-a-shader-geometry/54003812#54003812)  
+[Skybox texture does not show with OpenGL?](https://stackoverflow.com/questions/54030902/skybox-texture-does-not-show-with-opengl/54041037#54041037)  
+
+---
+
 <a href="https://stackexchange.com/users/7322082/rabbid76"><img src="https://stackexchange.com/users/flair/7322082.png" width="208" height="58" alt="profile for Rabbid76 on Stack Exchange, a network of free, community-driven Q&amp;A sites" title="profile for Rabbid76 on Stack Exchange, a network of free, community-driven Q&amp;A sites" /></a>
 
   [C]: https://stackoverflow.com/questions/tagged/c
   [C++]: https://stackoverflow.com/questions/tagged/c%2b%2b
   [C#]: https://stackoverflow.com/questions/tagged/c%23
+  [Java]: https://stackoverflow.com/questions/tagged/java
   [Python]: https://stackoverflow.com/questions/tagged/python
   [GLSL]: https://stackoverflow.com/questions/tagged/glsl
+  [Android]: https://stackoverflow.com/questions/tagged/android
   [GLUT]: https://stackoverflow.com/questions/tagged/glut
   [Three.js]: https://stackoverflow.com/questions/tagged/three.js
   [Fixed Function]: https://www.khronos.org/opengl/wiki/Fixed_Function_Pipeline
