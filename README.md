@@ -126,6 +126,14 @@
 
 ---
 
+## Python
+
+### Examples
+
+[OpenGL 4.6, DIrect State Access (DSA), Spir-V Shader Program](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/python_dsa_spirv_demo.md)
+
+---
+
 ## Documentation
 
 [Intersection](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/intersection.md)
