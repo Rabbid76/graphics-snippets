@@ -130,7 +130,7 @@
 
 ### Examples
 
-[OpenGL 4.6, DIrect State Access (DSA), Spir-V Shader Program](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/python_dsa_spirv_demo.md)
+[OpenGL 4.6, Direct State Access (DSA), Spir-V Shader Program](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/python_example_dsa_spirv.md)
 
 ---
 

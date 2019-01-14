@@ -1,7 +1,5 @@
 # Python OpenGL 4.6, Direct state access (DSA), Spir-V shader program
 
-[Direct State Access, Khronos wiki](https://www.khronos.org/opengl/wiki/Direct_State_Access)
-
 ## Overview
 
 ### Debug output
@@ -26,7 +24,7 @@ glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS)
 glDebugMessageInsert(GL_DEBUG_SOURCE_APPLICATION, GL_DEBUG_TYPE_MARKER, 0, GL_DEBUG_SEVERITY_NOTIFICATION, -1, "Starting debug messaging service")
 ```
 
-### Create Spir-V sahder program
+### Create Standard, Portable Intermediate Representation - V (SPIR-V) shader program
 
 [SPIR Overview, Khronos](https://www.khronos.org/spir/)  
 [OpenGL SPIR-V, Khronos wiki](https://www.khronos.org/opengl/wiki/SPIR-V)
