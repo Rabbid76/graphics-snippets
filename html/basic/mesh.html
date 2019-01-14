@@ -154,7 +154,7 @@ class App {
             new MeshSphereTessellated(),
             new MeshTorus(32, 32),
             new MeshTrefoilKnot(256, 32),
-            new MeshTorusKnot(512, 32, 3, 7),
+            new MeshTorusKnot(512, 32, 7, 3),
             new MeshArrow(2, 8, 32)
         ];
         this.meshes = new Array(this.meshDefs.length);
@@ -610,100 +610,56 @@ class MeshTrefoilKnot extends MeshObject {
 };
 
 class MeshTorusKnot extends MeshObject {
-    constructor(slices, stacks, p_, q_, ra, rb, c) {
+    constructor(tess_u, tess_v, p_, q_, ra, rb, rc, c) {
         super();
-        slices = slices || 512;
-        stacks = stacks || 32;
+        tess_u = tess_u || 512;
+        tess_v = tess_v || 32;
         p_ = p_ || 7;
         q_ = q_ || 3; 
-        this.ra = ra || 0.35;
-        this.rb = ra || 0.3;
+        ra = ra || 0.7;
+        rb = rb || 0.3;
+        rc = rc || 0.1;
         c = c || [0.9, 0.5, 0.1];
         this.v = []; this.n = []; this.c = []; this.e = []; this.t = [];
-        let ds = 1.0 / slices, dt = 1.0 / stacks;
-        for ( let s = 0; s < 1 + ds / 2; s += ds) {
-            for ( let t = 0; t < 1 + dt / 2; t += dt ) {
-                let E = 0.001;
-                let p = this.compute( s, t, p_, q_ );
-                let u = this.compute( s - E, t, p_, q_ );
-                u = Vec3.sub( u, p );
-                let v = this.compute( s, t + E, p_, q_ );
-                v = Vec3.sub( v, p );
-                let n = Vec3.normalize(Vec3.cross( u, v ));
-                this.addAttr( p, n, [s * 3.0 * p_ * q_, t], c );
+        
+        for (let u = 0; u <= tess_u; ++ u ) {
+            let phi0 = 2 * Math.PI * u / tess_u;
+            let pt_tk0 = this.sample(phi0, p_, q_, ra, rb)
+            let phi1 = 2 * Math.PI * (u + 1) / tess_u
+            let pt_tk1 = this.sample(phi1, p_, q_, ra, rb)
+            let pt_c = this.sample(phi0, p_, q_, ra, 0)
+            
+            let T = Vec3.sub(pt_tk1, pt_tk0);
+            let B = Vec3.normalize(Vec3.sub(pt_tk0, pt_c));
+            let N = Vec3.normalize(Vec3.cross(T, B))
+            T = Vec3.normalize(Vec3.cross(B, N))
+            for (let v = 0; v <= tess_v; ++ v ) {
+                let theta = 2 * Math.PI * (v / tess_v);
+                let px = Math.sin(theta) * rc; 
+                let py = Math.cos(theta) * rc;
+                let n = Vec3.add(Vec3.mul_s(N, px), Vec3.mul_s(B, py));
+                let p = Vec3.add(n, pt_tk0);
+                n = Vec3.normalize(n);
+                this.addAttr( p, n, [3.0 * p_ * q_ * u/tess_u, v/tess_v], c );
             }
         }
+        
         this.e = [];
-        let vertexCount = this.v.length/3;
-        let n = 0;
-        for ( let i = 0; i < slices; ++ i ) {
-            for ( let j = 0; j < stacks; ++ j ) {       
-                this.e.push( n + j, n + j + 1, (n + j + stacks + 1) % vertexCount );
-                this.e.push( (n + j + stacks + 1) % vertexCount, (n + j + 1) % vertexCount, (n + j + 1 + stacks + 1) % vertexCount );
+        for (let i_strip = 0; i_strip < tess_u; ++ i_strip ) {
+            for (let i_v = 0; i_v < tess_v; ++ i_v ) {
+                let ei = [i_strip*(tess_v+1)+i_v, i_strip*(tess_v+1)+i_v+1, (i_strip+1)*(tess_v+1)+i_v+1, (i_strip+1)*(tess_v+1)+i_v];
+                this.e.push(ei[0], ei[1], ei[2]);
+                this.e.push(ei[0], ei[2], ei[3]);
             }
-            n += stacks + 1;
         }
     }
 
-    compute( s, t, p, q ) {
-        var tube_rad = this.ra;
-        var torus_rad = this.rb;
-
-        /*
-        var phi1 = ( s - 1 / ( q * Math.PI ) ) * Math.PI * 2;
-        var r1 = Math.cos( q * phi1 ) + 2;
-        var x1 = r1 * Math.cos( p * phi1 );
-        var y1 = r1 * Math.sin( p * phi1 );
-        var z1 = - Math.sin( q * phi1 );
-
-        var phi2 = ( s + 1 / ( q * Math.PI ) ) * Math.PI * 2;
-        var r2 = Math.cos( q * phi2 ) + 2;
-        var x2 = r2 * Math.cos( p * phi2 );
-        var y2 = r2 * Math.sin( p * phi2 );
-        var z2 = - Math.sin( q * phi2 );
-
-        var dir = vec3.create( [ x2 - x1, y2 - y1, z2 - z1 ] );
-        vec3.normalize( dir );
-        var dir_xy = vec3.create( [ dir[0], dir[1], 0 ] );
-        vec3.normalize( dir_xy );
-        var dir_xy_len = Math.sqrt( dir[0] * dir[0] + dir[1] + dir[1] );
-
-        var phi = s * Math.PI * 2;
-        var r = Math.cos( q * phi ) + 2;
-        var x = r * Math.cos( p * phi );
-        var y = r * Math.sin( p * phi );
-        var z = - Math.sin( q * phi );
-        
-        var beta = t * Math.PI * 2;
-        var tube_x = Math.sin( beta );
-        var tube_y = Math.cos( beta );
-
-        var vertex = vec3.create();
-        vertex[0] = x + tube_rad * tube_x * -dir_xy[1] + tube_rad * tube_y * dir_xy_len * dir_xy[0]; 
-        vertex[1] = y + tube_rad * tube_x * dir_xy[0] + tube_rad * tube_y * dir_xy_len * dir_xy[1]; 
-        vertex[2] = z + tube_rad * tube_y * dir[2]; 
-        */
-
-        var phi = s * Math.PI * 2;
-        var r = Math.cos( q * phi ) + 2;
-        var dir_x = Math.cos( p * phi );
-        var dir_y = Math.sin( p * phi );
-        var x = r * dir_x;
-        var y = r * dir_y;
-        var z = - Math.sin( q * phi );
-        var beta = t * Math.PI * 2;
-        var tube_x = Math.sin( beta );
-        var tube_y = Math.cos( beta );
-        var dir_circle = Vec3.normalize( [ -y, x, 0 ] );
-        var dir_up = Vec3.normalize( [ 0, Math.cos( q * phi ), 1 ] );
+    sample(phi, p, q, r1, r2) {
         var vertex = [
-            x + tube_rad * tube_x * dir_x + tube_rad * tube_y * dir_up[1] * dir_circle[0],
-            y + tube_rad * tube_x * dir_y + tube_rad * tube_y * dir_up[1] * dir_circle[1], 
-            z + tube_rad * tube_y * dir_up[2]
+            (r1 + r2 * Math.cos(p * phi)) * Math.cos(q * phi),
+            (r1 + r2 * Math.cos(p * phi)) * Math.sin(q * phi), 
+            r2 * -Math.sin(p * phi)
         ]; 
-        vertex[0] *= torus_rad;  
-        vertex[1] *= torus_rad;
-        vertex[2] *= torus_rad;
         return vertex;
     }
 };
