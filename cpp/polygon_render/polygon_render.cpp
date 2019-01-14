@@ -24,6 +24,7 @@
 #include <math.h>
 
 // Own
+#include <OpenGLError.h>
 #include <Render_IProgram.h>
 #include <Render_IDrawPolygon.h>
 #include <OpenGLPolygon_1_0.h>
@@ -45,6 +46,7 @@ public:
     virtual ~CWindow_Glfw();
 
     void Init( int width, int height, int multisampling, bool doubleBuffer );
+    void InitDebug( void );
     static void CallbackResize(GLFWwindow* window, int cx, int cy);
     void MainLoop( void );
 
@@ -73,6 +75,7 @@ private:
     std::chrono::high_resolution_clock::time_point _start_time;
     std::chrono::high_resolution_clock::time_point _current_time;
 
+    std::unique_ptr<Render::IDebug>              _debug;
     std::unique_ptr<OpenGL::ShaderProgramSimple> _prog;
 
     std::unique_ptr<Render::Polygon::IRender> _polygon_1;
@@ -96,6 +99,7 @@ int main(int argc, char** argv)
     glewExperimental = true;
     if ( glewInit() != GLEW_OK )
         throw std::runtime_error( "error initializing glew" );
+     window.InitDebug();
 
     std::cout << glGetString( GL_VENDOR ) << std::endl;
     std::cout << glGetString( GL_RENDERER ) << std::endl;
@@ -188,6 +192,18 @@ void CWindow_Glfw::Init( int width, int height, int multisampling, bool doubleBu
     glfwGetWindowPos( _wnd, &_wndPos[0], &_wndPos[1] );
     _updateViewport = true;
 }
+
+
+void CWindow_Glfw::InitDebug( void ) // has to be done after GLEW initialization!
+{
+ #if defined(_DEBUG)
+    static bool synchromous = true;
+    _debug = std::make_unique<OpenGL::CDebug>();
+    _debug->Init( Render::TDebugLevel::error_only );
+    _debug->Activate( synchromous );
+#endif
+}
+
 
 void CWindow_Glfw::Resize( int cx, int cy )
 {

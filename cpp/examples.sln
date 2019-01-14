@@ -26,8 +26,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "example_map_generator", "ex
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cone_step_map_generator", "cone_step_map_generator\cone_step_map_generator.vcxproj", "{2569C8B9-9C7A-4A83-B0E0-508E2ACCFEC9}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{686548B1-8567-437D-9B7F-4EE65324ED8C}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "depth_pack_test", "depth_pack_test\depth_pack_test.vcxproj", "{D69B5E0B-4748-48E0-A333-7DC978170E30}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fixed_function_attibutes_glfw", "fixed_function_attibutes_glfw\fixed_function_attibutes_glfw.vcxproj", "{69C3630B-6963-40B5-89E9-8441B5B4EE52}"

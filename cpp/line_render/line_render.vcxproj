@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\OpenGL\OpenGLDataBuffer_std140.cpp" />
+    <ClCompile Include="..\source\OpenGL\OpenGLError.cpp" />
     <ClCompile Include="..\source\OpenGL\OpenGLLine_1_0.cpp" />
     <ClCompile Include="..\source\OpenGL\OpenGLLine_2_0.cpp" />
     <ClCompile Include="..\source\OpenGL\OpenGLLine_core_and_es.cpp" />
@@ -38,6 +39,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\OpenGL\OpenGLDataBuffer_std140.h" />
+    <ClInclude Include="..\include\OpenGL\OpenGLError.h" />
     <ClInclude Include="..\include\OpenGL\OpenGLLine_1_0.h" />
     <ClInclude Include="..\include\OpenGL\OpenGLLine_2_0.h" />
     <ClInclude Include="..\include\OpenGL\OpenGLLine_core_and_es.h" />
@@ -51,6 +53,7 @@
     <ClInclude Include="..\include\render\Render_IBuffer.h" />
     <ClInclude Include="..\include\render\Render_IDrawLine.h" />
     <ClInclude Include="..\include\render\Render_IDrawType.h" />
+    <ClInclude Include="..\include\render\Render_IGraphicsDebug.h" />
     <ClInclude Include="..\include\render\Render_IProgram.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />

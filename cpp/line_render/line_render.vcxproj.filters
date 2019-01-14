@@ -45,6 +45,9 @@
     <ClCompile Include="..\source\OpenGL\OpenGLVertexBuffer.cpp">
       <Filter>OpenGL</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\OpenGL\OpenGLError.cpp">
+      <Filter>OpenGL</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -96,6 +99,12 @@
       <Filter>OpenGL</Filter>
     </ClInclude>
     <ClInclude Include="..\include\OpenGL\OpenGLVertexBuffer.h">
+      <Filter>OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\render\Render_IGraphicsDebug.h">
+      <Filter>render</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenGL\OpenGLError.h">
       <Filter>OpenGL</Filter>
     </ClInclude>
   </ItemGroup>

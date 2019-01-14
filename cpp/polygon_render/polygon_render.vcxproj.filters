@@ -42,6 +42,9 @@
     <ClCompile Include="..\source\OpenGL\OpenGLDataBuffer_std140.cpp">
       <Filter>OpenGL</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\OpenGL\OpenGLError.cpp">
+      <Filter>OpenGL</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -91,6 +94,12 @@
     </ClInclude>
     <ClInclude Include="..\include\OpenGL\OpenGLDataBuffer_std140.h">
       <Filter>OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\OpenGL\OpenGLError.h">
+      <Filter>OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\render\Render_IGraphicsDebug.h">
+      <Filter>render</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
