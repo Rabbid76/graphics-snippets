@@ -857,6 +857,7 @@ Also, the following other formats must be supported for both textures and render
 
 [How can I map a texture image onto a shader geometry?](https://stackoverflow.com/questions/53999716/how-can-i-map-a-texture-image-onto-a-shader-geometry/54003812#54003812)  
 [Skybox texture does not show with OpenGL?](https://stackoverflow.com/questions/54030902/skybox-texture-does-not-show-with-opengl/54041037#54041037)  
+[Can't texture and transform at the same time](https://stackoverflow.com/questions/54133596/cant-texture-and-transform-at-the-same-time/54135029#54135029)  
 
 ---
 
