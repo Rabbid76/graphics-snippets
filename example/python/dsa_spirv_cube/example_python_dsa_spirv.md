@@ -112,6 +112,7 @@ for vspec in vertex_spec:
 
 ### Vertex shader
 
+
 ```glsl
 #version 460
 
