@@ -112,9 +112,8 @@ for vspec in vertex_spec:
 
 ### Vertex shader
 
-
 ```glsl
-#version 460
+#version 460 core
 
 layout (location = 0) in vec3 inPos;
 layout (location = 1) in vec3 inNV;
@@ -161,7 +160,7 @@ void main()
 ### Fragment shader
 
 ```glsl
-#version 460
+#version 460 core
 
 layout (location = 0) in TVertexData
 {
@@ -259,7 +258,6 @@ if glslVaidator != None:
         vspir_vert_cmd = '"' + glslVaidator + '" -V "' + glslPath + '" -o "' + spvPath + '"'
         call( vspir_vert_cmd )
 
-
 #
 # OpenGL context base class
 #
@@ -316,7 +314,7 @@ class GL_Context:
         print('debug:', msg)
 
 #
-# OpenGL program base class 
+# OpenGL program base class
 #
 class GL_Program:
 
@@ -324,6 +322,9 @@ class GL_Program:
 
     def __init__(self, program):
         self.__program = program
+
+    def Object(self):
+        return self.__program
 
     def Use(self):
         glUseProgram(self.__program)
@@ -361,12 +362,36 @@ class GL_Program_GLSL(GL_Program):
         except:
             frag_code = fs
 
+        sh_code_list = [(GL_VERTEX_SHADER, vert_code), (GL_FRAGMENT_SHADER, frag_code)]
+
         # OpenGL.GL.shaders
         # http://pyopengl.sourceforge.net/pydoc/OpenGL.GL.shaders.html
-        program = compileProgram( 
-            compileShader( vert_code, GL_VERTEX_SHADER ),
-            compileShader( frag_code, GL_FRAGMENT_SHADER ),
-        )
+        #sh_objs = [compileShader(sh_code[1], sh_code[0]) for sh_code in sh_code_list]
+        #program = compileProgram(vs_obj, fs_obj)
+
+        sh_objs = []
+        for sh_code in sh_code_list:
+            sh_obj = glCreateShader(sh_code[0])
+            glShaderSource(sh_obj, sh_code[1])
+            glCompileShader(sh_obj)
+            result = glGetShaderiv(sh_obj, GL_COMPILE_STATUS )
+            #if verbose or not result:
+            #    print( '\n%s shader code:' % nameMap.get( shaderStage, '' ) )
+            #    print( sh_code[1] )
+            if not result:
+                print( glGetShaderInfoLog(sh_obj) )
+            sh_objs.append(sh_obj)
+
+        program = glCreateProgram()
+        for shObj in sh_objs: glAttachShader(program, shObj)
+
+        # programs has to be declare separable for the use with program pipeline - this is crucial!
+        glProgramParameteri(program, GL_PROGRAM_SEPARABLE, GL_TRUE)
+
+        glLinkProgram(program)
+        if not glGetProgramiv(program, GL_LINK_STATUS):
+            print( 'link error:' )
+            print( glGetProgramInfoLog(program) )
 
         super().__init__(program)
 
@@ -399,6 +424,10 @@ class GL_Program_SpirV(GL_Program):
 
         program = glCreateProgram()
         for sh_obj in sh_objs: glAttachShader(program, sh_obj)
+
+        # programs has to be declare separable for the use with program pipeline - this is crucial!
+        glProgramParameteri(program, GL_PROGRAM_SEPARABLE, GL_TRUE)
+
         glLinkProgram(program)
         if not glGetProgramiv(program, GL_LINK_STATUS):
             print( 'link error:' )
@@ -420,6 +449,10 @@ class GL_Mesh:
         self.__vao            = vao
         self.__no_of_vertices = no_vertices
         self.__no_of_indices  = no_indices
+
+    def Bind(self):
+        if self.__no_of_vertices > 0:
+            glBindVertexArray(self.__vao)
 
     def Draw(self):
         if self.__no_of_vertices > 0:
@@ -446,9 +479,6 @@ class GL_MeshCube(GL_Mesh):
         no_vert = len(attr_array) // 10
 
         vertex_attributes = np.array(attr_array, dtype=np.float32)
-
-        # See PyOpenGL 4.5 Cheatsheet
-        # https://github.com/henkeldi/opengl_cheatsheet
 
         self.__vbo = np.empty(1, dtype=np.uint32)
         glCreateBuffers(len(self.__vbo), self.__vbo)
@@ -579,26 +609,11 @@ class GL_Window:
 
     def _Init(self):
 
-        # initialize shader program 
-
-        if os.path.isfile(spv_vert_draw_file) and os.path.isfile(spv_frag_draw_file):
-            self.__draw_prog = GL_Program_SpirV(spv_vert_draw_file, spv_frag_draw_file)
-        else:
-            self.__draw_prog = GL_Program_GLSL(glsl_vert_draw_file, glsl_frag_draw_file)
-
-        #al = ['inPos', 'inNV', 'inCol']
-        #self.___attrib = self.__draw_prog.AttributeLocations(al)
-        #print(self.___attrib)
-
-        #ul = ['u_model', 'u_view', 'u_proj']
-        #self.__uniform = self.__draw_prog.UniformLocations(ul)
-        #print(self.__uniform)
-
         # create cube mesh
 
         self.__cube = GL_MeshCube()
 
-        # mpdel view projetion data shader storage block
+        # model view projection data shader storage block
 
         self.__model = glm.mat4(1)
         self.__view  = glm.lookAt(glm.vec3(0,-3,0), glm.vec3(0,0,0), glm.vec3(0,0,1))
@@ -632,10 +647,32 @@ class GL_Window:
         glNamedBufferStorage(self.__light_ssbo, light_data_buffer.nbytes, light_data_buffer, code)
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, self.__light_ssbo)
 
-        # activate program  and set states
+        # set states
 
         glEnable(GL_DEPTH_TEST)
-        self.__draw_prog.Use()
+        self.__cube.Bind()
+
+        # initialize (compile and link) shader program 
+
+        # This should be done after all OpenGL states have been set,
+        # because NVIDIA optimize the current program for the current states an would have to recompile it if the states would change.
+        # https://www.opengl.org/discussion_boards/showthread.php/175944-NVidia-280-x-and-GeForce-4xx?p=1229120&viewfull=1#post1229120 
+
+        if os.path.isfile(spv_vert_draw_file) and os.path.isfile(spv_frag_draw_file):
+            self.__draw_prog = GL_Program_SpirV(spv_vert_draw_file, spv_frag_draw_file)
+        else:
+            self.__draw_prog = GL_Program_GLSL(glsl_vert_draw_file, glsl_frag_draw_file)
+
+        # create pipeline for draw mesh
+
+        self.__draw_pipeline = np.empty(1, dtype=np.uint32)
+        glGenProgramPipelines(1, self.__draw_pipeline)
+        glUseProgramStages(self.__draw_pipeline[0], GL_VERTEX_SHADER_BIT | GL_FRAGMENT_SHADER_BIT, self.__draw_prog.Object())
+
+        # activate program  and set states
+
+        glBindProgramPipeline(self.__draw_pipeline[0])
+        #self.__draw_prog.Use()
 
     def _Draw(self, time):
 
