@@ -312,6 +312,13 @@ class CNavigationController:
         view = self.__get_view_mat()
         return view, glm.inverse(view)
 
+    def WindowMat(self):
+        vp_rect = self.VpRect()
+        inv_wnd = glm.translate(glm.mat4(1), glm.vec3(-1, -1, 0))
+        inv_wnd = glm.scale(inv_wnd, glm.vec3(2/vp_rect[2], 2/vp_rect[3], 1))
+        inv_wnd = glm.translate(inv_wnd, glm.vec3(-vp_rect[0], -vp_rect[1], 0))
+        return glm.inverse(inv_wnd), inv_wnd
+
     def VpRect(self):
         return self.__get_view_rect()
 
@@ -327,13 +334,16 @@ class CNavigationController:
         # get viewport rectangle
         vp_rect = self.VpRect()
        
-        # get projection and view
+        # get view, projection and window matrix
+        proj, inv_proj = self.ProjectionMat()
         view, inv_view = self.ViewMat()
-        proj, _        = self.ProjectionMat()
+        wnd,  inv_wnd  = self.WindowMat() 
 
         # get world space postion on view ray
-        pt_wnd   = glm.vec3(*cursor_pos, 1.0)
-        pt_world = glm.unProject(pt_wnd, view, proj, vp_rect)
+        pt_wnd     = glm.vec3(*cursor_pos, 1.0)
+        #pt_world  = glm.unProject(pt_wnd, view, proj, vp_rect)
+        pt_h_world = inv_view * inv_proj * inv_wnd * glm.vec4(*pt_wnd, 1)
+        pt_world   = glm.vec3(pt_h_world) / pt_h_world.w
         
         # get view postion
         eye  = glm.vec3(inv_view[3])

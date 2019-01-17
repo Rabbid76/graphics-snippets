@@ -25,6 +25,11 @@ cursor_pos     # (x, y) window position of the cursor (mouse)
 
 width  = vp_rect[2]
 height = vp_rect[3]
+
+inv_wnd = glm.translate(glm.mat4(1), glm.vec3(-1, -1, 0))
+inv_wnd = glm.scale(inv_wnd, glm.vec3(2/vp_rect[2], 2/vp_rect[3], 1))
+inv_wnd = glm.translate(inv_wnd, glm.vec3(-vp_rect[0], -vp_rect[1], 0))
+wnd     = glm.inverse(inv_wnd)
 ```
 
 ### Perspective "zoom" - move view position along view ray
@@ -45,4 +50,13 @@ ray_cursor = glm.normalize(pt_world - eye)
 # translate view position and update view matrix
 inv_view = glm.translate(glm.mat4(1), ray_cursor * delta) * inv_view
 view     = glm.inverse(inv_view)
+```
+
+#### Using the view projection and window matrix
+
+```py
+# get world space position on view ray
+pt_wnd     = glm.vec3(*cursor_pos, 1.0)
+pt_h_world = inv_view * inv_proj * inv_wnd * glm.vec4(*pt_wnd, 1)
+pt_world   = glm.vec3(pt_h_world) / pt_h_world.w
 ```
