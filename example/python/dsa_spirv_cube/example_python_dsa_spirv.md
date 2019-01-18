@@ -107,6 +107,7 @@ for vspec in vertex_spec:
     glVertexArrayAttribBinding(vao, vspec[0], 0)
     glEnableVertexArrayAttrib(vao, vspec[0])
 ```
+---
 
 ## Code listing
 

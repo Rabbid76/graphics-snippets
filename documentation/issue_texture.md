@@ -120,6 +120,31 @@ if ( image != nullptr )
 }
 ```
 
+---
+
+[Texture colors replaced by purple tones](https://stackoverflow.com/questions/54174087/texture-colors-replaced-by-purple-tones/54179559#54179559), [Nim]  
+
+The [Portable Network Graphics (PNG)](https://en.wikipedia.org/wiki/Portable_Network_Graphics) file may contain 32-bit RGBA colors.
+
+Force the `stbi_load` to generate an image with 4 color channels, by explicitly pass 4 to the last parameter:
+
+```py
+imageData = stbi_load("Test/2d-rendering-test./stack.png",
+                      addr texWidth, addr texHeight, addr channelCount, 4)
+```
+
+See [stb_image.h](https://github.com/nothings/stb/blob/master/stb_image.h):
+
+>     Basic usage (see HDR discussion below for HDR usage):
+          int x,y,n;
+          unsigned char *data = stbi_load(filename, &x, &y, &n, 0);
+          // ... process data if not NULL ...
+          // ... x = width, y = height, n = # 8-bit components per pixel ...
+> **`// ... replace '0' with '1'..'4' to force that many components per pixel`**
+
+>           // ... but 'n' will always be the number that it would have been if you said 0
+          stbi_image_free(data)
+
 ### Windows Bitmap
 
 [OpenGL Texture Loading issue with images that Crossed each other](https://stackoverflow.com/questions/53051066/opengl-texture-loading-issue-with-images-that-crossed-each-other/53051516#53051516), [C]  
@@ -1012,6 +1037,7 @@ The material can be used in the same manner as any other material.
   [C#]: https://stackoverflow.com/questions/tagged/c%23
   [Java]: https://stackoverflow.com/questions/tagged/java
   [Python]: https://stackoverflow.com/questions/tagged/python
+  [Nim]]: https://stackoverflow.com/questions/tagged/nim
   [GLSL]: https://stackoverflow.com/questions/tagged/glsl
   [Android]: https://stackoverflow.com/questions/tagged/android
   [GLUT]: https://stackoverflow.com/questions/tagged/glut
