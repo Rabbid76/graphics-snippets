@@ -1,3 +1,23 @@
+[next](../navigation_glm/example_python_navigation_glm.md)
+
+---
+
+<!-- TOC -->
+
+- [Python OpenGL 4.6, Direct state access (DSA), Spir-V shader program](#python-opengl-46-direct-state-access-dsa-spir-v-shader-program)
+  - [Overview](#overview)
+    - [Debug output](#debug-output)
+    - [Create Standard, Portable Intermediate Representation - V (SPIR-V) shader program](#create-standard-portable-intermediate-representation---v-spir-v-shader-program)
+    - [Generate mesh, by direct state access (DSA)](#generate-mesh-by-direct-state-access-dsa)
+  - [Code listing](#code-listing)
+    - [Vertex shader](#vertex-shader)
+    - [Fragment shader](#fragment-shader)
+    - [Python script](#python-script)
+
+<!-- /TOC -->
+
+---
+
 # Python OpenGL 4.6, Direct state access (DSA), Spir-V shader program
 
 ## Overview

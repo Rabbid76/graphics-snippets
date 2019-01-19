@@ -24,6 +24,7 @@
   - [Texture and Renderbuffer](#texture-and-renderbuffer)
   - [Texture - WebGL](#texture---webgl)
   - [Texture - three.js](#texture---threejs)
+  - [TODO](#todo)
 
 <!-- /TOC -->
 
@@ -1027,6 +1028,13 @@ var material = new THREE.ShaderMaterial({
 ```
 
 The material can be used in the same manner as any other material.
+
+---
+
+## TODO
+
+[What and why about GLSL textureGrad](https://stackoverflow.com/questions/21009985/what-and-why-about-glsl-texturegrad)  
+[What is, in simple terms, textureGrad()?](https://stackoverflow.com/questions/52975878/what-is-in-simple-terms-texturegrad)
 
 ---
 
