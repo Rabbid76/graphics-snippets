@@ -349,7 +349,7 @@ glDisableClientState( GL_TEXTURE_COORD_ARRAY );
 
 e.g. Vertex, Normal vector and Texture coordinate
 
-```txt     
+```txt
 [ Vx0, Vy0, Vz0, Nx0, Ny0, Nz0, Tv0, Tu0,
     Vx1, Vy1, Vz1, Nx1, Ny1, Nz1, Tv1, Tu1,
     .....

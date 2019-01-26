@@ -296,6 +296,10 @@ class GL_MeshCube(GL_Mesh):
 #
 class CNavigationController:
 
+    OFF    = 0
+    ORBIT  = 1
+    ROTATE = 2
+
     def __init__(self, view_mat, proj_mat, view_rect, depth_val, pivot_pt):
 
         self.__id = id
@@ -307,7 +311,7 @@ class CNavigationController:
 
         self.__pan = False
         self.__pan_start = glm.vec3(0, 0, 1)
-        self.__orbit = False
+        self.__orbit = self.OFF
         self.__orbit_start = glm.vec3(0, 0, 1)
         self.__pivot_world = glm.vec3(0, 0, 0)
 
@@ -342,13 +346,13 @@ class CNavigationController:
     def EndPan(self, cursor_pos):
         self.__pan = False
 
-    def StartOrbit(self, cursor_pos):
-        self.__orbit = True
+    def StartOrbit(self, cursor_pos, mode = ORBIT):
+        self.__orbit = mode if mode >= self.ORBIT and mode <= self.ROTATE else self.ORBIT
         self.__orbit_start = glm.vec3(*cursor_pos, self.Depth(cursor_pos)*2-1)
         self.__pivot_world = self.PivotWorld(cursor_pos)
         
     def EndOrbit(self, cursor_pos):
-        self.__orbit = False
+        self.__orbit = self.OFF
 
     def MoveOnLineOfSight(self, cursor_pos, delta):
 
@@ -412,7 +416,7 @@ class CNavigationController:
             view         = glm.inverse(inv_view)
             view_changed = True
 
-        elif self.__orbit:
+        elif self.__orbit == self.ORBIT:
 
             # get the drag start and end
             wnd_from = self.__orbit_start
@@ -431,6 +435,46 @@ class CNavigationController:
             
             #transform and update view matrix
             view         = rot_pivot * view
+            view_changed = True 
+
+        elif self.__orbit == self.ROTATE:
+
+            # get the drag start and end
+            wnd_from = self.__orbit_start
+            wnd_to   = glm.vec3(*cursor_pos, self.__orbit_start[2])
+            self.__orbit_start = wnd_to
+
+            # calculate the pivot, rotation axis and angle
+            pivot_view   = glm.vec3(view * glm.vec4(*self.__pivot_world, 1))
+            orbit_dir    = wnd_to - wnd_from 
+
+            # get the projection of the up vector to the view port 
+            # TODO
+
+            # calculate the rotation components for the rotation around the view space x axis and the world up vector 
+            orbit_dir_x  = glm.vec2(0, 1)
+            orbit_vec_x  = glm.vec2(0, orbit_dir.y)
+            orbit_dir_up = glm.vec2(1, 0)
+            orbit_vec_up = glm.vec2(orbit_dir.x, 0)
+
+            # calculate the rotation matrix around the view space x axis through the pivot
+            rot_pivot_x = glm.mat4(1)
+            if glm.length(orbit_vec_x) > 0.5: 
+                axis_x      = glm.vec3(-1, 0, 0)
+                angle_x     = glm.dot(orbit_dir_x, glm.vec2(orbit_vec_x.x/view_rect[2], orbit_vec_x.y/view_rect[3])) * math.pi
+                rot_mat_x   = glm.rotate(glm.mat4(1), angle_x, axis_x)
+                rot_pivot_x = glm.translate(glm.mat4(1), pivot_view) * rot_mat_x * glm.translate(glm.mat4(1), -pivot_view)
+            
+            # calculate the rotation matrix around the world space up vector through the pivot
+            rot_pivot_up = glm.mat4(1)
+            if glm.length(orbit_vec_up) > 0.5: 
+                axis_up      = glm.vec3(0, 0, 1)
+                angle_up     = glm.dot(orbit_dir_up, glm.vec2(orbit_vec_up.x/view_rect[2], orbit_vec_up.y/view_rect[3])) * math.pi
+                rot_mat_up   = glm.rotate(glm.mat4(1), angle_up, axis_up)
+                rot_pivot_up = glm.translate(glm.mat4(1), self.__pivot_world) * rot_mat_up * glm.translate(glm.mat4(1), -self.__pivot_world)
+            
+            #transform and update view matrix
+            view         = rot_pivot_x * view * rot_pivot_up
             view_changed = True 
 
         # return the view matrix
@@ -523,7 +567,8 @@ class GL_Window:
         elif button == GLUT_RIGHT_BUTTON and state == GLUT_UP:
             self.__navigate_control.EndPan(wnd_pos)
         if button == GLUT_LEFT_BUTTON and state == GLUT_DOWN:
-            self.__navigate_control.StartOrbit(wnd_pos)
+            self.__navigate_control.StartOrbit(wnd_pos, self.__navigate_control.ORBIT)
+            #self.__navigate_control.StartOrbit(wnd_pos, self.__navigate_control.ROTATE)
         elif button == GLUT_LEFT_BUTTON and state == GLUT_UP:
             self.__navigate_control.EndOrbit(wnd_pos)
 

@@ -617,7 +617,7 @@ Further there is the default texture object (0). If you don't create and bind a 
 
 > The uniform qualifier is used to declare global variables whose values are the same across the entire primitive being processed. **All uniform variables are read-only and are initialized externally either at link time or through the API**. **The link-time initial value is either the value of the variable’s initializer, if present, or 0 if no initializer is present**.
 
---- 
+---
 
 [How do you "free" a texture unit?](https://stackoverflow.com/questions/50113147/how-do-you-free-a-texture-unit/50113279#50113279), [C++]
 
@@ -704,6 +704,38 @@ Vertex shader: `binding = 3` means texture unit 3
 
 ```glsl
 layout(binding = 3) uniform sampler2D ourTexture;
+```
+
+---
+
+[Should I write logic in fragment shader in this case?](https://stackoverflow.com/questions/54280392/should-i-write-logic-in-fragment-shader-in-this-case/54294601#54294601), [GLSL]  
+
+Create a 1x1 texture with a single (white) color and use it for the uniform colored cubes.
+Binding and using this texture is much "cheaper" than changing the shader program: 
+
+<!-- language: lang-js -->
+
+```pp
+let whiteTexture = gl.createTexture();
+gl.bindTexture(gl.TEXTURE_2D, whiteTexture);
+gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
+                new Uint8Array([255,255,255,255]));
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+```
+
+Note, the lookup to this texture (`texture2D(u_texture, TextureCoordinates)`) will always return `vec4(1.0)`.
+
+If the texture is bound (to the texture unit which is assigned to `u_texture`), then  
+
+```glsl
+FragColor = Color * texture2D(u_texture, TextureCoordinates);
+```
+
+will sets the same fragment color as
+
+```glsl
+FragColor = Color * vec4(1.0); 
 ```
 
 ---

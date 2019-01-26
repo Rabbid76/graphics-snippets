@@ -142,6 +142,8 @@
 
 [Draw geometry](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/draw_mesh.md)
 
+[Draw elements in Python](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/draw_elements_python.md)
+
 [Model View Projection and Depth](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/model_view_projection_depth.md)
 
 [Matrix operations](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/matrix_operations.md)
