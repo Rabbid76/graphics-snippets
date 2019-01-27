@@ -140,7 +140,7 @@
 
 ### p5.js
 
-[Circle by 3 points - p5.js]((https://github.com/Rabbid76/graphics-snippets/blob/master/processing/p5js/p5js_circle_3_points.html)  
+[![](processing/p5js/image/circle_3_points.png) Circle by 3 points - p5.js](https://rabbid76.github.io/graphics-snippets/processing/p5js/p5js_circle_3_points.html)  
 
 ---
 
