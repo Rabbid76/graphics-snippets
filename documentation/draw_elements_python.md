@@ -12,9 +12,9 @@ Since the data which is passed to the OpenGL functions has to be consist of fixe
 The type of the array elements has to match value type enumerator constant, which is set, at the call of `glDrawElements` or `glMultiDrawElements`:
 
 ```
-ctypes.c_ubyte   /  numpy.uint8     <->    GL_UNSIGNED_BYTE
-ctypes.c_ushort  /  numpy.uint16    <->    GL_UNSIGNED_SHORT
-ctypes.c_uint    /  numpy.uint32    <->    GL_UNSIGNED_INT
+ctypes.c_uint8   /  numpy.uint8     <->    GL_UNSIGNED_BYTE
+ctypes.c_uint16  /  numpy.uint16    <->    GL_UNSIGNED_SHORT
+ctypes.c_uint32  /  numpy.uint32    <->    GL_UNSIGNED_INT
 ```
 
 Using `ctypes`:
@@ -22,7 +22,7 @@ Using `ctypes`:
 ```py
 import ctypes
 
-indexArray = (ctypes.c_uint * 6)(*indices)
+indexArray = (ctypes.c_uint32 * 6)(*indices)
 ``` 
 
 Using `numpy`:
@@ -75,8 +75,8 @@ Using `ctypes`:
 <!-- language: py -->
 
 ```py
-indexArray1 = (ctypes.c_uint * 3)(0, 1, 2)
-indexArray2 = (ctypes.c_uint * 3)(0, 2, 3)
+indexArray1 = (ctypes.c_uint32 * 3)(0, 1, 2)
+indexArray2 = (ctypes.c_uint32 * 3)(0, 2, 3)
 ```
 
 Using `numpy`:

@@ -1,0 +1,146 @@
+<html>
+<head>
+<meta charset='UTF-8'>
+<title>processing p5.js example</title>
+<style>
+body { margin: 0; overflow: hidden; }
+#ref-div { position: absolute; top: 0; left: 0; }
+#ref-link { color: #4040d0; }
+</style>
+</head>
+<body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.6.1/p5.js"></script>
+<div id="ref-div" >
+<a id="ref-link" href="https://p5js.org/">
+Circle by 3 points - p5.js
+</a>
+<br/>
+<a id="ref-link" href="https://p5js.org/reference/#/p5.Vector">
+p5.Vector
+</a>
+</div>
+
+<div id="p5js_canvas"></div>
+
+<script>
+
+function setup() {
+    let sketchCanvas = createCanvas(windowWidth, windowHeight);
+    sketchCanvas.parent('p5js_canvas')
+}
+
+function windowResized() {
+    resizeCanvas(windowWidth, windowHeight);
+}
+
+function mouseClicked() {
+    points = [];
+}
+
+function keyPressed() {
+    points = []
+}
+
+let count = 0;
+let points = [];
+let radius = 0;
+let center = new p5.Vector(0, 0);
+
+function draw() {
+        
+    if (points.length == 0) {
+
+        points = []
+        for (let i=0; i < 3; ++i ) {
+            let x = random(2) - 1;
+            let y = random(2) - 1;
+            points.push( new p5.Vector(x, y) );
+        }
+
+        // Intersection of 2 lines (2 dimensional)
+        // https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/intersection.md#intersection-of-2-lines-2-dimensional
+
+        // line 1
+        let ptQ  = p5.Vector.add(points[0], points[1]).mult(0.5);
+        let dirS = new p5.Vector(points[0].y-points[1].y, points[1].x-points[0].x);
+        dirS.normalize();
+
+        // line 2
+        let ptP  = p5.Vector.add(points[0], points[2]).mult(0.5);
+        let dirR = new p5.Vector(points[0].y-points[2].y, points[2].x-points[0].x);
+        dirR.normalize();
+        
+        // t  =  dot(Q-P, (S.y, -S.x)) / dot(R, (S.y, -S.x))
+        let vPQ    = p5.Vector.sub(ptQ, ptP);
+        let nvS    = new p5.Vector(dirS.y, -dirS.x);
+        let dist_t = p5.Vector.dot(vPQ, nvS) / p5.Vector.dot(dirR, nvS);
+
+        // X  =  P + R * t
+        center = p5.Vector.add(ptP, p5.Vector.mult(dirR, dist_t));
+        
+        // circle radius
+        radius = center.dist(points[0]); 
+    }
+
+
+    // fit the size of the geometry to the screen
+    
+    let max_radius= Math.min(width, height) / 2 - 10;
+    let geo_scale = max_radius / radius;
+
+    let pts = []
+    for (let i=0; i < 3; ++i ) {
+        pts.push( p5.Vector.mult(points[i], geo_scale) );
+    }
+    let cpt = p5.Vector.mult(center, geo_scale);
+    let rad = radius * geo_scale;
+    
+    let ptsMid = []
+    for (let i=0; i < 3; ++i ) {
+        let i2 = (i+1) % 3;
+        ptsMid.push( p5.Vector.add(pts[i], pts[i2]).mult(0.5) );
+    }
+
+
+    // center the circle to the screen
+    
+    translate(width/2 - cpt.x, height/2 - cpt.y);
+
+
+    // draw the scene
+
+    background(192);
+    
+    stroke(255, 64, 64);
+    noFill();
+    ellipse(cpt.x, cpt.y, rad*2, rad*2);
+    
+    stroke(0, 255, 0);
+    fill(128, 255, 128, 128);
+    triangle(pts[0].x, pts[0].y, pts[1].x, pts[1].y, pts[2].x, pts[2].y);
+
+    stroke(0, 0, 255);
+    fill(128, 128, 255);
+    for (let i=0; i < pts.length; ++i ) {
+        ellipse(pts[i].x, pts[i].y, 10, 10);
+    }
+
+    stroke(255, 0, 0);
+    fill(255, 128, 0);
+    ellipse(cpt.x, cpt.y, 5, 5);
+
+    stroke(255, 0, 0);
+    fill(255, 128, 0);
+    for (let i=0; i < ptsMid.length; ++i ) {
+        ellipse(ptsMid[i].x, ptsMid[i].y, 5, 5);
+    }
+
+    stroke(255, 0, 255);
+    for (let i=0; i < ptsMid.length; ++i ) {
+        line(ptsMid[i].x, ptsMid[i].y, cpt.x, cpt.y);
+    }
+}
+
+</script>
+</body>
+</html>

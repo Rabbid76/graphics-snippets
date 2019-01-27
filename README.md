@@ -136,6 +136,14 @@
 
 ---
 
+## Processing
+
+### p5.js
+
+[Circle by 3 points - p5.js]((https://github.com/Rabbid76/graphics-snippets/blob/master/processing/p5js/p5js_circle_3_points.html)  
+
+---
+
 ## Documentation
 
 [Intersection](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/intersection.md)
