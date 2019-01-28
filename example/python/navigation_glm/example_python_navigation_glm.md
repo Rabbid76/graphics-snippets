@@ -5,7 +5,7 @@
 <!-- TOC -->
 
 - [Python OpenGL 4.6, GLM navigation](#python-opengl-46-glm-navigation)
-  - [TODDO](#toddo)
+  - [TODO](#todo)
   - [Overview](#overview)
     - [Data source](#data-source)
     - [Perspective "zoom" - move view position along view ray](#perspective-zoom---move-view-position-along-view-ray)
@@ -26,7 +26,7 @@
 
 # Python OpenGL 4.6, GLM navigation
 
-## TODDO
+## TODO
 
 - gird 
 - coordinate axis
