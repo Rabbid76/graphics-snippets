@@ -176,6 +176,8 @@ wnd_from = wnd_to
 
 ##### Rotate world up vector and local x axis
 
+[How to implement alt+MMB camera rotation like in 3ds max?](https://stackoverflow.com/questions/54400422/how-to-implement-altmmb-camera-rotation-like-in-3ds-max/54411580#54411580)  
+
 ```py
 # get the drag start and end
 wnd_to = glm.vec3(*cursor_pos, wnd_from[2])
