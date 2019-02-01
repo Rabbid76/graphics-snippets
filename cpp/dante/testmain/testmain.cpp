@@ -10,8 +10,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-// freeglut
-#include <GLFW/glfw3.h>
+// GLFW
+#include <glfw3_window.h>
 
 // stl
 #include <vector>
@@ -29,17 +29,16 @@
 
 
 // [Switching Between windowed and full screen in OpenGL/GLFW 3.2](https://stackoverflow.com/questions/47402766/switching-between-windowed-and-full-screen-in-opengl-glfw-3-2/47462358#47462358)
+/***********************************************************************************************//**
+* \brief   
+*
+* \author  Rabbid76    \date  2019-02-01
+***************************************************************************************************/
 class CWindow_Glfw
 {
 private:
 
-    std::array< int, 2 > _wndPos         {0, 0};
-    std::array< int, 2 > _wndSize        {0, 0};
-    std::array< int, 2 > _vpSize         {0, 0};
-    bool                 _updateViewport = true;
-    bool                 _doubleBuffer   = true;
-    GLFWwindow *         _wnd            = nullptr;
-    GLFWmonitor *        _monitor        = nullptr;
+    View::GLFW3::CWindow _window;
 
     void Resize( int cx, int cy );
 
@@ -53,10 +52,11 @@ private:
 
 public:
 
+    CWindow_Glfw( void ) : _window("OGL window") {}
+
     virtual ~CWindow_Glfw();
 
     void Init( int width, int height, int multisampling, bool doubleBuffer, bool debugcontext );
-    static void CallbackResize(GLFWwindow* window, int cx, int cy);
     void MainLoop( void );
 };
 
@@ -88,9 +88,6 @@ int mulit_samples = 8;
 
 int main(int argc, char** argv)
 {
-    if ( glfwInit() == GLFW_FALSE )
-        throw std::runtime_error( "error initializing glfw" );
-
     // create OpenGL window and make OpenGL context current (`glfwInit` has to be done before).
     CWindow_Glfw window;
     window.Init( 800, 600, mulit_samples, true, debug_level != COpenGLContext::TDebugLevel::off );
@@ -115,63 +112,23 @@ int main(int argc, char** argv)
 
 
 CWindow_Glfw::~CWindow_Glfw()
-{
-  if ( _wnd != nullptr)
-    glfwDestroyWindow( _wnd );
-  glfwTerminate();
-}
+{}
 
-void CWindow_Glfw::CallbackResize(GLFWwindow* window, int cx, int cy)
-{
-    void *ptr = glfwGetWindowUserPointer( window );
-    if ( CWindow_Glfw *wndPtr = static_cast<CWindow_Glfw*>( ptr ) )
-        wndPtr->Resize( cx, cy );
-}
 
 void CWindow_Glfw::Init( int width, int height, int multisampling, bool doubleBuffer, bool debugcontext )
 {
-    _doubleBuffer = doubleBuffer;
+    View::TInitialize paramter;
+    paramter._size.x() = width;
+    paramter._size.y() = height;
 
-    // [GLFW Window guide; Window creation hints](http://www.glfw.org/docs/latest/window_guide.html#window_hints_values)
-
-    glfwWindowHint( GLFW_DEPTH_BITS, 24 );
-    glfwWindowHint( GLFW_STENCIL_BITS, 8 ); 
-
-    glfwWindowHint( GLFW_SAMPLES, multisampling );
-    glfwWindowHint( GLFW_DOUBLEBUFFER, _doubleBuffer ? GLFW_TRUE : GLFW_FALSE );
-
-    glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, 4 );
-    glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, 6 );
-    //glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE );
-    glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE );
-    glfwWindowHint( GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE );
-
-    glfwWindowHint( GLFW_OPENGL_DEBUG_CONTEXT, debugcontext ? GLFW_TRUE : GLFW_FALSE );
-
-    //GLFW_CONTEXT_ROBUSTNESS 
+    paramter._samples = multisampling;
+    paramter.Set<View::TCapability::doublebuffer>( doubleBuffer );
+    paramter.Set<View::TCapability::debug>( debugcontext );
     
-    _wnd = glfwCreateWindow( width, height, "OGL window", nullptr, nullptr );
-    if ( _wnd == nullptr )
-    {
-        glfwTerminate();
-        throw std::runtime_error( "error initializing window" ); 
-    }
-
-    glfwMakeContextCurrent( _wnd );
-
-    glfwSetWindowUserPointer( _wnd, this );
-    glfwSetWindowSizeCallback( _wnd, CWindow_Glfw::CallbackResize );
-
-    _monitor =  glfwGetPrimaryMonitor();
-    glfwGetWindowSize( _wnd, &_wndSize[0], &_wndSize[1] );
-    glfwGetWindowPos( _wnd, &_wndPos[0], &_wndPos[1] );
-    _updateViewport = true;
+    _window.Init( paramter );
+    _window.Activate();
 }
 
-void CWindow_Glfw::Resize( int cx, int cy )
-{
-    _updateViewport = true;
-}
 
 void CWindow_Glfw::MainLoop ( void )
 {
@@ -179,14 +136,16 @@ void CWindow_Glfw::MainLoop ( void )
 
     _start_time = std::chrono::high_resolution_clock::now();
 
-    while (!glfwWindowShouldClose(_wnd))
+    while (_window.Dropped() == false)
     {
+        /*
         if ( _updateViewport )
         {
             glfwGetFramebufferSize( _wnd, &_vpSize[0], &_vpSize[1] );
             glViewport( 0, 0, _vpSize[0], _vpSize[1] );
             _updateViewport = false;
         }
+        */
 
         _current_time     = std::chrono::high_resolution_clock::now();
         auto   delta_time = _current_time - _start_time;
@@ -194,12 +153,8 @@ void CWindow_Glfw::MainLoop ( void )
         
         Render( time_ms );
 
-        if ( _doubleBuffer )
-          glfwSwapBuffers( _wnd );
-        else
-          glFinish();
-        
-        glfwPollEvents();
+        _window.Flush();
+        _window.HandleEvents();
     }
 } 
 

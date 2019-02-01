@@ -1,0 +1,48 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="testmain.cpp" />
+    <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="..\source\view\glfw3\glfw3_window.cpp">
+      <Filter>view\glfw3</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\OpenGL\OpenGL_Matrix_Camera.h" />
+    <ClInclude Include="..\include\OpenGL\OpenGL_SimpleShaderProgram.h" />
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="targetver.h" />
+    <ClInclude Include="..\source\view\iview\view_iview.h">
+      <Filter>view\iview</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\view\iview\view_iview_types.h">
+      <Filter>view\iview</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\utililty\vector\utility_vector_types.h">
+      <Filter>utilility\vector</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\view\glfw3\glfw3_window.h">
+      <Filter>view\glfw3</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="view">
+      <UniqueIdentifier>{1dee737e-19ad-4698-8826-bf836aa0aef3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="view\glfw3">
+      <UniqueIdentifier>{17b174ea-f20d-406b-b1b8-000efc400390}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="view\iview">
+      <UniqueIdentifier>{57363306-0d60-4edd-a831-6fa51d2645d2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="utilility">
+      <UniqueIdentifier>{e12dd311-7972-46b2-8de8-7668394ed11f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="utilility\vector">
+      <UniqueIdentifier>{a5885e95-7241-437b-b0b4-2dde8ada0bdd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="utilility\exception">
+      <UniqueIdentifier>{4ecb4e74-09be-41ac-9a2a-525740e3f503}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

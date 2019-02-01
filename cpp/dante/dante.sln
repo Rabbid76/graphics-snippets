@@ -3,29 +3,23 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28307.329
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dante", "testmain\dante.vcxproj", "{A76F6F1B-2C7D-4E99-A7A4-F772601EF293}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "testmain", "testmain\testmain.vcxproj", "{A76F6F1B-2C7D-4E99-A7A4-F772601EF293}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
-		Debug|x86 = Debug|x86
 		Release|x64 = Release|x64
-		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{A76F6F1B-2C7D-4E99-A7A4-F772601EF293}.Debug|x64.ActiveCfg = Debug|x64
 		{A76F6F1B-2C7D-4E99-A7A4-F772601EF293}.Debug|x64.Build.0 = Debug|x64
-		{A76F6F1B-2C7D-4E99-A7A4-F772601EF293}.Debug|x86.ActiveCfg = Debug|Win32
-		{A76F6F1B-2C7D-4E99-A7A4-F772601EF293}.Debug|x86.Build.0 = Debug|Win32
 		{A76F6F1B-2C7D-4E99-A7A4-F772601EF293}.Release|x64.ActiveCfg = Release|x64
 		{A76F6F1B-2C7D-4E99-A7A4-F772601EF293}.Release|x64.Build.0 = Release|x64
-		{A76F6F1B-2C7D-4E99-A7A4-F772601EF293}.Release|x86.ActiveCfg = Release|Win32
-		{A76F6F1B-2C7D-4E99-A7A4-F772601EF293}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {5AFAC045-A253-4E5C-9D77-E17462BEC1D4}
+		SolutionGuid = {EE5E40C6-CAF1-4BE2-A840-411A77CE6EE4}
 	EndGlobalSection
 EndGlobal
