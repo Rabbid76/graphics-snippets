@@ -117,10 +117,8 @@ CWindow_Glfw::~CWindow_Glfw()
 
 void CWindow_Glfw::Init( int width, int height, int multisampling, bool doubleBuffer, bool debugcontext )
 {
-    View::TInitialize paramter;
-    paramter._size.x() = width;
-    paramter._size.y() = height;
-
+    View::TViewSettings paramter;
+    paramter._size = {width, height};
     paramter._samples = multisampling;
     paramter.Set<View::TCapability::doublebuffer>( doubleBuffer );
     paramter.Set<View::TCapability::debug>( debugcontext );
@@ -134,18 +132,19 @@ void CWindow_Glfw::MainLoop ( void )
 {
     InitScene();
 
+    // TODO $$$
+    // thread 
+    // process class implementing loop and timing std::chrono::high_resolution_clock
+
     _start_time = std::chrono::high_resolution_clock::now();
 
     while (_window.Dropped() == false)
     {
-        /*
-        if ( _updateViewport )
+        if ( _window.SizeChanged(true) )
         {
-            glfwGetFramebufferSize( _wnd, &_vpSize[0], &_vpSize[1] );
-            glViewport( 0, 0, _vpSize[0], _vpSize[1] );
-            _updateViewport = false;
+            View::TSize size = _window.Size();
+            glViewport( 0, 0, size[0], size[1] );
         }
-        */
 
         _current_time     = std::chrono::high_resolution_clock::now();
         auto   delta_time = _current_time - _start_time;
@@ -163,16 +162,17 @@ std::string sh_vert = R"(
 #version 400 core
 
 layout (location = 0) in vec3 inPos;
-layout (location = 1) in vec4 inColor;
+layout (location = 1) in vec2 inUV;
 
-out vec3 vertPos;
-out vec4 vertCol;
+out vec2 vUV;
+
+uniform mat4 u_proj;
+uniform mat4 u_model;
 
 void main()
 {
-    vertCol     = inColor;
-		vertPos     = inPos;
-		gl_Position = vec4(inPos, 1.0);
+    vUV         = inUV;
+    gl_Position = u_proj * u_model * vec4(inPos, 1.0);
 }
 )";
 
@@ -180,57 +180,101 @@ void main()
 std::string sh_frag = R"(
 #version 400 core
 
-in vec3 vertPos;
-in vec4 vertCol;
+in vec2 vUV;
 
 out vec4 fragColor;
 
 void main()
 {
-    fragColor  = vertCol;
+    fragColor = vec4(vUV.x, vUV.y, (1.0 - vUV.x)*(1.0 - vUV.y), 1.0);
 }
 )";
 
 
+std::string sh_perlin_noise = R"(
+#version 400 core
+
+in vec2 vUV;
+
+out vec4 fragColor;
+
+void main()
+{
+    fragColor = vec4(vUV.x, vUV.y, (1.0 - vUV.x)*(1.0 - vUV.y), 1.0);
+}
+)";
+
+
+GLint proj_loc  = -1;
+GLint model_loc = -1;
+GLuint program = 0;
+
 void CWindow_Glfw::InitScene( void )
 {
-    _prog.reset( new OpenGL::ShaderProgramSimple(
-    {
-      { sh_vert, GL_VERTEX_SHADER },
-      { sh_frag, GL_FRAGMENT_SHADER }
-    } ) );
-
     static const std::vector<float> varray
     { 
-      -0.707f, -0.75f,    1.0f, 0.0f, 0.0f, 1.0f, 
-       0.707f, -0.75f,    1.0f, 1.0f, 0.0f, 1.0f,
-       0.0f,    0.75f,    0.0f, 0.0f, 1.0f, 1.0f
+      -1.0f, -1.0f,    0.0f, 0.0f, 
+       1.0f, -1.0f,    1.0f, 0.0f,
+       1.0f,  1.0f,    1.0f, 1.0f,
+      -1.0f,  1.0f,    0.0f, 1.0f,
+    };
+
+    static const std::vector<unsigned int> iarray
+    {
+        0, 1, 2, 0, 2, 3
     };
 
     GLuint vbo;
     glGenBuffers( 1, &vbo );
+
+    GLuint ibo;
+    glGenBuffers( 1, &ibo );
+
     glBindBuffer( GL_ARRAY_BUFFER, vbo );
     glBufferData( GL_ARRAY_BUFFER, varray.size()*sizeof(*varray.data()), varray.data(), GL_STATIC_DRAW );
 
     GLuint vao;
     glGenVertexArrays( 1, &vao );
     glBindVertexArray( vao );
-    glVertexAttribPointer( 0, 2, GL_FLOAT, GL_FALSE, 6*sizeof(*varray.data()), 0 );
+
+    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, ibo );
+    glBufferData( GL_ELEMENT_ARRAY_BUFFER, iarray.size()*sizeof(*iarray.data()), iarray.data(), GL_STATIC_DRAW );
+
+    glVertexAttribPointer( 0, 2, GL_FLOAT, GL_FALSE, 4*sizeof(*varray.data()), 0 );
     glEnableVertexAttribArray( 0 );
-    glVertexAttribPointer( 1, 4, GL_FLOAT, GL_FALSE, 6*sizeof(*varray.data()), (void*)(2*sizeof(*varray.data())) );
+    glVertexAttribPointer( 1, 2, GL_FLOAT, GL_FALSE, 4*sizeof(*varray.data()), (void*)(2*sizeof(*varray.data())) );
     glEnableVertexAttribArray( 1 );
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
 
-    _prog->Use();
+    _prog.reset( new OpenGL::ShaderProgramSimple(
+    {
+      { sh_vert, GL_VERTEX_SHADER },
+      { sh_perlin_noise, GL_FRAGMENT_SHADER }
+    } ) );
+    program = _prog->Prog();
+
+    proj_loc  = glGetUniformLocation( program, "u_proj" );
+    model_loc = glGetUniformLocation( program, "u_model" );
+
+    glUseProgram( program );
 }
 
 
 void CWindow_Glfw::Render( double time_ms )
 {
+    View::TSize size = _window.Size();
+    float aspect = (float)size[0] / (float)size[1];
+
+    glm::mat4 proj  = glm::ortho( -aspect, aspect, -1.0f, 1.0f, -1.0f, 1.0f );
+    glm::mat4 model = glm::scale( glm::mat4(1.0f), glm::vec3( 0.8f, 0.8f, 0.8f ) );
+
+    glUniformMatrix4fv( proj_loc,  1, GL_FALSE, glm::value_ptr( proj ) );
+    glUniformMatrix4fv( model_loc, 1, GL_FALSE, glm::value_ptr( model ) );
+
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);  
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
       
-    glDrawArrays( GL_TRIANGLES, 0, 3 );
+    glDrawElements( GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr );
 }
 
 

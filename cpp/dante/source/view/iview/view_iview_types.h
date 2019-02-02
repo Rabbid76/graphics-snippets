@@ -16,10 +16,14 @@
 // STL
 
 #include <bitset>
+#include <exception> 
 
 
 namespace View
 {
+
+// view exception
+using Error = std::runtime_error;
 
 
 // scale type for view size and point
@@ -27,11 +31,11 @@ typedef int TScale;
 
 
 //! view size
-using TSize = Utility::Vector::TVector<TScale, 2>;
+using TSize = std::array<TScale, 2>;
 
 
 //! view point
-using TPoint = Utility::Vector::TVector<TScale, 2>;
+using TPoint = std::array<TScale, 2>;
 
 
 //! view capability
@@ -47,7 +51,7 @@ using TCapabilitySet = std::bitset<(int)TCapability::NO_OF>;
 
 
 //! view initial settings
-class TInitialize
+class TViewSettings
 {
 public:
 

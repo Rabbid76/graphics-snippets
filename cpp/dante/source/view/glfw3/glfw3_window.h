@@ -34,6 +34,17 @@ class CWindowHandle;
 using TWindowHandle = std::shared_ptr<CWindowHandle>;
 
 
+//! GLFW window states
+enum class TWindowState
+{
+    size_changed, //!< indicates that the size of the window has changed
+
+    NO_OF         //!< number of window state flags
+};
+
+using TWindowStateSet = std::bitset<(int)TWindowState::NO_OF>;
+
+
 /***********************************************************************************************//**
 * \brief GLFW-3 window implementation  
 *
@@ -49,10 +60,11 @@ public:
 
     bool Valid( void ) const noexcept(true) { return _handle != nullptr; }
 
-    virtual bool  Init( const TInitialize & ) noexcept(false) override;
+    virtual bool  Init( const TViewSettings & ) noexcept(false) override;
     
     virtual bool  Dropped( void )      const noexcept(false) override;
-    virtual TSize Size( void )         const noexcept(false) override;
+    virtual bool  SizeChanged( bool )        noexcept(true)  override;
+    virtual TSize Size( void )         const noexcept(true)  override;
     virtual void  HandleEvents( void ) const noexcept(false) override;
     virtual void  Activate( void )     const noexcept(false) override;
     virtual void  Flush( void )        const noexcept(false) override;
@@ -61,10 +73,13 @@ private:
 
     void Validate( void ) const noexcept(false);
 
-    TWindowHandle _handle;    //!< window object handle
-    std::string   _name;      //!< name of the window
-    TInitialize   _paramters; //!< initialization parameters
-    TSize         _size;      //!< current window size
+    void Resize( TSize );
+
+    TWindowHandle   _handle;      //!< window object handle
+    std::string     _name;        //!< name of the window
+    TViewSettings   _paramters;   //!< initialization parameters
+    TSize           _size{0, 0};  //!< current window size
+    TWindowStateSet _state;       //!< current states of the window
 };
 
 

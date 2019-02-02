@@ -27,6 +27,23 @@ namespace GLFW3
 
 
 /***********************************************************************************************//**
+* \brief GLFW exception object  
+*
+* \author  Rabbid76    \date  2019-02-02
+***************************************************************************************************/
+class GLFWError
+    : public View::Error
+{
+public:
+
+    GLFWError( 
+        const std::string &message ) //! error message
+        : View::Error( "GLFW-3: " + message )
+    {}
+};
+
+
+/***********************************************************************************************//**
 * \brief GLFW-3 window pointer  
 *
 * \author  Rabbid76    \date  2019-02-01
@@ -35,6 +52,19 @@ class CWindowHandle
 {
 public:
     GLFWwindow *_window{ nullptr };
+
+    static CWindow * WindowPtr( GLFWwindow *window )
+    {
+        void *ptr = glfwGetWindowUserPointer( window );
+        return static_cast<CWindow*>(ptr);
+    }
+
+    TSize FrabufferSize( void ) const
+    {
+        int cx, cy;
+        glfwGetFramebufferSize(_window, &cx, &cy );
+        return { (TScale)cx, (TScale)cy };
+    }
 };
 
 
@@ -68,7 +98,8 @@ CWindow::~CWindow()
 ***************************************************************************************************/
 void CWindow::Validate( void ) const
 {
-    // TODO $$$ if ( Valid() == false ) { exception }
+    if ( Valid() == false )
+        throw GLFWError( "invalid window handle" );
 }
 
 
@@ -78,7 +109,7 @@ void CWindow::Validate( void ) const
 * \author  Rabbid76    \date  2019-02-01
 ***************************************************************************************************/
 bool CWindow::Init(
-    const TInitialize &parameters ) //!< initialization parameter
+    const TViewSettings &parameters ) //!< initialization parameter
 {
     class CInstance
     {
@@ -86,7 +117,7 @@ bool CWindow::Init(
         CInstance( void )
         {
             if ( glfwInit() == GLFW_FALSE )
-                throw std::runtime_error( "error initializing glfw" ); // TODO Utility::Eception::Throw
+                throw GLFWError("error initializing");
         }
 
         virtual ~CInstance()
@@ -120,14 +151,20 @@ bool CWindow::Init(
 
     glfwWindowHint( GLFW_OPENGL_DEBUG_CONTEXT, _paramters.Test<TCapability::debug>() ? GLFW_TRUE : GLFW_FALSE );
 
-    auto window = glfwCreateWindow( _paramters._size.x(), _paramters._size.y(), _name.c_str(), nullptr, nullptr );
+    auto window = glfwCreateWindow( _paramters._size[0], _paramters._size[1], _name.c_str(), nullptr, nullptr );
     if ( window == nullptr )
     {
         glfwTerminate();
-        throw std::runtime_error( "error initializing window" ); // TODO Utility::Eception::Throw
+        throw GLFWError( "error initializing window" );
     }
 
     glfwSetWindowUserPointer( window, this );
+
+    glfwSetWindowSizeCallback( window, [](GLFWwindow* window, int cx, int cy)
+    {
+        if ( CWindow *wndPtr = CWindowHandle::WindowPtr(window) )
+            wndPtr->Resize( { (TScale)cx, (TScale)cy } );
+    } );
 
     /*
     
@@ -142,15 +179,7 @@ bool CWindow::Init(
     */
 
     /*
-    glfwSetWindowSizeCallback( window, CWindow_Glfw::CallbackResize );
-
-    void CWindow_Glfw::CallbackResize(GLFWwindow* window, int cx, int cy)
-    {
-        void *ptr = glfwGetWindowUserPointer( window );
-        if ( CWindow_Glfw *wndPtr = static_cast<CWindow_Glfw*>( ptr ) )
-            wndPtr->Resize( cx, cy );
-    }
-
+   
     void CWindow_Glfw::Resize( int cx, int cy )
     {
         _updateViewport = true;
@@ -162,10 +191,24 @@ bool CWindow::Init(
     //glfwGetWindowPos( window, &_wndPos[0], &_wndPos[1] );
 
     _handle = std::make_shared<CWindowHandle>( CWindowHandle( { window } ) );
+    _size   = _handle->FrabufferSize();
 
     // ...
 
     return Valid();
+}
+
+
+/***********************************************************************************************//**
+* \brief   
+*
+* \author  Rabbid76    \date  2019-02-02
+***************************************************************************************************/
+void CWindow::Resize( 
+    TSize ) //!< new window size - not this may be different to framebuffer size
+{
+    _size = _handle->FrabufferSize();
+    _state.set( (int)TWindowState::size_changed, true );
 }
 
 
@@ -183,13 +226,28 @@ bool CWindow::Dropped( void ) const
 
 
 /***********************************************************************************************//**
+* \brief Evaluate if the size of the window has changed.  
+*
+* \author  Rabbid76    \date  2019-02-02
+***************************************************************************************************/
+bool CWindow::SizeChanged( 
+    bool reset_changed ) //!< true: rest the size changed state
+    noexcept(true)
+{
+    bool changed = _state.test( (int)TWindowState::size_changed );
+    if ( reset_changed )
+        _state.reset( (int)TWindowState::size_changed );
+    return changed;
+}
+
+
+/***********************************************************************************************//**
 * \brief Get the current window size.  
 *
 * \author  Rabbid76    \date  2019-02-01
 ***************************************************************************************************/
-TSize CWindow::Size( void ) const
+TSize CWindow::Size( void ) const noexcept(true)
 {
-    Validate();
     return _size;
 }
 

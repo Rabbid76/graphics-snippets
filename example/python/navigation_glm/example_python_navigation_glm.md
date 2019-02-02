@@ -99,7 +99,7 @@ If the object is close to the eye position, then a translation on the viewport l
 
 ![pan near](./../../../documentation/image/pan_near.png)
 
-It the distance from the object to the eye is far, then a translation on the viewport leads to a large displacement of the eye and target positions:
+If the distance from the object to the eye is far, then a translation on the viewport leads to a large displacement of the eye and target positions:
 
 ![pan far](./../../../documentation/image/pan_far.png)
 

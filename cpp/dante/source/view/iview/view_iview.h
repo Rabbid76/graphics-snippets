@@ -37,8 +37,9 @@ public:
     
     virtual ~IView() {};
 
-    virtual bool  Init( const TInitialize & ) = 0;
+    virtual bool  Init( const TViewSettings & ) = 0;
     virtual bool  Dropped( void ) const = 0;
+    virtual bool  SizeChanged( bool ) = 0;
     virtual TSize Size( void ) const = 0;
     virtual void  HandleEvents( void ) const = 0;
     virtual void  Activate( void ) const = 0;
