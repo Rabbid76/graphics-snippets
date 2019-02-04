@@ -365,6 +365,22 @@ gl.generateMipmap(gl.TEXTURE_2D)
 
 ---
 
+[OpenGl texture wrapping](https://stackoverflow.com/questions/54487795/opengl-texture-wrapping/54487868#54487868)  
+
+See [OpenGL 4.6 API Core Profile Specification; 8.14.2 Coordinate Wrapping and Texel Selection; page 257, Table 8.20](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf)  
+
+>     MIRRORED_REPEAT : (size − 1) − mirror(coord mod (2 × size)) − size) 
+> where `mirror(a)` returns a `if a ≥ 0`, and `−(1 + a)` otherwise.
+
+This means if the texture is tiled then the even tiles are draw as the texture is and the odd tiles are drawn mirrored. 
+
+If the texture coordinate are in [0, 1], [2, 3], [4, 5], ..., then the *wrap* function returns a corresponding coordinate in range [0, 1].   
+If the texture coordinate are in [1, 2], [3, 4], [5, 6], ...,  then the *wrap* function returns a corresponding mirrored coordinate in range [1, 0].
+
+The *wrap* function is applied to each coordinate separately and for each coordinate a separate, different *wrap* function can be set.
+
+---
+
 ## Texture format and texture swizzle
 
 [Image Format](https://www.khronos.org/opengl/wiki/Image_Format)  
