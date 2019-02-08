@@ -21,11 +21,19 @@ The "hint" that there is a named attribute associated to a location, does not ma
 ### OpenGL and ### OpenGL ES 3.2
 
 See [OpenGL 4.6 Core Profile Specification - 7.6 Uniform Variables - p. 130](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf):
-See [OpenGL ES Shading Language 3.20 Specification - 7.3.1 Program Interfaces - p. 101](https://www.khronos.org/registry/OpenGL/index_es.php#specs32):
 
 > 7.6 Uniform Variables
 >
 > Shaders can declare named uniform variables, as described in the OpenGL Shading Language Specification. A uniform is considered an active uniform if the compiler and linker determine that the uniform will actually be accessed when the executable code is executed. In cases where the compiler and linker cannot make a conclusive determination, the uniform will be considered active.
+
+See [OpenGL ES Shading Language 3.00 Specification - 2.12.6 Uniform Variables; page 58](https://www.khronos.org/registry/OpenGL/specs/es/3.0/es_spec_3.0.pdf):
+
+> 7.6 Uniform Variables
+>
+> Shaders can declare named uniform variables, as described in the OpenGL ES Shading Language Specification. Values for these uniforms are constant over a
+primitive, and typically they are constant across many primitives. A uniform is considered active if it is determined by the compiler and linker that the uniform
+will actually be accessed when the executable code is executed. In cases where the compiler and linker cannot make a conclusive determination, the uniform will be
+considered active.
 
 See [OpenGL 4.6 Core Profile Specification - 7.3.1 Program Interfaces - p. 101](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf):
 See [OpenGL ES Shading Language 3.20 Specification - 7.6 Uniform Variables - p. 79](https://www.khronos.org/registry/OpenGL/index_es.php#specs32):
