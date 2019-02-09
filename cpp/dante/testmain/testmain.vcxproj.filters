@@ -24,6 +24,12 @@
     <ClInclude Include="..\source\view\glfw3\glfw3_window.h">
       <Filter>view\glfw3</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\utililty\noise\utility_noise_perlin.h">
+      <Filter>utilility\noise</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\utililty\math\utility_math_functions.h">
+      <Filter>utilility\math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="view">
@@ -44,5 +50,19 @@
     <Filter Include="utilility\exception">
       <UniqueIdentifier>{4ecb4e74-09be-41ac-9a2a-525740e3f503}</UniqueIdentifier>
     </Filter>
+    <Filter Include="utilility\noise">
+      <UniqueIdentifier>{b9fabfb3-1ff5-489f-a806-5c07de577c34}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="_doc">
+      <UniqueIdentifier>{9ff42bf9-607e-4c71-84f9-f0e938db3c97}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="utilility\math">
+      <UniqueIdentifier>{f1d0a6bb-21a9-4b39-b108-dbb30fdfa522}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\source\_doc\todo.md">
+      <Filter>_doc</Filter>
+    </None>
   </ItemGroup>
 </Project>
