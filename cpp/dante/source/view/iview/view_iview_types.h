@@ -15,27 +15,40 @@
 
 // STL
 
+#include <cassert>
 #include <bitset>
 #include <exception> 
 
 
+// view assert
+#define VIEW_ASSERT(CONDITION) assert(CONDITION);
+
 namespace View
-{
+{ 
 
 // view exception
 using Error = std::runtime_error;
 
 
 // scale type for view size and point
-typedef int TScale; 
+typedef int TScale;
+
+// scale type for view size and point (floating point)
+typedef int TScaleF;
 
 
-//! view size
+//! view size or distance
 using TSize = std::array<TScale, 2>;
 
+//! view size (floating point)
+using TSizeF = std::array<TScaleF, 2>;
 
-//! view point
+
+//! point on view
 using TPoint = std::array<TScale, 2>;
+
+//! point on view (floating point)
+using TPointF = std::array<TScaleF, 2>;
 
 
 //! view capability

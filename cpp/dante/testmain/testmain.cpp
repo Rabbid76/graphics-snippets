@@ -61,6 +61,8 @@ public:
 
     void Init( int width, int height, int multisampling, bool doubleBuffer, bool debugcontext );
     void MainLoop( void );
+
+    void CursorEvent( const View::TCursorEventData &data );
 };
 
 
@@ -127,8 +129,24 @@ void CWindow_Glfw::Init( int width, int height, int multisampling, bool doubleBu
     paramter.Set<View::TCapability::debug>( debugcontext );
     
     _window.Init( paramter );
+
+    View::TCursorEvent cb_cursor = [this]( View::IView &view, const View::TCursorEventData &data )
+    {
+        this->CursorEvent( data );
+    };
+    _window.AddCursorEvent( 1, cb_cursor );
+
     _window.Activate();
 }
+
+
+ void CWindow_Glfw::CursorEvent( const View::TCursorEventData &data )
+ {
+     std::cout << (int)data._kind 
+         << " (" << data._position[0] << ", " << data._position[1] << ") "
+         << " (" << data._distance[0] << ", " << data._distance[1] << ") "
+         << data._button << std::endl;
+ }
 
 
 void CWindow_Glfw::MainLoop ( void )

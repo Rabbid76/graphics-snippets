@@ -74,12 +74,17 @@ private:
     void Validate( void ) const noexcept(false);
 
     void Resize( TSize );
+    void CursorEnter( bool );
+    void CursorMove( TPointF );
+    void CursorScroll( TSizeF );
+    void CursorButton( bool, int, int );
 
-    TWindowHandle   _handle;      //!< window object handle
-    std::string     _name;        //!< name of the window
-    TViewSettings   _paramters;   //!< initialization parameters
-    TSize           _size{0, 0};  //!< current window size
-    TWindowStateSet _state;       //!< current states of the window
+    TWindowHandle   _handle;            //!< window object handle
+    std::string     _name;              //!< name of the window
+    TViewSettings   _paramters;         //!< initialization parameters
+    TSize           _window_size{0, 0}; //!< current window size
+    TSize           _buffer_size{0, 0}; //!< current frame buffer size
+    TWindowStateSet _state;             //!< current states of the window
 };
 
 
