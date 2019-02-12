@@ -287,9 +287,10 @@ vec3 HUEtoRGB(in float H)
 void main()
 {
     vec2 offs = vec2(u_time_ms / 5000.0, u_time_ms / 15000.0);
-    //offs = vec2(0.0);
+    offs = vec2(0.0);
 
     float n = noise(vec3(vUV.xy + offs.xy, 0.0));
+    //float n = noise(vec3(vUV.x + offs.x, 0.0, vUV.y + offs.y));
     //float n = noise(vec3(vUV.xy + offs.xy, (1.0 - vUV.x)*(1.0 - vUV.y)));
 
     fragColor = vec4( HUEtoRGB( n ), 1.0);
