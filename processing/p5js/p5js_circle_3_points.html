@@ -24,20 +24,22 @@ p5.Vector
 
 <script>
 
-function setup() {
-    let sketchCanvas = createCanvas(windowWidth, windowHeight);
+var sketch = function( p ) {
+
+p.setup = function() {
+    let sketchCanvas = p.createCanvas(p.windowWidth, p.windowHeight);
     sketchCanvas.parent('p5js_canvas')
 }
 
-function windowResized() {
-    resizeCanvas(windowWidth, windowHeight);
+p.windowResized = function() {
+    p.resizeCanvas(p.windowWidth, p.windowHeight);
 }
 
-function mouseClicked() {
+p.mouseClicked = function() {
     points = [];
 }
 
-function keyPressed() {
+p.keyPressed = function() {
     points = []
 }
 
@@ -46,14 +48,14 @@ let points = [];
 let radius = 0;
 let center = new p5.Vector(0, 0);
 
-function draw() {
+p.draw = function() {
         
     if (points.length == 0) {
 
         points = []
         for (let i=0; i < 3; ++i ) {
-            let x = random(2) - 1;
-            let y = random(2) - 1;
+            let x = p.random(2) - 1;
+            let y = p.random(2) - 1;
             points.push( new p5.Vector(x, y) );
         }
 
@@ -85,7 +87,7 @@ function draw() {
 
     // fit the size of the geometry to the screen
     
-    let max_radius= Math.min(width, height) / 2 - 10;
+    let max_radius= Math.min(p.width, p.height) / 2 - 10;
     let geo_scale = max_radius / radius;
 
     let pts = []
@@ -104,42 +106,46 @@ function draw() {
 
     // center the circle to the screen
     
-    translate(width/2 - cpt.x, height/2 - cpt.y);
+    p.translate(p.width/2 - cpt.x, p.height/2 - cpt.y);
 
 
     // draw the scene
 
-    background(192);
+    p.background(192);
     
-    stroke(255, 64, 64);
-    noFill();
-    ellipse(cpt.x, cpt.y, rad*2, rad*2);
+    p.stroke(255, 64, 64);
+    p.noFill();
+    p.ellipse(cpt.x, cpt.y, rad*2, rad*2);
     
-    stroke(0, 255, 0);
-    fill(128, 255, 128, 128);
-    triangle(pts[0].x, pts[0].y, pts[1].x, pts[1].y, pts[2].x, pts[2].y);
+    p.stroke(0, 255, 0);
+    p.fill(128, 255, 128, 128);
+    p.triangle(pts[0].x, pts[0].y, pts[1].x, pts[1].y, pts[2].x, pts[2].y);
 
-    stroke(0, 0, 255);
-    fill(128, 128, 255);
+    p.stroke(0, 0, 255);
+    p.fill(128, 128, 255);
     for (let i=0; i < pts.length; ++i ) {
-        ellipse(pts[i].x, pts[i].y, 10, 10);
+        p.ellipse(pts[i].x, pts[i].y, 10, 10);
     }
 
-    stroke(255, 0, 0);
-    fill(255, 128, 0);
-    ellipse(cpt.x, cpt.y, 5, 5);
+    p.stroke(255, 0, 0);
+    p.fill(255, 128, 0);
+    p.ellipse(cpt.x, cpt.y, 5, 5);
 
-    stroke(255, 0, 0);
-    fill(255, 128, 0);
+    p.stroke(255, 0, 0);
+    p.fill(255, 128, 0);
     for (let i=0; i < ptsMid.length; ++i ) {
-        ellipse(ptsMid[i].x, ptsMid[i].y, 5, 5);
+        p.ellipse(ptsMid[i].x, ptsMid[i].y, 5, 5);
     }
 
-    stroke(255, 0, 255);
+    p.stroke(255, 0, 255);
     for (let i=0; i < ptsMid.length; ++i ) {
-        line(ptsMid[i].x, ptsMid[i].y, cpt.x, cpt.y);
+        p.line(ptsMid[i].x, ptsMid[i].y, cpt.x, cpt.y);
     }
 }
+
+};
+
+var circle_3_pts = new p5(sketch);
 
 </script>
 </body>
