@@ -18,7 +18,6 @@
   - [Texture read](#texture-read)
   - [Fixed function pipeline (Texture)](#fixed-function-pipeline-texture)
   - [Texture - GLSL](#texture---glsl)
-  - [Texture view](#texture-view)
   - [Image Load Store](#image-load-store)
   - [Bindless Textures](#bindless-textures)
   - [Texture and Renderbuffer](#texture-and-renderbuffer)
@@ -31,6 +30,13 @@
 # Texture and Sampler - Common mistakes and issues
 
 [Sampler Object](https://www.khronos.org/opengl/wiki/Sampler_Object)
+[Texture views](https://www.khronos.org/opengl/wiki/Texture_Storage#Texture_views)
+[Sampler (GLSL)](https://www.khronos.org/opengl/wiki/Sampler_(GLSL))  
+[Multibind and textures](https://www.khronos.org/opengl/wiki/Sampler_(GLSL)#Multibind_and_textures) 
+[Image Format](https://www.khronos.org/opengl/wiki/Image_Format)  
+[sRGB colorspace - non linear colorspace](https://www.khronos.org/opengl/wiki/Image_Format#sRGB_colorspace) 
+[Image Load Store](https://www.khronos.org/opengl/wiki/Image_Load_Store)
+[Bindless Texture](https://www.khronos.org/opengl/wiki/Bindless_Texture)
 
 [OpenGL 4.6 API Compatibility Profile Specification; 7.10 Samplers; page 154](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.compatibility.pdf)  
 [OpenGL 4.6 API Core Profile Specification; 7.10 Samplers; page 154](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf)  
@@ -965,12 +971,6 @@ See [OpenGL Shading Language 4.60 Specification; 4.4.6 Opaque-Uniform Layout Qua
         binding = integer-constant-expression
 
 >The identifier binding specifies which unit will be bound. Any uniform sampler or image variable declared without a binding qualifier is initially bound to unit zero. After a program is linked, the unit referenced by a sampler or image uniform variable declared with or without a binding identifier can be updated by the OpenGL API.
-
----
-
-## Texture view
-
-[Texture views](https://www.khronos.org/opengl/wiki/Texture_Storage#Texture_views)
 
 ---
 

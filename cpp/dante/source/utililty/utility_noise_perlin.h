@@ -15,6 +15,7 @@
 // includes
 
 #include <utility_math_functions.h>
+#include <utility_random_generators.h>
 
 // STL
 
@@ -87,7 +88,10 @@ int permutation[256]{
  
 void initPermutation(void)
 {
-    for (int i=0; i < 256 ; i++) p[256+i] = p[i] = permutation[i];
+    Utility::Random::CUniqueIntegralSequence<int> sequ;
+    sequ.Generate( 0, 255 );
+
+    for (int i=0; i < 256 ; i++) p[256+i] = p[i] = sequ()[i];
 }
 
 /*

@@ -18,17 +18,32 @@
     <ClInclude Include="..\source\view\iview\view_iview_types.h">
       <Filter>view\iview</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\utililty\vector\utility_vector_types.h">
-      <Filter>utilility\vector</Filter>
-    </ClInclude>
     <ClInclude Include="..\source\view\glfw3\glfw3_window.h">
       <Filter>view\glfw3</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\utililty\noise\utility_noise_perlin.h">
-      <Filter>utilility\noise</Filter>
+    <ClInclude Include="..\source\object\iobject\object_iobject_types.h">
+      <Filter>object\iobject</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\utililty\math\utility_math_functions.h">
-      <Filter>utilility\math</Filter>
+    <ClInclude Include="..\source\texture\itexture\texture_itexture_types.h">
+      <Filter>texture\itexture</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\utililty\utility_container_types.h">
+      <Filter>utilility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\utililty\utility_exception_types.h">
+      <Filter>utilility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\utililty\utility_math_functions.h">
+      <Filter>utilility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\utililty\utility_noise_perlin.h">
+      <Filter>utilility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\utililty\utility_vector_types.h">
+      <Filter>utilility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\utililty\utility_random_generators.h">
+      <Filter>utilility</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -44,20 +59,20 @@
     <Filter Include="utilility">
       <UniqueIdentifier>{e12dd311-7972-46b2-8de8-7668394ed11f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="utilility\vector">
-      <UniqueIdentifier>{a5885e95-7241-437b-b0b4-2dde8ada0bdd}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="utilility\exception">
-      <UniqueIdentifier>{4ecb4e74-09be-41ac-9a2a-525740e3f503}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="utilility\noise">
-      <UniqueIdentifier>{b9fabfb3-1ff5-489f-a806-5c07de577c34}</UniqueIdentifier>
-    </Filter>
     <Filter Include="_doc">
       <UniqueIdentifier>{9ff42bf9-607e-4c71-84f9-f0e938db3c97}</UniqueIdentifier>
     </Filter>
-    <Filter Include="utilility\math">
-      <UniqueIdentifier>{f1d0a6bb-21a9-4b39-b108-dbb30fdfa522}</UniqueIdentifier>
+    <Filter Include="object">
+      <UniqueIdentifier>{ddb511e8-f866-429a-b33b-218b1dbc1a78}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="object\iobject">
+      <UniqueIdentifier>{cf2d9850-0483-4bf1-bfa2-1b3c2bbe681f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="texture">
+      <UniqueIdentifier>{f81afb29-60a4-467a-8719-5f6941b57a74}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="texture\itexture">
+      <UniqueIdentifier>{7404a985-a247-463f-b667-89a24cf699b2}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

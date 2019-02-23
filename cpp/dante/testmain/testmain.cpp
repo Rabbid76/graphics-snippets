@@ -367,7 +367,7 @@ void CWindow_Glfw::Render( double time_ms )
 
     glUniformMatrix4fv( proj_loc,  1, GL_FALSE, glm::value_ptr( proj ) );
     glUniformMatrix4fv( model_loc, 1, GL_FALSE, glm::value_ptr( model ) );
-    glUniform1f( time_loc, time_ms );
+    glUniform1f( time_loc, (float)time_ms );
 
 
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);  

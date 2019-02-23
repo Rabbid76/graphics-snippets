@@ -21,9 +21,14 @@
   <ItemGroup>
     <ClInclude Include="..\include\OpenGL\OpenGL_Matrix_Camera.h" />
     <ClInclude Include="..\include\OpenGL\OpenGL_SimpleShaderProgram.h" />
-    <ClInclude Include="..\source\utililty\math\utility_math_functions.h" />
-    <ClInclude Include="..\source\utililty\noise\utility_noise_perlin.h" />
-    <ClInclude Include="..\source\utililty\vector\utility_vector_types.h" />
+    <ClInclude Include="..\source\object\iobject\object_iobject_types.h" />
+    <ClInclude Include="..\source\texture\itexture\texture_itexture_types.h" />
+    <ClInclude Include="..\source\utililty\utility_container_types.h" />
+    <ClInclude Include="..\source\utililty\utility_exception_types.h" />
+    <ClInclude Include="..\source\utililty\utility_math_functions.h" />
+    <ClInclude Include="..\source\utililty\utility_noise_perlin.h" />
+    <ClInclude Include="..\source\utililty\utility_random_generators.h" />
+    <ClInclude Include="..\source\utililty\utility_vector_types.h" />
     <ClInclude Include="..\source\view\glfw3\glfw3_window.h" />
     <ClInclude Include="..\source\view\iview\view_iview.h" />
     <ClInclude Include="..\source\view\iview\view_iview_types.h" />
@@ -84,7 +89,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>GLEW_STATIC;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.\;$(SolutionDir)..\include\render;$(SolutionDir)..\include\OpenGL;$(SolutionDir)..\$(GlmDir);$(SolutionDir)..\glew\include;$(SolutionDir)..\$(GlfwDir)include;$(SolutionDir)source\utililty\math;$(SolutionDir)source\utililty\noise;$(SolutionDir)source\utililty\vector;$(SolutionDir)source\view\iview;$(SolutionDir)source\view\glfw3</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\;$(SolutionDir)..\include\render;$(SolutionDir)..\include\OpenGL;$(SolutionDir)..\$(GlmDir);$(SolutionDir)..\glew\include;$(SolutionDir)..\$(GlfwDir)include;$(SolutionDir)source\utililty;$(SolutionDir)source\object\iobject;$(SolutionDir)source\texture\itexture;$(SolutionDir)source\view\iview;$(SolutionDir)source\view\glfw3</AdditionalIncludeDirectories>
       <CallingConvention>StdCall</CallingConvention>
     </ClCompile>
     <Link>
@@ -106,7 +111,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>GLEW_STATIC;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.\;$(SolutionDir)..\include\render;$(SolutionDir)..\include\OpenGL;$(SolutionDir)..\$(GlmDir);$(SolutionDir)..\glew\include;$(SolutionDir)..\$(GlfwDir)include;$(SolutionDir)source\utililty\math;$(SolutionDir)source\utililty\noise;$(SolutionDir)source\utililty\vector;$(SolutionDir)source\view\iview;$(SolutionDir)source\view\glfw3</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\;$(SolutionDir)..\include\render;$(SolutionDir)..\include\OpenGL;$(SolutionDir)..\$(GlmDir);$(SolutionDir)..\glew\include;$(SolutionDir)..\$(GlfwDir)include;$(SolutionDir)source\utililty;$(SolutionDir)source\object\iobject;$(SolutionDir)source\texture\itexture;$(SolutionDir)source\view\iview;$(SolutionDir)source\view\glfw3</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

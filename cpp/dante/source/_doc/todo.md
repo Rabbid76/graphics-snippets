@@ -25,6 +25,12 @@ Perlin noise](https://rosettacode.org/wiki/Perlin_noise)
 - radial gaussian
 - integration
 
+## shapes
+
+### morphing
+
+Morph tube and form arbitrary shapes.
+
 ## shader
 
 ### universal shader generator

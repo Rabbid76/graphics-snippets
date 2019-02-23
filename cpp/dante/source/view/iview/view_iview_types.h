@@ -10,14 +10,14 @@
 
 // include
 
+#include <utility_exception_types.h>
 #include <utility_vector_types.h>
 
 
 // STL
 
 #include <cassert>
-#include <bitset>
-#include <exception> 
+#include <bitset> 
 
 
 // view assert
@@ -26,8 +26,8 @@
 namespace View
 { 
 
-// view exception
-using Error = std::runtime_error;
+// view runtime exception
+using Error = Utility::Exception::RuntimeError;
 
 
 // scale type for view size and point
