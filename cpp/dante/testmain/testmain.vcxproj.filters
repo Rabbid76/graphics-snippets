@@ -6,6 +6,12 @@
     <ClCompile Include="..\source\view\glfw3\glfw3_window.cpp">
       <Filter>view\glfw3</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\opengl\opengl_3xx_texture_factory.cpp">
+      <Filter>opengl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\opengl\opengl_3xx_perlin_noise.cpp">
+      <Filter>opengl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\OpenGL\OpenGL_Matrix_Camera.h" />
@@ -20,12 +26,6 @@
     </ClInclude>
     <ClInclude Include="..\source\view\glfw3\glfw3_window.h">
       <Filter>view\glfw3</Filter>
-    </ClInclude>
-    <ClInclude Include="..\source\object\iobject\object_iobject_types.h">
-      <Filter>object\iobject</Filter>
-    </ClInclude>
-    <ClInclude Include="..\source\texture\itexture\texture_itexture_types.h">
-      <Filter>texture\itexture</Filter>
     </ClInclude>
     <ClInclude Include="..\source\utililty\utility_container_types.h">
       <Filter>utilility</Filter>
@@ -44,6 +44,24 @@
     </ClInclude>
     <ClInclude Include="..\source\utililty\utility_random_generators.h">
       <Filter>utilility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\object\object_iobject_types.h">
+      <Filter>object</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\texture\texture_itexture_types.h">
+      <Filter>texture</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\opengl\opengl_init_load.h">
+      <Filter>opengl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\opengl\opengl_include.h">
+      <Filter>opengl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\opengl\opengl_3xx_texture_factory.h">
+      <Filter>opengl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\opengl\opengl_3xx_perlin_noise.h">
+      <Filter>opengl</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -65,14 +83,11 @@
     <Filter Include="object">
       <UniqueIdentifier>{ddb511e8-f866-429a-b33b-218b1dbc1a78}</UniqueIdentifier>
     </Filter>
-    <Filter Include="object\iobject">
-      <UniqueIdentifier>{cf2d9850-0483-4bf1-bfa2-1b3c2bbe681f}</UniqueIdentifier>
-    </Filter>
     <Filter Include="texture">
       <UniqueIdentifier>{f81afb29-60a4-467a-8719-5f6941b57a74}</UniqueIdentifier>
     </Filter>
-    <Filter Include="texture\itexture">
-      <UniqueIdentifier>{7404a985-a247-463f-b667-89a24cf699b2}</UniqueIdentifier>
+    <Filter Include="opengl">
+      <UniqueIdentifier>{0287d935-f771-45c2-87e0-6fe20324b262}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

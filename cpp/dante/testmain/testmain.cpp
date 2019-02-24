@@ -1,10 +1,5 @@
 #include <stdafx.h>
 
-// OpenGL
-#include <GL/glew.h>
-#include <GL/gl.h>
-#include <GL/glu.h>
-
 // glm
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -23,12 +18,17 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-// Own
+// Application
+
+#include <utility_noise_perlin.h>
+
+#include <OpenGL_include.h>
+
 #include <OpenGL_Matrix_Camera.h>
 #include <OpenGL_SimpleShaderProgram.h>
 
 
-#include <utility_noise_perlin.h>
+
 
 
 // [Switching Between windowed and full screen in OpenGL/GLFW 3.2](https://stackoverflow.com/questions/47402766/switching-between-windowed-and-full-screen-in-opengl-glfw-3-2/47462358#47462358)

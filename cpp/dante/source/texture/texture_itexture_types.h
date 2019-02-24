@@ -22,10 +22,20 @@
 namespace Texture
 {
 
+// scale type for texture size and window coordinates
+typedef int TScale;
+
 
 class ITextureGenerator
 {
 public:
+
+    ITextureGenerator( void ) = default;
+    ITextureGenerator( ITextureGenerator && ) = default;
+    ITextureGenerator & operator = ( ITextureGenerator && ) = default;
+
+    ITextureGenerator( const ITextureGenerator & ) = delete;
+    ITextureGenerator & operator = ( const ITextureGenerator & ) = delete;
 
     virtual ~ITextureGenerator() = default;
 
@@ -36,4 +46,4 @@ public:
 } // Texture
 
 
-#endif / /__Texture_ITexture_Types__h__
+#endif // __Texture_ITexture_Types__h__

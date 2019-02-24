@@ -9,6 +9,7 @@
     - [Load Bitmap](#load-bitmap)
     - [Windows Bitmap](#windows-bitmap)
   - [Texture alignment (GL_UNPACK_ALIGNMENT, GL_PACK_ALIGNMENT)](#texture-alignment-gl_unpack_alignment-gl_pack_alignment)
+  - [Internal texture format](#internal-texture-format)
   - [Texture Filter and Texture Wrapping](#texture-filter-and-texture-wrapping)
   - [Texture format and texture swizzle](#texture-format-and-texture-swizzle)
   - [Texture unit and texture binding](#texture-unit-and-texture-binding)
@@ -197,6 +198,38 @@ Otherwise an offset of 0-3 bytes per line is gained, at texture lookup. This cau
 
 [Error when creating textures in WebGL with the RGB format](https://stackoverflow.com/questions/51582282/error-when-creating-textures-in-webgl-with-the-rgb-format)  
 [Texture not showing correctly?](https://stackoverflow.com/questions/52460143/texture-not-showing-correctly/52460224#52460224)  
+
+---
+
+## Internal texture format
+
+[How to render GL_SHORT in java (endian)?](https://stackoverflow.com/questions/54797387/how-to-render-gl-short-in-java-endian/54804051#54804051)
+
+The internal format `GL_R16` for the data store of a texture image is not a singed format, but it is an unsigned integral 16 bit format. 
+
+I don't know which OpenGL version you are using.
+
+Desktop OpenGL provides the internal data format `GL_R16_SNORM` which is a 16 bit signed integral data format - see [`glTexImage3D`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexImage3D.xhtml).  
+[`GL_R16_SNORM`](https://jogamp.org/deployment/v2.1.0/javadoc/jogl/javadoc/javax/media/opengl/GL2GL3.html#GL_R16_SNORM) is implemented in the interface [`GL2GL3`](https://jogamp.org/deployment/v2.1.0/javadoc/jogl/javadoc/javax/media/opengl/GL2GL3.html): 
+
+```java
+gl2.glTexImage3D(GL2.GL_TEXTURE_3D, 0, GL2GL3.GL_R16_SNORM, nCols, nRows, nSlices, 0, GL2.GL_RED, GL.GL_SHORT, data);
+```
+
+OpenGL ES (3.0) provides an singed integral 8 bit format `GL_R8_SNORM`.  
+[`GL_R8_SNORM`](https://jogamp.org/deployment/v2.1.0/javadoc/jogl/javadoc/javax/media/opengl/GL2ES3.html#GL_R8_SNORM) is implemented interface [`GL2ES3`](https://jogamp.org/deployment/v2.1.0/javadoc/jogl/javadoc/javax/media/opengl/GL2ES3.html):
+
+```java
+gl2.glTexImage3D(GL2.GL_TEXTURE_3D, 0, GL2ES3.GL_R8_SNORM, nCols, nRows, nSlices, 0, GL2.GL_RED, GL.GL_SHORT, data);
+```
+
+As an alternative both, desktop OpenGL and OpenGL ES, provide a 16 floating point format:
+
+e.g.
+
+```java
+gl2.glTexImage3D(GL2.GL_TEXTURE_3D, 0, GL2.GL_R16F, nCols, nRows, nSlices, 0, GL2.GL_RED, GL.GL_SHORT, data);
+```
 
 ---
 

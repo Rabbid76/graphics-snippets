@@ -16,6 +16,7 @@
 
 #include <utility_math_functions.h>
 #include <utility_random_generators.h>
+#include <texture_itexture_types.h>
 
 // STL
 
@@ -31,20 +32,60 @@ namespace Noise
 namespace Perlin
 {
 
+
+/***********************************************************************************************//**
+* \brief Format and parameter for Perlin-Noise   
+*
+* \author  gernot Rabbid76    \date  2019-02-24
+***************************************************************************************************/
+class TPerlinNoisParameter
+{
+public:
+
+    Texture::TScale _size; //! Size of the Perlin-Noise quad 
+};
+
+
+class CPerlinNoiseGenerator
+    : public Texture::ITextureGenerator
+{
+public:
+
+    CPerlinNoiseGenerator( const TPerlinNoisParameter &param )
+        : _parameter(param)
+    {}
+
+    CPerlinNoiseGenerator( void ) = default;
+    CPerlinNoiseGenerator( const CPerlinNoiseGenerator & ) = default;
+    CPerlinNoiseGenerator( CPerlinNoiseGenerator && ) = default;
+
+    CPerlinNoiseGenerator & operator = ( const CPerlinNoiseGenerator & ) = default;
+    CPerlinNoiseGenerator & operator = ( CPerlinNoiseGenerator && ) = default;
+
+    const TPerlinNoisParameter & Prameter( void ) const  { return _parameter; }
+
+protected:
+
+    TPerlinNoisParameter _parameter; //! generator configuration parameters
+};
+
+
+
 using namespace Math;
 
+/*
 
 int p[512];
  
-double fade(double t) { return t * t * t * (t * (t * 6 - 15) + 10); }
-double grad(int hash, double x, double y, double z) {
+inline double fade(double t) { return t * t * t * (t * (t * 6 - 15) + 10); }
+inline double grad(int hash, double x, double y, double z) {
       int h = hash & 15;                      
       double u = h<8 ? x : y,                 
              v = h<4 ? y : h==12||h==14 ? x : z;
       return ((h&1) == 0 ? u : -u) + ((h&2) == 0 ? v : -v);
    }
  
-double noise(double x, double y, double z) {
+inline double noise(double x, double y, double z) {
       int X = (int)std::floor(x) & 255,                  
           Y = (int)std::floor(y) & 255,                  
           Z = (int)floor(z) & 255;
@@ -86,13 +127,15 @@ int permutation[256]{
     222, 114, 67, 29, 24, 72, 243, 141, 128, 195, 78, 66, 215, 61, 156, 180,
 };
  
-void initPermutation(void)
+inline void initPermutation(void)
 {
     Utility::Random::CUniqueIntegralSequence<int> sequ;
     sequ.Generate( 0, 255 );
 
     for (int i=0; i < 256 ; i++) p[256+i] = p[i] = sequ()[i];
 }
+
+*/
 
 /*
 void loadPermutation(char* fileName){
