@@ -112,7 +112,7 @@ class MeshBuffer:
             glBufferData( GL_ARRAY_BUFFER, arrdata, self.__usage )
             self.__vbo[i_buffer]['size'] = size
         else:
-            glBufferSubData( GL_ARRAY_BUFFER, 0, arrdata, self.__usage )   
+            glBufferSubData( GL_ARRAY_BUFFER, 0, arrdata )   
         for i_attrib in range(len(attribs)):
             attrib_index, attrib_size, attrib_offset = attribs[i_attrib]
             self.__vbo[i_buffer]['attribs'].append( (attrib_index, attrib_size, attrib_offset) )
@@ -134,7 +134,7 @@ class MeshBuffer:
             glBufferData( GL_ELEMENT_ARRAY_BUFFER, indexdata, self.__usage )
             self.__ibo['size'] = size
         else:   
-            glBufferSubData( GL_ELEMENT_ARRAY_BUFFER, 0, indexdata, self.__usage ) 
+            glBufferSubData( GL_ELEMENT_ARRAY_BUFFER, 0, indexdata ) 
         glBindVertexArray( 0 )
         glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 ) # has to be unbind after vertex array object was unbound!
 
@@ -316,7 +316,7 @@ class DrawBuffer:
             glBufferData( type, data, self.__usage )
             bos[i_bo] = bo, new_size
         else:               # the buffer is lared enough - quick
-            glBufferSubData( type, 0, data, self.__usage ) 
+            glBufferSubData( type, 0, data ) 
 
         return bos[i_bo][1]
 

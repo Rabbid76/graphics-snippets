@@ -15,6 +15,7 @@ print ( '' )
 import math
 from time import time
 import numpy
+import ctypes
 
 # PyOpenGL import
 from OpenGL.GL import *
@@ -104,7 +105,40 @@ cubeVAO = vertex.VAObject( [ (3, cubePosData), (3, cubeNVData) ], cubeIndices )
 # Uniform Buffer Object (uniform block) [https://www.khronos.org/opengl/wiki/Uniform_Buffer_Object]
 ubo = glGenBuffers( 1 )
 glBindBuffer( GL_UNIFORM_BUFFER, ubo )
-glBufferData( GL_UNIFORM_BUFFER, numpy.array( cubeColFaceData, dtype=numpy.float32 ), GL_STATIC_DRAW )
+
+# case 1
+#dataArray = (ctypes.c_float * len(cubeColFaceData))(*cubeColFaceData)
+#glBufferData( GL_UNIFORM_BUFFER, dataArray, GL_STATIC_DRAW )
+
+# case 2
+#dataArray = numpy.array( cubeColFaceData, dtype=numpy.float32 )
+#glBufferData( GL_UNIFORM_BUFFER, dataArray, GL_STATIC_DRAW )
+
+# case 3
+#dataArray = (ctypes.c_float * len(cubeColFaceData))(*cubeColFaceData)
+#glBufferData( GL_UNIFORM_BUFFER, len(dataArray)*4, (ctypes.c_void_p)(ctypes.addressof(dataArray)), GL_STATIC_DRAW )
+
+# case 4
+#dataArray = (ctypes.c_float * len(cubeColFaceData))(*cubeColFaceData)
+#glBufferData( GL_UNIFORM_BUFFER, len(dataArray)*4, None, GL_STATIC_DRAW )
+#glBufferSubData( GL_UNIFORM_BUFFER, 0, dataArray )
+
+# case 5
+#dataArray = (ctypes.c_float * len(cubeColFaceData))(*cubeColFaceData)
+#glBufferData( GL_UNIFORM_BUFFER, len(dataArray)*4, None, GL_STATIC_DRAW )
+#glBufferSubData( GL_UNIFORM_BUFFER, 0, len(dataArray)*4, (ctypes.c_void_p)(ctypes.addressof(dataArray)) )
+
+# case 6
+dataArray = numpy.array( cubeColFaceData, dtype=numpy.float32 )
+glBufferData( GL_UNIFORM_BUFFER, len(dataArray)*4, None, GL_STATIC_DRAW )
+glBufferSubData( GL_UNIFORM_BUFFER, 0, dataArray )
+
+
+# case 7
+#dataArray = numpy.array( cubeColFaceData, dtype=numpy.float32 )
+#data = ???
+#glBufferData( GL_UNIFORM_BUFFER, len(dataArray)*4, data, GL_STATIC_DRAW )
+
 glBindBufferBase( GL_UNIFORM_BUFFER, 1, ubo )
 glBindBuffer(GL_UNIFORM_BUFFER, 0)
 
