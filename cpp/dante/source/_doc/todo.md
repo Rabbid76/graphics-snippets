@@ -34,3 +34,7 @@ Morph tube and form arbitrary shapes.
 ## shader
 
 ### universal shader generator
+
+## non photorealistic
+
+Convert to HSV and use fixed hue, saturation and lightness threshold

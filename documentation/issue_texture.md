@@ -922,6 +922,64 @@ glDeleteFramebuffers(1, &fbo);
 
 ---
 
+[How can I read the texture data so I can edit it?](https://stackoverflow.com/questions/54812864/how-can-i-read-the-texture-data-so-i-can-edit-it/54813349#54813349)
+
+The texture is attached to a framebuffer. Either read the pixels from the framebuffer or read the texture image from the texture.
+
+The pixels of the framebuffer can be read by [`glReadPixels`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glReadPixels.xhtml). Bind the framebuffer for reading and read the pixels:
+
+```cpp
+glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
+glReadBuffer(GL_FRONT);
+glReadPixels(0, 0, width, height, format, type, pixels);
+```
+
+The texture image can be read by [`glGetTexImage`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGetTexImage.xhtml). Bind the texture and read the data:
+
+```cpp
+glBindTexture(GL_TEXTURE_2D, ssaoTexture);
+glGetTexImage(GL_TEXTURE_2D, 0, format, type, pixels);
+```
+
+In both cases `format` and `type` define the pixel format of the target data.  
+e.g. If you want to store the pixels to an buffer with 4 color channels which 1 byte for each channel then `format = GL_RGBA` and `type = GL_UNSIGNED_BYTE`.  
+The size of the target buffer has to be `widht * height * 4`.
+
+e.g.
+
+```cpp
+#include <vector>
+```
+
+```cpp
+int width = ...;
+int height = ...;
+std::vector<GLbyte> pixels(width * height * 4); // 4 because of RGBA * 1 byte
+
+glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
+```
+
+or
+
+```cpp
+glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
+```
+
+Note, if the size in bytes of 1 row of the image, is not dividable by 4, then the [`GL_PACK_ALIGNMENT`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml) parameter has to be set, to adapt the alignment requirements for the start of each pixel row. 
+
+e.g. for an tightly packed `GL_RGB` image:
+
+```cpp
+int width = ...;
+int height = ...;
+std::vector<GLbyte> pixels(width * height * 3); // 3 because of RGB * 1 byte
+
+glPixelStorei(GL_PACK_ALIGNMENT, 1);
+glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels.data());  
+```
+
+---
+
 ## Fixed function pipeline (Texture)
 
 [OpenGL 2.1 API Specification; 3.8.16 Texture Application; page 191](https://www.khronos.org/registry/OpenGL/specs/gl/glspec20.pdf)
