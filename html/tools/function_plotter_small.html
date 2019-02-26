@@ -35,7 +35,7 @@ plot_shader_code.start =
 "  fragCol = AddLine( vTexCoord, vec2( 0.0, originRel.y ), vec2( 1.0, originRel.y ), pixel_info, fragCol, axis_color ); \n";
 
 plot_shader_code.PlotFunctionCall = function ( postfix ) {
-  var code = "  fragCol = AddFunc" + postfix.toString() + "( u_view_port_size, vTexCoord, u_scale, u_offset, fragCol, f" + postfix.toString() + "_color ); \n";
+  var code = "  fragCol = AddFunc" + postfix.toString() + "( u_view_port_size*0.5, vTexCoord, u_scale, u_offset, fragCol, f" + postfix.toString() + "_color ); \n";
   return code;
 }
 
