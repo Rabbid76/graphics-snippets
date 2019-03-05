@@ -763,6 +763,42 @@ layout(binding = 3) uniform sampler2D ourTexture;
 
 ---
 
+[Correspondance between texture units and sampler uniforms in opengl](https://stackoverflow.com/questions/54931941/correspondance-between-texture-units-and-sampler-uniforms-in-opengl/54932052#54932052)  
+
+
+You have to set the index of the texture unit to sampler uniform (similar as setting the value of a uniform variable of type `int`). e.g. value 1 for  `GL_TEXTURE1`.
+
+See [OpenGL 4.6 API Compatibility Profile Specification; 7.10 Samplers; page 154](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.compatibility.pdf):
+
+> Samplers are special uniforms used in the OpenGL Shading Language to identify
+the texture object used for each texture lookup. The value of a sampler indicates the texture image unit being accessed. Setting a sampler’s value to `i` selects texture image unit number `i`. 
+
+e.g.
+
+```glsl
+layout (location = 11) uniform sampler2D color;
+layout (location = 12) uniform sampler2D tex;
+layout (location = 13) uniform sampler2D norm;
+```
+
+```cpp
+glUniform1i(11, 0); // 0: GL_TEXTURE0
+glUniform1i(12, 1); // 1: GL_TEXTURE1
+glUniform1i(13, 2); // 2: GL_TEXTURE2
+```
+
+Since GLSL version 4.2 this can be done in the fragment shader by specifying binding points - See [OpenGL Shading Language 4.20 Specification - 4.4.4 Opaque-Uniform Layout Qualifiers; page 60](https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.4.20.pdf):
+
+```glsl
+#version 420
+
+layout (binding = 0) uniform sampler2D color;
+layout (binding = 1) uniform sampler2D tex;
+layout (binding = 2) uniform sampler2D norm;
+```
+
+---
+
 [Should I write logic in fragment shader in this case?](https://stackoverflow.com/questions/54280392/should-i-write-logic-in-fragment-shader-in-this-case/54294601#54294601), [GLSL]  
 
 Create a 1x1 texture with a single (white) color and use it for the uniform colored cubes.
