@@ -47,7 +47,7 @@ public:
 
     using TPerlinNoisParameter = Utility::Noise::Perlin::TPerlinNoisParameter;
 
-    CPerlinNoiseGenerator( const TPerlinNoisParameter &param );
+    CPerlinNoiseGenerator( const TPerlinNoisParameter & );
     virtual ~CPerlinNoiseGenerator();
 
     virtual Object::TObjectHandle Generate( void ) override;

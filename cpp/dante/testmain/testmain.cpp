@@ -9,6 +9,7 @@
 #include <glfw3_window.h>
 
 // stl
+#include <iostream>
 #include <vector>
 #include <stdexcept>
 #include <chrono>
@@ -22,12 +23,10 @@
 
 #include <utility_noise_perlin.h>
 
+#include <OpenGL_3xx_program.h>
 #include <OpenGL_include.h>
 
 #include <OpenGL_Matrix_Camera.h>
-#include <OpenGL_SimpleShaderProgram.h>
-
-
 
 
 
@@ -48,7 +47,7 @@ private:
     std::chrono::high_resolution_clock::time_point _start_time;
     std::chrono::high_resolution_clock::time_point _current_time;
 
-    std::unique_ptr<OpenGL::ShaderProgramSimple> _prog;
+    std::unique_ptr<Program::OpenGL::GL3xx::CProgram> _prog;
 
     void InitScene( void );
     void Render( double time_ms );
@@ -342,12 +341,13 @@ void CWindow_Glfw::InitScene( void )
     glEnableVertexAttribArray( 1 );
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
 
-    _prog.reset( new OpenGL::ShaderProgramSimple(
+    _prog = std::make_unique<Program::OpenGL::GL3xx::CProgram>();
+    _prog->Generate(
     {
       { sh_vert, GL_VERTEX_SHADER },
       { sh_perlin_noise, GL_FRAGMENT_SHADER }
-    } ) );
-    program = _prog->Prog();
+    } );
+    program = _prog->ProgramObject();
 
     proj_loc  = glGetUniformLocation( program, "u_proj" );
     model_loc = glGetUniformLocation( program, "u_model" );

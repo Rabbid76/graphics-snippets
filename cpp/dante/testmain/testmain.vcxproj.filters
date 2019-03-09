@@ -12,10 +12,11 @@
     <ClCompile Include="..\source\opengl\opengl_3xx_perlin_noise.cpp">
       <Filter>opengl</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\opengl\opengl_3xx_program.cpp">
+      <Filter>opengl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\include\OpenGL\OpenGL_Matrix_Camera.h" />
-    <ClInclude Include="..\include\OpenGL\OpenGL_SimpleShaderProgram.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="..\source\view\iview\view_iview.h">
@@ -61,6 +62,9 @@
       <Filter>opengl</Filter>
     </ClInclude>
     <ClInclude Include="..\source\opengl\opengl_3xx_perlin_noise.h">
+      <Filter>opengl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\opengl\opengl_3xx_program.h">
       <Filter>opengl</Filter>
     </ClInclude>
   </ItemGroup>

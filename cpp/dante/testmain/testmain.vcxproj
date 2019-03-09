@@ -12,6 +12,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\opengl\opengl_3xx_perlin_noise.cpp" />
+    <ClCompile Include="..\source\opengl\opengl_3xx_program.cpp" />
     <ClCompile Include="..\source\opengl\opengl_3xx_texture_factory.cpp" />
     <ClCompile Include="..\source\view\glfw3\glfw3_window.cpp" />
     <ClCompile Include="testmain.cpp" />
@@ -21,10 +22,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\include\OpenGL\OpenGL_Matrix_Camera.h" />
-    <ClInclude Include="..\include\OpenGL\OpenGL_SimpleShaderProgram.h" />
     <ClInclude Include="..\source\object\object_iobject_types.h" />
     <ClInclude Include="..\source\opengl\opengl_3xx_perlin_noise.h" />
+    <ClInclude Include="..\source\opengl\opengl_3xx_program.h" />
     <ClInclude Include="..\source\opengl\opengl_3xx_texture_factory.h" />
     <ClInclude Include="..\source\opengl\opengl_include.h" />
     <ClInclude Include="..\source\opengl\opengl_init_load.h" />

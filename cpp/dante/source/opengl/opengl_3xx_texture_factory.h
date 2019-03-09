@@ -12,12 +12,12 @@
 
 // include
 
-// [...]
+#include <texture_itexture_types.h>
 
 
 // STL
 
-// [...]
+#include <string>
 
 
 namespace Texture
@@ -38,12 +38,18 @@ namespace GL3xx
 * \author  gernot Rabbid76    \date  2019-02-24
 ***************************************************************************************************/
 class CFactory
+  : public Texture::ITextureGenerator
 {
 public:
 
     CFactory( void );
     virtual ~CFactory();
 
+    CFactory & CreateProgram( const std::string & );
+
+private:
+
+    static std::string _vetex_shader; //! vertex shader for generating the string
 };
 
 
