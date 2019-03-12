@@ -82,6 +82,8 @@
 
 [![](html/stackoverflow/image/cube_texture.png) Textured cube](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/cube_texture.html)
 
+[![](html/stackoverflow/image/cube_parallax.png) Parallax textured cube](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/cube_parallax.html)
+
 [![](html/stackoverflow/image/glMatrix_cube.png) Cube - `glMatrix`](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/glMatrix_cube.html)
 
 [![](html/stackoverflow/image/sphere_texture.png) Globe](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/sphere_texture.html)
