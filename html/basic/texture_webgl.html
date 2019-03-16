@@ -99,7 +99,7 @@ class App {
 
         this.progDraw = new ShProg( 
             [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },
-                { source : "draw-shader-fs", stage : gl.FRAGMENT_SHADER }
+              { source : "draw-shader-fs", stage : gl.FRAGMENT_SHADER }
             ] );
         if ( !this.progDraw.progObj )
             return null;

@@ -71,25 +71,7 @@ html,body { margin: 0; overflow: hidden; }
 <script type="text/javascript">
 (function loadscene() {    
 
-var startTime, canvas, gl, vp_size, prog, bufObj = {};
-
-function render(deltaMS) {
-
-    gl.viewport( 0, 0, canvas.width, canvas.height );
-    gl.enable( gl.DEPTH_TEST );
-    gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
-    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
-    ShProg.Use( progDraw );
-    ShProg.SetF1( progDraw, "u_time", deltaMS/200.0 );
-    gl.enableVertexAttribArray( progDraw.inPos );
-    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.pos );
-    gl.vertexAttribPointer( progDraw.inPos, 2, gl.FLOAT, false, 0, 0 ); 
-    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufObj.inx );
-    gl.drawElements( gl.TRIANGLES, bufObj.inx.len, gl.UNSIGNED_SHORT, 0 );
-    gl.disableVertexAttribArray( progDraw.pos );
-
-    requestAnimationFrame(render);
-}  
+var canvas, gl, vp_size, prog, bufObj = {};
 
 function initScene() {
 
@@ -98,13 +80,22 @@ function initScene() {
     if ( !gl )
       return;
 
-    progDraw = ShProg.Create( 
-      [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },
-        { source : "draw-shader-fs", stage : gl.FRAGMENT_SHADER }
-      ] );
-    progDraw.inPos = ShProg.AttrI( progDraw, "inPos" );
-    if ( progDraw.progObj == 0 )
-        return;
+    progDraw = gl.createProgram();
+    for (let i = 0; i < 2; ++i) {
+        let source = document.getElementById(i==0 ? "draw-shader-vs" : "draw-shader-fs").text;
+        let shaderObj = gl.createShader(i==0 ? gl.VERTEX_SHADER : gl.FRAGMENT_SHADER);
+        gl.shaderSource(shaderObj, source);
+        gl.compileShader(shaderObj);
+        let status = gl.getShaderParameter(shaderObj, gl.COMPILE_STATUS);
+        if (!status) alert(gl.getShaderInfoLog(shaderObj));
+        gl.attachShader(progDraw, shaderObj);
+        gl.linkProgram(progDraw);
+    }
+    status = gl.getProgramParameter(progDraw, gl.LINK_STATUS);
+    if ( !status ) alert(gl.getProgramInfoLog(progDraw));
+    progDraw.inPos = gl.getAttribLocation(progDraw, "inPos");
+    progDraw.u_time = gl.getUniformLocation(progDraw, "u_time");
+    gl.useProgram(progDraw);
 
     var pos = [ -1, -1, 1, -1, 1, 1, -1, 1 ];
     var inx = [ 0, 1, 2, 0, 2, 3 ];
@@ -115,6 +106,11 @@ function initScene() {
     bufObj.inx.len = inx.length;
     gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufObj.inx );
     gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( inx ), gl.STATIC_DRAW );
+    gl.enableVertexAttribArray( progDraw.inPos );
+    gl.vertexAttribPointer( progDraw.inPos, 2, gl.FLOAT, false, 0, 0 ); 
+    
+    gl.enable( gl.DEPTH_TEST );
+    gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
 
     window.onresize = resize;
     resize();
@@ -129,61 +125,16 @@ function resize() {
     canvas.height = vp_size[1];
 }
 
-var ShProg = {
-Create: function (shaderList) {
-    var shaderObjs = [];
-    for (var i_sh = 0; i_sh < shaderList.length; ++i_sh) {
-        var shderObj = this.Compile(shaderList[i_sh].source, shaderList[i_sh].stage);
-        if (shderObj) shaderObjs.push(shderObj);
-    }
-    var prog = {}
-    prog.progObj = this.Link(shaderObjs)
-    if (prog.progObj) {
-        prog.attrInx = {};
-        var noOfAttributes = gl.getProgramParameter(prog.progObj, gl.ACTIVE_ATTRIBUTES);
-        for (var i_n = 0; i_n < noOfAttributes; ++i_n) {
-            var name = gl.getActiveAttrib(prog.progObj, i_n).name;
-            prog.attrInx[name] = gl.getAttribLocation(prog.progObj, name);
-        }
-        prog.uniLoc = {};
-        var noOfUniforms = gl.getProgramParameter(prog.progObj, gl.ACTIVE_UNIFORMS);
-        for (var i_n = 0; i_n < noOfUniforms; ++i_n) {
-            var name = gl.getActiveUniform(prog.progObj, i_n).name;
-            prog.uniLoc[name] = gl.getUniformLocation(prog.progObj, name);
-        }
-    }
-    return prog;
-},
-AttrI: function (prog, name) { return prog.attrInx[name]; },
-UniformL: function (prog, name) { return prog.uniLoc[name]; },
-Use: function (prog) { gl.useProgram(prog.progObj); },
-SetI1: function (prog, name, val) { if (prog.uniLoc[name]) gl.uniform1i(prog.uniLoc[name], val); },
-SetF1: function (prog, name, val) { if (prog.uniLoc[name]) gl.uniform1f(prog.uniLoc[name], val); },
-SetF2: function (prog, name, arr) { if (prog.uniLoc[name]) gl.uniform2fv(prog.uniLoc[name], arr); },
-SetF3: function (prog, name, arr) { if (prog.uniLoc[name]) gl.uniform3fv(prog.uniLoc[name], arr); },
-SetF4: function (prog, name, arr) { if (prog.uniLoc[name]) gl.uniform4fv(prog.uniLoc[name], arr); },
-SetM33: function (prog, name, mat) { if (prog.uniLoc[name]) gl.uniformMatrix3fv(prog.uniLoc[name], false, mat); },
-SetM44: function (prog, name, mat) { if (prog.uniLoc[name]) gl.uniformMatrix4fv(prog.uniLoc[name], false, mat); },
-Compile: function (source, shaderStage) {
-    var shaderScript = document.getElementById(source);
-    if (shaderScript)
-        source = shaderScript.text;
-    var shaderObj = gl.createShader(shaderStage);
-    gl.shaderSource(shaderObj, source);
-    gl.compileShader(shaderObj);
-    var status = gl.getShaderParameter(shaderObj, gl.COMPILE_STATUS);
-    if (!status) alert(gl.getShaderInfoLog(shaderObj));
-    return status ? shaderObj : null;
-},
-Link: function (shaderObjs) {
-    var prog = gl.createProgram();
-    for (var i_sh = 0; i_sh < shaderObjs.length; ++i_sh)
-        gl.attachShader(prog, shaderObjs[i_sh]);
-    gl.linkProgram(prog);
-    status = gl.getProgramParameter(prog, gl.LINK_STATUS);
-    if ( !status ) alert(gl.getProgramInfoLog(prog));
-    return status ? prog : null;
-} };
+function render(deltaMS) {
+
+    gl.viewport( 0, 0, canvas.width, canvas.height );
+    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+   
+    gl.uniform1f(progDraw.u_time, deltaMS/200.0);
+    gl.drawElements( gl.TRIANGLES, bufObj.inx.len, gl.UNSIGNED_SHORT, 0 );
+    
+    requestAnimationFrame(render);
+}  
 
 initScene();
 
