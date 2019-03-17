@@ -1,0 +1,179 @@
+<script id="draw-shader-vs" type="x-shader/x-vertex">
+precision mediump float;
+
+attribute vec2 inPos;
+
+varying vec2 ndcPos;
+
+void main()
+{
+    ndcPos = inPos;
+    gl_Position = vec4( inPos.xy, 0.0, 1.0 );
+}
+</script>
+
+<script id="draw-shader-fs" type="x-shader/x-fragment">
+precision mediump float;
+
+varying vec2 ndcPos;  // normaliced device coordinates in range [-1.0, 1.0]
+uniform float u_time;
+
+vec2 hash( vec2 p ) { p=vec2(dot(p,vec2(127.1,311.7)),dot(p,vec2(269.5,183.3))); return fract(sin(p)*18.5453); }
+
+bool IsIn(vec2 p0, vec2 p1, vec2 p2)
+{
+  vec3 n0 = cross(vec3(p0, 0.0), vec3(p1, 0.0));
+  vec3 n1 = cross(vec3(p1, 0.0), vec3(p2, 0.0));
+  vec3 n2 = cross(vec3(p2, 0.0), vec3(p0, 0.0));
+  return dot(n0, n1) >= 0.0 && dot(n1, n2) >= 0.0;
+}
+
+float voronoi( in vec2 x )
+{
+    vec2 n = floor( x );
+    vec2 f = fract( x );
+    
+    vec2 p[9];
+    vec2 o[9];
+    for( int y = -1; y <= 1; ++y )
+    {
+        for( int x = -1; x <= 1; x++ )
+        {
+            vec2 g = vec2(float(x), float(y));
+            vec2 o_ = hash(n + g);
+            vec2 p_ = g - f + (sin(u_time + 6.2831 * o_) * 0.5 + 0.5) * 0.5;
+            p[(y+1)*3+x+1] = p_;
+            o[(y+1)*3+x+1] = o_;
+        }
+    }
+
+    vec2 v = vec2(0.0);
+    if (IsIn(p[3], p[1], p[0]))
+        v = o[3] + o[1] + o[0]; 
+    else if (IsIn(p[3], p[4], p[1]))
+        v = o[3] + o[4] + o[1]; 
+    else if (IsIn(p[4], p[2], p[1]))
+        v = o[4] + o[2] + o[1]; 
+    else if (IsIn(p[4], p[5], p[2]))
+        v = o[4] + o[5] + o[2]; 
+    else if (IsIn(p[6], p[4], p[3]))
+        v = o[6] + o[4] + o[3]; 
+    else if (IsIn(p[6], p[7], p[4]))
+        v = o[6] + o[7] + o[4]; 
+    else if (IsIn(p[7], p[5], p[4]))
+        v = o[7] + o[5] + o[4];
+    else if (IsIn(p[7], p[8], p[5]))
+        v = o[7] + o[8] + o[5]; 
+
+    return v.x + v.y;
+}
+
+vec3 HUEtoRGB(in float H)
+{
+    float R = abs(H * 6.0 - 3.0) - 1.0;
+    float G = 2.0 - abs(H * 6.0 - 2.0);
+    float B = 2.0 - abs(H * 6.0 - 4.0);
+    return clamp( vec3(R,G,B), 0.0, 1.0 );
+}
+
+void main()
+{
+    float time_scale = 0.2;
+    float size_amount = 1.0;
+    float size_scale = 20.0;
+    float p_base = (size_scale + size_amount * sin(time_scale * u_time));
+
+    vec2  p   = ndcPos * 0.5 - 0.5;
+    float x   = voronoi(p * p_base);
+    float h   = 0.5 + 0.5 * cos(x*6.2831);
+    vec3  col = HUEtoRGB(h*0.66);
+    
+    gl_FragColor = vec4(col, 1.0);
+}
+</script>
+
+<style>
+html,body { margin: 0; overflow: hidden; }
+#gui { position : absolute; top : 0; left : 0; }
+#ref-link { position : absolute; bottom : 0; left : 0; }  
+</style>
+
+<body>
+<canvas id="ogl-canvas" style="border: none"></canvas>
+<a id="ref-link" href="https://stackoverflow.com/questions/45382370/triangle-pattern-glsl-shader">
+<b><font color= #e0e080 size=4>Triangle pattern GLSL shader</font></b>
+</a>
+</body>
+
+<script type="text/javascript">
+(function loadscene() {    
+
+var canvas, gl, vp_size, prog, bufObj = {};
+
+function initScene() {
+
+    canvas = document.getElementById( "ogl-canvas");
+    gl = canvas.getContext( "experimental-webgl" );
+    if ( !gl )
+      return;
+
+    progDraw = gl.createProgram();
+    for (let i = 0; i < 2; ++i) {
+        let source = document.getElementById(i==0 ? "draw-shader-vs" : "draw-shader-fs").text;
+        let shaderObj = gl.createShader(i==0 ? gl.VERTEX_SHADER : gl.FRAGMENT_SHADER);
+        gl.shaderSource(shaderObj, source);
+        gl.compileShader(shaderObj);
+        let status = gl.getShaderParameter(shaderObj, gl.COMPILE_STATUS);
+        if (!status) alert(gl.getShaderInfoLog(shaderObj));
+        gl.attachShader(progDraw, shaderObj);
+        gl.linkProgram(progDraw);
+    }
+    status = gl.getProgramParameter(progDraw, gl.LINK_STATUS);
+    if ( !status ) alert(gl.getProgramInfoLog(progDraw));
+    progDraw.inPos = gl.getAttribLocation(progDraw, "inPos");
+    progDraw.u_time = gl.getUniformLocation(progDraw, "u_time");
+    gl.useProgram(progDraw);
+
+    var pos = [ -1, -1, 1, -1, 1, 1, -1, 1 ];
+    var inx = [ 0, 1, 2, 0, 2, 3 ];
+    bufObj.pos = gl.createBuffer();
+    gl.bindBuffer( gl.ARRAY_BUFFER, bufObj.pos );
+    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array( pos ), gl.STATIC_DRAW );
+    bufObj.inx = gl.createBuffer();
+    bufObj.inx.len = inx.length;
+    gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, bufObj.inx );
+    gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array( inx ), gl.STATIC_DRAW );
+    gl.enableVertexAttribArray( progDraw.inPos );
+    gl.vertexAttribPointer( progDraw.inPos, 2, gl.FLOAT, false, 0, 0 ); 
+    
+    gl.enable( gl.DEPTH_TEST );
+    gl.clearColor( 0.0, 0.0, 0.0, 1.0 );
+
+    window.onresize = resize;
+    resize();
+    requestAnimationFrame(render);
+}
+
+function resize() {
+    //vp_size = [gl.drawingBufferWidth, gl.drawingBufferHeight];
+    vp_size = [window.innerWidth, window.innerHeight];
+    //vp_size = [256, 256]
+    canvas.width = vp_size[0];
+    canvas.height = vp_size[1];
+}
+
+function render(deltaMS) {
+
+    gl.viewport( 0, 0, canvas.width, canvas.height );
+    gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+   
+    gl.uniform1f(progDraw.u_time, deltaMS/2000.0);
+    gl.drawElements( gl.TRIANGLES, bufObj.inx.len, gl.UNSIGNED_SHORT, 0 );
+    
+    requestAnimationFrame(render);
+}  
+
+initScene();
+
+})();
+</script>

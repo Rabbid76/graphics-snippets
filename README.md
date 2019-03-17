@@ -114,6 +114,8 @@
 
 [![](html/stackoverflow/image/voronoi.png) Voronoi](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/voronoi.html)
 
+[![](html/stackoverflow/image/voronoi_triangle.png) Voronoi triangles](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/voronoi_triangle.html)
+
 [![](html/stackoverflow/image/normalmap1.png) Normal map 1](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/normalmap1.html)
 
 [![](html/stackoverflow/image/background_cube_poor_webgl.png) Background](https://rabbid76.github.io/graphics-snippets/html/stackoverflow/background_cube_poor_webgl.html)
