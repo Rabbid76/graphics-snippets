@@ -153,6 +153,22 @@ See [stb_image.h](https://github.com/nothings/stb/blob/master/stb_image.h):
 >           // ... but 'n' will always be the number that it would have been if you said 0
           stbi_image_free(data)
 
+---
+
+[C++ SOIL does not load small images](https://stackoverflow.com/questions/55208514/c-soil-does-not-load-small-images/55208624#55208624)
+
+When the image is loaded to a texture object, then [`GL_UNPACK_ALIGNMENT`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml) has to be set to 1: 
+
+```cpp
+glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+```
+
+Note, by default the parameter is 4. This means that each line of the image is assumed to be aligned to a size which is a multiple of 4. Since the image data are tightly packed and each pixel has a size of 3 bytes, the alignment has to be changed.
+
+When the size of the image is 40 x 50 then the size of a line in bytes is 120, which is divisible by 4.  
+But if the size of the image is 30 x 40, the the size of a line in bytes is 90, which is not divisible by 4.
+
 ### Windows Bitmap
 
 [OpenGL Texture Loading issue with images that Crossed each other](https://stackoverflow.com/questions/53051066/opengl-texture-loading-issue-with-images-that-crossed-each-other/53051516#53051516), [C]  
