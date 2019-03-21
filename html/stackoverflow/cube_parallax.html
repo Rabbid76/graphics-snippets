@@ -49,6 +49,9 @@ uniform sampler2D u_displacement_map;
 
 vec2 ParallaxMapping (vec2 texCoord, vec3 viewDir)
 {
+    if ( viewDir.z >= 0.0 )
+        return texCoord;
+        
     float numLayers = 32.0 - 31.0 * abs(dot(vec3(0.0, 0.0, 1.0), viewDir));
     float layerDepth = 1.0 / numLayers;
 
