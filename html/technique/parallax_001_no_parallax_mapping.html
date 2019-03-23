@@ -249,7 +249,7 @@ function initScene() {
         ],
         cubeInxData);
 
-    Texture.LoadTexture2D(tex_unit, "https://raw.githubusercontent.com/Rabbid76/graphics-snippets/master/resource/texture/example_1_texture.png");
+    Texture.LoadTexture2D(tex_unit, "https://raw.githubusercontent.com/Rabbid76/graphics-snippets/master/resource/texture/woodtiles.jpg");
 
     window.onresize = resize;
     resize();
@@ -283,25 +283,21 @@ function getFPS(delta_sum_MS) {
     return 1000 * times.length / timeSum;
 }
 
-function Fract(val) {
-    return val - Math.trunc(val);
+function Fract( val ) { 
+    return val - Math.trunc( val );
 }
 function CalcAng(deltaTime, intervall) {
     return Fract(deltaTime / (1000 * intervall)) * 2.0 * Math.PI;
 }
 function CalcMove(deltaTime, intervall, range) {
     var pos = Fract(deltaTime / (1000 * intervall)) * 2.0
-    var pos = pos < 1.0 ? pos : (2.0 - pos)
+    var pos = pos < 1.0 ? pos : (2.0-pos)
     return range[0] + (range[1] - range[0]) * pos;
-}
-function EllipticalPosition(a, b, angRag) {
-    var a_b = a * a - b * b
-    var ea = (a_b <= 0) ? 0 : Math.sqrt(a_b);
-    var eb = (a_b >= 0) ? 0 : Math.sqrt(-a_b);
-    return [a * Math.sin(angRag) - ea, b * Math.cos(angRag) - eb, 0];
-}
+}    
 
-function IdentM44() { return [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]; }
+function IdentM44() { 
+    return [ 1, 0, 0, 0,    0, 1, 0, 0,    0, 0, 1, 0,    0, 0, 0, 1 ];
+};
 
 function RotateAxis(matA, angRad, axis) {
     var aMap = [ [1, 2], [2, 0], [0, 1] ];
@@ -334,11 +330,11 @@ function Multiply(matA, matB) {
     return matC;
 }
 
-function Cross(a, b) { return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0], 0.0]; }
-function Dot(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
-function Normalize(v) {
-    var len = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
-    return [v[0] / len, v[1] / len, v[2] / len];
+function Cross( a, b ) { return [ a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0], 0.0 ]; }
+function Dot( a, b ) { return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]; }
+function Normalize( v ) {
+    var len = Math.sqrt( v[0] * v[0] + v[1] * v[1] + v[2] * v[2] );
+    return [ v[0] / len, v[1] / len, v[2] / len ];
 }
 
 Camera = function( pos, target, up, fov_y, vp, near, far ) {
@@ -589,7 +585,7 @@ Draw: function(bufObj) {
     gl.bindBuffer( gl.ARRAY_BUFFER, null );
     gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, null );
 } };
-
+  
 initScene();
 
 })();
