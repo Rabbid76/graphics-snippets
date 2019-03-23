@@ -103,7 +103,7 @@ class App {
         let cubeHlpInx = [ 0, 1, 2, 3, 1, 5, 6, 2, 5, 4, 7, 6, 4, 0, 3, 7, 3, 2, 6, 7, 1, 0, 4, 5 ];  
         let cubePosData = [];
         for ( let i = 0; i < cubeHlpInx.length; ++ i ) {
-            cubePosData.push( cubePos[cubeHlpInx[i]*3], cubePos[cubeHlpInx[i]*3+1], cubePos[cubeHlpInx[i]*3+2] );
+            cubePosData.push( ...cubePos.slice(cubeHlpInx[i]*3, cubeHlpInx[i]*3+3) );
         }
         let cubeNVData = [];
         for ( let i1 = 0; i1 < cubeHlpInx.length; i1 += 4 ) {
@@ -113,12 +113,12 @@ class App {
                 nv[0] += cubePosData[i*3]; nv[1] += cubePosData[i*3+1]; nv[2] += cubePosData[i*3+2];
         }
         for ( let i2 = 0; i2 < 4; ++ i2 )
-            cubeNVData.push( nv[0], nv[1], nv[2] );
+            cubeNVData.push( ...nv );
         }
         let cubeColData = [];
         for ( let is = 0; is < 6; ++ is ) {
             for ( let ip = 0; ip < 4; ++ ip ) {
-                cubeColData.push( cubeCol[is*3], cubeCol[is*3+1], cubeCol[is*3+2] ); 
+                cubeColData.push( ...cubeCol.slice(is*3, is*3+3) ); 
             }
         }
         let cubeInxData = [];
