@@ -193,7 +193,7 @@ function initScene() {
     //    alert('no standard derivatives support (no dFdx, dFdy)');
     //gl = canvas.getContext( "webgl2" );
     if ( !gl )
-    return null;
+        return null;
     
     progDraw = ShProg.Create( 
     [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },

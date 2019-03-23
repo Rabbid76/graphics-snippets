@@ -6,7 +6,7 @@ precision highp float;
 attribute vec3 inPos;
 attribute vec3 inNV;
 attribute vec2 inUV;
-attribute vec3 inCol;
+//attribute vec3 inCol;
 
 varying vec3  v_view_pos;
 varying vec3  v_view_nv;
@@ -22,7 +22,7 @@ uniform vec4 u_clipPlane;
 void main()
 {
     mat4 mv        = u_viewMat44 * u_modelMat44;
-    v_col          = inCol;
+    //v_col          = inCol;
     v_uv           = inUV;
     v_view_nv      = normalize(mat3(mv) * inNV);
     vec4 viewPos   = mv * vec4( inPos, 1.0 );
@@ -40,7 +40,7 @@ precision mediump float;
 varying vec3  v_view_pos;
 varying vec3  v_view_nv;
 varying vec2  v_uv;
-varying vec3  v_col;
+//varying vec3  v_col;
 varying float clip_distance;
 
 uniform sampler2D u_texture;
@@ -53,8 +53,8 @@ uniform float u_shininess;
 
 void main()
 {
-    //if ( clip_distance < 0.0 )
-    //discard;
+    if ( clip_distance < 0.0 )
+        discard;
 
     vec3 fac_nv = sign(dot(v_view_nv, -v_view_pos)) * normalize(v_view_nv);
 
@@ -148,6 +148,7 @@ function render(deltaMS) {
         document.getElementById("fps_val").innerHTML = getFPS(deltaMS).toFixed(1);
     }
 
+    vp_size = [canvas.width, canvas.height];
     camera.Update( vp_size );
 
     gl.viewport(0, 0, vp_size[0], vp_size[1]);
@@ -204,7 +205,7 @@ function initScene() {
     progDraw.inPos = ShProg.AttrI(progDraw, "inPos");
     progDraw.inNV = ShProg.AttrI(progDraw, "inNV");
     progDraw.inUV = ShProg.AttrI(progDraw, "inUV");
-    progDraw.inCol = ShProg.AttrI(progDraw, "inCol");
+    //progDraw.inCol = ShProg.AttrI(progDraw, "inCol");
 
     // create cube
     var cubePos = [
@@ -234,7 +235,7 @@ function initScene() {
     }
     var cubeTexData = []
     for (var i = 0; i < 6; ++i) {
-        cubeTexData.push(0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0);
+        cubeTexData.push(0, 0, 1, 0, 1, 1, 0, 1);
     }
     var cubeInxData = [];
     for (var i = 0; i < cubeHlpInx.length; i += 4) {
@@ -244,7 +245,8 @@ function initScene() {
         [{ data: cubePosData, attrSize: 3, attrLoc: progDraw.inPos },
         { data: cubeNVData, attrSize: 3, attrLoc: progDraw.inNV },
         { data: cubeTexData, attrSize: 2, attrLoc: progDraw.inUV },
-        { data: cubeColData, attrSize: 3, attrLoc: progDraw.inCol }],
+        //{ data: cubeColData, attrSize: 3, attrLoc: progDraw.inCol }
+        ],
         cubeInxData);
 
     Texture.LoadTexture2D(tex_unit, "https://raw.githubusercontent.com/Rabbid76/graphics-snippets/master/resource/texture/example_1_texture.png");
