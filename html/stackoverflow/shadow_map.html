@@ -2,12 +2,7 @@
   precision mediump float;
   
   attribute vec3 inPos;
-  attribute vec3 inNV;
-  attribute vec3 inCol;
   
-  varying vec3 vertPos;
-  varying vec3 vertNV;
-  varying vec3 vertCol;
   varying vec4 vPosPrj;
   
   uniform mat4 u_projectionMat44;
@@ -16,12 +11,8 @@
   
   void main()
   {
-      vec3 modelNV  = mat3( u_modelMat44 ) * normalize( inNV );
-      vertNV        = mat3( u_viewMat44 ) * modelNV;
-      vertCol       = inCol;
       vec4 modelPos = u_modelMat44 * vec4( inPos, 1.0 );
       vec4 viewPos  = u_viewMat44 * modelPos;
-      vertPos       = viewPos.xyz / viewPos.w;
       vPosPrj       = u_projectionMat44 * viewPos;
       gl_Position   = vPosPrj;
   }
@@ -30,9 +21,6 @@
 <script id="shadow-shader-fs" type="x-shader/x-fragment">
     precision mediump float;
     
-    varying vec3 vertPos;
-    varying vec3 vertNV;
-    varying vec3 vertCol;
     varying vec4 vPosPrj;
 
     uniform vec2 u_depthRange;
@@ -65,7 +53,6 @@ varying vec3 vertPos;
 varying vec3 vertNV;
 varying vec3 vertCol;
 varying vec4 lightPrj;
-varying vec4 vPosPrj;
 
 uniform mat4 u_projectionMat44;
 uniform mat4 u_viewMat44;
@@ -83,8 +70,7 @@ void main()
     vec4 viewPos  = u_viewMat44 * modelPos;
     lightPrj      = u_lightProjectionMat44 * lightPos;
     vertPos       = viewPos.xyz / viewPos.w;
-    vPosPrj       = u_projectionMat44 * viewPos;
-    gl_Position   = vPosPrj;
+    gl_Position   = u_projectionMat44 * viewPos;
 }
 </script>
   
@@ -95,7 +81,6 @@ varying vec3 vertPos;
 varying vec3 vertNV;
 varying vec3 vertCol;
 varying vec4 lightPrj;
-varying vec4 vPosPrj;
 
 uniform sampler2D u_depthSampler;
 uniform vec3      u_lightDir;
@@ -220,7 +205,7 @@ ShProg.SetM44( progShadow, "u_viewMat44", lightViewMat );
 ShProg.SetM44( progShadow, "u_modelMat44", modelMat );
 ShProg.SetF2( progShadow, "u_depthRange", [light.near, light.far] );
 
-VertexBuffer.Draw( bufTorus );
+VertexBuffer.Draw( bufTorus, [0] );
 
 gl.viewport( 0, 0, vp_size[0], vp_size[1] );
 shadowFB.Release( true );
@@ -282,8 +267,6 @@ progShadow = ShProg.Create(
 if (!progShadow.progObj)
     return null;
 progShadow.inPos = ShProg.AttrI( progShadow, "inPos" );
-progShadow.inNV  = ShProg.AttrI( progShadow, "inNV" );
-progShadow.inCol = ShProg.AttrI( progShadow, "inCol" );
 
 progDraw = ShProg.Create( 
   [ { source : "draw-shader-vs", stage : gl.VERTEX_SHADER },
@@ -629,8 +612,10 @@ Create: function(attribs, indices, type) {
     }
     return buffer;
 },
-Draw: function(bufObj) {
+Draw: function(bufObj, attribs) {
     for (var i=0; i<bufObj.buf.length; ++i) {
+        if ( attribs && !attribs.includes(i))
+            continue;
         gl.bindBuffer(gl.ARRAY_BUFFER, bufObj.buf[i]);
         gl.vertexAttribPointer(bufObj.attr[i].loc, bufObj.attr[i].size, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray( bufObj.attr[i].loc);
