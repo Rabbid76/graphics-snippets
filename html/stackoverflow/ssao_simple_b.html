@@ -2,12 +2,12 @@
 precision mediump float;
 
 attribute vec3 inPos;
-attribute vec3 inNV;
-attribute vec3 inCol;
+//attribute vec3 inNV;
+//attribute vec3 inCol;
 
-varying vec3 vertPos;
-varying vec3 vertNV;
-varying vec3 vertCol;
+//varying vec3 vertPos;
+//varying vec3 vertNV;
+//varying vec3 vertCol;
 varying vec4 vPosPrj;
 
 uniform mat4 u_projectionMat44;
@@ -15,10 +15,10 @@ uniform mat4 u_modelViewMat44;
 
 void main()
 {
-    vertNV      = mat3( u_modelViewMat44 ) * normalize( inNV );
-    vertCol     = inCol;
+    //vertNV      = mat3( u_modelViewMat44 ) * normalize( inNV );
+    //vertCol     = inCol;
     vec4 pos    = u_modelViewMat44 * vec4( inPos, 1.0 );
-    vertPos     = pos.xyz / pos.w;
+    //vertPos     = pos.xyz / pos.w;
     vPosPrj     = u_projectionMat44 * pos;
     gl_Position = vPosPrj;
 }
@@ -27,9 +27,9 @@ void main()
 <script id="draw-shader-fs" type="x-shader/x-fragment">
 precision mediump float;
 
-varying vec3 vertPos;
-varying vec3 vertNV;
-varying vec3 vertCol;
+//varying vec3 vertPos;
+//varying vec3 vertNV;
+//varying vec3 vertCol;
 varying vec4 vPosPrj;
 
 uniform vec2 u_depthRange;
@@ -363,8 +363,8 @@ function initScene() {
         { source : "draw-shader-fs", stage : gl.FRAGMENT_SHADER }
       ] );
     progDraw.inPos = ShProg.AttrI( progDraw, "inPos" );
-    progDraw.inNV  = ShProg.AttrI( progDraw, "inNV" );
-    progDraw.inCol = ShProg.AttrI( progDraw, "inCol" );
+    //progDraw.inNV  = ShProg.AttrI( progDraw, "inNV" );
+    //progDraw.inCol = ShProg.AttrI( progDraw, "inCol" );
     if ( progDraw.progObj == 0 )
         return;
 
@@ -416,9 +416,9 @@ function initScene() {
     }
     bufCube = VertexBuffer.Create(
         [ { data : cubePosData, attrSize : 3, attrLoc : progDraw.inPos },
-          { data : cubeNVData,  attrSize : 3, attrLoc : progDraw.inNV },
-          { data : cubeColData, attrSize : 3, attrLoc : progDraw.inCol } ],
-          inxData
+          //{ data : cubeNVData,  attrSize : 3, attrLoc : progDraw.inNV },
+          //{ data : cubeColData, attrSize : 3, attrLoc : progDraw.inCol }
+        ], inxData
       );
 
     // create torus
