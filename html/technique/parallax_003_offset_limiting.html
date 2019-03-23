@@ -6,12 +6,12 @@ precision highp float;
 attribute vec3 inPos;
 attribute vec3 inNV;
 attribute vec2 inUV;
-attribute vec3 inCol;
+//attribute vec3 inCol;
 
 varying vec3  v_view_pos;
 varying vec3  v_view_nv;
 varying vec2  v_uv;
-varying vec3  v_col;
+//varying vec3  v_col;
 varying float clip_distance;
 
 uniform mat4 u_projectionMat44;
@@ -22,7 +22,7 @@ uniform vec4 u_clipPlane;
 void main()
 {
     mat4 mv        = u_viewMat44 * u_modelMat44;
-    v_col          = inCol;
+    //v_col          = inCol;
     v_uv           = inUV;
     v_view_nv      = normalize(mat3(mv) * inNV);
     vec4 viewPos   = mv * vec4( inPos, 1.0 );
@@ -41,7 +41,7 @@ precision mediump float;
 varying vec3  v_view_pos;
 varying vec3  v_view_nv;
 varying vec2  v_uv;
-varying vec3  v_col;
+//varying vec3  v_col;
 varying float clip_distance;
 
 uniform sampler2D u_texture;
@@ -306,7 +306,7 @@ html, body {
                 progDraw.inPos = ShProg.AttrI(progDraw, "inPos");
                 progDraw.inNV = ShProg.AttrI(progDraw, "inNV");
                 progDraw.inUV = ShProg.AttrI(progDraw, "inUV");
-                progDraw.inCol = ShProg.AttrI(progDraw, "inCol");
+                //progDraw.inCol = ShProg.AttrI(progDraw, "inCol");
 
                 // create cube
                 var cubePos = [
@@ -346,7 +346,8 @@ html, body {
                     [{ data: cubePosData, attrSize: 3, attrLoc: progDraw.inPos },
                     { data: cubeNVData, attrSize: 3, attrLoc: progDraw.inNV },
                     { data: cubeTexData, attrSize: 2, attrLoc: progDraw.inUV },
-                    { data: cubeColData, attrSize: 3, attrLoc: progDraw.inCol }],
+                    //{ data: cubeColData, attrSize: 3, attrLoc: progDraw.inCol }
+                    ],
                     cubeInxData);
 
                 Texture.LoadTexture2D(tex_unit, "https://raw.githubusercontent.com/Rabbid76/graphics-snippets/master/resource/texture/example_1_texture.png");
@@ -384,23 +385,17 @@ html, body {
                 return 1000 * times.length / timeSum;
             }
 
-function Fract(val) {
-    return val - Math.trunc(val);
+function Fract( val ) { 
+    return val - Math.trunc( val );
 }
 function CalcAng(deltaTime, intervall) {
     return Fract(deltaTime / (1000 * intervall)) * 2.0 * Math.PI;
 }
 function CalcMove(deltaTime, intervall, range) {
     var pos = Fract(deltaTime / (1000 * intervall)) * 2.0
-    var pos = pos < 1.0 ? pos : (2.0 - pos)
+    var pos = pos < 1.0 ? pos : (2.0-pos)
     return range[0] + (range[1] - range[0]) * pos;
-}
-function EllipticalPosition(a, b, angRag) {
-    var a_b = a * a - b * b
-    var ea = (a_b <= 0) ? 0 : Math.sqrt(a_b);
-    var eb = (a_b >= 0) ? 0 : Math.sqrt(-a_b);
-    return [a * Math.sin(angRag) - ea, b * Math.cos(angRag) - eb, 0];
-}
+}    
 
 function IdentM44() { return [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]; }
 
@@ -585,9 +580,9 @@ var Texture = {};
 Texture.HandleLoadedTexture2D = function (texture, flipY) {
     gl.activeTexture(gl.TEXTURE0 + texture.unit);
     gl.bindTexture(gl.TEXTURE_2D, texture.obj);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.image);
     if (flipY != undefined && flipY == true)
         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.image);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
