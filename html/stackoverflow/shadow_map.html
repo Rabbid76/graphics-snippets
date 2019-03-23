@@ -140,7 +140,7 @@ void main()
 
 <style>
 html,body { margin: 0; overflow: hidden; }
-#gui { position : absolute; top : 0; left : 0; color : #FFFF00FF; font-size : large }
+#gui { position : absolute; top : 0; left : 0; font-size : large }
 #ref-link { position : absolute; bottom : 0; left : 0; font-size : large }  
 </style>
     
@@ -659,6 +659,8 @@ FrameBuffer.Create = function( vp, texturePlan ) {
     gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, fb.width, fb.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, texPlan );
     gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST );
     gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST );
+    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE );
+  	gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE );
     fb.renderbuffer = gl.createRenderbuffer();
     gl.bindRenderbuffer( gl.RENDERBUFFER, fb.renderbuffer );
     gl.renderbufferStorage( gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, fb.width, fb.height );
