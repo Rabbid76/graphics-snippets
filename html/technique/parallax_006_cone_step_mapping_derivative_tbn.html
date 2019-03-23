@@ -222,12 +222,14 @@ html, body {
     position: absolute;
     top: 0;
     left: 0;
+    font-size : large;
 }
 
 #ref-link {
     position: absolute;
     bottom: 0;
     left: 0;
+    font-size : large;
 }
 </style>
 
@@ -647,7 +649,7 @@ Texture.LoadTexture2D = function (unit, linear, name) {
     texture.image = new Image();
     texture.image.setAttribute('crossorigin', 'anonymous');
     texture.image.onload = function () {
-        Texture.HandleLoadedTexture2D(texture, linear, true)
+        Texture.HandleLoadedTexture2D(texture, linear, false)
     }
     texture.image.src = name;
     return texture;

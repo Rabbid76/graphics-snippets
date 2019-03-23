@@ -327,12 +327,14 @@ html, body {
     position: absolute;
     top: 0;
     left: 0;
+    font-size : large;
 }
 
 #ref-link {
     position: absolute;
     bottom: 0;
     left: 0;
+    font-size : large;
 }
 </style>
 
@@ -770,12 +772,11 @@ Texture.HandleLoadedTexture2D = function (texture, linear, flipY) {
     gl.activeTexture(gl.TEXTURE0 + texture.unit);
     gl.bindTexture(gl.TEXTURE_2D, texture.obj);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.image);
-    if (flipY != undefined && flipY == true)
-        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, flipY != undefined && flipY == true);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, linear ? gl.LINEAR : gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, linear ? gl.LINEAR : gl.NEAREST);
-    var wrap = gl.CLAMP_TO_EDGE;
-    //var wrap = gl.REPEAT;
+    //var wrap = gl.CLAMP_TO_EDGE;
+    var wrap = gl.REPEAT;
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap);
     if (texture.unit == height_map_unit)
@@ -789,7 +790,7 @@ Texture.LoadTexture2D = function (unit, linear, name) {
     texture.image = new Image();
     texture.image.setAttribute('crossorigin', 'anonymous');
     texture.image.onload = function () {
-        Texture.HandleLoadedTexture2D(texture, linear, true)
+        Texture.HandleLoadedTexture2D(texture, linear, false)
     }
     texture.image.src = name;
     return texture;

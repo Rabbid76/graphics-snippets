@@ -234,8 +234,8 @@ void main()
 
 <style>
 html,body { margin: 0; overflow: hidden; }
-#gui { position : absolute; top : 0; left : 0; }
-#ref-link { position : absolute; bottom : 0; left : 0; }  
+#gui { position : absolute; top : 0; left : 0; font-size : large; }
+#ref-link { position : absolute; bottom : 0; left : 0; font-size : large; }  
 </style>
 
 <body>
@@ -821,8 +821,10 @@ var FrameBuffer = {};
 FrameBuffer.Create = function( vp, texturePlan ) {
     var texPlan = texturePlan ? new Uint8Array( texturePlan ) : null;
     var fb = gl.createFramebuffer();
-    fb.width = vp[0];
-    fb.height = vp[1];
+    var fbsize = Math.max(vp[0], vp[1]);
+    fbsize = 1 << 31 - Math.clz32(fbsize); // nearest power of 2
+    fb.width = fbsize;
+    fb.height = fbsize;
     gl.bindFramebuffer( gl.FRAMEBUFFER, fb );
     fb.color0_texture = gl.createTexture();
     gl.bindTexture( gl.TEXTURE_2D, fb.color0_texture );

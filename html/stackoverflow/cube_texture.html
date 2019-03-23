@@ -48,8 +48,8 @@
   
 <style>
 html,body { margin: 0; overflow: hidden; }
-#gui { position : absolute; top : 0; left : 0; }
-#ref-link { position : absolute; bottom : 0; left : 0; }  
+#gui { position : absolute; top : 0; left : 0; font-size : large; }
+#ref-link { position : absolute; bottom : 0; left : 0; font-size : large; }  
 </style>
 
 <body>
@@ -450,7 +450,7 @@ Texture.LoadTexture2D = function( unit, name ) {
     texture.image = new Image();
     texture.image.setAttribute('crossorigin', 'anonymous');
     texture.image.onload = function () {
-        Texture.HandleLoadedTexture2D( texture, true )
+        Texture.HandleLoadedTexture2D( texture, false )
     }
     texture.image.src = name;
     return texture;
