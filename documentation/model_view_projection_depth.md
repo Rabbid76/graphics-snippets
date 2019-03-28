@@ -142,8 +142,8 @@ The window coordinates are the coordinates of the viewport rectangle. The window
 
 #### Viewport and depth range
 
-The normalized device coordinates are linearly mapped to the Window Coordinates (Screen Coordinates) and to the depth for the depth buffer.
-The viewport is defined by [`glViewport`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glViewport.xhtml). The depth range is set by [`glDepthRange`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glDepthRange.xhtml) and is by default [0, 1].
+The normalized device coordinates are linearly mapped to the viewport rectangle (Window Coordinates / Screen Coordinates) and to the depth for the depth buffer.
+The viewport rectangle is defined by [`glViewport`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glViewport.xhtml). The depth range is set by [`glDepthRange`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glDepthRange.xhtml) and is by default [0, 1].
 
 See also:
 [OpenGL Transformation](http://www.songho.ca/opengl/gl_transform.html)
@@ -244,7 +244,7 @@ float depth = (((farZ-nearZ) * ndc_depth) + nearZ + farZ) / 2.0;
 
 ## Orthographic Projection
 
-At Orthographic Projection the coordinates in the view space are linearly mapped to clip space coordinates and the clip space coordinates are equal to the normalized device coordinates, because the `w` component is 1 (for a cartesian input coordinate).  
+At Orthographic Projection, the view space coordinates are linearly mapped to the clip space coordinates. The clip space coordinates are equal to the normalized device coordinates, because the `w` component is 1 (for a cartesian input coordinate).  
 The values for left, right, bottom, top, near and far define a box. All the geometry which is inside the volume of the box is "visible" on the viewport.
 
 ![Orthographic Projection](image/OrthographicProjection.png)
