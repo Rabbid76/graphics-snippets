@@ -74,6 +74,14 @@ function render(deltaMS){
     mat4.lookAt(viewMatrix, [0, 0, -8], [0, 0, 0], [0, 1, 0]);
     mat4.perspective(projMatrix, glMatrix.toRadian(45), canvas.clientWidth / canvas.clientHeight, 0.1, 1000.0);
 
+    inv_view = mat4.invert([], viewMatrix);
+    inv_proj = mat4.invert([], projMatrix);
+
+    ndc_corner = vec4.set([], -1, -1, -1, 1);
+    view_corner_h = vec4.transformMat4([], ndc_corner, inv_proj);
+    view_corner = vec4.scale([], view_corner_h, 1/view_corner_h[3]);
+    world_corner = vec4.transformMat4([], view_corner, inv_view);
+
     var xRotationMatrix = new Float32Array(16);
     var yRotationMatrix = new Float32Array(16);
     var identityMatrix = new Float32Array(16); 
