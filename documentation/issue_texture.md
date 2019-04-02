@@ -182,7 +182,7 @@ A [Windows Bitmap](https://de.wikipedia.org/wiki/Windows_Bitmap) file has a file
 [Failing to map a simple unsigned byte rgb texture to a quad](https://stackoverflow.com/questions/46202452/failing-to-map-a-simple-unsigned-byte-rgb-texture-to-a-quad/46203044#46203044), [C++] [GLSL]  
 
 `GL_UNPACK_ALIGNMENT` specifies the alignment requirements for the start of each pixel row in memory. By default `GL_UNPACK_ALIGNMENT` is set to 4.
-This means each row of the texture is supposed to have a lenght of 4*N bytes.
+This means the start of each line of the image is assumed to be aligned to an address which is a multiple of 4.
 
 You specify a 2*2 texture with the data: 255, 0, 0, 255, 0, 0, 255, 0, 0, 255, 0, 0
 
