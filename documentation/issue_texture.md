@@ -169,6 +169,52 @@ Note, by default the parameter is 4. This means that each line of the image is a
 When the size of the image is 40 x 50 then the size of a line in bytes is 120, which is divisible by 4.  
 But if the size of the image is 30 x 40, the the size of a line in bytes is 90, which is not divisible by 4.
 
+---
+
+[OpenGL 2D textures not displaying properly c++](https://stackoverflow.com/questions/55482364/opengl-2d-textures-not-displaying-properly-c/55482415#55482415), [C++]  
+
+When a RGB image with 3 color channels is loaded to a texture object, then [`GL_UNPACK_ALIGNMENT`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml) has to be set to 1: 
+
+<!-- language: cpp -->
+
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
+                 GL_UNSIGNED_BYTE, imageData);
+
+`GL_UNPACK_ALIGNMENT` specifies the alignment requirements for the start of each pixel row in memory. By default `GL_UNPACK_ALIGNMENT` is set to 4.
+This means the start of each line of the image is assumed to be aligned to an address which is a multiple of 4. Since the image data are tightly packed and each pixel has a size of 3 bytes, the alignment has to be changed.
+
+To proper read the image the last parameter of `stbi_load` has to be 0 (since the jpg format provides 3 color channesl) or 3 (to force 3 color channels):
+
+    unsigned char* imageData = stbi_load(filePath.c_str(),
+         &width, &height, &numComponents, 0);
+
+---
+
+`stbi_load` can be forced to generate an image with 4 color channels, by explicitly pass 4 to the last parameter:
+
+See [stb_image.h](https://github.com/nothings/stb/blob/master/stb_image.h):
+
+>     Basic usage (see HDR discussion below for HDR usage):
+          int x,y,n;
+          unsigned char *data = stbi_load(filename, &x, &y, &n, 0);
+          // ... process data if not NULL ...
+          // ... x = width, y = height, n = # 8-bit components per pixel ...
+> **`// ... replace '0' with '1'..'4' to force that many components per pixel`**
+
+>           // ... but 'n' will always be the number that it would have been if you said 0
+          stbi_image_free(data)
+
+In this case the format parameter has to be changed from `GL_RGB` to `GL_RGBA` when loading the image: 
+
+    unsigned char* imageData = stbi_load(filePath.c_str(),
+         &width, &height, &numComponents, 0);
+
+    // [...]
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA,
+                 GL_UNSIGNED_BYTE, imageData);
+
 ### Windows Bitmap
 
 [OpenGL Texture Loading issue with images that Crossed each other](https://stackoverflow.com/questions/53051066/opengl-texture-loading-issue-with-images-that-crossed-each-other/53051516#53051516), [C]  
