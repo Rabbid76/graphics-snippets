@@ -931,7 +931,7 @@ If you don`t do so, a transition from the last point on the circumference to the
 
 [Cubemaps](https://learnopengl.com/#!Advanced-OpenGL/Cubemaps)
 
-[GLSL - The OpenGL Shading Language 4.6, 8.13 Cube Map Texture Selection, page 250](https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.4.60.pdf)  
+[OpenGL 4.6 API Core Profile Specification, 8.13 Cube Map Texture Selection, page 253](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf)  
 [OpenGL ES 3.2 Specification, 8.13 Cube Map Texture Selection, page 193](https://www.khronos.org/registry/OpenGL/specs/es/3.2/es_spec_3.2.pdf)  
 
 >When a cube map texture is sampled, the $(s \; t \; r)$ texture coordinates are treated
@@ -958,7 +958,7 @@ coordinates
 
 ---
 
-[OpenGL Environment mapping Reflection](https://stackoverflow.com/questions/24732653/opengl-environment-mapping-reflection/44994586#44994586), [C++]    
+[OpenGL Environment mapping Reflection](https://stackoverflow.com/questions/24732653/opengl-environment-mapping-reflection/44994586#44994586), [C++]   
 [How to rotate Cubemap face without memory copy in OpenGL?](https://stackoverflow.com/questions/53938973/how-to-rotate-cubemap-face-without-memory-copy-in-opengl/53942886#53942886), [C++]  
 
 The line of sight direction (`LOS`) and up vector (`up`) for each of the 6 cubemap sides is:
