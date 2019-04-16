@@ -11,6 +11,7 @@
   - [Texture alignment (GL_UNPACK_ALIGNMENT, GL_PACK_ALIGNMENT)](#texture-alignment-gl_unpack_alignment-gl_pack_alignment)
   - [Internal texture format](#internal-texture-format)
   - [Texture Filter and Texture Wrapping](#texture-filter-and-texture-wrapping)
+- [GLSL ES 1.00](#glsl-es-100)
   - [Texture format and texture swizzle](#texture-format-and-texture-swizzle)
   - [Texture unit and texture binding](#texture-unit-and-texture-binding)
   - [Texture Coordinates](#texture-coordinates)
@@ -308,6 +309,17 @@ gl2.glTexImage3D(GL2.GL_TEXTURE_3D, 0, GL2.GL_R16F, nCols, nRows, nSlices, 0, GL
 [Anisotropic filtering](https://en.wikipedia.org/wiki/Anisotropic_filtering)  
 [Anisotropic Filtering](https://www.geforce.com/whats-new/guides/aa-af-guide#1)  
 [Sampler Object - Anisotropic filtering](https://www.khronos.org/opengl/wiki/Sampler_Object)  
+
+---
+
+# GLSL ES 1.00
+
+[OpenGL ES 1.1 Full Specification - 6 Texture Accesses; page 110](https://www.khronos.org/registry/OpenGL/specs/es/2.0/GLSL_ES_Specification_1.00.pdf):
+
+> Accessing mip-mapped textures within the body of a non-uniform conditional block gives an undefined value. A non-uniform conditional block is a block whose execution cannot be determined at compile time.
+
+
+---
 
 [Reflection texture from FBO getting to correct image](https://stackoverflow.com/questions/50289505/reflection-texture-from-fbo-getting-to-correct-image/50291377#50291377), [C++]  
 
