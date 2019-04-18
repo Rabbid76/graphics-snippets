@@ -260,7 +260,14 @@ This means the [`GL_UNPACK_ALIGNMENT`](https://www.khronos.org/registry/OpenGL-R
 Otherwise an offset of 0-3 bytes per line is gained, at texture lookup. This causes a continuously twisted or tilted texture.
 
 [Error when creating textures in WebGL with the RGB format](https://stackoverflow.com/questions/51582282/error-when-creating-textures-in-webgl-with-the-rgb-format)  
+
 [Texture not showing correctly?](https://stackoverflow.com/questions/52460143/texture-not-showing-correctly/52460224#52460224)  
+
+By default OpenGL assumes that the size of each row of an image is aligned 4 bytes.
+
+This is because the [`GL_UNPACK_ALIGNMENT`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml) parameter by default is 4.
+
+Since the image has 3 color channels (because its a JPG), and is tightly packed the size of a row of the image may not be aligned to 4 bytes.
 
 ---
 
