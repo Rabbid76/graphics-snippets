@@ -271,6 +271,27 @@ Since the image has 3 color channels (because its a JPG), and is tightly packed 
 
 ---
 
+[Calculating texture coordinates from a heightmap](https://stackoverflow.com/questions/55739024/calculating-texture-coordinates-from-a-heightmap/55739265#55739265)
+
+By default OpenGL assumes that the start of each row of an image is aligned to 4 bytes.
+
+This is because the [`GL_UNPACK_ALIGNMENT`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml) parameter by default is 4.
+
+Since the image has 3 color channels (`GL_RGB`), and is tightly packed the size of a row of the image may not be aligned to 4 bytes.
+
+When a RGB image with 3 color channels is loaded to a texture object, then [`GL_UNPACK_ALIGNMENT`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml) has to be set to 1: 
+
+```cpp
+glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0,
+             GL_RGB, GL_UNSIGNED_BYTE, this->diffuseData);
+``` 
+
+The diffuse image in the question has a dimension of 390x390. So each row of the image has a size of `390 * 3 = 1170` bytes.  
+Since 1170 is not divisible by 4 (`1170 / 4 = 292,5`), the start of a row is not aligned to 4 bytes.
+
+---
+
 ## Internal texture format
 
 [How to render GL_SHORT in java (endian)?](https://stackoverflow.com/questions/54797387/how-to-render-gl-short-in-java-endian/54804051#54804051)
