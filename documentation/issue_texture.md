@@ -850,7 +850,7 @@ The former code has worked and you have "seen" the texture because, if you the u
 Since the value of `"ourTexture"` is not set explicitly, its value is the default value 0.  
 In this special case the texture unit, the location `Textureloc` and the value of `"ourTexture"` are equal, they are all 0. Your code worked coincidentally. 
 
-Since GLSL version 4.2, the texture unit can be set by a [Layout Qualifier (GLSL)](https://www.khronos.org/opengl/wiki/Layout_Qualifier_(GLSL)) within the shader, too. Set a [Binding point]( https://www.khronos.org/opengl/wiki/Layout_Qualifier_(GLSL)#Binding_points), with the texture unit:
+Since GLSL version 4.2, the texture unit can be set by a [Layout Qualifier (GLSL)](https://www.khronos.org/opengl/wiki/Layout_Qualifier_(GLSL)) within the shader, too. The [Binding point]( https://www.khronos.org/opengl/wiki/Layout_Qualifier_(GLSL)#Binding_points) corresponds to the texture unit:
 
 ```cpp
 GLuint unit = 3;
