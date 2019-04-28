@@ -7,8 +7,8 @@ in TVertexData
     vec3 col;
 } inData;
 
-layout (location = 0) out vec4 outColor;
-layout (location = 1) out vec3 outNV;
+layout (location = 0) out vec4 outColor[2];
+//layout (location = 1) out vec3 outNV;
 
 uniform vec3  u_lightDir;
 uniform float u_ambient;
@@ -36,6 +36,6 @@ void main()
     float kSpecular = ( u_shininess + 2.0 ) * pow( NdotH, u_shininess ) / ( 2.0 * 3.14159265 );
     lightCol       += kSpecular * u_specular * color;
 
-    outColor = vec4( lightCol.rgb, 1.0 );
-    outNV    = normalV;
+    outColor[0] = vec4( lightCol.rgb, 1.0 );
+    outColor[1] = vec4( normalV, 1.0 );
 }
