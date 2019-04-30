@@ -522,6 +522,26 @@ The *wrap* function is applied to each coordinate separately and for each coordi
 
 ---
 
+[How to set texture parameters in OpenGL/GLFW to avoid texture aliasing (wavey behavior on object borders) when viewing objects from a distance?](https://stackoverflow.com/questions/55883803/how-to-set-texture-parameters-in-opengl-glfw-to-avoid-texture-aliasing-wavey-be/55883821#55883821)  
+
+If you want to enable [Mip Mapping](https://de.wikipedia.org/wiki/Mip_Mapping), then you have to use one of the minifying functions like `GL_NEAREST_MIPMAP_NEAREST`, `GL_LINEAR_MIPMAP_NEAREST`, `GL_NEAREST_MIPMAP_LINEAR` or `GL_LINEAR_MIPMAP_LINEAR`, see [`glTexParameter`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexParameter.xhtml) and [Texture - Mip Maps](https://www.khronos.org/opengl/wiki/Texture#Mip_maps):
+
+```cpp
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+```
+
+A further improvement can be gained by [Anisotropic filtering](https://en.wikipedia.org/wiki/Anisotropic_filtering), which is provides by the extension [`ARB_texture_filter_anisotropic`](https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_texture_filter_anisotropic.txt) and is a core feature since OpenGL 4.6.
+
+e.g.
+
+```cpp
+glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, 16);
+```
+
+See [Sampler Object - Anisotropic filtering](https://www.khronos.org/opengl/wiki/Sampler_Object#Anisotropic_filtering)  
+
+---
+
 ## Texture format and texture swizzle
 
 [Image Format](https://www.khronos.org/opengl/wiki/Image_Format)  
