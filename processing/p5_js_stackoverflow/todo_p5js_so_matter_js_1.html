@@ -1,0 +1,85 @@
+<html>
+<head>
+<meta charset='UTF-8'>
+<title>processing p5.js example</title>
+<style>
+#ref-link { position: absolute; top: 0; right: 0; color: #d0d040; }
+</style>
+</head>
+<body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.12.0/matter.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.3/p5.min.js"></script>
+<div>
+<a id="ref-link" href="https://stackoverflow.com/questions/55066257/matter-js-collision-not-detecting-after-setting-velocity">
+Matter.js collision not detecting after setting velocity
+</a>
+</div>
+<script>
+var Engine = Matter.Engine,
+  World = Matter.World,
+  Bodies = Matter.Bodies,
+  Body = Matter.Body;
+  
+var ground;
+var engine;
+var player = [];
+
+function setup() {
+  createCanvas(400, 400);
+  engine = Engine.create();
+  world = engine.world;
+  Engine.run(engine)
+  var options = {
+    isStatic: true
+  }
+  engine.world.gravity.y = 0
+  my = new Cell(200, 200, 32)
+  ground = Bodies.rectangle(200, height, width, 20, options)
+  World.add(world, ground)
+
+  //  engine.world.gravity.y = 0;
+  console.log(player)
+}
+
+function keyPressed() {
+  player.push(new Cell(mouseX, mouseY, 32));
+}
+
+function draw() {
+  background(0);
+  my.show();
+  for (var i = 0; i < player.length; i++) {
+    player[i].show();
+  }
+}
+
+function Cell(x, y, r) {
+  this.body = Matter.Bodies.circle(x, y, r, r);
+  //   World.add(world,this.body);
+  this.r = r;
+  World.add(world, this.body)
+  //  player[player.length] = this;
+  this.show = function() {
+    var pos = this.body.position;
+    
+    vx = this.body.velocity.x + (mouseX - pos.x) * 0.001
+    vy = this.body.velocity.y + (mouseY - pos.y) * 0.001
+    Body.setVelocity(this.body, {x: vx, y: vy } )
+    /*
+    Body.setVelocity(this.body, {
+      x: mouseX - pos.x,
+      y: mouseY - pos.y
+    })
+    */
+    
+    push();
+    translate(pos.x, pos.y)
+    //  noStroke()
+    ellipseMode(CENTER);
+    ellipse(0, 0, this.r * 2, this.r * 2)
+    pop();
+  }
+}
+</script>
+</body>
+</html>
