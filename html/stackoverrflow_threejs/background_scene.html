@@ -28,8 +28,8 @@
       I want to cache a frame, and then render another scene on the basis of this frame, how to do it?
     </a>
 
-    <!--script src="https://threejs.org/build/three.min.js"></script-->
-    <!--script src="https://threejs.org/examples/js/controls/TrackballControls.js"></script-->
+  <!--script src="https://threejs.org/build/three.min.js"></script-->
+  <!--script src="https://threejs.org/examples/js/controls/TrackballControls.js"></script-->
 
 <script>
 
@@ -162,7 +162,8 @@ function threeReady() {
     document.head.appendChild(script);
   }
 
-  addScript("https://threejs.org/build/three.js", function() {
+  addScript("https://cdnjs.cloudflare.com/ajax/libs/three.js/101/three.min.js", function() {
+  //addScript("https://threejs.org/build/three.js", function() {
     addScript("https://threejs.org/examples/js/controls/TrackballControls.js", function() {
       addScript("https://threejs.org/examples/js/libs/stats.min.js", function() {
         threeReady();
