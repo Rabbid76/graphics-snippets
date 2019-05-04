@@ -1,0 +1,137 @@
+<html>
+
+<head>
+<title>Moving an object using three.js</title>
+<style>
+
+#ref-link { position : absolute; bottom : 0; left : 0; }
+
+</style>
+
+</head>
+
+<body>
+<!--script src="https://threejs.org/build/three.min.js"></script-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/96/three.min.js"></script>
+<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/17.2.0/Tween.js"></script>
+
+<div id="container"></div>
+
+<a id="ref-link" href="https://stackoverflow.com/questions/52428643/moving-an-object-using-three-js">
+Moving an object using three.js 
+</a>
+
+<script>
+(function onLoad() {
+  var container, loader, camera, scene, renderer, controls, cube1, cube2, cubeTween, tweenStart;
+  
+  init();
+  animate();
+  animateCube();
+
+  function init() {
+    container = document.getElementById('container');
+    
+    renderer = new THREE.WebGLRenderer({
+      antialias: true
+    });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    container.appendChild(renderer.domElement);
+
+    camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 100);
+    camera.position.set(0, 6, 0);
+    camera.lookAt( 0, 0, 0 );
+
+    loader = new THREE.TextureLoader();
+    loader.setCrossOrigin("");
+
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xffffff);
+    scene.add(camera);
+    window.onresize = resize;
+    
+    var ambientLight = new THREE.AmbientLight(0x404040);
+    scene.add(ambientLight);
+
+    var directionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
+    directionalLight.position.set(1,2,1.5);
+    scene.add( directionalLight );
+
+    controls = new THREE.OrbitControls(camera);
+    
+    addGridHelper();
+    createModel();
+  }
+
+  function createModel() {
+
+    var material1 = new THREE.MeshPhongMaterial({color:'#2020ff'});
+    var geometry1 = new THREE.BoxGeometry( 1, 1, 1 );
+    cube1 = new THREE.Mesh(geometry1, material1);
+    cube1.position.set(0.0, 0.0, 2.0);
+
+    var material2 = new THREE.MeshPhongMaterial({color:'#ff2020'});
+    var geometry2 = new THREE.BoxGeometry( 1, 1, 1 );
+    cube2 = new THREE.Mesh(geometry2, material2);
+    cube2.position.set(2.0, 0.0, 0.0);
+
+    scene.add(cube1);
+    scene.add(cube2);
+
+    
+    tweenStart = { value: 0 };
+    var finish = { value: Math.PI/2 };
+
+    cubeTween = new TWEEN.Tween(tweenStart);
+    cubeTween.to(finish, 3000)
+    
+    cubeTween.onUpdate(function() {
+        cube1.position.set(0.0, 0.0, 0.0);
+        cube1.rotation.y = tweenStart.value;
+        cube1.translateZ( 2.0 );
+    });
+    
+    cubeTween.onComplete( function() {
+        tweenStart.value = 0;
+        requestAnimationFrame(function() {
+            cubeTween.start();
+        });
+    });
+    cubeTween.start();
+  }
+
+  function addGridHelper() {
+    var helper = new THREE.GridHelper(100, 100);
+    helper.material.opacity = 0.25;
+    helper.material.transparent = true;
+    scene.add(helper);
+
+    var axis = new THREE.AxesHelper(1000);
+    scene.add(axis);
+  }
+
+  function resize() {
+    
+    var aspect = window.innerWidth / window.innerHeight;
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = aspect;
+    camera.updateProjectionMatrix();
+  }
+
+  function animate() {
+    requestAnimationFrame(animate);
+    TWEEN.update();
+    render();
+  }
+
+  function render() {
+    renderer.render(scene, camera);
+  }
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,142 @@
+<html>
+
+<head>
+<title>Three.js example</title>
+<style>
+
+#ref-link { position : absolute; bottom : 0; left : 0; }
+
+</style>
+
+</head>
+
+<body>
+<script src="https://threejs.org/build/three.min.js"></script>
+<!--script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/100/three.min.js"></script-->
+<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+
+<div id="container"></div>
+
+<a id="ref-link" href="https://threejs.org/">
+Three.js example  
+</a>
+
+<script>
+(function onLoad() {
+  var container, loader, camera, scene, renderer, orbitControls, raycaster, sprite, mousePos, objectGroup;
+  
+  init();
+  animate();
+
+  function init() {
+    container = document.getElementById('container');
+    
+    renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true
+    });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    container.appendChild(renderer.domElement);
+
+    camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 100);
+    camera.position.set(0, 1, -4);
+    //camera.lookAt( -1, 0, 0 );
+
+    loader = new THREE.TextureLoader();
+    loader.setCrossOrigin("");
+
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xffffff);
+    scene.add(camera);
+    
+    var ambientLight = new THREE.AmbientLight(0x404040);
+    scene.add(ambientLight);
+
+    var directionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
+    directionalLight.position.set(1,2,1.5);
+    scene.add( directionalLight );
+
+    orbitControls = new THREE.OrbitControls(camera);
+    raycaster = new THREE.Raycaster();
+    
+    addGridHelper();
+    createModel();
+
+    window.onresize = function() {
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+    }
+
+    mousePos = new THREE.Vector2()
+    container.addEventListener('mousemove', function onMouseMove(event) {
+      event.preventDefault();
+       
+      mousePos.x = event.clientX / window.innerWidth * 2 - 1;
+      mousePos.y = 1 - event.clientY / window.innerHeight * 2 ;
+    } );
+  }
+
+  function createModel() {
+
+    objectGroup = new THREE.Group();
+    scene.add(objectGroup);
+
+    var material = new THREE.MeshPhongMaterial({color:'#b090b0'});
+    var geometry = new THREE.BoxGeometry( 1, 1, 1 );
+    var mesh = new THREE.Mesh(geometry, material);
+    objectGroup.add(mesh);
+
+
+    var spriteMap = loader.load( "https://raw.githubusercontent.com/Rabbid76/graphics-snippets/master/resource/texture/hands.png" );
+    var spriteMaterial = new THREE.SpriteMaterial( { map: spriteMap, color: 0xffffff } );
+    spriteMaterial.depthWrite = false;
+    spriteMaterial.depthTest = false;
+    sprite = new THREE.Sprite( spriteMaterial );
+    scene.add( sprite );
+  }
+
+  function addGridHelper() {
+    
+    var helper = new THREE.GridHelper(100, 100);
+    helper.material.opacity = 0.25;
+    helper.material.transparent = true;
+    scene.add(helper);
+
+    var axis = new THREE.AxesHelper(1000);
+    scene.add(axis);
+  }
+
+  function animate() {
+    requestAnimationFrame(animate);
+    
+    //var projMousePos = new THREE.Vector3(mousePos.x, mousePos.y, -1.0).unproject(camera);
+    //sprite.position.copy( projMousePos );
+
+    raycaster.setFromCamera( mousePos, camera );
+    var intersects = raycaster.intersectObjects( objectGroup.children );
+    if (intersects.length > 0) {
+        var projMousePos = new THREE.Vector3(mousePos.x, mousePos.y, -1.0).unproject(camera);
+        sprite.position.copy( projMousePos );
+        sprite.position.copy( intersects[0].point );
+        sprite.visible = true;
+    } else {
+        sprite.visible = false;
+    }
+    
+    
+    
+    orbitControls.update();
+    render();
+  }
+
+  function render() {
+    renderer.render(scene, camera);
+  }
+})();
+</script>
+
+</body>
+</html>

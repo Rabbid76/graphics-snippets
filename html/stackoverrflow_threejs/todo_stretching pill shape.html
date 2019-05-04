@@ -1,0 +1,85 @@
+<html>
+
+<head>
+<title>Animating a line in Three.js with lineTo and curveTo</title>
+<style>
+
+#ref-link { position : absolute; bottom : 0; left : 0; }
+
+</style>
+
+</head>
+
+<body>
+<script src="https://threejs.org/build/three.min.js"></script>
+<!--script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/94/three.min.js"></script-->
+
+
+
+<a id="ref-link" href="https://stackoverflow.com/questions/51971861/animating-a-line-in-three-js-with-lineto-and-curveto/51972073#51972073">
+Animating a line in Three.js with lineTo and curveTo  
+</a>
+
+<script>
+var camera, scene, renderer;
+var curve;
+var path;
+var oHeight = 0;
+var delta = 0;
+var geometry;
+
+init();
+animate();
+
+function init() {
+    camera = new THREE.PerspectiveCamera( 35, window.innerWidth / window.innerHeight, 1, 1000 );
+    camera.position.z = 600;
+    scene = new THREE.Scene();
+
+    geometry = new THREE.BufferGeometry();
+    var material = new THREE.LineBasicMaterial( { color: 0xffffff } );
+
+    curve = new THREE.Line( geometry, material );
+
+    scene.add( curve );
+
+    renderer = new THREE.WebGLRenderer( { antialias: true } );
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    document.body.appendChild( renderer.domElement );
+
+    window.onresize = resize;
+}
+
+function animate() {
+    requestAnimationFrame( animate );
+
+    delta +=.1;
+    oHeight = Math.sin(delta)*20;
+
+    path = new THREE.Path();
+    path.lineTo( 0, 0 );
+    path.quadraticCurveTo( 0, 20, 20, 20 );
+    path.lineTo( 40, 20 );
+    path.quadraticCurveTo( 60,20, 60,0);
+    path.lineTo(60,-40-oHeight);
+    path.quadraticCurveTo( 60,-60-oHeight, 40,-60-oHeight);
+    path.lineTo(20,-60-oHeight);
+    path.quadraticCurveTo(0,-60-oHeight,0,-40-oHeight);
+    path.lineTo(0,0);
+    
+    geometry.setFromPoints( path.getPoints() );
+    
+    renderer.render( scene, camera );
+}
+
+function resize() {   
+    var aspect = window.innerWidth / window.innerHeight;
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = aspect;
+    camera.updateProjectionMatrix();
+}
+</script>
+
+</body>
+</html>

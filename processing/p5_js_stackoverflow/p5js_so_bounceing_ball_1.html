@@ -1,0 +1,145 @@
+<html>
+<head>
+<meta charset='UTF-8'>
+<title>processing p5.js example</title>
+<style>
+body { margin: 0; overflow: hidden; }
+#ref-link { position: absolute; top: 0; left : 0; color: #d0d040; }
+</style>
+</head>
+<body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.8.0/p5.js"></script>
+
+<div id="ref-link">
+<a href="https://stackoverflow.com/questions/55854558/how-to-add-a-bouce-compression-animation-to-a-ball-in-p5">
+<font color= #CCF>How to add a bouce compression animation to a ball in P5?</font> 
+</a><br/>
+<a href="https://stackoverflow.com/questions/54592602/how-to-get-the-speed-of-an-object-dragged-with-the-mouse/54595192#54595192">
+<font color= #CCF>How to get the speed of an object dragged with the mouse</font> 
+</a><br/>
+<a href="https://stackoverflow.com/questions/54581308/how-to-create-a-simple-gravity-engine-on-javascript">
+<font color= #CCF>How to create a simple gravity engine on javascript</font> 
+</a>
+</div>
+
+<script>
+
+function Ball(p) {
+   
+    this.p = p;
+    this.v_speed = 0;
+    this.h_speed = 0;
+    this.gravity = 0.2;
+    this.ypos = this.p.height / 4;
+    this.xpos = this.p.width / 2;
+    this.drag = false;
+
+    this.onBall = function(x, y) {
+        let dx = x - this.xpos; 
+        let dy = y - this.ypos; 
+        let dist = Math.sqrt(dx*dx, dy*dy)
+        return dist <= this.diameter/2; 
+    }
+
+    this.startDrag = function() {
+          this.drag = true;
+          this.mousex = p.mouseX;
+          this.mousey = p.mouseY;
+    }
+
+    this.endDrag = function() {
+          this.drag = false;  
+    }
+
+    this.update = function() {
+
+        this.diameter = Math.min(100, Math.min(this.p.height, this.p.width) / 4);
+        this.starty = this.p.height / 5;
+        this.endy = this.p.height - this.diameter / 2;
+        this.minY = this.diameter/2;
+        this.maxY = this.p.height-this.diameter/2;
+        this.minX = this.diameter/2;
+        this.maxX = this.p.width-this.diameter/2;
+
+        if (this.drag) {
+
+            this.xpos = Math.max(this.minX, Math.min(this.maxX, p.mouseX)); 
+            this.ypos = p.mouseY; 
+            this.h_speed = this.h_speed/2 + (p.mouseX - this.mousex);
+            this.v_speed = this.v_speed/2 + (p.mouseY - this.mousey);
+            this.mousex = p.mouseX;
+            this.mousey = p.mouseY;
+            //this.v_speed = 0;
+
+        } else {
+
+            // calculate gravity
+
+            this.v_speed = this.v_speed + this.gravity;
+            this.ypos = this.ypos + this.v_speed; 
+
+            let endy = this.endy + Math.min(Math.abs(this.v_speed), this.diameter/2); 
+            if (this.ypos >= endy) {
+                this.ypos = endy;
+                this.v_speed *= -1.0; // change direction
+                this.v_speed = this.v_speed * 0.9;
+                if (Math.abs(this.v_speed) < 0.5) {
+                    this.ypos = this.starty;
+                }
+            }
+
+            // calculate side movement
+
+            this.xpos = this.xpos + this.h_speed;
+            if ( this.xpos <= this.minX){
+                this.xpos = this.minX;
+                this.h_speed *= -1;
+            }
+            if ( this.xpos >= this.maxX){
+                this.xpos = this.maxX;
+                this.h_speed *= -1;
+            }
+            this.h_speed *= 0.99;
+        }
+    }
+
+    this.show = function() {
+        h = Math.min(this.diameter, (this.p.height - this.ypos)*2)
+        w = this.diameter + this.diameter - h;
+        p.ellipse(this.xpos, this.ypos, w, h);
+        p.fill(255);
+    }
+}
+
+let ball;
+let sketch = function( p ) {
+    p.setup = function() {
+        let sketchCanvas = p.createCanvas(p.windowWidth, p.windowHeight);
+        ball = new Ball(p);
+    };
+    
+    p.windowResized = function() {
+        p.resizeCanvas(p.windowWidth, p.windowHeight);
+    };
+
+    p.draw = function() {
+        p.background(0);
+        ball.update();
+        ball.show();
+    };
+
+    p.mousePressed = function() {
+        if ( ball.onBall(p.mouseX, p.mouseY))
+            ball.startDrag();
+    };
+
+    p.mouseReleased = function() {
+        ball.endDrag();
+    };
+}
+
+var bounce_ball = new p5(sketch);
+
+</script>
+</body>
+</html>

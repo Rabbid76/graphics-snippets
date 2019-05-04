@@ -1,0 +1,139 @@
+<html>
+
+<head>
+<title>Three.js example</title>
+<style>
+
+#ref-link { position : absolute; bottom : 0; left : 0; }
+
+</style>
+
+</head>
+
+<body>
+<script src="https://threejs.org/build/three.min.js"></script>
+<!--script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/100/three.min.js"></script-->
+<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+
+<canvas id="gl_canvas" style="background-color: black;height: 480px;width: 680px;"></canvas>
+
+<script type="glsl" id="vshader">
+  attribute float vertPos; varying float fragPos; void main() { gl_Position = projectionMatrix*modelViewMatrix*vec4(position, 1.0); fragPos = vertPos; }
+</script>
+
+<script type="glsl" id="fshader">
+  uniform vec3 color; varying float fragPos; void main() { gl_FragColor = vec4(color, fragPos); }
+</script>
+
+<a id="ref-link" href="https://threejs.org/">
+Three.js example  
+</a>
+
+<script>
+var canvas;
+var scene;
+var renderer;
+var material;
+var geometry;
+var line;
+
+var maxPoints = 256;
+var drawCount = 1;
+
+//intialize rendering
+function init(aa, cdist, fov, lw, col) {
+
+  canvas = document.getElementById('gl_canvas');
+
+  camera = new THREE.PerspectiveCamera(fov, window.innerWidth / window.innerHeight, 1, 500);
+  camera.position.set(0, 0, cdist);
+  camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+  geometry = new THREE.BufferGeometry();
+  var positions = new Float32Array(3 * maxPoints);
+  positions[0] = Math.random();
+  positions[1] = Math.random();
+  positions[2] = Math.random();
+  geometry.addAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+  //ADD vertPos ATTRIBUTE
+  var ds = 1.0 / maxPoints;
+  var vertPos = new Float32Array(maxPoints);
+  for (var i = 1; i < maxPoints; i++)
+    vertPos[i] = i * ds;
+  geometry.addAttribute('vertPos', new THREE.BufferAttribute(vertPos, 1));
+
+  geometry.setDrawRange(0, drawCount);
+
+  material = new THREE.ShaderMaterial({
+    vertexShader: document.getElementById('vshader').textContent,
+    fragmentShader: document.getElementById('fshader').textContent,
+    uniforms: {
+      color: {
+        type: 'v3',
+        value: col
+      }
+    },
+    depthWrite: false,
+    depthTest: false,
+    lineWidth: lw, //this always defaults to 1, unfortunately
+    transparent: true
+  });
+
+  scene = new THREE.Scene();
+  line = new THREE.Line(geometry, material);
+  scene.add(line);
+
+  //set up renderer WITH alpha channel
+  renderer = new THREE.WebGLRenderer({
+    canvas: canvas,
+    antialias: aa,
+    alpha: true
+  });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+
+  window.onresize = function() {
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+  }
+}
+
+function shift(array) {
+  for (var i = 0; i < maxPoints - 1; i++) {
+    for (var j = 0; j < 3; j++) {
+      array[3 * i + j] = array[3 * i + j + 3];
+    }
+  }
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+
+  var currentGeometry = line.geometry;
+  var currentPositions = currentGeometry.getAttribute('position');
+  var posArray = currentPositions.array;
+
+  if (drawCount < maxPoints) {
+    for (var i = 0; i < 3; i++)
+      posArray[3 * drawCount + i] = posArray[3 * drawCount - 3 + i] + 0.5 * Math.random() - 0.25;
+    drawCount++;
+    currentPositions.needsUpdate = true;
+    geometry.setDrawRange(0, drawCount);
+  } else {
+    shift(posArray);
+    for (var j = 0; j < 3; j++)
+      posArray[3 * maxPoints - j] = posArray[3 * maxPoints - j] + 0.5 * Math.random() - 0.25;
+    currentPositions.needsUpdate = true;
+  }
+
+  renderer.render(scene, camera);
+}
+
+init(true, 10, 60, 2, new THREE.Vector3(1, 1, 1));
+animate();
+
+</script>
+
+</body>
+</html>

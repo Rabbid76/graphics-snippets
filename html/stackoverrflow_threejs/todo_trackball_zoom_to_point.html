@@ -1,0 +1,120 @@
+<html>
+
+<head>
+<title>Three.js example</title>
+<style>
+
+#ref-link { position : absolute; bottom : 0; left : 0; }
+
+</style>
+
+</head>
+
+<body>
+<script src="https://threejs.org/build/three.min.js"></script>
+<!--script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/104/three.min.js"></script-->
+<script src="https://threejs.org/examples/js/controls/TrackballControls.js"></script>
+<!--script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script-->
+
+<div id="container"></div>
+
+<a id="ref-link" href="https://stackoverflow.com/questions/55951601/zoom-in-to-the-object-based-on-mouse-pointer">
+Zoom in to the object based on mouse pointer
+</a>
+
+<script>
+var scene, renderer, camera;
+var cube;
+var controls;
+var containerWidth = window.innerWidth,
+  containerHeight = window.innerHeight;
+
+init();
+
+animate();
+
+function init() {
+  configureRenderer();
+
+  scene = new THREE.Scene();
+  configureCube();
+  configureCamera();
+  configureLight();
+  configureControls();
+}
+
+function configureRenderer() {
+  renderer = new THREE.WebGLRenderer({
+    antialias: true,
+    alpha: true
+  });
+  renderer.setSize(containerWidth, containerHeight);
+  document.body.appendChild(renderer.domElement);
+
+  window.onresize = function() {
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      if (controls)
+          controls.handleResize();
+  }
+
+  renderer.domElement.addEventListener("wheel", event => {
+      const delta = event.deltaY;
+
+      let x = 2 * event.clientX / window.innerWidth - 1; 
+      let y = 1 - 2 * event.clientY / window.innerHeight;
+      let cursorpos = new THREE.Vector3(x, y, 1);
+
+      cursorpos.unproject(camera); 
+
+      let dir = new THREE.Vector3().copy(cursorpos).sub(camera.position).normalize();
+      let shift = new THREE.Vector3().copy(dir).multiplyScalar(delta * 0.1);
+
+      camera.position.add(shift);
+      controls.position0.add(shift);
+      controls.target.add(shift);
+  });
+}
+
+function configureCube() {
+  var cubeGeometry = new THREE.BoxGeometry(20, 20, 20);
+  var cubeMaterial = new THREE.MeshLambertMaterial({
+    color: 0xff0000
+  });
+  cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+  cube.position.set(50, 0, 0);
+  scene.add(cube);
+}
+
+function configureCamera() {
+  camera = new THREE.PerspectiveCamera(45, containerWidth / containerHeight, 1, 1000);
+  camera.position.set(0, 160, 400);
+  camera.lookAt(scene);
+}
+
+function configureLight() {
+  pointLight = new THREE.PointLight(0xffffff, 1.0, 100000);
+  pointLight.position.set(0, 300, 200);
+  scene.add(pointLight);
+}
+
+function configureControls() {
+  controls = new THREE.TrackballControls(camera, renderer.domElement);
+  // configuration of controls
+  controls.rotateSpeed = 5.0;
+  controls.zoomSpeed = 0.0;
+  controls.panSpeed = 2.0;
+  controls.staticMoving = true;
+  controls.dynamicDampingFactor = 0;
+}
+
+function animate() {
+  controls.update();
+  requestAnimationFrame(animate);
+  renderer.render(scene, camera);
+}
+</script>
+
+</body>
+</html>

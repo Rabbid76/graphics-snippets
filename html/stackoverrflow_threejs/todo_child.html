@@ -1,0 +1,124 @@
+<html>
+
+<head>
+<title>Threejs rotate an object around another object in 3d matrix axis</title>
+<style>
+
+#ref-link {
+    position : absolute;
+    bottom : 0;
+    left : 0;
+}
+
+</style>
+
+</head>
+
+<body>
+<script src="https://threejs.org/build/three.min.js"></script>
+<!--script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/89/three.min.js"></script-->
+<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+
+<div id="container"></div>
+
+<a id="ref-link" href="https://stackoverflow.com/questions/50529018/threejs-rotate-an-object-around-another-object-in-3d-matrix-axis/50529860#50529860">
+Threejs rotate an object around another object in 3d matrix axis 
+</a>
+
+<script>
+(function onLoad() {
+  var container, loader, camera, scene, renderer, controls;
+  
+  init();
+  animate();
+
+  function init() {
+    container = document.getElementById('container');
+    
+    renderer = new THREE.WebGLRenderer({
+      antialias: true
+    });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    container.appendChild(renderer.domElement);
+
+    camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 100);
+    camera.position.set(0, -4, -1.5);
+
+    loader = new THREE.TextureLoader();
+    loader.setCrossOrigin("");
+
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xffffff);
+    scene.add(camera);
+    window.onresize = resize;
+    
+    var ambientLight = new THREE.AmbientLight(0x404040);
+    scene.add(ambientLight);
+
+    var directionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
+    directionalLight.position.x = -0.75;
+    directionalLight.position.y = -0.5;
+    directionalLight.position.z = -1;
+    scene.add( directionalLight );
+
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    
+    var axis = new THREE.AxesHelper(1000);
+    scene.add(axis);
+    
+    createModel();
+  }
+
+  var mesh;
+  var child;
+  function createModel() {
+
+    var material = new THREE.MeshPhongMaterial({color:'#f08080'});
+    var geometry = new THREE.BoxGeometry( 1, 1, 1 );
+
+    mesh = new THREE.Mesh(geometry, material);
+
+    var material2 = new THREE.MeshPhongMaterial({color:'#8080f0'});
+    var geometry2 = new THREE.BoxGeometry( 1, 1, 1 );
+
+    child = new THREE.Mesh(geometry2, material2);
+
+    mesh.add(child);
+    scene.add(mesh);
+  }
+
+  function resize() {
+    
+    var aspect = window.innerWidth / window.innerHeight;
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = aspect;
+    camera.updateProjectionMatrix();
+    //controls.handleResize();
+  }
+
+  function animate() {
+
+    var curpos = child.position.clone();
+    
+    child.position.set(0, 0, 0);
+    child.rotateY(0.02);
+    child.translateX(1.5);
+
+    mesh.position.set(0, 0, 0);
+    mesh.rotateZ(0.01);
+    mesh.translateX(1.0);
+
+    requestAnimationFrame(animate);
+    render();
+  }
+
+  function render() {
+    renderer.render(scene, camera);
+  }
+})();
+</script>
+
+</body>
+</html>

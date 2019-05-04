@@ -1,0 +1,132 @@
+<html>
+
+<head>
+<title>Three.js example</title>
+<style>
+
+#ref-link { position : absolute; bottom : 0; left : 0; }
+
+</style>
+
+</head>
+
+<body>
+<script src="https://threejs.org/build/three.min.js"></script>
+<!--script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/102/three.min.js"></script-->
+<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/17.2.0/Tween.js"></script>
+
+<div id="container"></div>
+
+<a id="ref-link" href="https://stackoverflow.com/questions/55932351/set-3d-cube-rotation-origin/55932545#">
+Set 3d cube rotation origin 
+</a>
+
+<script>
+(function onLoad() {
+  var camera, scene, renderer, orbitControls, pivot;
+  var rot = 0.02;
+  
+  init();
+  animate();
+
+  function init() {
+    container = document.getElementById('container');
+    
+    renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true
+    });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    container.appendChild(renderer.domElement);
+
+    camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 100);
+    camera.position.set(4, 1, 2);
+    //camera.lookAt( -1, 0, 0 );
+
+    loader = new THREE.TextureLoader();
+    loader.setCrossOrigin("");
+
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xffffff);
+    scene.add(camera);
+    
+    window.onresize = function() {
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+    }
+    
+    orbitControls = new THREE.OrbitControls(camera);
+
+    var ambientLight = new THREE.AmbientLight(0x404040);
+    scene.add(ambientLight);
+
+    var directionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
+    directionalLight.position.set(1,2,-1.5);
+    scene.add( directionalLight );
+    
+    addGridHelper();
+    createModel();
+
+  }
+
+  function createModel() {
+
+    var material = new THREE.MeshPhongMaterial({color:'#80f080'});
+    var geometry = new THREE.BoxGeometry( 1, 1, 1 );
+    
+    var cube1 = new THREE.Mesh(geometry, material);
+    cube1.position.set(0, -0.5, -0.5);
+
+    var cube2 = new THREE.Mesh(geometry, material);
+    cube2.position.set(0, 0.5, -0.5);
+
+    var cube3 = new THREE.Mesh(geometry, material);
+    cube3.position.set(0, -0.5, 0.5);
+
+    var material2 = new THREE.MeshPhongMaterial({color:'#f08080'});
+    var cube4 = new THREE.Mesh(geometry, material2);
+    
+    var bbox = new THREE.Box3().setFromObject(cube4);
+    cube4.position.set(bbox.min.x, bbox.max.y, 0);
+
+    pivot = new THREE.Group();
+    pivot.add(cube4);
+    pivot.position.set(-bbox.min.x, 0.5-bbox.max.y, 0.5);
+
+    scene.add(cube1);
+    scene.add(cube2);
+    scene.add(cube3);
+    scene.add(pivot);
+  }
+
+  function addGridHelper() {
+    
+    var helper = new THREE.GridHelper(100, 100);
+    helper.material.opacity = 0.25;
+    helper.material.transparent = true;
+    scene.add(helper);
+
+    var axis = new THREE.AxesHelper(1000);
+    scene.add(axis);
+  }
+
+  function animate() {
+    requestAnimationFrame(animate);
+    orbitControls.update();
+    pivot.rotation.z += rot;
+    if (pivot.rotation.z > 0.0 || pivot.rotation.z < -Math.PI/2) rot *= -1;
+    render();
+  }
+
+  function render() {
+    renderer.render(scene, camera);
+  }
+})();
+</script>
+
+</body>
+</html>

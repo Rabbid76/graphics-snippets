@@ -1,0 +1,120 @@
+<html>
+
+<head>
+<title>Improve UV line quality of threejs/shader geometry</title>
+<style>
+
+#ref-link { position : absolute; bottom : 0; left : 0; }
+
+</style>
+
+</head>
+
+<body>
+<script src="https://threejs.org/build/three.min.js"></script>
+<!--script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/100/three.min.js"></script-->
+<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+
+<div id="canvas"></div>
+
+<a id="ref-link" href="https://stackoverflow.com/questions/54015617/improve-uv-line-quality-of-threejs-shader-geometry">
+Improve UV line quality of threejs/shader geometry
+</a>
+
+<script>
+/* Scene Initialization */
+var startTime = Date.now();
+var scene = new THREE.Scene();
+var width = window.innerWidth;
+var height = window.innerHeight;
+var canvas = document.getElementById('canvas');
+var camera = new THREE.PerspectiveCamera(75, 1, 1, 1200);
+
+camera.position.set(0, -420, 600);
+camera.lookAt(new THREE.Vector3(0, 0, 0));
+orbitControls = new THREE.OrbitControls(camera);
+
+var renderer = new THREE.WebGLRenderer({antialias: true});
+renderer.setSize(window.innerWidth * .2, window.innerWidth * .2);
+renderer.setClearColor( 0xffffff, 1);
+canvas.appendChild(renderer.domElement);
+
+var geometry = new THREE.TorusGeometry(200, 200, 260, 260); 
+material = new THREE.ShaderMaterial( {
+        uniforms: {time: { type: "f", value: Date.now() - startTime}, },
+        vertexShader: `attribute vec3 center;
+			varying vec3 vCenter;
+      varying vec2 vUv;
+			void main() {
+				vCenter = center;
+        vUv = uv;
+				gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+			}`,
+        fragmentShader: `varying vec3 vCenter;
+      varying vec2 vUv;
+      uniform float time;
+      uniform sampler2D tDiffuse;
+			void main() {
+        
+        float t = time;
+               
+        vec2 noLines = vec2(30.0, 20.0);
+        vec2 floorUV = floor((t + vUv) * noLines);
+        vec2 distUV  = t + vUv - (floorUV+0.5) / noLines;
+
+        float sh = 0.005;
+        vec2 lineUV = smoothstep(sh, sh*0.5, abs(distUV));
+         
+        float uvOutput = max(lineUV.x, lineUV.y);
+        gl_FragColor = vec4(1.0, 0.0, 0.0, uvOutput);
+			}`,
+      transparent: true
+      } );
+//material.extensions.derivatives = true;
+
+material.side = THREE.DoubleSide;
+
+material.transparent = true;
+
+//material.blending = THREE.Add;
+material.depthTest = false;
+
+var torus = new THREE.Mesh(geometry, material);
+var geom = torus.geometry;
+geometry.sortFacesByMaterialIndex();
+torus.position.x = 0;
+
+scene.add(torus);
+
+/* Request Animation Frame */
+function animation() {
+  camera.lookAt(new THREE.Vector3(0, 0, 0));
+  renderer.render(scene, camera);
+  material.uniforms.time.value = (Date.now() - startTime)/20000;
+  requestAnimationFrame(animation);
+}
+
+resize();
+window.onresize = resize;
+animation();
+setupDraggableEvents();
+
+function setupDraggableEvents() {
+  var hammer = new Hammer(document.getElementsByTagName('canvas')[0]);
+  hammer.on('pan', function(event) {
+    torus.rotation.y += event.velocityX / 10;
+    torus.rotation.x += event.velocityY / 10;
+  });
+}
+
+function resize() {
+    
+    var aspect = window.innerWidth / window.innerHeight;
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = aspect;
+    camera.updateProjectionMatrix();
+  }
+</script>
+
+</body>
+</html>

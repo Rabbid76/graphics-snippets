@@ -1,0 +1,47 @@
+<html>
+<head>
+<meta charset='UTF-8'>
+<title>processing p5.js example</title>
+<style>
+#ref-link { position: absolute; top: 0; right: 0; color: #d0d040; }
+</style>
+</head>
+<body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.8.0/p5.js"></script>
+<div>
+<a id="ref-link" href="https://stackoverflow.com/questions/53808130/conways-game-of-life-p5js">
+Sine function to vary object heights in P5.js
+</a>
+</div>
+<script>
+function setup() {
+    createCanvas(500, 500);
+}
+
+function draw() {
+    background(0);
+    fill(0);
+    stroke(255, 0, 0)
+    strokeWeight(2);
+
+
+    middle = width/2;
+
+    circles = 13;
+    angle = Math.PI*2 / circles;
+
+    radius = 200;
+    circleRadius = sin(angle/2) * radius;
+
+    for(var i = 0; i < circles; i++){
+
+        xCircle = middle + cos(angle*i) * radius;
+        yCircle = middle - sin(angle*i) * radius;
+
+        ellipse(xCircle, yCircle, circleRadius*2, circleRadius*2);
+    }
+}
+
+</script>
+</body>
+</html>

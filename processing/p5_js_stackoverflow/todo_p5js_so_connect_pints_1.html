@@ -1,0 +1,91 @@
+<html>
+<head>
+<meta charset='UTF-8'>
+<title>processing p5.js example</title>
+<style>
+#ref-link { position: absolute; top: 0; right: 0; color: #d0d040; }
+</style>
+</head>
+<body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.6.1/p5.js"></script>
+<div>
+<a id="ref-link" href="https://p5js.org/">
+p5.js
+</a>
+</div>
+<script>
+var numPoints = 10;
+var connections = 3;
+var points = [];
+var noiseT = [];
+
+function setup() {
+  createCanvas(displayWidth, displayHeight);
+  // creating points and settings for the random movement
+  for (var i = 0; i < numPoints; i++) {
+    var tempNoiseX = random(-50, 50);
+    var tempNoiseY = random(-50, 50);
+    var tempNoiseXplus = random(-0.002, 0.002);
+    var tempNoiseYplus = random(-0.002, 0.002);
+    noiseT.push([tempNoiseX, tempNoiseY, tempNoiseXplus, tempNoiseYplus]);
+    var tempX = width * noise(noiseT[i][0]);
+    var tempY = height * noise(noiseT[i][1]);
+    points.push([tempX, tempY]);
+  }
+  frameRate(60);
+  stroke(0,0,255);
+  background(0);
+}
+
+function draw() {
+  background(0);
+
+  // moving the points
+  for (var i = 0; i < numPoints; i++) {
+    points[i][0] = width * noise(noiseT[i][0]) * 1.2;
+    points[i][1] = height * noise(noiseT[i][1]) * 1.2;
+  }
+
+  // calculate the distance between all the points
+  for (var i = 0; i < points.length; i++) {
+    var distance = {};
+    for (var j = 0; j < numPoints; j++) {
+      var startX = points[i][0];
+      var startY = points[i][1];
+      var endX = points[j][0];
+      var endY = points[j][1];
+      var tempDistance = dist(startX, startY, endX, endY);
+      distance[tempDistance] = [endX, endY];
+    }
+
+    var tempKeys = Object.values(Object.keys(distance)).sort(function(a, b) {
+      return a - b
+    });
+    // drawing lines
+    for (var c = 1; c <= connections; c++) {
+      line(points[i][0], points[i][1], distance[tempKeys[c]][0], distance[tempKeys[c]][1]);
+    }
+  }
+
+  // adding noise
+  for (var i = 0; i < noiseT.length; i++) {
+    noiseT[i][0] += noiseT[i][2];
+    noiseT[i][1] += noiseT[i][3];
+  }
+  // cehcking the borders
+  for (var i = 0; i < points.length; i++) {
+    if (points[i][0] >= width) {
+      points[i][0] = width;
+    } else if (points[i][0] <= 0) {
+      points[i][0] = 0;
+    }
+    if (points[i][1] >= height) {
+      points[i][1] = height;
+    } else if (points[i][1] <= 0) {
+      points[i][1] = 0;
+    }
+  }
+}
+</script>
+</body>
+</html>

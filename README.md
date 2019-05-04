@@ -150,11 +150,15 @@
 
 ---
 
-## Processing
+## [Processing](https://processing.org/)
 
-### p5.js
+### [p5.js](https://p5js.org/)
 
 [![](processing/p5js/image/circle_3_points.png) Circle by 3 points - p5.js](https://rabbid76.github.io/graphics-snippets/processing/p5js/p5js_circle_3_points.html)  
+
+### [p5.js](https://p5js.org/) StackOverflow examples
+
+[Bouncing ball](https://rabbid76.github.io/graphics-snippets/processing/p5_js_stackoverflow/p5js_so_bounceing_ball_1.html)
 
 ---
 

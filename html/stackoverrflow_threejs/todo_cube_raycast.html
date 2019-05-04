@@ -1,0 +1,163 @@
+<html>
+
+<head>
+<title>Reset an object's material properties with Raycaster in Three.js</title>
+<style>
+
+#ref-link { position : absolute; bottom : 0; left : 0; }
+
+</style>
+
+</head>
+
+<body>
+<script src="https://threejs.org/build/three.min.js"></script>
+<!--script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/100/three.min.js"></script-->
+<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+
+<div id="container"></div>
+
+<div id="ref-link">
+<a href="https://stackoverflow.com/questions/54047220/reset-an-objects-material-properties-with-raycaster-in-three-js">
+Reset an object's material properties with Raycaster in Three.js
+</a>
+<br>
+<a href="https://threejs.org/examples/?q=interactive#webgl_interactive_cubes">
+three.js / examples / interactive / cubes
+</a>
+</div>
+
+<script>
+(function onLoad() {
+  var container, loader, camera, scene, renderer, orbitControls, intersectObject, raycaster, mouse;
+
+  init();
+  animate();
+
+  function init() {
+
+    mouse = new THREE.Vector2()
+
+    container = document.getElementById('container');
+    
+    renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true
+    });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    container.appendChild(renderer.domElement);
+
+    camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 100);
+    camera.position.set(0, 1, -4);
+    camera.lookAt( 0, 0, 0 );
+
+    raycaster = new THREE.Raycaster();
+
+    loader = new THREE.TextureLoader();
+    loader.setCrossOrigin("");
+
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xffffff);
+    scene.add(camera);
+    window.onresize = resize;
+    document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+
+    var ambientLight = new THREE.AmbientLight(0x404040);
+    scene.add(ambientLight);
+
+    var directionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
+    directionalLight.position.set(1,2,-1.5);
+    scene.add( directionalLight );
+
+    orbitControls = new THREE.OrbitControls(camera);
+
+    //addGridHelper();
+    createModel();
+
+  }
+
+  function createModel() {
+
+    var material1 = new THREE.MeshPhongMaterial({color:'#c04040'});
+    var geometry1 = new THREE.BoxGeometry( 1, 1, 1 );
+    var mesh1 = new THREE.Mesh(geometry1, material1);
+    mesh1.position.x = -1;
+    scene.add(mesh1);
+
+    var material2 = new THREE.MeshPhongMaterial({color:'#4040c0'});
+    var geometry2 = new THREE.BoxGeometry( 1, 1, 1 );
+    var mesh2 = new THREE.Mesh(geometry2, material2);
+    mesh2.position.x = 1;
+    scene.add(mesh2);
+  }
+
+  function addGridHelper() {
+    
+    var helper = new THREE.GridHelper(100, 100);
+    helper.material.opacity = 0.25;
+    helper.material.transparent = true;
+    scene.add(helper);
+
+    var axis = new THREE.AxesHelper(1000);
+    scene.add(axis);
+  }
+
+  function onDocumentMouseMove( event ) {
+
+    event.preventDefault();
+
+    mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+    mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+  }
+
+  function resize() {
+    
+    var aspect = window.innerWidth / window.innerHeight;
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = aspect;
+    camera.updateProjectionMatrix();
+  }
+
+  function animate() {
+    requestAnimationFrame(animate);
+    //orbitControls.update();
+    render();
+  }
+
+  function render() {
+
+    raycaster.setFromCamera( mouse, camera );
+    var intersects = raycaster.intersectObjects( scene.children );
+
+    if (intersects.length > 0) {
+
+        if (intersectObject != intersects[ 0 ].object) {
+
+            // reset opacity
+            if (intersectObject)
+                intersectObject.material.opacity = 1.0;
+
+            // notice new object
+            intersectObject = intersects[ 0 ].object;
+            // set object to 75% opacity
+            intersectObject.material.opacity = 0.25;
+            //intersectObject.material.color.setHex( 0xff0000 );
+        }
+    } else {
+
+        // reset opacity
+        if (intersectObject) {
+            intersectObject.material.opacity = 1.0;
+            intersectObject = null;
+        }
+    }
+
+    renderer.render(scene, camera);
+  }
+})();
+</script>
+
+</body>
+</html>

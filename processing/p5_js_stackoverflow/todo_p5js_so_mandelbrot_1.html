@@ -1,0 +1,74 @@
+<html>
+<head>
+<meta charset='UTF-8'>
+<title>processing p5.js example</title>
+<style>
+#ref-link { position: absolute; top: 0; right: 0; color: #d0d040; }
+</style>
+</head>
+<body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.3/p5.js"></script>
+<div>
+<a id="ref-link" href="https://stackoverflow.com/questions/54613006/some-problems-with-generating-the-mandelbrot-set">
+Some problems with generating the Mandelbrot set
+</a>
+</div>
+<script>
+function setup() {
+    createCanvas(600, 600);
+    background(200);
+    noLoop();
+}
+
+function draw() {
+    translate(width/2, height/2);
+    loadPixels();
+    for (let x=0; x<=width; x++) {
+        for (let y=0; y<=height; y++) {
+            a=map(x, 0, width, -2.5, 1);
+            b=map(y, 0, height, -1, 1);
+            z=new Complex(a, b);
+            f = (mand(z))
+            //i = map(f,1,100,0,255);
+
+            cR = Math.min(sqrt(f/100.0), 1);
+            cG = Math.min(sqrt(f/50.0), 1);
+            cB = Math.min(sqrt(f/10.0), 1);
+            pixels[(x+y*width)*4]   = cR * 255;
+            pixels[(x+y*width)*4+1] = cG * 255;
+            pixels[(x+y*width)*4+2] = cB * 255; 
+        }
+    }
+    updatePixels();
+}
+
+var Complex = function(a, b) {
+    this.re=a;
+    this.im=b;
+    this.modSq=(a*a+b*b);
+}
+
+Complex.prototype.square = function() {
+    a=sq(this.re)-sq(this.im);
+    b=2*this.re*this.im;
+    return new Complex(a, b);
+}
+
+function mand(c) {
+    oldZ=new Complex(0, 0);
+    for (let i=1; i<=100; i++) {
+        newZ=oldZ.square();
+        newZ.re+=c.re;
+        newZ.im+=c.im;
+        //newZ.re+= -0.70176;
+        //newZ.im+= -0.3842;
+        oldZ=newZ;
+        if (oldZ.modSq>=4) {
+            return i
+        }
+    }
+    return 0
+}
+</script>
+</body>
+</html>
