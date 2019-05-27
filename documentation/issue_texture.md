@@ -127,8 +127,8 @@ int width = 0, height = 0, channels = 0;
 stbi_uc *image = stbi_load( filename, &width, &height, &channels, 3 );
 ```
 
-When the image is loaded to a texture object, then [`GL_UNPACK_ALIGNMENT`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml) has to be set to 1,
-because the length of one line of an BMP-file is aligned to 4.  
+When the image is loaded to a texture object, then [`GL_UNPACK_ALIGNMENT`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml) has to be set to 1.  
+By default `GL_UNPACK_ALIGNMENT` is 4, so each line of an image is assumed to be aligned to 4 bytes. The pixels of a BMP-file in common have a size of 3 bytes and are tightly packed, this would cause a misalignment.<br/>
 After loading the image, the memory on the can be freed by `stbi_image_free`:  
 
 ```cpp
@@ -306,6 +306,19 @@ glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0,
 
 The diffuse image in the question has a dimension of 390x390. So each row of the image has a size of `390 * 3 = 1170` bytes.  
 Since 1170 is not divisible by 4 (`1170 / 4 = 292,5`), the start of a row is not aligned to 4 bytes.
+
+---
+
+[Can't load “glyp” properly for opengl using freetype2](https://stackoverflow.com/questions/56330505/cant-load-glyp-properly-for-opengl-using-freetype2/56331113#56331113)  
+
+The [`GL_UNPACK_ALIGNMENT`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml) parameter defines the alignment of the first pixel in each row (line) of an image when the image is read form the buffer. By default the this parameter is 4.  
+Each pixel of the glyph image is encoded in one byte and the image is tightly packed. So the the alignment of the glyph image is 1 and the parameter has to be changed before the image is read and the texture is specified: 
+
+```cpp
+glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+```
+
+If that is missed, this would cause a shift effect at each line of the image (except if the width of the image is divisible by 4).
 
 ---
 
