@@ -20,7 +20,6 @@
   - [WebGL](#webgl)
 - [TODO](#todo)
   - [Investigate](#investigate)
-- [Using vertex attribute index 0, instead of Fixed-Function attribute GL_VERTEX_ARRAY [duplicate]](#using-vertex-attribute-index-0-instead-of-fixed-function-attribute-gl_vertex_array-duplicate)
   - [Question](#question)
   - [Answer](#answer)
 
@@ -723,9 +722,6 @@ See the [WebGL documentation for `WebGL2RenderingContext.vertexAttribIPointer()`
 ----
 
 Keep this, because it was **deleted**. The answer was added to [What are the Attribute locations for fixed function pipeline in OpenGL 4.0++ core profile?](https://stackoverflow.com/questions/20573235/what-are-the-attribute-locations-for-fixed-function-pipeline-in-opengl-4-0-cor/51949673#51949673), too.
-
-# Using vertex attribute index 0, instead of Fixed-Function attribute GL_VERTEX_ARRAY [duplicate]
-[https://stackoverflow.com/questions/51944318/using-vertex-attribute-index-0-instead-of-fixed-function-attribute-gl-vertex-ar]
 
 ## Question
 
