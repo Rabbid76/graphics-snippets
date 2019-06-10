@@ -35,8 +35,8 @@ primitive, and typically they are constant across many primitives. A uniform is 
 will actually be accessed when the executable code is executed. In cases where the compiler and linker cannot make a conclusive determination, the uniform will be
 considered active.
 
-See [OpenGL 4.6 Core Profile Specification - 7.3.1 Program Interfaces - p. 101](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf):
-See [OpenGL ES Shading Language 3.20 Specification - 7.6 Uniform Variables - p. 79](https://www.khronos.org/registry/OpenGL/index_es.php#specs32):
+See [OpenGL 4.6 Core Profile Specification - 7.3.1 Program Interfaces](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf), page 102:
+See [OpenGL ES 3.2 Specification - 7.3.1 Program Interfaces](https://www.khronos.org/registry/OpenGL/specs/es/3.2/es_spec_3.2.pdf), page 79:
 
 > 7.3.1 Program Interfaces
 >
