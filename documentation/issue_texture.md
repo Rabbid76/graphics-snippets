@@ -1078,6 +1078,57 @@ The texture coordinates for cubemaps are 3D vector directions. These are concept
 
 This means that scaling the texture coordinate does **not** cause different results.
 
+
+---
+
+[Do not understand captureViews in Diffuse-irradiance tutorial in learnopengl.com](https://stackoverflow.com/questions/56515732/do-not-understand-captureviews-in-diffuse-irradiance-tutorial-in-learnopengl-com/56516750#56516750)  
+
+When a cubemap texture is used, then a 3 dimensional direction vector has to be transformed, to 2 dimensional texture coordinate relative to one side of the map.
+
+The relevant part of the specification for this transformtion is [OpenGL 4.6 API Core Profile Specification, 8.13 Cube Map Texture Selection](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf), page 253:
+
+> When a cube map texture is sampled, the `(s t r)` texture coordinates are treated
+as a direction vector `(rx ry rz)` emanating from the center of a cube. The `q` coordinate is ignored. At texture application time, the interpolated per-fragment direction vector selects one of the cube map face’s two-dimensional images based on the largest magnitude coordinate direction (the major axis direction). If two or more coordinates have the identical magnitude, the implementation may define the rule to disambiguate this situation. The rule must be deterministic and depend only on `(rx ry rz)`. The target column in table 8.19 explains how the major axis direction maps to the two-dimensional image of a particular cube map target.
+Using the `sc`, `tc`, and `ma` determined by the major axis direction as specified in table 8.19, an updated `(s t)`
+is calculated as follows: 
+>
+>     s = 1/2 * (s_c / |m_a| + 1)
+>     t = 1/2 * (t_c / |m_a| + 1)
+>
+>
+>     Major Axis Direction|        Target             |sc |tc |ma |
+>     --------------------+---------------------------+---+---+---+
+>            +rx          |TEXTURE_CUBE_MAP_POSITIVE_X|−rz|−ry| rx|
+>            −rx          |TEXTURE_CUBE_MAP_NEGATIVE_X| rz|−ry| rx|
+>            +ry          |TEXTURE_CUBE_MAP_POSITIVE_Y| rx| rz| ry|
+>            −ry          |TEXTURE_CUBE_MAP_NEGATIVE_Y| rx|−rz| ry|
+>            +rz          |TEXTURE_CUBE_MAP_POSITIVE_Z| rx|−ry| rz|
+>            −rz          |TEXTURE_CUBE_MAP_NEGATIVE_Z|−rx|−ry| rz|
+>     --------------------+---------------------------+---+---+---+
+
+`sc` cooresponds the u coordiante and `tc` to the `v` cooridnate. So `tc` has to be in the direction of the view space up vector 
+
+---
+
+Look at the first row of the table:
+
+>     +rx | TEXTURE_CUBE_MAP_POSITIVE_X | −rz | −ry | rx
+
+This means, for the X+ side (right side) of the cube map, the directions which correspond to the tangent and binormal are 
+
+```
+sc = (0, 0, -1)
+tc = (0, -1, 0)
+``` 
+
+This perfectly matches the 1st row of the table `glm::mat4 captureViews[]`:
+
+>     glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f))
+
+because the major direction is given by the line of sight, which is the directon form the eye position to the target (`los = target - eye`) and so (1, 0, 0).  
+The up vector (or  `ts`) is (0, -1, 0).  
+`sc` is given by the cross product of the line of sight and the up vector (0, 0, -1).
+
 ---
 
 ## Texture read
