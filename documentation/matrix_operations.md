@@ -100,8 +100,8 @@ vec4 c3 = m44[3].xyzw;
 
 ### Column-major order
 
-See [The OpenGL Shading Language 4.6, 5.4.2 Vector and Matrix Constructors, page 101](https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.4.60.pdf)<br/>
-and [OpenGL ES Shading Language 3.20 Specification, 5.4.2 Vector and Matrix Constructors, page 100](https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.4.60.pdf):
+See [The OpenGL Shading Language 4.6, 5.4.2 Vector and Matrix Constructors](https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.4.60.pdf#page=112&zoom=100,0,918), page 108  
+and [OpenGL ES Shading Language 3.20 Specification, 5.4.2 Vector and Matrix Constructors, page 110](https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.4.60.pdf):
 
 > To initialize a matrix by specifying vectors or scalars, the components are assigned to the matrix elements in **column-major order**.
 >
