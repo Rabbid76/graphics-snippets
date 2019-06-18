@@ -28,6 +28,7 @@
 
         float u = asin( pos.x ) / 3.1415 + 0.5;
         float v = (pos.y * v_scale) * 0.5 + 0.5; 
+        //if (abs(pos.y) * (1.0 + b) > 1.0)
         if ( v < 0.0 || v > 1.0 )
             discard;
         
@@ -48,6 +49,9 @@ html,body { margin: 0; overflow: hidden; }
 <div id="ref-link">
 <a href="https://stackoverflow.com/questions/53943867/how-to-project-top-and-bottom-area-of-opengl-control/53947821#comment94752319_53947821">
 How to project top and bottom area of openGL control
+</a><br/>
+<a href="https://stackoverflow.com/questions/56643876/how-to-cut-hide-projected-area-from-bottom-and-top-of-glcontrol-opentk">
+How to cut/hide projected area from bottom and top of GLControl - openTK
 </a>
 </div>
 </body>
