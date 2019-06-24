@@ -447,6 +447,25 @@ def Multiply(matA, matB):
     return matC
 ```
 
+```py
+def m3dMultiply(A, B):
+    C = (GLfloat * 16)(*identityMatrix)
+    for k in range(0, 4):
+        for j in range(0, 4):
+            C[k*4+j] = A[0*4+j] * B[k*4+0] + A[1*4+j] * B[k*4+1] + \
+                       A[2*4+j] * B[k*4+2] + A[3*4+j] * B[k*4+3]
+    return C
+```
+
+```py
+def m3dMultiply(A, B):
+    C = (GLfloat * 16)(*identityMatrix)
+    for k in range(0, 4):
+        for j in range(0, 4):
+            C[k*4+j] = sum([A[i*4+j] * B[k*4+i] for i in range(0, 4)])
+    return C
+```
+
 **A concatenation of 2 matrices (matrix multiplication) is not commutative:**<br/>
 e.g. multiplication of a translation matrix and a rotation matrix around the Y-axis
 
