@@ -156,7 +156,7 @@ On the viewport the X-axis points to the left, the Y-axis up and the Z-axis out 
 
 The code below defines a matrix that exactly encapsulates the steps necessary to calculate a look at the scene:
 
-- Converting model coordinates into viewport coordinates.
+- Converting model coordinates into view system coordinates.
 - Rotation, to look in the direction of the view.
 - Movement to the eye position.
 
