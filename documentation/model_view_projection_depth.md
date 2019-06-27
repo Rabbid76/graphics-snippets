@@ -97,7 +97,7 @@ e.g.:
 ### View space (Eye coordinates)
 
 The view space is the local system which is defined by the point of view onto the scene.
-The position of the view, the line of sight and the upwards direction of the view, define a coordinate system relative to the world coordinate system. The objects of a scene have to be drawn in relation to the view coordinate system, to be "seen" from the viewing position. The inverse matrix of the view coordinate system is named the **view matrix**.  
+The position of the view, the line of sight and the upwards direction of the view, define a coordinate system relative to the world coordinate system. The objects of a scene have to be drawn in relation to the view coordinate system, to be "seen" from the viewing position. The inverse matrix of the view coordinate system is named the **view matrix**. This matrix transforms from world coordinates to view coordinates.  
 In general world coordinates and view coordinates are [Cartesian coordinates](https://en.wikipedia.org/wiki/Cartesian_coordinate_system)
 
 #### View matrix
@@ -193,6 +193,61 @@ TMat44 Camera::LookAt( const TVec3 &pos, const TVec3 &target, const TVec3 &up )
 
     return v;
 }
+```
+
+[Euclidean length](https://en.wikipedia.org/wiki/Euclidean_distance) of a vector:
+
+```py
+def length(v):
+    return math.sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2])
+```  
+
+[Unit vector](https://en.wikipedia.org/wiki/Unit_vector):
+
+```py
+def normalize(v):
+    l = length(v)
+    return [v[0]/l, v[1]/l, v[2]/l]
+``` 
+
+[Dot product](https://en.wikipedia.org/wiki/Dot_product):
+
+```py
+def dot(v0, v1):
+    return v0[0]*v1[0]+v0[1]*v1[1]+v0[2]*v1[2]
+```
+
+[Cross product](https://en.wikipedia.org/wiki/Cross_product):
+
+```py
+def cross(v0, v1):
+    return [
+        v0[1]*v1[2]-v1[1]*v0[2],
+        v0[2]*v1[0]-v1[2]*v0[0],
+        v0[0]*v1[1]-v1[0]*v0[1]]
+
+```
+
+The following code does the same as [`gluLookAt`](https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/gluLookAt.xml) or [`glm::lookAt`](https://glm.g-truc.net/0.9.9/api/a00668.html#gaa64aa951a0e99136bba9008d2b59c78e) does:
+
+The parameter `eye` is the point of view, `target` is the point which is looked at and `up` is the upwards direction.
+
+```py
+def m3dLookAt(eye, center, up):
+    mz = normalize( (eye[0]-target[0], eye[1]-target[1], eye[2]-target[2]) ) # inverse line of sight
+    mx = normalize( cross( up, mz ) )
+    my = normalize( cross( mz, mx ) )
+    tx =  dot( mx, eye )
+    ty =  dot( my, eye )
+    tz = -dot( mz, eye )   
+    return np.array([mx[0], my[0], mz[0], 0, mx[1], my[1], mz[1], 0, mx[2], my[2], mz[2], 0, tx, ty, tz, 1])
+```
+
+Use it like this:
+
+```py
+view_position = [0, 0, 20]
+view_matrix = m3dLookAt(view_position, [0, 0, 0], [0, 1, 0])
 ```
 
 ---
