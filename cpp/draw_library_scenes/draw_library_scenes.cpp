@@ -43,6 +43,7 @@ enum class TScene
 
     // transformation
     e_text_rotate,
+    e_pivot,
 
     // intersection
     e_isect_line_line,
@@ -173,6 +174,7 @@ private:
     void TestScene_2( double time_ms );
     void TestScene_Perspecitve( double time_ms );
     void TextRotate( double time_ms );
+    void PivotRotate( double time_ms );
     void IsectLineLine( double time_ms );
     void IsectLinePlane( double time_ms );
     void IsectPlaneCone( double time_ms );
@@ -445,6 +447,7 @@ TScene CWindow_Glfw::SelectScene( void )
         { (int)TScene::e_test_2,                 "Test 2" },
         { (int)TScene::e_test_perspective,       "Perspective test" },
         { (int)TScene::e_text_rotate,            "Rotate text" },
+        { (int)TScene::e_pivot,                  "pivot" },
         { (int)TScene::e_isect_line_line,        "Intersect line line" },
         { (int)TScene::e_isect_line_plane,       "Intersect line plane" },
         { (int)TScene::e_isect_plane_cone,       "Intersect plane cone" },
@@ -523,6 +526,7 @@ void CWindow_Glfw::Render( double time_ms )
     case TScene::e_test_2:                 TestScene_2( time_ms ); break;
     case TScene::e_test_perspective:       TestScene_Perspecitve( time_ms ); break;
     case TScene::e_text_rotate:            TextRotate( time_ms ); break;
+    case TScene::e_pivot:                  PivotRotate( time_ms ); break;
     case TScene::e_isect_line_line:        IsectLineLine( time_ms ); break;
     case TScene::e_isect_line_plane:       IsectLinePlane( time_ms ); break;
     case TScene::e_isect_plane_cone:       IsectPlaneCone( time_ms ); break;
@@ -721,6 +725,65 @@ void CWindow_Glfw::TestScene_Perspecitve( double time_ms )
 
   //_draw->ActivateOpaque();
   //_draw->ClearDepth();
+}
+
+
+
+//-------------------------------------------------------------------------------------------------
+// e_text_rotate
+//-------------------------------------------------------------------------------------------------
+
+
+void CWindow_Glfw::PivotRotate( double time_ms )
+{
+    _draw->Projection( OpenGL::Camera::Orthopraphic( _scale_x, _scale_y, { -10.0f, 10.0f } ) );
+    _draw->View( Render::Identity() );
+    _draw->Model( Render::Identity() );
+
+    _draw->ActivateBackground();
+
+    Setup2DCheckered();
+
+    _draw->ActivateOpaque();
+
+    static float rect_size = 0.4f;
+
+    // pivot
+    static float p_x = -0.2f;
+    static float p_y = 0.4f;
+
+  
+    double intervall_s = 2.0;
+    int step = (int)(time_ms / intervall_s / 1000.0) % 4;
+    //step = 4;
+
+    Render::IDraw::TStyle style;
+    style._thickness = 2.0f;
+    _draw->Draw( Render::TPrimitive::lines, 2, { -0.1f, 0.0f,  0.1f, 0.0f, 0.0f, -0.1f,  0.0f, 0.1f }, Color_red(), style );
+    
+    glm::mat4 model( 1.0f );
+
+    if (step > 0)
+      _draw->DrawRectangle2D( { -rect_size, -rect_size }, { rect_size, rect_size }, 0.0f, Color_gray(), 3 );
+
+    float angle = 10.0f * (float)time_ms / 1000.0f;
+    angle = 35.0f;
+    for ( int i = 0; i < step;  ++ i )
+    {
+      if ( i == step-3 )
+        model = glm::translate( model, glm::vec3( p_x, p_y, 1.0f ) );
+      if ( i == step-2 )
+        model = glm::rotate( model, glm::radians(angle), glm::vec3( 0.0f, 0.0f, 1.0f ) );
+      if ( i == step-1  )
+        model = glm::translate( model, glm::vec3( -p_x, -p_y, 1.0f ) );     
+    }
+    
+    Render::TMat44 model_mat;
+    memcpy( &model_mat[0][0], glm::value_ptr( model ), sizeof(Render::TMat44) );
+    _draw->Model( model_mat );
+
+    _draw->DrawRectangle2D( { -rect_size, -rect_size }, { rect_size, rect_size }, 0.0f, Color_ink(), 3 );
+    _draw->Draw( Render::TPrimitive::lines, 2, { p_x-0.1f, p_y-0.1f,  p_x+0.1f, p_y+0.1f, p_x-0.1f, p_y+0.1f, p_x+0.1f, p_y-0.1f }, Color_green(), style );
 }
 
 
