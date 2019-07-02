@@ -347,19 +347,19 @@ t:    0              0              -2*f*n/(f-n)     0
 If the projection is symmetric, where the line of sight is axis of symmetry of the view frustum, then the matrix can be simplified:
 
 ```txt
-x:    1/(ta*a)  0     0              0
-y:    0         1/ta  0              0
-z:    0         0    -(f+n)/(f-n)   -1
-t:    0         0    -2*f*n/(f-n)    0
+x:    1/(t*a)  0     0              0
+y:    0        1/t   0              0
+z:    0        0    -(f+n)/(f-n)   -1
+t:    0        0    -2*f*n/(f-n)    0
 ```
 
 where:
 
 ```txt
 a = w / h
-ta = tan( fov_y / 2 );
+t = tan( fov_y / 2 );
 
-2 * n / (r-l) = 1 / (ta * a)
+2 * n / (r-l) = 1 / (t * a)
 2 * n / (t-b) = 1 / ta
 ```
 
