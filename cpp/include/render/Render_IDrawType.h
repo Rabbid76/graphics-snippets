@@ -17,7 +17,6 @@
 
 //#include <UtCString.h>
 
-
 // STL
 
 #include <cstddef>
@@ -26,6 +25,7 @@
 #include <array>
 #include <vector>
 #include <tuple>
+#include <algorithm>
 
 
 #include <string>
@@ -139,7 +139,18 @@ inline TColor8 toColor8( const TColor &col8 )
   };
 };
 
-//! mix 2 floating point colors
+//! clamp color channel2 to rang [0.0, 1.0]
+inline TColor clamColor( const TColor &col )
+{ 
+  return TColor{
+    std::max(0.0f, std::min(1.0f, col[0]) ),
+    std::max(0.0f, std::min(1.0f, col[1]) ),
+    std::max(0.0f, std::min(1.0f, col[2]) ),
+    std::max(0.0f, std::min(1.0f, col[3]) ),
+  };
+};
+
+//! mix 2 t_fping point colors
 inline TColor MixColor( const TColor &a, const TColor &b, t_fp w )
 {
   return TColor{
@@ -181,6 +192,227 @@ inline TColor8 MixColorRGB( const TColor8 &a, const TColor8 &b, t_fp w, t_byte a
     MixProperty(a[2], b[2], w),
     alpha
   };
+}
+
+
+//! dot product of RGB color
+inline t_fp DotRGB( const TColor &a, const TColor &b )
+{
+  return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
+}
+
+
+//! fractal part of a t_fping point number
+inline t_fp Frac( t_fp f )
+{
+  int i = (int)f;
+  return f - (t_fp)i;
+}
+
+
+//! HUE, HSV, HSL, HCY constants
+const t_fp Epsilon = 1e-10f;
+const TColor HCYwts = TColor{ 0.299f, 0.587f, 0.114f, 0.0 };
+const t_fp HCLgamma = 3.0f;
+const t_fp HCLy0 = 100.0f;
+const t_fp HCLmaxL = 0.530454533953517f; // == exp(HCLgamma / HCLy0) - 0.5
+const t_fp PI = 3.1415926536f;
+  
+  
+
+//! \ref secShaderCodeSnippetserHue_HUEtoRGB Converting pure hue to RGB
+inline TColor HUEtoRGB(t_fp H)
+{
+  t_fp R = fabs(H * 6.0f - 3.0f) - 1.0f;
+  t_fp G = 2.0f - fabs(H * 6.0f - 2.0f);
+  t_fp B = 2.0f - fabs(H * 6.0f - 4.0f);
+  return clamColor( TColor{ R, G, B, 1.0f } );
+}
+
+
+//! \ref secShaderCodeSnippetserHue_RGBtoHCV Converting RGB to hue/chroma/value
+inline TColor RGBtoHCV( TColor RGB )
+{
+  TColor P = (RGB[1] < RGB[2]) ? TColor{ RGB[2], RGB[1], - 1.0f, 2.0f / 3.0f } : TColor{ RGB[2], RGB[1], 0.0f, -1.0f / 3.0f };
+  TColor Q = (RGB[0] < P[0]) ? TColor{ P[0], P[1], P[3], RGB[0] } : TColor{ RGB[0], P[1], P[2], P[3] };
+  t_fp C = Q[0] - std::min(Q[3], Q[1]);
+  t_fp H = fabs((Q[3] - Q[1]) / (6.0f * C + Epsilon) + Q[2]);
+  return TColor{ H, C, Q[0], RGB[3] };
+}
+
+
+//! \ref secShaderCodeSnippetserHue_HSVtoRGB Converting HSV to RGB
+inline TColor HSVtoRGB(TColor HSV)
+{
+  TColor RGB = HUEtoRGB(HSV[0]);
+  return TColor{
+    ((RGB[0] - 1.0f) * HSV[1] + 1.0f) * HSV[2],
+    ((RGB[1] - 1.0f) * HSV[1] + 1.0f) * HSV[2],
+    ((RGB[2] - 1.0f) * HSV[1] + 1.0f) * HSV[2],
+    HSV[3]
+  };
+}
+
+
+//! \ref secShaderCodeSnippetserHue_RGBtoHSV Converting RGB to HSV
+inline TColor RGBtoHSV(TColor RGB)
+{
+  TColor HCV = RGBtoHCV(RGB);
+  t_fp S = HCV[1] / (HCV[2] + Epsilon);
+  return TColor{ HCV[0], S, HCV[2], RGB[3] };
+}
+
+
+//! \ref secShaderCodeSnippetserHue_HSLtoRGB Converting HSL to RGB
+inline TColor HSLtoRGB( TColor HSL )
+{
+  TColor RGB = HUEtoRGB(HSL[0]);
+  t_fp C = (1.0f - fabs(2.0f * HSL[2] - 1.0f)) * HSL[1];
+  return TColor{
+    (RGB[0] - 0.5f) * C * HSL[2],
+    (RGB[1] - 0.5f) * C * HSL[2],
+    (RGB[2] - 0.5f) * C * HSL[2],
+    HSL[3]
+  };
+}
+
+
+//! \ref secShaderCodeSnippetserHue_RGBtoHSL Converting RGB to HSL
+inline TColor RGBtoHSL(TColor RGB)
+{
+ TColor HCV = RGBtoHCV(RGB);
+  t_fp L = HCV[2] - HCV[1] * 0.5f;
+  t_fp S = HCV[1] / (1.0f - fabs(L * 2.0f - 1.0f) + Epsilon);
+  return TColor{ HCV[0], S, L, RGB[3] };
+}
+
+
+//! \ref secShaderCodeSnippetserHue_HCYtoRGB Converting HCY to RGB
+inline TColor HCYtoRGB(TColor HCY)
+{
+  TColor RGB = HUEtoRGB(HCY[0]);
+  t_fp Z = DotRGB(RGB, HCYwts);
+  if (HCY[2] < Z)
+  {
+    HCY[1] *= HCY[2] / Z;
+  }
+  else if (Z < 1.0f)
+  {
+    HCY[1] *= (1.0f - HCY[2]) / (1.0f - Z);
+  }
+   return TColor{
+    (RGB[0] - Z) * HCY[1] * HCY[2],
+    (RGB[1] - Z) * HCY[1] * HCY[2],
+    (RGB[2] - Z) * HCY[1] * HCY[2],
+    HCY[3]
+  };
+}
+
+
+//! \ref secShaderCodeSnippetserHue_RGBtoHCY Converting RGB to HCY
+inline TColor RGBtoHCY(TColor RGB)
+{
+  TColor HCV = RGBtoHCV(RGB);
+  t_fp Y = DotRGB(RGB, HCYwts);
+  t_fp Z = DotRGB(HUEtoRGB(HCV[0]), HCYwts);
+  if (Y < Z)
+  {
+    HCV[1] *= Z / (Epsilon + Y);
+  }
+  else
+  {
+    HCV[1] *= (1.0f - Z) / (Epsilon + 1.0f - Y);
+  }
+  return TColor{ HCV[0], HCV[1], Y, RGB[3] };
+}
+
+
+//! \ref secShaderCodeSnippetserHue_HCLtoRGB Converting HCL to RGB
+inline TColor HCLtoRGB(TColor HCL)
+{
+  TColor RGB{ 0.0f, 0.0f, 0.0f, 0.0f };
+  if (HCL[2] != 0.0)
+  {
+    t_fp H = HCL[0];
+    t_fp C = HCL[1];
+    t_fp L = HCL[2] * HCLmaxL;
+    t_fp Q = std::exp((1 - C / (2.0f * L)) * (HCLgamma / HCLy0));
+    t_fp U = (2.0f * L - C) / (2.0f * Q - 1.0f);
+    t_fp V = C / Q;
+    t_fp T = std::tan((H + std::min(Frac(2.0f * H) / 4.0f, Frac(-2.0f * H) / 8.0f)) * PI * 2.0f);
+    H *= 6.0f;
+    if (H <= 1.0f)
+    {
+      RGB[0] = 1.0f;
+      RGB[1] = T / (1.0f + T);
+    }
+    else if (H <= 2.0f)
+    {
+      RGB[0] = (1.0f + T) / T;
+      RGB[1] = 1.0f;
+    }
+    else if (H <= 3.0f)
+    {
+      RGB[1] = 1.0f;
+      RGB[2] = 1.0f + T;
+    }
+    else if (H <= 4.0f)
+    {
+      RGB[1] = 1.0f / (1.0f + T);
+      RGB[2] = 1.0f;
+    }
+    else if (H <= 5.0f)
+    {
+      RGB[0] = -1.0f / T;
+      RGB[2] = 1.0f;
+    }
+    else
+    {
+      RGB[0] = 1.0f;
+      RGB[2] = -T;
+    }
+    RGB = TColor{ RGB[0] * V + U, RGB[1] * V + U, RGB[2] * V + U, HCL[3] }; ;
+  }
+  return RGB;
+}
+
+
+//! \ref secShaderCodeSnippetserHue_RGBtoHCL Converting RGB to HCL
+inline TColor RGBtoHCL(TColor RGB)
+{
+  TColor HCL;
+  t_fp H = 0;
+  t_fp U = std::min(RGB[0], std::min(RGB[1], RGB[2]));
+  t_fp V = std::max(RGB[0], std::max(RGB[1], RGB[2]));
+  t_fp Q = HCLgamma / HCLy0;
+  HCL[1] = V - U;
+  if (HCL[1] != 0.0f)
+  {
+    H = std::atan2(RGB[1] - RGB[2], RGB[0] - RGB[1]) / PI;
+    Q *= U / V;
+  }
+  Q = std::exp(Q);
+  HCL[0] = Frac(H / 2.0f - std::min(Frac(H), Frac(-H)) / 6.0f);
+  HCL[1] *= Q;
+  HCL[2] = MixProperty(-U, V, Q) / (HCLmaxL * 2.0f);
+  HCL[3] = RGB[3];
+  return HCL;
+}
+
+
+//! Modify the color intensity (lightness)
+inline TColor ModifyColorIntensityRGB( TColor c, t_fp intensity_scale )
+{
+  Render::TColor HSL = RGBtoHSL( c );
+  HSL[3] *= intensity_scale;
+  return HSLtoRGB( HSL );
+}
+
+
+//! Modify the color intensity (lightness)
+inline TColor ModifyColorIntensityRGB( TColor8 c, t_fp intensity_scale )
+{
+  return ModifyColorIntensityRGB( toColor( c ), intensity_scale );
 }
 
 
@@ -342,10 +574,10 @@ public:
       _cache.resize( _cache.size() + std::max((size_t)_tuple_size, _min_cache_elems) );
 
     // add the vertex coordinate to the cache
-    _cache.data()[_sequence_size++] = (float)x;
-    _cache.data()[_sequence_size++] = (float)y;
+    _cache.data()[_sequence_size++] = (t_fp)x;
+    _cache.data()[_sequence_size++] = (t_fp)y;
     if ( _tuple_size >= 3 )
-      _cache.data()[_sequence_size++] = (float)z;
+      _cache.data()[_sequence_size++] = (t_fp)z;
     if ( _tuple_size == 4 )
       _cache.data()[_sequence_size++] = 1.0f;
 
@@ -359,7 +591,7 @@ public:
       _cache.resize( _cache.size() + std::max(coords_size, _min_cache_elems) );
 
     // add the vertex coordinates to the cache
-    std::memcpy( _cache.data() + _sequence_size, coords, coords_size * sizeof( float ) );
+    std::memcpy( _cache.data() + _sequence_size, coords, coords_size * sizeof( t_fp ) );
     _sequence_size += coords_size;
 
     return *this;
@@ -372,9 +604,9 @@ public:
       _cache.resize( _cache.size() + std::max(coords_size, _min_cache_elems) );
 
     // add the vertex coordinate to the cache
-    float *cache_ptr = _cache.data() + _sequence_size;
+    t_fp *cache_ptr = _cache.data() + _sequence_size;
     for ( const double *ptr = coords, *end_ptr = coords + coords_size; ptr < end_ptr; ptr ++, cache_ptr ++ )
-      *cache_ptr = (float)(*ptr);
+      *cache_ptr = (t_fp)(*ptr);
     _sequence_size += coords_size;
 
     return *this;
