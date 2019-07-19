@@ -178,14 +178,15 @@ inline float LightMaxDistance(
 * @version 1.0
 *******************************************************************************/
 inline TVec3 CalculateLightAttenuationByDistance( 
-  t_fp max_distance ) //!< I - maximum distance
+  t_fp attenuation_level, //!< I - level of the attenuation
+  t_fp max_distance )     //!< I - maximum distance
 {
   const int c_CA = 0;
   const int c_LA = 1;
   const int c_QA = 2;
   static int map_mode = c_QA;
   static std::array< float, 3 > c_att{ 0.0f, 0.0f, 0.0f };
-  
+
   std::array< float, 3 > att = c_att;
   float maxI = 1.0;
   switch ( map_mode )
@@ -199,7 +200,7 @@ inline TVec3 CalculateLightAttenuationByDistance(
 }
 
 
-//! Additional properties that specify the behavior of the
+//! Additional properties that specify the behavior of the light source
 enum class TLightProperty
 {
   enabled,                    //!< the light source is active
@@ -257,6 +258,17 @@ struct TLight
 using TLightTable = std::vector<TLight>;
 
 
+//! Additional properties that specify the behavior of the ambient source
+enum class TAmbientLightProperty
+{
+  add_to_sun,                 //!< add the ambient light to the sun light
+  add_to_global_illumination, //!< add the ambient light to the global illumination
+  // ...
+  NO_OF
+};
+using TAmbientLightProperties = std::bitset<static_cast<size_t>(TAmbientLightProperty::NO_OF)>;
+
+
 /******************************************************************//**
 * \brief   General parameters for an ambient light source.
 * 
@@ -266,7 +278,8 @@ using TLightTable = std::vector<TLight>;
 **********************************************************************/
 struct TAmbientLight
 {
-  TColor8 _color;  //!< the ambient light color
+  TColor8                 _color;      //!< the ambient light color
+  TAmbientLightProperties _properties; //!< `TLightProperty` properties 
 };
 using TAmbientLightTable = std::vector<TAmbientLight>;
 
