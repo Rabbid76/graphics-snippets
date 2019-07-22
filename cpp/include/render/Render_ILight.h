@@ -186,14 +186,20 @@ inline TVec3 CalculateLightAttenuationByDistance(
   const int c_QA = 2;
   static int map_mode = c_QA;
   static std::array< float, 3 > c_att{ 0.0f, 0.0f, 0.0f };
-
+  if (max_distance <= 0.0f)
+    return c_att;
+  
   std::array< float, 3 > att = c_att;
   float maxI = 1.0;
   switch ( map_mode )
   {
     case c_CA: att[c_CA] = LightConstantAttenuation(  maxI, att[c_LA], att[c_QA], max_distance ); break;
     case c_LA: att[c_LA] = LightLinearAttenuation(    maxI, att[c_CA], att[c_QA], max_distance ); break;
-    case c_QA: att[c_QA] = LightQuadraticAttenuation( maxI, att[c_CA], att[c_LA], max_distance ); break;
+    
+    case c_QA: 
+      att[c_LA] = (attenuation_level - 1.0f) / LigthMinThreshold() / max_distance;
+      att[c_QA] = LightQuadraticAttenuation( maxI, att[c_CA], att[c_LA], max_distance ); 
+      break;
   }
 
   return att;
@@ -246,8 +252,8 @@ struct TLight
   TColor8          _diffuse;           //!< diffuse light color; the brightness of the light is encoded to the alpha channel
   TColor8          _specular;          //!< specular light color; the brightness of the light is encoded to the alpha channel
   TPoint4          _position;          //!< position of the light source (homogeneous coordinate); can be infinite (w=0.0)
-  //t_fp             _attenuation_value; //!< a value in the range [0, 1], which represents the attenuation of a light source
-  TVec3            _attenuation;       //!< constant, linear and quadratic attenuation of the light source by its distance
+  t_fp             _attenuation_value; //!< a value in the range [0, 1], which represents the attenuation of a light source
+  TVec3            _attenuation;       //!< constant, linear and quadratic attenuation and of the light source by its distance
   t_fp             _cone_attenuation;  //!< light cone attenuation (attenuation from the center of the light cone to its borders)
   TVec3            _direction;         //!< direction of a spot light
   t_fp             _light_cone;        //!< full light cone angle of a spot light in radians [0, PI]
