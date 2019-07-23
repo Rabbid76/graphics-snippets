@@ -69,16 +69,16 @@ inline float LigthMinThreshold( void )
 * @version 1.0
 *******************************************************************************/
 inline float LightConstantAttenuation(
-  float maxI,      // I - maximum light intensity
-  float aLI,       // I - linear attenuation
-  float aQU,       // I - quadratic attenuation
-  float max_dist ) // I - maximum distance
+  float maxI,         // I - maximum light intensity
+  float minThreshold, // I - maximum light intensity
+  float aLI,          // I - linear attenuation
+  float aQU,          // I - quadratic attenuation
+  float max_dist )   // I - maximum distance
 {
   if ( max_dist <= 0.0f )
     return 0.0f;
 
-  float min_threshold = LigthMinThreshold();
-  float aCO = maxI / min_threshold - max_dist * aLI - max_dist * max_dist * aQU;
+  float aCO = maxI / minThreshold - max_dist * aLI - max_dist * max_dist * aQU;
   return aCO;
 }
 
@@ -94,16 +94,16 @@ inline float LightConstantAttenuation(
 * @version 1.0
 *******************************************************************************/
 inline float LightLinearAttenuation(
-  float maxI,      // I - maximum light intensity
-  float aCO,       // I - constant attenuation
-  float aQU,       // I - quadratic attenuation
-  float max_dist ) // I - maximum distance
+  float maxI,         // I - maximum light intensity
+  float minThreshold, // I - maximum light intensity
+  float aCO,          // I - constant attenuation
+  float aQU,          // I - quadratic attenuation
+  float max_dist )    // I - maximum distance
 {
   if ( max_dist <= 0.0f )
     return 0.0f;
 
-  float min_threshold = LigthMinThreshold();
-  float aLI = (maxI / min_threshold - aCO - max_dist * max_dist * aQU) / max_dist;
+  float aLI = (maxI / minThreshold - aCO - max_dist * max_dist * aQU) / max_dist;
   return aLI;
 }
 
@@ -119,16 +119,16 @@ inline float LightLinearAttenuation(
 * @version 1.0
 *******************************************************************************/
 inline float LightQuadraticAttenuation(
-  float maxI,      // I - maximum light intensity
-  float aCO,       // I - constant attenuation
-  float aLI,       // I - linear attenuation
-  float max_dist ) // I - maximum distance
+  float maxI,         // I - maximum light intensity
+  float minThreshold, // I - maximum light intensity
+  float aCO,          // I - constant attenuation
+  float aLI,          // I - linear attenuation
+  float max_dist )    // I - maximum distance
 {
   if ( max_dist <= 0.0f )
     return 0.0f;
 
-  float min_threshold = LigthMinThreshold();
-  float aQU = (maxI / min_threshold - aCO - max_dist * aLI) / ( max_dist * max_dist );
+  float aQU = (maxI / minThreshold - aCO - max_dist * aLI) / ( max_dist * max_dist );
   return aQU;
 }
 
@@ -191,15 +191,12 @@ inline TVec3 CalculateLightAttenuationByDistance(
   
   std::array< float, 3 > att = c_att;
   float maxI = 1.0;
+  float min_threshold = LigthMinThreshold();
   switch ( map_mode )
   {
-    case c_CA: att[c_CA] = LightConstantAttenuation(  maxI, att[c_LA], att[c_QA], max_distance ); break;
-    case c_LA: att[c_LA] = LightLinearAttenuation(    maxI, att[c_CA], att[c_QA], max_distance ); break;
-    
-    case c_QA: 
-      att[c_LA] = (attenuation_level - 1.0f) / LigthMinThreshold() / max_distance;
-      att[c_QA] = LightQuadraticAttenuation( maxI, att[c_CA], att[c_LA], max_distance ); 
-      break;
+    case c_CA: att[c_CA] = LightConstantAttenuation(  maxI, min_threshold, att[c_LA], att[c_QA], max_distance ); break;
+    case c_LA: att[c_LA] = LightLinearAttenuation(    maxI, min_threshold, att[c_CA], att[c_QA], max_distance ); break; 
+    case c_QA: att[c_QA] = LightQuadraticAttenuation( maxI, min_threshold, att[c_CA], att[c_LA], max_distance ); break;
   }
 
   return att;
@@ -252,7 +249,7 @@ struct TLight
   TColor8          _diffuse;           //!< diffuse light color; the brightness of the light is encoded to the alpha channel
   TColor8          _specular;          //!< specular light color; the brightness of the light is encoded to the alpha channel
   TPoint4          _position;          //!< position of the light source (homogeneous coordinate); can be infinite (w=0.0)
-  t_fp             _attenuation_value; //!< a value in the range [0, 1], which represents the attenuation of a light source
+  //t_fp             _attenuation_value; //!< a value in the range [0, 1], which represents the attenuation of a light source
   TVec3            _attenuation;       //!< constant, linear and quadratic attenuation and of the light source by its distance
   t_fp             _cone_attenuation;  //!< light cone attenuation (attenuation from the center of the light cone to its borders)
   TVec3            _direction;         //!< direction of a spot light
