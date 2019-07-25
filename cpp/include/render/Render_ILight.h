@@ -219,6 +219,15 @@ enum class TLightProperty
 using TLightProperties = std::bitset<static_cast<size_t>(TLightProperty::NO_OF)>;
 
 
+//! Shape of a light source
+enum class TLightShape : t_byte
+{
+  circular,    //!< perfect circular shape
+  rectangular, //!< rectangular or square shape
+  oval         //!< oval shape or rectangular shape with rounded edges
+};
+
+
 /******************************************************************//**
 * \brief   General parameters for a light source.
 * 
@@ -256,7 +265,10 @@ struct TLight
   t_fp             _light_cone;        //!< full light cone angle of a spot light in radians [0, PI]
   t_fp             _maximum_radius;    //!< the maximum influence radius for a finite light source (in meter) (except the distance is calculated automatically `auto_distance`)
   t_fp             _cut_off_weight;    //!< radius cut off weight [0.0, 1.0]; soft (= 0.0) or hard (= 1.0)
+  t_fp             _size;              //!< general size of the light source in meters
+  t_fp             _aspect;            //!< aspect ration of rectangular or oval light sources
   TLightProperties _properties;        //!< `TLightProperty` properties 
+  TLightShape      _shape;             //!< shape of the light (spot) source
 };
 using TLightTable = std::vector<TLight>;
 
