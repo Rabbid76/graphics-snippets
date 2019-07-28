@@ -1261,10 +1261,30 @@ glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
 [Trouble Texturing a cube with glDrawarrays](https://stackoverflow.com/questions/52728716/trouble-texturing-a-cube-with-gldraw-arrays/52729889#52729889)
 
-Two-dimensional texturing has to be enable, see [`glEnable`](https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glEnable.xml):
+Two-dimensional texturing has to be enabled, see [`glEnable`](https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glEnable.xml):
 
 ```cpp
 glEnable(GL_TEXTURE_2D)
+```
+
+---
+
+[Why does a texture in OpenTK not show properly? (Wrong colors/Rotated)](https://stackoverflow.com/questions/57173521/why-does-a-texture-in-opentk-not-show-properly-wrong-colors-rotated/57175419#57175419) [VB]  
+
+If texturing is enabled, then by default the color of the texel is multiplied by the current color, because by default the texture environment mode (`GL_TEXTURE_ENV_MODE`) is `GL_MODULATE`. See [`glTexEnv`](https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glTexEnv.xml).
+
+This causes that the color of the texels of the texture is "mixed" by the last color which you have set by [`glColor`](https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glColor.xml).
+
+Set a "white" color before you render the texture, to solve your issue:
+
+```
+GL.Color3(Color.White)
+```
+
+Likewise you can change the environment mode to `GL_REPLACE`, instead by [`glTexEnv`](https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glTexEnv.xml):
+
+```
+GL.TexEnv(TextureEnvTarget.TextureEnv, TextureEnvParameter.TextureEnvMode, GL_REPLACE)
 ```
 
 ---
@@ -1462,3 +1482,4 @@ The material can be used in the same manner as any other material.
   [WebGL]: https://stackoverflow.com/questions/tagged/webgl
   [three.js]: https://stackoverflow.com/questions/tagged/three.js
   [Fixed Function]: https://www.khronos.org/opengl/wiki/Fixed_Function_Pipeline
+  [VB]: https://stackoverflow.com/questions/tagged/vb.net
