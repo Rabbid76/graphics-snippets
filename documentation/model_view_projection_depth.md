@@ -40,7 +40,7 @@ In a rendering, each mesh of the scene usually is transformed by the model matri
 The projection, view and model matrix interact together to present the objects (meshes) of a scene on the viewport.
 The model matrix defines the position orientation and scale of a single object (mesh) in the world space of the scene.
 The view matrix defines the position and viewing direction of the observer (viewer) within the scene.
-The projection matrix defines the area (volume) with respect to the observer (viewer) projected onto the viewport.
+The projection matrix defines the area (volume) with respect to the observer (viewer) which is projected onto the viewport.
 
 At orthographic projection, this area (volume) is defined by 6 distances (left, right, bottom, top, near and far) to the viewer's position.
 If the left, bottom and near distance are negative and the right, top and far distance are positive (as in normalized device space), this can be imagined as box around the viewer.
