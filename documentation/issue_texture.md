@@ -288,7 +288,7 @@ Since the image has 3 color channels (because its a JPG), and is tightly packed 
 
 ---
 
-[Calculating texture coordinates from a heightmap](https://stackoverflow.com/questions/55739024/calculating-texture-coordinates-from-a-heightmap/55739265#55739265)
+[Calculating texture coordinates from a heightmap](https://stackoverflow.com/questions/55739024/calculating-texture-coordinates-from-a-heightmap/55739265#55739265), [C++]  
 
 By default OpenGL assumes that the start of each row of an image is aligned to 4 bytes.
 
@@ -309,7 +309,7 @@ Since 1170 is not divisible by 4 (`1170 / 4 = 292,5`), the start of a row is not
 
 ---
 
-[Can't load “glyp” properly for opengl using freetype2](https://stackoverflow.com/questions/56330505/cant-load-glyp-properly-for-opengl-using-freetype2/56331113#56331113)  
+[Can't load “glyp” properly for opengl using freetype2](https://stackoverflow.com/questions/56330505/cant-load-glyp-properly-for-opengl-using-freetype2/56331113#56331113), [C++]    
 
 The [`GL_UNPACK_ALIGNMENT`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml) parameter defines the alignment of the first pixel in each row (line) of an image when the image is read form the buffer. By default the this parameter is 4.  
 Each pixel of the glyph image is encoded in one byte and the image is tightly packed. So the the alignment of the glyph image is 1 and the parameter has to be changed before the image is read and the texture is specified: 
@@ -319,6 +319,46 @@ glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 ```
 
 If that is missed, this would cause a shift effect at each line of the image (except if the width of the image is divisible by 4).
+
+---
+
+[OpenGL: Greyscale texture data layout doesn't match when the dimensions aren't divisible by 4](https://stackoverflow.com/questions/57346317/opengl-greyscale-texture-data-layout-doesnt-match-when-the-dimensions-arent-d/57346464#57346464), [C++]  
+
+By default OpenGL assumes that the start of each row of an image is aligned 4 bytes.
+
+This is because the [`GL_UNPACK_ALIGNMENT`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml) parameter by default is 4.
+
+Since the image has 1 (RED) color channel, and is tightly packed the start of a row of the image is aligned to 4 bytes if `width=16`, but it is not aligned to 4 bytes if `width=15`.
+
+Change the the [`GL_UNPACK_ALIGNMENT`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml) parameter to 1, before specifying the two-dimensional texture image (`glTexImage2D`):
+
+```cpp
+glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, width, 
+             0, GL_RED, GL_UNSIGNED_BYTE, localBuffer);
+```
+
+Since that is missed, this cause a shift effect at each line of the image, except if the width of the image is divisible by 4.  
+When the format of the image is changed to `GL_RGBA`, the the size of single pixel is 4, so the size of a line (in bytes) is divisible by 4 in any case.
+
+---
+
+[How to glReadPixels properly to write the data into QImage in Linux](https://stackoverflow.com/questions/57366251/how-to-glreadpixels-properly-to-write-the-data-into-qimage-in-linux/57368417#57368417)  
+
+By default, the start of each row of an image is assumed to be aligned to 4 bytes. This is because the `GL_PACK_ALIGNMENT` respectively `GL_UNPACK_ALIGNMENT` parameter is by default 4, see [`glPixelStore`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml).  
+When a framebuffer is read by [`glReadPixels`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glReadPixels.xhtml) the `GL_PACK_ALIGNMENT` parameter is considered. 
+
+If you want to read the image in a tightly packed memory, with not alignment at the start of each line, then you've to change the `GL_PACK_ALIGNMENT` parameter to 1, before reading the color plane of the framebuffer:
+
+```cpp
+glPixelStorei(GL_PACK_ALIGNMENT, 1);
+
+glReadPixels(0,0,unchangable_w, unchangable_h, GL_RED, GL_UNSIGNED_BYTE, tga.rpic);
+glReadPixels(0,0,unchangable_w, unchangable_h, GL_GREEN, GL_UNSIGNED_BYTE, tga.gpic);
+glReadPixels(0,0,unchangable_w, unchangable_h, GL_BLUE, GL_UNSIGNED_BYTE, tga.bpic); 
+``` 
+
+If that is missed, this cause a shift effect at each line of the image, except if the length of a line of the image in bytes is divisible by 4.
 
 ---
 
