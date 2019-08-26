@@ -1023,6 +1023,96 @@ FragColor = Color * vec4(1.0);
 
 ---
 
+[OpenGL: Some clarification on using multiple textures or texture units](https://stackoverflow.com/questions/57621863/opengl-some-clarification-on-using-multiple-textures-or-texture-units/57622525#57622525), [C++]  
+
+If you want to use multiple 2 dimensional textures in one shader program, then you've to bind the different texture objects to different texture units.  
+It is not necessary that the proper texture unit is selected ([`glActiveTexture`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glActiveTexture.xhtml)) when the   texture name (value) is generated ([`glGenTextures`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGenTextures.xhtml)) or when the texture image is specified ([`glTexImage2D`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexImage2D.xhtml)), but the texture has to be bound to the proper texture unit before the object (mesh) is drawn by the use of the shader program.
+
+The binding between the texture sampler uniform in the shader program and the texture object is achieved, by binding the texture to a texture unit and setting the number of the texture unit to uniform variable.
+
+The value of the uniform can either be set by [`glUniform1i`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glUniform.xhtml)
+
+```cpp
+texUniformID[0] = glGetUniformLocation(myShaderProgram, "tex1");
+texUniformID[1] = glGetUniformLocation(myShaderProgram, "tex2");
+glUniform1i(texUniformID[0], 0);
+glUniform1i(texUniformID[1], 1);
+```   
+
+or in-shader by a [Binding point](https://www.khronos.org/opengl/wiki/Layout_Qualifier_(GLSL)#Binding_points) layout qualifier:
+
+```glsl
+layout(binding = 0) uniform sampler2D tex1;
+```
+
+```glsl
+layout(binding = 1) uniform sampler2D tex2;
+``` 
+
+Since the binding points are 0 and 1, the texture objects have to be bound to the texture units 0 (`GL_TEXTURE0 `) and 1 (`GL_TEXTURE1`), before drawing the geometry with the shader program:
+
+```cpp
+glActiveTexture(GL_TEXTURE0);
+glBindTexture(GL_TEXTURE_2D, texName[0]);
+glActiveTexture(GL_TEXTURE1);
+glBindTexture(GL_TEXTURE_2D, texName[1]);
+
+glDrawElements(...);
+```
+
+But it is not necessary to select the texture unit 0 respectively 1, when the texture is "created":
+
+```cpp
+glGenTextures(2, texName);
+
+// Initialize first texture
+glBindTexture(GL_TEXTURE_2D, texName[0]);
+glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, xDim0, yDim0, 0, GL_RED, GL_FLOAT, data1);
+
+// Initialize second texture
+glBindTexture(GL_TEXTURE_2D, texName[1]);
+glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, xDim1, yDim1, 0, GL_RGB, GL_FLOAT, data2);
+```
+
+Of course you can select a texture unit before creating the textures, then it is superfluous to bind them later. But note, `glGenTextures` doesn't create a texture object, it just reserves names (values) which can be used for texture objects. The texture is created when the name (value) the first time is bound to a texturing target by [`glBindTexture`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glBindTexture.xhtml). This means `glBindTexture` creates a texture if it doesn't exist or it use the existing texture. [`glTexImage2D`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexImage2D.xhtml) specifies, creates and initialize the image of the existing texture object which is bound to the specified target of the current texture unit:
+
+```cpp
+glGenTextures(2, texName);
+
+// Initialize first texture
+glActiveTexture(GL_TEXTURE0);
+glBindTexture(GL_TEXTURE_2D, texName[0]);
+glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, xDim0, yDim0, 0, GL_RED, GL_FLOAT, data1);
+
+// Initialize second texture
+glActiveTexture(GL_TEXTURE1);
+glBindTexture(GL_TEXTURE_2D, texName[1]);
+glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, xDim1, yDim1, 0, GL_RGB, GL_FLOAT, data2);
+```
+
+---
+
+[`glTexSubImage2D`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexSubImage2D.xhtml) updates the content of a texture image of the texture object which is currently bound to the specified target of the current texture unit. All you've to do is to bind the texture object. 
+
+```cpp
+glBindTexture(GL_TEXTURE_2D, texName[0]);
+glTexSubImage2D(GL_TEXTURE_2D, ...);
+``` 
+
+But note that `glBindTexture` binds the texture to the currently selected texture unit, so it may mess up your combinations of texture objects and texture units, if the "wrong" texture unit is currently selected (The current texture unit is a global state). So it may make sense to select the proper texture unit. If the texture object is still bound to the texture unit, it is unnecessary to bind it agian:
+
+```cpp
+glActiveTexture(GL_TEXTURE0);
+glBindTexture(GL_TEXTURE_2D, texName[0]); // <-- this is possibly unnecessary
+glTexSubImage2D(GL_TEXTURE_2D, ...);
+``` 
+
+---
+
+Of course different shader programs can use the same binding points. But note that the number of texture units is limited. If you've a lot of textures it is not possible to bind each texture object to a different texture unit. But, if you've 2 texture objects and different shader programs it is handy to bind the 2 texture objects to different texture inits and to (re)use the same binding points in each shader program.  
+
+---
+
 ## Texture Coordinates
 
 [OpenGL 4.6 API core profile specification; 8.5. TEXTURE IMAGE SPECIFICATION; page 214](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf)
@@ -1063,11 +1153,10 @@ If you don`t do so, a transition from the last point on the circumference to the
 
 [OpenGL cubemap face order & sampling issue](https://stackoverflow.com/questions/55558241/opengl-cubemap-face-order-sampling-issue/55558841#55558841), [C++]  
 
-[OpenGL 4.6 API Core Profile Specification, 8.13 Cube Map Texture Selection, page 253](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf)  
+[OpenGL 4.6 API Core Profile Specification, 8.13 Cube Map Texture Selection, page 253](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf#page=275&zoom=100,0,614)  
 [OpenGL ES 3.2 Specification, 8.13 Cube Map Texture Selection, page 193](https://www.khronos.org/registry/OpenGL/specs/es/3.2/es_spec_3.2.pdf)  
 
->When a cube map texture is sampled, the $(s \; t \; r)$ texture coordinates are treated
-as a direction vector $(r_x \; r_y \; r_z)$ emanating from the center of a cube. The $q$ coordinate is ignored. At texture application time, the interpolated per-fragment direction vector selects one of the cube map face’s two-dimensional images based on the largest magnitude coordinate direction (the major axis direction). If two or more coordinates have the identical magnitude, the implementation may define the rule to disambiguate this situation. The rule must be deterministic and depend only on $(r_x \; r_y \; r_z)$. The target column in table 8.19 explains how the major axis direction maps to the two-dimensional image of a particular cube map target.
+>When a cube map texture is sampled, the $(s \; t \; r)$ texture coordinates are treated as a direction vector $(r_x \; r_y \; r_z)$ emanating from the center of a cube. The $q$ coordinate is ignored. At texture application time, the interpolated per-fragment direction vector selects one of the cube map face’s two-dimensional images based on the largest magnitude coordinate direction (the major axis direction). If two or more coordinates have the identical magnitude, the implementation may define the rule to disambiguate this situation. The rule must be deterministic and depend only on $(r_x \; r_y \; r_z)$. The target column in table 8.19 explains how the major axis direction maps to the two-dimensional image of a particular cube map target.
 Using the $s_c$, $t_c$, and $m_a$ determined by the major axis direction as specified in table 8.19, an updated $(s \; t)$
 is calculated as follows: 
 >
@@ -1125,10 +1214,9 @@ This means that scaling the texture coordinate does **not** cause different resu
 
 When a cubemap texture is used, then a 3 dimensional direction vector has to be transformed, to 2 dimensional texture coordinate relative to one side of the map.
 
-The relevant part of the specification for this transformtion is [OpenGL 4.6 API Core Profile Specification, 8.13 Cube Map Texture Selection](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf), page 253:
+The relevant part of the specification for this transformtion is [OpenGL 4.6 API Core Profile Specification, 8.13 Cube Map Texture Selection](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf#page=275&zoom=100,0,614), page 253:
 
-> When a cube map texture is sampled, the `(s t r)` texture coordinates are treated
-as a direction vector `(rx ry rz)` emanating from the center of a cube. The `q` coordinate is ignored. At texture application time, the interpolated per-fragment direction vector selects one of the cube map face’s two-dimensional images based on the largest magnitude coordinate direction (the major axis direction). If two or more coordinates have the identical magnitude, the implementation may define the rule to disambiguate this situation. The rule must be deterministic and depend only on `(rx ry rz)`. The target column in table 8.19 explains how the major axis direction maps to the two-dimensional image of a particular cube map target.
+> When a cube map texture is sampled, the `(s t r)` texture coordinates are treated as a direction vector `(rx ry rz)` emanating from the center of a cube. The `q` coordinate is ignored. At texture application time, the interpolated per-fragment direction vector selects one of the cube map face’s two-dimensional images based on the largest magnitude coordinate direction (the major axis direction). If two or more coordinates have the identical magnitude, the implementation may define the rule to disambiguate this situation. The rule must be deterministic and depend only on `(rx ry rz)`. The target column in table 8.19 explains how the major axis direction maps to the two-dimensional image of a particular cube map target.
 Using the `sc`, `tc`, and `ma` determined by the major axis direction as specified in table 8.19, an updated `(s t)`
 is calculated as follows: 
 >
