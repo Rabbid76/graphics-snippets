@@ -36,7 +36,7 @@ will actually be accessed when the executable code is executed. In cases where t
 considered active.
 
 See [OpenGL 4.6 Core Profile Specification - 7.3.1 Program Interfaces](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf#page=124&zoom=100,0,173), page 102:
-See [OpenGL ES 3.2 Specification - 7.3.1 Program Interfaces](https://www.khronos.org/registry/OpenGL/specs/es/3.2/es_spec_3.2.pdf), page 79:
+See [OpenGL ES 3.2 Specification - 7.3.1 Program Interfaces](https://www.khronos.org/registry/OpenGL/specs/es/3.2/es_spec_3.2.pdf#page=97&zoom=100,0,173), page 79:
 
 > 7.3.1 Program Interfaces
 >
