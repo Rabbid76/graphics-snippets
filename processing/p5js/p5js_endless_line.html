@@ -1,0 +1,105 @@
+<html>
+<head>
+<meta charset='UTF-8'>
+<title>processing p5.js example</title>
+<style>
+body { margin: 0; overflow: hidden; }
+#ref-div { position: absolute; top: 0; left: 0; }
+#ref-link { color: #4040d0; }
+</style>
+</head>
+<body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.9.0/p5.js"></script>
+<div id="ref-div" >
+<a id="ref-link" href="https://p5js.org/reference/#/p5.Vector">
+p5.Vector
+</a><br/>
+<a id="ref-link" href="https://stackoverflow.com/questions/57126779/p5-js-how-do-i-let-a-line-go-endless-in-both-directions">
+p5.js How do I let a Line go endless in both directions
+</a>
+</div>
+
+<div id="p5js_canvas"></div>
+
+<script>
+var sketch = function( p ) {
+
+p.setup = function() {
+    let sketchCanvas = p.createCanvas(p.windowWidth, p.windowHeight);
+    sketchCanvas.parent('p5js_canvas')
+}
+
+let points = [];
+let move = []
+
+p.endlessLine = function(x1, y1, x2, y2) {
+
+    p1 = new p5.Vector(x1, y1);
+    p2 = new p5.Vector(x2, y2);
+
+    let dia_len = new p5.Vector(p.windowWidth, p.windowHeight).mag();
+    let dir_v = p5.Vector.sub(p2, p1).setMag(dia_len);
+    let lp1 = p5.Vector.add(p1, dir_v);
+    let lp2 = p5.Vector.sub(p1, dir_v);
+
+    p.line(lp1.x, lp1.y, lp2.x, lp2.y);
+}
+
+p.draw = function() {
+        
+    if (points.length == 0) {
+
+        points = [];
+        move = [];
+        for (let i=0; i < 2; ++i ) {
+            points.push( new p5.Vector(p.random(p.windowWidth-20)+10, p.random(p.windowHeight-20)+10));
+            move.push( new p5.Vector(p.random(2)-1, p.random(2)-1) );
+        }
+    }
+    else
+    {
+        for (let i=0; i < 2; ++i ) {
+            points[i] = points[i].add(move[i]);
+            if (points[i].x < 10 || points[i].x > p.windowWidth-10)
+                move[i].x *= -1; 
+            if (points[i].y < 10 || points[i].y > p.windowHeight-10)
+                move[i].y *= -1;    
+            move[i].x = Math.max(-1, Math.min(1, move[i].x+p.random(0.2)-0.1))
+            move[i].y = Math.max(-1, Math.min(1, move[i].y+p.random(0.2)-0.1))
+        }
+    }
+
+    // draw the scene
+
+    p.background(192);
+    
+    p.stroke(0, 0, 255);
+    p.fill(128, 128, 255);
+    for (let i=0; i < points.length; ++i ) {
+        p.ellipse(points[i].x, points[i].y, 10, 10);
+    }
+
+    p.stroke(0, 255, 0);
+    p.fill(128, 255, 128, 128);
+    p.endlessLine(points[0].x, points[0].y, points[1].x, points[1].y)
+}
+
+p.windowResized = function() {
+    p.resizeCanvas(p.windowWidth, p.windowHeight);
+    points = [];
+}
+
+p.mouseClicked = function() {
+    points = [];
+}
+
+p.keyPressed = function() {
+    points = []
+}
+
+};
+
+var endless_line = new p5(sketch);
+</script>
+</body>
+</html>

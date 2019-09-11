@@ -122,8 +122,6 @@
 
 ### StackOverflow examples - three.js
 
-[Background scene](https://rabbid76.github.io/graphics-snippets/html/stackoverrflow_threejs/background_scene.html)
-
 [BSP geometry - subtract](https://rabbid76.github.io/graphics-snippets/html/stackoverrflow_threejs/geometry_bsp_subtrac.html)
 
 [Logarithmic depth buffer (cube)](https://rabbid76.github.io/graphics-snippets/html/stackoverrflow_threejs/logarithmic_depth_cube.html)
@@ -157,6 +155,10 @@
 ### [p5.js](https://p5js.org/)
 
 [![](processing/p5js/image/circle_3_points.png) Circle by 3 points - p5.js](https://rabbid76.github.io/graphics-snippets/processing/p5js/p5js_circle_3_points.html)
+
+[![](processing/p5js/image/endless_line.png) Circle by 3 points - p5.js](https://rabbid76.github.io/graphics-snippets/processing/p5js/p5js_endless_line.html)
+
+[![](processing/p5js/image/circle_line_intersection.png) Circle by 3 points - p5.js](https://rabbid76.github.io/graphics-snippets/processing/p5js/p5js_circle_line_intersection.html)
 
 ### [p5.js](https://p5js.org/) StackOverflow examples
 

@@ -1,0 +1,164 @@
+<html>
+<head>
+<meta charset='UTF-8'>
+<title>processing p5.js example</title>
+<style>
+body { margin: 0; overflow: hidden; }
+#ref-div { position: absolute; top: 0; left: 0; }
+#ref-link { color: #4040d0; }
+</style>
+</head>
+<body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.9.0/p5.js"></script>
+<div id="ref-div" >
+<a id="ref-link" href="https://p5js.org/reference/#/p5.Vector">
+p5.Vector
+</a><br/>
+<a id="ref-link" href="https://stackoverflow.com/questions/57891494/how-to-calculate-intersection-point-of-a-line-on-a-circle-using-p5-js">
+How to calculate intersection point of a line on a circle using p5.js
+</a>
+</div>
+
+<div id="p5js_canvas"></div>
+
+<script>
+var sketch = function( p ) {
+
+p.setup = function() {
+    let sketchCanvas = p.createCanvas(p.windowWidth, p.windowHeight);
+    sketchCanvas.parent('p5js_canvas')
+}
+
+let points = [];
+let move = []
+
+// Circle-Line Intersection
+// http://mathworld.wolfram.com/Circle-LineIntersection.html
+p.intersectLineCircle = function(p1, p2, cpt, r) {
+
+    let sign = function(x) { return x < 0.0 ? -1 : 1; };
+
+    let x1 = p1.copy().sub(cpt);
+    let x2 = p2.copy().sub(cpt);
+
+    let dv = x2.copy().sub(x1)
+    let dr = dv.mag();
+    let D = x1.x*x2.y - x2.x*x1.y;
+
+    // evaluate if there is an intersection
+    let di = r*r*dr*dr - D*D;
+    if (di < 0.0)
+        return [];
+   
+    let t = p.sqrt(di);
+
+    ip = [];
+    ip.push( new p5.Vector(D*dv.y + sign(dv.y)*dv.x * t, -D*dv.x + p.abs(dv.y) * t).div(dr*dr).add(cpt) );
+    if (di > 0.0) {
+        ip.push( new p5.Vector(D*dv.y - sign(dv.y)*dv.x * t, -D*dv.x - p.abs(dv.y) * t).div(dr*dr).add(cpt) ); 
+    }
+    return ip;
+}
+
+p.inBetween = function(p1, p2, px) {
+
+    let v = p2.copy().sub(p1);
+    let d = v.mag();
+    v = v.normalize();
+
+    let vx = px.copy().sub(p1);
+    let dx = v.dot(vx);
+    
+    return dx >= 0 && dx <= d;
+}
+
+p.endlessLine = function(x1, y1, x2, y2) {
+
+    p1 = new p5.Vector(x1, y1);
+    p2 = new p5.Vector(x2, y2);
+
+    let dia_len = new p5.Vector(p.windowWidth, p.windowHeight).mag();
+    let dir_v = p5.Vector.sub(p2, p1).setMag(dia_len);
+    let lp1 = p5.Vector.add(p1, dir_v);
+    let lp2 = p5.Vector.sub(p1, dir_v);
+
+    p.line(lp1.x, lp1.y, lp2.x, lp2.y);
+}
+
+p.draw = function() {
+        
+    if (points.length == 0) {
+
+        points = [];
+        move = [];
+        for (let i=0; i < 2; ++i ) {
+            points.push( new p5.Vector(p.random(p.windowWidth-20)+10, p.random(p.windowHeight-20)+10));
+            move.push( new p5.Vector(p.random(2)-1, p.random(2)-1) );
+        }
+        points.push( new p5.Vector(p.mouseX, p.mouseY));
+    }
+    else
+    {
+        for (let i=0; i < 2; ++i ) {
+            points[i] = points[i].add(move[i]);
+            if (points[i].x < 10 || points[i].x > p.windowWidth-10)
+                move[i].x *= -1; 
+            if (points[i].y < 10 || points[i].y > p.windowHeight-10)
+                move[i].y *= -1;    
+            move[i].x = Math.max(-1, Math.min(1, move[i].x+p.random(0.2)-0.1))
+            move[i].y = Math.max(-1, Math.min(1, move[i].y+p.random(0.2)-0.1))
+        }
+        points[2].x = p.mouseX;
+        points[2].y = p.mouseY;
+    }
+    let circle_diameter = p.min(p.windowWidth, p.windowHeight) / 2.0;
+
+    let isectP = p.intersectLineCircle(...points, circle_diameter/2.0);
+
+    // draw the scene
+
+    p.background(192);
+    
+    p.stroke(0, 0, 255);
+    p.fill(128, 128, 255);
+    for (let i=0; i < points.length; ++i ) {
+        p.ellipse(points[i].x, points[i].y, 10, 10);
+    }
+
+    for (let i=0; i < isectP.length; ++i ) {
+        if (p.inBetween(points[0], points[1], isectP[i])) {
+            p.stroke(255, 0, 0);
+            p.fill(255, 128, 0);
+        } else {
+            p.stroke(255, 128, 0);
+            p.fill(255, 255, 0);
+        }
+
+        p.ellipse(isectP[i].x, isectP[i].y, 10, 10);
+    }
+
+    p.stroke(0, 255, 0);
+    p.noFill();
+    p.endlessLine(points[0].x, points[0].y, points[1].x, points[1].y)
+    p.ellipse(points[2].x, points[2].y, circle_diameter, circle_diameter);
+}
+
+p.windowResized = function() {
+    p.resizeCanvas(p.windowWidth, p.windowHeight);
+    points = [];
+}
+
+p.mouseClicked = function() {
+    points = [];
+}
+
+p.keyPressed = function() {
+    points = []
+}
+
+};
+
+var circle_line = new p5(sketch);
+</script>
+</body>
+</html>
