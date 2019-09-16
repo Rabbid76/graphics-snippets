@@ -12,7 +12,7 @@
   - [Texture alignment (GL_UNPACK_ALIGNMENT, GL_PACK_ALIGNMENT)](#texture-alignment-gl_unpack_alignment-gl_pack_alignment)
   - [Internal texture format](#internal-texture-format)
   - [Texture Filter and Texture Wrapping](#texture-filter-and-texture-wrapping)
-- [GLSL ES 1.00](#glsl-es-100)
+- [GLSL](#glsl)
   - [Texture format and texture swizzle](#texture-format-and-texture-swizzle)
   - [Texture unit and texture binding](#texture-unit-and-texture-binding)
   - [Texture Coordinates](#texture-coordinates)
@@ -410,12 +410,55 @@ gl2.glTexImage3D(GL2.GL_TEXTURE_3D, 0, GL2.GL_R16F, nCols, nRows, nSlices, 0, GL
 
 ---
 
-# GLSL ES 1.00
+# GLSL
+
+[GLSL 4.60 Specification - 4.1.7. Opaque Types
+ (page 34)](https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.4.60.pdf#page=27&zoom=100,0,397)
+
+> Texture-combined sampler types are opaque types, declared and behaving as described above for opaque types. When aggregated into arrays within a shader, they can only be indexed with a dynamically uniform integral expression, otherwise results are undefined. [...]
+
+In later version, the index to an array of samplers has to be "dynamically uniform". This means the index has to be the "same" for all fragments (e.g. a constant or a uniform variable).
+
+[GLSL ES 3.20 Specification - 4.1.11. Opaque Types (page 32)](https://www.khronos.org/registry/OpenGL/specs/es/3.2/GLSL_ES_Specification_3.20.pdf)  
+
+> When aggregated into arrays within a shader, opaque types can only be indexed with a dynamically uniform integral expression. [...]
+
+[Core Language (GLSL) - Dynamically uniform expression](https://www.khronos.org/opengl/wiki/Core_Language_(GLSL)#Dynamically_uniform_expression)
 
 [OpenGL ES 1.1 Full Specification - 6 Texture Accesses; page 110](https://www.khronos.org/registry/OpenGL/specs/es/2.0/GLSL_ES_Specification_1.00.pdf):
 
 > Accessing mip-mapped textures within the body of a non-uniform conditional block gives an undefined value. A non-uniform conditional block is a block whose execution cannot be determined at compile time.
 
+---
+
+[In a fragment shader, why can't I use a flat input integer to index a uniform array of sampler2D?](https://stackoverflow.com/questions/54388274/in-a-fragment-shader-why-cant-i-use-a-flat-input-integer-to-index-a-uniform-ar/54388460#54388460)  
+
+> [...] but can't use it to index an array of samplers as expected because compiler sees it as "non-constant" [...]
+
+In GLSL up to version 3.30 respectively GLSL ES up to version 3.00, the index of an array of texture samplers has to be a constant expression:
+
+[GLSL 3.30 Specification - 4.1.7 Samplers (page 21)](https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.3.30.pdf)  
+[GLSL ES 3.00 Specification - 4.1.7.1 Samplers (page 29)](https://www.khronos.org/registry/OpenGL/specs/es/3.0/GLSL_ES_Specification_3.00.pdf):
+
+> Samplers aggregated into arrays within a shader (using square brackets [ ]) can only be indexed with integral constant expressions [...]
+
+[GLSL 4.60 Specification - 4.1.7. Opaque Types
+ (page 33)](https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.4.60.pdf)    
+
+> Texture-combined sampler types are opaque types, declared and behaving as described above for opaque types. When aggregated into arrays within a shader, they can only be indexed with a dynamically uniform integral expression, otherwise results are undefined. [...]
+
+In later version, the index to an array of samplers has to be "dynamically uniform". This means the index has to be the "same" for all fragments (e.g. a constant or a uniform variable).
+
+[GLSL ES 3.20 Specification - 4.1.11. Opaque Types (page 32)](https://www.khronos.org/registry/OpenGL/specs/es/3.2/GLSL_ES_Specification_3.20.pdf)  
+
+> When aggregated into arrays within a shader, opaque types can only be indexed with a dynamically uniform integral expression. [...]
+
+> [...] Sampler types (e.g. **sampler2D**) are opaque types [...]
+
+[GLSL 4.60 Specification - 3.8.2. Dynamically Uniform Expressions (page 20)](https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.4.60.pdf)  
+[GLSL ES 3.20 Specification - 3.9.3. Dynamically Uniform Expressions (page 22)](https://www.khronos.org/registry/OpenGL/specs/es/3.2/GLSL_ES_Specification_3.20.pdf)  
+
+> A fragment-shader expression is dynamically uniform if all fragments evaluating it get the same resulting value. 
 
 ---
 
