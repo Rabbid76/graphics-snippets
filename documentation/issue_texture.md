@@ -502,7 +502,7 @@ While the parameter `GL_LINEAR `would cause that the weighted average of the 4 t
 
 The initial value of `GL_TEXTURE_MIN_FILTER` is `GL_NEAREST_MIPMAP_LINEAR`. If you don't change it and you don't create mipmaps, then the texture is not "complete" and will not be "shown". See [`glTexParameter`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexParameter.xhtml).
 
-See [OpenGL 4.6 API Compatibility Profile Specification; 8.17 Texture Completeness; page 306](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.compatibility.pdf)  
+See [OpenGL 4.6 API Compatibility Profile Specification; 8.17 Texture Completeness; page 306](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.compatibility.pdf#page=330&zoom=100,0,173)  
 
 >A texture is said to be *complete* if all the texture images and texture parameters required to utilize the texture for texture application are consistently defined.  
 >
