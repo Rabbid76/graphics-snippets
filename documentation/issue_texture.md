@@ -846,6 +846,42 @@ To check if an OpenGL extension is valid, [`glGetString(GL_EXTENSIONS)`](https:/
 
 ---
 
+[Surface poorly filled with sdl_ttf](https://stackoverflow.com/questions/57938402/surface-poorly-filled-with-sdl-ttf/57941915#57941915), [C++]  
+
+The format and type parameter of [`glTexImage2D`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexImage2D.xhtml)specifiy how e single pixel is encoded.  
+When the texture font is created, then each pixel is encoded to a single byte. This means your texture consist of a single color channel and each pixel has 1 byte.
+Im very sure that `colors = surface->format->BytesPerPixel` is 1.
+Note that it is completely sufficient to encode the glyph in one color channel, because there glyph just consists of a information.
+
+By default OpenGL assumes that the start of each row of an image is aligned 4 bytes. This is because the [`GL_UNPACK_ALIGNMENT`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml) parameter by default is 4. Since the image has 1 (RED) color channel, and is tightly packed the start of a row is possibly misaligned.  
+Change the the [`GL_UNPACK_ALIGNMENT`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml) parameter to 1, before specifying the two-dimensional texture image (`glTexImage2D`).
+
+Since the texture has only one (red) color channel, the green an blue color will be 0 and the alpha channel will be 1 when the texture is looked up. But you can treat green, blue and even the alpha channel to be read from the red color channel, too.
+This can be achieved by setting the texture swizzle parameters `GL_TEXTURE_SWIZZLE_G`, `GL_TEXTURE_SWIZZLE_B` respectively `GL_TEXTURE_SWIZZLE_A`. See [`glTexParameter`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexParameter.xhtml).
+
+Further not that the texture parameter are stored in the texture object. `glTexParameter` changes the texture object which is currently bound to the specified targetof the current texture unit. So it is sufficient to set the parameters once when the texture image is created.  
+In compare [`glPixelStore`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml) changes global states an ma have to be set to its default value after specifying the texture image (if later calls to `glTexImage2D` rely on it).  
+
+The specification of the 2 dimensional texture image and setting the parameters may look as follows:
+
+```cpp
+glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, surface->w, surface->h, 0,
+             GL_RED, GL_UNSIGNED_BYTE, surface->pixels);
+glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_G, GL_RED);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_B, GL_RED);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_A, GL_RED);
+
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+```
+
+---
+
 ## Texture unit and texture binding
 
 [Texture units overlap? Rendered the wrong texture](https://stackoverflow.com/questions/52657167/texture-units-overlap-rendered-the-wrong-texture/52673057#52673057), [C++]  
