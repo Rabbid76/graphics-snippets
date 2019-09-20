@@ -553,6 +553,30 @@ The initial value of `GL_TEXTURE_MIN_FILTER` is `GL_NEAREST_MIPMAP_LINEAR`. When
 
 ---
 
+[glTexImage2D won't work, but setting FragColor to vec4(1.0, 0, 0, 1.0) gives me red image](https://stackoverflow.com/questions/57967483/glteximage2d-wont-work-but-setting-fragcolor-to-vec41-0-0-0-1-0-gives-me/57967661#57967661), [C++]  
+
+You cant "see" the image, because the texture is not mipmap complete.
+
+See [OpenGL 4.6 API Compatibility Profile Specification; 8.17 Texture Completeness; page 306](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.compatibility.pdf#page=330&zoom=100,0,173)  
+
+>A texture is said to be *complete* if all the texture images and texture parameters required to utilize the texture for texture application are consistently defined.  
+>
+>... a texture is complete unless any of the following conditions hold true:
+>
+> - The minification filter requires a mipmap (is neither `NEAREST` nor `LINEAR`), and the texture is not mipmap complete.
+
+The initial value of `GL_TEXTURE_MIN_FILTER` is `GL_NEAREST_MIPMAP_LINEAR`. If you don't change it and you don't create mipmaps, then the texture is not "complete" and will not be "shown". See [`glTexParameter`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexParameter.xhtml).
+
+Either set the minification filter to `GL_NEAREST` or `GL_LINEAR`
+
+```cpp
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+```
+
+or generate mipmaps by [`glGenerateMipmap(GL_TEXTURE_2D)`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGenerateMipmap.xhtml) to solve the issue.
+
+---
+
 [Problems using GLTexImage3D correctly](https://stackoverflow.com/questions/52326761/problems-using-glteximage3d-correctly/52333776#52333776), [C#]  
 
 The texture wrap parameters `GL_TEXTURE_WRAP_S`, `GL_TEXTURE_WRAP_T` and `GL_TEXTURE_WRAP_R`  are by default `GL_REPEAT`.  
