@@ -15,7 +15,8 @@
 
 // utility
 
-#include <UtCString.h>
+//#include <UtCString.h>
+#define UtCString std::string
 
 // STL
 
