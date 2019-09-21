@@ -883,7 +883,7 @@ unsigned int CRenderProcess::CreateFrambufferRenderBuffer(
   }
 
   // specify the format of the render buffer
-  glRenderbufferStorage( GL_RENDERBUFFER, format[0], (GLsizei)fb._size[0], (GLsizei)fb._size[0] ); OPENGL_CHECK_GL_ERROR
+  glRenderbufferStorage( GL_RENDERBUFFER, format[0], (GLsizei)fb._size[0], (GLsizei)fb._size[1] ); OPENGL_CHECK_GL_ERROR
 
   // unbind the render buffer
   glBindRenderbuffer( GL_RENDERBUFFER, 0 ); OPENGL_CHECK_GL_ERROR
