@@ -360,6 +360,27 @@ glReadPixels(0,0,unchangable_w, unchangable_h, GL_BLUE, GL_UNSIGNED_BYTE, tga.bp
 
 If that is missed, this cause a shift effect at each line of the image, except if the length of a line of the image in bytes is divisible by 4.
 
+--
+
+[Display YUV(yuv420p) is not correct on IOS](https://stackoverflow.com/questions/58072427/display-yuvyuv420p-is-not-correct-on-ios/58077363#58077363)  
+
+By default OpenGL assumes that the start of each row of an image is aligned 4 bytes. This is because the [`GL_UNPACK_ALIGNMENT`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml) parameter by default is 4.  
+Since the images have 1 (`GL_LUMINANCE`) channel with a sizof 1 byte, and are tightly packed the start of a row is possibly misaligned.  
+Change the the [`GL_UNPACK_ALIGNMENT`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml) parameter to 1, before specifying the two-dimensional texture image (`glTexImage2D`).
+
+Note `glPixelStorei` changes a global state, so it is sufficient to set the parameter once, before the texture images are specified by `glTexImage2D`.
+
+```cpp
+glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+``` 
+
+If you don't set the alignment correctly, then this causes a shift effect at row of the texture and finally the image buffer is accessed out of bounds.
+
+Note, the issue is cause by the `width` of the first texture which is 3268. So 
+`widht/2` is 1634. 1634 is not divisible by 4 (1634/4 = 408,5).  
+In compare the `width` of the 2nd texture is 1280. `widht/2` is 640 and that is  divisible by 4.  
+Actually  an alignment of 2 (`glPixelStorei(GL_UNPACK_ALIGNMENT, 2);`) would solve the issue, too (in this special case).
+
 ---
 
 ## Internal texture format
@@ -483,7 +504,7 @@ In three.js the texture wrap parameters can be set as follows (see [Texture](htt
 ```js
 var texture = new THREE.TextureLoader().load( textureFileName );
 texture.wrapS = THREE.ClampToEdgeWrapping;
-texture.wrapT = THREE.ClampToEdgeWrapping; 
+texture.wrapT = THREE.ClampToEdgeWrapping;
 ```
 
 This means the texture coordinates, which are passed to `texture2D` are clamped, if they are less than 0.0 or greater than 1.0. In fact, the  `u` (`x`) coordinate is clamped to `[0.5/width, (width-0.5)/width]` and the `v` (`y`) coordinate is clamped to `[0.5/height, (hight-0.5)/height]`.
