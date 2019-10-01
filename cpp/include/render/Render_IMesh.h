@@ -283,8 +283,10 @@ public:
   virtual const TAttributeContainer  * Colors( void ) const = 0;              //!< Container for the color attributes
   virtual const TIndexContainer      * ColorIndices( void ) const = 0;        //!< Container for the separated indices of the color attributes
 
+  virtual bool                         Smooth( void ) const { return false; } //!< Additional attribute, which indicates that the mesh is completely smooth
+
   bool ValidFaceNormals( void ) const { auto kind = NormalKind(); return kind == TNormalKind::face || kind == TNormalKind::both; }
-  bool ValidNormals( void )     const { auto kind = NormalKind(); return kind == TNormalKind::vertex || kind == TNormalKind::both; }
+  bool ValidNormals( void )     const { auto kind = NormalKind(); return kind == TNormalKind::vertex || kind == TNormalKind::both; }                        
 };
 
 template<typename T_DATA, typename T_INDEX>
