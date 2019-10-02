@@ -293,8 +293,10 @@ using TAmbientLightProperties = std::bitset<static_cast<size_t>(TAmbientLightPro
 **********************************************************************/
 struct TAmbientLight
 {
-  TColor8                 _color;      //!< the ambient light color
-  TAmbientLightProperties _properties; //!< `TLightProperty` properties 
+  TColor8                 _color;              //!< the ambient light color
+  TColor8                 _fog_color;          //!< fog color; the intensity of the fog is encoded to the alpha channel
+  TColor8                 _fog_emission_color; //!< fog emission color
+  TAmbientLightProperties _properties;         //!< `TLightProperty` properties 
 };
 using TAmbientLightTable = std::vector<TAmbientLight>;
 
