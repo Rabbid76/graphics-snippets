@@ -25,7 +25,7 @@
 #include <vector>
 #include <algorithm>
 #include <iostream>
-
+#include <map>
 
 
 // preprocessor
@@ -314,26 +314,28 @@ void CDebug::DebugCallback(
   int           length,   //!< I - length of debug message
   const char   *message ) //!< I - debug message
 {
-  static const std::vector<GLenum> error_ids
+  static const std::map<GLenum, std::string> error_ids
   {
-    GL_INVALID_ENUM,
-    GL_INVALID_VALUE,
-    GL_INVALID_OPERATION,
-    GL_STACK_OVERFLOW,
-    GL_STACK_UNDERFLOW,
-    GL_OUT_OF_MEMORY
+    { GL_INVALID_ENUM,      "INVALID_ENUM" },
+    { GL_INVALID_VALUE,     "INVALID_VALUE" },
+    { GL_INVALID_OPERATION, "INVALID_OPERATION" },
+    { GL_STACK_OVERFLOW,    "STACK_OVERFLOW" },
+    { GL_STACK_UNDERFLOW,   "STACK_UNDERFLOW" },
+    { GL_OUT_OF_MEMORY,     "OUT_OF_MEMORY" }
   };
 
-  auto error_it = std::find( error_ids.begin(), error_ids.end(), id );
+  std::string error_mesage = "OpenGL ";
+
+  auto error_it = error_ids.find( id );
   if ( error_it != error_ids.end() )
   {
-    std::cout << message << std::endl;
+    error_mesage += error_it->second;
+    error_mesage += " error";
   }
-  else
-  {
-    std::cout << message << std::endl;
-  }
-  // TODO $$$
+  error_mesage += ": ";
+  error_mesage += message;
+
+  DebugWarning << error_mesage << std::endl;
 }
 
 
