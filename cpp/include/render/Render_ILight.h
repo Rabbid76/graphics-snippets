@@ -41,6 +41,7 @@
 namespace Render
 {
 
+using TAssociationIndex = unsigned int; 
 
 /***************************************************************************//**
 * @brief Threshold for maximum light distance
@@ -224,7 +225,8 @@ enum class TLightShape : t_byte
 {
   circular,    //!< perfect circular shape
   rectangular, //!< rectangular or square shape
-  oval         //!< oval shape or rectangular shape with rounded edges
+  oval,        //!< oval shape or rectangular shape with rounded edges
+  mesh         //!< geometry of the light source is defined by the geometry of the associated object
 };
 
 
@@ -254,21 +256,22 @@ struct TLight
   t_fp OuterConeAngle( void )        const { return _light_cone + _light_cone * LinearConeAttenuation() * 0.5f; }
 
 
-  TColor8          _ambient;           //!< ambient light color; the brightness of the light is encoded to the alpha channel
-  TColor8          _diffuse;           //!< diffuse light color; the brightness of the light is encoded to the alpha channel
-  TColor8          _specular;          //!< specular light color; the brightness of the light is encoded to the alpha channel
-  TPoint4          _position;          //!< position of the light source (homogeneous coordinate); can be infinite (w=0.0)
-  //t_fp             _attenuation_value; //!< a value in the range [0, 1], which represents the attenuation of a light source
-  TVec3            _attenuation;       //!< constant, linear and quadratic attenuation and of the light source by its distance
-  t_fp             _cone_attenuation;  //!< light cone attenuation (attenuation from the center of the light cone to its borders)
-  TVec3            _direction;         //!< direction of a spot light
-  t_fp             _light_cone;        //!< full light cone angle of a spot light in radians [0, PI]
-  t_fp             _maximum_radius;    //!< the maximum influence radius for a finite light source (in meter) (except the distance is calculated automatically `auto_distance`)
-  t_fp             _cut_off_weight;    //!< radius cut off weight [0.0, 1.0]; soft (= 0.0) or hard (= 1.0)
-  t_fp             _size;              //!< general size of the light source in meters
-  t_fp             _aspect;            //!< aspect ration of rectangular or oval light sources
-  TLightProperties _properties;        //!< `TLightProperty` properties 
-  TLightShape      _shape;             //!< shape of the light (spot) source
+  TColor8           _ambient;           //!< ambient light color; the brightness of the light is encoded to the alpha channel
+  TColor8           _diffuse;           //!< diffuse light color; the brightness of the light is encoded to the alpha channel
+  TColor8           _specular;          //!< specular light color; the brightness of the light is encoded to the alpha channel
+  TPoint4           _position;          //!< position of the light source (homogeneous coordinate); can be infinite (w=0.0)
+  //t_fp              _attenuation_value; //!< a value in the range [0, 1], which represents the attenuation of a light source
+  TVec3             _attenuation;       //!< constant, linear and quadratic attenuation and of the light source by its distance
+  t_fp              _cone_attenuation;  //!< light cone attenuation (attenuation from the center of the light cone to its borders)
+  TVec3             _direction;         //!< direction of a spot light
+  t_fp              _light_cone;        //!< full light cone angle of a spot light in radians [0, PI]
+  t_fp              _maximum_radius;    //!< the maximum influence radius for a finite light source (in meter) (except the distance is calculated automatically `auto_distance`)
+  t_fp              _cut_off_weight;    //!< radius cut off weight [0.0, 1.0]; soft (= 0.0) or hard (= 1.0)
+  t_fp              _size;              //!< general size of the light source in meters
+  t_fp              _aspect;            //!< aspect ration of rectangular or oval light sources
+  TLightProperties  _properties;        //!< `TLightProperty` properties 
+  TLightShape       _shape;             //!< shape of the light (spot) source
+  TAssociationIndex _shape_mehses;      //!< index of mesh association: mesh respectively surfaces which are associated to the light source
 };
 using TLightTable = std::vector<TLight>;
 
