@@ -271,7 +271,7 @@ struct TLight
   t_fp              _aspect;            //!< aspect ration of rectangular or oval light sources
   TLightProperties  _properties;        //!< `TLightProperty` properties 
   TLightShape       _shape;             //!< shape of the light (spot) source
-  TAssociationIndex _shape_mehses;      //!< index of mesh association: mesh respectively surfaces which are associated to the light source
+  TAssociationIndex _shape_meshes;      //!< index of mesh association: mesh respectively surfaces which are associated to the light source
 };
 using TLightTable = std::vector<TLight>;
 
