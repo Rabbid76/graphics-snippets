@@ -240,7 +240,7 @@ class VertexBuffer {
     constructor(attribs, indices, type) {
         this.buf = [];
         this.attr = [];
-        this.inxLen = indices.length;
+        this.inxLen = indices ? indices.length : 0;
         this.primitive_type = type ? type : gl.TRIANGLES;
         this.vao = gl.createVertexArray();
         gl.bindVertexArray(this.vao);

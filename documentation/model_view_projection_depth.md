@@ -333,9 +333,9 @@ The eye space coordinates in the camera frustum (a truncated pyramid) are mapped
 ![Perspective Projection](image/PerspectiveProjection.png)
 
 A perspective projection matrix can be defined by a **frustum**.  
-The distances `left`, `right`, `bottom` and `top`, are the distances from the center of the view to the side faces of the frustum, on the near plane. `near` and `far` specify the distances to the near and far plane on the frustum.
+The distances `left`, `right`, `bottom` and `top`, are the distances from the center of the view to the side faces of the frustum, on the near plane. `near` and `far` specify the distances to the near and far plane of the frustum.
 
-```txt
+```lang-none
 r = right, l = left, b = bottom, t = top, n = near, f = far
 
 x:    2*n/(r-l)      0              0                0
@@ -346,21 +346,23 @@ t:    0              0              -2*f*n/(f-n)     0
 
 If the projection is symmetric, where the line of sight is axis of symmetry of the view frustum, then the matrix can be simplified:
 
-```txt
-x:    1/(t*a)  0     0              0
-y:    0        1/t   0              0
-z:    0        0    -(f+n)/(f-n)   -1
-t:    0        0    -2*f*n/(f-n)    0
+```lang-none
+a  = w / h
+ta = tan( fov_y / 2 );
+
+2 * n / (r-l) = 1 / (ta * a)
+2 * n / (t-b) = 1 / ta
+(r+l)/(r-l)   = 0
+(t+b)/(t-b)   = 0
 ```
 
-where:
+So the symmetrically perspective projection is:
 
-```txt
-a = w / h
-t = tan( fov_y / 2 );
-
-2 * n / (r-l) = 1 / (t * a)
-2 * n / (t-b) = 1 / ta
+```lang-none
+x:    1/(ta*a)  0      0              0
+y:    0         1/ta   0              0
+z:    0         0     -(f+n)/(f-n)   -1
+t:    0         0     -2*f*n/(f-n)    0
 ```
 
 The following function will calculate the same projection matrix as `gluPerspective` does:
