@@ -152,6 +152,9 @@ public:
   // Verifies the linking result.
   virtual bool Verify( std::string &message ) override;
 
+  // validates if the shader program was verified successfully
+  virtual bool Valid( void ) override { return _object_status != 0; }
+
   // Activate a program.
   virtual bool Use( void ) override;
 
@@ -164,6 +167,7 @@ private:
   TResourceLinkList     _resource_binding;                                     //!< additional resource bindings for linking the program
   TTranformFeedbackMode _transform_feedback_mode = TTranformFeedbackMode::NON; //!< buffer mode for transform feedback shader (required for linking)
   unsigned int          _object                  = 0;                          //!< named program object (GPU)
+  int                   _object_status           = 0;                          //!< status of the verified program object
 };
 
 
