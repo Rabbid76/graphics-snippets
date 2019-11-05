@@ -216,7 +216,7 @@ public:
   virtual ~IIntrospection() = default;
 
   // find a active program resource
-  virtual bool FindResource( const std::string &name, size_t &handle, TResourceType &resource_type ) = 0;
+  virtual bool FindProgramResource( const std::string &name, size_t &handle, TResourceType &resource_type ) = 0;
 
   // bit set which resources have to be evaluated
 

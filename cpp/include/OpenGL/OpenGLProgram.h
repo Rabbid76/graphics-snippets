@@ -198,7 +198,7 @@ public:
   virtual CIntrospection & Observe( Render::Program::TResourceTypes resources );
 
   // find a active program resource
-  virtual bool FindResource( const std::string &name, size_t &handle, TResourceType &resource_type ) override
+  virtual bool FindProgramResource( const std::string &name, size_t &handle, TResourceType &resource_type ) override
   {
     auto it = _resources.find( name );
     if ( it == _resources.end() )
