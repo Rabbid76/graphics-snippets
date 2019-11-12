@@ -270,8 +270,11 @@ struct TLight
   t_fp              _size;              //!< general size of the light source in meters
   t_fp              _aspect;            //!< aspect ration of rectangular or oval light sources
   TLightProperties  _properties;        //!< `TLightProperty` properties 
+
+  // TODO $$$ reference to additional data table? (e.g. TLightShapeTable, TSunPropertyTable, TLightVolumTable)
   TLightShape       _shape;             //!< shape of the light (spot) source
   TAssociationIndex _shape_meshes;      //!< index of mesh association: mesh respectively surfaces which are associated to the light source
+  t_fp              _atmospheric;       //!< areal perspective atmospheric, actually used for sun lights
 };
 using TLightTable = std::vector<TLight>;
 
