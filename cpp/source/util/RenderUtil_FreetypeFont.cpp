@@ -393,7 +393,7 @@ bool CFreetypeTexturedFont::Load(
 * \version 1.0
 **********************************************************************/
 bool CFreetypeTexturedFont::CalculateTextSize( 
-  const char *str,      //!< in: the text
+  t_s_param   str,      //!< in: the text
   float       height,   //!< in: the maximum height of the text from the bottom to the top  
   float      &box_x,    //!< out: with of the text
   float      &box_btm,  //!< out: height from the base line to the top 
@@ -442,7 +442,7 @@ bool CFreetypeTexturedFont::CalculateTextSize(
 bool CFreetypeTexturedFont::Draw( 
   Render::IDrawBufferProvider &buffer_provider,   //!< in: draw library
   size_t                       textur_binding_id, //!< in: texture unit index
-  const char                  *str,               //!< in: the text
+  t_s_param                    str,               //!< in: the text
   float                        height,            //!< in: the maximum height of the text from the bottom to the top 
   float                        width_scale,       //!< in: scale of the text in the y direction
   const Render::TPoint3       &pos )              //!< in: the reference position

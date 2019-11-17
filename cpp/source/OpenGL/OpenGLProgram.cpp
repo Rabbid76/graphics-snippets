@@ -854,7 +854,68 @@ void CIntrospection::GetUniformBlocks( void )
 **********************************************************************/
 void CIntrospection::GetSubroutines( void )
 {
-  // TODO $$$
+  /*
+  for ( int typeInx = 0; typeInx < eShader_NO_OF_TYPES; typeInx ++ )
+	{
+    if ( _gl.IsShaderTypeValid( (TShaderType)typeInx ) == false )
+      continue;
+
+		GLenum shaderType = CShaderObject::MapShaderType( (TShaderType)typeInx );
+			
+		GLint nSubroutineUniforms, maxSubroutineUniformLen;
+		glGetProgramStageiv( Object(), shaderType, GL_ACTIVE_SUBROUTINE_UNIFORMS, &nSubroutineUniforms );
+		glGetProgramStageiv( Object(), shaderType, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &m_locationCount[typeInx] );
+		glGetProgramStageiv( Object(), shaderType, GL_ACTIVE_SUBROUTINE_UNIFORM_MAX_LENGTH, &maxSubroutineUniformLen );
+		GLib().EvaluateGlError( s_subComponentName );
+
+		if ( maxSubroutineUniformLen > 0 &&  nSubroutineUniforms > 0 )
+		{
+			std::vector< GLchar >name( maxSubroutineUniformLen+1 );
+			for( int subroutineUniformInx = 0; subroutineUniformInx < nSubroutineUniforms; subroutineUniformInx++ )
+			{
+				TSubroutineUniform subroutine;
+				GLint nCompatible;
+				glGetActiveSubroutineUniformiv( Object(), shaderType, subroutineUniformInx, GL_NUM_COMPATIBLE_SUBROUTINES, &nCompatible );
+				subroutine.m_compatible.swap( std::vector< GLint >( nCompatible ) );
+				glGetActiveSubroutineUniformiv( Object(), shaderType, subroutineUniformInx, GL_COMPATIBLE_SUBROUTINES, subroutine.m_compatible.data() );
+				glGetActiveSubroutineUniformiv( Object(), shaderType, subroutineUniformInx, GL_UNIFORM_SIZE, &subroutine.m_arraySize );
+				GLint nameLen;
+				glGetActiveSubroutineUniformiv( Object(), shaderType, subroutineUniformInx, GL_UNIFORM_NAME_LENGTH, &nameLen );
+				glGetActiveSubroutineUniformName( Object(), shaderType, subroutineUniformInx, maxSubroutineUniformLen + 1, &nameLen, name.data() );
+				subroutine.m_location = glGetSubroutineUniformLocation( Object(), shaderType, name.data() );
+				subroutine.m_name = name.data();
+				m_subroutineUniform[typeInx][subroutine.m_location] = subroutine;
+}
+		}
+
+    GLib().EvaluateGlError( s_subComponentName );
+
+		GLint nSubroutine, maxSubroutineLen;
+		glGetProgramStageiv( Object(), shaderType, GL_ACTIVE_SUBROUTINES, &nSubroutine );
+		glGetProgramStageiv( Object(), shaderType, GL_ACTIVE_SUBROUTINE_MAX_LENGTH, &maxSubroutineLen );
+			
+		m_subroutineName[typeInx].clear();
+		if ( maxSubroutineLen > 0 && nSubroutine > 0)
+		{
+			TNameList subroutineList;
+			std::vector< GLchar >name( maxSubroutineLen+1 );
+			for ( int subroutineInx = 0; subroutineInx < nSubroutine; subroutineInx++ )
+			{
+				GLsizei length;
+				glGetActiveSubroutineName( Object(), shaderType, subroutineInx, maxSubroutineLen, &length, name.data() );
+				m_subroutineName[typeInx].push_back( name.data() );
+			}
+		}
+	}
+
+  glGetProgramResourceLocation
+  GL_VERTEX_SUBROUTINE_UNIFORM,
+  GL_TESS_CONTROL_SUBROUTINE_UNIFORM,
+  GL_TESS_EVALUATION_SUBROUTINE_UNIFORM,
+  GL_GEOMETRY_SUBROUTINE_UNIFORM,
+  GL_FRAGMENT_SUBROUTINE_UNIFORM,
+  GL_COMPUTE_SUBROUTINE_UNIFORM
+  */
 }
 
 } // OpenGL

@@ -235,6 +235,96 @@ map: name -> entry point, type
 };
 
 
+
+//---------------------------------------------------------------------
+// IDataExchange
+//---------------------------------------------------------------------
+
+
+/******************************************************************//**
+* \brief  Generic interface for the data exchange with a program.  
+* 
+* \author  gernot
+* \date    2018-08-01
+* \version 1.0
+**********************************************************************/
+class IDataExchange
+{
+public:
+
+  virtual ~IDataExchange() = default;
+
+  // associates a active program resource to binding point of data
+  virtual bool SetBinding( size_t handle, TResourceType resource_type, size_t binding_point ) = 0;
+  
+  // TODO $$$ how to pass the type of a uniform ???
+  // set data to the program
+  virtual bool Set( size_t handle, TResourceType resource_type, void *data ) = 0;
+
+};
+using TDataExchangePtr = std::shared_ptr<IDataExchange>;
+
+
+
+//---------------------------------------------------------------------
+// IProvider
+//---------------------------------------------------------------------
+
+
+/******************************************************************//**
+* \brief Generic provider for generic program objects.  
+* 
+* \author  gernot
+* \date    2018-08-01
+* \version 1.0
+**********************************************************************/
+class IProvider
+{
+public:
+
+  //! create new shader object
+  virtual TShaderPtr NewShader( TShaderType type ) const = 0;
+
+  // create new program object
+  virtual TProgramPtr NewProgram( void ) const = 0;
+
+  // create new program introspection
+  virtual TIntrospectionPtr NewIntrospection( TProgramPtr program, TResourceTypes resource_types ) const = 0;
+
+  // create new data exchange 
+  virtual TDataExchangePtr NewDataExchange( TProgramPtr program ) const = 0;
+};
+
+
+
+//---------------------------------------------------------------------
+// Instance
+//---------------------------------------------------------------------
+
+
+/******************************************************************//**
+* \brief Instance of a single program.   
+* 
+* \author  gernot
+* \date    2018-08-01
+* \version 1.0
+**********************************************************************/
+class Instance
+{
+public:
+
+  // TODO $$$ CInstance( const IProvider & provider )
+
+  virtual ~Instance() = default;
+
+  /*
+  
+  << [shader_type, sorce_code]
+
+  */
+};
+
+
 } // Program
 
 } // Render

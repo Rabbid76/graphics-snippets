@@ -314,6 +314,7 @@ public:
 
   virtual size_t ObjectHandle( void ) const = 0;
   virtual size_t DetachHandle( void ) = 0;
+  virtual void   AttachHandle( size_t hdl ) = 0;
 
   virtual TTextureType Type( void ) const = 0;
 

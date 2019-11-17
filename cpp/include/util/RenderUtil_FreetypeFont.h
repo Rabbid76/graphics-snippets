@@ -57,10 +57,10 @@ public:
   virtual bool Load( Render::ITextureLoader &loader ) override; //!< load the glyphs
 
   //! calculates box of a string in relation to its height (maximum height of the font from the bottom to the top)
-  virtual bool CalculateTextSize( const char *str, float height, float &box_x, float &box_btm, float &box_top ) override;
+  virtual bool CalculateTextSize( t_s_param str, float height, float &box_x, float &box_btm, float &box_top ) override;
 
   //! render a texture based text
-  virtual bool Draw( Render::IDrawBufferProvider &buffer_provider, size_t textur_binding_id, const char *str, float height, float width_scale, const Render::TPoint3 &pos ) override;
+  virtual bool Draw( Render::IDrawBufferProvider &buffer_provider, size_t textur_binding_id, t_s_param str, float height, float width_scale, const Render::TPoint3 &pos ) override;
 
 private:
 

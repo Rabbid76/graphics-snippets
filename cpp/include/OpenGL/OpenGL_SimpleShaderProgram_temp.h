@@ -83,7 +83,7 @@ public:
 
     size_t handle;
     Render::Program::TResourceType resource_type;
-    if ( _introspection->FindResource( name, handle, resource_type ) == false )
+    if ( _introspection->FindProgramResource( name, handle, resource_type ) == false )
       return -1;
     if ( resource_type != Render::Program::TResourceType::uniform )
       return -1;

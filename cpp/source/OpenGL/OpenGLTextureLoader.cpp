@@ -89,6 +89,7 @@ public:
 
   virtual size_t ObjectHandle( void ) const override { return _texture_obj; }
   virtual size_t DetachHandle( void )       override { unsigned int hdl = _texture_obj; _texture_obj = 0; return hdl; }
+  virtual void   AttachHandle( size_t hdl ) override { glDeleteTextures( 1, &_texture_obj ); _texture_obj = (unsigned int)hdl; }
 
   virtual Render::TTextureType Type( void ) const override { return _type; }
 
@@ -180,8 +181,10 @@ void CTextureLoader::EvaluateCapabilities( void )
     _dsa = false;
   if ( glGenerateTextureMipmap == nullptr )
     _dsa = false;
+  
+  // [What's the DSA version of glTexImage2D?](https://gamedev.stackexchange.com/questions/134177/whats-the-dsa-version-of-glteximage2d)
   _dsa = false; // TODO $$$
-
+  
   _capabilities_evaluated = true;
 }
 
@@ -602,7 +605,30 @@ Render::ITexturePtr CTextureLoader::CreateTexture(
   GLenum internal_format = InternalFormat( parameter._format );
   if ( _dsa )
   {
-    glTextureStorage2D( (GLuint)texture->ObjectHandle(), 1, internal_format, (GLsizei)size[0], (GLsizei)size[1] );
+    // [What's the DSA version of glTexImage2D?](https://gamedev.stackexchange.com/questions/134177/whats-the-dsa-version-of-glteximage2d)
+
+    GLuint tbo;
+    glCreateTextures( target, 1, &tbo );
+    texture->AttachHandle( tbo );
+    //glTextureStorage2D( (GLuint)texture->ObjectHandle(), 1, internal_format, (GLsizei)size[0], (GLsizei)size[1] );
+
+    static const std::unordered_map< Render::TTextureFormat, std::tuple<GLenum, GLenum> > compatible_foramt_map
+    {
+      { Render::TTextureFormat::R8,          { GL_RED,  GL_BYTE  } },
+      { Render::TTextureFormat::RG8,         { GL_RG,   GL_BYTE  } },
+      { Render::TTextureFormat::RGB8,        { GL_RGB,  GL_BYTE  } }, 
+      { Render::TTextureFormat::RGBA8,       { GL_RGBA, GL_BYTE  } },
+      { Render::TTextureFormat::RGB8_SNORM,  { GL_RGB,  GL_FLOAT } },
+      { Render::TTextureFormat::RGB16_SNORM, { GL_RGBA, GL_FLOAT } } 
+    };
+
+    auto it = compatible_foramt_map.find(parameter._format);
+    ASSERT( it != compatible_foramt_map.end() );
+    GLenum format = it != compatible_foramt_map.end() ? std::get<0>( it->second ) : GL_RGBA;
+    GLenum type   = it != compatible_foramt_map.end() ? std::get<1>( it->second ) : GL_BYTE;
+    glBindTexture( target, tbo );
+    glTexImage2D( target, 0, internal_format, (GLsizei)size[0], (GLsizei)size[1], 0, format, type, nullptr );
+    glBindTexture( target, 0 );
   }
   /*
   else if ( glTexStorage2D != nullptr )
