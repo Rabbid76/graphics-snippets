@@ -1,14 +1,12 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27428.1
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29519.87
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "simple_glut", "simple_glut\simple_glut.vcxproj", "{DB405177-E635-479B-83EC-FAEA4B4BD453}"
 	ProjectSection(ProjectDependencies) = postProject
 		{664E6F0D-6784-4760-9565-D54F8EB1EDF4} = {664E6F0D-6784-4760-9565-D54F8EB1EDF4}
 	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glew_static_v17", "glew\build\vc12\glew_static_v17.vcxproj", "{664E6F0D-6784-4760-9565-D54F8EB1EDF4}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "simple_glfw", "simple_glfw\simple_glfw.vcxproj", "{A76F6F1B-2C7D-4E99-A7A4-F772601EF293}"
 EndProject
@@ -42,6 +40,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "draw_library", "draw_librar
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "simple_glsl_subroutine", "simple_glsl_subroutine\simple_glsl_subroutine.vcxproj", "{0152155C-1E05-44DD-A736-16DB83EDE18A}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glew_static_v19", "glew\build\vc12\glew_static_v19.vcxproj", "{664E6F0D-6784-4760-9565-D54F8EB1EDF4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -58,14 +58,6 @@ Global
 		{DB405177-E635-479B-83EC-FAEA4B4BD453}.Release|x64.Build.0 = Release|x64
 		{DB405177-E635-479B-83EC-FAEA4B4BD453}.Release|x86.ActiveCfg = Release|Win32
 		{DB405177-E635-479B-83EC-FAEA4B4BD453}.Release|x86.Build.0 = Release|Win32
-		{664E6F0D-6784-4760-9565-D54F8EB1EDF4}.Debug|x64.ActiveCfg = Debug|x64
-		{664E6F0D-6784-4760-9565-D54F8EB1EDF4}.Debug|x64.Build.0 = Debug|x64
-		{664E6F0D-6784-4760-9565-D54F8EB1EDF4}.Debug|x86.ActiveCfg = Debug|Win32
-		{664E6F0D-6784-4760-9565-D54F8EB1EDF4}.Debug|x86.Build.0 = Debug|Win32
-		{664E6F0D-6784-4760-9565-D54F8EB1EDF4}.Release|x64.ActiveCfg = Release|x64
-		{664E6F0D-6784-4760-9565-D54F8EB1EDF4}.Release|x64.Build.0 = Release|x64
-		{664E6F0D-6784-4760-9565-D54F8EB1EDF4}.Release|x86.ActiveCfg = Release|Win32
-		{664E6F0D-6784-4760-9565-D54F8EB1EDF4}.Release|x86.Build.0 = Release|Win32
 		{A76F6F1B-2C7D-4E99-A7A4-F772601EF293}.Debug|x64.ActiveCfg = Debug|x64
 		{A76F6F1B-2C7D-4E99-A7A4-F772601EF293}.Debug|x64.Build.0 = Debug|x64
 		{A76F6F1B-2C7D-4E99-A7A4-F772601EF293}.Debug|x86.ActiveCfg = Debug|Win32
@@ -178,6 +170,14 @@ Global
 		{0152155C-1E05-44DD-A736-16DB83EDE18A}.Release|x64.Build.0 = Release|x64
 		{0152155C-1E05-44DD-A736-16DB83EDE18A}.Release|x86.ActiveCfg = Release|Win32
 		{0152155C-1E05-44DD-A736-16DB83EDE18A}.Release|x86.Build.0 = Release|Win32
+		{664E6F0D-6784-4760-9565-D54F8EB1EDF4}.Debug|x64.ActiveCfg = Debug|x64
+		{664E6F0D-6784-4760-9565-D54F8EB1EDF4}.Debug|x64.Build.0 = Debug|x64
+		{664E6F0D-6784-4760-9565-D54F8EB1EDF4}.Debug|x86.ActiveCfg = Debug|Win32
+		{664E6F0D-6784-4760-9565-D54F8EB1EDF4}.Debug|x86.Build.0 = Debug|Win32
+		{664E6F0D-6784-4760-9565-D54F8EB1EDF4}.Release|x64.ActiveCfg = Release|x64
+		{664E6F0D-6784-4760-9565-D54F8EB1EDF4}.Release|x64.Build.0 = Release|x64
+		{664E6F0D-6784-4760-9565-D54F8EB1EDF4}.Release|x86.ActiveCfg = Release|Win32
+		{664E6F0D-6784-4760-9565-D54F8EB1EDF4}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

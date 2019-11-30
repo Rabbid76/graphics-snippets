@@ -146,9 +146,6 @@
     <ClCompile Include="..\source\util\RenderUtil_FreetypeFont.cpp">
       <Filter>util</Filter>
     </ClCompile>
-    <ClCompile Include="..\source\util\RenderUtil_ObjLoader.cpp">
-      <Filter>util</Filter>
-    </ClCompile>
     <ClCompile Include="..\source\OpenGL\OpenGLBasicDraw.cpp">
       <Filter>OpenGL_source</Filter>
     </ClCompile>

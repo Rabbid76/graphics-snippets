@@ -15,8 +15,11 @@
 
 // utility
 
-//#include <UtCString.h>
+#ifdef RENDER_INCLUDE_UTCSTRING
+#include <UtCString.h>
+#else
 #define UtCString std::string
+#endif
 
 // STL
 
@@ -422,6 +425,27 @@ inline constexpr TMat44 Identity( void )
                    TVec4{ 0.0f, 0.0f, 1.0f, 0.0f },
                    TVec4{ 0.0f, 0.0f, 0.0f, 1.0f } } );
 }
+
+
+//! sketch mode
+enum class TSketchMode
+{
+  NON,
+  lead_pencil,          //! lead pencil
+  //edge,                 //! edge only
+  sketch_1,             //! sketch hatch
+  sketch_2,             //! sketch hatch
+  perlin_hatch,         //! perlin hatch
+  perlin_hatch_spotted, //! spotted perlin hatch
+  texture_hatch,        //! texture hatch
+  toon,                 //! toon effect specular light source
+  toon_opaque,          //! toon effect opaque color source
+  toon_opaque_mapped,   //! toon effect opaque color source andf luminosity map 
+  toon_flat,            //! toon effect flat opaque color source
+  // ...
+  NUMBER_OF
+};
+
 
 //---------------------------------------------------------------------
 // Primitives
