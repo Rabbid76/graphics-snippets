@@ -115,7 +115,7 @@ Using WebGLRenderer with logarithmicDepthBufferset option set to true together w
     scene.add(camera);
     window.onresize = resize;
 
-    orbitControls = new THREE.OrbitControls(camera);
+    orbitControls = new THREE.OrbitControls(camera, container);
     
     var helper = new THREE.GridHelper(100, 100);
     helper.material.opacity = 0.25;

@@ -59,7 +59,7 @@ Set 3d cube rotation origin
       camera.updateProjectionMatrix();
     }
     
-    orbitControls = new THREE.OrbitControls(camera);
+    orbitControls = new THREE.OrbitControls(camera, container);
 
     var ambientLight = new THREE.AmbientLight(0x404040);
     scene.add(ambientLight);
