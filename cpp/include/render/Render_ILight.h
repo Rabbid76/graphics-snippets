@@ -214,6 +214,7 @@ enum class TLightProperty
   auto_radius,                //!< the maximum influence radius cut off is automatically calculated by the light intensity and the attenuation
   sun,                        //!< the light is a sun light
   auto_attenuation_by_radius, //!< the attenuation is automatically determined by the radius of the light source
+  volumetric,                 //!< add volumetric light effect
   // ...
   NO_OF
 };
