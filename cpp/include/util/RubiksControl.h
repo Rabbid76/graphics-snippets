@@ -281,7 +281,7 @@ CCube & CCube::Shuffle(
       {
         valid = shuffle_ops.back()._axis             != op._axis ||
                 shuffle_ops.back()._row              != op._row ||
-                shuffle_ops.back()._direction        != op._direction;
+                shuffle_ops.back()._direction        != op._direction ||
                 (shuffle_ops.rbegin()+1)->_axis      != op._axis ||
                 (shuffle_ops.rbegin()+1)->_row       != op._row ||
                 (shuffle_ops.rbegin()+1)->_direction != op._direction; 
@@ -348,7 +348,7 @@ CCube & CCube::Update( void )
       // update the position model matrix of the affected sub cubes 
       for ( auto i : cube_i )
       {
-        double angle = glm::radians( 90.0f ) * (op._direction == TDirection::left ? -1.0f : 1.0f);
+        double angle = glm::radians( 90.0f ) * (op._direction == TDirection::left ? -1.0 : 1.0);
         angle *= past_animation_time_s / _animation_time_s;
         _animation[i] = glm::rotate( glm::mat4(1.0f), (float)angle, AxisVector(axis_i) );
       }
@@ -405,7 +405,7 @@ bool CCube::IntersectSidePlane(
   const glm::vec3 &d_ray,  //! I - direction of the ray
   int              side_i, //! I - index of the side of the cube
   float           &dist,   //! O - distance to the intersection
-  glm::vec3       &pt )    //! O - 
+  glm::vec3       &pt )    //! O - intersection point
 {
   // define the cube corner points and its faces
 
@@ -437,8 +437,11 @@ bool CCube::IntersectSidePlane(
   const glm::vec3 &pb = cube_pts[cube_faces[side_i][1]];
   const glm::vec3 &pc = cube_pts[cube_faces[side_i][3]];
 
-  glm::vec3 dir      = glm::normalize( d_ray );
-  glm::vec3 n_plane  = glm::normalize( glm::cross( pb - pa, pc - pa ) );
+  // Note, the normalization of `d_ray` and `n_plane` is not necessary,
+  // because: `norm(D) * dot(PR, norm(N)) / dot(norm(D), norm(N))` is equal `D * dot(PR, N) / dot(D, N)`
+
+  glm::vec3 dir      = d_ray;                          // glm::normalize( d_ray );
+  glm::vec3 n_plane  = glm::cross( pb - pa, pc - pa ); // glm::normalize( glm::cross( pb - pa, pc - pa ) );
   glm::vec3 p0_plane = pa * cube_sidelen_2;
 
   if ( fabs( fabs( glm::dot( dir, n_plane ) ) - 1.0f ) < 0.0017f ) // 0.0017 < sin(1°)
@@ -466,7 +469,7 @@ bool CCube::Intersect(
   const glm::vec3 &r0_ray, //!< I - start point of the ray
   const glm::vec3 &d_ray,  //!< I - direction vector of the ray
   int             &side_i, //!< O - index of the intersected side 
-  glm::vec3       &pt )    //!< O - point of intersection
+  glm::vec3       &pt )    //!< O - intersection point
 {
   // find the nearest intersection of a side of the cube and the ray 
 
