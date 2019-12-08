@@ -657,22 +657,22 @@ CCube & CCube::Rotate(
     std::array<int, 2>{2, 2}, std::array<int, 2>{1, 2}, std::array<int, 2>{0, 2}, std::array<int, 2>{0, 1} 
   };
   TMapCubes current_map = _cube_map;
-  for ( int i = 0; i < 8; ++ i )
+  for ( int i_o = 0; i_o < 8; ++ i_o )
   {
-    int j = ( op._direction == TDirection::left ? i + 6 : i + 2 ) % 8;
+    int i_n = ( op._direction == TDirection::left ? i_o + 6 : i_o + 2 ) % 8;
     
     std::array<int, 3> ao, an;
     ao[axis_i] = row_i;
     an[axis_i] = row_i;
-    ao[(axis_i+1) % 3] = indices[i][0];
-    an[(axis_i+1) % 3] = indices[j][0];
-    ao[(axis_i+2) % 3] = indices[i][1];
-    an[(axis_i+2) % 3] = indices[j][1];
+    ao[(axis_i+1) % 3] = indices[i_o][0];
+    an[(axis_i+1) % 3] = indices[i_n][0];
+    ao[(axis_i+2) % 3] = indices[i_o][1];
+    an[(axis_i+2) % 3] = indices[i_n][1];
 
-    int io = ao[0] + ao[1] * 3 + ao[2] * 9;
-    int in = an[0] + an[1] * 3 + an[2] * 9;
+    int ci_o = ao[0] + ao[1] * 3 + ao[2] * 9;
+    int ci_n = an[0] + an[1] * 3 + an[2] * 9;
 
-    _cube_map[in] = current_map[io];
+    _cube_map[ci_n] = current_map[ci_o];
   }
 
   // reset animation matrices
