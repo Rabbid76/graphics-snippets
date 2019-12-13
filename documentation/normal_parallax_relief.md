@@ -437,7 +437,7 @@ vec3 ConeStep( in vec3 texDir3D, in vec2 texCoord )
     float mapHeight = GetHeightAndCone( texCoord.xy ).x;
     return vec3( texC.xy, mapHeight );
 }
-```glsl
+```
 
 ### Cone Step Map generation
 
