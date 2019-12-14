@@ -47,7 +47,7 @@ If the left, bottom and near distance are negative and the right, top and far di
 All the objects (meshes) which are in the space (volume) are "visible" on the viewport. All the objects (meshes) which are out (or partly out) of this space are clipped at the borders of the volume.
 This means at orthographic projection, the objects "behind" the viewer are possibly "visible". This may seem unnatural, but this is how orthographic projection works.
 
-At perspective projection the view space (volume) is defined by a frustum (a truncated pyramid), where the top of the pyramid is the viewer's position.
+At perspective projection the viewing volume is a [frustum](https://en.wikipedia.org/wiki/Viewing_frustum) (a truncated pyramid), where the top of the pyramid is the viewing position.
 The direction of view (line of sight) and the near and the far distance define the planes which truncated the pyramid to a frustum (the direction of view is the normal vector of this planes).
 The left, right, bottom, top distance define the distance from the intersection of the line of sight and the near plane, with the side faces of the frustum (on the near plane).
 This causes that the scene looks like, as it would be seen from of a pinhole camera.
