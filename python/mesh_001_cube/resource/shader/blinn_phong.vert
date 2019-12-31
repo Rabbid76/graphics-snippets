@@ -17,6 +17,11 @@ uniform mat4 u_modelMat44;
 
 void main()
 {
+    const vec4 vertices[3] = vec4[3](
+        vec4(0.25,-0.25,0.5,1.0),
+        vec4(-0.25,-0.25,0.5,1.0),
+        vec4(0.25,0.25,0.5,1.0));
+
     vec3 modelNV  = mat3( u_modelMat44 ) * normalize( inNV );
     outData.nv    = mat3( u_viewMat44 ) * modelNV;
     outData.col   = inCol;

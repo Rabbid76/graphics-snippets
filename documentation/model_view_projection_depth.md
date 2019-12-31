@@ -505,14 +505,14 @@ The relation between the projected area in view space and the Z coordinate of th
 
 ![field of view](image/field_of_view.png)
 
-The normalized device size can be transformed to a size in view space like this:
+A projected size in normalized device space can be transformed to a size in view space by:
 
 ```cpp
 aspect = w / h
-tanFov = tan( fov_y * 0.5 );
+tanFov = tan(fov_y * 2.0) * 2.0;
 
-size_x = ndx_size_x * (tanFov * aspect) / z_eye;
-size_y = ndx_size_y * tanFov / z_eye;
+size_x = ndx_size_x * z_eye * tanFov * aspect;
+size_y = ndx_size_y * z_eye * tanFov;
 ```
 
 If the perspective projection matrix is known and the projection is symmetrically (the line of sight is in the center of the viewport and the field of view is not displaced), this can be done as follows:

@@ -51,6 +51,54 @@
 
 ## Load Texture
 
+[OpenGL integer texture raising GL_INVALID_VALUE](https://stackoverflow.com/questions/59542891/opengl-integer-texture-raising-gl-invalid-value/59544753#59544753), [three.js]
+
+First of all you have to create an [OpenGL Context](https://www.khronos.org/opengl/wiki/OpenGL_Context). e.g.:   
+(See also [Using OpenGL With SDL](https://www.libsdl.org/release/SDL-1.2.15/docs/html/guidevideoopengl.html))
+
+```cpp
+if (SDL_Init(SDL_INIT_VIDEO) < 0)
+    return 0;
+
+SDL_Window *window = SDL_CreateWindow("ogl wnd", 0, 0, width, height, SDL_WINDOW_OPENGL);
+if (window == nullptr)
+    return 0;
+SDL_GLContext context = SDL_GL_CreateContext(window);
+
+if (glewInit() != GLEW_OK)
+    return 0;
+``` 
+
+Then you have to generate an texture name by [`glGenTextures`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGenTextures.xhtml):
+
+```cpp
+GLuint tobj;
+glGenTextures(1, &tobj);
+```
+
+After that you've to bind the named texture to a texturing target by [`glBindTexture`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glBindTexture.xhtml):
+
+```cpp
+glBindTexture(GL_TEXTURE_2D, tobj);
+```
+
+Finally you can specify the two-dimensional texture image by [`glTexImage2D`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexImage2D.xhtml)
+
+```cpp
+glTexImage2D(GL_TEXTURE_2D, 0, GL_R32UI, 3072, 2048, 0, GL_RED_INTEGER, GL_UNSIGNED_INT, nullptr);
+```
+
+Note, the texture format has to be `GL_RED_INTEGER` rather than `GL_RED`, because the source texture image has to be interpreted as integral data, rather than normalized floating point data. The *format* and *type* parameter specify the format of the source data. The *internalformat* parameter specifies the format of the target texture image.
+
+Set the texture parameters by [`glTexParameter`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexParameter.xhtml) ( this can be done before `glTexImage2D`, too):
+
+```cpp
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+```  
+
+If you do not generate [mipmaps](https://en.wikipedia.org/wiki/Mipmap) (by [`glGenerateMipmap`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGenerateMipmap.xhtml)), then setting the `GL_TEXTURE_MIN_FILTER` is important. Since the default filter is `GL_NEAREST_MIPMAP_LINEAR` the texture would be mipmap incomplete, if you don not change the minifying function to `GL_NEAREST` or `GL_LINEAR`.
+
 ### `glBindTexture`
 
 [OpenGL/C++: Problem passing multiple textures to one shader](https://stackoverflow.com/questions/55959818/opengl-c-problem-passing-multiple-textures-to-one-shader/55959867#55959867)  
