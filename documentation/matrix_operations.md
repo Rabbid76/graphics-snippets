@@ -127,6 +127,7 @@ See further:
 - [Does WebGL matrix (mat4) notation corresponds to mathematical matrix notation](https://stackoverflow.com/questions/48367593/does-webgl-matrix-mat4-notation-correspondes-to-mathematical-matrix-notation/48367941#48367941)
 - [Custom matrices & OpenGL shaders.](https://stackoverflow.com/questions/48375568/custom-matrices-opengl-shaders/48375786#48375786)
 - [glm returning nan on simple translate](https://stackoverflow.com/questions/49058381/glm-returning-nan-on-simple-translate/49058953#49058953)
+- [how does GLM handle translation](https://stackoverflow.com/questions/59222806/how-does-glm-handle-translation/59224588#59224588)  
 
 <br/><hr/>
 
