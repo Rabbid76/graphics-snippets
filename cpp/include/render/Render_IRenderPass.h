@@ -437,6 +437,7 @@ public:
   virtual void  Destroy( void ) = 0;                                       //!< destroy the buffer and the passes
   virtual bool  Prepare( size_t passID, TPrepareProperties props ) = 0;    //!< prepare a render pass
   virtual bool  Bind( size_t passID, bool read, bool draw ) = 0;           //!< binds the named framebuffer for drawing
+  virtual bool  SetDrawBuffers( bool firstColorAttachmentOnly ) = 0;       //!< activates the draw buffers
   virtual bool  ReleasePass( size_t passID ) = 0;                          //!< release the render pass
   virtual bool  Release( void ) = 0;                                       //!< release the current render pass
   virtual bool  GetBufferObject( size_t bufferID, unsigned int &obj ) = 0; //!< get the implementation object for a buffer

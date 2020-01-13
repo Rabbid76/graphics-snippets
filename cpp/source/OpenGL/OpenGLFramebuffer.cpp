@@ -1135,7 +1135,7 @@ void CRenderProcess::Destroy( void )
 * \date    2018-02-11
 * \version 1.0
 **********************************************************************/
-const CRenderProcess::TBufferInfoCache & CRenderProcess::EvaluateInfoCache( 
+CRenderProcess::TBufferInfoCache & CRenderProcess::EvaluateInfoCache( 
   size_t               passID, //!< in: the name of the render pass
   const Render::TPass &pass )  //!< in: render pass data
 {
@@ -1273,7 +1273,7 @@ bool CRenderProcess::Prepare(
   Render::TPass &pass = passIt->second;
 
   // Update information for target buffer binding, target buffer clearing and source texture binding
-  const TBufferInfoCache &bufferInfo = EvaluateInfoCache( passID, pass );
+  TBufferInfoCache &bufferInfo = EvaluateInfoCache( passID, pass );
 
   // setup depth test
   if ( props.test((int)TPrepareProperty::depth) )
@@ -1300,6 +1300,8 @@ bool CRenderProcess::Prepare(
   // setup target buffer
   if ( props.test((int)TPrepareProperty::targets) &&  bufferInfo._targetIsDefault == false )
   {
+    bufferInfo._only_first_color = false;
+
     if ( bufferInfo._drawBuffers.empty() )
       glDrawBuffer( GL_NONE );
     else
@@ -1333,6 +1335,46 @@ bool CRenderProcess::Prepare(
     glActiveTexture( GL_TEXTURE0 );
   }
   
+  return true;
+}
+
+
+/******************************************************************//**
+* \brief   Activates the draw buffers.
+* 
+* \author  gernot
+* \date    2018-02-11
+* \version 1.0
+**********************************************************************/
+bool CRenderProcess::SetDrawBuffers( 
+  bool firstColorAttachmentOnly ) //!< I - bind the first color attachment only
+{
+  if ( IsValid() == false || _complete == false )
+    return false;
+
+  // check if the pass is valid
+  auto passIt = _passes.find( _currentPass );
+  if ( passIt == _passes.end() )
+    return false;
+  Render::TPass &pass = passIt->second;
+
+  // Update information for target buffer binding, target buffer clearing and source texture binding
+  TBufferInfoCache &bufferInfo = EvaluateInfoCache( _currentPass, pass );
+  if (bufferInfo._drawBuffers.empty() || bufferInfo._targetIsDefault || bufferInfo._only_first_color == firstColorAttachmentOnly)
+    return true;
+  bufferInfo._only_first_color = firstColorAttachmentOnly;
+
+  if (firstColorAttachmentOnly)
+  {
+    // activate only the color attachment 0
+    GLenum attachment = GL_COLOR_ATTACHMENT0;
+    glDrawBuffers( 1, &attachment );
+  }
+  else
+  {
+    glDrawBuffers( (GLsizei)bufferInfo._drawBuffers.size(),  bufferInfo._drawBuffers.data() );
+  }
+
   return true;
 }
 

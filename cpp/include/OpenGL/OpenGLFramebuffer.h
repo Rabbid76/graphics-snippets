@@ -89,13 +89,14 @@ public:
   {
     TBufferInfoCache( void ) = default;
 
-    bool                                           _targetIsDefault = false; //!< the target is the default frame buffer
-    TViewportSize                                  _vp_size{ 0, 0 };         //!< framebuffer viewport size
-    unsigned int                                   _fb_obj;                  //!< the named framebuffer object (GPU); if the target is the default framebuffer, the this is 0 
-    unsigned int                                   _clearMask = 0;           //!< OpenGL bit mask for framebuffer clear
-    std::vector<std::pair<size_t, Render::TColor>> _clearTargets;            //!< color attachment and color for separated clear operations
-    std::vector<unsigned int>                      _drawBuffers;             //!< enumerators for the draw buffers
-    std::vector<TTextureAndBindig>                 _sourceTextures;          //!< source texture objects and its binding point
+    bool                                           _targetIsDefault  = false; //!< the target is the default frame buffer
+    bool                                           _only_first_color = false; //!< only the first color attachment is activated
+    TViewportSize                                  _vp_size{ 0, 0 };          //!< framebuffer viewport size
+    unsigned int                                   _fb_obj;                   //!< the named framebuffer object (GPU); if the target is the default framebuffer, the this is 0 
+    unsigned int                                   _clearMask = 0;            //!< OpenGL bit mask for framebuffer clear
+    std::vector<std::pair<size_t, Render::TColor>> _clearTargets;             //!< color attachment and color for separated clear operations
+    std::vector<unsigned int>                      _drawBuffers;              //!< enumerators for the draw buffers
+    std::vector<TTextureAndBindig>                 _sourceTextures;           //!< source texture objects and its binding point
   };
   using TBufferInfoMap = std::map<size_t, TBufferInfoCache>;
 
@@ -132,6 +133,7 @@ public:
   virtual void Destroy( void ) override;                                                        //!< destroy the buffer and the passes
   virtual bool Prepare( size_t passID, TPrepareProperties props ) override;                     //!< prepare a render pass
   virtual bool Bind( size_t passID, bool read, bool draw ) override;                            //!< binds the named framebuffer
+  virtual bool SetDrawBuffers(  bool firstColorAttachmentOnly ) override;                       //!< activates the draw buffers
   virtual bool ReleasePass( size_t passID ) override;                                           //!< release the render pass
   virtual bool Release( void ) override;                                                        //!< release the current render pass
   virtual bool GetBufferObject( size_t bufferID, unsigned int &obj ) override;                  //!< get the implementation object for a buffer
@@ -152,7 +154,7 @@ private:
   void UpdateTexture( size_t bufferID, const Render::TBuffer &specification );
   unsigned int CreateFrambufferRenderBuffer( const TFramebufferObject &fb, const Render::TPass::TTarget &target );
   void AttachFrambufferTextureBuffer( const TFramebufferObject &fb, const Render::TPass::TTarget &target );
-  const TBufferInfoCache & EvaluateInfoCache( size_t passID, const Render::TPass &pass );
+  TBufferInfoCache & EvaluateInfoCache( size_t passID, const Render::TPass &pass );
   
   size_t           _currentPass = c_no_pass; //!< current render pass
   TBufferMap       _buffers;                 //!< buffer specifications
