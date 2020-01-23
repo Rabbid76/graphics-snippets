@@ -1,0 +1,121 @@
+<html>
+
+<head>
+<title>Three.js example</title>
+<style>
+
+#ref-link { position : absolute; bottom : 0; left : 0; font-size : large; }
+
+</style>
+
+</head>
+
+<body>
+<script src="https://threejs.org/build/three.min.js"></script>
+<!--script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/100/three.min.js"></script-->
+<!--script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script-->
+
+
+<a id="ref-link" href="https://stackoverflow.com/questions/54516794/three-js-uniform-dashed-line-relative-to-camera">
+Three.js uniform dashed line relative to camera 
+</a>
+
+<script type='x-shader/x-vertex' id='vertex-shader'>
+#extension GL_NV_shader_noperspective_interpolation : enable
+
+//flat varying vec3 startPos;
+varying vec3 startPos;
+varying vec3 vertPos;
+
+void main() {
+    vec4 pos    = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    gl_Position = pos;
+    vertPos     = pos.xyz / pos.w;
+    startPos    = vertPos;
+}
+</script>
+<script type='x-shader/x-fragment' id='fragment-shader'>
+#extension GL_NV_shader_noperspective_interpolation : enable
+
+precision highp float;
+
+//flat varying vec3 startPos;
+varying vec3 startPos;
+varying vec3 vertPos;
+
+uniform vec3  u_color;
+uniform vec2  u_resolution;
+uniform float u_dashSize;
+uniform float u_gapSize;
+
+void main(){
+
+    vec2  dir  = (vertPos.xy-startPos.xy) * u_resolution.xy/2.0;
+    float dist = length(dir);
+    
+    if (fract(dist / (u_dashSize + u_gapSize)) > u_dashSize/(u_dashSize + u_gapSize))
+        discard; 
+    gl_FragColor = vec4(u_color.rgb, 1.0);
+}
+</script>
+
+<script>
+var scene = new THREE.Scene();
+var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
+var canvas = document.createElement( 'canvas' );
+var context = canvas.getContext( "experimental-webgl" );
+var renderer = new THREE.WebGLRenderer( { canvas: canvas, context : context } );
+
+this.context = renderer.context;
+this.available_extensions = context.getSupportedExtensions();
+this.ext_noperspective = context.getExtension("GL_NV_shader_noperspective_interpolation");
+
+var vpSize = [window.innerWidth, window.innerHeight];
+renderer.setSize( window.innerWidth, window.innerHeight );
+document.body.appendChild( renderer.domElement );
+
+var geometry = new THREE.BoxGeometry( 2, 2, 2 );
+
+var uniforms = {
+    u_resolution: {type: 'v2', value: {x: vpSize[0], y: vpSize[1]}},
+    u_dashSize : {type:'f', value: 10.0},
+    u_gapSize : {type:'f', value: 5.0},
+    u_color : {type: 'v3', value: {x:0.0, y:0.0, z:0.0} }
+};
+    
+var material = new THREE.ShaderMaterial({  
+        uniforms: uniforms,
+        vertexShader: document.getElementById('vertex-shader').textContent,
+        fragmentShader: document.getElementById('fragment-shader').textContent
+});
+
+var LINES_DASHED = new THREE.LineSegments(
+    new THREE.EdgesGeometry(geometry),
+    material);
+
+LINES_DASHED.computeLineDistances();
+scene.add( LINES_DASHED );
+scene.background = new THREE.Color( 0xffffff);
+camera.position.z = 5;
+
+var animate = function () {
+    requestAnimationFrame( animate );
+    LINES_DASHED.rotation.x += 0.01;
+    LINES_DASHED.rotation.y += 0.01;
+    renderer.render( scene, camera );
+};
+
+window.onresize = function() {
+    vpSize = [window.innerWidth, window.innerHeight];
+    LINES_DASHED.material.uniforms.u_resolution.value.x = window.innerWidth;
+    LINES_DASHED.material.uniforms.u_resolution.value.y = window.innerHeight;
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+}
+
+animate();
+</script>
+
+</body>
+</html>
