@@ -1,8 +1,11 @@
-# rougier/freetype-py
-# https://github.com/rougier/freetype-py/blob/master/examples/opengl.py
-# LeranOpenGL Text Rendering
-# https://learnopengl.com/In-Practice/Text-Rendering
+# FreeType / OpenGL text rendering
 
+TrueType Text rendering using [FreeType](https://www.freetype.org/) / [freetype-py](https://pypi.org/project/freetype-py/).  
+Inspired by GitHub [rougier/freetype-py](https://github.com/rougier/freetype-py/blob/master/examples/opengl.py) and [LeranOpenGL Text Rendering](https://learnopengl.com/In-Practice/Text-Rendering).
+
+![](image/free_type_text.png)
+
+```py
 import numpy
 from freetype import *
 from OpenGL.GL import *
@@ -185,3 +188,4 @@ if __name__ == '__main__':
     import sys
     wnd = Window()
     wnd.run()
+```

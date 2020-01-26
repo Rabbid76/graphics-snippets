@@ -14,34 +14,6 @@
 
 [Rubiks cube](https://rabbid76.github.io/graphics-snippets/html/app/rubiks_cube.html)
 
-### Normal and Parallax Mapping
-
-[No Mapping](https://rabbid76.github.io/graphics-snippets/html/technique/parallax_001_no_parallax_mapping.html)
-
-[Normal Mapping](https://rabbid76.github.io/graphics-snippets/html/technique/parallax_002_normal_mapping.html)
-
-[Offset Limiting](https://rabbid76.github.io/graphics-snippets/html/technique/parallax_003_offset_limiting.html)
-
-[Steep Parallax Mapping](https://rabbid76.github.io/graphics-snippets/html/technique/parallax_004_parallax_occlusion_mapping_derivative_tbn.html)
-
-[Parallax Occlusion Mapping](https://rabbid76.github.io/graphics-snippets/html/technique/parallax_005_parallax_relief_mapping_derivative_tbn.html)
-
-[Cone Step Mapping](https://rabbid76.github.io/graphics-snippets/html/technique/parallax_006_cone_step_mapping_derivative_tbn.html)
-
-[Compare of different "bump" mapping techniques](https://rabbid76.github.io/graphics-snippets/html/technique/parallax_mapping.html)
-
-### Ambient occlusion
-
-[SSAO (Screen Space Ambient Occlusion)](https://rabbid76.github.io/graphics-snippets/html/technique/ssao.html)
-
-### Special
-
-[![](html/effect/image/fire.png) Fire](https://rabbid76.github.io/graphics-snippets/html/effect/fire.html)
-
-### Sketch
-
-[![](html/sketch/image/sketch_texture_pen.png) Sketch](https://rabbid76.github.io/graphics-snippets/html/sketch/sketch_texture_pen.html)
-
 ### Tools
 
 [Light Model](https://rabbid76.github.io/graphics-snippets/html/tools/light_model_view.html)
@@ -51,6 +23,35 @@
 [Height Map Generator](https://rabbid76.github.io/graphics-snippets/html/tools/height_map_generator.html)
 
 [Function Plotter](https://rabbid76.github.io/graphics-snippets/html/tools/function_plotter.html)
+
+### Normal and Parallax Mapping
+
+[![](documentation/image/parallax_mapping/parallax_001_no_parallax_mapping_1.png) No Mapping](https://rabbid76.github.io/graphics-snippets/html/technique/parallax_001_no_parallax_mapping.html)
+
+[![](documentation/image/parallax_mapping/parallax_002_normal_mapping_1.png) Normal Mapping](https://rabbid76.github.io/graphics-snippets/html/technique/parallax_002_normal_mapping.html)
+
+[![](documentation/image/parallax_mapping/parallax_003_offset_limiting_1.png) Offset Limiting](https://rabbid76.github.io/graphics-snippets/html/technique/parallax_003_offset_limiting.html)
+
+[![](documentation/image/parallax_mapping/parallax_004_parallax_occlusion_mapping_derivative_tbn_1.png) Steep Parallax Mapping](https://rabbid76.github.io/graphics-snippets/html/technique/parallax_004_parallax_occlusion_mapping_derivative_tbn.html)
+
+[![](documentation/image/parallax_mapping/parallax_005_parallax_relief_mapping_derivative_tbn_1.png) Parallax Occlusion Mapping](https://rabbid76.github.io/graphics-snippets/html/technique/parallax_005_parallax_relief_mapping_derivative_tbn.html)
+
+[![](documentation/image/parallax_mapping/parallax_006_cone_step_mapping_derivative_tbn_1.png) Cone Step Mapping](https://rabbid76.github.io/graphics-snippets/html/technique/parallax_006_cone_step_mapping_derivative_tbn.html)
+
+[![](documentation/image/parallax_mapping/parallax_006_cone_step_mapping_derivative_tbn_2.png) Compare of different "bump" mapping techniques](https://rabbid76.github.io/graphics-snippets/html/technique/parallax_mapping.html)
+
+### Ambient occlusion
+
+[![](html/technique/image/ssao.png)SSAO (Screen Space Ambient Occlusion)](https://rabbid76.github.io/graphics-snippets/html/technique/ssao.html)
+
+### Special
+
+[![](html/effect/image/fire.png) Fire](https://rabbid76.github.io/graphics-snippets/html/effect/fire.html)
+
+### Sketch
+
+[![](html/sketch/image/sketch_texture_pen.png) Sketch](https://rabbid76.github.io/graphics-snippets/html/sketch/sketch_texture_pen.html)
+
 
 ### StackOverflow examples
 
@@ -136,9 +137,11 @@
 
 ### Examples
 
-[OpenGL 4.6, Direct State Access (DSA), Spir-V Shader Program](https://github.com/Rabbid76/graphics-snippets/blob/master/example/python/dsa_spirv_cube/example_python_dsa_spirv.md)
+[![](example/python/dsa_spirv_cube/image/cube_glut_glm_spirv.gif) OpenGL 4.6, Direct State Access (DSA), Spir-V Shader Program](https://github.com/Rabbid76/graphics-snippets/blob/master/example/python/dsa_spirv_cube/example_python_dsa_spirv.md)
 
-[OpenGL 4.6, Python OpenGL 4.6, GLM navigation](https://github.com/Rabbid76/graphics-snippets/blob/master/example/python/navigation_glm/example_python_navigation_glm.md)
+[![](example/python/navigation_glm/image/cube_glut_glm_navigate.gif) OpenGL 4.6, Python OpenGL 4.6, GLM navigation](https://github.com/Rabbid76/graphics-snippets/blob/master/example/python/navigation_glm/example_python_navigation_glm.md)
+
+[![](example/python/text_freetype/image/free_type_text.png) OpenGL 4.6, Python OpenGL 4.6, freetype text](https://github.com/Rabbid76/graphics-snippets/blob/master/example/python/text_freetype/freetype_text.md)
 
 ---
 
@@ -146,7 +149,9 @@
 
 ### StackOverflow examples
 
-[Dashed line shader](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/dashed_line_shader.md)
+[![](documentation/image/dashed_cube.gif) Dashed line shader](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/dashed_line_shader.md)
+
+[![](documentation/image/thick_line_2.png) Dashed line shader](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/thick_line_shader.md)
 
 ---
 

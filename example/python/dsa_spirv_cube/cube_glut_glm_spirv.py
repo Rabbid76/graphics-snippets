@@ -268,11 +268,13 @@ class GL_MeshCube(GL_Mesh):
 
         vertex_attributes = np.array(attr_array, dtype=np.float32)
 
-        self.__vbo = np.empty(1, dtype=np.uint32)
-        glCreateBuffers(len(self.__vbo), self.__vbo)
+        temp_vbo = np.empty(1, dtype=np.uint32)
+        glCreateBuffers(len(temp_vbo), temp_vbo)
+        self.__vbo = temp_vbo[0]
 
-        vao = np.empty(1, dtype=np.uint32)
-        glCreateVertexArrays(len(vao), vao)
+        temp_vao = np.empty(1, dtype=np.uint32)
+        glCreateVertexArrays(len(temp_vao), temp_vao)
+        vao = temp_vao[0]
 
         dynamic_buffer = False
         code = 0 if not dynamic_buffer else GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT| GL_MAP_PERSISTENT_BIT
@@ -412,13 +414,24 @@ class GL_Window:
             for j in range(4):
                 buffer_data
 
-        self.__mvp_ssbo = np.empty(1, dtype=np.uint32)
-        glCreateBuffers(len(self.__mvp_ssbo), self.__mvp_ssbo)
+        temp_ssbo = np.empty(1, dtype=np.uint32)
+        glCreateBuffers(len(temp_ssbo), temp_ssbo)
+        self.__mvp_ssbo = temp_ssbo[0]
         dynamic_mvp_data = True
         code = 0 if not dynamic_mvp_data else GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT| GL_MAP_PERSISTENT_BIT
         glNamedBufferStorage(self.__mvp_ssbo, 3*16*SIZEOF_FLAOT32, None, code)
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, self.__mvp_ssbo)
 
+        ssbo_buffer = np.empty([16*3], dtype=np.float32)
+        #modelbuffer = np.frombuffer(glm.value_ptr(self.__model), dtype=float)
+        #viewbuffer  = np.frombuffer(glm.value_ptr(self.__view), dtype=float)
+        #projbuffer  = np.frombuffer(glm.value_ptr(self.__proj), dtype=float)
+
+        #glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0,                      glm.sizeof(glm.mat4), modelbuffer) 
+        #glBufferSubData(GL_SHADER_STORAGE_BUFFER, 1*glm.sizeof(glm.mat4), glm.sizeof(glm.mat4), viewbuffer) 
+        #glBufferSubData(GL_SHADER_STORAGE_BUFFER, 2*glm.sizeof(glm.mat4), glm.sizeof(glm.mat4), projbuffer) 
+        #np.put(ssbo_buffer, [i for i in range(16)], glm.value_ptr(self.__model))
+     
         glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0,                      glm.sizeof(glm.mat4), glm.value_ptr(self.__model)) 
         glBufferSubData(GL_SHADER_STORAGE_BUFFER, 1*glm.sizeof(glm.mat4), glm.sizeof(glm.mat4), glm.value_ptr(self.__view)) 
         glBufferSubData(GL_SHADER_STORAGE_BUFFER, 2*glm.sizeof(glm.mat4), glm.sizeof(glm.mat4), glm.value_ptr(self.__proj)) 
@@ -428,8 +441,9 @@ class GL_Window:
         light_data = [-1.0, -0.5, -2.0, 0.0, 0.2, 0.8, 0.8, 10.0]
         light_data_buffer = np.array( light_data, dtype=np.float32 )
 
-        self.__light_ssbo = np.empty(1, dtype=np.uint32)
-        glCreateBuffers(len(self.__light_ssbo), self.__light_ssbo)
+        temp_ssbo = np.empty(1, dtype=np.uint32)
+        glCreateBuffers(len(temp_ssbo), temp_ssbo)
+        self.__light_ssbo = temp_ssbo[0]
         dynamic_light_data = True
         code = 0 if not dynamic_light_data else GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT| GL_MAP_PERSISTENT_BIT
         glNamedBufferStorage(self.__light_ssbo, light_data_buffer.nbytes, light_data_buffer, code)
@@ -487,6 +501,6 @@ class GL_Window:
 
         self.__cube.Draw()
 
-#window = MyWindow(600, 400)
-window = GL_Window(800, 600)
+window = GL_Window(300, 200)
+#window = GL_Window(800, 600)
 window.Run()

@@ -13,6 +13,7 @@ print( 'changed current working directory: {}'.format( str(baseWDir) ) )
 print ( '' )
 
 import math
+import ctypes
 from time import time
 import numpy as np
 
@@ -268,11 +269,13 @@ class GL_MeshCube(GL_Mesh):
 
         vertex_attributes = np.array(attr_array, dtype=np.float32)
 
-        self.__vbo = np.empty(1, dtype=np.uint32)
-        glCreateBuffers(len(self.__vbo), self.__vbo)
+        temp_vbo = np.empty(1, dtype=np.uint32)
+        glCreateBuffers(len(temp_vbo), temp_vbo)
+        self.__vbo = temp_vbo[0]
 
-        vao = np.empty(1, dtype=np.uint32)
-        glCreateVertexArrays(len(vao), vao)
+        temp_vao = np.empty(1, dtype=np.uint32)
+        glCreateVertexArrays(len(temp_vao), temp_vao)
+        vao = temp_vao[0]
 
         dynamic_buffer = False
         code = 0 if not dynamic_buffer else GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT| GL_MAP_PERSISTENT_BIT
@@ -325,9 +328,9 @@ class CNavigationController:
 
     def WindowMat(self):
         vp_rect = self.VpRect()
-        inv_wnd = glm.translate(glm.mat4(1), glm.vec3(-1, -1, 0))
-        inv_wnd = glm.scale(inv_wnd, glm.vec3(2/vp_rect[2], 2/vp_rect[3], 1))
-        inv_wnd = glm.translate(inv_wnd, glm.vec3(-vp_rect[0], -vp_rect[1], 0))
+        inv_wnd = glm.translate(glm.mat4(1), glm.vec3(-1, -1, -1))
+        inv_wnd = glm.scale(inv_wnd, glm.vec3(2/vp_rect[2], 2/vp_rect[3], 2))
+        inv_wnd = glm.translate(inv_wnd, glm.vec3(vp_rect[0], vp_rect[1], 0))
         return glm.inverse(inv_wnd), inv_wnd
 
     def VpRect(self):
@@ -341,22 +344,20 @@ class CNavigationController:
 
     def StartPan(self, cursor_pos):
         self.__pan = True
-        self.__pan_start = glm.vec3(*cursor_pos, self.Depth(cursor_pos)*2-1)
+        self.__pan_start = glm.vec3(*cursor_pos, self.Depth(cursor_pos))
         
     def EndPan(self, cursor_pos):
         self.__pan = False
 
     def StartOrbit(self, cursor_pos, mode = ORBIT):
         self.__orbit = mode if mode >= self.ORBIT and mode <= self.ROTATE else self.ORBIT
-        self.__orbit_start = glm.vec3(*cursor_pos, self.Depth(cursor_pos)*2-1)
+        self.__orbit_start = glm.vec3(*cursor_pos, self.Depth(cursor_pos))
         self.__pivot_world = self.PivotWorld(cursor_pos)
         
     def EndOrbit(self, cursor_pos):
         self.__orbit = self.OFF
 
     def MoveOnLineOfSight(self, cursor_pos, delta):
-
-        # TODO $$$ algorithm without glm.unProject
 
         # get viewport rectangle
         #vp_rect = self.VpRect()
@@ -366,13 +367,13 @@ class CNavigationController:
         view, inv_view = self.ViewMat()
         wnd,  inv_wnd  = self.WindowMat() 
 
-        # get world space postion on view ray
+        # get world space position on view ray
         pt_wnd     = glm.vec3(*cursor_pos, 1.0)
         #pt_world  = glm.unProject(pt_wnd, view, proj, vp_rect)
         pt_h_world = inv_view * inv_proj * inv_wnd * glm.vec4(*pt_wnd, 1)
         pt_world   = glm.vec3(pt_h_world) / pt_h_world.w
          
-        # get view postion
+        # get view position
         eye  = glm.vec3(inv_view[3])
         
         # get "zoom" direction and amount
@@ -389,7 +390,7 @@ class CNavigationController:
         
         view_changed = False 
 
-        # get view matrix and  vieport rectangle
+        # get view matrix and  viewport rectangle
         view, inv_view = self.ViewMat()
         view_rect      = self.VpRect()
 
@@ -404,7 +405,7 @@ class CNavigationController:
             proj, inv_proj = self.ProjectionMat()
             wnd,  inv_wnd  = self.WindowMat() 
 
-            # calcaulate drag start and world coordinates
+            # calculate drag start and world coordinates
             pt_h_world = [inv_view * inv_proj * inv_wnd * glm.vec4(*pt, 1) for pt in [wnd_from, wnd_to]]
             pt_world   = [glm.vec3(pt_h) / pt_h.w for pt_h in pt_h_world]
            
@@ -427,7 +428,7 @@ class CNavigationController:
             pivot     = glm.vec3(view * glm.vec4(*self.__pivot_world, 1))
             orbit_dir = wnd_to - wnd_from 
             axis  = glm.vec3(-orbit_dir.y, orbit_dir.x, 0)
-            angle = glm.length(glm.vec2(orbit_dir.x/view_rect[2], orbit_dir.y/view_rect[3])) * math.pi
+            angle = glm.length(glm.vec2(orbit_dir.x/(view_rect[2]-view_rect[0]), orbit_dir.y/(view_rect[3]-view_rect[1]))) * math.pi
 
             # calculate the rotation matrix and the rotation around the pivot 
             rot_mat   = glm.rotate(glm.mat4(1), angle, axis)
@@ -461,7 +462,7 @@ class CNavigationController:
             rot_pivot_x = glm.mat4(1)
             if glm.length(orbit_vec_x) > 0.5: 
                 axis_x      = glm.vec3(-1, 0, 0)
-                angle_x     = glm.dot(orbit_dir_x, glm.vec2(orbit_vec_x.x/view_rect[2], orbit_vec_x.y/view_rect[3])) * math.pi
+                angle_x     = glm.dot(orbit_dir_x, glm.vec2(orbit_vec_x.x/(view_rect[2]-view_rect[0]), orbit_vec_x.y/(view_rect[3]-view_rect[1]))) * math.pi
                 rot_mat_x   = glm.rotate(glm.mat4(1), angle_x, axis_x)
                 rot_pivot_x = glm.translate(glm.mat4(1), pivot_view) * rot_mat_x * glm.translate(glm.mat4(1), -pivot_view)
             
@@ -469,7 +470,7 @@ class CNavigationController:
             rot_pivot_up = glm.mat4(1)
             if glm.length(orbit_vec_up) > 0.5: 
                 axis_up      = glm.vec3(0, 0, 1)
-                angle_up     = glm.dot(orbit_dir_up, glm.vec2(orbit_vec_up.x/view_rect[2], orbit_vec_up.y/view_rect[3])) * math.pi
+                angle_up     = glm.dot(orbit_dir_up, glm.vec2(orbit_vec_up.x/(view_rect[2]-view_rect[0]), orbit_vec_up.y/(view_rect[3]-view_rect[1]))) * math.pi
                 rot_mat_up   = glm.rotate(glm.mat4(1), angle_up, axis_up)
                 rot_pivot_up = glm.translate(glm.mat4(1), self.__pivot_world) * rot_mat_up * glm.translate(glm.mat4(1), -self.__pivot_world)
             
@@ -567,8 +568,8 @@ class GL_Window:
         elif button == GLUT_RIGHT_BUTTON and state == GLUT_UP:
             self.__navigate_control.EndPan(wnd_pos)
         if button == GLUT_LEFT_BUTTON and state == GLUT_DOWN:
-            self.__navigate_control.StartOrbit(wnd_pos, self.__navigate_control.ORBIT)
-            #self.__navigate_control.StartOrbit(wnd_pos, self.__navigate_control.ROTATE)
+            #self.__navigate_control.StartOrbit(wnd_pos, self.__navigate_control.ORBIT)
+            self.__navigate_control.StartOrbit(wnd_pos, self.__navigate_control.ROTATE)
         elif button == GLUT_LEFT_BUTTON and state == GLUT_UP:
             self.__navigate_control.EndOrbit(wnd_pos)
 
@@ -632,16 +633,24 @@ class GL_Window:
             for j in range(4):
                 buffer_data
 
-        self.__mvp_ssbo = np.empty(1, dtype=np.uint32)
-        glCreateBuffers(len(self.__mvp_ssbo), self.__mvp_ssbo)
+        temp_ssbo = np.empty(1, dtype=np.uint32)
+        glCreateBuffers(len(temp_ssbo), temp_ssbo)
+        self.__mvp_ssbo = temp_ssbo[0]
         dynamic_mvp_data = True
         code = 0 if not dynamic_mvp_data else GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT| GL_MAP_PERSISTENT_BIT
-        glNamedBufferStorage(self.__mvp_ssbo, 3*16*SIZEOF_FLAOT32, None, code)
+        
+        buffer_data = np.empty([3, 4, 4], dtype=np.float32)
+        buffer_data[0] = self.__model
+        buffer_data[1] = self.__view
+        buffer_data[2] = self.__proj
+        buffer_size = buffer_data.size * buffer_data.itemsize
+        
+        glNamedBufferStorage(self.__mvp_ssbo, 3*16*SIZEOF_FLAOT32, buffer_data, code)
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, self.__mvp_ssbo)
 
-        glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0,                      glm.sizeof(glm.mat4), glm.value_ptr(self.__model)) 
-        glBufferSubData(GL_SHADER_STORAGE_BUFFER, 1*glm.sizeof(glm.mat4), glm.sizeof(glm.mat4), glm.value_ptr(self.__view)) 
-        glBufferSubData(GL_SHADER_STORAGE_BUFFER, 2*glm.sizeof(glm.mat4), glm.sizeof(glm.mat4), glm.value_ptr(self.__proj)) 
+        #glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0,                      glm.sizeof(glm.mat4), glm.value_ptr(self.__model)) 
+        #glBufferSubData(GL_SHADER_STORAGE_BUFFER, 1*glm.sizeof(glm.mat4), glm.sizeof(glm.mat4), glm.value_ptr(self.__view)) 
+        #glBufferSubData(GL_SHADER_STORAGE_BUFFER, 2*glm.sizeof(glm.mat4), glm.sizeof(glm.mat4), glm.value_ptr(self.__proj)) 
 
         self.__update_view = False
 
@@ -650,8 +659,9 @@ class GL_Window:
         light_data = [-1.0, -0.5, -2.0, 0.0, 0.2, 0.8, 0.8, 10.0]
         light_data_buffer = np.array( light_data, dtype=np.float32 )
 
-        self.__light_ssbo = np.empty(1, dtype=np.uint32)
-        glCreateBuffers(len(self.__light_ssbo), self.__light_ssbo)
+        temp_ssbo = np.empty(1, dtype=np.uint32)
+        glCreateBuffers(len(temp_ssbo), temp_ssbo)
+        self.__light_ssbo = temp_ssbo[0]
         dynamic_light_data = True
         code = 0 if not dynamic_light_data else GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT| GL_MAP_PERSISTENT_BIT
         glNamedBufferStorage(self.__light_ssbo, light_data_buffer.nbytes, light_data_buffer, code)
@@ -711,6 +721,6 @@ class GL_Window:
 
         self.__cube.Draw()
 
-#window = MyWindow(600, 400)
+#window = GL_Window(300, 200)
 window = GL_Window(800, 600)
 window.Run()

@@ -20,6 +20,8 @@
 
 # Python OpenGL 4.6, Direct state access (DSA), Spir-V shader program
 
+![](image/cube_glut_glm_spirv.gif)
+
 ## Overview
 
 ### Debug output

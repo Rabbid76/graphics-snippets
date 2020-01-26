@@ -26,6 +26,8 @@
 
 # Python OpenGL 4.6, GLM navigation
 
+![](image/cube_glut_glm_navigate.gif)
+
 ## TODO
 
 - gird 
