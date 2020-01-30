@@ -1,0 +1,140 @@
+<html>
+
+<head>
+<title>Three.js example</title>
+<style>
+
+#ref-link { position : absolute; bottom : 0; left : 0; }
+
+</style>
+
+</head>
+
+<body>
+<!--script src="https://threejs.org/build/three.min.js"></script-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.min.js"></script>
+<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+
+<div id="container">
+    <canvas id="my_canvas"> </canvas>
+</div>
+
+<a id="ref-link" href="https://threejs.org/">
+Three.js example  
+</a>
+
+<script>
+(function onLoad() {
+    let camera, renderer, scene, object, orbitControls;
+    let eye = -4, frustum = {fov_y: Math.PI/5, aspect: 4/3, near: 0, far: 5 };
+    
+    init();
+    render();
+
+    // init scene
+    function init() {
+        renderer = new THREE.WebGLRenderer({canvas: my_canvas, antialias: true, alpha: true});
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.localClippingEnabled = true;
+
+        camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 100);
+        camera.position.set(-5, 2, 10);
+        camera.lookAt( 0, 0, 0 );
+
+        orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
+
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xffffff);
+        
+        window.onresize = () => {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+        }
+        
+        scene.add(new THREE.AmbientLight(0x404040));
+        scene.add((()=>{let l = new THREE.DirectionalLight( 0xffffff, 0.5 ); l.position.set(1,2,-1.5); return l;})());
+
+        scene.add(create_frustum(eye, frustum));
+        scene.add(create_camera(eye, 1));
+
+        let nearClipPlane = new THREE.Plane(new THREE.Vector3(1, 0, 0), -frustum.near);
+        let farClipPlane = new THREE.Plane(new THREE.Vector3(-1, 0, 0), frustum.far);
+
+        object = new THREE.Mesh(
+            new THREE.SphereGeometry( 1, 32, 32 ),
+            new THREE.MeshPhongMaterial({color:'#b090ff', side: THREE.DoubleSide, clippingPlanes: [nearClipPlane, farClipPlane]}));
+        scene.add(object);
+    }
+
+    // camera
+    function create_camera(eye_x, scale) {
+        let camera_grp = new THREE.Group();
+
+        camera_grp.add( new THREE.Mesh( 
+            new THREE.ConeGeometry(0.5*scale, scale, 32, 32, true).rotateZ(Math.PI / 2).translate(eye_x-scale/2, 0, 0),      
+            new THREE.MeshBasicMaterial( {color: '#404040', side: THREE.DoubleSide} ) ) );
+        camera_grp.add( new THREE.Mesh( 
+            new THREE.CircleGeometry(0.45*scale, 32).rotateY(Math.PI / 2).translate(eye_x-scale*0.1, 0, 0),      
+            new THREE.MeshBasicMaterial( {color: '#8080ff', side: THREE.DoubleSide} ) ) );
+
+        return camera_grp;
+    }
+
+    // create frustum
+    function create_frustum(eye_x, frustum) {
+        
+        let frustum_grp = new THREE.Group();
+        let h_scale = Math.tan(frustum.fov_y/2)*2;
+        let w_scale = h_scale * frustum.aspect;
+        let hf = (frustum.far - eye_x) * h_scale, wf = (frustum.far - eye_x) * w_scale;
+        let hn = (frustum.near - eye_x) * h_scale, wn = (frustum.near - eye_x) * w_scale;
+        
+        // near plane
+        frustum_grp.add( create_plane(frustum.near, wn, hn, 0x00ff00) );
+
+        // far plane
+        frustum_grp.add( create_plane(frustum.far, wf, hf, 0xff0000) );
+
+        // pyramid
+        frustum_grp.add( new THREE.LineSegments( 
+            ((w, h)=>{let g = new THREE.Geometry(); g.vertices.push(
+                new THREE.Vector3(eye_x, 0, 0), new THREE.Vector3(frustum.far, -w, -h),
+                new THREE.Vector3(eye_x, 0, 0), new THREE.Vector3(frustum.far, w, -h),
+                new THREE.Vector3(eye_x, 0, 0), new THREE.Vector3(frustum.far, w, h),
+                new THREE.Vector3(eye_x, 0, 0), new THREE.Vector3(frustum.far, -w, h) ); 
+                return g; })(hf / 2, wf / 2),
+            new THREE.LineBasicMaterial({color: 0x000000} ) ) );
+
+        return frustum_grp;
+    }
+
+    // create frustum
+    function create_plane(x, w, h, color) {
+        let plane_grp = new THREE.Group();
+        let rect = (x, w, h) => { return [new THREE.Vector3(x, -w, -h), new THREE.Vector3(x, w, -h), new THREE.Vector3(x, w, h), new THREE.Vector3(x, -w, h)]; }
+        plane_grp.add( new THREE.Mesh( 
+            new THREE.PlaneGeometry( w, h, 1 ).rotateY(Math.PI / 2).translate(x, 0, 0),      
+            new THREE.MeshBasicMaterial( {color: color, opacity: 0.1, transparent: true, side: THREE.DoubleSide} ) ) );
+        plane_grp.add( new THREE.LineLoop( 
+            (()=>{let g = new THREE.Geometry(); g.vertices.push(...rect(x, h/2, w/2)); return g; })(),
+            new THREE.LineBasicMaterial({color: color} ) ) );
+        return plane_grp;
+    }
+
+    // update objects and render scene
+    function render(delta_t_ms) {
+        requestAnimationFrame(render);
+        orbitControls.update();
+
+        let center = (frustum.near + frustum.far) / 2;
+        let len = Math.abs(frustum.far - frustum.near) + 1;
+        object.position.x = Math.sin(delta_t_ms / 1000) * len / 2 + center;
+        renderer.render(scene, camera);
+    }
+})();
+</script>
+
+</body>
+</html>

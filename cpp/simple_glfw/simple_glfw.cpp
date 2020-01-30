@@ -144,8 +144,7 @@ void CWindow_Glfw::Init( int width, int height, int multisampling, bool doubleBu
     glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, 6 );
     //glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE );
     glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE );
-    glfwWindowHint( GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE );
-
+    
     glfwWindowHint( GLFW_OPENGL_DEBUG_CONTEXT, debugcontext ? GLFW_TRUE : GLFW_FALSE );
 
     //GLFW_CONTEXT_ROBUSTNESS 

@@ -770,6 +770,12 @@ Note, if a texture is not mipmap complete, then the return value of a texel fetc
 
 ---
 
+[OpenGL 4.6 API Core Profile Specification, 11.1.3.5 Texture Access](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf#page=418&zoom=100,168,517)  
+
+> If a sampler is used in a shader and the sampler’s associated texture is not complete, as defined in section 8.17, (0.0, 0.0, 0.0, 1.0), in floating-point, will be returned for a non-shadow sampler and 0 for a shadow sampler
+
+---
+
 ## Texture format and texture swizzle
 
 [Image Format](https://www.khronos.org/opengl/wiki/Image_Format)  
