@@ -125,7 +125,7 @@
 
 ## THREE.js
 
-[![](documentation/image/perspective_view_frustum.gif) Perspective Viewing Frustum](https://rabbid76.github.io/graphics-snippetsexample/threejs/three_perspective.html)
+[![](documentation/image/perspective_view_frustum.gif) Perspective Viewing Frustum](https://rabbid76.github.io/graphics-snippets/example/threejs/three_perspective.html)
 
 ### StackOverflow examples - three.js
 
