@@ -1,0 +1,171 @@
+<html>
+
+<head>
+<title>Three.js example</title>
+<style>
+
+#ref-link { position : absolute; bottom : 0; left : 0; }
+
+</style>
+
+</head>
+
+<body>
+<!--script src="https://threejs.org/build/three.min.js"></script-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.min.js"></script>
+<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+
+<div id="container">
+    <canvas id="my_canvas"> </canvas>
+</div>
+
+<div id="ref-link">
+<a href="https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/model_view_projection_depth.md">
+Model View Projection and Depth
+</a>
+</div>
+
+<script>
+(function onLoad() {
+    let camera, renderer, scene, main_grp, object, orbitControls;
+    let shift = 0;
+    let eye = -4, frustum = {fov_y: Math.PI/5, aspect: 4/3, near: 0+shift, far: 5 };
+    
+    init();
+    render();
+
+    // init scene
+    function init() {
+        renderer = new THREE.WebGLRenderer({canvas: my_canvas, antialias: true, alpha: true});
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.localClippingEnabled = true;
+
+        camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 100);
+        camera.position.set(-7, 4, 15);
+        camera.position.set(-8, 4, 17);
+        camera.lookAt( 0, 0, 0 );
+
+        orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
+
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xffffff);
+        
+        window.onresize = () => {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+        }
+        
+        scene.add(new THREE.AmbientLight(0x404040));
+        scene.add((()=>{let l = new THREE.DirectionalLight( 0xffffff, 0.5 ); l.position.set(1,1,1.5); return l;})());
+        scene.add((()=>{let l = new THREE.DirectionalLight( 0xffffff, 0.5 ); l.position.set(-1,1,1.5); return l;})());
+
+        main_grp = new THREE.Group();
+        main_grp.add(create_frustum(eye, frustum));
+        main_grp.add(create_camera(eye, 1));
+
+        let nearClipPlane = new THREE.Plane(new THREE.Vector3(1, 0, 0), -frustum.near);
+        let farClipPlane = new THREE.Plane(new THREE.Vector3(-1, 0, 0), frustum.far);
+
+        object = new THREE.Mesh(
+            new THREE.SphereBufferGeometry( 1, 32, 32 ),
+            new THREE.MeshPhongMaterial({color:'#b090ff', side: THREE.DoubleSide, clippingPlanes: [nearClipPlane, farClipPlane]}));
+        main_grp.add(object);
+        
+        scene.add(main_grp);
+    }
+
+    // create frustum
+    function create_frustum(eye_x, frustum) {
+        
+        let frustum_grp = new THREE.Group();
+        let h_scale = Math.tan(frustum.fov_y/2)*2;
+        let w_scale = h_scale * frustum.aspect;
+        let hf = (frustum.far - eye_x) * h_scale, wf = (frustum.far - eye_x) * w_scale;
+        let hn = (frustum.near - eye_x) * h_scale, wn = (frustum.near - eye_x) * w_scale;
+        
+        // near plane
+        frustum_grp.add( create_plane(frustum.near, wn, hn, 0x00ff00) );
+
+        // far plane
+        frustum_grp.add( create_plane(frustum.far, wf, hf, 0xff0000) );
+
+        // pyramid
+        frustum_grp.add( new THREE.LineSegments( 
+            new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute( new Float32Array(
+                [eye_x, 0, 0, frustum.far, -hf/2, -wf/2, eye_x, 0, 0, frustum.far, hf/2, -wf/2,
+                 eye_x, 0, 0, frustum.far, hf/2, wf/2, eye_x, 0, 0, frustum.far, -hf/2, wf/2 ]), 3) ),
+            new THREE.LineBasicMaterial({color: 0x000000} ) ) );
+
+        return frustum_grp;
+    }
+
+    // create plane
+    function create_plane(x, w, h, color) {
+        let plane_grp = new THREE.Group();
+        let rect = (x, w, h) => { return new Float32Array([x, -w, -h, x, w, -h, x, w, h, x, -w, h]); }
+        plane_grp.add( new THREE.Mesh( 
+            new THREE.PlaneBufferGeometry( w, h, 1 ).rotateY(Math.PI / 2).translate(x, 0, 0),      
+            new THREE.MeshBasicMaterial( {color: color, opacity: 0.1, transparent: true, side: THREE.DoubleSide} ) ) );
+        plane_grp.add( new THREE.LineLoop( 
+            new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute( rect(x, h/2, w/2), 3)),
+            new THREE.LineBasicMaterial({color: color} ) ) );
+        return plane_grp;
+    }
+
+    // camera
+    function create_camera(eye_x, scale) {
+        let camera_grp = new THREE.Group();
+        let camera_mtl = new THREE.MeshPhongMaterial( {color: '#404040', side: THREE.DoubleSide} );
+
+        camera_grp.add( new THREE.Mesh( 
+            new THREE.ConeBufferGeometry(0.5*scale, scale, 32, 32, true).rotateZ(Math.PI / 2).translate(eye_x-scale/2, 0, 0),      
+            camera_mtl) );
+        camera_grp.add( new THREE.Mesh( 
+            new THREE.CircleBufferGeometry(0.45*scale, 32).rotateY(Math.PI / 2).translate(eye_x-scale*0.1, 0, 0),      
+            new THREE.MeshPhongMaterial( {color: '#8080ff', side: THREE.DoubleSide} ) ) ); 
+        camera_grp.add(new THREE.Mesh( 
+            ((w, h, d) => { return create_box(w, h, d, 0.2, 10).translate(eye_x-scale/2-w/2, 0, 0); })(1.5*scale, scale, scale),
+             camera_mtl ));
+
+        return camera_grp;
+    }
+
+    // create box with round edges
+    function create_box( width, height, depth, radius0, smoothness ) {
+        let shape = new THREE.Shape();
+        let eps = 0.00001;
+        let radius = radius0 - eps;
+        shape.absarc( eps, eps, eps, -Math.PI / 2, -Math.PI, true );
+        shape.absarc( eps, height -  radius * 2, eps, Math.PI, Math.PI / 2, true );
+        shape.absarc( width - radius * 2, height -  radius * 2, eps, Math.PI / 2, 0, true );
+        shape.absarc( width - radius * 2, eps, eps, 0, -Math.PI / 2, true );
+        let geometry = new THREE.ExtrudeBufferGeometry( shape, {
+            amount: depth - radius0 * 2,
+            bevelEnabled: true,
+            bevelSegments: smoothness * 2,
+            steps: 1,
+            bevelSize: radius,
+            bevelThickness: radius0,
+            curveSegments: smoothness
+        });        
+        geometry.center();
+        return geometry;
+    }
+
+    // update objects and render scene
+    function render(delta_t_ms) {
+        requestAnimationFrame(render);
+        orbitControls.update();
+
+        let center = (frustum.near + frustum.far) / 2;
+        let len = Math.abs(frustum.far - frustum.near) + 1;
+        object.position.x = Math.sin(delta_t_ms / 1000) * len / 2 + center;
+        renderer.render(scene, camera);
+    }
+})();
+</script>
+
+</body>
+</html>

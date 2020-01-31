@@ -281,6 +281,10 @@ and that can never be fulfilled.
 
 The objects between the near plane and the far plane of the camera frustum are mapped to the range (-1, 1) of the NDC.
 
+The viewing frustum is limited by the near and far plane. The geometry is clipped at the 6 planes of the frustum.
+
+![perspective viewing frustum](image/perspective_view_frustum.gif)
+
 ---
 
 ## Depth
