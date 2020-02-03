@@ -9,7 +9,7 @@
     <GlfwDir>..\..\_cpp_extern\glfw-3.2.1.bin.WIN64\</GlfwDir>
     <VulkanDir>..\..\_cpp_extern\VulkanSDK\1.0.61.1\</VulkanDir>
     <FreetypeDir>..\..\_cpp_extern\freetype-2.9\</FreetypeDir>
-    <StbDir>..\..\stb\</StbDir>
+    <StbDir>..\..\_cpp_extern\stb\</StbDir>
   </PropertyGroup>
   <PropertyGroup />
   <ItemDefinitionGroup />
