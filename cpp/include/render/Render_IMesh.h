@@ -285,6 +285,8 @@ public:
 
   virtual bool                         Smooth( void ) const { return false; } //!< Additional attribute, which indicates that the mesh is completely smooth
 
+  virtual size_t NoOfVertices( void ) const { return Vertices().NoOfAttributes(); } //!< number of vertex coordinates
+
   bool ValidFaceNormals( void ) const { auto kind = NormalKind(); return kind == TNormalKind::face || kind == TNormalKind::both; }
   bool ValidNormals( void )     const { auto kind = NormalKind(); return kind == TNormalKind::vertex || kind == TNormalKind::both; }                        
 };
