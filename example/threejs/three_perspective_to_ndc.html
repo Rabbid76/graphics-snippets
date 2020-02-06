@@ -33,7 +33,7 @@ Model View Projection and Depth
 
 <script>
 (function onLoad() {
-    let camera, renderer, scene, main_grp, object, orbitControls;
+    let renderer, main_grp, objectFrustum, objectNDC, views;
     let shift = 0;
     let eye = -4, frustum = {fov_y: Math.PI/5, aspect: 4/3, near: 0+shift, far: 5 };
     
@@ -47,24 +47,20 @@ Model View Projection and Depth
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.localClippingEnabled = true;
 
-        camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 100);
-        camera.position.set(3, 5, 17);
-        camera.lookAt( 0, 0, 0 );
+        let cameraNDC = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 100);
+        cameraNDC.position.set(3, 5, 17);
+        cameraNDC.lookAt( 0, 0, 0 );
+        let cameraFrustum = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 100);
+        cameraFrustum.position.set(3, 5, 17);
+        cameraFrustum.lookAt( 0, 0, 0 );
 
-        orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
+        // scene : perspective frustum
 
-        scene = new THREE.Scene();
-        scene.background = new THREE.Color(0xffffff);
-        
-        window.onresize = () => {
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-        }
-        
-        scene.add(new THREE.AmbientLight(0x404040));
-        scene.add((()=>{let l = new THREE.DirectionalLight( 0xffffff, 0.5 ); l.position.set(1,1,1.5); return l;})());
-        scene.add((()=>{let l = new THREE.DirectionalLight( 0xffffff, 0.5 ); l.position.set(-1,1,1.5); return l;})());
+        let sceneFrustum = new THREE.Scene();
+        sceneFrustum.background = new THREE.Color(0xffffff);  
+        sceneFrustum.add(new THREE.AmbientLight(0x404040));
+        sceneFrustum.add((()=>{let l = new THREE.DirectionalLight( 0xffffff, 0.5 ); l.position.set(1,1,1.5); return l;})());
+        sceneFrustum.add((()=>{let l = new THREE.DirectionalLight( 0xffffff, 0.5 ); l.position.set(-1,1,1.5); return l;})());
 
         main_grp = new THREE.Group();
         main_grp.add(create_frustum(eye, frustum));
@@ -73,12 +69,51 @@ Model View Projection and Depth
         let nearClipPlane = new THREE.Plane(new THREE.Vector3(1, 0, 0), -frustum.near);
         let farClipPlane = new THREE.Plane(new THREE.Vector3(-1, 0, 0), frustum.far);
 
-        object = new THREE.Mesh(
-            new THREE.SphereBufferGeometry( 1, 32, 32 ),
-            new THREE.MeshPhongMaterial({color:'#b090ff', side: THREE.DoubleSide, clippingPlanes: [nearClipPlane, farClipPlane]}));
-        main_grp.add(object);
+        objectFrustum = new THREE.Mesh(
+            create_box(1, 1, 1, 0.2, 10),
+            new THREE.MeshPhongMaterial({color:'#8080ff', side: THREE.DoubleSide, clippingPlanes: [nearClipPlane, farClipPlane]}));
+        main_grp.add(objectFrustum);
+      
+        sceneFrustum.add(main_grp);
+
+        // scene : NDC
+
+        let sceneNDC = new THREE.Scene();
+        sceneNDC.background = new THREE.Color(0xffffff);  
         
-        scene.add(main_grp);
+        objectNDC = new THREE.Mesh(
+            create_box(1, 1, 1, 0.2, 10),
+            new THREE.MeshBasicMaterial({color:'#8080ff', side: THREE.DoubleSide /*, clippingPlanes: [nearClipPlane, farClipPlane]*/}));
+        sceneNDC.add(objectNDC);
+
+        // views
+
+        views = [
+            {l: 0, b: 0, w: 0, h: 0, camera : cameraNDC, scene: sceneNDC, controls: new THREE.OrbitControls(cameraNDC, renderer.domElement) },
+            {l: 0, b: 0, w: 0, h: 0, camera : cameraFrustum, scene: sceneFrustum, controls: new THREE.OrbitControls(cameraFrustum, renderer.domElement) },
+        ];
+        update_view_size(window.innerWidth, window.innerHeight)
+
+        window.onresize = () => {
+            update_view_size(window.innerWidth, window.innerHeight)
+        }
+    }
+
+    function update_view_size(cx, cy) {
+        let set_view = (v, l, b, w, h) => {
+            v.l = l; v.b = b; v.w = w; v.h = h;
+            v.camera.aspect = w/h;
+            v.camera.updateProjectionMatrix();
+        }
+
+        renderer.setSize(cx, cy);
+        if (cx/2 >= cy) {
+            set_view(views[0], 0, 0, cx/2, cy);
+            set_view(views[1], cx/2, 0, cx/2, cy);
+        } else {
+            set_view(views[0], 0, 0, cx, cy/2);
+            set_view(views[1], 0, cy/2, cx, cy/2);
+        }
     }
 
     // create frustum
@@ -162,12 +197,23 @@ Model View Projection and Depth
     // update objects and render scene
     function render(delta_t_ms) {
         requestAnimationFrame(render);
-        orbitControls.update();
+        
+        views.forEach((v) => {
+           v.controls.update();
+        });
 
         let center = (frustum.near + frustum.far) / 2;
         let len = Math.abs(frustum.far - frustum.near) + 1;
-        object.position.x = Math.sin(delta_t_ms / 1000) * len / 2 + center;
-        renderer.render(scene, camera);
+        let x = Math.sin(delta_t_ms / 1000) * len / 2 + center;
+        objectFrustum.position.x = x;
+        objectNDC.position.x = x;
+
+        views.forEach((v) => {
+            renderer.setViewport( v.l, v.b, v.w, v.h );
+            renderer.setScissor( v.l, v.b, v.w, v.h );
+            renderer.setScissorTest( true );
+            renderer.render(v.scene, v.camera);
+        });
     }
 })();
 </script>

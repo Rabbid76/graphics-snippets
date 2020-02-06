@@ -277,8 +277,6 @@ and that can never be fulfilled.
 
 ### Perspective Clip Space
 
-![near far plane](image/perspective.png)
-
 The objects between the near plane and the far plane of the camera frustum are mapped to the range (-1, 1) of the NDC.
 
 The viewing frustum is limited by the near and far plane. The geometry is clipped at the 6 planes of the frustum.
@@ -334,7 +332,7 @@ z_ndc = z_eye * -2/(f-n) - (f+n)/(f-n)
 At Perspective Projection the projection matrix describes the mapping from 3D points in the world as they are seen from of a pinhole camera, to 2D points of the viewport.  
 The eye space coordinates in the camera frustum (a truncated pyramid) are mapped to a cube (the normalized device coordinates).
 
-![Perspective Projection](image/PerspectiveProjection.png)
+![near far plane](image/perspective.png)
 
 A perspective projection matrix can be defined by a **frustum**.  
 The distances `left`, `right`, `bottom` and `top`, are the distances from the center of the view to the side faces of the frustum, on the near plane. `near` and `far` specify the distances to the near and far plane of the frustum.
