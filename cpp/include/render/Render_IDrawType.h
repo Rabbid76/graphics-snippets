@@ -30,6 +30,8 @@
 #include <vector>
 #include <tuple>
 #include <algorithm>
+#include <memory>
+#include <cstring>
 
 
 //---------------------------------------------------------------------
@@ -690,9 +692,9 @@ Each structure member is stored in memory at its aligned offset. The members of 
 > 4. If the member is an array of scalars or vectors, the base alignment and array stride are set to match the base alignment of a single array element, according to rules (1), (2), and (3), and rounded up to the base alignment of a `vec4`.
 >    The array may have padding at the end; the base offset of the member following the array is rounded up to the next multiple of the base alignment.
 > 5. If the member is a column-major matrix with C columns and R rows, the matrix is stored identically to an array of C column vectors with R components each, according to rule (4).
-> 6. If the member is an array of S column-major matrices with C columns and R rows, the matrix is stored identically to a row of S × C column vectors with R components each, according to rule (4).
+> 6. If the member is an array of S column-major matrices with C columns and R rows, the matrix is stored identically to a row of S ï¿½ C column vectors with R components each, according to rule (4).
 > 7. If the member is a row-major matrix with C columns and R rows, the matrix is stored identically to an array of R row vectors with C components each, according to rule (4).
-> 8. If the member is an array of S row-major matrices with C columns and R rows, the matrix is stored identically to a row of S × R row vectors with C components each, according to rule (4).
+> 8. If the member is an array of S row-major matrices with C columns and R rows, the matrix is stored identically to a row of S ï¿½ R row vectors with C components each, according to rule (4).
 > 9. If the member is a structure, the base alignment of the structure is N, where N is the largest base alignment value of any of its members, and rounded up to the base alignment of a `vec4`.
 >    The individual members of this substructure are then assigned offsets by applying this set of rules recursively, where the base offset of the first member of the sub-structure is equal to the aligned offset of the structure.
 >    The structure may have padding at the end; the base offset of the member following the sub-structure is rounded up to the next multiple of the base alignment of the structure.

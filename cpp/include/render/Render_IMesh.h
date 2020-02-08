@@ -287,8 +287,8 @@ public:
 
   virtual size_t NoOfVertices( void ) const { return Vertices().NoOfAttributes(); } //!< number of vertex coordinates
 
-  bool ValidFaceNormals( void ) const { auto kind = NormalKind(); return kind == TNormalKind::face || kind == TNormalKind::both; }
-  bool ValidNormals( void )     const { auto kind = NormalKind(); return kind == TNormalKind::vertex || kind == TNormalKind::both; }                        
+  bool ValidFaceNormals( void ) const { auto kind = NormalKind(); return kind == TMeshNormalKind::face || kind == TMeshNormalKind::both; }
+  bool ValidNormals( void )     const { auto kind = NormalKind(); return kind == TMeshNormalKind::vertex || kind == TMeshNormalKind::both; }                        
 };
 
 template<typename T_DATA, typename T_INDEX>
