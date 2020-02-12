@@ -104,7 +104,7 @@ In general world coordinates and view coordinates are [Cartesian coordinates](ht
   
 The view coordinates system describes the direction and position from which the scene is looked at. The view matrix transforms from the world space to the view (eye) space.
 
-If the coordinate system of the view space is a [Right-handed](https://en.wikipedia.org/wiki/Right-hand_rule) system, where the X-axis points to the left and the Y-axis points up, then the Z-axis points out of the view (Note in a right hand system the Z-Axis is the cross product of the X-Axis and the Y-Axis).
+If the coordinate system of the view space is a [Right-handed](https://en.wikipedia.org/wiki/Right-hand_rule) system, where the X-axis points to the right and the Y-axis points up, then the Z-axis points out of the view (Note in a right hand system the Z-Axis is the cross product of the X-Axis and the Y-Axis).
 
 ![view coordinates](image/view_coordinates.png)
 
@@ -604,6 +604,27 @@ vec3 viewUpperRight  = viewUpperRightH.xyz / viewUpperRightH.w;
 ---
 
 ## Resources
+
+[Why is the z coordinate flipped after multiplying with a matrix in GLSL - OpenGL](https://stackoverflow.com/questions/60195019/why-is-the-z-coordinate-flipped-after-multiplying-with-a-matrix-in-glsl-opengl/60195132#60195132)  
+
+If you do not transform the vertex coordinates (or transform it by the [Identity matrix](https://en.wikipedia.org/wiki/Identity_matrix)), then you directly set the coordinates in normalized device space. The NDC is a unique cube, with the left, bottom, near of (-1, -1, -1) and the right, top, far of (1, 1, 1). That means the X-axis is to the right, the Y-axis is upwards and the Z-axis points into the view.  
+
+In common the OpenGL coordinate system is a [Right-handed](https://en.wikipedia.org/wiki/Right-hand_rule) system. In view space the X-axis points to the right and the Y-axis points up.  
+Since the Z-axis is the [Cross product](https://en.wikipedia.org/wiki/Cross_product) of the X-axis and the Y-axis, it points out of the viewport and appears to be inverted.  
+
+To compensate the difference in the direction of the Z-axis in view space in compare to normalized device space the Z-axis has to be inverted.  
+A typical OpenGL projection matrix (e.g. [`glm::ortho`](https://glm.g-truc.net/0.9.9/api/a00243.html), [`glm::perspective`](https://glm.g-truc.net/0.9.9/api/a00243.html#ga747c8cf99458663dd7ad1bb3a2f07787) or [`glm::frustum`](https://glm.g-truc.net/0.9.9/api/a00243.html#ga0bcd4542e0affc63a0b8c08fcb839ea9)) turns the right handed system to a left handed system and mirrors the Z-axis. 
+
+That means, if you use a (typical) projection matrix (and no other transformations), then the vertex coordinates are equal to the view space coordinates. The X-axis is to the right, the Y-axis is upwards and the Z-axis points out of the view.
+
+In simplified words, in normalized device space the camera points in +Z. In view space (before the transformation by a typical projection matrix) the camera points in -Z.
+
+---
+
+Note if you setup a [Viewing frustum](https://en.wikipedia.org/wiki/Viewing_frustum), then `0 < near` and `near < far`. Both conditions have to be fulfilled. The geometry has to be between the near and the far plane, else it is clipped. In common a view matrix is used to look at the scene from a certain point of view. The near and far plane of the viewing frustum are chosen in that way, that the geometry is in between.  
+Since the depth is not linear (see [How to render depth linearly in modern OpenGL with gl_FragCoord.z in fragment shader?](https://stackoverflow.com/questions/7777913/how-to-render-depth-linearly-in-modern-opengl-with-gl-fragcoord-z-in-fragment-sh/45710371#45710371)), the near plane should be placed as close as possible to the geometry. 
+
+---
 
 - [OpenGL - Mouse coordinates to Space coordinates](https://stackoverflow.com/questions/46749675/opengl-mouse-coordinates-to-space-coordinates/46752492#46752492)
 - [How to render depth linearly in modern OpenGL with gl_FragCoord.z in fragment shader?](https://stackoverflow.com/questions/7777913/how-to-render-depth-linearly-in-modern-opengl-with-gl-fragcoord-z-in-fragment-sh/45710371#45710371)
