@@ -1313,6 +1313,44 @@ Of course different shader programs can use the same binding points. But note th
 
 ---
 
+[binding buffers multiple times in openGL](https://stackoverflow.com/questions/60221462/binding-buffers-multiple-times-in-opengl/60222446#60222446)  
+
+[`glBindTexture`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glBindTexture.xhtml) binds a texture to specified target and the current texture unit. The current texture unit is set by [`glActiveTexture`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glActiveTexture.xhtml). The current texture unit is a global state, and `glBindTexture` considers that state.
+
+That meas when you do
+
+```cpp
+glBindTexture(GL_TEXTURE_2D, texture1);
+glBindTexture(GL_TEXTURE_2D, texture2);
+glActiveTexture(GL_TEXTURE0);
+glActiveTexture(GL_TEXTURE1); 
+``` 
+
+after that `texture2` is bound to the current texture unit (`GL_TEXTURE0` by default) and the current texture unit is `GL_TEXTURE1`. Note `texture1`  
+is just bound for a short moment, but the binding is lost, when `texture2` is bound.
+
+In compare, when you do
+
+```cpp
+glActiveTexture(GL_TEXTURE0);
+glBindTexture(GL_TEXTURE_2D, texture1);
+glActiveTexture(GL_TEXTURE1); 
+glBindTexture(GL_TEXTURE_2D, texture2);
+``` 
+
+The current texture unit is explicitly set to `GL_TEXTURE0` and `texture1` is bound to texture texture unit 0. After that the current texture unit is switched to `GL_TEXTURE1` and  `texture2` is bound to texture unit 1 (because it is current at this moment). 
+
+---
+
+Note, with the use of [Direct State Access](https://www.khronos.org/opengl/wiki/Direct_State_Access) and [`glBindTextureUnit`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glBindTextureUnit.xhtml) (since OpenGL 4.5) a texture can be bound to a texture unit directly. e.g.:
+
+```cpp
+glBindTextureUnit(GL_TEXTURE0, texture1);
+glBindTextureUnit(GL_TEXTURE1, texture2);
+```
+
+---
+
 ## Texture Coordinates
 
 [OpenGL 4.6 API core profile specification; 8.5. TEXTURE IMAGE SPECIFICATION; page 214](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf)
