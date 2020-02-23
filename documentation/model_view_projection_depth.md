@@ -152,7 +152,7 @@ See also:
 
 ## View
 
-On the viewport the X-axis points to the left, the Y-axis up and the Z-axis out of the view (Note in a right hand system the Z-Axis is the cross product of the X-Axis and the Y-Axis).
+On the viewport the X-axis points to the left, the Y-axis up and the Z-axis out of the view (Note in a c the Z-Axis is the cross product of the X-Axis and the Y-Axis).
 
 The code below defines a matrix that exactly encapsulates the steps necessary to calculate a look at the scene:
 
@@ -623,6 +623,18 @@ In simplified words, in normalized device space the camera points in +Z. In view
 
 Note if you setup a [Viewing frustum](https://en.wikipedia.org/wiki/Viewing_frustum), then `0 < near` and `near < far`. Both conditions have to be fulfilled. The geometry has to be between the near and the far plane, else it is clipped. In common a view matrix is used to look at the scene from a certain point of view. The near and far plane of the viewing frustum are chosen in that way, that the geometry is in between.  
 Since the depth is not linear (see [How to render depth linearly in modern OpenGL with gl_FragCoord.z in fragment shader?](https://stackoverflow.com/questions/7777913/how-to-render-depth-linearly-in-modern-opengl-with-gl-fragcoord-z-in-fragment-sh/45710371#45710371)), the near plane should be placed as close as possible to the geometry. 
+
+---
+
+[confusion on openGL's camera and camera space transformation](https://stackoverflow.com/questions/60362629/confusion-on-opengls-camera-and-camera-space-transformation/60362897#60362897)  
+
+At the end everything what is in 3 dimensional normalized device space is projected on the 2 dimensional viewport. The normalized device space is a cube with the left, bottom, near of (-1, -1, -1) and right, top, far of (1, 1, 1).  
+All the transformations which transform vertex coordinates to [homogeneous](https://en.wikipedia.org/wiki/Homogeneous_coordinates) clipspace coordinates ([`gl_Position`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/gl_Position.xhtml)) respectively [cartesian](https://en.wikipedia.org/wiki/Cartesian_coordinate_system) normalized device space coordinates are up to you.  
+(The normalized device coordinates are the clip space coordinates divide by the `w` component of the clip coordinates. This is called [Perspective divide](https://www.khronos.org/opengl/wiki/Vertex_Post-Processing#Perspective_divide))
+
+The normalized device space is a left handed system (see [Left- vs. Right-handed coordinate systems](https://www.evl.uic.edu/ralph/508S98/coordinates.html) respectively [Right-hand rule](https://en.wikipedia.org/wiki/Right-hand_rule)). Usually we want to use a right handed system. So at some point the cooridantes have to be transformed from a right handed to a left handed system. In common that is done by the projection matrix, which inverts (mirrors) the Z-axis.     
+
+Anyway, there's absolutely no necessity that *"by default (in OpenGL) the camera points towards the negative z-axis"*. It is a matter of specification, but in common a view coordinate system like that is used.
 
 ---
 
