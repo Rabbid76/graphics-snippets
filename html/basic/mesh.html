@@ -911,8 +911,9 @@ class VertexBuffer {
 }
 
 class Texture {
-    constructor( name, dflt ) {
+    constructor( name, texUnit, dflt ) {
         let texture = this;
+        this.texUnit = texUnit || 0;
         this.dflt = dflt || [128,128,128,255]
         let image = { "cx": this.dflt.w || 1, "cy": this.dflt.h || 1, "plane": this.dflt.p || this.dflt };
         this.size = [image.cx, image.cy];
@@ -936,7 +937,7 @@ class Texture {
     }
     static createTexture2D( image, flipY ) {
         let t = gl.createTexture();
-        gl.activeTexture( gl.TEXTURE0 );
+        gl.activeTexture(gl.TEXTURE0 + this.texUnit);
         gl.bindTexture( gl.TEXTURE_2D, t );
         gl.pixelStorei( gl.UNPACK_FLIP_Y_WEBGL, flipY != undefined && flipY == true );
         if ( image.cx && image.cy && image.plane )
@@ -948,14 +949,21 @@ class Texture {
         gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT );
         gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT );
         gl.bindTexture( gl.TEXTURE_2D, null );
+        gl.activeTexture(gl.TEXTURE0 );
         return t;
     }
-    bind( texUnit = 0 ) {
-        gl.activeTexture( gl.TEXTURE0 + texUnit );
+    bind( texUnit ) {
+        let unit = texUnit || this.texUnit;
+        gl.activeTexture( gl.TEXTURE0 + unit );
         if ( this.textureObj ) { 
             gl.bindTexture( gl.TEXTURE_2D, this.textureObj );
             return true;
         }
+        gl.bindTexture( gl.TEXTURE_2D, this.dummyObj );
+        return false;
+    }
+    bindDflt( texUnit ) {
+        gl.activeTexture( gl.TEXTURE0 + texUnit );
         gl.bindTexture( gl.TEXTURE_2D, this.dummyObj );
         return false;
     }
