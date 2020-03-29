@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='UTF-8'>
+<title>texture WebGL 1.0</title>
+
+</head>
+<body>
+
+<script id="draw-shader-vs" type="x-shader/x-vertex">
+precision highp float;
+
+attribute vec3 inPos;
+attribute vec3 inNV;
+attribute vec4 inCol;
+attribute vec2 inUV;
+
+varying vec3  vertPos;
+varying vec3  vertNV;
+varying vec4  vertCol;
+varying vec2  vertUV;
+  
+uniform mat4 u_projectionMat44;
+uniform mat4 u_viewMat44;
+uniform mat4 u_modelMat44;
+uniform mat4 u_textureMat44;
+
+void main()
+{   
+    mat4 mv       = u_viewMat44 * u_modelMat44; 
+    vertCol       = inCol;
+    vertNV        = normalize(mat3(mv) * inNV);
+    vertUV        = (u_textureMat44 * vec4(inUV, 0.0, 2.0)).st;
+    vec4 viewPos  = mv * vec4( inPos, 1.0 );
+    vertPos       = viewPos.xyz;
+    gl_Position   = u_projectionMat44 * viewPos;
+}
+</script>
+
+<script id="draw-shader-fs" type="x-shader/x-fragment">
+precision mediump float;
+
+varying vec3  vertPos;
+varying vec3  vertNV;
+varying vec4  vertCol;
+varying vec2  vertUV;
+
+uniform vec2      u_resolution;
+uniform vec2      u_time;
+uniform sampler2D u_texture;
+
+void main()
+{
+    //vec4 color    = vertCol;
+    vec4 texColor = texture2D(u_texture, vertUV.st);
+    gl_FragColor  = vec4(texColor.rgb, 1.0);
+} 
+</script>
+
+<style>
+html,body { margin: 0; overflow: hidden; }
+#gui { position : absolute; top : 0; left : 0; font-size : large; }
+#ref-link { position : absolute; bottom : 0; left : 0; font-size : large; }  
+</style>
+
+<!--div>
+<form id="gui" name="inputs">
+  <table>
+      <tr> <td> <font color= #CCF></font> </td> 
+              <td> <input type="range" id="" min="0" max="100" value="50" onchange="changeEventHandler(event);"/></td> </tr>
+  </table>
+</form>
+</div-->
+
+<!--div id="ref-link">
+  <a href=""> 
+  </a>
+</div-->
+
+<canvas id="canvas" style="border: none;"></canvas>
+
+<script>var exports = {"__esModule": true}; require = function(name) {}; </script>
+<script src="./utility/MathUtility.js"></script>
+<script src="./webgl/ShaderProgram.js"></script>
+<script src="./webgl/VertexBuffer.js"></script>
+<script src="./webgl/Texture.js"></script>
+
+<script>
+(function loadscene() {
+    class App {
+        constructor() {
+            this.vp_size = [0, 0];
+            this.canvas = document.getElementById("canvas");
+            this.gl = this.canvas.getContext("experimental-webgl");
+            //gl = canvas.getContext( "webgl2" );
+            if (!this.gl)
+                return null;
+            this.texture = new Texture(this.gl, "https://raw.githubusercontent.com/Rabbid76/graphics-snippets/master/resource/texture/supermario.jpg");
+            this.texture.bound = false;
+            this.progDraw = new ShProg(this.gl, [{ source: "draw-shader-vs", stage: this.gl.VERTEX_SHADER },
+                { source: "draw-shader-fs", stage: this.gl.FRAGMENT_SHADER }
+            ]);
+            if (!this.progDraw.progObj)
+                return null;
+            this.progDraw.inPos = this.progDraw.AttrI("inPos");
+            this.progDraw.inNV = this.progDraw.AttrI("inNV");
+            this.progDraw.inCol = this.progDraw.AttrI("inCol");
+            this.progDraw.inUV = this.progDraw.AttrI("inUV");
+            this.progDraw.invalid = true;
+            this.bufQuad = new VertexBuffer(this.gl, [{ data: [-1, -1, 0, 1, -1, 0, 1, 1, 0, -1, 1, 0], attrSize: 3, attrLoc: this.progDraw.inPos },
+                { data: [0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1], attrSize: 3, attrLoc: this.progDraw.inNV },
+                { data: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], attrSize: 4, attrLoc: this.progDraw.inCol },
+                { data: [0, 0, 1, 0, 1, 1, 0, 1], attrSize: 2, attrLoc: this.progDraw.inUV }], [0, 1, 2, 0, 2, 3]);
+            this.resize();
+            var self = this;
+            window.onresize = function () { self.resize(); };
+        }
+        resize() {
+            //vp_size = [gl.drawingBufferWidth, gl.drawingBufferHeight];
+            this.vp_size = [window.innerWidth, window.innerHeight];
+            this.canvas.width = this.vp_size[0];
+            this.canvas.height = this.vp_size[1];
+        }
+        draw(deltaMS) {
+            this.gl.viewport(0, 0, this.vp_size[0], this.vp_size[1]);
+            this.gl.enable(this.gl.DEPTH_TEST);
+            this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
+            this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+            // set up draw shader
+            if (this.progDraw.invalid) {
+                this.progDraw.invalid = false;
+                this.progDraw.Use();
+                this.progDraw.SetM44("u_projectionMat44", Mat44.ident());
+                this.progDraw.SetM44("u_viewMat44", Mat44.ident());
+                this.progDraw.SetM44("u_modelMat44", Mat44.ident());
+                this.progDraw.SetM44("u_textureMat44", Mat44.ident());
+                this.progDraw.SetI1("u_texture", 0);
+            }
+            this.progDraw.SetF2("u_resolution", this.vp_size);
+            this.progDraw.SetF1("u_time", deltaMS);
+            // bind the texture
+            this.texture.bound = this.texture.bound || this.texture.bind(0);
+            // draw scene
+            this.bufQuad.draw();
+        }
+    }
+    function render(deltaMS) {
+        app.draw(deltaMS);
+        requestAnimationFrame(render);
+    }
+    let app = new App();
+    requestAnimationFrame(render);
+})();
+</script>
+
+</body>
+</html>

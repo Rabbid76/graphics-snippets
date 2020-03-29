@@ -252,6 +252,23 @@ view_matrix = m3dLookAt(view_position, [0, 0, 0], [0, 1, 0])
 
 ---
 
+[understanding camera translation in GLM- openGL](https://stackoverflow.com/questions/60372034/understanding-camera-translation-in-glm-opengl/60372122#60372122) 
+
+[`glm::lookAt`](https://glm.g-truc.net/0.9.9/api/a00247.html#gaa64aa951a0e99136bba9008d2b59c78e) defines the view matrix. The view matrix transforms vertex coordinates from world space to view space.  
+`eye`, `center` and `up` are positions respectively vectors in world space, which define the the position and orientation of the camera in world space. `eye`, `center` and `up` define the view space. If you would setup a matrix by this vectors, then the matrix would transform from view space to world space.  
+Since the view matrix has to do the opposite (world space -> view space), the view matrix is the [inverse matrix](https://en.wikipedia.org/wiki/Invertible_matrix) of that matrix which is defined by `eye`, `center` and `up`. `glm::lookAt` is a optimized algorithm for computing an inverse matrix in this spacial case.  
+Note `s`, `u`, `f` are transposed when they are assigned to the matrix. 
+
+The translation of the inverse matrix is **not** the negative translation of the matrix. The translation of the inverse matrix has to consider the orientation (rotation). Because of that the translation vector has to be rotated. The rotation of a (3d) vector by a 3x3 [Rotation matrix](https://en.wikipedia.org/wiki/Rotation_matrix) can be computed by (is the same as) the 3 [Dot products](https://en.wikipedia.org/wiki/Dot_product) of the axis vectors and the direction vector. (`s`, `u`, `f`) define a 3x3 rotation matrix and `eye` is transformed by this matrix.   
+
+What the code actually dose is to concatenate a rotation by transposed (`s`, `u`, `f`) and a translation by `-eye` (very simplified pseudo code):
+
+```lang-none
+viewmatrix = transpose(rotation(s, u, f)) * translation(-eye)
+```
+
+---
+
 ## Projection
 
 The projection matrix describes the mapping from 3D points of the view on a scene, to 2D points on the viewport. It transforms from eye space to the clip space, and the coordinates in the clip space are transformed to the normalized device coordinates (NDC) by dividing with the `w` component of the clip coordinates. The NDC are in range (-1,-1,-1) to (1,1,1).  

@@ -54,7 +54,7 @@ class UniformBlockBuffer:
         self.dataSize = ub.dataSize
         glBindBuffer(GL_UNIFORM_BUFFER, self.object)
         dataArray = numpy.zeros(self.dataSize//4, dtype='float32')
-        glBufferData(GL_UNIFORM_BUFFER, self.dataSize, dataArray, GL_DYNAMIC_DRAW)
+        glBufferData(GL_UNIFORM_BUFFER, dataArray, GL_DYNAMIC_DRAW)
     def BindToTarget(self):
         glBindBuffer(GL_UNIFORM_BUFFER, self.object)
         glBindBufferBase(GL_UNIFORM_BUFFER, self.bindingPoint, self.object)
