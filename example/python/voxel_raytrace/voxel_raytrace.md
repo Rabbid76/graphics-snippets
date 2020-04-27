@@ -1,4 +1,4 @@
-# Voxel Ray tracing
+# Voxel Ray Tracing
 
 ![](image/voxel_raytrace.png)
 
