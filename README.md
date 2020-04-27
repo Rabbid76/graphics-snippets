@@ -149,6 +149,8 @@
 
 [![](example/python/text_freetype/image/free_type_text.png) OpenGL 4.6, Python OpenGL 4.6, freetype text](https://github.com/Rabbid76/graphics-snippets/blob/master/example/python/text_freetype/freetype_text.md)
 
+[![](example/python/voxel_raytrace/image/voxel_raytrace.gif) OpenGL 4.6, Python OpenGL 4.6, voxel ray tracing](https://github.com/Rabbid76/graphics-snippets/blob/master/example/python/voxel_raytrace/voxel_raytrace.md)
+
 ---
 
 ## C++
