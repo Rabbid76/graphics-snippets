@@ -13,6 +13,7 @@
   - [Internal texture format](#internal-texture-format)
   - [Texture Filter and Texture Wrapping](#texture-filter-and-texture-wrapping)
 - [GLSL](#glsl)
+  - [Sampler](#sampler)
   - [Texture format and texture swizzle](#texture-format-and-texture-swizzle)
   - [Texture unit and texture binding](#texture-unit-and-texture-binding)
   - [Texture Coordinates](#texture-coordinates)
@@ -775,6 +776,68 @@ Note, if a texture is not mipmap complete, then the return value of a texel fetc
 > If a sampler is used in a shader and the sampler’s associated texture is not complete, as defined in section 8.17, (0.0, 0.0, 0.0, 1.0), in floating-point, will be returned for a non-shadow sampler and 0 for a shadow sampler
 
 ---
+
+## Sampler
+
+[Why are Uniform variables not working in GLSL?](https://stackoverflow.com/questions/61290812/why-are-uniform-variables-not-working-in-glsl/61291170#61291170), [Java]
+
+Your shader code can't work at all, because of
+
+>```glsl
+>samplers[index]
+>```
+
+`samplers` is an array of `sampler2D` and `index` is set from the vertex shader input `samplerIndex`:
+
+>```glsl
+>int index = int(samplerIndex);
+>```
+
+See GLSL version 3.30, which you use (from [OpenGL Shading Language 3.30 Specification - 4.1.7 Samplers](https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.3.30.pdf) ):
+
+> Samplers aggregated into arrays
+within a shader (using square brackets [ ]) can only be indexed with integral constant expressions
+ 
+See GLSL version 4.60 (most recent) (from [OpenGL Shading Language 4.60 Specification - 4.1.7. Opaque Types](https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.4.60.html#opaque-types)):  
+(This rule applies to all the versions since GLSL 4.00)  
+
+> When aggregated into arrays within a shader, these types can only be indexed with a dynamically uniform expression, or texture lookup will result in undefined values. 
+
+Thus, neither in the GLSL version which you use, nor in the most recent version, array of samplers can be indexed by an vertex shader input (attribute). 
+
+Since GLSL 4.00 it would be possible to index an array of samplers by an uniform, because indexing by a uniform variable is a [dynamically uniform expression](https://www.khronos.org/opengl/wiki/Core_Language_(GLSL)#Dynamically_uniform_expression).
+
+I recommend to use s `sampler2DArray` (see [Sampler](https://www.khronos.org/opengl/wiki/Sampler_(GLSL))) rather than an array of `sampler2D`.  
+When you use a `sampler2DArray`, then you don't need any indexing at all, because  the "index" is encoded in the 3rd component of the texture coordinate at texture lookup (see [`texture`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/texture.xhtml)). 
+
+---
+
+[Multiple cube map textures behaving strangely when amount of textures increases](https://stackoverflow.com/questions/61567783/multiple-cube-map-textures-behaving-strangely-when-amount-of-textures-increases/61570931#61570931)
+
+The behavior of the fragment shader is undefined, because of:
+
+>```glsl
+>in flat float TexID;
+>uniform samplerCube cubeTextures[3];
+>```
+
+>```glsl
+>int id = int(TexID);
+>... cubeTextures[id] ...
+>```
+
+`cubeTextures` is an array of cube map samplers and `TexID` is a fragment shader input, thus `TexID` is not a [Dynamically uniform expression](https://www.khronos.org/opengl/wiki/Core_Language_(GLSL)#Dynamically_uniform_expression)
+
+See GLSL version 4.60 (most recent) (from [OpenGL Shading Language 4.60 Specification - 4.1.7. Opaque Types](https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.4.60.html#opaque-types)):   
+
+> When aggregated into arrays within a shader, these types can only be indexed with a dynamically uniform expression, or texture lookup will result in undefined values.  
+
+---
+
+I recommend to use `samplerCubeArray` (see [Sampler](https://www.khronos.org/opengl/wiki/Sampler_(GLSL))) rather than an array of `samplerCube`.  
+When you use a `samplerCubeArray`, then you don't need any indexing at all, because the "index" is encoded in the 4th component of the texture coordinate at texture lookup (see [`texture`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/texture.xhtml)). 
+
+
 
 ## Texture format and texture swizzle
 

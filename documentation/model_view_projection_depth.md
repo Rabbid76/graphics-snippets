@@ -138,7 +138,7 @@ The normalized device coordinates are the clip space coordinates divide by the `
 
 ### Window coordinates (Screen coordinates)
 
-The window coordinates are the coordinates of the viewport rectangle. The window coordinates finally are passed to the rasterization process.
+The window coordinates are the coordinates of the viewport rectangle. The window coordinates are decisive for the rasterization process.
 
 #### Viewport and depth range
 
