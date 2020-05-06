@@ -351,7 +351,7 @@ The eye space coordinates in the camera frustum (a truncated pyramid) are mapped
 
 ![near far plane](image/perspective.png)
 
-A perspective projection matrix can be defined by a **frustum**.  
+A perspective projection matrix can be defined by a [**frustum**](https://en.wikipedia.org/wiki/Viewing_frustum).  
 The distances `left`, `right`, `bottom` and `top`, are the distances from the center of the view to the side faces of the frustum, on the near plane. `near` and `far` specify the distances to the near and far plane of the frustum.
 
 ```lang-none
@@ -375,7 +375,7 @@ ta = tan( fov_y / 2 );
 (t+b)/(t-b)   = 0
 ```
 
-So the symmetrically perspective projection is:
+The symmetrically perspective projection matrix is:
 
 ```lang-none
 x:    1/(ta*a)  0      0              0
