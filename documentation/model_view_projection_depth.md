@@ -363,7 +363,7 @@ z:    (r+l)/(r-l)    (t+b)/(t-b)    -(f+n)/(f-n)    -1
 t:    0              0              -2*f*n/(f-n)     0
 ```
 
-If the projection is symmetric, where the line of sight is axis of symmetry of the view frustum, then the matrix can be simplified:
+If the projection is symmetrical and the line of sight is the axis of symmetry of the frustum, the matrix can be simplified:
 
 ```lang-none
 a  = w / h
