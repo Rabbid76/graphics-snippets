@@ -2,32 +2,32 @@
 <!-- TOC -->
 
 - [Texture and Sampler - Common mistakes and issues](#texture-and-sampler---common-mistakes-and-issues)
-  - [Load Texture](#load-texture)
-    - [`glBindTexture`](#glbindtexture)
-    - [`glTexImage2D`](#glteximage2d)
-    - [`glTexSubImage3D`](#gltexsubimage3d)
-    - [`glTexStorage`](#gltexstorage)
-    - [Load Bitmap](#load-bitmap)
-    - [Windows Bitmap](#windows-bitmap)
-  - [Texture alignment (GL_UNPACK_ALIGNMENT, GL_PACK_ALIGNMENT)](#texture-alignment-gl_unpack_alignment-gl_pack_alignment)
-  - [Internal texture format](#internal-texture-format)
-  - [Texture Filter and Texture Wrapping](#texture-filter-and-texture-wrapping)
+    - [Load Texture](#load-texture)
+        - [`glBindTexture`](#glbindtexture)
+        - [`glTexImage2D`](#glteximage2d)
+        - [`glTexSubImage3D`](#gltexsubimage3d)
+        - [`glTexStorage`](#gltexstorage)
+        - [Load Bitmap](#load-bitmap)
+        - [Windows Bitmap](#windows-bitmap)
+    - [Texture alignment (GL_UNPACK_ALIGNMENT, GL_PACK_ALIGNMENT)](#texture-alignment-gl_unpack_alignment-gl_pack_alignment)
+    - [Internal texture format](#internal-texture-format)
+    - [Texture Filter and Texture Wrapping](#texture-filter-and-texture-wrapping)
 - [GLSL](#glsl)
-  - [Sampler](#sampler)
-  - [Texture format and texture swizzle](#texture-format-and-texture-swizzle)
-  - [Texture unit and texture binding](#texture-unit-and-texture-binding)
-  - [Texture Coordinates](#texture-coordinates)
-  - [UV wrapping](#uv-wrapping)
-  - [Cubemap](#cubemap)
-  - [Texture read](#texture-read)
-  - [Fixed function pipeline (Texture)](#fixed-function-pipeline-texture)
-  - [Texture - GLSL](#texture---glsl)
-  - [Image Load Store](#image-load-store)
-  - [Bindless Textures](#bindless-textures)
-  - [Texture and Renderbuffer](#texture-and-renderbuffer)
-  - [Texture - WebGL](#texture---webgl)
-  - [Texture - three.js](#texture---threejs)
-  - [TODO](#todo)
+    - [Sampler](#sampler)
+    - [Texture format and texture swizzle](#texture-format-and-texture-swizzle)
+    - [Texture unit and texture binding](#texture-unit-and-texture-binding)
+    - [Texture Coordinates](#texture-coordinates)
+    - [UV wrapping](#uv-wrapping)
+    - [Cubemap](#cubemap)
+    - [Texture read](#texture-read)
+    - [Fixed function pipeline (Texture)](#fixed-function-pipeline-texture)
+    - [Texture - GLSL](#texture---glsl)
+    - [Image Load Store](#image-load-store)
+    - [Bindless Textures](#bindless-textures)
+    - [Texture and Renderbuffer](#texture-and-renderbuffer)
+    - [Texture - WebGL](#texture---webgl)
+    - [Texture - three.js](#texture---threejs)
+    - [TODO](#todo)
 
 <!-- /TOC -->
 
@@ -91,11 +91,10 @@ glTexImage2D(GL_TEXTURE_2D, 0, GL_R32UI, 3072, 2048, 0, GL_RED_INTEGER, GL_UNSIG
 
 Note, the texture format has to be `GL_RED_INTEGER` rather than `GL_RED`, because the source texture image has to be interpreted as integral data, rather than normalized floating point data. The *format* and *type* parameter specify the format of the source data. The *internalformat* parameter specifies the format of the target texture image.
 
-Set the texture parameters by [`glTexParameter`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexParameter.xhtml) ( this can be done before `glTexImage2D`, too):
+You have to set the texture minifying function (`GL_TEXTURE_MIN_FILTER`) by [`glTexParameter`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexParameter.xhtml) ( this can be done before `glTexImage2D`):
 
 ```cpp
-glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 ```  
 
 If you do not generate [mipmaps](https://en.wikipedia.org/wiki/Mipmap) (by [`glGenerateMipmap`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGenerateMipmap.xhtml)), then setting the `GL_TEXTURE_MIN_FILTER` is important. Since the default filter is `GL_NEAREST_MIPMAP_LINEAR` the texture would be mipmap incomplete, if you don not change the minifying function to `GL_NEAREST` or `GL_LINEAR`.
