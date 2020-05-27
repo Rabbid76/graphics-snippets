@@ -7,9 +7,9 @@ layout (location = 2) in vec3 inCol;
 
 layout (location = 0) out TVertexData
 {
-    vec3 pos;
-    vec3 nv;
-    vec3 col;
+    sample vec3 pos;
+    sample vec3 nv;
+    sample vec3 col;
 } outData;
 
 struct TMVP

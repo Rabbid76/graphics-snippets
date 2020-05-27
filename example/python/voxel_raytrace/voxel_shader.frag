@@ -3,9 +3,9 @@
 
 layout (location = 0) in TVertexData
 {
-    vec3 pos;
-    vec3 nv;
-    vec3 col;
+    sample vec3 pos;
+    sample vec3 nv;
+    sample vec3 col;
 } inData;
 
 layout (location = 0) out vec4 fragColor;
