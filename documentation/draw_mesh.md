@@ -1,27 +1,27 @@
 <!-- TOC -->
 
 - [Draw geometry](#draw-geometry)
-  - [Primitives](#primitives)
-    - [Point primitives](#point-primitives)
-    - [Line primitives](#line-primitives)
-    - [Triangle primitives](#triangle-primitives)
-      - [Triangle fan](#triangle-fan)
-      - [Triangle stripe](#triangle-stripe)
-      - [Triangle adjacency](#triangle-adjacency)
-      - [Triangle stripe adjacency](#triangle-stripe-adjacency)
-  - [Vertex array](#vertex-array)
-    - [Separated tightly packed buffers for different attributes](#separated-tightly-packed-buffers-for-different-attributes)
-  - [Vertex buffer object (Array buffer)](#vertex-buffer-object-array-buffer)
-    - [Separated tightly packed buffers for different attributes](#separated-tightly-packed-buffers-for-different-attributes-1)
-  - [Index buffer object (Element array buffer)](#index-buffer-object-element-array-buffer)
-  - [Vertex array object](#vertex-array-object)
-  - [Fixed Function Pipeline - Deprecated, old school](#fixed-function-pipeline---deprecated-old-school)
-  - [Vertex attributes with integral data types](#vertex-attributes-with-integral-data-types)
-  - [WebGL](#webgl)
+    - [Primitives](#primitives)
+        - [Point primitives](#point-primitives)
+        - [Line primitives](#line-primitives)
+        - [Triangle primitives](#triangle-primitives)
+            - [Triangle fan](#triangle-fan)
+            - [Triangle stripe](#triangle-stripe)
+            - [Triangle adjacency](#triangle-adjacency)
+            - [Triangle stripe adjacency](#triangle-stripe-adjacency)
+    - [Vertex array](#vertex-array)
+        - [Separated tightly packed buffers for different attributes](#separated-tightly-packed-buffers-for-different-attributes)
+    - [Vertex buffer object (Array buffer)](#vertex-buffer-object-array-buffer)
+        - [Separated tightly packed buffers for different attributes](#separated-tightly-packed-buffers-for-different-attributes-1)
+    - [Index buffer object (Element array buffer)](#index-buffer-object-element-array-buffer)
+    - [Vertex array object](#vertex-array-object)
+    - [Fixed Function Pipeline - Deprecated, old school](#fixed-function-pipeline---deprecated-old-school)
+    - [Vertex attributes with integral data types](#vertex-attributes-with-integral-data-types)
+    - [WebGL](#webgl)
 - [TODO](#todo)
-  - [Investigate](#investigate)
-  - [Question](#question)
-  - [Answer](#answer)
+    - [Investigate](#investigate)
+    - [Question](#question)
+    - [Answer](#answer)
 
 <!-- /TOC -->
 
@@ -892,6 +892,12 @@ void main()
     fragColor = vertCol;
 }
 ```
+
+---
+
+See also
+
+[Drawing multiple triangles in OpenGL](https://stackoverflow.com/questions/47760298/drawing-multiple-triangles-in-opengl)  
 
 <br/><hr/>
 
