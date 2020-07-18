@@ -1649,6 +1649,15 @@ glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels.data());
 
 ---
 
+[How to get texture data using textureID's in openGL](https://stackoverflow.com/questions/5117653/how-to-get-texture-data-using-textureids-in-opengl/62965713#62965713)  
+
+In OpneGL a texture can be read by [`glGetTexImage`/`glGetnTexImage`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGetTexImage.xhtml) respectively the DSA version of the function `glGetTextureImage`.
+
+Another possibility is to attach the texture to a framebuffer and to read the pixel by [`glReadPixels`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glReadPixels.xhtml). OpenGL ES does not offer a `glGetTexImage`, so this is the way to OpenGL ES.  
+See [opengl es 2.0 android c++ glGetTexImage alternative](https://stackoverflow.com/questions/53993820/opengl-es-2-0-android-c-glgetteximage-alternative/53993894#53993894)  
+
+---
+
 ## Fixed function pipeline (Texture)
 
 [OpenGL 2.1 API Specification; 3.8.16 Texture Application; page 191](https://www.khronos.org/registry/OpenGL/specs/gl/glspec20.pdf)
