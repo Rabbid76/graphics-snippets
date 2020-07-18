@@ -1658,6 +1658,31 @@ See [opengl es 2.0 android c++ glGetTexImage alternative](https://stackoverflow.
 
 ---
 
+If you transfer the texture image to a [Pixel Buffer Object](https://www.khronos.org/opengl/wiki/Pixel_Buffer_Object), then you can even access the data via [Buffer object mapping](https://www.khronos.org/opengl/wiki/Buffer_Object#Mapping). See also [OpenGL Pixel Buffer Object (PBO)](http://www.songho.ca/opengl/gl_pbo.html).  
+You've to bind a buffer with the proper size to the target `GL_PIXEL_PACK_BUFFER`:
+
+```c
+// create buffer
+GLuint pbo;
+glGenBuffers(1, &pbo);
+glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo);
+glBufferData(GL_PIXEL_PACK_BUFFER, size_in_bytes, 0, GL_STATIC_READ);
+
+// get texture image
+glBindTexture(GL_TEXTURE_2D, texture_obj);
+glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, (void*)(0));
+
+// map pixel buffer
+void * data_ptr = glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
+
+// access the data
+// [...]
+
+glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
+```
+
+---
+
 ## Fixed function pipeline (Texture)
 
 [OpenGL 2.1 API Specification; 3.8.16 Texture Application; page 191](https://www.khronos.org/registry/OpenGL/specs/gl/glspec20.pdf)
