@@ -1,35 +1,36 @@
 <!-- TOC -->
 
 - [Model, View, Projection and Depth](#model-view-projection-and-depth)
-  - [Coordinate Systems](#coordinate-systems)
-    - [Model coordinates (Object coordinates)](#model-coordinates-object-coordinates)
-    - [World coordinates](#world-coordinates)
-      - [Model matrix](#model-matrix)
-    - [View space (Eye coordinates)](#view-space-eye-coordinates)
-      - [View matrix](#view-matrix)
-    - [Clip coordinates](#clip-coordinates)
-      - [Projection matrix](#projection-matrix)
-    - [Normalized device coordinates](#normalized-device-coordinates)
-    - [Window coordinates (Screen coordinates)](#window-coordinates-screen-coordinates)
-      - [Viewport and depth range](#viewport-and-depth-range)
-  - [View](#view)
-  - [Projection](#projection)
-    - [Orthographic Clip Space](#orthographic-clip-space)
-    - [Perspective Clip Space](#perspective-clip-space)
-  - [Depth](#depth)
-  - [Orthographic Projection](#orthographic-projection)
-  - [Perspective Projection](#perspective-projection)
-    - [What the perspective projection does](#what-the-perspective-projection-does)
-  - [Depth buffer](#depth-buffer)
-  - [Unproject](#unproject)
-    - [Unproject - Orthographic Projection](#unproject---orthographic-projection)
-    - [Unproject - Perspective Projection](#unproject---perspective-projection)
-    - [Perspective Projection - Linearized depth](#perspective-projection---linearized-depth)
-  - [3 Solutions to recover view space position in perspective projection](#3-solutions-to-recover-view-space-position-in-perspective-projection)
-    - [1. With field of view and aspect](#1-with-field-of-view-and-aspect)
-    - [2. With the projection matrix](#2-with-the-projection-matrix)
-    - [3. With the inverse projection matrix](#3-with-the-inverse-projection-matrix)
-  - [Resources](#resources)
+    - [Coordinate Systems](#coordinate-systems)
+        - [Model coordinates (Object coordinates)](#model-coordinates-object-coordinates)
+        - [World coordinates](#world-coordinates)
+            - [Model matrix](#model-matrix)
+        - [View space (Eye coordinates)](#view-space-eye-coordinates)
+            - [View matrix](#view-matrix)
+        - [Clip coordinates](#clip-coordinates)
+            - [Projection matrix](#projection-matrix)
+        - [Normalized device coordinates](#normalized-device-coordinates)
+        - [Window coordinates (Screen coordinates)](#window-coordinates-screen-coordinates)
+            - [Viewport and depth range](#viewport-and-depth-range)
+    - [View](#view)
+    - [Projection](#projection)
+        - [Orthographic Clip Space](#orthographic-clip-space)
+        - [Perspective Clip Space](#perspective-clip-space)
+    - [Depth](#depth)
+    - [Orthographic Projection](#orthographic-projection)
+    - [Perspective Projection](#perspective-projection)
+        - [What the perspective projection does](#what-the-perspective-projection-does)
+        - [Relation between z distance and depth](#relation-between-z-distance-and-depth)
+    - [Depth buffer](#depth-buffer)
+    - [Unproject](#unproject)
+        - [Unproject - Orthographic Projection](#unproject---orthographic-projection)
+        - [Unproject - Perspective Projection](#unproject---perspective-projection)
+        - [Perspective Projection - Linearized depth](#perspective-projection---linearized-depth)
+    - [3 Solutions to recover view space position in perspective projection](#3-solutions-to-recover-view-space-position-in-perspective-projection)
+        - [1. With field of view and aspect](#1-with-field-of-view-and-aspect)
+        - [2. With the projection matrix](#2-with-the-projection-matrix)
+        - [3. With the inverse projection matrix](#3-with-the-inverse-projection-matrix)
+    - [Resources](#resources)
 
 <!-- /TOC -->
 
@@ -440,6 +441,84 @@ At the left side, the following image shows a cube which is looked at from a eye
 
 ![Perspective distortion](image/perspective_distortion.png)
 
+### Relation between z distance and depth
+
+The depth of a geometry at perspective projection is
+
+```lang-none
+depth = (1/z - 1/n) / (1/f - 1/n)
+```
+
+where `z` is the distance to the point of view, `n` is the distance to the near plane and `f` is the distance to the far plane of the [Viewing frustum](https://en.wikipedia.org/wiki/Viewing_frustum).
+
+For the depth we are just interested in the `z` and `w` component. For an input vertex *(x_eye, y_eye, z_eye, w_eye)*, the clip space _z_clip_ and _w_clip_ components are computed by:
+
+```lang-none
+z_clip = C * z_eye + D * w_eye
+w_clip = -z_eye
+```
+
+where (from perspective projection matrix)
+
+```lang-none
+C = -(f+n) / (f-n)
+D = -2fn / (f-n)
+```
+
+The normalized device space _z_ coordinate is computed by a [Perspective divide](https://www.khronos.org/opengl/wiki/Vertex_Post-Processing#Perspective_divide)
+
+```lang-none
+z_ndc = z_clip / w_clip
+```
+
+The normalized device space _z_ coordinate is mapped to the depth range _[a, b]_ (see [`glDepthRange`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glDepthRange.xhtml)):
+
+```lang-none
+depth = a + (a-b) * (z_ndc+1)/2
+```
+
+When we assume tha the depth range is _[0, 1]_ and the input vertex is a [Cartesian coordinate](https://en.wikipedia.org/wiki/Cartesian_coordinate_system) _(x_eye, y_eye, z_eye, 1)_, this leads to the following:
+
+```lang-none
+             z_eye * -(f+n) / (f-n)  +  -2fn / (f-n)
+depth  =  (------------------------------------------ + 1) / 2
+                          -z_eye
+```
+
+And can be transformed
+
+```lang-none
+             -z_eye * (f+n)  -  2fn
+depth  =  (-------------------------- + 1) / 2
+               -z_eye  *  (f-n)
+```
+
+```lang-none
+             -z_eye * (f+n)  -  2fn  +  -z_eye * (f-n)
+depth  =  ---------------------------------------------
+                      -z_eye  *  (f-n)  * 2
+```
+
+```lang-none
+             -z_eye * (f+n+f-n)  -  2fn
+depth  =  -------------------------------
+               -z_eye  *  (f-n)  * 2
+```
+
+```lang-none
+             -z_eye * f  -  fn           -f (n + z_eye)  
+depth  =  -----------------------   =   ----------------
+               -z_eye * (f-n)             z_eye (n - f)
+```
+
+Since the view space z axis points out of the viewport, the `z` distance from the point of view to the vertex is `z = -z_eye`. This leads to:
+
+```lang-none
+          f (n - z)        1/z - 1/n
+depth  =  -----------  =  -----------
+          z (n - f)        1/f - 1/n
+```
+
 ---
 
 ## Depth buffer
@@ -656,8 +735,9 @@ Anyway, there's absolutely no necessity that *"by default (in OpenGL) the camera
 ---
 
 - __[What exactly are eye space coordinates?](https://stackoverflow.com/questions/15588860/what-exactly-are-eye-space-coordinates/61537327#61537327)__  
-- [OpenGL - Mouse coordinates to Space coordinates](https://stackoverflow.com/questions/46749675/opengl-mouse-coordinates-to-space-coordinates/46752492#46752492)
-- [How to render depth linearly in modern OpenGL with gl_FragCoord.z in fragment shader?](https://stackoverflow.com/questions/7777913/how-to-render-depth-linearly-in-modern-opengl-with-gl-fragcoord-z-in-fragment-sh/45710371#45710371)
+- __[How does openGL come to the formula F_depth and and is this the window viewport transformation](https://stackoverflow.com/questions/63096579/how-does-opengl-come-to-the-formula-f-depth-and-and-is-this-the-window-viewport/63101878#63101878)__
+- __[OpenGL - Mouse coordinates to Space coordinates](https://stackoverflow.com/questions/46749675/opengl-mouse-coordinates-to-space-coordinates/46752492#46752492)__
+- __[How to render depth linearly in modern OpenGL with gl_FragCoord.z in fragment shader?](https://stackoverflow.com/questions/7777913/how-to-render-depth-linearly-in-modern-opengl-with-gl-fragcoord-z-in-fragment-sh/45710371#45710371)__
 - [How to find PyGame Window Coordinates of an OpenGL Vertice?](https://stackoverflow.com/questions/46801701/how-to-find-pygame-window-coordinates-of-an-opengl-vertice/46815050#46815050)
 - [Transform the modelMatrix](https://stackoverflow.com/questions/46008171/transform-the-modelmatrix/46008573#46008573)
 - [Negative values for gl_Position.w?](https://stackoverflow.com/questions/47233771/negative-values-for-gl-position-w/47235404#47235404)
