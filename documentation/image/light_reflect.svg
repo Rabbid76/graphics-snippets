@@ -154,17 +154,17 @@ xQSonLqHaBNgQgzqilrDLzABJkidXNEEmDj9XFGz+wETYE1I1RX/A1Z/JBlcVHKw
 AAAAAElFTkSuQmCC"/>
   </g>
   <g id="Drawing_5">
-   <rect fill="none" stroke="none" x="3800" y="8900" width="3999" height="984"/>
-   <g fill="rgb(0,153,0)" stroke="none" font-family="Arial embedded" font-size="634" font-style="normal" font-weight="700">
+   <rect fill="none" stroke="none" x="3800" y="8900" width="4029" height="984"/>
+   <g fill="rgb(0,153,0)" stroke="none" font-family="Arial embedded" font-size="635" font-style="normal" font-weight="700">
     <text x="4050" y="9613">V</text>
    </g>
    <g fill="rgb(0,153,0)" stroke="none" font-family="Arial embedded" font-size="423" font-style="normal" font-weight="400">
     <text x="4473" y="9613">
      <tspan x="4473 4592 4710 4850">  - </tspan></text>
    </g>
-   <g fill="rgb(0,153,0)" stroke="none" font-family="Arial embedded" font-size="493" font-style="normal" font-weight="400">
+   <g fill="rgb(0,153,0)" stroke="none" font-family="Arial embedded" font-size="494" font-style="normal" font-weight="400">
     <text x="4968" y="9613">
-     <tspan x="4968 5286 5396 5671 6014 6149 6450 6725 6970 7106 7381">View Vector</tspan></text>
+     <tspan x="4968 5290 5400 5675 6026 6166 6471 6746 6996 7135 7411">View Vector</tspan></text>
    </g>
   </g>
   <g>
@@ -435,15 +435,15 @@ AOgQAQAAgA4RAAAA6BABAACADhEAAADo0P8H8MEFK6gU6QQAAAAASUVORK5CYII="/>
    <path fill="rgb(102,0,204)" stroke="none" id="Drawing_9_1" d="M 7447,6371 L 7502,6374 7001,6001 7151,6607 7169,6557 7197,6508 7234,6464 7280,6425 7333,6396 7390,6379 7447,6371 Z"/>
   </g>
   <g id="Drawing_10">
-   <rect fill="none" stroke="none" x="4793" y="4942" width="5257" height="984"/>
-   <g fill="rgb(102,0,204)" stroke="none" font-family="Arial embedded" font-size="634" font-style="normal" font-weight="700">
+   <rect fill="none" stroke="none" x="4793" y="4942" width="5299" height="984"/>
+   <g fill="rgb(102,0,204)" stroke="none" font-family="Arial embedded" font-size="635" font-style="normal" font-weight="700">
     <text x="5043" y="5655">R</text>
    </g>
-   <g fill="rgb(102,0,204)" stroke="none" font-family="Arial embedded" font-size="493" font-style="normal" font-weight="400">
+   <g fill="rgb(102,0,204)" stroke="none" font-family="Arial embedded" font-size="494" font-style="normal" font-weight="400">
     <text x="5500" y="5655">
-     <tspan x="5500 5635 5771 5936">  - </tspan></text>
-    <text fill="rgb(102,0,204)" stroke="none" x="6072" y="5655">
-     <tspan x="6072 6428 6703 6838 6948 7223 7469 7604 7715 7990 8265 8400 8701 8976 9222 9357 9632">Reflection Vector</tspan></text>
+     <tspan x="5500 5640 5779 5945">  - </tspan></text>
+    <text fill="rgb(102,0,204)" stroke="none" x="6084" y="5655">
+     <tspan x="6084 6440 6715 6854 6965 7240 7489 7629 7739 8014 8290 8429 8734 9009 9259 9399 9674">Reflection Vector</tspan></text>
    </g>
   </g>
   <g>
@@ -599,27 +599,27 @@ GJI3AAAAAElFTkSuQmCC"/>
    </g>
   </g>
   <g id="Drawing_23">
-   <rect fill="none" stroke="none" x="10201" y="3161" width="4520" height="984"/>
-   <g fill="rgb(0,0,0)" stroke="none" font-family="Arial embedded" font-size="634" font-style="normal" font-weight="700">
+   <rect fill="none" stroke="none" x="10201" y="3161" width="4546" height="984"/>
+   <g fill="rgb(0,0,0)" stroke="none" font-family="Arial embedded" font-size="635" font-style="normal" font-weight="700">
     <text x="10451" y="3874">N</text>
    </g>
-   <g fill="rgb(0,0,0)" stroke="none" font-family="Arial embedded" font-size="493" font-style="normal" font-weight="400">
+   <g fill="rgb(0,0,0)" stroke="none" font-family="Arial embedded" font-size="494" font-style="normal" font-weight="400">
     <text x="10908" y="3874">
-     <tspan x="10908 11043 11209"> - </tspan></text>
-    <text fill="rgb(0,0,0)" stroke="none" x="11344" y="3874">
-     <tspan x="11344 11700 11975 12140 12551 12826 12936 13071 13372 13647 13892 14028 14303">Normal Vector</tspan></text>
+     <tspan x="10908 11048 11213"> - </tspan></text>
+    <text fill="rgb(0,0,0)" stroke="none" x="11353" y="3874">
+     <tspan x="11353 11709 11984 12149 12560 12835 12945 13084 13389 13664 13914 14054 14329">Normal Vector</tspan></text>
    </g>
   </g>
   <g id="Drawing_24">
    <rect fill="none" stroke="none" x="14910" y="6033" width="4191" height="984"/>
-   <g fill="rgb(204,0,0)" stroke="none" font-family="Arial embedded" font-size="634" font-style="normal" font-weight="700">
+   <g fill="rgb(204,0,0)" stroke="none" font-family="Arial embedded" font-size="635" font-style="normal" font-weight="700">
     <text x="15160" y="6746">L</text>
    </g>
-   <g fill="rgb(204,0,0)" stroke="none" font-family="Arial embedded" font-size="493" font-style="normal" font-weight="400">
+   <g fill="rgb(204,0,0)" stroke="none" font-family="Arial embedded" font-size="494" font-style="normal" font-weight="400">
     <text x="15537" y="6746">
-     <tspan x="15537 15672 15808 15973">  - </tspan></text>
-    <text fill="rgb(204,0,0)" stroke="none" x="16109" y="6746">
-     <tspan x="16109 16384 16494 16769 17045 17180 17316 17616 17891 18137 18272 18547">Light Vector</tspan></text>
+     <tspan x="15537 15677 15816 15982">  - </tspan></text>
+    <text fill="rgb(204,0,0)" stroke="none" x="16121" y="6746">
+     <tspan x="16121 16396 16506 16781 17057 17196 17336 17641 17916 18166 18305 18581">Light Vector</tspan></text>
    </g>
   </g>
  </g>
