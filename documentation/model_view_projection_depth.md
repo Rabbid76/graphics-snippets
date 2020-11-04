@@ -347,7 +347,7 @@ z_ndc = z_eye * -2/(f-n) - (f+n)/(f-n)
 
 ## Perspective Projection
 
-At Perspective Projection the projection matrix describes the mapping from 3D points in the world as they are seen from of a pinhole camera, to 2D points of the viewport.  
+In perspective projection, the projection matrix describes the mapping of 3D points in the world, as seen from a pinhole camera, onto 2D points in the viewport. 
 The eye space coordinates in the camera frustum (a truncated pyramid) are mapped to a cube (the normalized device coordinates).
 
 ![near far plane](image/perspective.png)
