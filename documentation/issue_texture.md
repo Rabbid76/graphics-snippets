@@ -97,7 +97,7 @@ You have to set the texture minifying function (`GL_TEXTURE_MIN_FILTER`) by [`gl
 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 ```  
 
-If you do not generate [mipmaps](https://en.wikipedia.org/wiki/Mipmap) (by [`glGenerateMipmap`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGenerateMipmap.xhtml)), then setting the `GL_TEXTURE_MIN_FILTER` is important. Since the default filter is `GL_NEAREST_MIPMAP_LINEAR` the texture would be mipmap incomplete, if you don not change the minifying function to `GL_NEAREST` or `GL_LINEAR`.
+If you are not generating [mipmaps](https://en.wikipedia.org/wiki/Mipmap) (with [`glGenerateMipmap`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGenerateMipmap.xhtml)) it is important to set `GL_TEXTURE_MIN_FILTER`. Since the default filter is `GL_NEAREST_MIPMAP_LINEAR`, the texture would be "Mipmap Incomplete" if you did not change the minimize function to `GL_NEAREST` or `GL_LINEAR`.
 
 ### `glBindTexture`
 
