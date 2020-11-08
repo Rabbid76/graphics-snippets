@@ -12,6 +12,7 @@
         - [Matrix translation](#matrix-translation)
         - [Matrix rotation](#matrix-rotation)
         - [Matrix scaling](#matrix-scaling)
+            - [Reset the scale of a 4x4 matrix](#reset-the-scale-of-a-4x4-matrix)
         - [Matrix multiplication (concatenation)](#matrix-multiplication-concatenation)
     - [Transposed matrix](#transposed-matrix)
         - [Transpose? It's just a matter of definition](#transpose-its-just-a-matter-of-definition)
@@ -405,6 +406,29 @@ def Scale(matA, s):
 Note, this would be what [`glm::scale`](https://glm.g-truc.net/0.9.8/api/a00232.html#ga1972d4a66a2e92637c8aaee598417a71) does.
 
     glm::mat4 scaling = glm::scale(glm::mat4(), glm::vec3(1.0f, 2.0f, 1.0f));
+
+#### Reset the scale of a 4x4 matrix
+
+Knowing the matrix, you can calculate the scale for each axis. In the following `m` is the matrix:
+
+```cpp
+float scaleX = sqrt(m[0][0]*m[0][0] + m[0][1]*m[0][1] + m[0][2]*m[0][2]);
+float scaleY = sqrt(m[1][0]*m[1][0] + m[1][1]*m[1][1] + m[1][2]*m[1][2]);
+float scaleZ = sqrt(m[2][0]*m[2][0] + m[2][1]*m[2][1] + m[2][2]*m[2][2]);
+```
+
+If you want to "reset" the scale while keeping the absolute translation and rotation, you need to normalize the axis. The length of a normalized vector ([Unit vector](https://en.wikipedia.org/wiki/Unit_vector)) is 1:
+
+```cpp
+for (int i = 0; i < 3; ++i)
+{
+    m[0][i] /= scaleX;
+    m[1][i] /= scaleY;
+    m[2][i] /= scaleZ;
+}
+```
+
+If the scale for the 3-axes is identical, the result for `scaleX`, `scaleY`, `scaleZ` will also be identically. Hence, you can tweak the code and only calculate one scale.
 
 ### Matrix multiplication (concatenation)
 
