@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros">
+    <FreeGlutDir>..\..\..\_cpp_extern\freeglut\freeglut-3.0.0\</FreeGlutDir>
+    <GlfwDir>..\..\..\_cpp_extern\glfw-3.2.1.bin.WIN64\</GlfwDir>
+    <GlmDir>..\..\..\_cpp_extern\glm-0.9.9.3\glm\</GlmDir>
+    <SdlDir>..\..\..\_cpp_extern\SDL2-2.0.10\</SdlDir>
+    <FreetypeDir>..\..\..\_cpp_extern\freetype-2.9\</FreetypeDir>
+    <SfmlDir>..\..\..\_cpp_extern\SFML-2.4.2\</SfmlDir>
+    <OwnGraohicsLibDir>..\..\cpp\</OwnGraohicsLibDir>
+    <StbDir>..\..\..\_cpp_extern\stb\</StbDir>
+    <AssimpDir>..\..\..\_cpp_extern\assimp_4_x\</AssimpDir>
+    <GlewDir>..\..\..\_cpp_extern\glew-2.1.0\</GlewDir>
+  </PropertyGroup>
+  <PropertyGroup />
+  <ItemDefinitionGroup />
+  <ItemGroup>
+    <BuildMacro Include="FreeGlutDir">
+      <Value>$(FreeGlutDir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="GlfwDir">
+      <Value>$(GlfwDir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="GlmDir">
+      <Value>$(GlmDir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="SdlDir">
+      <Value>$(SdlDir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="FreetypeDir">
+      <Value>$(FreetypeDir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="SfmlDir">
+      <Value>$(SfmlDir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="OwnGraohicsLibDir">
+      <Value>$(OwnGraohicsLibDir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="StbDir">
+      <Value>$(StbDir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="AssimpDir">
+      <Value>$(AssimpDir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="GlewDir">
+      <Value>$(GlewDir)</Value>
+    </BuildMacro>
+  </ItemGroup>
+</Project>
