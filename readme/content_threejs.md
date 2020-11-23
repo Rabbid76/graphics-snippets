@@ -1,7 +1,7 @@
 [![StackOverflow](https://stackexchange.com/users/flair/7322082.png)](https://stackoverflow.com/users/5577765/rabbid76?tab=profile)
 
-"Programmers must avoid leaving false clues that obscure the meaning of code."  
-Robert C. Martin, Clean Code: A Handbook of Agile Software Craftsmanship
+"You keep on learning and learning, and pretty soon you learn something no one has learned before" 
+Richard P. Feynman
 
 ---
 
