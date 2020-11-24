@@ -982,7 +982,7 @@ class MeshTrefoilKnot extends MeshObject {
                 let v = this.compute( s, t + E );
                 v = Vec3.sub( v, p );
                 let n = Vec3.normalize(Vec3.cross( u, v ));
-                this.addAttr( p, n, [s * 18.0, t], c );
+                this.addAttr( p, n, [s * 12.0, t], c );
             }
         }
         this.e = [];
@@ -1058,7 +1058,7 @@ class MeshTorusKnot extends MeshObject {
                 let n = Vec3.add(Vec3.mul_s(N, px), Vec3.mul_s(B, py));
                 let p = Vec3.add(n, pt_tk0);
                 n = Vec3.normalize(n);
-                this.addAttr( p, n, [3.0 * p_ * q_ * u/tess_u, v/tess_v], c );
+                this.addAttr( p, n, [2.0 * p_ * q_ * u/tess_u, v/tess_v], c );
             }
         }
         
