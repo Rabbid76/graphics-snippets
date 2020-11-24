@@ -41,7 +41,7 @@ Robert C. Martin, Clean Code: A Handbook of Agile Software Craftsmanship
 
 [![](../documentation/image/parallax_mapping/parallax_006_cone_step_mapping_derivative_tbn_1.png) Cone Step Mapping](https://rabbid76.github.io/graphics-snippets/html/technique/parallax_006_cone_step_mapping_derivative_tbn.html)
 
-[![](../documentation/image/parallax_mapping/parallax_006_cone_step_mapping_derivative_tbn_2.png) Compare of different "bump" mapping techniques](https://rabbid76.github.io/graphics-snippets/html/technique/parallax_mapping.html)
+[![](../documentation/image/parallax_mapping/parallax_006_cone_step_mapping_derivative_tbn_2.png) Comparison of different "bump" mapping techniques](https://rabbid76.github.io/graphics-snippets/html/technique/parallax_mapping.html)
 
 ## Ambient occlusion
 
