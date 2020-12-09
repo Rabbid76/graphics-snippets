@@ -1753,7 +1753,7 @@ GL.TexEnv(TextureEnvTarget.TextureEnv, TextureEnvParameter.TextureEnvMode, GL_RE
 
 [Texture and image handling with (py)OpenGL](https://stackoverflow.com/questions/54243031/texture-and-image-handling-with-pyopengl/54243162#54243162), [Python]  
 
-Two-dimensional texturing is enabled by [`glEnable(GL_TEXTURE_2D)`](https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glEnable.xml) and can be disabled by `glDisable(GL_TEXTURE_2D)`.  
+Two-dimensional texturing has to enabled by [`glEnable(GL_TEXTURE_2D)`](https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glEnable.xml) and can be disabled by `glDisable(GL_TEXTURE_2D)`.  
 If texturing is enables then the texture wich is currently bound when the geometry is drawn by the [`glBegin`/`glEnd`](https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glBegin.xml) sequence is applied.
 
 When [`glVertex`](https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glVertex.xml) is called, the the current texture coordinates are associated with the vertex coordinate. The texture coordinate is set by [`glTexCoord2f`](https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glTexCoord.xml).
