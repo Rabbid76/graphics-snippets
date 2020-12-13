@@ -1,9 +1,13 @@
+[![StackOverflow](https://stackexchange.com/users/flair/7322082.png)](https://stackoverflow.com/users/5577765/rabbid76?tab=profile)
+
+---
+
 <!-- TOC -->
 
 - [Phong reflection model](#phong-reflection-model)
-  - [Obvious issues](#obvious-issues)
-    - [Phong Clipping](#phong-clipping)
-    - [Phong Distortion](#phong-distortion)
+    - [Obvious issues](#obvious-issues)
+        - [Phong Clipping](#phong-clipping)
+        - [Phong Distortion](#phong-distortion)
 
 <!-- /TOC -->
 

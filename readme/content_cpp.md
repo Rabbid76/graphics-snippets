@@ -7,6 +7,7 @@ Robert C. Martin, Clean Architecture
 
 # C++
 
+[C++ code snippets](../documentation/cpp_code_snippets.md)
 ## StackOverflow examples
 
 [![Dashed line shader](../documentation/image/dashed_cube.gif)](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/dashed_line_shader.md)  

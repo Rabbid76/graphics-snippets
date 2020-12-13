@@ -1,9 +1,13 @@
+[![StackOverflow](https://stackexchange.com/users/flair/7322082.png)](https://stackoverflow.com/users/5577765/rabbid76?tab=profile)
+
+---
+
 <!-- TOC -->
 
 - [Intersection](#intersection)
-  - [Intersection of 2 lines (2 dimensional)](#intersection-of-2-lines-2-dimensional)
-  - [Intersection of a line and a plane](#intersection-of-a-line-and-a-plane)
-    - [Intersection of the Line of Sight and the Viewport](#intersection-of-the-line-of-sight-and-the-viewport)
+    - [Intersection of 2 lines (2 dimensional)](#intersection-of-2-lines-2-dimensional)
+    - [Intersection of a line and a plane](#intersection-of-a-line-and-a-plane)
+        - [Intersection of the Line of Sight and the Viewport](#intersection-of-the-line-of-sight-and-the-viewport)
 
 <!-- /TOC -->
 

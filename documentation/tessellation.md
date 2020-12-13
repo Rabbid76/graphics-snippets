@@ -1,11 +1,15 @@
+[![StackOverflow](https://stackexchange.com/users/flair/7322082.png)](https://stackoverflow.com/users/5577765/rabbid76?tab=profile)
+
+---
+
 <!-- TOC -->
 
 - [Changing the geometry with tessellation shaders](#changing-the-geometry-with-tessellation-shaders)
-  - [Vertex shader](#vertex-shader)
-  - [Tessellation control shader](#tessellation-control-shader)
-  - [Tessellation evaluation shader](#tessellation-evaluation-shader)
-  - [Fragment shader](#fragment-shader)
-    - [Python script](#python-script)
+    - [Vertex shader](#vertex-shader)
+    - [Tessellation control shader](#tessellation-control-shader)
+    - [Tessellation evaluation shader](#tessellation-evaluation-shader)
+    - [Fragment shader](#fragment-shader)
+        - [Python script](#python-script)
 
 <!-- /TOC -->
 

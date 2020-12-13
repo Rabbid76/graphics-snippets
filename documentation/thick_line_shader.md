@@ -1,3 +1,7 @@
+[![StackOverflow](https://stackexchange.com/users/flair/7322082.png)](https://stackoverflow.com/users/5577765/rabbid76?tab=profile)
+
+---
+
 # Thick lines with OpenGL core profile
 
 The following is the answer to the StackOverflow question [OpenGL Line Width](https://stackoverflow.com/questions/3484260/opengl-line-width/59688394#59688394)

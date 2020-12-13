@@ -1,3 +1,7 @@
+[![StackOverflow](https://stackexchange.com/users/flair/7322082.png)](https://stackoverflow.com/users/5577765/rabbid76?tab=profile)
+
+---
+
 # Draw elements in Python
 
 Answer to StackOverflow question [Using offsets into the buffer in PyOpenGL calls](https://stackoverflow.com/questions/6431103/using-offsets-into-the-buffer-in-pyopengl-calls/54355523#54355523)

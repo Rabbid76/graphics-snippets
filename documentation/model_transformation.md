@@ -1,11 +1,15 @@
+[![StackOverflow](https://stackexchange.com/users/flair/7322082.png)](https://stackoverflow.com/users/5577765/rabbid76?tab=profile)
+
+---
+
 <!-- TOC -->
 
 - [Transformation of the model](#transformation-of-the-model)
-  - [Rotation matrix](#rotation-matrix)
-  - [Euler angles](#euler-angles)
-  - [Quaternion](#quaternion)
-    - [Rotate by quaternion](#rotate-by-quaternion)
-  - [Matrix calculus](#matrix-calculus)
+    - [Rotation matrix](#rotation-matrix)
+    - [Euler angles](#euler-angles)
+    - [Quaternion](#quaternion)
+        - [Rotate by quaternion](#rotate-by-quaternion)
+    - [Matrix calculus](#matrix-calculus)
 
 <!-- /TOC -->
 

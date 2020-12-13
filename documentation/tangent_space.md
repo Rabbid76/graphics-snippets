@@ -1,13 +1,17 @@
+[![StackOverflow](https://stackexchange.com/users/flair/7322082.png)](https://stackoverflow.com/users/5577765/rabbid76?tab=profile)
+
+---
+
 <!-- TOC -->
 
 - [Tangent space](#tangent-space)
-  - [Relation system](#relation-system)
-  - [Tangent and Binormal](#tangent-and-binormal)
-    - [Precomputed tangent](#precomputed-tangent)
-    - [Calculating the Tangent in the Fragment Shader](#calculating-the-tangent-in-the-fragment-shader)
-    - [Calculating the Tangent in a Geometry or Tesselation Shader](#calculating-the-tangent-in-a-geometry-or-tesselation-shader)
-  - [Tangent space matrix](#tangent-space-matrix)
-  - [Resources](#resources)
+    - [Relation system](#relation-system)
+    - [Tangent and Binormal](#tangent-and-binormal)
+        - [Precomputed tangent](#precomputed-tangent)
+        - [Calculating the Tangent in the Fragment Shader](#calculating-the-tangent-in-the-fragment-shader)
+        - [Calculating the Tangent in a Geometry or Tesselation Shader](#calculating-the-tangent-in-a-geometry-or-tesselation-shader)
+    - [Tangent space matrix](#tangent-space-matrix)
+    - [Resources](#resources)
 - [TODO](#todo)
 
 <!-- /TOC -->

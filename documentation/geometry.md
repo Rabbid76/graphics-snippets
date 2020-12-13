@@ -1,10 +1,14 @@
+[![StackOverflow](https://stackexchange.com/users/flair/7322082.png)](https://stackoverflow.com/users/5577765/rabbid76?tab=profile)
+
+---
+
 <!-- TOC -->
 
 - [Creating geometry using a geometry shader](#creating-geometry-using-a-geometry-shader)
-    - [Vertex shader](#vertex-shader)
-    - [Geometry shader](#geometry-shader)
-    - [Fragment shader](#fragment-shader)
-    - [Pyhton script](#pyhton-script)
+        - [Vertex shader](#vertex-shader)
+        - [Geometry shader](#geometry-shader)
+        - [Fragment shader](#fragment-shader)
+        - [Pyhton script](#pyhton-script)
 
 <!-- /TOC -->
 

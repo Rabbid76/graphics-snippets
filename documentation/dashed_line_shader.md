@@ -1,3 +1,7 @@
+[![StackOverflow](https://stackexchange.com/users/flair/7322082.png)](https://stackoverflow.com/users/5577765/rabbid76?tab=profile)
+
+---
+
 # Dashed lines with OpenGL core profile
 
 The following is the answer to the StackOverflow question [Dashed line in OpenGL3?](https://stackoverflow.com/questions/52928678/dashed-line-in-opengl3/54543267#54543267)
