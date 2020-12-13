@@ -123,3 +123,103 @@ bool LinkStatus( GLuint program )
     return status != GL_FALSE;
 }
 ```
+
+## Query the alignment and stride for an SSBO structure
+
+Related Stack Overflow questions:
+
+- [How do I query the alignment/stride for an SSBO struct?](https://stackoverflow.com/questions/56512216/how-do-i-query-the-alignment-stride-for-an-ssbo-struct/56513136#56513136)  
+
+Use [`glGetProgramInterface`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGetProgramInterface.xhtml) with the parameter `GL_SHADER_STORAGE_BLOCK` to get the number of the
+[Shader Storage Buffer Objects](https://www.khronos.org/opengl/wiki/Shader_Storage_Buffer_Object) and the maximum name length.  
+The maximum name length of the buffer variables can be get from the program interface `GL_BUFFER_VARIABLE`:
+
+```cpp
+GLuint prog_obj; // shader program object
+```
+
+```cpp
+GLint no_of, ssbo_max_len, var_max_len;
+glGetProgramInterfaceiv(prog_obj, GL_SHADER_STORAGE_BLOCK, GL_ACTIVE_RESOURCES, &no_of);
+glGetProgramInterfaceiv(prog_obj, GL_SHADER_STORAGE_BLOCK, GL_MAX_NAME_LENGTH, &ssbo_max_len);
+glGetProgramInterfaceiv(prog_obj, GL_BUFFER_VARIABLE, GL_MAX_NAME_LENGTH, &var_max_len);
+```
+
+The name of the SSBO can be get by [`glGetProgramResourceName`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGetProgramResourceName.xhtml) and a resource index by [`glGetProgramResourceIndex`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGetProgramResourceIndex.xhtml):
+
+```cpp
+std::vector< GLchar >name( max_len );
+for( int i_resource = 0; i_resource < no_of; i_resource++ ) {
+
+    // get name of the shader storage block
+    GLsizei strLength;
+    glGetProgramResourceName(
+        prog_obj, GL_SHADER_STORAGE_BLOCK, i_resource, ssbo_max_len, &strLength, name.data());
+
+    // get resource index of the shader storage block
+    GLint resInx = glGetProgramResourceIndex(prog_obj, GL_SHADER_STORAGE_BLOCK, name.data());
+
+    // [...]
+}
+```
+
+Data of the shader storage block can be retrieved by [`glGetProgramResource`](https://www.khronos.org/opengl/wiki/GLAPI/glGetProgramResource). See also [Program Introspection](https://www.khronos.org/opengl/wiki/Program_Introspection).
+
+Get the number of of buffer variables and its indices from program interface and `GL_SHADER_STORAGE_BLOCK` and the shader storage block resource `resInx`:
+
+```cpp
+for( int i_resource = 0; i_resource < no_of; i_resource++ ) {
+
+    // [...]
+
+    GLint resInx = ...
+
+    // get number of the buffer variables in the shader storage block
+    GLenum prop = GL_NUM_ACTIVE_VARIABLES;
+    GLint num_var;
+    glGetProgramResourceiv(
+        prog_obj, GL_SHADER_STORAGE_BLOCK, resInx, 1, &prop,
+        1, nullptr, &num_var);
+
+    // get resource indices of the buffer variables
+    std::vector<GLint> vars(num_var);
+    prop = GL_ACTIVE_VARIABLES;
+    glGetProgramResourceiv(
+        prog_obj, GL_SHADER_STORAGE_BLOCK, resInx,
+        1, &prop, (GLsizei)vars.size(), nullptr, vars.data());
+
+    // [...]
+}
+```
+
+Get the offsets of the buffer variables, in basic machine units, relative to the base of buffer and its names from the program interface `GL_BUFFER_VARIABLE` and the resource indices `vars[]`:
+
+```cpp
+for( int i_resource = 0; i_resource < no_of; i_resource++ ) {
+
+    // [...]
+
+    std::vector<GLint> offsets(num_var);
+    std::vector<std::string> var_names(num_var);
+    for (GLint i = 0; i < num_var; i++) {
+        
+        // get offset of buffer variable relative to SSBO
+        GLenum prop = GL_OFFSET;
+        glGetProgramResourceiv(
+            prog_obj, GL_BUFFER_VARIABLE, vars[i],
+            1, &prop, (GLsizei)offsets.size(), nullptr, &offsets[i]);
+
+        // get name of buffer variable
+        std::vector<GLchar>var_name(var_max_len);
+        GLsizei strLength;
+        glGetProgramResourceName(
+            prog_obj, GL_BUFFER_VARIABLE, vars[i], 
+            var_max_len, &strLength, var_name.data());
+        var_names[i] = var_name.data();
+    }
+
+    // [...]
+}
+```
+
+See also [`ARB_shader_storage_buffer_object`](https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_shader_storage_buffer_object.txt)
