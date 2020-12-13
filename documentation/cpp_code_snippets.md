@@ -68,3 +68,58 @@ catch ( std::ifstream::failure e )
     std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
 }
 ```
+
+## Compile and link shader
+
+Related Stack Overflow questions:
+
+- [OpenGL ignores Quads and makes them Triangles](https://stackoverflow.com/questions/53218925/opengl-ignores-quads-and-makes-them-triangles/53220726#53220726)  
+- [light shows but the cube does not appear](https://stackoverflow.com/questions/59235204/light-shows-but-the-cube-does-not-appear/59236020#59236020)
+- [glGetAttribLocation is causing invalid operation](https://stackoverflow.com/questions/50805413/glgetattriblocation-is-causing-invalid-operation/50805535#50805535)  
+
+I recommend to check if the shader compilation succeeded and if the program object linked successfully.
+
+If the compiling of a shader succeeded can be checked by [`glGetShaderiv`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGetShader.xhtml) and the parameter `GL_COMPILE_STATUS`. e.g.:
+
+```cpp
+#include <iostream>
+#include <vector>
+```
+
+```cpp
+bool CompileStatus( GLuint shader )
+{
+    GLint status = GL_TRUE;
+    glGetShaderiv( shader, GL_COMPILE_STATUS, &status );
+    if (status == GL_FALSE)
+    {
+        GLint logLen;
+        glGetShaderiv( shader, GL_INFO_LOG_LENGTH, &logLen );
+        std::vector< char >log( logLen );
+        GLsizei written;
+        glGetShaderInfoLog( shader, logLen, &written, log.data() );
+        std::cout << "compile error:" << std::endl << log.data() << std::endl;
+    }
+    return status != GL_FALSE;
+}
+```
+
+If the linking of a program was successful can be checked by [`glGetProgramiv`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGetProgram.xhtml) and the parameter `GL_LINK_STATUS`. e.g.:
+
+```cpp
+bool LinkStatus( GLuint program )
+{
+    GLint status = GL_TRUE;
+    glGetProgramiv( program, GL_LINK_STATUS, &status );
+    if (status == GL_FALSE)
+    {
+        GLint logLen;
+        glGetProgramiv( program, GL_INFO_LOG_LENGTH, &logLen );
+        std::vector< char >log( logLen );
+        GLsizei written;
+        glGetProgramInfoLog( program, logLen, &written, log.data() );
+        std::cout << "link error:" << std::endl << log.data() << std::endl;
+    }
+    return status != GL_FALSE;
+}
+```
