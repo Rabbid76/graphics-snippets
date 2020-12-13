@@ -45,3 +45,26 @@ void init_opengl_debug() {
     }
 }
 ```
+
+## Load shader file
+
+Related Stack Overflow questions:
+
+- [OpenGL shaders don't compile](https://stackoverflow.com/questions/47853523/opengl-shaders-dont-compile/47853880#47853880)  
+
+Pass `std::ifstream::failbit` to [`std::ios::exceptions`](http://www.cplusplus.com/reference/ios/ios/exceptions/), because if [`std::ifstream::open`](http://www.cplusplus.com/reference/fstream/ifstream/open/) fails, the failbit status flag is set.
+
+```cpp
+vShaderFile.exceptions ( std::ifstream::failbit | std::ifstream::badbit );
+fShaderFile.exceptions ( std::ifstream::failbit | std::ifstream::badbit );
+try
+{
+    vShaderFile.open( vertexPath );
+    fShaderFile.open( fragmentPath );
+    .....
+}
+catch ( std::ifstream::failure e )
+{
+    std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
+}
+```
