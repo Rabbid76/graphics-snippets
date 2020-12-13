@@ -126,6 +126,8 @@ bool LinkStatus( GLuint program )
 
 ## Query the alignment and stride for an SSBO structure
 
+[Shader Storage Buffer Object SSBO](https://www.khronos.org/opengl/wiki/Shader_Storage_Buffer_Object)
+
 Related Stack Overflow questions:
 
 - [How do I query the alignment/stride for an SSBO struct?](https://stackoverflow.com/questions/56512216/how-do-i-query-the-alignment-stride-for-an-ssbo-struct/56513136#56513136)  
