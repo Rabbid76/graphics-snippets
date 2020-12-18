@@ -225,3 +225,192 @@ for( int i_resource = 0; i_resource < no_of; i_resource++ ) {
 ```
 
 See also [`ARB_shader_storage_buffer_object`](https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_shader_storage_buffer_object.txt)
+
+## Load Wave front file (OBJ) 
+
+Related Stack Overflow questions:
+
+- [How do I sort the texture positions based on the texture indices given in a Wavefront (.obj) file?](https://stackoverflow.com/questions/51708275/how-do-i-sort-the-texture-positions-based-on-the-texture-indices-given-in-a-wave/51711080#51711080)  
+
+If there are different indexes for vertex coordinates and texture coordinates, then the vertex positions must be "duplicated".  
+The vertex coordinate and its attributes (like texture coordinate) form a tuple. Each vertex coordinate must have its own texture coordinates and attributes. You can think of a 3D vertex coordinate and a 2D texture coordinate as a single 5D coordinate.
+See [Rendering meshes with multiple indices](https://stackoverflow.com/questions/11148567/rendering-meshes-with-multiple-indices/11148568#11148568).
+
+The vertex attributes for each vertex position form a set of data. This means you have to create tuples of vertex coordinate, and texture coordiantes.
+
+Let's assume that you have a *.obj* file like this:
+
+```lang-none
+v -1 -1 -1
+v  1 -1 -1
+v -1  1 -1
+v  1  1 -1
+v -1 -1  1
+v  1 -1  1
+v -1  1  1
+v  1  1  1
+
+vt 0 0
+vt 0 1
+vt 1 0
+vt 1 1
+
+vn -1  0  0
+vn  0 -1  0
+vn  0  0 -1
+vn  1  0  0
+vn  0  1  0
+vn  0  0  1
+
+f 3/1/1 1/2/1 5/4/1 7/3/1
+f 1/1/2 2/2/2 3/4/2 6/3/2
+f 3/1/3 4/2/3 2/4/3 1/3/3
+f 2/1/4 4/2/4 8/4/4 6/3/4
+f 4/1/5 3/2/5 7/4/5 8/3/5
+f 5/1/6 6/2/6 8/4/6 7/3/6
+```
+
+From this you have to find all the combinations of vertex coordinate, texture texture coordinate and normal vector indices, which are used in the face specification:
+
+```lang-none
+0 : 3/1/1
+1 : 1/2/1
+2 : 5/4/1
+3 : 7/3/1
+4 : 1/1/2
+5 : 2/2/2
+6 : 3/4/2
+7 : 6/3/2
+8 : ...
+```
+
+Then you have to create a vertex coordinate, texture coordinate and normal vector array corresponding to the array of index combinations.
+The vertex coordinates and its attributes can either be combined in one array to data sets, or to three arrays with equal number of attributes:
+
+```lang-none
+index   vx vy vz     u v     nx ny nz
+0 :     -1  1 -1     0 0     -1  0  0
+1 :     -1 -1 -1     0 1     -1  0  0
+2 :     -1 -1  1     1 1     -1  0  0
+3 :     -1  1  1     1 0     -1  0  0
+4 :     -1 -1 -1     0 0      0 -1  0
+5 :      1 -1 -1     0 1      0 -1  0
+6 :     -1  1 -1     1 1      0 -1  0
+7 :      1 -1  1     1 0      0 -1  0
+8 : ...
+```
+
+See the very simple c++ function, which can read an *.obj* file, like that you linked to.
+The function reads a file and writes the data to an element vector and an attribute vector.
+
+Note, the function can be optimized and does not care about performance.
+For a small file (like *cube3.obj* which you liked to), that doesn't matter, but for large file,
+especially the linear search in the index table, will have to be improved.
+
+I just tried to give you an idea how to read an *.obj* file and how to create an element and attribute vector, which can be directly used to draw an mesh with the use of OpenGL.
+
+```cpp
+#include <vector>
+#include <array>
+#include <string>
+#include <fstream>
+#include <strstream>
+#include <algorithm>
+
+bool load_obj( 
+    const std::string          filename, 
+    std::vector<unsigned int> &elements,
+    std::vector<float>        &attributes )
+{
+    std::ifstream obj_stream( filename, std::ios::in );
+    if( !obj_stream )
+        return false;
+
+    // parse the file, line by line
+    static const std::string white_space = " \t\n\r";
+    std::string token, indices, index;
+    float value;
+    std::vector<float> v, vt, vn;
+    std::vector<std::array<unsigned int, 3>> f;
+    for( std::string line; std::getline( obj_stream, line ); )
+    {
+        // find first non whispce characterr in line
+        size_t start = line.find_first_not_of( white_space );
+        if ( start == std::string::npos )
+            continue;
+
+        // read the first token
+        std::istringstream line_stream( line.substr(start) );
+        line_stream.exceptions( 0 );
+        line_stream >> token;
+
+        // ignore comment lines
+        if ( token[0] == '#' )
+            continue;
+
+        // read the line
+        if ( token == "v" ) // read vertex coordinate
+        {
+            while ( line_stream >> value )  
+                v.push_back( value );
+        }
+        else if ( token == "vt" ) // read normal_vectors 
+        {
+            while ( line_stream >> value )
+                vt.push_back( value );
+        }
+        else if ( token == "vn" )  // read normal_vectors 
+        {
+            while ( line_stream >> value )
+                vn.push_back( value );
+        }
+        else if ( token == "f" )
+        {
+            // read faces
+            while( line_stream >> indices )
+            {
+                std::array<unsigned int, 3> f3{ 0, 0, 0 };
+                // parse indices
+                for ( int j=0; j<3; ++ j )
+                {
+                    auto slash = indices.find( "/" );
+                    f3[j] = std::stoi(indices.substr(0, slash), nullptr, 10);
+                    if ( slash == std::string::npos )
+                        break;
+                    indices.erase(0, slash + 1);
+                }
+
+                // add index
+                auto it = std::find( f.begin(), f.end(), f3 );
+                elements.push_back( (unsigned int)(it - f.begin()) );
+                if ( it == f.end() )
+                    f.push_back( f3 );
+            }
+        }
+    }
+
+    // create array of attributes from the face indices
+    for ( auto f3 : f )
+    {
+        if ( f3[0] > 0 )
+        {
+            auto iv = (f3[0] - 1) * 3;
+            attributes.insert( attributes.end(), v.begin() + iv, v.begin() + iv + 3 );
+        }
+
+        if ( f3[1] > 0 )
+        {
+            auto ivt = (f3[1] - 1) * 2;
+            attributes.insert( attributes.end(), vt.begin() + ivt, vt.begin() + ivt + 2 );
+        }
+
+        if ( f3[2] > 0 )
+        {
+            auto ivn = (f3[2] - 1) * 3;
+            attributes.insert( attributes.end(), vn.begin() + ivn, vn.begin() + ivn + 3 );
+        }
+    }
+
+    return true;
+}
+```
