@@ -10,3 +10,7 @@
 - webgl: add typscript
 - pixi.js
 - book of sahders
+
+# Questions
+
+- [Can't get glVertexAttribPointer to render colour from shaders](https://stackoverflow.com/questions/50519828/applying-a-perspective-transformation-matrix-from-gimp-into-a-glsl-shader/50522311#50522311)
