@@ -178,8 +178,7 @@ int width = 0, height = 0, channels = 0;
 stbi_uc *image = stbi_load( filename, &width, &height, &channels, 3 );
 ```
 
-When the image is loaded to a texture object, then [`GL_UNPACK_ALIGNMENT`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml) has to be set to 1.  
-By default `GL_UNPACK_ALIGNMENT` is 4, so each line of an image is assumed to be aligned to 4 bytes. The pixels of a BMP-file in common have a size of 3 bytes and are tightly packed, this would cause a misalignment.<br/>
+When an RGB image is loaded to a texture object, GL_UNPACK_ALIGNMENT needs to be set to 1. By default GL_UNPACK_ALIGNMENT is 4, so each line of an image is assumed to be aligned to 4 bytes. The pixels in the buffer have a size of 3 bytes and are tightly packed, this would cause a misalignment.
 After loading the image, the memory on the can be freed by `stbi_image_free`:  
 
 ```cpp
