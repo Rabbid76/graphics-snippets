@@ -7,14 +7,20 @@ Richard P. Feynman
 
 # three.js
 
-[![](../documentation/image/perspective_view_frustum.gif) Perspective Viewing Frustum](https://rabbid76.github.io/graphics-snippets/example/threejs/three_perspective.html)
+[![](../documentation/image/perspective_view_frustum.gif) Perspective Viewing Frustum](../example/threejs/three_perspective.html)
 
 ## StackOverflow examples - three.js
 
-[BSP geometry - subtract](https://rabbid76.github.io/graphics-snippets/html/stackoverrflow_threejs/geometry_bsp_subtrac.html)
+[![](https://i.stack.imgur.com/GgWSu.png) BSP geometry - subtract cube](../example/threejs/stackoverflow/geometry_bsp_subtract_cube.html)
 
-[Logarithmic depth buffer (cube)](https://rabbid76.github.io/graphics-snippets/html/stackoverrflow_threejs/logarithmic_depth_cube.html)
+[![](https://i.stack.imgur.com/K89Mz.png) BSP geometry - subtract sphere](../example/threejs/stackoverflow/geometry_bsp_subtract_sphere.html)
 
-[Dashed line shader](https://rabbid76.github.io/graphics-snippets/html/stackoverrflow_threejs/dashed_line.html)
+[![](https://i.stack.imgur.com/mmWhr.png) BSP geometry - subtract heart](../example/threejs/stackoverflow/geometry_bsp_subtract_heart.html)
 
-[Cube tilt (axis)](https://rabbid76.github.io/graphics-snippets/html/stackoverrflow_threejs/pivote_rotate_group.html)
+[![](../screenshot/example/threejs\stackoverflow/geometry_extrude.png) geometry - extrude](../example/threejs/stackoverflow/geometry_extrude.html)
+
+[Logarithmic depth buffer (cube)](../html/stackoverrflow_threejs/logarithmic_depth_cube.html)
+
+[![](https://i.stack.imgur.com/yFnQd.gif) Dashed line shader](../example/threejs/stackoverflow/dashed_line.html)
+
+[![](https://i.stack.imgur.com/Arv4J.gif) Cube tilt (axis)](../example/threejs/stackoverflow/pivote_rotate_group.html)

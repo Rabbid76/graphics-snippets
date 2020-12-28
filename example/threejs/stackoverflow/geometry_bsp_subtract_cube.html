@@ -1,0 +1,127 @@
+<html>
+
+<head>
+<title>How create window, holes or subtract geometry in three.js</title>
+<style>
+
+body {
+    background: transparent;
+    padding: 0;
+    margin: 0;
+    font-family: sans-serif;
+}
+
+canvas {
+    margin: 10px auto;
+    width: 800px;
+    height: 350px;
+    margin-top: -44px;
+}
+
+#ref-link {
+    position : absolute;
+    bottom : 0;
+    left : 0;
+}
+
+</style>
+
+</head>
+
+<body>
+<!--script src="https://threejs.org/build/three.js"></!--script-->
+<script src="https://rawcdn.githack.com/mrdoob/three.js/r124/build/three.js"></script>
+<script src="https://rawcdn.githack.com/mrdoob/three.js/r124/examples/js/controls/OrbitControls.js"></script>
+<script src="https://rawgit.com/Wilt/ThreeCSG/develop/ThreeCSG.js"></script>
+
+<div id="container"></div>
+
+<a id="ref-link" href="https://stackoverflow.com/questions/59802750/how-create-window-holes-or-subtract-geometry-in-three-js/59810310#59810310">
+How create window, holes or subtract geometry in three.js 
+</a>
+
+<script>
+(function onLoad() {
+  var container, camera, scene, renderer, controls;
+  
+  init();
+  animate();
+
+  function init() {
+    container = document.getElementById('container');
+    
+    renderer = new THREE.WebGLRenderer({
+      antialias: true
+    });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    container.appendChild(renderer.domElement);
+
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xffffff);
+    
+    camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 10000);
+    camera.position.set(3, 1, -1);
+    scene.add(camera);
+    window.onresize = function() {
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+    }
+    
+    var ambientLight = new THREE.AmbientLight(0x404040);
+    scene.add(ambientLight);
+
+    var directionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
+    directionalLight.position.x = 4;
+    directionalLight.position.y = 1;
+    directionalLight.position.z = -2;
+    scene.add( directionalLight );
+    
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+		
+    addGridHelper();
+    createModel();
+  }
+
+  function createModel() {
+
+      var geometry_Y = new THREE.BoxBufferGeometry( 1.5, 1.5, 0.99 );
+      var geometry_A = new THREE.BoxBufferGeometry( 0.7, 0.7, 0.7 );
+      geometry_A.translate( 0.5, 0.5, 0 );
+    
+      var bsp_A = new ThreeBSP(geometry_A);
+      var bsp_Y = new ThreeBSP(geometry_Y);
+      
+      var bsp_YsubA = bsp_Y.subtract(bsp_A);
+      var bsp_mesh = bsp_YsubA.toMesh();
+      bsp_mesh.material = new THREE.MeshLambertMaterial( { color: 0x00ff00 } );
+      
+      scene.add( bsp_mesh );
+  }
+
+  function addGridHelper() {
+
+    var helper = new THREE.GridHelper(10, 10);
+    helper.material.opacity = 0.25;
+    helper.material.transparent = true;
+    scene.add(helper);
+
+    var axis = new THREE.AxesHelper(100);
+    scene.add(axis);
+  }
+
+  function animate() {
+    requestAnimationFrame(animate);
+    render();
+  }
+
+  function render() {
+    renderer.render(scene, camera);
+  }
+})();
+</script>
+
+</body>
+</html>

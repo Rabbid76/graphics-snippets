@@ -1,0 +1,160 @@
+<html>
+
+<head>
+<title>Rounded corner box having holes using three.js</title>
+<style>
+
+body {
+    background: transparent;
+    padding: 0;
+    margin: 0;
+    font-family: sans-serif;
+}
+
+canvas {
+    margin: 10px auto;
+    width: 800px;
+    height: 350px;
+    margin-top: -44px;
+}
+
+#ref-link {
+    position : absolute;
+    bottom : 0;
+    left : 0;
+}
+
+</style>
+
+</head>
+
+<body>
+<!--script src="https://threejs.org/build/three.js"></!--script-->
+<script src="https://rawcdn.githack.com/mrdoob/three.js/r124/build/three.js"></script>
+<script src="https://rawcdn.githack.com/mrdoob/three.js/r124/examples/js/controls/OrbitControls.js"></script>
+<!--script!-- src="https://rawgit.com/Wilt/ThreeCSG/develop/ThreeCSG.js"></script-->
+
+<div id="container"></div>
+
+<div>
+<a id="ref-link" href="https://threejs.org/examples/#webgl_geometry_shapes">
+Three.js - webgl_geometry_shapes
+</a>
+<br/>
+<a id="ref-link" href="https://stackoverflow.com/questions/59828669/rounded-corner-box-having-holes-using-three-js">
+Rounded corner box having holes using three.js
+</a>
+</div>div
+
+<script>
+(function onLoad() {
+  var container, camera, scene, renderer, controls;
+  
+  init();
+  animate();
+
+  function init() {
+    container = document.getElementById('container');
+    
+    renderer = new THREE.WebGLRenderer({
+      antialias: true
+    });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    container.appendChild(renderer.domElement);
+
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xffffff);
+    
+    camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 10000);
+    camera.position.set(5, 5, 10);
+    scene.add(camera);
+    window.onresize = function() {
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+    }
+    
+    var ambientLight = new THREE.AmbientLight(0x404040);
+    scene.add(ambientLight);
+
+    var directionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
+    directionalLight.position.x = 4;
+    directionalLight.position.y = 1;
+    directionalLight.position.z = 2;
+    scene.add( directionalLight );
+    
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+		
+    addGridHelper();
+    createModel();
+  }
+
+  function createModel() {
+
+      let f_rect = function roundedRect( ctx, x, y, width, height, radius ) {
+          ctx.moveTo( x, y + radius );
+          ctx.lineTo( x, y + height - radius );
+          ctx.quadraticCurveTo( x, y + height, x + radius, y + height );
+          ctx.lineTo( x + width - radius, y + height );
+          ctx.quadraticCurveTo( x + width, y + height, x + width, y + height - radius );
+          ctx.lineTo( x + width, y + radius );
+          ctx.quadraticCurveTo( x + width, y, x + width - radius, y );
+          ctx.lineTo( x + radius, y );
+          ctx.quadraticCurveTo( x, y, x, y + radius );
+      }
+
+      let f_rect_reverse = function roundedRect( ctx, x, y, width, height, radius ) { 
+          ctx.moveTo( x, y + height - radius );
+          ctx.lineTo( x, y + radius ); 
+          ctx.quadraticCurveTo( x, y, x + radius, y );
+          ctx.lineTo( x + width - radius, y );
+          ctx.quadraticCurveTo( x + width, y, x + width, y + radius );
+          ctx.lineTo( x + width, y + height - radius );
+          ctx.quadraticCurveTo( x + width, y + height, x + width - radius, y + height );
+          ctx.lineTo( x + radius, y + height );
+          ctx.quadraticCurveTo( x, y + height, x, y + height - radius );       
+      }
+
+      var roundedRectShape = new THREE.Shape();
+      f_rect( roundedRectShape, -25, -25, 50, 50, 20 );
+      var roundedRectShape_small = new THREE.Path();
+      f_rect_reverse( roundedRectShape_small, -15, -15, 30, 30, 10 );
+      roundedRectShape.holes.push( roundedRectShape_small );
+
+      var material = new THREE.MeshLambertMaterial( { color: 0x00ff00, side: THREE.DoubleSide } );
+      var extrudeSettings = { depth: 8, bevelEnabled: true, bevelSegments: 2, steps: 3, bevelSize: 5, bevelThickness: 5 };
+      var geometry = new THREE.ExtrudeBufferGeometry( roundedRectShape, extrudeSettings );
+      
+      let s = 0.1;
+      var mesh = new THREE.Mesh( geometry, material );
+      mesh.scale.set( s, s, s );
+
+      scene.add( mesh );
+  }
+
+  function addGridHelper() {
+
+    var helper = new THREE.GridHelper(10, 10);
+    helper.material.opacity = 0.25;
+    helper.material.transparent = true;
+    scene.add(helper);
+
+    var axis = new THREE.AxesHelper(100);
+    scene.add(axis);
+  }
+
+  function animate() {
+    requestAnimationFrame(animate);
+    render();
+  }
+
+  function render() {
+    renderer.render(scene, camera);
+  }
+})();
+</script>
+
+</body>
+</html>

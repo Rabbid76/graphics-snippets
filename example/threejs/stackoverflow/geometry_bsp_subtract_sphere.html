@@ -1,0 +1,180 @@
+<html>
+
+<head>
+<title>[help]After using the threeBSP method, the created spheres are not smooth</title>
+<style>
+
+body {
+    background: transparent;
+    padding: 0;
+    margin: 0;
+    font-family: sans-serif;
+}
+
+canvas {
+    margin: 10px auto;
+    width: 800px;
+    height: 350px;
+    margin-top: -44px;
+}
+
+#ref-link {
+    position : absolute;
+    bottom : 0;
+    left : 0;
+}
+
+</style>
+
+</head>
+
+<body>
+<!--script src="https://threejs.org/build/three.js"></!--script-->
+<!--script src="https://threejs.org/examples/js/libs/dat.min.js"></!--script-->
+<script src="https://rawcdn.githack.com/mrdoob/three.js/r124/build/three.js"></script>
+<script src="https://rawcdn.githack.com/mrdoob/three.js/r124/examples/js/controls/OrbitControls.js"></script>
+<script src="https://rawgit.com/Wilt/ThreeCSG/develop/ThreeCSG.js"></script>
+
+<div id="container"></div>
+
+<a id="ref-link" href="https://stackoverflow.com/questions/48016546/helpafter-using-the-threebsp-method-the-created-spheres-are-not-smooth">
+[help]After using the threeBSP method, the created spheres are not smooth  
+</a>
+
+<script>
+(function onLoad() {
+  var container, camera, scene, renderer, controls;
+  
+  init();
+  animate();
+
+  function init() {
+    container = document.getElementById('container');
+    
+    renderer = new THREE.WebGLRenderer({
+      antialias: true
+    });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    container.appendChild(renderer.domElement);
+
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xffffff);
+    
+    camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 10000);
+    camera.position.set(0, -400, -150);
+    scene.add(camera);
+    resize();
+    window.onresize = resize;
+    
+    var ambientLight = new THREE.AmbientLight(0x404040);
+    scene.add(ambientLight);
+
+    var directionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
+    directionalLight.position.x = -1;
+    directionalLight.position.y = 0;
+    directionalLight.position.z = -2;
+    scene.add( directionalLight );
+
+    //var hemisphereLight = new THREE.HemisphereLight(0xffffbb, 0x080820, 1);
+    //scene.add(hemisphereLight);
+
+    //var spotLight = new THREE.SpotLight(0xffffff, 1.5);
+    //spotLight.position.set(0, 1500, 200);
+    //spotLight.castShadow = true;
+    //spotLight.shadow = new THREE.LightShadow(new THREE.PerspectiveCamera(70, 1, 200, 2000));
+    //spotLight.shadow.bias = -0.000222;
+    //spotLight.shadow.mapSize.width = 1024;
+    //spotLight.shadow.mapSize.height = 1024;
+    //scene.add(spotLight);
+    
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+		
+    //addGridHelper();
+    createModel();
+  }
+
+  function createModel() {
+
+    var sphereG = new THREE.SphereGeometry( 115, 45, 45 );
+    var sphere = new THREE.Mesh(sphereG);
+    var polyhedronG = new THREE.Geometry();
+    polyhedronG.vertices.push(
+        new THREE.Vector3(-200,200,-200),   //A 0
+        new THREE.Vector3(-200,-200,200),   //B 1
+        new THREE.Vector3(200,-200,-200),   //D 2
+        new THREE.Vector3(-1,-1,-1)         //O 3
+    );
+    polyhedronG.faces.push( 
+      new THREE.Face3( 0, 1, 2 ),
+      new THREE.Face3( 0, 2, 3 ),
+      new THREE.Face3( 0, 3, 1 ),
+      new THREE.Face3( 3, 2, 1 )
+    );
+    var polyhedronM = new THREE.MeshPhongMaterial( {
+        color:"#E8FBFF",
+        side:THREE.DoubleSide,
+        transparent:true,
+        opacity:0.1
+    });
+    var polyhedron  = new THREE.Mesh(polyhedronG,polyhedronM);
+    var boxBSP = new ThreeBSP(polyhedron);
+    var sphereBSP = new ThreeBSP(sphere);
+    
+    var resultBSP1 = sphereBSP.subtract(boxBSP);
+    var resultMesh1 = resultBSP1.toMesh();
+    resultMesh1.material=new THREE.MeshPhongMaterial({color:'#ff8080'});
+    resultMesh1.position.x = 100
+
+    var resultBSP2 = sphereBSP.subtract(boxBSP); 
+    var resultMesh2 = resultBSP2.toMesh();
+    resultMesh2.material=new THREE.MeshPhongMaterial({color:'#ff8080'});
+    resultMesh2.position.x = -100
+    resultMesh2.geometry.computeVertexNormals();
+    
+    scene.add(resultMesh1);
+    scene.add(resultMesh2);
+  }
+
+  function addGridHelper() {
+    var planeGeometry = new THREE.PlaneGeometry(2000, 2000);
+    planeGeometry.rotateX(-Math.PI / 2);
+
+    var planeMaterial = new THREE.ShadowMaterial({
+      opacity: 0.2
+    });
+    var plane = new THREE.Mesh(planeGeometry, planeMaterial);
+    plane.position.y = -200;
+    plane.receiveShadow = true;
+    scene.add(plane);
+
+    var helper = new THREE.GridHelper(2000, 100);
+    helper.material.opacity = 0.25;
+    helper.material.transparent = true;
+    scene.add(helper);
+
+    var axis = new THREE.AxesHelper(1000);
+    scene.add(axis);
+  }
+
+  function resize() {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    //controls.handleResize();
+  }
+
+  function animate() {
+    requestAnimationFrame(animate);
+    render();
+  }
+
+  function render() {
+    renderer.render(scene, camera);
+  }
+})();
+</script>
+
+</body>
+</html>
