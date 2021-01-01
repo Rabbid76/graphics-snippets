@@ -69,6 +69,10 @@ catch ( std::ifstream::failure e )
 }
 ```
 
+```cpp
+sourceCode = std::string(std::istreambuf_iterator<char>(sourceFile), std::istreambuf_iterator<char>());
+```
+
 ## Compile and link shader
 
 Related Stack Overflow questions:
