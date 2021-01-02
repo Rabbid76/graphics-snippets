@@ -323,8 +323,9 @@ float depth = (((farZ-nearZ) * ndc_depth) + nearZ + farZ) / 2.0;
 
 ## Orthographic Projection
 
-At Orthographic Projection, the view space coordinates are linearly mapped to the clip space coordinates. The clip space coordinates are equal to the normalized device coordinates, because the `w` component is 1 (for a cartesian input coordinate).  
-The values for left, right, bottom, top, near and far define a box. All the geometry which is inside the volume of the box is "visible" on the viewport.
+In Orthographic Projection, the view space coordinates are linearly mapped to the clip space coordinates. The clip space coordinates are equal to the normalized device coordinates, because the `w` component is 1 (for a cartesian input coordinate).  
+The viewing volume is defined by 6 distances (left, right, bottom, top, near, far). The values for left, right, bottom, top, near and far define a cuboid (box). All of the geometry that is within the volume of the box is projected onto the two-dimensional viewport and is "visible". All geometry that is outside this volume is clipped.  
+If you want to use orthographic projection, you need to define the area (cuboid volume) of your scene that you want to show in the viewport. This area indicates the 6 distances for the orthographic projection. If your viewport is rectangular and you want to keep the aspect ratio, the _xy_ plane of the viewing volume volume must also be rectangular. The ratio of the _xy_ plane must match the ratio of the viewport.
 
 ![Orthographic Projection](image/OrthographicProjection.png)
 
@@ -339,7 +340,7 @@ z:    0               0               -2/(f-n)        0
 t:    -(r+l)/(r-l)    -(t+b)/(t-b)    -(f+n)/(f-n)    1
 ```
 
-At Orthographic Projection, the Z component is calculated by the **linear function**:
+In Orthographic Projection, the Z component is calculated by the **linear function**:
 
 ```txt
 z_ndc = z_eye * -2/(f-n) - (f+n)/(f-n)
