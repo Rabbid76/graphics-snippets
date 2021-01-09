@@ -4,6 +4,44 @@
 
 # C++ code snippets
 
+## OpenGL extensions
+
+[OpenGL Extension](https://www.khronos.org/opengl/wiki/OpenGL_Extension)
+
+Related Stack Overflow questions:
+
+- [Is there a way in Opengl es 2.0 fragment shader, to get a previews fragment color](https://stackoverflow.com/questions/65642257/is-there-a-way-in-opengl-es-2-0-fragment-shader-to-get-a-previews-fragment-colo/65642346#65642346)  
+- [How can I simulate “Glow Dodge” blending by using OpenGL Shader?](https://stackoverflow.com/questions/61236450/how-can-i-simulate-glow-dodge-blending-by-using-opengl-shader/61236742#61236742)  
+- [OpenGL handling float color saturation (“color overflow”)?](https://stackoverflow.com/questions/61236450/how-can-i-simulate-glow-dodge-blending-by-using-opengl-shader/61236742#61236742)  
+
+With [`glGetIntegerv(GL_NUM_EXTENSIONS, ...)`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGet.xhtml), the number of extension supported by the GL implementation can be get.  
+With [`glGetStringi(GL_EXTENSIONS, ...)`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGetString.xhtml) the name of an extension can be asked.
+
+Read the extensions to a `std::set`
+
+```cpp
+#include <set>
+#include <string>
+```
+
+```cpp
+GLint no_of_extensions = 0;
+glGetIntegerv(GL_NUM_EXTENSIONS, &no_of_extensions);
+
+std::set<std::string> ogl_extensions;
+for ( int i = 0; i < no_of_extensions; ++i )
+    ogl_extensions.insert( (const char*)glGetStringi(GL_EXTENSIONS, i) );
+```
+
+Check if an extension is supported:
+
+```cpp
+bool filter_anisotropic = 
+    ogl_extensions.find( "GL_ARB_texture_filter_anisotropic" ) != ogl_extensions.end();
+```
+
+Alternatively, you can use `glewIsSupported` to ask for an extension. See [GLEW - Checking for Extensions](http://glew.sourceforge.net/basic.html).
+
 ## Debug context and Debug output
 
 [Debug Output](https://www.khronos.org/opengl/wiki/Debug_Output)
