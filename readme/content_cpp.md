@@ -13,7 +13,7 @@ Robert C. Martin, Clean Architecture
 
 [Thick lines with OpenGL core profile](../documentation/thick_line_shader.md)
 
-[thick_line_strip_ssbo](../example/cpp/opengl_line_thickness/thick_line_strip_ssbo.cpp)
+[thick_line_strip_ssbo](../example/cpp/opengl_line_thickness/thick_line_strip_ssbo.cpp)  
 [![thick_line_strip_ssbo](../documentation/image/thick_line_2.png)](../example/cpp/opengl_line_thickness/dashed_line_strip.cpp)  
 
 ## Dashed lines
