@@ -175,7 +175,7 @@ const char *filename = .....; // path and filename
 int         req_channels = 3; // 3 color channels of BMP-file   
 
 int width = 0, height = 0, channels = 0;
-stbi_uc *image = stbi_load( filename, &width, &height, &channels, 3 );
+stbi_uc *image = stbi_load(filename, &width, &height, &channels, req_channels);
 ```
 
 When an RGB image is loaded to a texture object, GL_UNPACK_ALIGNMENT needs to be set to 1. By default GL_UNPACK_ALIGNMENT is 4, so each line of an image is assumed to be aligned to 4 bytes. The pixels in the buffer have a size of 3 bytes and are tightly packed, this would cause a misalignment.
