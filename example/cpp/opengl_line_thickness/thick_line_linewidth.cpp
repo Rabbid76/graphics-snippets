@@ -82,6 +82,7 @@ int main(void)
     //glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, 6 );
     //glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE );
     //glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE );
+    //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
     GLFWwindow *wnd = glfwCreateWindow( 800, 600, "GLFW OGL window", nullptr, nullptr );
     if ( wnd == nullptr )
     {
@@ -171,7 +172,11 @@ int main(void)
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
       
-        glDrawArrays( GL_TRIANGLES, 0, 3 );
+        // Drawing a line in modern OpenGL [duplicate]
+        // https://stackoverflow.com/questions/60440682/drawing-a-line-in-modern-opengl/63614147#comment116474561_63614147
+        // If using a core profile contextand the forward compatibility bit is set, then glLineWidth(10.0f); generates an INVALID_VALUE error
+        glLineWidth(10.0);
+        glDrawArrays( GL_LINE_LOOP, 0, 3 );
 
         glfwSwapBuffers(wnd);
         glfwPollEvents();

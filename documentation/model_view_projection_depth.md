@@ -710,7 +710,7 @@ vec3 viewUpperRight  = viewUpperRightH.xyz / viewUpperRightH.w;
 
 If you do not transform the vertex coordinates (or transform it by the [Identity matrix](https://en.wikipedia.org/wiki/Identity_matrix)), then you directly set the coordinates in normalized device space. The NDC is a unique cube, with the left, bottom, near of (-1, -1, -1) and the right, top, far of (1, 1, 1). That means the X-axis is to the right, the Y-axis is upwards and the Z-axis points into the view.  
 
-In common the OpenGL coordinate system is a [Right-handed](https://en.wikipedia.org/wiki/Right-hand_rule) system. In view space the X-axis points to the right and the Y-axis points up.  
+In general the OpenGL coordinate system is a [Right-handed](https://en.wikipedia.org/wiki/Right-hand_rule) system. In view space the X-axis points to the right and the Y-axis points up.  
 Since the Z-axis is the [Cross product](https://en.wikipedia.org/wiki/Cross_product) of the X-axis and the Y-axis, it points out of the viewport and appears to be inverted.  
 
 To compensate the difference in the direction of the Z-axis in view space in compare to normalized device space the Z-axis has to be inverted.  
