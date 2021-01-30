@@ -436,6 +436,10 @@ If the scale for the 3-axes is identical, the result for `scaleX`, `scaleY`, `sc
 
 ### Matrix multiplication (concatenation)
 
+See also [OpenGL Shading Language 4.60 Specification (HTML) - 5.10. Vector and Matrix Operations](https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.4.60.html#vector-and-matrix-operations).
+
+OpenGL matrices are stored in colum major order. Multiplying the matrix `M` with the matrix `N` means multiplying the columns of matrix `M` with the rows of matrix `N` and storing the result to the columns of the target. 
+
 A matrix multiplication `C = A * B` works like this:
 
 ```txt
