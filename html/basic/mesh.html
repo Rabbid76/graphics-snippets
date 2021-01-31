@@ -249,7 +249,7 @@ class MeshTetrahedron extends MeshObject {
     constructor() {
         super();
         let s_8_9 = Math.sqrt(8/9), s_2_9 = Math.sqrt(2/9), s_2_3 = Math.sqrt(2/3);
-        let v = [ 0,0,1, s_8_9,0,-1/3, -s_2_9,s_2_3,-1/3, -s_2_9,-s_2_3,-1/3 ]
+        let v = [ 0,0,1, s_8_9,0,-1/3, -s_2_9,s_2_3,-1/3, -s_2_9,-s_2_3,-1/3 ];
         let c = [ 1.0, 0.0, 0.0,  1.0, 1.0, 0.0,  0.0, 0.0, 1.0,  0.0, 1.0, 0.0 ];
         let t = [ 0,0, 0,1, 1,1, 1,0 ];
         let ni = [ 3, 1, 2, 0 ];
@@ -298,8 +298,8 @@ class MeshIcosahedron extends MeshObject {
         for ( let i = 0; i < e.length; ++ i ) {
            this.v.push( v[e[i]*3], v[e[i]*3+1], v[e[i]*3+2] );
            let ti = i % 3, fi = i / 3;
-           let sift = ( Math.floor(fi) >= 10 || ti == 0) ? 0 : 2;
-           this.t.push( t[ti*2+sift], t[ti*2+1+sift] );
+           let shift = ( Math.floor(fi) >= 10 || ti == 0) ? 0 : 2;
+           this.t.push( t[ti*2+shift], t[ti*2+1+shift] );
         }
         for ( let fi = 0; fi < this.v.length/9; ++ fi ) {
             let n = [0, 0, 0];
@@ -326,7 +326,7 @@ class MeshTube extends MeshObject {
         h = h || 2;
         r = r || h/Math.PI;
         c = c || [0.2, 0.4, 0.8];
-        // bottom cap
+        // top cap
         this.e = [];
         this.addAttr( [0, 0, h/2], [0, 0, 1], [0.5, 0.5], c );
         for ( let i = 0; i <= nc; i ++ ) {
