@@ -554,7 +554,7 @@ class MeshTrefoilKnot extends MeshObject {
         this.rc = rc || 0.4;
         this.rd = rd || 0.175;
         c = c || [0.9, 0.5, 0.1];
-        this.v = []; this.n = []; this.c = []; this.e = []; this.t = [];
+        this.v = []; this.n = []; this.c = []; this.t = [];
         let ds = 1.0 / slices, dt = 1.0 / stacks;
         let E = 0.01;
         for ( let s = 0; s < 1 + ds / 2; s += ds) {
@@ -620,19 +620,18 @@ class MeshTorusKnot extends MeshObject {
         rb = rb || 0.3;
         rc = rc || 0.1;
         c = c || [0.9, 0.5, 0.1];
-        this.v = []; this.n = []; this.c = []; this.e = []; this.t = [];
+        this.v = []; this.n = []; this.c = []; this.t = [];
         
         for (let u = 0; u <= tess_u; ++ u ) {
             let phi0 = 2 * Math.PI * u / tess_u;
-            let pt_tk0 = this.sample(phi0, p_, q_, ra, rb)
-            let phi1 = 2 * Math.PI * (u + 1) / tess_u
-            let pt_tk1 = this.sample(phi1, p_, q_, ra, rb)
-            let pt_c = this.sample(phi0, p_, q_, ra, 0)
-            
+            let pt_tk0 = this.sample(phi0, p_, q_, ra, rb);
+            let phi1 = 2 * Math.PI * (u + 1) / tess_u;
+            let pt_tk1 = this.sample(phi1, p_, q_, ra, rb);
+            let pt_c = this.sample(phi0, p_, q_, ra, 0);
             let T = Vec3.sub(pt_tk1, pt_tk0);
             let B = Vec3.normalize(Vec3.sub(pt_tk0, pt_c));
-            let N = Vec3.normalize(Vec3.cross(T, B))
-            T = Vec3.normalize(Vec3.cross(B, N))
+            let N = Vec3.normalize(Vec3.cross(T, B));
+            T = Vec3.normalize(Vec3.cross(B, N));
             for (let v = 0; v <= tess_v; ++ v ) {
                 let theta = 2 * Math.PI * (v / tess_v);
                 let px = Math.sin(theta) * rc; 
