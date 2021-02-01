@@ -13,6 +13,7 @@
             - [Triangle stripe](#triangle-stripe)
             - [Triangle adjacency](#triangle-adjacency)
             - [Triangle stripe adjacency](#triangle-stripe-adjacency)
+    - [Vertex attributes](#vertex-attributes)
     - [Vertex array](#vertex-array)
         - [Separated tightly packed buffers for different attributes](#separated-tightly-packed-buffers-for-different-attributes)
     - [Vertex buffer object (Array buffer)](#vertex-buffer-object-array-buffer)
@@ -74,6 +75,15 @@ See [Wikipedia, Triangle strip](https://en.wikipedia.org/wiki/Triangle_strip).
 #### Triangle stripe adjacency
 
 <br/><hr/>
+
+## Vertex attributes
+
+If you do not specify the attributes indices through [layout qualifiers](https://www.khronos.org/opengl/wiki/Layout_Qualifier_(GLSL)), the attribute indexes are not specified and can have any value. There is no guarantee of the order nor that the indices are 0, 1, 2 and 3.  
+You must get the attribute indexes with [`glGetAttribLocation`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGetAttribLocation.xhtml) after you link the program, or you must specify the attribute indexes with [`glBindAttribLocation`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glBindAttribLocation.xhtml) before you link the program.
+
+See [OpenGL 4.6 API Core Profile Specification - 7.3.1.1 Naming Active Resources](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.core.pdf#page=128&zoom=100,168,214)
+
+> The order of the active resource list is implementation-dependent for all interfaces except for TRANSFORM_FEEDBACK_VARYING.
 
 ## Vertex array
 

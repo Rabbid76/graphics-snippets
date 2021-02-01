@@ -36,6 +36,7 @@ Lloyd Alexander, The Book of Three
 --><a href="https://github.com/Rabbid76/graphics-snippets/blob/master/readme/content_python.md"><img src="https://rabbid76.github.io/graphics-snippets/example/python/navigation_glm/image/cube_glut_glm_navigate.gif" height="100"></a><!--
 --><a href="https://github.com/Rabbid76/graphics-snippets/blob/master/readme/content_python.md"><img src="https://rabbid76.github.io/graphics-snippets/example/python/text_freetype/image/free_type_text.png" height="100"></a><!--
 --><a href="https://github.com/Rabbid76/graphics-snippets/blob/master/readme/content_python.md"><img src="https://rabbid76.github.io/graphics-snippets/example/python/voxel_raytrace/image/voxel_raytrace.gif" height="100"></a><!--
+--><a href="https://github.com/Rabbid76/graphics-snippets/blob/master/readme/content_python.md"><img src="./screenshot/example/python/mesh/glut_opengl_shader_ctypes_glm_meshes.png" height="100"></a><!--
 --><a href="https://github.com/Rabbid76/graphics-snippets/blob/master/readme/content_cpp.md"><img src="screenshot/example/cpp/opengl/example_glm_animation_1.gif" height="100"></a><!--
 --><a href="https://github.com/Rabbid76/graphics-snippets/blob/master/readme/content_cpp.md"><img src="screenshot/example/cpp/opengl/example_mesh_1_instancing.gif" height="100"></a><!--
 --><a href="https://github.com/Rabbid76/graphics-snippets/blob/master/readme/content_cpp.md"><img src="screenshot/example/cpp/opengl/example_mesh_4_cube_flat.gif" height="100"></a><!--
