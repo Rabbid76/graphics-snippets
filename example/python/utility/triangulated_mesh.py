@@ -38,12 +38,21 @@ class TriangulatedMeshBase:
     def format(self):
         return TriangulatedMeshBase.__stride, TriangulatedMeshBase.__format
 
+class Quad(TriangulatedMeshBase):
+    def __init__(self, l=1):
+        super().__init__()
+        v = [-l/2,-l/2,0, l/2,-l/2,0, l/2,l/2,0, -l/2,l/2,0]
+        t = [0,1,0, 1,1,0, 1,0,0, 0,0,0]
+        self._attributes = []
+        for i in range(4):
+            self._attributes += v[i*3:i*3+3] + [0, 0, 1] + t[i*3:i*3+3] 
+        self._indices = [0,1,2, 0,2,3]
+
 class Tetrahedron(TriangulatedMeshBase):
     def __init__(self, l = 1):
         super().__init__()
         s_8_9, s_2_9, s_2_3 = math.sqrt(8/9), math.sqrt(2/9), math.sqrt(2/3)
         v = [0,0,1, s_8_9,0,-1/3, -s_2_9,s_2_3,-1/3, -s_2_9,-s_2_3,-1/3]
-        c = [1.0, 0.0, 0.0,  1.0, 1.0, 0.0,  0.0, 0.0, 1.0,  0.0, 1.0, 0.0]
         t = [0,0, 0,1, 1,1, 1,0]
         ni = [3, 1, 2, 0]
         e = [0,1,2, 0,2,3, 0,3,1, 1,3,2]
