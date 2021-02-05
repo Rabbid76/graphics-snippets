@@ -3,6 +3,7 @@
 # LeranOpenGL Text Rendering
 # https://learnopengl.com/In-Practice/Text-Rendering
 
+import os
 import numpy
 from freetype import *
 from OpenGL.GL import *
@@ -10,7 +11,7 @@ from OpenGL.GLUT import *
 from OpenGL.GL import shaders
 import math
 import glm
-
+os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../../resource/font'))
 
 text_shader_vert = """
 #version 460
@@ -64,7 +65,7 @@ class Window:
         
         self.initgl()
         self.fontsize = 48
-        self.makefont(r'C:\source\resource\fonts\gnu-freefont_freesans\freesans.ttf', self.fontsize)
+        self.makefont('freesans.ttf', self.fontsize)
 
     def run(self):
         glutMainLoop( )

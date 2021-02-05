@@ -27,6 +27,9 @@ Robert C. Martin, Clean Architecture
 [Shadow](../example/python/shadow/glut_opengl_shader_ctypes_glm_shadow_volume.py)  
 [![Shadow](../screenshot/example/python/shadow/glut_opengl_shader_ctypes_glm_shadow_volume.png)](../example/python/shadow/glut_opengl_shader_ctypes_glm_shadow_volume.py)  
 
+[Parallax](../example/python/parallax/glut_opengl_shader_glm_cube_parallax.py)  
+[![Parallax](../screenshot/example/python/parallax/glut_opengl_shader_glm_cube_parallax.png)](../example/python/parallax/glut_opengl_shader_glm_cube_parallax.py)  
+
 ## PyGame
 
 See
