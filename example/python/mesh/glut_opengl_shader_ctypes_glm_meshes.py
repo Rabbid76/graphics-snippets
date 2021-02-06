@@ -253,7 +253,7 @@ class MyWindow:
         model_matrices = []
         for i, mesh in enumerate(self.__meshes):
             angleY = angle1 + math.pi*2 * i / len(self.__meshes)
-            angleY =  math.pi*2 * i / len(self.__meshes)
+            #angleY =  math.pi*2 * i / len(self.__meshes)
             model = glm.mat4(1)
             model = glm.rotate(model, angleY, glm.vec3(0, 0, 1))
             model = glm.translate(model, glm.vec3(self.__diameter/2, 0, 0))
