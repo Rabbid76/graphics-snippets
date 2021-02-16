@@ -241,7 +241,7 @@ But if the size of the image is 30 x 40, the the size of a line in bytes is 90, 
 
 [OpenGL 2D textures not displaying properly c++](https://stackoverflow.com/questions/55482364/opengl-2d-textures-not-displaying-properly-c/55482415#55482415), [C++]  
 
-When a RGB image with 3 color channels is loaded to a texture object, then [`GL_UNPACK_ALIGNMENT`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml) has to be set to 1: 
+If an RGB image with 3 color channels is loaded into a texture object, [`GL_UNPACK_ALIGNMENT`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml) must be set to 1:
 
 <!-- language: cpp -->
 
@@ -250,7 +250,8 @@ When a RGB image with 3 color channels is loaded to a texture object, then [`GL_
                  GL_UNSIGNED_BYTE, imageData);
 
 `GL_UNPACK_ALIGNMENT` specifies the alignment requirements for the start of each pixel row in memory. By default `GL_UNPACK_ALIGNMENT` is set to 4.
-This means the start of each line of the image is assumed to be aligned to an address which is a multiple of 4. Since the image data are tightly packed and each pixel has a size of 3 bytes, the alignment has to be changed.
+This means the start of each line of the image is assumed to be aligned to an address which is a multiple of 4. Since the image data is tightly packed and each pixel is 3 bytes in size, the alignment has to be changed.  
+If the width of the image is divisible by 4 (more exactly if `3*width` is divisible by 4) then the error is not noticeable.
 
 To proper read the image the last parameter of `stbi_load` has to be 0 (since the jpg format provides 3 color channesl) or 3 (to force 3 color channels):
 
