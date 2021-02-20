@@ -223,43 +223,6 @@ See [stb_image.h](https://github.com/nothings/stb/blob/master/stb_image.h):
 
 ---
 
-[C++ SOIL does not load small images](https://stackoverflow.com/questions/55208514/c-soil-does-not-load-small-images/55208624#55208624)
-
-When the image is loaded to a texture object, then [`GL_UNPACK_ALIGNMENT`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml) has to be set to 1: 
-
-```cpp
-glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-```
-
-Note, by default the parameter is 4. This means that each line of the image is assumed to be aligned to a size which is a multiple of 4. Since the image data are tightly packed and each pixel has a size of 3 bytes, the alignment has to be changed.
-
-When the size of the image is 40 x 50 then the size of a line in bytes is 120, which is divisible by 4.  
-But if the size of the image is 30 x 40, the the size of a line in bytes is 90, which is not divisible by 4.
-
----
-
-[OpenGL 2D textures not displaying properly c++](https://stackoverflow.com/questions/55482364/opengl-2d-textures-not-displaying-properly-c/55482415#55482415), [C++]  
-
-If an RGB image with 3 color channels is loaded into a texture object, [`GL_UNPACK_ALIGNMENT`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml) must be set to 1:
-
-<!-- language: cpp -->
-
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
-                 GL_UNSIGNED_BYTE, imageData);
-
-`GL_UNPACK_ALIGNMENT` specifies the alignment requirements for the start of each pixel row in memory. By default `GL_UNPACK_ALIGNMENT` is set to 4.
-This means the start of each line of the image is assumed to be aligned to an address which is a multiple of 4. Since the image data is tightly packed and each pixel is 3 bytes in size, the alignment has to be changed.  
-If the width of the image is divisible by 4 (more exactly if `3*width` is divisible by 4) then the error is not noticeable.
-
-To proper read the image the last parameter of `stbi_load` has to be 0 (since the jpg format provides 3 color channesl) or 3 (to force 3 color channels):
-
-    unsigned char* imageData = stbi_load(filePath.c_str(),
-         &width, &height, &numComponents, 0);
-
----
-
 `stbi_load` can be forced to generate an image with 4 color channels, by explicitly pass 4 to the last parameter:
 
 See [stb_image.h](https://github.com/nothings/stb/blob/master/stb_image.h):
@@ -336,6 +299,66 @@ By default OpenGL assumes that the size of each row of an image is aligned 4 byt
 This is because the [`GL_UNPACK_ALIGNMENT`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml) parameter by default is 4.
 
 Since the image has 3 color channels (because its a JPG), and is tightly packed the size of a row of the image may not be aligned to 4 bytes.
+
+---
+
+[glTexImage2D data not filled as expected](https://stackoverflow.com/questions/66221801/glteximage2d-data-not-filled-as-expected/66221832#66221832)  
+
+If an RGB image with 3 color channels is loaded into a texture object, [`GL_UNPACK_ALIGNMENT`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml) must be set to 1:
+
+```py
+gl.glPixelStorei(gl.GL_UNPACK_ALIGNMENT, 1)
+gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, iformat, width, height, 0, iformat, gl.GL_UNSIGNED_BYTE, image)
+```
+
+`GL_UNPACK_ALIGNMENT` specifies the alignment requirements for the start of each pixel row in memory. By default `GL_UNPACK_ALIGNMENT` is set to 4.
+This means the start of each line of the image is assumed to be aligned to an address which is a multiple of 4. Since the image data is tightly packed and each pixel is 3 bytes in size, the alignment has to be changed.  
+If the width of the image is divisible by 4 (more exactly if `3*width` is divisible by 4) then the error is not noticeable.
+
+Since you are reading back the texture from the GPU, you also need to change `GL_PACK_ALIGNMENT`:
+
+```py
+gl.glPixelStorei(gl.GL_PACK_ALIGNMENT, 1)
+p = gl.glGetTexImage(gl.GL_TEXTURE_2D, 0, iformat, gl.GL_UNSIGNED_BYTE)
+```
+
+---
+
+[C++ SOIL does not load small images](https://stackoverflow.com/questions/55208514/c-soil-does-not-load-small-images/55208624#55208624)
+
+When the image is loaded to a texture object, then [`GL_UNPACK_ALIGNMENT`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml) has to be set to 1: 
+
+```cpp
+glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+```
+
+Note, by default the parameter is 4. This means that each line of the image is assumed to be aligned to a size which is a multiple of 4. Since the image data are tightly packed and each pixel has a size of 3 bytes, the alignment has to be changed.
+
+When the size of the image is 40 x 50 then the size of a line in bytes is 120, which is divisible by 4.  
+But if the size of the image is 30 x 40, the the size of a line in bytes is 90, which is not divisible by 4.
+
+---
+
+[OpenGL 2D textures not displaying properly c++](https://stackoverflow.com/questions/55482364/opengl-2d-textures-not-displaying-properly-c/55482415#55482415), [C++]  
+
+If an RGB image with 3 color channels is loaded into a texture object, [`GL_UNPACK_ALIGNMENT`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml) must be set to 1:
+
+<!-- language: cpp -->
+
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
+                 GL_UNSIGNED_BYTE, imageData);
+
+`GL_UNPACK_ALIGNMENT` specifies the alignment requirements for the start of each pixel row in memory. By default `GL_UNPACK_ALIGNMENT` is set to 4.
+This means the start of each line of the image is assumed to be aligned to an address which is a multiple of 4. Since the image data is tightly packed and each pixel is 3 bytes in size, the alignment has to be changed.  
+If the width of the image is divisible by 4 (more exactly if `3*width` is divisible by 4) then the error is not noticeable.
+
+To proper read the image the last parameter of `stbi_load` has to be 0 (since the jpg format provides 3 color channesl) or 3 (to force 3 color channels):
+
+    unsigned char* imageData = stbi_load(filePath.c_str(),
+         &width, &height, &numComponents, 0);
+
 
 ---
 
