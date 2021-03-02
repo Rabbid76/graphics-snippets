@@ -21,10 +21,10 @@
 
 ```txt
 P     ... point on the 1. line
-R     ... normalized direction of the 1. line
+R     ... direction vector of the 1. line
 
 Q     ... point on the 2. line
-S     ... normalized direction of the 2. line
+S     ... direction vector of the 2. line
 
 alpha ... angle between Q-P and R
 beta  ... angle between R and S
@@ -55,7 +55,7 @@ The plane is defined by a triangle with the three points `PA`, `PB`, and `PC`.
 The normal vector of the plane can be calculated by the cross product of 2 legs of the triangle:
 
 ```txt
-N  =  normalize( cross(PC-PA, PB-PA)
+N  =  cross(PC-PA, PB-PA)
 ```
 
 The normal distance `n` of the point `R0` to the plane is:
