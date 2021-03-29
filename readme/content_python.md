@@ -20,6 +20,9 @@ Robert C. Martin, Clean Architecture
 [Instancing](../example/python/mesh/glut_opengl_shader_instancing_cube.py)  
 [![Instancing](../screenshot/example/python/mesh/glut_opengl_shader_instancing_cube.png)](../example/python/mesh/glut_opengl_shader_instancing_cube.py)
 
+[Visualizing a 3D NumPy array with PyOpenGL](python/glut_opengl_shader_instancing_array.md)  
+[![Visualizing a 3D NumPy array with PyOpenGL](https://i.stack.imgur.com/twWaF.gif)](../example/python/mesh/glut_opengl_shader_instancing_array.py)
+
 [Draw elements](../example/python/mesh/glut_opengl_draw_elements.py)
 
 ### Model, View and Projection
