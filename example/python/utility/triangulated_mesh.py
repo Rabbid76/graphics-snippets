@@ -67,7 +67,7 @@ class Tetrahedron(TriangulatedMeshBase):
         self._indices = range(len(self._attributes) // 9)
 
 class Cube(TriangulatedMeshBase):
-    def __init__(self, l = 1/math.sqrt(3)):
+    def __init__(self, l = 1/math.sqrt(2)):
         super().__init__()
         v = [[-1,-1,1], [1,-1,1], [1,1,1], [-1,1,1], [-1,-1,-1], [1,-1,-1], [1,1,-1], [-1,1,-1]]
         t = [[0, 1], [1, 1], [1, 0], [0, 0]]
@@ -78,6 +78,24 @@ class Cube(TriangulatedMeshBase):
         for si in range(len(e)):
             for qi, vi in enumerate(e[si]):
                 self._attributes += [v[vi][0]*l, v[vi][1]*l,v[vi][2]*l, *n[si], *t[qi], si/6]
+
+class Octahedron(TriangulatedMeshBase):
+    def __init__(self, l = 1):
+        super().__init__()
+        v = [-1,0,0, 0,-1,0, 0,0,-1, 1,0,0, 0,1,0, 0,0,1]
+        t = [0,0, 1,0, 0.5,0.5, 1,1, 0,1, 0.5, 0.5]
+        e = [0,2,1, 1,2,3, 3,2,4, 4,2,0, 0,1,5, 1,3,5, 3,4,5, 4,0,5]
+        nf = [-1,-1,-1, 1,-1,-1, 1,1,-1, -1,1,-1, -1,-1,1, 1,-1,1, 1,1,1, -1,1,1]
+        self._attributes = []
+        for si in range(8):
+            nv = normalize([nf[si*3], nf[si*3+1], nf[si*3+2]])
+            for pi in range (3):
+                i = si*3 + pi
+                self._attributes += [
+                    l*v[e[i]*3], l*v[e[i]*3+1], l*v[e[i]*3+2],
+                    nv[0], nv[1], nv[2],
+                    t[e[i]*2], t[e[i]*2+1], si/8]
+        self._indices = range(len(self._attributes) // 9)
 
 class Icosahedron(TriangulatedMeshBase):
     def __init__(self, l = 1):

@@ -187,6 +187,7 @@ class MyWindow:
         mesh_defs = [
             triangulated_mesh.Tetrahedron(),
             triangulated_mesh.Cube(),
+            triangulated_mesh.Octahedron(),
             triangulated_mesh.Icosahedron(),
             triangulated_mesh.Tube(),
             triangulated_mesh.Cone(),
