@@ -97,6 +97,33 @@ class Octahedron(TriangulatedMeshBase):
                     t[e[i]*2], t[e[i]*2+1], si/8]
         self._indices = range(len(self._attributes) // 9)
 
+
+class Dodecahedron(TriangulatedMeshBase):
+    def __init__(self, l = 4 / (1 + math.sqrt(5)) / (1 + math.sqrt(5))):
+        super().__init__()
+        phi = (1 + math.sqrt(5)) / 2 # φ=(1+√5)/2 is the Golden Ratio.
+        phi2 = phi*phi
+        v = [-phi,-phi,-phi, phi,-phi,-phi, phi,phi,-phi, -phi,phi,-phi, # 0..7: (±φ, ±φ, ±φ)
+             -phi,-phi,phi, phi,-phi,phi, phi,phi,phi, -phi,phi,phi,
+             0,-phi2,-1, 0,phi2,-1, 0,phi2,1, 0,-phi2,1,                 # 8..11: (0, ±φ^2, ±1)
+             -phi2,-1,0, phi2,-1,0, phi2,1,0, -phi2,1,0,                 # 12..15: (±φ^2, ±1, 0)
+             -1,0,-phi2, 1,0,-phi2, 1,0,phi2, -1,0,phi2,                 # 16..19: (±1, 0, ±φ^2)
+        ]
+        t = [0,0, 1,0, 1,0.5, 0.5,1, 0,0.5]
+        e = [16,17,1,8,0]
+        en = [8, 10]
+        self._attributes = []
+        for si in range(len(e) // 5):
+            nv = normalize([v[en[si]*3], v[en[si]*3+1], v[en[si]*3+2]])
+            e0 = si*5
+            for ti in range(3):
+                for i in [e0, e0+ti+1, e0+ti+2]:
+                    self._attributes += [
+                        l*v[e[i]*3], l*v[e[i]*3+1], l*v[e[i]*3+2],
+                        nv[0], nv[1], nv[2],
+                        t[(i-e0)*2], t[(i-e0)*2+1], si/12]
+        self._indices = range(len(self._attributes) // 9)
+
 class Icosahedron(TriangulatedMeshBase):
     def __init__(self, l = 1):
         v = [0,0,1, 0.894,0,0.447, 0.276,0.851,0.447, -0.724,0.526,0.447, -0.724,-0.526,0.447, 0.276,-0.851, 0.447,

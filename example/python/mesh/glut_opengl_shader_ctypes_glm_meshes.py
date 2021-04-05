@@ -188,6 +188,7 @@ class MyWindow:
             triangulated_mesh.Tetrahedron(),
             triangulated_mesh.Cube(),
             triangulated_mesh.Octahedron(),
+            triangulated_mesh.Dodecahedron(),
             triangulated_mesh.Icosahedron(),
             triangulated_mesh.Tube(),
             triangulated_mesh.Cone(),
@@ -249,7 +250,7 @@ class MyWindow:
         glClearColor(0.2, 0.3, 0.3, 1.0)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
-        angle1 = self.elapsed_ms() * math.pi * 2 / 5000.0
+        angle1 = 0#self.elapsed_ms() * math.pi * 2 / 5000.0
         angle2 = self.elapsed_ms() * math.pi * 2 / 7333.0
         model_matrices = []
         for i, mesh in enumerate(self.__meshes):
