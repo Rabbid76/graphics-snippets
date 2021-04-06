@@ -110,19 +110,23 @@ class Dodecahedron(TriangulatedMeshBase):
              -1,0,-phi2, 1,0,-phi2, 1,0,phi2, -1,0,phi2,                 # 16..19: (±1, 0, ±φ^2)
         ]
         t = [0,0, 1,0, 1,0.5, 0.5,1, 0,0.5]
-        e = [16,17,1,8,0]
-        en = [8, 10]
+        e = [17,16,0,8,1, 16,17,2,9,3]
         self._attributes = []
         for si in range(len(e) // 5):
-            nv = normalize([v[en[si]*3], v[en[si]*3+1], v[en[si]*3+2]])
-            e0 = si*5
-            for ti in range(3):
-                for i in [e0, e0+ti+1, e0+ti+2]:
-                    self._attributes += [
-                        l*v[e[i]*3], l*v[e[i]*3+1], l*v[e[i]*3+2],
-                        nv[0], nv[1], nv[2],
-                        t[(i-e0)*2], t[(i-e0)*2+1], si/12]
-        self._indices = range(len(self._attributes) // 9)
+            nv = [0, 0, 0]
+            for pi in range(5):
+                nv[0] += v[e[si*5+pi]*3]
+                nv[1] += v[e[si*5+pi]*3+1]
+                nv[2] += v[e[si*5+pi]*3+2]
+            cpt = [nv[0]/5, nv[1]/5, nv[2]/5]
+            nv = normalize(nv)
+            w = si/12
+            self._attributes += [l*cpt[0], l*cpt[1], l*cpt[2], nv[0], nv[1], nv[2], 0.5, 0.5, w]
+            for pi in range(5):
+                i = si*5+pi
+                self._attributes += [l*v[e[i]*3], l*v[e[i]*3+1], l*v[e[i]*3+2], nv[0], nv[1], nv[2], t[pi*2], t[pi*2+1], w]
+            e0 = si*6
+            self._indices += [e0,e0+1,e0+2, e0,e0+2,e0+3, e0,e0+3,e0+4, e0,e0+4,e0+5, e0,e0+5,e0+1]    
 
 class Icosahedron(TriangulatedMeshBase):
     def __init__(self, l = 1):

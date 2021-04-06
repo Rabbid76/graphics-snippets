@@ -227,6 +227,7 @@ class MyWindow:
 
         glEnable(GL_DEPTH_TEST)
         glUseProgram(self.__program)
+        #glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
 
         glutDisplayFunc(self.__mainloop)
 
