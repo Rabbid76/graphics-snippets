@@ -251,7 +251,7 @@ class MyWindow:
         glClearColor(0.2, 0.3, 0.3, 1.0)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
-        angle1 = 0#self.elapsed_ms() * math.pi * 2 / 5000.0
+        angle1 = self.elapsed_ms() * math.pi * 2 / 5000.0
         angle2 = self.elapsed_ms() * math.pi * 2 / 7333.0
         model_matrices = []
         for i, mesh in enumerate(self.__meshes):
@@ -260,7 +260,7 @@ class MyWindow:
             model = glm.mat4(1)
             model = glm.rotate(model, angleY, glm.vec3(0, 0, 1))
             model = glm.translate(model, glm.vec3(self.__diameter/2, 0, 0))
-            #model = glm.rotate(model, angle2, glm.vec3(0, 1, 0))
+            model = glm.rotate(model, angle2, glm.vec3(0, 1, 0))
             model_matrices.append(model)
 
         multi_mesh = True

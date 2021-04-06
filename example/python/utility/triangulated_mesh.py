@@ -99,18 +99,21 @@ class Octahedron(TriangulatedMeshBase):
 
 
 class Dodecahedron(TriangulatedMeshBase):
-    def __init__(self, l = 4 / (1 + math.sqrt(5)) / (1 + math.sqrt(5))):
+    def __init__(self, l = 1):
         super().__init__()
         phi = (1 + math.sqrt(5)) / 2 # φ=(1+√5)/2 is the Golden Ratio.
         phi2 = phi*phi
-        v = [-phi,-phi,-phi, phi,-phi,-phi, phi,phi,-phi, -phi,phi,-phi, # 0..7: (±φ, ±φ, ±φ)
-             -phi,-phi,phi, phi,-phi,phi, phi,phi,phi, -phi,phi,phi,
-             0,-phi2,-1, 0,phi2,-1, 0,phi2,1, 0,-phi2,1,                 # 8..11: (0, ±φ^2, ±1)
-             -phi2,-1,0, phi2,-1,0, phi2,1,0, -phi2,1,0,                 # 12..15: (±φ^2, ±1, 0)
-             -1,0,-phi2, 1,0,-phi2, 1,0,phi2, -1,0,phi2,                 # 16..19: (±1, 0, ±φ^2)
+        a, b, c = 1, 1/phi, 1/(phi*phi)
+        v = [-b,-b,-b, b,-b,-b, b,b,-b, -b,b,-b, # 0..7: (±φ, ±φ, ±φ)
+             -b,-b,b, b,-b,b, b,b,b, -b,b,b,
+             0,-a,-c, 0,a,-c, 0,a,c, 0,-a,c,     # 8..11: (0, ±φ^2, ±1)
+             -a,-c,0, a,-c,0, a,c,0, -a,c,0,     # 12..15: (±φ^2, ±1, 0)
+             -c,0,-a, c,0,-a, c,0,a, -c,0,a,     # 16..19: (±1, 0, ±φ^2)
         ]
         t = [0,0, 1,0, 1,0.5, 0.5,1, 0,0.5]
-        e = [17,16,0,8,1, 16,17,2,9,3]
+        e = [17,16,0,8,1, 16,17,2,9,3,  18,19,7,10,6, 19,18,5,11,4,
+             14,13,1,17,2, 13,14,6,18,5, 12,15,7,19,4, 15,12,0,16,3,
+             9,10,6,14,2, 10,9,3,15,7, 8,11,4,12,0, 11,8,1,13,5]
         self._attributes = []
         for si in range(len(e) // 5):
             nv = [0, 0, 0]
