@@ -32,15 +32,15 @@ layout(std430, binding = 1) buffer Draw
 
 void main()
 {
-    mat4 model_view = u_view * draw.model[gl_DrawID];
-    mat3 normal     = transpose(inverse(mat3(model_view)));
+    mat4 model  = draw.model[gl_DrawID];
+    mat3 normal = transpose(inverse(mat3(model)));
     
-    vec4 view_pos   = model_view * vec4(a_pos.xyz, 1.0);
+    vec4 world_pos = model * vec4(a_pos.xyz, 1.0);
 
-    v_pos       = view_pos.xyz;
+    v_pos       = world_pos.xyz;
     v_nv        = normal * a_nv; 
     v_uvw       = a_uvw; 
-    gl_Position = u_proj * view_pos;
+    gl_Position = u_proj * u_view * world_pos;
 }
 """
 
@@ -51,6 +51,7 @@ out vec4 frag_color;
 in  vec3 v_pos;
 in  vec3 v_nv;
 in  vec3 v_uvw;
+uniform mat4 u_view; 
 
 vec3 HUEtoRGB(in float H)
 {
@@ -63,12 +64,13 @@ vec3 HUEtoRGB(in float H)
 void main()
 {
     vec4  color = vec4(HUEtoRGB(v_uvw.z), 1.0);
-    vec3  L     = normalize(vec3(0.0, 0.0, 1.0));
+    vec3  L     = normalize(vec3(1.0, -1.0, 1.0));
     vec3  N     = normalize(v_nv);
-    vec3  V     = -normalize(v_pos);
+    vec3  eye   = inverse(u_view)[3].xyz;
+    vec3  V     = normalize(eye - v_pos);
     vec3  H     = normalize(V + L);
     float ka    = 0.1;
-    float kd    = max(0.0, dot(N, V)) * 0.9;
+    float kd    = max(0.0, dot(N, L)) * 0.9;
     float NdotH = max(0.0, dot(N, H));
     float sh    = 100.0;
     float ks    = pow(NdotH, sh) * 0.1;
