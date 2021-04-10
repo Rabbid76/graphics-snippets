@@ -3,6 +3,7 @@ sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 
 import time
 import tkinter
+import tkinter.ttk
 from pyopengltk import OpenGLFrame
 from OpenGL.GL import *
 from OpenGL.GL.shaders import *
@@ -16,28 +17,39 @@ def create_window():
     root = tkinter.Tk()
     status_bar_text = tkinter.StringVar()
 
-    control_frame = tkinter.Frame(root, bg='lightgray', width=100, padx=4, pady=4)
+    control_frame = tkinter.Frame(root, bg='lightgray', padx=4, pady=4)
     status_bar_frame = tkinter.Frame(root, borderwidth=1)
-    view_frame = OpenGLView(status_bar_text, root, width=400, height=400)
+    view_frame = OpenGLView(status_bar_text, root, width=600, height=400)
 
-    root.grid_columnconfigure(0, weight=0)
-    root.grid_columnconfigure(1, weight=1)
-    root.grid_rowconfigure(0, weight=1)
-    root.grid_rowconfigure(1, weight=0)
+    root.grid_columnconfigure(0, weight=1)
+    root.grid_rowconfigure(0, weight=0)
+    root.grid_rowconfigure(1, weight=1)
+    root.grid_rowconfigure(2, weight=0)
 
-    control_frame.grid(row=0, column=0, sticky="ns")
-    view_frame.grid(row=0, column=1, sticky="nwse")
-    status_bar_frame.grid(row=1, column=0, columnspan=2, sticky="we")
+    control_frame.grid(row=0, column=0, sticky="we")
+    view_frame.grid(row=1, column=0, sticky="nwse")
+    status_bar_frame.grid(row=2, column=0, sticky="we")
 
-    status_label = tkinter.Label(status_bar_frame, textvariable=status_bar_text, font=("Consolas", 12))
+    status_label = tkinter.Label(status_bar_frame, textvariable=status_bar_text, font=("Consolas", 10))
     status_label.grid(column=0, row=0)
-    control_label = tkinter.Label(control_frame, text="Menu", font=("Consolas", 12), width=8)
-    control_label.grid(column=0, row=0)
+    
+    control_shape = tkinter.ttk.Combobox(control_frame, state="readonly", font=("Consolas", 10))
+    control_shape['values'] = [
+        "Tetrahedron", "Hexahedron", "Octahedron", "Dodecahedron", "Icosahedron",
+        "Tube", "Cone", "SphereSlice", "SphereTessellated", "Torus", "TrefoilKnot", "TorusKnot", "Arrow"]
+    control_shape.current(10)
+    view_frame.shape_index = 10
+    control_shape.grid(column=0, row=0)
+    def shape_changed(event):
+        view_frame.shape_index = control_shape.current()
+    control_shape.bind('<<ComboboxSelected>>', shape_changed)  
+
     return root
 
 class OpenGLView(OpenGLFrame):
     def __init__(self, status_text, *args, **kwds):
         super().__init__(*args, kwds) 
+        self.shape_index = 0
         self.status_text = status_text
         self.opengl_initialized = False
 
@@ -82,12 +94,9 @@ class OpenGLView(OpenGLFrame):
             triangulated_mesh.TorusKnot(),
             triangulated_mesh.Arrow()]
 
-        distance = 2.5
-        self.__diameter = distance * len(mesh_defs) / math.pi
-
         self.__tkinter_navigation = TkinterNavigation(
             self,
-            glm.lookAt(glm.vec3(0,-self.__diameter,0), glm.vec3(0, 0, 0), glm.vec3(0,0,1)),
+            glm.lookAt(glm.vec3(0,0,2), glm.vec3(0, 0, 0), glm.vec3(0,1,0)),
             90, 0.1, 100,
             lambda x, y : glReadPixels(x, y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT))
 
@@ -128,30 +137,21 @@ class OpenGLView(OpenGLFrame):
         glClearColor(0.2, 0.3, 0.3, 1.0)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
-        angle1 = self.elapsed_ms() * math.pi * 2 / 5000.0
-        angle2 = self.elapsed_ms() * math.pi * 2 / 7333.0
-        model_matrices = []
-        for i, mesh in enumerate(self.__meshes):
-            angleY = angle1 + math.pi*2 * i / len(self.__meshes)
-            #angleY =  math.pi*2 * i / len(self.__meshes)
-            model = glm.mat4(1)
-            model = glm.rotate(model, angleY, glm.vec3(0, 0, 1))
-            model = glm.translate(model, glm.vec3(self.__diameter/2, 0, 0))
-            model = glm.rotate(model, angle2, glm.vec3(0, 1, 0))
-            model_matrices.append(model)
-
-        multi_mesh = True
-        if multi_mesh:
-            glBindBuffer(GL_SHADER_STORAGE_BUFFER, self.__ssbo)
-            for i, model in enumerate(model_matrices):
-                glBufferSubData(GL_SHADER_STORAGE_BUFFER, i*4*16, glm.sizeof(glm.mat4), glm.value_ptr(model)) 
-            self.__multimesh.draw()
+        angle1 = 0 # self.elapsed_ms() * math.pi * 2 / 5000.0
+        angle2 = 0 # self.elapsed_ms() * math.pi * 2 / 7333.0
+        model = glm.mat4(1)
+        model = glm.rotate(model, angle1, glm.vec3(0, 0, 1))
+        model = glm.rotate(model, angle2, glm.vec3(0, 1, 0))
         
-        else:
-            for model, mesh in zip(model_matrices, self.__meshes):
-                glBindBuffer(GL_SHADER_STORAGE_BUFFER, self.__ssbo)
-                glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, glm.sizeof(glm.mat4), glm.value_ptr(model)) 
-                mesh.draw()
+        multi_mesh = True
+        index = self.shape_index
+        if index < len(self.__meshes):
+            glBindBuffer(GL_SHADER_STORAGE_BUFFER, self.__ssbo)
+            glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, glm.sizeof(glm.mat4), glm.value_ptr(model)) 
+            if multi_mesh:
+                self.__multimesh.draw_single(index)
+            else:
+                self.__meshes[index].draw()
 
 class TkinterNavigation:
     def __init__(self, opengl_frame, view, fov_y, near, far, get_depth_callback):
@@ -205,8 +205,8 @@ class TkinterNavigation:
     def __mouse_button_left_down(self, event):
         x, y = event.x, event.y
         wnd_pos = (x, self.__vp_size[1]-y) 
-        #self.__navigate_control.StartOrbit(wnd_pos, self.__navigate_control.ORBIT)
-        self.__navigate_control.StartOrbit(wnd_pos, self.__navigate_control.ROTATE)
+        self.__navigate_control.StartOrbit(wnd_pos, self.__navigate_control.ORBIT)
+        #self.__navigate_control.StartOrbit(wnd_pos, self.__navigate_control.ROTATE)
     
     def __mouse_button_left_up(self, event):
         x, y = event.x, event.y
@@ -333,6 +333,12 @@ class MultiMesh:
         glBindVertexArray(self.__vao)
         glBindBuffer(GL_DRAW_INDIRECT_BUFFER, self.__dbo)
         glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, None, self.__no_of_meshes, 4*5)
+    
+    def draw_single(self, index):
+        if index < self.__no_of_meshes:
+            glBindVertexArray(self.__vao)
+            glBindBuffer(GL_DRAW_INDIRECT_BUFFER, self.__dbo)
+            glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, ctypes.c_void_p(index*4*5), 1, 4*5)
 
 phong_vert = """
 #version 460 core
@@ -392,8 +398,8 @@ void main()
     vec3  eye   = inverse(u_view)[3].xyz;
     vec3  V     = normalize(eye - v_pos);
     vec3  H     = normalize(V + L);
-    float ka    = 0.1;
-    float kd    = max(0.0, dot(N, L)) * 0.9;
+    float ka    = 0.5;
+    float kd    = max(0.0, dot(N, L)) * 0.5;
     float NdotH = max(0.0, dot(N, H));
     float sh    = 100.0;
     float ks    = pow(NdotH, sh) * 0.1;

@@ -17,6 +17,9 @@ Robert C. Martin, Clean Architecture
 [Mesh](../example/python/mesh/glut_opengl_shader_ctypes_glm_meshes.py)  
 [![Mesh](../screenshot/example/python/mesh/glut_opengl_shader_ctypes_glm_meshes.png)](../example/python/mesh/glut_opengl_shader_ctypes_glm_meshes.py)
 
+[Mesh in Tkinter frame](../example/python/mesh/tkinter_opengl_shader_ctypes_glm_meshes.py)  
+[![Mesh](../screenshot/example/python/mesh/tkinter_opengl_shader_ctypes_glm_meshes.png)](../example/python/mesh/tkinter_opengl_shader_ctypes_glm_meshes.py)
+
 [Instancing](../example/python/mesh/glut_opengl_shader_instancing_cube.py)  
 [![Instancing](../screenshot/example/python/mesh/glut_opengl_shader_instancing_cube.png)](../example/python/mesh/glut_opengl_shader_instancing_cube.py)
 
