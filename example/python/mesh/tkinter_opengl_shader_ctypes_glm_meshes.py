@@ -44,12 +44,30 @@ def create_window():
         view_frame.shape_index = control_shape.current()
     control_shape.bind('<<ComboboxSelected>>', shape_changed)  
 
+    control_polygonmode = tkinter.ttk.Combobox(control_frame, state="readonly", font=("Consolas", 10))
+    control_polygonmode['values'] = ['point', 'line', 'fill']
+    control_polygonmode.current(0)
+    control_polygonmode.grid(column=1, row=0)
+    def polygon_mode_changed(event):
+        view_frame.polygon_mode = control_polygonmode.current()
+    control_polygonmode.bind('<<ComboboxSelected>>', polygon_mode_changed)  
+
+    control_culling = tkinter.ttk.Combobox(control_frame, state="readonly", font=("Consolas", 10))
+    control_culling['values'] = ['no face culling', 'back face culling', 'front face culling']
+    control_culling.current(1)
+    control_culling.grid(column=2, row=0)
+    def culling_changed(event):
+        view_frame.cull_mode = control_culling.current()
+    control_culling.bind('<<ComboboxSelected>>', culling_changed)  
+
     return root
 
 class OpenGLView(OpenGLFrame):
     def __init__(self, status_text, *args, **kwds):
         super().__init__(*args, kwds) 
         self.shape_index = 0
+        self.polygon_mode = 2
+        self.cull_mode = 1
         self.status_text = status_text
         self.opengl_initialized = False
 
@@ -119,7 +137,10 @@ class OpenGLView(OpenGLFrame):
 
         glEnable(GL_DEPTH_TEST)
         glUseProgram(self.__program)
-        #glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
+
+        glEnable(GL_CULL_FACE)
+        glFrontFace(GL_CCW)
+        glCullFace(GL_BACK)
 
     def resize_opengl_viewport(self):
         self.__tkinter_navigation.reshape()
@@ -130,6 +151,13 @@ class OpenGLView(OpenGLFrame):
         vp_valid, vp_size, view, projection = self.__tkinter_navigation.update()
         if not vp_valid:
             glViewport(0, 0, *vp_size)
+
+        if self.cull_mode == 0:
+            glDisable(GL_CULL_FACE)
+        else:
+            glEnable(GL_CULL_FACE)
+            glCullFace(GL_FRONT if self.cull_mode == 2 else GL_BACK)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_POINT if self.polygon_mode == 0 else GL_LINE if self.polygon_mode == 1 else GL_FILL)
 
         glUniformMatrix4fv(self.___uniform['u_proj'], 1, GL_FALSE, glm.value_ptr(projection))
         glUniformMatrix4fv(self.___uniform['u_view'], 1, GL_FALSE, glm.value_ptr(view))
@@ -394,9 +422,10 @@ void main()
 {
     vec4  color = vec4(HUEtoRGB(v_uvw.z), 1.0);
     vec3  L     = normalize(vec3(1.0, -1.0, 1.0));
-    vec3  N     = normalize(v_nv);
     vec3  eye   = inverse(u_view)[3].xyz;
     vec3  V     = normalize(eye - v_pos);
+    float face  = sign(dot(v_nv, V));
+    vec3  N     = normalize(v_nv) * face;
     vec3  H     = normalize(V + L);
     float ka    = 0.5;
     float kd    = max(0.0, dot(N, L)) * 0.5;
