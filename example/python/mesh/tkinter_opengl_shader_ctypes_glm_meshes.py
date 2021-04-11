@@ -7,11 +7,11 @@ import tkinter.ttk
 from pyopengltk import OpenGLFrame
 from OpenGL.GL import *
 from OpenGL.GL.shaders import *
-import math 
 import ctypes 
 import glm 
 from utility import triangulated_mesh
-from utility.navigation_controller import NavigationController
+from utility.tkinter_utility import TkinterNavigation
+from utility.opengl_mesh import SingleMesh, MultiMesh
 
 def create_window():
     root = tkinter.Tk()
@@ -177,196 +177,9 @@ class OpenGLView(OpenGLFrame):
             glBindBuffer(GL_SHADER_STORAGE_BUFFER, self.__ssbo)
             glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, glm.sizeof(glm.mat4), glm.value_ptr(model)) 
             if multi_mesh:
-                self.__multimesh.draw_single(index)
+                self.__multimesh.draw_range(index, index+1)
             else:
                 self.__meshes[index].draw()
-
-class TkinterNavigation:
-    def __init__(self, opengl_frame, view, fov_y, near, far, get_depth_callback):
-        
-        self.opengl_frame = opengl_frame
-        cx, cy = self.opengl_frame.width, self.opengl_frame.height
-        self.__vp_size = (cx, cy)
-        self.__fov_y = fov_y
-        self.__depth_range = [near, far]
-        self.__view = view
-        self.__proj = glm.perspective(glm.radians(self.__fov_y), cx/cy, *self.__depth_range)
-
-        self.__navigate_control = NavigationController(
-            lambda : self.__view,
-            lambda : self.__proj,
-            lambda : glm.vec4(0, 0, *self.__vp_size),
-            lambda x, y : self.__get_depth(x, y),
-            lambda _, __ : glm.vec3(0, 0, 0) )
-        self.__get_depth_callback = get_depth_callback
-
-        self.opengl_frame.bind('<Button-1>', self.__mouse_button_left_down)
-        self.opengl_frame.bind('<ButtonRelease-1>', self.__mouse_button_left_up)
-        self.opengl_frame.bind('<Button-3>', self.__mouse_button_right_down)
-        self.opengl_frame.bind('<ButtonRelease-3>', self.__mouse_button_right_up)
-        self.opengl_frame.bind('<Motion>', self.__mouse_motion)
-        self.opengl_frame.bind('<MouseWheel>', self.__mouse_wheel)
-
-    def update(self):
-        vp_valid = self.__vp_valid
-        if not self.__vp_valid:
-            self.__vp_size = [self.opengl_frame.width, self.opengl_frame.height]
-            self.__vp_valid = True
-        return vp_valid, self.__vp_size, self.__view, self.__proj 
-
-    def __get_depth(self, x, y):
-        depth_buffer = self.__get_depth_callback(x, self.__vp_size[1]-y)    
-        depth = float(depth_buffer[0][0])
-        if depth == 1:
-            pt_drag  = glm.vec3(0, 0, 0)
-            clip_pos = self.__proj * self.__view * glm.vec4(pt_drag, 1)
-            ndc_pos  = glm.vec3(clip_pos) / clip_pos.w
-            if ndc_pos.z > -1 and ndc_pos.z < 1:
-                depth = ndc_pos.z * 0.5 + 0.5
-        return depth
-    
-    def reshape(self):
-        self.__vp_valid = False
-        aspect = self.opengl_frame.width / self.opengl_frame.height
-        self.__proj = glm.perspective(glm.radians(self.__fov_y), aspect, *self.__depth_range)
-
-    def __mouse_button_left_down(self, event):
-        x, y = event.x, event.y
-        wnd_pos = (x, self.__vp_size[1]-y) 
-        self.__navigate_control.StartOrbit(wnd_pos, self.__navigate_control.ORBIT)
-        #self.__navigate_control.StartOrbit(wnd_pos, self.__navigate_control.ROTATE)
-    
-    def __mouse_button_left_up(self, event):
-        x, y = event.x, event.y
-        wnd_pos = (x, self.__vp_size[1]-y) 
-        self.__navigate_control.EndOrbit(wnd_pos)
-
-    def __mouse_button_right_down(self, event):
-        x, y = event.x, event.y
-        wnd_pos = (x, self.__vp_size[1]-y) 
-        self.__navigate_control.StartPan(wnd_pos)
-    
-    def __mouse_button_right_up(self, event):
-        x, y = event.x, event.y
-        wnd_pos = (x, self.__vp_size[1]-y) 
-        self.__navigate_control.EndPan(wnd_pos)
-
-    def __mouse_motion(self, event):
-        x, y = event.x, event.y
-        wnd_pos = (x, self.__vp_size[1]-y)
-        self.__view, self.__update_view = self.__navigate_control.MoveCursorTo(wnd_pos) 
-
-    def __mouse_passive_motion(self, x, y ): 
-        pass
-
-    def __mouse_entry(self, state):
-        pass
-
-    def __mouse_wheel(self, event):
-        x, y = event.x, event.y 
-        direction = -1 if event.delta < 0 else 1        
-        wnd_pos = (x, self.__vp_size[1]-y) 
-        self.__view, self.__update_view = self.__navigate_control.MoveOnLineOfSight(wnd_pos, direction)
-
-class SingleMesh:
-    def __init__(self, mesh_specification):
-        attr_array = mesh_specification.attributes
-        index_array = mesh_specification.indices
-        stride, format = mesh_specification.format
-
-        self.__no_indices = len(index_array)
-        vertex_attributes = (ctypes.c_float * len(attr_array))(*attr_array)
-        indices = (ctypes.c_uint32 * self.__no_indices)(*index_array)
-        
-        self.__vao = glGenVertexArrays(1)
-        self.__vbo, self.__ibo = glGenBuffers(2)
-        
-        glBindVertexArray(self.__vao)
-
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.__ibo)
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices, GL_STATIC_DRAW)
-
-        glBindBuffer(GL_ARRAY_BUFFER, self.__vbo)
-        glBufferData(GL_ARRAY_BUFFER, vertex_attributes, GL_STATIC_DRAW)
-
-        offset = 0
-        float_size = ctypes.sizeof(ctypes.c_float)
-        for i, attribute_format in enumerate(format):   
-            tuple_size = attribute_format[1]
-            glVertexAttribPointer(i, tuple_size, GL_FLOAT, False, stride*float_size, ctypes.c_void_p(offset))
-            offset += tuple_size * float_size
-            glEnableVertexAttribArray(i)
-
-    def draw(self):
-        glBindVertexArray(self.__vao)
-        glDrawElements(GL_TRIANGLES, self.__no_indices, GL_UNSIGNED_INT, None)
-
-class MultiMesh:
-    def __init__(self, mesh_specifications, stride, format):
-        
-        attributes = [mesh.attributes for mesh in mesh_specifications]
-        indices = [mesh.indices for mesh in mesh_specifications]
-        attributes_len = sum(len(a) for a in attributes)
-        indices_len = sum(len(i) for i in indices)
-
-        self.__no_of_meshes = len(mesh_specifications)
-        draw_indirect_list = []
-        first_index = 0
-        base_vertex = 0
-        for attr_list, index_list in zip(attributes, indices):
-            no_of_indices = len(index_list)
-            no_of_attributes = len(attr_list) // stride
-            draw_indirect_list += [no_of_indices, 1, first_index, base_vertex, 0]
-            first_index += no_of_indices
-            base_vertex += no_of_attributes
-
-        self.__vao = glGenVertexArrays(1)
-        self.__vbo, self.__ibo, self.__dbo = glGenBuffers(3)
-
-        draw_indirect_array = (ctypes.c_uint32 * len(draw_indirect_list))(*draw_indirect_list)
-        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, self.__dbo)
-        glBufferData(GL_DRAW_INDIRECT_BUFFER, draw_indirect_array, GL_STATIC_DRAW)
-
-        glBindBuffer(GL_ARRAY_BUFFER, self.__vbo)
-        glBufferData(GL_ARRAY_BUFFER, attributes_len*4, None, GL_STATIC_DRAW)
-        offset = 0
-        for attr_list in attributes:
-            no_of_values = len(attr_list)
-            value_array = (ctypes.c_float * no_of_values)(*attr_list)
-            glBufferSubData(GL_ARRAY_BUFFER, offset, no_of_values*4, value_array)
-            offset += no_of_values*4
-
-        glBindVertexArray(self.__vao)
-
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.__ibo)
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_len*4, None, GL_STATIC_DRAW)
-        offset = 0
-        for index_list in indices:
-            no_of_indices = len(index_list)
-            index_array = (ctypes.c_uint32 * no_of_indices)(*index_list)
-            glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset, no_of_indices*4, index_array)
-            offset += no_of_indices*4
-
-        offset = 0
-        float_size = ctypes.sizeof(ctypes.c_float)
-        for i, attribute_format in enumerate(format):   
-            tuple_size = attribute_format[1]
-            glVertexAttribPointer(i, tuple_size, GL_FLOAT, False, stride*float_size, ctypes.c_void_p(offset))
-            offset += tuple_size * float_size
-            glEnableVertexAttribArray(i)
-
-    def draw(self):
-        # GLAPI/glDrawElementsIndirect
-        # https://www.khronos.org/opengl/wiki/GLAPI/glDrawElementsIndirect
-        glBindVertexArray(self.__vao)
-        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, self.__dbo)
-        glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, None, self.__no_of_meshes, 4*5)
-    
-    def draw_single(self, index):
-        if index < self.__no_of_meshes:
-            glBindVertexArray(self.__vao)
-            glBindBuffer(GL_DRAW_INDIRECT_BUFFER, self.__dbo)
-            glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, ctypes.c_void_p(index*4*5), 1, 4*5)
 
 phong_vert = """
 #version 460 core
