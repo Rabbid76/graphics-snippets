@@ -61,6 +61,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WXUSINGDLL;GLEW_STATIC;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>.\;$(SolutionDir);$(SolutionDir)\_util\include;$(SolutionDir)\$(OwnGraphicsLibDir)include\Render;$(SolutionDir)\$(GlmDir);$(SolutionDir)\$(StbDir);$(SolutionDir)\$(GlewDir)\include;$(SolutionDir)\$(GlfwDir)\include;$(SolutionDir)\$(FreeGlutDir)\include;$(SolutionDir)\$(FreetypeDir)\include;$(SolutionDir)\$(wxWidgetDir)\include;$(SolutionDir)\$(wxWidgetDir)\include\msvc;$(SolutionDir)\$(AssimpDir)\include\msvc</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -70,14 +71,12 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)\$(GlewDir)\lib\Release\$(PlatformName)\;$(SolutionDir)\$(FreeGlutDir)\lib\$(Platform)\;$(SolutionDir)\$(GlfwDir)\lib-vc2015;$(SolutionDir)\$(AssimpDir)\lib\x64\;$(SolutionDir)\$(FreetypeDir)\objs\$(PlatformName)\$(Configuration)\;$(SolutionDir)\$(wxWidgetDir)\lib\vc_x64_dll\</AdditionalLibraryDirectories>
       <AdditionalDependencies>glew32s.lib;Opengl32.lib;Glu32.lib;glfw3.lib;freetype.lib;wxbase31ud.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <IgnoreSpecificDefaultLibraries>MSVCRT.lib;LIBCMT.lib</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <FunctionLevelLinking>
-      </FunctionLevelLinking>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WXUSINGDLL;GLEW_STATIC;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -85,18 +84,15 @@
       <AdditionalIncludeDirectories>.\;$(SolutionDir);$(SolutionDir)\_util\include;$(SolutionDir)\$(OwnGraphicsLibDir)include\Render;$(SolutionDir)\$(GlmDir);$(SolutionDir)\$(StbDir);$(SolutionDir)\$(GlewDir)\include;$(SolutionDir)\$(GlfwDir)\include;$(SolutionDir)\$(FreeGlutDir)\include;$(SolutionDir)\$(FreetypeDir)\include;$(SolutionDir)\$(wxWidgetDir)\include;$(SolutionDir)\$(wxWidgetDir)\include\msvc;$(SolutionDir)\$(AssimpDir)\include\msvc</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <BufferSecurityCheck>true</BufferSecurityCheck>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalLibraryDirectories>$(SolutionDir)\$(GlewDir)\lib\Release\$(PlatformName)\;$(SolutionDir)\$(FreeGlutDir)\lib\$(Platform)\;$(SolutionDir)\$(GlfwDir)\lib-vc2015;$(SolutionDir)\$(AssimpDir)\lib\x64\;$(SolutionDir)\$(FreetypeDir)\objs\$(PlatformName)\$(Configuration)\;$(SolutionDir)\$(wxWidgetDir)\lib\vc_x64_dll\</AdditionalLibraryDirectories>
       <AdditionalDependencies>glew32s.lib;Opengl32.lib;Glu32.lib;glfw3.lib;freetype.lib;wxbase31u.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <IgnoreSpecificDefaultLibraries>MSVCRT.lib;LIBCMT.lib</IgnoreSpecificDefaultLibraries>
-      <IgnoreAllDefaultLibraries>
-      </IgnoreAllDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
