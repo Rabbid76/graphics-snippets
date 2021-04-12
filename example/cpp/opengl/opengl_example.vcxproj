@@ -71,6 +71,9 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)\$(GlewDir)\lib\Release\$(PlatformName)\;$(SolutionDir)\$(FreeGlutDir)\lib\$(Platform)\;$(SolutionDir)\$(GlfwDir)\lib-vc2015;$(SolutionDir)\$(AssimpDir)\lib\x64\;$(SolutionDir)\$(FreetypeDir)\objs\$(PlatformName)\$(Configuration)\;$(SolutionDir)\$(wxWidgetDir)\lib\vc_x64_dll\</AdditionalLibraryDirectories>
       <AdditionalDependencies>glew32s.lib;Opengl32.lib;Glu32.lib;glfw3.lib;freetype.lib;wxbase31ud.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreAllDefaultLibraries>
+      </IgnoreAllDefaultLibraries>
+      <IgnoreSpecificDefaultLibraries>LIBCMT.lib</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -93,6 +96,9 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalLibraryDirectories>$(SolutionDir)\$(GlewDir)\lib\Release\$(PlatformName)\;$(SolutionDir)\$(FreeGlutDir)\lib\$(Platform)\;$(SolutionDir)\$(GlfwDir)\lib-vc2015;$(SolutionDir)\$(AssimpDir)\lib\x64\;$(SolutionDir)\$(FreetypeDir)\objs\$(PlatformName)\$(Configuration)\;$(SolutionDir)\$(wxWidgetDir)\lib\vc_x64_dll\</AdditionalLibraryDirectories>
       <AdditionalDependencies>glew32s.lib;Opengl32.lib;Glu32.lib;glfw3.lib;freetype.lib;wxbase31u.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreAllDefaultLibraries>
+      </IgnoreAllDefaultLibraries>
+      <IgnoreSpecificDefaultLibraries>LIBCMT.lib</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

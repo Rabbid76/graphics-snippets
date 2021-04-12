@@ -7,6 +7,7 @@
 int main()
 {
     int ret = 0;
+
     ret = example_camera_and_matrix();
 
     return ret;
