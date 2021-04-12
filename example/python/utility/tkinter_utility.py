@@ -1,6 +1,8 @@
+import time
 import glm
 import tkinter
 import tkinter.ttk
+from pyopengltk import OpenGLFrame
 from utility.navigation_controller import NavigationController
 
 class TkinterNavigation:
@@ -89,3 +91,43 @@ class TkinterNavigation:
         direction = -1 if event.delta < 0 else 1        
         wnd_pos = (x, self.__vp_size[1]-y) 
         self.__view, self.__update_view = self.__navigate_control.MoveOnLineOfSight(wnd_pos, direction)
+
+class TkOpenGLView:
+    def init(self, opengl_frame):
+        raise NotImplementedError()
+    def resize(self, opengl_frame):
+        raise NotImplementedError()
+    def draw(self, opengl_frame):
+        raise NotImplementedError()
+
+class TkOpenGLFrame(OpenGLFrame):
+    def __init__(self, opengl_view: TkOpenGLView, *args, **kwds):
+        super().__init__(*args, kwds) 
+        self.animate = 10 # milliseconds
+        self.__opengl_initialized = False
+        self.__opengl_view = opengl_view
+    def initgl(self): 
+        self.__times = [time.time()] 
+        self.__number_of_frames = 0
+        if not self.__opengl_initialized:
+            self.__opengl_view.init(self)
+            self.__opengl_initialized = True
+        self.__opengl_view.resize(self)
+    def redraw(self):
+        self.__times += [time.time()]
+        if len(self.__times) > 100:
+            self.__times.pop(0)
+        self.__number_of_frames += 1
+        self.__opengl_view.draw(self)
+    @property
+    def elapsed_ms(self):
+      return (self.__times[-1] - self.__times[0]) * 1000
+    @property  
+    def delta_ms(self):
+        return (self.__times[-1] - self.__times[-2]) * 1000
+    @property  
+    def fps(self):
+        return (len(self.__times)-1) / (self.__times[-1] - self.__times[0])
+    @property  
+    def number_of_frames(self):
+        return self.__number_of_frames

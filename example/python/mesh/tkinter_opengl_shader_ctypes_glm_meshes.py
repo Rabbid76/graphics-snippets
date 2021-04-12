@@ -10,7 +10,7 @@ from OpenGL.GL.shaders import *
 import ctypes 
 import glm 
 from utility import triangulated_mesh
-from utility.tkinter_utility import TkinterNavigation
+from utility.tkinter_utility import TkinterNavigation, TkOpenGLView, TkOpenGLFrame
 from utility.opengl_mesh import SingleMesh, MultiMesh
 
 def create_window():
@@ -19,7 +19,8 @@ def create_window():
 
     control_frame = tkinter.Frame(root, bg='lightgray', padx=4, pady=4)
     status_bar_frame = tkinter.Frame(root, borderwidth=1)
-    view_frame = OpenGLView(status_bar_text, root, width=600, height=400)
+    open_gl_view = OpenGLView(status_bar_text)
+    view_frame = TkOpenGLFrame(open_gl_view, root, width=600, height=400)
 
     root.grid_columnconfigure(0, weight=1)
     root.grid_rowconfigure(0, weight=0)
@@ -38,62 +39,41 @@ def create_window():
         "Tetrahedron", "Hexahedron", "Octahedron", "Dodecahedron", "Icosahedron",
         "Tube", "Cone", "SphereSlice", "SphereTessellated", "Torus", "TrefoilKnot", "TorusKnot", "Arrow"]
     control_shape.current(10)
-    view_frame.shape_index = 10
+    open_gl_view.shape_index = 10
     control_shape.grid(column=0, row=0)
     def shape_changed(event):
-        view_frame.shape_index = control_shape.current()
+        open_gl_view.shape_index = control_shape.current()
     control_shape.bind('<<ComboboxSelected>>', shape_changed)  
 
     control_polygonmode = tkinter.ttk.Combobox(control_frame, state="readonly", font=("Consolas", 10))
     control_polygonmode['values'] = ['point', 'line', 'fill']
-    control_polygonmode.current(0)
+    control_polygonmode.current(2)
+    open_gl_view.polygon_mode = 2
     control_polygonmode.grid(column=1, row=0)
     def polygon_mode_changed(event):
-        view_frame.polygon_mode = control_polygonmode.current()
+        open_gl_view.polygon_mode = control_polygonmode.current()
     control_polygonmode.bind('<<ComboboxSelected>>', polygon_mode_changed)  
 
     control_culling = tkinter.ttk.Combobox(control_frame, state="readonly", font=("Consolas", 10))
     control_culling['values'] = ['no face culling', 'back face culling', 'front face culling']
     control_culling.current(1)
+    open_gl_view.cull_mode = 1
     control_culling.grid(column=2, row=0)
     def culling_changed(event):
-        view_frame.cull_mode = control_culling.current()
+        open_gl_view.cull_mode = control_culling.current()
     control_culling.bind('<<ComboboxSelected>>', culling_changed)  
 
     return root
 
-class OpenGLView(OpenGLFrame):
-    def __init__(self, status_text, *args, **kwds):
-        super().__init__(*args, kwds) 
+class OpenGLView(TkOpenGLView):
+    def __init__(self, status_text):
+        super().__init__() 
         self.shape_index = 0
         self.polygon_mode = 2
         self.cull_mode = 1
         self.status_text = status_text
-        self.opengl_initialized = False
 
-    def initgl(self): 
-        self.times = [time.time()] 
-        self.nframes = 0
-        self.animate = 10 # milliseconds
-        if not self.opengl_initialized:
-            self.init_opengl_states_and_objects()
-        self.opengl_initialized = True
-        self.resize_opengl_viewport()
-
-    def redraw(self):
-        self.times += [time.time()]
-        if len(self.times) > 100:
-            self.times.pop(0)
-        fps = (len(self.times)-1) / (self.times[-1] - self.times[0])
-        self.nframes += 1
-        self.status_text.set(f"fps {fps:.03f} frame: {self.nframes:05d}")
-        self.draw_opengl_scene()
-
-    def elapsed_ms(self):
-      return (self.times[-1] - self.start_time) * 1000
-
-    def init_opengl_states_and_objects(self):
-        self.start_time = time.time()
+    def init(self, opengl_frame):
         self.__glsl_vert = phong_vert
         self.__glsl_frag = phong_frag
 
@@ -113,7 +93,7 @@ class OpenGLView(OpenGLFrame):
             triangulated_mesh.Arrow()]
 
         self.__tkinter_navigation = TkinterNavigation(
-            self,
+            opengl_frame,
             glm.lookAt(glm.vec3(0,0,2), glm.vec3(0, 0, 0), glm.vec3(0,1,0)),
             90, 0.1, 100,
             lambda x, y : glReadPixels(x, y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT))
@@ -142,11 +122,12 @@ class OpenGLView(OpenGLFrame):
         glFrontFace(GL_CCW)
         glCullFace(GL_BACK)
 
-    def resize_opengl_viewport(self):
+    def resize(self, opengl_frame):
         self.__tkinter_navigation.reshape()
-        glViewport(0, 0, self.width, self.height)
+        glViewport(0, 0, opengl_frame.width, opengl_frame.height)
 
-    def draw_opengl_scene(self):
+    def draw(self, opengl_frame):
+        self.status_text.set(f"fps {opengl_frame.fps:.03f} frame: {opengl_frame.number_of_frames:05d}")
 
         vp_valid, vp_size, view, projection = self.__tkinter_navigation.update()
         if not vp_valid:
