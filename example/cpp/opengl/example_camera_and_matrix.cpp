@@ -120,8 +120,8 @@ struct Camera
   TVec3 up     {0.0, 0.0, 1.0};
   float fov_y  {85.0};
   TSize vp     {800, 600};
-  float near   {0.5};
-  float far    {100.0};
+  float near_  {0.5};
+  float far_   {100.0};
 
   TMat44 Perspective( void );
   TMat44 LookAt( void );
@@ -129,9 +129,9 @@ struct Camera
 
 TMat44 Camera::Perspective( void )
 {
-  float fn = far + near, f_n = far - near;
+  float fn = far_ + near_, f_n = far_ - near_;
   float r = (float)vp[0] / vp[1], t = 1.0f / tan( ToRad( fov_y ) / 2.0f );
-  return TMat44{ TVec4{ t / r, 0.0f, 0.0f, 0.0f }, TVec4{ 0.0f, t, 0.0f, 0.0f }, TVec4{ 0.0f, 0.0f, -fn / f_n, -1.0 }, TVec4{ 0.0f, 0.0f, -2.0f*far*near / f_n, 0.0f } };
+  return TMat44{ TVec4{ t / r, 0.0f, 0.0f, 0.0f }, TVec4{ 0.0f, t, 0.0f, 0.0f }, TVec4{ 0.0f, 0.0f, -fn / f_n, -1.0 }, TVec4{ 0.0f, 0.0f, -2.0f*far_*near_ / f_n, 0.0f } };
 }
 
 TMat44 Camera::LookAt( void )
@@ -655,8 +655,6 @@ int main(void)
 
 void PrintMat( const TMat44 & m )
 {
-  char str[100];
-  char str2[100];
   for ( auto & v : m )
   {
     for ( auto s : v )
@@ -694,27 +692,6 @@ void print_vec(glm::vec4 pnt) {
 
 void TestOutMat( Camera &camera )
 {
-  glm::mat3 a33( 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0 );
-  glm::mat3 b33( 9.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0 );
-
-  glm::vec3 v3( 1.0, 2.0, 3.0 );
-
-  glm::vec3 r1 = (a33 * v3) * b33;
-  glm::vec3 r2 = a33 * (v3 * b33);
-
-
-  glm::mat4 orhto2;
-
-  float range = 5.0f;
-  glm::mat4 ortho2 = glm::ortho( -range * 16.0f / 9.0f, range*16.0f / 9.0f, -range, range, -2.0f*range, 2.0f*range );
-
-
-  glm::mat4 testm( 1.0f );
-  glm::mat4 testm2;
-
-  
-
-  size_t my_size = sizeof( Vertex );
   void * startOffs = Vertex::StartOffset();
 
   glm::mat4 m(
@@ -739,7 +716,7 @@ void TestOutMat( Camera &camera )
   
   glMatrixMode( GL_PROJECTION );
   glLoadIdentity();
-  gluPerspective( camera.fov_y, (float)camera.vp[0] / camera.vp[1], camera.near, camera.far );
+  gluPerspective( camera.fov_y, (float)camera.vp[0] / camera.vp[1], camera.near_, camera.far_ );
   TMat44 prjMatOGL;
   glGetFloatv( GL_PROJECTION_MATRIX, prjMatOGL.data()->data() );
 
@@ -750,7 +727,7 @@ void TestOutMat( Camera &camera )
   glGetFloatv( GL_MODELVIEW_MATRIX, viewMatOGL.data()->data() );
 
   TMat44 prjMat;
-  glm::mat4 glmPrjMat = glm::perspective( ToRad( camera.fov_y ), (float)camera.vp[0] / (float)camera.vp[1], camera.near, camera.far );
+  glm::mat4 glmPrjMat = glm::perspective( ToRad( camera.fov_y ), (float)camera.vp[0] / (float)camera.vp[1], camera.near_, camera.far_ );
   memcpy( prjMat.data()->data(), &(glmPrjMat[0][0]), 16 * sizeof( float ) );
 
   TMat44 invPrjMat;
