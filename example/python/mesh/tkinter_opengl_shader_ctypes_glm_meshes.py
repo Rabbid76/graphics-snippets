@@ -46,7 +46,8 @@ def create_window():
 
     control_polygonmode = tkinter.ttk.Combobox(control_frame, state="readonly", font=("Consolas", 10))
     control_polygonmode['values'] = ['point', 'line', 'fill']
-    control_polygonmode.current(0)
+    control_polygonmode.current(2)
+    view_frame.polygon_mode = 2
     control_polygonmode.grid(column=1, row=0)
     def polygon_mode_changed(event):
         view_frame.polygon_mode = control_polygonmode.current()
@@ -55,6 +56,7 @@ def create_window():
     control_culling = tkinter.ttk.Combobox(control_frame, state="readonly", font=("Consolas", 10))
     control_culling['values'] = ['no face culling', 'back face culling', 'front face culling']
     control_culling.current(1)
+    view_frame.cull_mode = 1
     control_culling.grid(column=2, row=0)
     def culling_changed(event):
         view_frame.cull_mode = control_culling.current()
