@@ -3,8 +3,10 @@
   <ItemGroup>
     <ClCompile Include="wx_widget_opengl_meshs.cpp" />
     <ClCompile Include="..\pch.cpp" />
+    <ClCompile Include="..\_util\source\wxutil\wx_opengl_canvas.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\pch.h" />
+    <ClInclude Include="..\_util\include\wxutil\wx_opengl_canvas.h" />
   </ItemGroup>
 </Project>
