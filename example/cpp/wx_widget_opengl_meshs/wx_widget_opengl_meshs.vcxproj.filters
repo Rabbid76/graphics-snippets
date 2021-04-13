@@ -8,5 +8,7 @@
   <ItemGroup>
     <ClInclude Include="..\pch.h" />
     <ClInclude Include="..\_util\include\wxutil\wx_opengl_canvas.h" />
+    <ClInclude Include="..\_util\include\view\canvas_interface.h" />
+    <ClInclude Include="..\_util\include\view\view_interface.h" />
   </ItemGroup>
 </Project>

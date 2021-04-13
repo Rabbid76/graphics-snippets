@@ -20,13 +20,12 @@
 
 #include "wx/glcanvas.h" 
 
-
-
 #include <memory>
 
 // project includes
 #include <gl/gl_debug.h>
 #include <gl/gl_shader.h>
+#include <view/view_interface.h>
 
 class MyApp : public wxApp
 {
@@ -42,8 +41,25 @@ public:
 private:
 
     // wxWindows don't need to be deleted. See [Window Deletion](https://docs.wxwidgets.org/3.0/overview_windowdeletion.html)
-    wxPanel* control_panel;
-    wxPanel* view_panel;
+    wxPanel *_control_panel;
+    wxutil::opengl_canvas*_view_panel;
+};
+
+class MyOpenGLView
+    : public view::view_interface
+{
+private:
+
+    const std::unique_ptr<OpenGL::CContext> _context;
+
+public:
+
+    MyOpenGLView();
+    virtual ~MyOpenGLView();
+
+    virtual void init(const view::canvas_interface& canvas) override;
+    virtual void resize(const view::canvas_interface& canvas) override;
+    virtual void render(const view::canvas_interface& canvas) override;
 };
 
 // SubSystem Windows (/SUBSYSTEM:WINDOWS)
@@ -59,6 +75,8 @@ bool MyApp::OnInit()
 MyFrame::MyFrame()
     : wxFrame(NULL, wxID_ANY, "OpenGL view", wxDefaultPosition, wxSize(600, 400))
 {
+    auto view = std::make_shared< MyOpenGLView>();
+
     CreateStatusBar();
     SetStatusText("Status");
 
@@ -70,14 +88,47 @@ MyFrame::MyFrame()
     sizer->AddGrowableCol(1);
     sizer->AddGrowableRow(0);
 
-    control_panel = new wxPanel(this, wxID_ANY, wxPoint(0, 0), wxSize(100, -1));
-    control_panel->SetBackgroundColour(wxColour(255, 255, 128));
+    _control_panel = new wxPanel(this, wxID_ANY, wxPoint(0, 0), wxSize(100, -1));
+    _control_panel->SetBackgroundColour(wxColour(255, 255, 128));
 
     int args[] = { WX_GL_RGBA, WX_GL_DOUBLEBUFFER, WX_GL_DEPTH_SIZE, 16, 0 };
-    auto gl_pane = new wxutil::open_gl_canvas((wxFrame*)this, args);
+    _view_panel = new wxutil::opengl_canvas(view, this, args);
 
-    sizer->Add(control_panel, 1, wxEXPAND | wxALL);
-    sizer->Add(gl_pane, 1, wxEXPAND | wxALL);
+    sizer->Add(_control_panel, 1, wxEXPAND | wxALL);
+    sizer->Add(_view_panel, 1, wxEXPAND | wxALL);
 
-    auto control_text = new wxStaticText(control_panel, wxID_ANY, wxString("controls"), wxPoint(10, 10));
+    auto control_text = new wxStaticText(_control_panel, wxID_ANY, wxString("controls"), wxPoint(10, 10));
+}
+
+
+MyOpenGLView::MyOpenGLView()
+    : _context{ std::make_unique<OpenGL::CContext>() }
+{}
+
+MyOpenGLView::~MyOpenGLView()
+{}
+
+void MyOpenGLView::init(const view::canvas_interface& canvas)
+{
+    if (glewInit() != GLEW_OK)
+    {
+        std::cerr << "GLEW init failed" << std::endl;
+    }
+
+    OpenGL::CContext::TDebugLevel debug_level = OpenGL::CContext::TDebugLevel::all;
+    _context->Init(debug_level);
+}
+
+void MyOpenGLView::resize(const view::canvas_interface& canvas)
+{
+    const auto [cx, cy] = canvas.get_size();
+    glViewport(0, 0, cx, cy);
+}
+
+void MyOpenGLView::render(const view::canvas_interface& canvas)
+{
+    glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // [...]
 }

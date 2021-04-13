@@ -3,40 +3,31 @@
 
 namespace wxutil
 {
-    open_gl_canvas::open_gl_canvas(wxFrame* parent, int* args) :
-        wxGLCanvas(parent, wxID_ANY, args, wxDefaultPosition, wxDefaultSize, wxFULL_REPAINT_ON_RESIZE)
+    opengl_canvas::opengl_canvas(std::shared_ptr<view::view_interface> view, wxFrame* parent, int* args)
+        : wxGLCanvas(parent, wxID_ANY, args, wxDefaultPosition, wxDefaultSize, wxFULL_REPAINT_ON_RESIZE)
+        , _view(view)
+        , _context{ std::make_unique<wxGLContext>(this) }
     {
-        _context = new wxGLContext(this);
-
-
         // To avoid flashing on MSW
         SetBackgroundStyle(wxBG_STYLE_CUSTOM);
     }
 
-    open_gl_canvas::~open_gl_canvas()
-    {
-        delete _context;
-    }
+    opengl_canvas::~opengl_canvas()
+    {}
 
-    void open_gl_canvas::resized(wxSizeEvent& evt)
+    void opengl_canvas::resized(wxSizeEvent& evt)
     {
         //	wxGLCanvas::OnSize(evt);
-
+        _view->resize(*this);
         Refresh();
     }
 
-    int open_gl_canvas::get_width()
+    std::tuple<int, int> opengl_canvas::get_size(void) const
     {
-        return GetSize().x;
+        return std::make_tuple<int, int>(GetSize().x, GetSize().y);
     }
 
-    int open_gl_canvas::get_height()
-    {
-        return GetSize().y;
-    }
-
-
-    void open_gl_canvas::render(wxPaintEvent& evt)
+    void opengl_canvas::render(wxPaintEvent& evt)
     {
         if (!IsShown()) return;
 
@@ -45,60 +36,49 @@ namespace wxutil
 
         if (!_gl_initialized)
         {
-            //if (glewInit() != GLEW_OK)
-            //{
-            //    std::cerr << "GLEW init failed" << std::endl;
-            //}
-
-            //OpenGL::CContext::TDebugLevel debug_level = OpenGL::CContext::TDebugLevel::all;
-            //OpenGL::CContext context;
-            //context.Init(debug_level);
-
+            _view->init(*this);
             _gl_initialized = true;
         }
 
-        glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-
+        _view->render(*this);
         glFlush();
         SwapBuffers();
     }
 
-    BEGIN_EVENT_TABLE(open_gl_canvas, wxGLCanvas)
-    EVT_MOTION(open_gl_canvas::mouse_moved)
-    EVT_LEFT_DOWN(open_gl_canvas::mouse_down)
-    EVT_LEFT_UP(open_gl_canvas::mouse_released)
-    EVT_RIGHT_DOWN(open_gl_canvas::right_click)
-    EVT_LEAVE_WINDOW(open_gl_canvas::mouse_left_window)
-    EVT_SIZE(open_gl_canvas::resized)
-    EVT_KEY_DOWN(open_gl_canvas::key_pressed)
-    EVT_KEY_UP(open_gl_canvas::key_released)
-    EVT_MOUSEWHEEL(open_gl_canvas::mouse_wheel_moved)
-    EVT_PAINT(open_gl_canvas::render)
+    BEGIN_EVENT_TABLE(opengl_canvas, wxGLCanvas)
+    EVT_MOTION(opengl_canvas::mouse_moved)
+    EVT_LEFT_DOWN(opengl_canvas::mouse_down)
+    EVT_LEFT_UP(opengl_canvas::mouse_released)
+    EVT_RIGHT_DOWN(opengl_canvas::right_click)
+    EVT_LEAVE_WINDOW(opengl_canvas::mouse_left_window)
+    EVT_SIZE(opengl_canvas::resized)
+    EVT_KEY_DOWN(opengl_canvas::key_pressed)
+    EVT_KEY_UP(opengl_canvas::key_released)
+    EVT_MOUSEWHEEL(opengl_canvas::mouse_wheel_moved)
+    EVT_PAINT(opengl_canvas::render)
     END_EVENT_TABLE()
 
-    void open_gl_canvas::mouse_moved(wxMouseEvent& event)
+    void opengl_canvas::mouse_moved(wxMouseEvent& event)
     {}
     
-    void open_gl_canvas::mouse_down(wxMouseEvent& event)
+    void opengl_canvas::mouse_down(wxMouseEvent& event)
     {}
     
-    void open_gl_canvas::mouse_wheel_moved(wxMouseEvent& event)
+    void opengl_canvas::mouse_wheel_moved(wxMouseEvent& event)
     {}
     
-    void open_gl_canvas::mouse_released(wxMouseEvent& event)
+    void opengl_canvas::mouse_released(wxMouseEvent& event)
     {}
     
-    void open_gl_canvas::right_click(wxMouseEvent& event)
+    void opengl_canvas::right_click(wxMouseEvent& event)
     {}
     
-    void open_gl_canvas::mouse_left_window(wxMouseEvent& event)
+    void opengl_canvas::mouse_left_window(wxMouseEvent& event)
     {}
     
-    void open_gl_canvas::key_pressed(wxKeyEvent& event)
+    void opengl_canvas::key_pressed(wxKeyEvent& event)
     {}
     
-    void open_gl_canvas::key_released(wxKeyEvent& event)
+    void opengl_canvas::key_released(wxKeyEvent& event)
     {}
 }

@@ -1,26 +1,33 @@
-#ifndef __WX_OPENGL_CANVAS __
-#define __WX_OPENGL_CANVAS __
+#ifndef __WX_OPENGL_CANVAS__
+#define __WX_OPENGL_CANVAS__
 
 #include "wx/glcanvas.h" 
+#include <view/canvas_interface.h>
+#include <view/view_interface.h>
+
+#include <memory>
+
 
 namespace wxutil
 {
     // [xGLCanvas](https://wiki.wxwidgets.org/WxGLCanvas)
-    class open_gl_canvas : public wxGLCanvas
+    class opengl_canvas 
+        : public wxGLCanvas, view::canvas_interface
     {
     private:
 
-        wxGLContext* _context;
+        const std::shared_ptr<view::view_interface> _view;
+        const std::unique_ptr<wxGLContext> _context;
         bool _gl_initialized = false;
 
     public:
-        open_gl_canvas(wxFrame* parent, int* args);
-        virtual ~open_gl_canvas();
+
+        opengl_canvas(std::shared_ptr<view::view_interface> view, wxFrame* parent, int* args);
+        virtual ~opengl_canvas();
 
         void resized(wxSizeEvent& evt);
 
-        int get_width();
-        int get_height();
+        virtual std::tuple<int, int> get_size(void) const override;
 
         void render(wxPaintEvent& evt);
 
