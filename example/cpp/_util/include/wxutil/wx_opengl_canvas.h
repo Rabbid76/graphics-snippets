@@ -11,19 +11,19 @@
 namespace wxutil
 {
     // [xGLCanvas](https://wiki.wxwidgets.org/WxGLCanvas)
-    class opengl_canvas 
-        : public wxGLCanvas, view::canvas_interface
+    class OpenGLCanvas 
+        : public wxGLCanvas, view::CanvasInterface
     {
     private:
 
-        const std::shared_ptr<view::view_interface> _view;
+        const std::shared_ptr<view::ViewInterface> _view;
         const std::unique_ptr<wxGLContext> _context;
         bool _gl_initialized = false;
 
     public:
 
-        opengl_canvas(std::shared_ptr<view::view_interface> view, wxFrame* parent, int* args);
-        virtual ~opengl_canvas();
+        OpenGLCanvas(std::shared_ptr<view::ViewInterface> view, wxFrame* parent, int* args);
+        virtual ~OpenGLCanvas();
 
         virtual std::tuple<int, int> get_size(void) const override;
         virtual void activate(void) const override;

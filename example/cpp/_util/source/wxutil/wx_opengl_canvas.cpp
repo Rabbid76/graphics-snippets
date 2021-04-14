@@ -3,7 +3,7 @@
 
 namespace wxutil
 {
-    opengl_canvas::opengl_canvas(std::shared_ptr<view::view_interface> view, wxFrame* parent, int* args)
+    OpenGLCanvas::OpenGLCanvas(std::shared_ptr<view::ViewInterface> view, wxFrame* parent, int* args)
         : wxGLCanvas(parent, wxID_ANY, args, wxDefaultPosition, wxDefaultSize, wxFULL_REPAINT_ON_RESIZE)
         , _view(view)
         , _context{ std::make_unique<wxGLContext>(this) }
@@ -12,27 +12,27 @@ namespace wxutil
         SetBackgroundStyle(wxBG_STYLE_CUSTOM);
     }
 
-    opengl_canvas::~opengl_canvas()
+    OpenGLCanvas::~OpenGLCanvas()
     {}
 
-    std::tuple<int, int> opengl_canvas::get_size(void) const
+    std::tuple<int, int> OpenGLCanvas::get_size(void) const
     {
         return std::make_tuple<int, int>(GetSize().x, GetSize().y);
     }
 
-    void opengl_canvas::activate(void) const
+    void OpenGLCanvas::activate(void) const
     {
         wxGLCanvas::SetCurrent(*_context);
     }
 
-    void opengl_canvas::resized(wxSizeEvent& evt)
+    void OpenGLCanvas::resized(wxSizeEvent& evt)
     {
         //	wxGLCanvas::OnSize(evt);
         _view->resize(*this);
         Refresh();
     }
 
-    void opengl_canvas::render(wxPaintEvent& evt)
+    void OpenGLCanvas::render(wxPaintEvent& evt)
     {
         if (!IsShown()) 
             return;
@@ -51,40 +51,40 @@ namespace wxutil
         SwapBuffers();
     }
 
-    BEGIN_EVENT_TABLE(opengl_canvas, wxGLCanvas)
-    EVT_MOTION(opengl_canvas::mouse_moved)
-    EVT_LEFT_DOWN(opengl_canvas::mouse_down)
-    EVT_LEFT_UP(opengl_canvas::mouse_released)
-    EVT_RIGHT_DOWN(opengl_canvas::right_click)
-    EVT_LEAVE_WINDOW(opengl_canvas::mouse_left_window)
-    EVT_SIZE(opengl_canvas::resized)
-    EVT_KEY_DOWN(opengl_canvas::key_pressed)
-    EVT_KEY_UP(opengl_canvas::key_released)
-    EVT_MOUSEWHEEL(opengl_canvas::mouse_wheel_moved)
-    EVT_PAINT(opengl_canvas::render)
+    BEGIN_EVENT_TABLE(OpenGLCanvas, wxGLCanvas)
+    EVT_MOTION(OpenGLCanvas::mouse_moved)
+    EVT_LEFT_DOWN(OpenGLCanvas::mouse_down)
+    EVT_LEFT_UP(OpenGLCanvas::mouse_released)
+    EVT_RIGHT_DOWN(OpenGLCanvas::right_click)
+    EVT_LEAVE_WINDOW(OpenGLCanvas::mouse_left_window)
+    EVT_SIZE(OpenGLCanvas::resized)
+    EVT_KEY_DOWN(OpenGLCanvas::key_pressed)
+    EVT_KEY_UP(OpenGLCanvas::key_released)
+    EVT_MOUSEWHEEL(OpenGLCanvas::mouse_wheel_moved)
+    EVT_PAINT(OpenGLCanvas::render)
     END_EVENT_TABLE()
 
-    void opengl_canvas::mouse_moved(wxMouseEvent& event)
+    void OpenGLCanvas::mouse_moved(wxMouseEvent& event)
     {}
     
-    void opengl_canvas::mouse_down(wxMouseEvent& event)
+    void OpenGLCanvas::mouse_down(wxMouseEvent& event)
     {}
     
-    void opengl_canvas::mouse_wheel_moved(wxMouseEvent& event)
+    void OpenGLCanvas::mouse_wheel_moved(wxMouseEvent& event)
     {}
     
-    void opengl_canvas::mouse_released(wxMouseEvent& event)
+    void OpenGLCanvas::mouse_released(wxMouseEvent& event)
     {}
     
-    void opengl_canvas::right_click(wxMouseEvent& event)
+    void OpenGLCanvas::right_click(wxMouseEvent& event)
     {}
     
-    void opengl_canvas::mouse_left_window(wxMouseEvent& event)
+    void OpenGLCanvas::mouse_left_window(wxMouseEvent& event)
     {}
     
-    void opengl_canvas::key_pressed(wxKeyEvent& event)
+    void OpenGLCanvas::key_pressed(wxKeyEvent& event)
     {}
     
-    void opengl_canvas::key_released(wxKeyEvent& event)
+    void OpenGLCanvas::key_released(wxKeyEvent& event)
     {}
 }

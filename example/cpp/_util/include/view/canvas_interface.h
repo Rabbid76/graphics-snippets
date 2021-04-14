@@ -5,7 +5,7 @@
 
 namespace view
 {
-    class canvas_interface
+    class CanvasInterface
     {
     public:
 

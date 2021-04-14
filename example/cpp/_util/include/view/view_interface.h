@@ -5,13 +5,13 @@
 
 namespace view
 {
-    class view_interface
+    class ViewInterface
     {
     public:
 
-        virtual void init(const canvas_interface&) = 0;
-        virtual void resize(const canvas_interface&) = 0;
-        virtual void render(const canvas_interface&) = 0;
+        virtual void init(const CanvasInterface&) = 0;
+        virtual void resize(const CanvasInterface&) = 0;
+        virtual void render(const CanvasInterface&) = 0;
     };
 }
 

@@ -21,6 +21,9 @@
 #include "wx/glcanvas.h" 
 
 #include <memory>
+#include <vector>
+#include <numeric>
+#include <tuple>
 
 // project includes
 #include <gl/gl_debug.h>
@@ -42,11 +45,11 @@ private:
 
     // wxWindows don't need to be deleted. See [Window Deletion](https://docs.wxwidgets.org/3.0/overview_windowdeletion.html)
     wxPanel *_control_panel;
-    wxutil::opengl_canvas*_view_panel;
+    wxutil::OpenGLCanvas*_view_panel;
 };
 
 class MyOpenGLView
-    : public view::view_interface
+    : public view::ViewInterface
 {
 private:
 
@@ -58,9 +61,9 @@ public:
     MyOpenGLView();
     virtual ~MyOpenGLView();
 
-    virtual void init(const view::canvas_interface& canvas) override;
-    virtual void resize(const view::canvas_interface& canvas) override;
-    virtual void render(const view::canvas_interface& canvas) override;
+    virtual void init(const view::CanvasInterface& canvas) override;
+    virtual void resize(const view::CanvasInterface& canvas) override;
+    virtual void render(const view::CanvasInterface& canvas) override;
 };
 
 // SubSystem Windows (/SUBSYSTEM:WINDOWS)
@@ -93,7 +96,7 @@ MyFrame::MyFrame()
     _control_panel->SetBackgroundColour(wxColour(255, 255, 128));
 
     int args[] = { WX_GL_RGBA, WX_GL_DOUBLEBUFFER, WX_GL_DEPTH_SIZE, 16, 0 };
-    _view_panel = new wxutil::opengl_canvas(view, this, args);
+    _view_panel = new wxutil::OpenGLCanvas(view, this, args);
 
     sizer->Add(_control_panel, 1, wxEXPAND | wxALL);
     sizer->Add(_view_panel, 1, wxEXPAND | wxALL);
@@ -170,6 +173,124 @@ void main()
 }
 )";
 
+namespace mesh
+{
+    template <class T_VERTEX = float>
+    using VertexAttributes = std::tuple<size_t, const T_VERTEX*>;
+
+    template <class T_INDEX = unsigned int>
+    using Indices = std::tuple<size_t, const T_INDEX*>;
+
+    template <class T_VERTEX = float, class T_INDEX = unsigned int>
+    using VertexSpcification = std::vector<std::tuple<int, int>>;
+
+    template <class T_VERTEX = float, class T_INDEX = int>
+    class MeshDefinitionInterface
+    {
+    public:
+
+        virtual const VertexAttributes<T_VERTEX> get_vertex_attributes(void) const = 0;
+        virtual const Indices<T_INDEX> get_indices(void) const = 0;
+        virtual const VertexSpcification<T_VERTEX, T_INDEX> get_specification(void) const = 0;
+    };
+
+    template <class T_VERTEX=float, class T_INDEX=int>
+    class MeshDefinition
+        : public MeshDefinitionInterface<T_VERTEX, T_INDEX>
+    {
+    private:
+
+        std::vector<T_VERTEX> _vertex_attributes;
+        std::vector<T_INDEX> _indices;
+        std::vector<std::tuple<int, int>> _specification;
+
+    public:
+
+        virtual const VertexAttributes<T_VERTEX> get_vertex_attributes(void) const
+        { 
+            return std::make_tuple<size_t, const T_VERTEX*>(_vertex_attributes.size(), _vertex_attributes.data());
+        }
+
+        virtual const Indices<T_INDEX> get_indices(void) const
+        {
+            return std::make_tuple<size_t, const T_INDEX*>(_indices.size(), _indices.data());
+        }
+
+        virtual const VertexSpcification<T_VERTEX, T_INDEX> get_specification(void) const
+        { 
+            return _specification; 
+        }
+    };
+}
+
+namespace OpenGL::mesh
+{
+    class MeshInterface
+    {
+       // destroy
+       // draw
+    };
+
+    class MultiMeshInterface
+    {
+        // darw_range
+    };
+
+    class SingleMesh 
+        : public MeshInterface
+    {
+    private:
+
+        GLuint _vertex_array_object;
+        GLuint _vertex_buffer_object;
+        GLuint _index_buffer_object;
+
+    public:
+
+        SingleMesh(const ::mesh::MeshDefinition<float, int>& specification);
+    };
+
+    class SingleMeshSeparateAttributeFormat
+        : public MeshInterface
+    {
+
+    };
+}
+
+namespace OpenGL::mesh
+{
+    SingleMesh::SingleMesh(const ::mesh::MeshDefinition<float, int>& definiition)
+    {
+        auto [no_of_values, vertex_array] = definiition.get_vertex_attributes();
+        auto [no_of_indices, index_array] = definiition.get_indices();
+        auto specification = definiition.get_specification();
+        
+        glCreateVertexArrays(1, &_vertex_array_object);
+        glBindVertexArray(_vertex_array_object);
+
+        GLuint buffer_objects[2];
+        glGenBuffers(2, buffer_objects);
+
+        _index_buffer_object = buffer_objects[0];
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _index_buffer_object);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, no_of_indices * sizeof(GLuint), index_array, GL_STATIC_DRAW);
+
+        _vertex_buffer_object = buffer_objects[1];
+        glBindBuffer(GL_ARRAY_BUFFER, _vertex_buffer_object);
+        glBufferData(GL_ARRAY_BUFFER, no_of_values*sizeof(GLfloat), vertex_array, GL_STATIC_DRAW);
+
+        auto attribute_size = std::accumulate(specification.begin(), specification.end(), 0, [](auto &&a, const auto &b) -> int
+            {
+                return std::move(a) + std::get<1>(b);
+            });
+        for (const auto& [attribute_index, size] : specification)
+        {
+            glEnableVertexAttribArray(attribute_index);
+            glVertexAttribPointer(attribute_index, size, GL_FLOAT, GL_FALSE, 
+                attribute_size * sizeof(GLfloat), reinterpret_cast<const void*>(size * sizeof(GLfloat)));
+        }
+    }
+}
 
 MyOpenGLView::MyOpenGLView()
     : _context{ std::make_unique<OpenGL::CContext>() }
@@ -178,7 +299,7 @@ MyOpenGLView::MyOpenGLView()
 MyOpenGLView::~MyOpenGLView()
 {}
 
-void MyOpenGLView::init(const view::canvas_interface& canvas)
+void MyOpenGLView::init(const view::CanvasInterface& canvas)
 {
     if (glewInit() != GLEW_OK)
         throw std::runtime_error("GLEW initialization failed");
@@ -189,13 +310,13 @@ void MyOpenGLView::init(const view::canvas_interface& canvas)
     _program = OpenGL::CreateProgram(phong_vert, phong_frag);
 }
 
-void MyOpenGLView::resize(const view::canvas_interface& canvas)
+void MyOpenGLView::resize(const view::CanvasInterface& canvas)
 {
     const auto [cx, cy] = canvas.get_size();
     glViewport(0, 0, cx, cy);
 }
 
-void MyOpenGLView::render(const view::canvas_interface& canvas)
+void MyOpenGLView::render(const view::CanvasInterface& canvas)
 {
     glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
