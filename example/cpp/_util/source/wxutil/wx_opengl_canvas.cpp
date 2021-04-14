@@ -15,6 +15,16 @@ namespace wxutil
     opengl_canvas::~opengl_canvas()
     {}
 
+    std::tuple<int, int> opengl_canvas::get_size(void) const
+    {
+        return std::make_tuple<int, int>(GetSize().x, GetSize().y);
+    }
+
+    void opengl_canvas::activate(void) const
+    {
+        wxGLCanvas::SetCurrent(*_context);
+    }
+
     void opengl_canvas::resized(wxSizeEvent& evt)
     {
         //	wxGLCanvas::OnSize(evt);
@@ -22,20 +32,16 @@ namespace wxutil
         Refresh();
     }
 
-    std::tuple<int, int> opengl_canvas::get_size(void) const
-    {
-        return std::make_tuple<int, int>(GetSize().x, GetSize().y);
-    }
-
     void opengl_canvas::render(wxPaintEvent& evt)
     {
-        if (!IsShown()) return;
+        if (!IsShown()) 
+            return;
 
-        wxGLCanvas::SetCurrent(*_context);
         wxPaintDC(this); // only to be used in paint events. use wxClientDC to paint outside the paint event
 
         if (!_gl_initialized)
         {
+            activate();
             _view->init(*this);
             _gl_initialized = true;
         }

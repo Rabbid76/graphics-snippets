@@ -25,10 +25,9 @@ namespace wxutil
         opengl_canvas(std::shared_ptr<view::view_interface> view, wxFrame* parent, int* args);
         virtual ~opengl_canvas();
 
-        void resized(wxSizeEvent& evt);
-
         virtual std::tuple<int, int> get_size(void) const override;
-
+        virtual void activate(void) const override;
+        void resized(wxSizeEvent& evt);
         void render(wxPaintEvent& evt);
 
         // events

@@ -10,6 +10,7 @@ namespace view
     public:
 
         virtual std::tuple<int, int> get_size(void) const = 0;
+        virtual void activate(void) const = 0;
     };
 }
 
