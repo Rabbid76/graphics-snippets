@@ -24,11 +24,111 @@
 #include <vector>
 #include <numeric>
 #include <tuple>
+#include <string>
 
 // project includes
 #include <gl/gl_debug.h>
 #include <gl/gl_shader.h>
 #include <view/view_interface.h>
+
+// glm
+# define GLM_ENABLE_EXPERIMENTAL
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+namespace mesh
+{
+    template <class T_VERTEX = float>
+    using VertexAttributes = std::tuple<size_t, const T_VERTEX*>;
+
+    template <class T_INDEX = unsigned int>
+    using Indices = std::tuple<size_t, const T_INDEX*>;
+
+    template <class T_VERTEX = float, class T_INDEX = unsigned int>
+    using VertexSpcification = std::vector<std::tuple<int, int>>;
+
+    template <class T_VERTEX = float, class T_INDEX = int>
+    class MeshDefinitionInterface
+    {
+    public:
+
+        virtual const VertexAttributes<T_VERTEX> get_vertex_attributes(void) const = 0;
+        virtual const Indices<T_INDEX> get_indices(void) const = 0;
+        virtual const VertexSpcification<T_VERTEX, T_INDEX> get_specification(void) const = 0;
+    };
+
+    template <class T_VERTEX = float, class T_INDEX = int>
+    class MeshDefinition
+        : public MeshDefinitionInterface<T_VERTEX, T_INDEX>
+    {
+    private:
+
+        std::vector<T_VERTEX> _vertex_attributes;
+        std::vector<T_INDEX> _indices;
+        std::vector<std::tuple<int, int>> _specification;
+
+    public:
+
+        MeshDefinition(
+            std::vector<T_VERTEX>&& vertex_attributes,
+            std::vector<T_INDEX>&& indices,
+            std::vector<std::tuple<int, int>>&& specification)
+            : _vertex_attributes(std::move(vertex_attributes))
+            , _indices(std::move(indices))
+            , _specification(specification)
+        {}
+
+        virtual const VertexAttributes<T_VERTEX> get_vertex_attributes(void) const
+        {
+            return std::make_tuple<size_t, const T_VERTEX*>(_vertex_attributes.size(), _vertex_attributes.data());
+        }
+
+        virtual const Indices<T_INDEX> get_indices(void) const
+        {
+            return std::make_tuple<size_t, const T_INDEX*>(_indices.size(), _indices.data());
+        }
+
+        virtual const VertexSpcification<T_VERTEX, T_INDEX> get_specification(void) const
+        {
+            return _specification;
+        }
+    };
+}
+
+namespace OpenGL::mesh
+{
+    class MeshInterface
+    {
+        // destroy
+        // draw
+    };
+
+    class MultiMeshInterface
+    {
+        // darw_range
+    };
+
+    class SingleMesh
+        : public MeshInterface
+    {
+    private:
+
+        GLuint _vertex_array_object;
+        GLuint _vertex_buffer_object;
+        GLuint _index_buffer_object;
+
+    public:
+
+        SingleMesh(const ::mesh::MeshDefinition<float, int>& specification);
+    };
+
+    class SingleMeshSeparateAttributeFormat
+        : public MeshInterface
+    {
+
+    };
+}
 
 class MyApp : public wxApp
 {
@@ -55,6 +155,8 @@ private:
 
     const std::unique_ptr<OpenGL::CContext> _context;
     GLuint _program = 0;
+    GLuint _shader_storag_buffer_object;
+    std::unique_ptr<OpenGL::mesh::MeshInterface> _mesh;
 
 public:
 
@@ -105,6 +207,44 @@ MyFrame::MyFrame()
 }
 
 
+namespace OpenGL::mesh
+{
+    SingleMesh::SingleMesh(const ::mesh::MeshDefinition<float, int>& definiition)
+    {
+        auto [no_of_values, vertex_array] = definiition.get_vertex_attributes();
+        auto [no_of_indices, index_array] = definiition.get_indices();
+        auto specification = definiition.get_specification();
+        
+        glCreateVertexArrays(1, &_vertex_array_object);
+        glBindVertexArray(_vertex_array_object);
+
+        GLuint buffer_objects[2];
+        glGenBuffers(2, buffer_objects);
+
+        _index_buffer_object = buffer_objects[0];
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _index_buffer_object);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, no_of_indices * sizeof(GLuint), index_array, GL_STATIC_DRAW);
+
+        _vertex_buffer_object = buffer_objects[1];
+        glBindBuffer(GL_ARRAY_BUFFER, _vertex_buffer_object);
+        glBufferData(GL_ARRAY_BUFFER, no_of_values*sizeof(GLfloat), vertex_array, GL_STATIC_DRAW);
+
+        auto attribute_size = std::accumulate(specification.begin(), specification.end(), 0, [](auto &&a, const auto &b) -> int
+            {
+                return std::move(a) + std::get<1>(b);
+            });
+            
+        size_t offset = 0;
+        for (const auto& [attribute_index, size] : specification)
+        {
+            glEnableVertexAttribArray(attribute_index);
+            glVertexAttribPointer(attribute_index, size, GL_FLOAT, GL_FALSE, 
+                attribute_size * sizeof(GLfloat), reinterpret_cast<const void*>(offset * sizeof(GLfloat)));
+            offset += size;
+        }
+    }
+}
+
 std::string phong_vert = R"(
 #version 460 core
 
@@ -116,8 +256,8 @@ out vec3 v_pos;
 out vec3 v_nv;
 out vec3 v_uvw;
 
-uniform mat4 u_proj;
-uniform mat4 u_view;
+layout(location = 0) uniform mat4 u_proj;
+layout(location = 1) uniform mat4 u_view;
 
 layout(std430, binding = 1) buffer Draw
 {
@@ -134,7 +274,7 @@ void main()
     v_pos = world_pos.xyz;
     v_nv = normal * a_nv;
     v_uvw = a_uvw;
-    gl_Position = u_proj * u_view * world_pos;
+    gl_Position = u_proj * world_pos;
 }
 )";
 
@@ -145,7 +285,7 @@ out vec4 frag_color;
 in  vec3 v_pos;
 in  vec3 v_nv;
 in  vec3 v_uvw;
-uniform mat4 u_view;
+layout(location = 1) uniform mat4 u_view;
 
 vec3 HUEtoRGB(in float H)
 {
@@ -173,125 +313,6 @@ void main()
 }
 )";
 
-namespace mesh
-{
-    template <class T_VERTEX = float>
-    using VertexAttributes = std::tuple<size_t, const T_VERTEX*>;
-
-    template <class T_INDEX = unsigned int>
-    using Indices = std::tuple<size_t, const T_INDEX*>;
-
-    template <class T_VERTEX = float, class T_INDEX = unsigned int>
-    using VertexSpcification = std::vector<std::tuple<int, int>>;
-
-    template <class T_VERTEX = float, class T_INDEX = int>
-    class MeshDefinitionInterface
-    {
-    public:
-
-        virtual const VertexAttributes<T_VERTEX> get_vertex_attributes(void) const = 0;
-        virtual const Indices<T_INDEX> get_indices(void) const = 0;
-        virtual const VertexSpcification<T_VERTEX, T_INDEX> get_specification(void) const = 0;
-    };
-
-    template <class T_VERTEX=float, class T_INDEX=int>
-    class MeshDefinition
-        : public MeshDefinitionInterface<T_VERTEX, T_INDEX>
-    {
-    private:
-
-        std::vector<T_VERTEX> _vertex_attributes;
-        std::vector<T_INDEX> _indices;
-        std::vector<std::tuple<int, int>> _specification;
-
-    public:
-
-        virtual const VertexAttributes<T_VERTEX> get_vertex_attributes(void) const
-        { 
-            return std::make_tuple<size_t, const T_VERTEX*>(_vertex_attributes.size(), _vertex_attributes.data());
-        }
-
-        virtual const Indices<T_INDEX> get_indices(void) const
-        {
-            return std::make_tuple<size_t, const T_INDEX*>(_indices.size(), _indices.data());
-        }
-
-        virtual const VertexSpcification<T_VERTEX, T_INDEX> get_specification(void) const
-        { 
-            return _specification; 
-        }
-    };
-}
-
-namespace OpenGL::mesh
-{
-    class MeshInterface
-    {
-       // destroy
-       // draw
-    };
-
-    class MultiMeshInterface
-    {
-        // darw_range
-    };
-
-    class SingleMesh 
-        : public MeshInterface
-    {
-    private:
-
-        GLuint _vertex_array_object;
-        GLuint _vertex_buffer_object;
-        GLuint _index_buffer_object;
-
-    public:
-
-        SingleMesh(const ::mesh::MeshDefinition<float, int>& specification);
-    };
-
-    class SingleMeshSeparateAttributeFormat
-        : public MeshInterface
-    {
-
-    };
-}
-
-namespace OpenGL::mesh
-{
-    SingleMesh::SingleMesh(const ::mesh::MeshDefinition<float, int>& definiition)
-    {
-        auto [no_of_values, vertex_array] = definiition.get_vertex_attributes();
-        auto [no_of_indices, index_array] = definiition.get_indices();
-        auto specification = definiition.get_specification();
-        
-        glCreateVertexArrays(1, &_vertex_array_object);
-        glBindVertexArray(_vertex_array_object);
-
-        GLuint buffer_objects[2];
-        glGenBuffers(2, buffer_objects);
-
-        _index_buffer_object = buffer_objects[0];
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _index_buffer_object);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, no_of_indices * sizeof(GLuint), index_array, GL_STATIC_DRAW);
-
-        _vertex_buffer_object = buffer_objects[1];
-        glBindBuffer(GL_ARRAY_BUFFER, _vertex_buffer_object);
-        glBufferData(GL_ARRAY_BUFFER, no_of_values*sizeof(GLfloat), vertex_array, GL_STATIC_DRAW);
-
-        auto attribute_size = std::accumulate(specification.begin(), specification.end(), 0, [](auto &&a, const auto &b) -> int
-            {
-                return std::move(a) + std::get<1>(b);
-            });
-        for (const auto& [attribute_index, size] : specification)
-        {
-            glEnableVertexAttribArray(attribute_index);
-            glVertexAttribPointer(attribute_index, size, GL_FLOAT, GL_FALSE, 
-                attribute_size * sizeof(GLfloat), reinterpret_cast<const void*>(size * sizeof(GLfloat)));
-        }
-    }
-}
-
 MyOpenGLView::MyOpenGLView()
     : _context{ std::make_unique<OpenGL::CContext>() }
 {}
@@ -308,18 +329,71 @@ void MyOpenGLView::init(const view::CanvasInterface& canvas)
     _context->Init(debug_level);
 
     _program = OpenGL::CreateProgram(phong_vert, phong_frag);
+
+    std::vector<float> vertices{
+                    -0.707f, -0.75f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+                     0.707f, -0.75f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f / 6.0f,
+                     0.0f,    0.75f, 0.0f, 0.0f, -1.0f, 1.0f, 0.5f, 2.0f / 3.0f,
+    };
+
+    std::vector<unsigned int> indices{ 0, 1, 2 };
+
+    std::vector<std::tuple<int, int>> specification{ std::tuple<int, int>(0, 3), std::tuple<int, int>(1, 3), std::tuple<int, int>(2, 3) };
+
+    mesh::MeshDefinition mesh_definition(
+        {
+            -0.707f, -0.75f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+             0.707f, -0.75f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f / 6.0f,
+             0.0f,    0.75f, 0.0f, 0.0f, -1.0f, 1.0f, 0.5f, 2.0f / 3.0f,
+        },
+        { 0, 1, 2 },
+        { {0, 3}, {1, 3}, {2, 3} });
+
+    _mesh = std::make_unique<OpenGL::mesh::SingleMesh>(
+        mesh::MeshDefinition(
+            {
+                -0.866f, -0.75f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+                 0.866f, -0.75f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f,
+                 0.0f,    0.75f, 0.0f, 0.0f, 0.0f, -1.0f, 1.0f, 0.5f, 0.5f,
+            },
+            { 0, 1, 2 },
+            { {0, 3}, {1, 3}, {2, 3} }));
+
+    glGenBuffers(1, &_shader_storag_buffer_object);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, _shader_storag_buffer_object);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::mat4), nullptr, GL_STATIC_DRAW);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, _shader_storag_buffer_object);
+
+    glUseProgram(_program);
+
+    glm::mat4 view(1.0f);
+    glProgramUniformMatrix4fv(_program, 1, 1, false, glm::value_ptr(view));
+
+    glm::mat4 model(1.0f);
+    glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(model));
+
+    resize(canvas);
 }
 
 void MyOpenGLView::resize(const view::CanvasInterface& canvas)
 {
     const auto [cx, cy] = canvas.get_size();
     glViewport(0, 0, cx, cy);
+
+    if (_program == 0)
+        return;
+    
+    float aspect = static_cast<float>(cx) / static_cast<float>(cy);
+    glm::mat4 projection = aspect < 1.0f
+        ? glm::ortho(-1.0f, 1.0f, -1.0f / aspect, 1.0f / aspect, -1.0f, 1.0f)
+        : glm::ortho(-aspect, aspect, -1.0f, 1.0f, -1.0f, 1.0f);
+    glProgramUniformMatrix4fv(_program, 0, 1, false, glm::value_ptr(projection));
 }
 
 void MyOpenGLView::render(const view::CanvasInterface& canvas)
 {
-    glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // [...]
+    glDrawArrays(GL_TRIANGLES, 0, 3);
 }
