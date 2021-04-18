@@ -33,6 +33,7 @@
 #include <view/view_interface.h>
 #include <mesh/mesh_data_interface.h>
 #include <mesh/mesh_data_container.h>
+#include <mesh/mesh_definiton_tetrahedron.h>
 
 // glm
 # define GLM_ENABLE_EXPERIMENTAL
@@ -44,8 +45,12 @@ namespace OpenGL::mesh
 {
     class MeshInterface
     {
+    public:
+
         // destroy
         // draw
+
+        virtual GLuint no_of_indices(void) const = 0;
     };
 
     class MultiMeshInterface
@@ -61,10 +66,16 @@ namespace OpenGL::mesh
         GLuint _vertex_array_object;
         GLuint _vertex_buffer_object;
         GLuint _index_buffer_object;
+        GLuint _no_of_indices = 0;
 
     public:
 
-        SingleMesh(const ::mesh::MeshDataInterface<float, int>& specification);
+        virtual GLuint no_of_indices(void) const override
+        {
+            return _no_of_indices;
+        }
+
+        SingleMesh(const ::mesh::MeshDataInterface<float, unsigned int>& specification);
     };
 
     class SingleMeshSeparateAttributeFormat
@@ -153,11 +164,14 @@ MyFrame::MyFrame()
 
 namespace OpenGL::mesh
 {
-    SingleMesh::SingleMesh(const ::mesh::MeshDataInterface<float, int>& definiition)
+    SingleMesh::SingleMesh(const ::mesh::MeshDataInterface<float, unsigned int>& definition)
     {
-        auto [no_of_values, vertex_array] = definiition.get_vertex_attributes();
-        auto [no_of_indices, index_array] = definiition.get_indices();
-        auto specification = definiition.get_specification();
+        auto [no_of_values, vertex_array] = definition.get_vertex_attributes();
+        auto [no_of_indices, index_array] = definition.get_indices();
+        auto specification = definition.get_specification();
+        auto attribute_size = definition.get_attribute_size();
+
+        _no_of_indices = no_of_indices;
         
         glCreateVertexArrays(1, &_vertex_array_object);
         glBindVertexArray(_vertex_array_object);
@@ -173,14 +187,10 @@ namespace OpenGL::mesh
         glBindBuffer(GL_ARRAY_BUFFER, _vertex_buffer_object);
         glBufferData(GL_ARRAY_BUFFER, no_of_values*sizeof(GLfloat), vertex_array, GL_STATIC_DRAW);
 
-        auto attribute_size = std::accumulate(specification.begin(), specification.end(), 0, [](auto &&a, const auto &b) -> int
-            {
-                return std::move(a) + std::get<1>(b);
-            });
-            
         size_t offset = 0;
-        for (const auto& [attribute_index, size] : specification)
+        for (const auto& [attribute_type, size] : specification)
         {
+            auto attribute_index = static_cast<GLuint>(attribute_type);
             glEnableVertexAttribArray(attribute_index);
             glVertexAttribPointer(attribute_index, size, GL_FLOAT, GL_FALSE, 
                 attribute_size * sizeof(GLfloat), reinterpret_cast<const void*>(offset * sizeof(GLfloat)));
@@ -218,7 +228,7 @@ void main()
     v_pos = world_pos.xyz;
     v_nv = normal * a_nv;
     v_uvw = a_uvw;
-    gl_Position = u_proj * world_pos;
+    gl_Position = u_proj * u_view * world_pos;
 }
 )";
 
@@ -274,26 +284,21 @@ void MyOpenGLView::init(const view::CanvasInterface& canvas)
 
     _program = OpenGL::CreateProgram(phong_vert, phong_frag);
 
-    std::vector<float> vertices{
-                    -0.707f, -0.75f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-                     0.707f, -0.75f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f / 6.0f,
-                     0.0f,    0.75f, 0.0f, 0.0f, -1.0f, 1.0f, 0.5f, 2.0f / 3.0f,
-    };
-
-    std::vector<unsigned int> indices{ 0, 1, 2 };
-
-    std::vector<std::tuple<int, int>> specification{ std::tuple<int, int>(0, 3), std::tuple<int, int>(1, 3), std::tuple<int, int>(2, 3) };
-
+    // TODO: triangle definition
+    /*
     _mesh = std::make_unique<OpenGL::mesh::SingleMesh>(
-        mesh::MeshDataContainer<float, int>::new_mesh(
+        mesh::MeshDataContainer<float, unsigned int>::new_mesh(
             {
                 -0.866f, -0.75f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f,
                  0.866f, -0.75f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f,
                  0.0f,    0.75f, 0.0f, 0.0f, 0.0f, -1.0f, 1.0f, 0.5f, 0.5f,
             },
             { 0, 1, 2 },
-            { {0, 3}, {1, 3}, {2, 3} }));
-        
+            { {mesh::AttributeType::vertex, 3}, {mesh::AttributeType::normal_vector, 3}, {mesh::AttributeType::texture_uvw, 3} }));
+     */
+       
+    auto mesh_data = mesh::MeshDefinitonTetrahedron<float, unsigned int>(1.0f).generate_mesh_data();
+    _mesh = std::make_unique<OpenGL::mesh::SingleMesh>(*mesh_data);
 
     glGenBuffers(1, &_shader_storag_buffer_object);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _shader_storag_buffer_object);
@@ -302,7 +307,7 @@ void MyOpenGLView::init(const view::CanvasInterface& canvas)
 
     glUseProgram(_program);
 
-    glm::mat4 view(1.0f);
+    glm::mat4 view = glm::lookAt(glm::vec3(0, 0, -5), glm::vec3(0), glm::vec3(0, 1, 0));
     glProgramUniformMatrix4fv(_program, 1, 1, false, glm::value_ptr(view));
 
     glm::mat4 model(1.0f);
@@ -320,9 +325,12 @@ void MyOpenGLView::resize(const view::CanvasInterface& canvas)
         return;
     
     float aspect = static_cast<float>(cx) / static_cast<float>(cy);
-    glm::mat4 projection = aspect < 1.0f
-        ? glm::ortho(-1.0f, 1.0f, -1.0f / aspect, 1.0f / aspect, -1.0f, 1.0f)
-        : glm::ortho(-aspect, aspect, -1.0f, 1.0f, -1.0f, 1.0f);
+    
+    //glm::mat4 projection = aspect < 1.0f
+    //    ? glm::ortho(-1.0f, 1.0f, -1.0f / aspect, 1.0f / aspect, -1.0f, 1.0f)
+    //    : glm::ortho(-aspect, aspect, -1.0f, 1.0f, -10.0f, 10.0f);
+
+    glm::mat4 projection = glm::perspective(glm::radians(45.0f), aspect, 0.01f, 10.0f);
     glProgramUniformMatrix4fv(_program, 0, 1, false, glm::value_ptr(projection));
 }
 
@@ -331,5 +339,5 @@ void MyOpenGLView::render(const view::CanvasInterface& canvas)
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glDrawArrays(GL_TRIANGLES, 0, _mesh->no_of_indices());
 }
