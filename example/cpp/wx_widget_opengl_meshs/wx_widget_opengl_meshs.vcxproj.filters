@@ -3,14 +3,46 @@
   <ItemGroup>
     <ClCompile Include="wx_widget_opengl_meshs.cpp" />
     <ClCompile Include="..\pch.cpp" />
-    <ClCompile Include="..\_util\source\wxutil\wx_opengl_canvas.cpp" />
+    <ClCompile Include="..\_util\source\wxutil\wx_opengl_canvas.cpp">
+      <Filter>wxutil</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\pch.h" />
-    <ClInclude Include="..\_util\include\wxutil\wx_opengl_canvas.h" />
-    <ClInclude Include="..\_util\include\view\canvas_interface.h" />
-    <ClInclude Include="..\_util\include\view\view_interface.h" />
-    <ClInclude Include="..\_util\include\gl\gl_debug.h" />
-    <ClInclude Include="..\_util\include\gl\gl_shader.h" />
+    <ClInclude Include="..\_util\include\gl\gl_debug.h">
+      <Filter>opengl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\_util\include\gl\gl_shader.h">
+      <Filter>opengl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\_util\include\view\view_interface.h">
+      <Filter>view</Filter>
+    </ClInclude>
+    <ClInclude Include="..\_util\include\wxutil\wx_opengl_canvas.h">
+      <Filter>wxutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\_util\include\view\canvas_interface.h">
+      <Filter>view</Filter>
+    </ClInclude>
+    <ClInclude Include="..\_util\include\mesh\mesh_data_interface.h">
+      <Filter>mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\_util\include\mesh\mesh_data_container.h">
+      <Filter>mesh</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="mesh">
+      <UniqueIdentifier>{836e2815-f45a-427e-9262-a8db86e806f5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="opengl">
+      <UniqueIdentifier>{2e3146d6-2dac-4d6c-81e2-f69c0e237117}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="view">
+      <UniqueIdentifier>{536c8fe5-800f-4d07-b6a1-1ae667f25c7f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="wxutil">
+      <UniqueIdentifier>{c36935cd-70d3-4798-888c-bb81c9aebd4b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

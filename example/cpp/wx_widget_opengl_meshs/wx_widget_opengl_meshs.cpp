@@ -25,76 +25,20 @@
 #include <numeric>
 #include <tuple>
 #include <string>
+#include <utility>
 
 // project includes
 #include <gl/gl_debug.h>
 #include <gl/gl_shader.h>
 #include <view/view_interface.h>
+#include <mesh/mesh_data_interface.h>
+#include <mesh/mesh_data_container.h>
 
 // glm
 # define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
-namespace mesh
-{
-    template <class T_VERTEX = float>
-    using VertexAttributes = std::tuple<size_t, const T_VERTEX*>;
-
-    template <class T_INDEX = unsigned int>
-    using Indices = std::tuple<size_t, const T_INDEX*>;
-
-    template <class T_VERTEX = float, class T_INDEX = unsigned int>
-    using VertexSpcification = std::vector<std::tuple<int, int>>;
-
-    template <class T_VERTEX = float, class T_INDEX = int>
-    class MeshDefinitionInterface
-    {
-    public:
-
-        virtual const VertexAttributes<T_VERTEX> get_vertex_attributes(void) const = 0;
-        virtual const Indices<T_INDEX> get_indices(void) const = 0;
-        virtual const VertexSpcification<T_VERTEX, T_INDEX> get_specification(void) const = 0;
-    };
-
-    template <class T_VERTEX = float, class T_INDEX = int>
-    class MeshDefinition
-        : public MeshDefinitionInterface<T_VERTEX, T_INDEX>
-    {
-    private:
-
-        std::vector<T_VERTEX> _vertex_attributes;
-        std::vector<T_INDEX> _indices;
-        std::vector<std::tuple<int, int>> _specification;
-
-    public:
-
-        MeshDefinition(
-            std::vector<T_VERTEX>&& vertex_attributes,
-            std::vector<T_INDEX>&& indices,
-            std::vector<std::tuple<int, int>>&& specification)
-            : _vertex_attributes(std::move(vertex_attributes))
-            , _indices(std::move(indices))
-            , _specification(specification)
-        {}
-
-        virtual const VertexAttributes<T_VERTEX> get_vertex_attributes(void) const
-        {
-            return std::make_tuple<size_t, const T_VERTEX*>(_vertex_attributes.size(), _vertex_attributes.data());
-        }
-
-        virtual const Indices<T_INDEX> get_indices(void) const
-        {
-            return std::make_tuple<size_t, const T_INDEX*>(_indices.size(), _indices.data());
-        }
-
-        virtual const VertexSpcification<T_VERTEX, T_INDEX> get_specification(void) const
-        {
-            return _specification;
-        }
-    };
-}
 
 namespace OpenGL::mesh
 {
@@ -120,7 +64,7 @@ namespace OpenGL::mesh
 
     public:
 
-        SingleMesh(const ::mesh::MeshDefinition<float, int>& specification);
+        SingleMesh(const ::mesh::MeshDataInterface<float, int>& specification);
     };
 
     class SingleMeshSeparateAttributeFormat
@@ -209,7 +153,7 @@ MyFrame::MyFrame()
 
 namespace OpenGL::mesh
 {
-    SingleMesh::SingleMesh(const ::mesh::MeshDefinition<float, int>& definiition)
+    SingleMesh::SingleMesh(const ::mesh::MeshDataInterface<float, int>& definiition)
     {
         auto [no_of_values, vertex_array] = definiition.get_vertex_attributes();
         auto [no_of_indices, index_array] = definiition.get_indices();
@@ -340,17 +284,8 @@ void MyOpenGLView::init(const view::CanvasInterface& canvas)
 
     std::vector<std::tuple<int, int>> specification{ std::tuple<int, int>(0, 3), std::tuple<int, int>(1, 3), std::tuple<int, int>(2, 3) };
 
-    mesh::MeshDefinition mesh_definition(
-        {
-            -0.707f, -0.75f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-             0.707f, -0.75f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f / 6.0f,
-             0.0f,    0.75f, 0.0f, 0.0f, -1.0f, 1.0f, 0.5f, 2.0f / 3.0f,
-        },
-        { 0, 1, 2 },
-        { {0, 3}, {1, 3}, {2, 3} });
-
     _mesh = std::make_unique<OpenGL::mesh::SingleMesh>(
-        mesh::MeshDefinition(
+        mesh::MeshDataContainer<float, int>::new_mesh(
             {
                 -0.866f, -0.75f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f,
                  0.866f, -0.75f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f,
@@ -358,6 +293,7 @@ void MyOpenGLView::init(const view::CanvasInterface& canvas)
             },
             { 0, 1, 2 },
             { {0, 3}, {1, 3}, {2, 3} }));
+        
 
     glGenBuffers(1, &_shader_storag_buffer_object);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _shader_storag_buffer_object);
