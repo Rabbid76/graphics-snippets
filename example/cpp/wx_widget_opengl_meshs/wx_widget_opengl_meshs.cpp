@@ -50,7 +50,9 @@ namespace OpenGL::mesh
         // destroy
         // draw
 
-        virtual GLuint no_of_indices(void) const = 0;
+        virtual size_t no_of_vertices(void) const = 0;
+        virtual size_t no_of_indices(void) const = 0;
+        virtual void draw(void) const = 0;
     };
 
     class MultiMeshInterface
@@ -63,19 +65,27 @@ namespace OpenGL::mesh
     {
     private:
 
-        GLuint _vertex_array_object;
-        GLuint _vertex_buffer_object;
-        GLuint _index_buffer_object;
-        GLuint _no_of_indices = 0;
+        GLuint _vertex_array_object = 0;
+        GLuint _vertex_buffer_object = 0;
+        GLuint _index_buffer_object = 0;
+        size_t _no_of_vertices = 0;
+        size_t _no_of_indices = 0;
 
     public:
 
-        virtual GLuint no_of_indices(void) const override
+        virtual size_t no_of_vertices(void) const override
+        {
+            return _no_of_vertices;
+        }
+
+        virtual size_t no_of_indices(void) const override
         {
             return _no_of_indices;
         }
 
         SingleMesh(const ::mesh::MeshDataInterface<float, unsigned int>& specification);
+
+        virtual void draw(void) const override;
     };
 
     class SingleMeshSeparateAttributeFormat
@@ -112,6 +122,8 @@ private:
     GLuint _program = 0;
     GLuint _shader_storag_buffer_object;
     std::unique_ptr<OpenGL::mesh::MeshInterface> _mesh;
+    GLfloat _angle1 = 0.0f;
+    GLfloat _angle2 = 0.0f;
 
 public:
 
@@ -171,7 +183,8 @@ namespace OpenGL::mesh
         auto specification = definition.get_specification();
         auto attribute_size = definition.get_attribute_size();
 
-        _no_of_indices = no_of_indices;
+        _no_of_vertices = no_of_values / attribute_size;
+        _no_of_indices = index_array != nullptr ? no_of_indices : 0;
         
         glCreateVertexArrays(1, &_vertex_array_object);
         glBindVertexArray(_vertex_array_object);
@@ -179,9 +192,12 @@ namespace OpenGL::mesh
         GLuint buffer_objects[2];
         glGenBuffers(2, buffer_objects);
 
-        _index_buffer_object = buffer_objects[0];
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _index_buffer_object);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, no_of_indices * sizeof(GLuint), index_array, GL_STATIC_DRAW);
+        if (_no_of_indices > 0)
+        {
+            _index_buffer_object = buffer_objects[0];
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _index_buffer_object);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, no_of_indices * sizeof(GLuint), index_array, GL_STATIC_DRAW);
+        }
 
         _vertex_buffer_object = buffer_objects[1];
         glBindBuffer(GL_ARRAY_BUFFER, _vertex_buffer_object);
@@ -196,6 +212,15 @@ namespace OpenGL::mesh
                 attribute_size * sizeof(GLfloat), reinterpret_cast<const void*>(offset * sizeof(GLfloat)));
             offset += size;
         }
+    }
+
+    void SingleMesh::draw(void) const
+    {
+        glBindVertexArray(_vertex_array_object);
+        if (_no_of_indices > 0)
+            glDrawElements(GL_TRIANGLES, _no_of_indices, GL_UNSIGNED_INT, nullptr);
+        else
+            glDrawArrays(GL_TRIANGLES, 0, _no_of_vertices);
     }
 }
 
@@ -307,11 +332,8 @@ void MyOpenGLView::init(const view::CanvasInterface& canvas)
 
     glUseProgram(_program);
 
-    glm::mat4 view = glm::lookAt(glm::vec3(0, 0, -5), glm::vec3(0), glm::vec3(0, 1, 0));
+    glm::mat4 view = glm::lookAt(glm::vec3(0, 0, 5), glm::vec3(0), glm::vec3(0, 1, 0));
     glProgramUniformMatrix4fv(_program, 1, 1, false, glm::value_ptr(view));
-
-    glm::mat4 model(1.0f);
-    glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(model));
 
     resize(canvas);
 }
@@ -336,8 +358,16 @@ void MyOpenGLView::resize(const view::CanvasInterface& canvas)
 
 void MyOpenGLView::render(const view::CanvasInterface& canvas)
 {
+    glEnable(GL_DEPTH_TEST);
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glDrawArrays(GL_TRIANGLES, 0, _mesh->no_of_indices());
+    glm::mat4 model(1.0f);
+    model = glm::rotate(model, _angle1, glm::vec3(1.0f, 0.0f, 0.0f));
+    model = glm::rotate(model, _angle2, glm::vec3(0.0f, 1.0f, 0.0f));
+    glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(model));
+    _angle1 += 0.02f;
+    _angle2 += 0.01f;
+
+    _mesh->draw();
 }

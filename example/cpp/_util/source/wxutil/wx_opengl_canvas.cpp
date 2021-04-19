@@ -1,6 +1,9 @@
 #include <pch.h>
 #include <wxutil/wx_opengl_canvas.h>
 
+#include <thread>
+#include <chrono>
+
 namespace wxutil
 {
     OpenGLCanvas::OpenGLCanvas(std::shared_ptr<view::ViewInterface> view, wxFrame* parent, int* args)
@@ -13,7 +16,10 @@ namespace wxutil
     }
 
     OpenGLCanvas::~OpenGLCanvas()
-    {}
+    {
+        if (_timer != nullptr)
+            _timer->Stop();
+    }
 
     std::tuple<int, int> OpenGLCanvas::get_size(void) const
     {
@@ -27,7 +33,7 @@ namespace wxutil
 
     void OpenGLCanvas::resized(wxSizeEvent& evt)
     {
-        //	wxGLCanvas::OnSize(evt);
+        // wxGLCanvas::OnSize(evt);
         _view->resize(*this);
         Refresh();
     }
@@ -44,11 +50,18 @@ namespace wxutil
             activate();
             _view->init(*this);
             _gl_initialized = true;
+
+            _timer = std::make_unique<wxTimer>(this, _timer_id);
+            _timer->Start(10);
         }
 
         _view->render(*this);
         glFlush();
         SwapBuffers();
+
+        //std::this_thread::yield();
+        //std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        //Refresh();
     }
 
     BEGIN_EVENT_TABLE(OpenGLCanvas, wxGLCanvas)
@@ -62,7 +75,13 @@ namespace wxutil
     EVT_KEY_UP(OpenGLCanvas::key_released)
     EVT_MOUSEWHEEL(OpenGLCanvas::mouse_wheel_moved)
     EVT_PAINT(OpenGLCanvas::render)
+    EVT_TIMER(OpenGLCanvas::_timer_id, OpenGLCanvas::refresh_timer)
     END_EVENT_TABLE()
+
+    void OpenGLCanvas::refresh_timer(wxTimerEvent& event_id)
+    {
+        Refresh();
+    }
 
     void OpenGLCanvas::mouse_moved(wxMouseEvent& event)
     {}

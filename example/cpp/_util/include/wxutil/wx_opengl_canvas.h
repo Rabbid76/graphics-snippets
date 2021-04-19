@@ -16,9 +16,11 @@ namespace wxutil
     {
     private:
 
+        static const int _timer_id = 1;
         const std::shared_ptr<view::ViewInterface> _view;
         const std::unique_ptr<wxGLContext> _context;
         bool _gl_initialized = false;
+        std::unique_ptr<wxTimer> _timer;
 
     public:
 
@@ -41,6 +43,10 @@ namespace wxutil
         void key_released(wxKeyEvent& event);
 
         DECLARE_EVENT_TABLE()
+
+    private:
+
+        void refresh_timer(wxTimerEvent& event_id);
     };
 }
 
