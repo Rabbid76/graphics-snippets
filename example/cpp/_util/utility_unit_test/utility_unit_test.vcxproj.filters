@@ -2,7 +2,10 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
-    <ClCompile Include="mesh_defintion_tetrahedron_test.cpp">
+    <ClCompile Include="mesh_definition_tetrahedron_test.cpp">
+      <Filter>mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="mesh_definition_octahedron_test.cpp">
       <Filter>mesh</Filter>
     </ClCompile>
   </ItemGroup>

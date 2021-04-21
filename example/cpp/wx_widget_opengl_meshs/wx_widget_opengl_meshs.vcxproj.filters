@@ -33,7 +33,10 @@
     <ClInclude Include="..\_util\include\mesh\mesh_definition_interface.h">
       <Filter>mesh</Filter>
     </ClInclude>
-    <ClInclude Include="..\_util\include\mesh\mesh_definiton_tetrahedron.h">
+    <ClInclude Include="..\_util\include\mesh\mesh_definition_tetrahedron.h">
+      <Filter>mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\_util\include\mesh\mesh_definition_octahedron.h">
       <Filter>mesh</Filter>
     </ClInclude>
   </ItemGroup>

@@ -53,9 +53,11 @@ namespace mesh
             }
         }
 
+        std::vector<T_INDEX> indices(12);
+        std::iota(indices.begin(), indices.end(), 0);
         return std::make_shared<MeshDataContainer<T_VERTEX, T_INDEX>>(
             std::move(vertex_attributes),
-            std::vector<T_INDEX>{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 },
+            std::move(indices),
             VertexSpcification{ {AttributeType::vertex, 3}, {AttributeType::normal_vector, 3}, {AttributeType::texture_uvw, 3} }
         );
     }

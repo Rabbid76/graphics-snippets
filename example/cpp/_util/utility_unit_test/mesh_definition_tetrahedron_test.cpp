@@ -5,7 +5,7 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 // [Write unit tests for C/C++ in Visual Studio](https://docs.microsoft.com/en-us/visualstudio/test/writing-unit-tests-for-c-cpp?view=vs-2019)
 
-#include <mesh/mesh_definiton_tetrahedron.h>
+#include <mesh/mesh_definition_tetrahedron.h>
 #include <glm/glm.hpp>
 
 using namespace mesh;
@@ -15,10 +15,6 @@ namespace mesh_test
     // Tetrahedron https://en.wikipedia.org/wiki/Tetrahedron
     TEST_CLASS(utility_mesh_definition_tetrahedron_test)
     {
-    private:
-
-        bool var = true;
-
     public:
 
         TEST_METHOD(tetrahedron_vertices_test)

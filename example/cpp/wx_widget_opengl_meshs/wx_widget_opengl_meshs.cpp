@@ -33,7 +33,8 @@
 #include <view/view_interface.h>
 #include <mesh/mesh_data_interface.h>
 #include <mesh/mesh_data_container.h>
-#include <mesh/mesh_definiton_tetrahedron.h>
+#include <mesh/mesh_definition_tetrahedron.h>
+#include <mesh/mesh_definition_octahedron.h>
 
 // glm
 # define GLM_ENABLE_EXPERIMENTAL
@@ -322,7 +323,8 @@ void MyOpenGLView::init(const view::CanvasInterface& canvas)
             { {mesh::AttributeType::vertex, 3}, {mesh::AttributeType::normal_vector, 3}, {mesh::AttributeType::texture_uvw, 3} }));
      */
        
-    auto mesh_data = mesh::MeshDefinitonTetrahedron<float, unsigned int>(1.0f).generate_mesh_data();
+    //auto mesh_data = mesh::MeshDefinitonTetrahedron<float, unsigned int>(1.0f).generate_mesh_data();
+    auto mesh_data = mesh::MeshDefinitonOctahedron<float, unsigned int>(1.0f).generate_mesh_data();
     _mesh = std::make_unique<OpenGL::mesh::SingleMesh>(*mesh_data);
 
     glGenBuffers(1, &_shader_storag_buffer_object);
