@@ -35,6 +35,7 @@
 #include <mesh/mesh_data_container.h>
 #include <mesh/mesh_definition_tetrahedron.h>
 #include <mesh/mesh_definition_octahedron.h>
+#include <mesh/mesh_definition_hexahedron.h>
 
 // glm
 # define GLM_ENABLE_EXPERIMENTAL
@@ -193,6 +194,7 @@ MyFrame::MyFrame()
     wxArrayString strings;
     strings.Add(itme1);
     strings.Add(wxT("Octahedron"));
+    strings.Add(wxT("Hexahedron"));
     auto combo_box = new wxComboBox(_control_panel, wxID_ANY, itme1, wxDefaultPosition, wxDefaultSize, strings, wxCB_DROPDOWN | wxCB_READONLY);
     controls_sizer->Add(combo_box);
     combo_box->Bind(wxEVT_COMBOBOX, &MyFrame::shape_changed, this);
@@ -354,10 +356,12 @@ void MyOpenGLView::init(const view::CanvasInterface& canvas)
        
     auto tetrahedron_mesh_data = mesh::MeshDefinitonTetrahedron<float, unsigned int>(1.0f).generate_mesh_data();
     auto octahedron_mesh_data = mesh::MeshDefinitonOctahedron<float, unsigned int>(1.0f).generate_mesh_data();
+    auto hexahedron_mesh_data = mesh::MeshDefinitonHexahedron<float, unsigned int>(1.0f).generate_mesh_data();
     _meshs = std::vector<std::shared_ptr<OpenGL::mesh::MeshInterface>>
     {
         std::make_shared<OpenGL::mesh::SingleMesh>(*tetrahedron_mesh_data),
         std::make_shared<OpenGL::mesh::SingleMesh>(*octahedron_mesh_data),
+        std::make_shared<OpenGL::mesh::SingleMesh>(*hexahedron_mesh_data),
     };
 
     glGenBuffers(1, &_shader_storag_buffer_object);
@@ -394,6 +398,10 @@ void MyOpenGLView::resize(const view::CanvasInterface& canvas)
 void MyOpenGLView::render(const view::CanvasInterface& canvas)
 {
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CCW);
+
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 

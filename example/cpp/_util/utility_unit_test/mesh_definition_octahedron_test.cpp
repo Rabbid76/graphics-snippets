@@ -13,7 +13,7 @@ using namespace mesh;
 namespace mesh_test
 {
     // Octahedron https://en.wikipedia.org/wiki/Octahedron
-    TEST_CLASS(utility_mesh_definition_tetrahedron_test)
+    TEST_CLASS(utility_mesh_definition_octahedron_test)
     {
     public:
 

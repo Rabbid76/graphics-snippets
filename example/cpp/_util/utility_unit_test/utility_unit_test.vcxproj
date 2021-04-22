@@ -91,6 +91,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="mesh_definition_hexahedron_test.cpp" />
     <ClCompile Include="mesh_definition_octahedron_test.cpp" />
     <ClCompile Include="mesh_definition_tetrahedron_test.cpp" />
     <ClCompile Include="pch.cpp">
