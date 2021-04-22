@@ -102,16 +102,21 @@ public:
     virtual bool OnInit();
 };
 
+class MyOpenGLView;
+
 class MyFrame : public wxFrame
 {
 public:
     MyFrame();
+
+    void shape_changed(wxCommandEvent& event);
 
 private:
 
     // wxWindows don't need to be deleted. See [Window Deletion](https://docs.wxwidgets.org/3.0/overview_windowdeletion.html)
     wxPanel *_control_panel;
     wxutil::OpenGLCanvas*_view_panel;
+    std::shared_ptr<MyOpenGLView> _view;
 };
 
 class MyOpenGLView
@@ -122,9 +127,10 @@ private:
     const std::unique_ptr<OpenGL::CContext> _context;
     GLuint _program = 0;
     GLuint _shader_storag_buffer_object;
-    std::unique_ptr<OpenGL::mesh::MeshInterface> _mesh;
+    std::vector<std::shared_ptr<OpenGL::mesh::MeshInterface>> _meshs;
     GLfloat _angle1 = 0.0f;
     GLfloat _angle2 = 0.0f;
+    int _selected_shape = 0;
 
 public:
 
@@ -134,6 +140,11 @@ public:
     virtual void init(const view::CanvasInterface& canvas) override;
     virtual void resize(const view::CanvasInterface& canvas) override;
     virtual void render(const view::CanvasInterface& canvas) override;
+
+    void select_shape(int shape)
+    {
+        _selected_shape = shape;
+    }
 };
 
 // SubSystem Windows (/SUBSYSTEM:WINDOWS)
@@ -149,7 +160,7 @@ bool MyApp::OnInit()
 MyFrame::MyFrame()
     : wxFrame(NULL, wxID_ANY, "OpenGL view", wxDefaultPosition, wxSize(600, 400))
 {
-    auto view = std::make_shared< MyOpenGLView>();
+    _view = std::make_shared< MyOpenGLView>();
 
     CreateStatusBar();
     SetStatusText("Status");
@@ -166,12 +177,30 @@ MyFrame::MyFrame()
     _control_panel->SetBackgroundColour(wxColour(255, 255, 128));
 
     int args[] = { WX_GL_RGBA, WX_GL_DOUBLEBUFFER, WX_GL_DEPTH_SIZE, 16, 0 };
-    _view_panel = new wxutil::OpenGLCanvas(view, this, args);
+    _view_panel = new wxutil::OpenGLCanvas(_view, this, args);
 
     sizer->Add(_control_panel, 1, wxEXPAND | wxALL);
     sizer->Add(_view_panel, 1, wxEXPAND | wxALL);
 
+    auto controls_sizer = new wxBoxSizer(wxVERTICAL);
+    _control_panel->SetSizer(controls_sizer);
+    _control_panel->SetAutoLayout(true);
+
     auto control_text = new wxStaticText(_control_panel, wxID_ANY, wxString("controls"), wxPoint(10, 10));
+    controls_sizer->Add(control_text);
+
+    auto itme1 = wxT("Tetrahedron");
+    wxArrayString strings;
+    strings.Add(itme1);
+    strings.Add(wxT("Octahedron"));
+    auto combo_box = new wxComboBox(_control_panel, wxID_ANY, itme1, wxDefaultPosition, wxDefaultSize, strings, wxCB_DROPDOWN | wxCB_READONLY);
+    controls_sizer->Add(combo_box);
+    combo_box->Bind(wxEVT_COMBOBOX, &MyFrame::shape_changed, this);
+}
+
+void MyFrame::shape_changed(wxCommandEvent& event)
+{
+    _view->select_shape(event.GetInt());
 }
 
 
@@ -323,9 +352,13 @@ void MyOpenGLView::init(const view::CanvasInterface& canvas)
             { {mesh::AttributeType::vertex, 3}, {mesh::AttributeType::normal_vector, 3}, {mesh::AttributeType::texture_uvw, 3} }));
      */
        
-    //auto mesh_data = mesh::MeshDefinitonTetrahedron<float, unsigned int>(1.0f).generate_mesh_data();
-    auto mesh_data = mesh::MeshDefinitonOctahedron<float, unsigned int>(1.0f).generate_mesh_data();
-    _mesh = std::make_unique<OpenGL::mesh::SingleMesh>(*mesh_data);
+    auto tetrahedron_mesh_data = mesh::MeshDefinitonTetrahedron<float, unsigned int>(1.0f).generate_mesh_data();
+    auto octahedron_mesh_data = mesh::MeshDefinitonOctahedron<float, unsigned int>(1.0f).generate_mesh_data();
+    _meshs = std::vector<std::shared_ptr<OpenGL::mesh::MeshInterface>>
+    {
+        std::make_shared<OpenGL::mesh::SingleMesh>(*tetrahedron_mesh_data),
+        std::make_shared<OpenGL::mesh::SingleMesh>(*octahedron_mesh_data),
+    };
 
     glGenBuffers(1, &_shader_storag_buffer_object);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _shader_storag_buffer_object);
@@ -371,5 +404,5 @@ void MyOpenGLView::render(const view::CanvasInterface& canvas)
     _angle1 += 0.02f;
     _angle2 += 0.01f;
 
-    _mesh->draw();
+    _meshs[_selected_shape]->draw();
 }
