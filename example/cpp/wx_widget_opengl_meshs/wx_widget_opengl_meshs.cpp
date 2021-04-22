@@ -50,16 +50,13 @@ namespace OpenGL::mesh
     public:
 
         // destroy
-        // draw
 
-        virtual size_t no_of_vertices(void) const = 0;
-        virtual size_t no_of_indices(void) const = 0;
         virtual void draw(void) const = 0;
     };
 
     class MultiMeshInterface
     {
-        // darw_range
+        virtual void draw(size_t from, size_t to) const = 0;
     };
 
     class SingleMesh
@@ -75,12 +72,12 @@ namespace OpenGL::mesh
 
     public:
 
-        virtual size_t no_of_vertices(void) const override
+        size_t no_of_vertices(void) const
         {
             return _no_of_vertices;
         }
 
-        virtual size_t no_of_indices(void) const override
+        size_t no_of_indices(void) const
         {
             return _no_of_indices;
         }
@@ -94,6 +91,38 @@ namespace OpenGL::mesh
         : public MeshInterface
     {
 
+    };
+
+    class MeshVector
+        : public MeshInterface
+        , public MultiMeshInterface
+    {
+    private:
+
+        std::vector<std::shared_ptr<OpenGL::mesh::MeshInterface>> _meshs;
+
+    public:
+
+        MeshVector(void) = default;
+        MeshVector(const std::vector<std::shared_ptr<OpenGL::mesh::MeshInterface>> &meshs)
+            : _meshs(meshs)
+        {}
+
+        virtual ~MeshVector() = default;
+
+        virtual void draw(void) const override
+        {
+            std::for_each(_meshs.begin(), _meshs.end(), [](const auto& mesh)
+                {
+                    mesh->draw();
+                });
+        }
+
+        virtual void draw(size_t from, size_t to) const override
+        {
+            for (auto i = from; i < to; ++i)
+                _meshs[i]->draw();
+        }
     };
 }
 
@@ -128,7 +157,7 @@ private:
     const std::unique_ptr<OpenGL::CContext> _context;
     GLuint _program = 0;
     GLuint _shader_storag_buffer_object;
-    std::vector<std::shared_ptr<OpenGL::mesh::MeshInterface>> _meshs;
+    OpenGL::mesh::MeshVector _meshs;
     GLfloat _angle1 = 0.0f;
     GLfloat _angle2 = 0.0f;
     int _selected_shape = 0;
@@ -357,12 +386,12 @@ void MyOpenGLView::init(const view::CanvasInterface& canvas)
     auto tetrahedron_mesh_data = mesh::MeshDefinitonTetrahedron<float, unsigned int>(1.0f).generate_mesh_data();
     auto octahedron_mesh_data = mesh::MeshDefinitonOctahedron<float, unsigned int>(1.0f).generate_mesh_data();
     auto hexahedron_mesh_data = mesh::MeshDefinitonHexahedron<float, unsigned int>(1.0f).generate_mesh_data();
-    _meshs = std::vector<std::shared_ptr<OpenGL::mesh::MeshInterface>>
+    _meshs = OpenGL::mesh::MeshVector(std::vector<std::shared_ptr<OpenGL::mesh::MeshInterface>>
     {
         std::make_shared<OpenGL::mesh::SingleMesh>(*tetrahedron_mesh_data),
         std::make_shared<OpenGL::mesh::SingleMesh>(*octahedron_mesh_data),
         std::make_shared<OpenGL::mesh::SingleMesh>(*hexahedron_mesh_data),
-    };
+    });
 
     glGenBuffers(1, &_shader_storag_buffer_object);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, _shader_storag_buffer_object);
@@ -412,5 +441,5 @@ void MyOpenGLView::render(const view::CanvasInterface& canvas)
     _angle1 += 0.02f;
     _angle2 += 0.01f;
 
-    _meshs[_selected_shape]->draw();
+    _meshs.draw(_selected_shape, _selected_shape+1);
 }
