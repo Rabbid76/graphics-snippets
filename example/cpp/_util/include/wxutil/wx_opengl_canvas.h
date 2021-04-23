@@ -24,6 +24,10 @@ namespace wxutil
 
     public:
 
+        static OpenGLCanvas* new_gl_canvas(std::shared_ptr<view::ViewInterface> view, wxFrame* parent, 
+            int depth_bits, int stencil_bits, int samples);
+        static OpenGLCanvas* new_gl_canvas(std::shared_ptr<view::ViewInterface> view, wxFrame* parent, 
+            int depth_bits, int stencil_bits, int samples, int major, int minor, bool core, bool forward_compatibility, bool debug);
         OpenGLCanvas(std::shared_ptr<view::ViewInterface> view, wxFrame* parent, int* args);
         virtual ~OpenGLCanvas();
 

@@ -6,8 +6,48 @@
 
 namespace wxutil
 {
-    OpenGLCanvas::OpenGLCanvas(std::shared_ptr<view::ViewInterface> view, wxFrame* parent, int* args)
-        : wxGLCanvas(parent, wxID_ANY, args, wxDefaultPosition, wxDefaultSize, wxFULL_REPAINT_ON_RESIZE)
+    OpenGLCanvas* OpenGLCanvas::new_gl_canvas(std::shared_ptr<view::ViewInterface> view, wxFrame* parent, 
+        int depth_bits, int stencil_bits, int samples)
+    {
+        std::vector<int> attribute_list
+        {
+            WX_GL_RGBA,
+            WX_GL_DOUBLEBUFFER,
+            WX_GL_DEPTH_SIZE, depth_bits,
+            WX_GL_STENCIL_SIZE, stencil_bits,
+            WX_GL_SAMPLE_BUFFERS, samples > 0 ? 1 : 0,
+            WX_GL_SAMPLES, samples,
+            0
+        };
+        return new OpenGLCanvas(view, parent, attribute_list.data());
+    }
+
+    OpenGLCanvas* OpenGLCanvas::new_gl_canvas(std::shared_ptr<view::ViewInterface> view, wxFrame* parent,
+        int depth_bits, int stencil_bits, int samples, int major, int minor, bool core, bool forward_compatibility, bool debug)
+    {
+        std::vector<int> attribute_list
+        {
+            WX_GL_RGBA,
+            WX_GL_DOUBLEBUFFER,
+            WX_GL_DEPTH_SIZE, depth_bits,
+            WX_GL_STENCIL_SIZE, stencil_bits,
+            WX_GL_SAMPLE_BUFFERS, samples > 0 ? 1 : 0,
+            WX_GL_SAMPLES, samples,
+            WX_GL_MAJOR_VERSION, major,
+            WX_GL_MINOR_VERSION, minor,
+        };
+        if (core)
+            attribute_list.push_back(WX_GL_CORE_PROFILE);
+        if (forward_compatibility)
+            attribute_list.push_back(WX_GL_FORWARD_COMPAT);
+        if (debug)
+            attribute_list.push_back(WX_GL_DEBUG);
+        attribute_list.push_back(0);
+        return new OpenGLCanvas(view, parent, attribute_list.data());
+    }
+
+    OpenGLCanvas::OpenGLCanvas(std::shared_ptr<view::ViewInterface> view, wxFrame* parent, int* attribute_list)
+        : wxGLCanvas(parent, wxID_ANY, attribute_list, wxDefaultPosition, wxDefaultSize, wxFULL_REPAINT_ON_RESIZE)
         , _view(view)
         , _context{ std::make_unique<wxGLContext>(this) }
     {

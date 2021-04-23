@@ -207,8 +207,7 @@ MyFrame::MyFrame()
     _control_panel = new wxPanel(this, wxID_ANY, wxPoint(0, 0), wxSize(100, -1));
     _control_panel->SetBackgroundColour(wxColour(255, 255, 128));
 
-    int args[] = { WX_GL_RGBA, WX_GL_DOUBLEBUFFER, WX_GL_DEPTH_SIZE, 16, 0 };
-    _view_panel = new wxutil::OpenGLCanvas(_view, this, args);
+    _view_panel = wxutil::OpenGLCanvas::new_gl_canvas(_view, this, 24, 8, 8, 4, 6, true, true, true);
 
     sizer->Add(_control_panel, 1, wxEXPAND | wxALL);
     sizer->Add(_view_panel, 1, wxEXPAND | wxALL);
