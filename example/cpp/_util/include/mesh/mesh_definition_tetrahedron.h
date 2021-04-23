@@ -28,14 +28,14 @@ namespace mesh
     template<class T_VERTEX, class T_INDEX>
     std::shared_ptr<MeshDataInterface<T_VERTEX, T_INDEX>> MeshDefinitonTetrahedron<T_VERTEX, T_INDEX>::generate_mesh_data(void) const
     {
-        T_VERTEX s_8_9 = static_cast<T_VERTEX>(std::sqrt(8.0 / 9.0));
-        T_VERTEX s_2_9 = static_cast<T_VERTEX>(std::sqrt(2.0 / 9.0));
-        T_VERTEX s_2_3 = static_cast<T_VERTEX>(std::sqrt(2.0 / 3.0));
-        T_VERTEX s_1_3 = static_cast<T_VERTEX>(1.0 / 3.0);
-        auto v = std::vector<T_VERTEX>{ 0, 0, 1, s_8_9, 0, -s_1_3, -s_2_9, s_2_3, -s_1_3, -s_2_9, -s_2_3, -s_1_3 };
-        auto t = std::vector<T_VERTEX>{ 0, 0, 0, 1, 1, 1, 1, 0 };
-        auto ni = std::vector<int>{ 3, 1, 2, 0 };
-        auto e = std::vector<int>{ 0, 1, 2, 0, 2, 3, 0, 3, 1, 1, 3, 2 };
+        const T_VERTEX s_8_9 = static_cast<T_VERTEX>(std::sqrt(8.0 / 9.0));
+        const T_VERTEX s_2_9 = static_cast<T_VERTEX>(std::sqrt(2.0 / 9.0));
+        const T_VERTEX s_2_3 = static_cast<T_VERTEX>(std::sqrt(2.0 / 3.0));
+        const T_VERTEX s_1_3 = static_cast<T_VERTEX>(1.0 / 3.0);
+        const auto v = std::vector<T_VERTEX>{ 0, 0, 1, s_8_9, 0, -s_1_3, -s_2_9, s_2_3, -s_1_3, -s_2_9, -s_2_3, -s_1_3 };
+        const auto t = std::vector<T_VERTEX>{ 0, 0, 0, 1, 1, 1, 1, 0 };
+        const auto ni = std::vector<int>{ 3, 1, 2, 0 };
+        const auto e = std::vector<int>{ 0, 1, 2, 0, 2, 3, 0, 3, 1, 1, 3, 2 };
 
         T_VERTEX l = _radius;
         std::vector<T_VERTEX> vertex_attributes;

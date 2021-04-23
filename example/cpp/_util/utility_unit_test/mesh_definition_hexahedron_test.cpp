@@ -50,7 +50,7 @@ namespace mesh_test
             auto specification = hexahedron_mesh_data->get_specification();
             auto attribute_size = hexahedron_mesh_data->get_attribute_size();
 
-            float expected_length_1 = 1.0f;
+            float expected_length_1 = 2.0f;
             float expected_length_2 = std::sqrt(2.0f);
             for (int i = 0; i < no_of_indices; i += 3)
             {

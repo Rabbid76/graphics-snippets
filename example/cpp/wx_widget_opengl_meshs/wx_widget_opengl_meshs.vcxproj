@@ -115,6 +115,7 @@
     <ClInclude Include="..\_util\include\gl\gl_shader.h" />
     <ClInclude Include="..\_util\include\mesh\mesh_data_container.h" />
     <ClInclude Include="..\_util\include\mesh\mesh_data_interface.h" />
+    <ClInclude Include="..\_util\include\mesh\mesh_definition_dodecahedron.h" />
     <ClInclude Include="..\_util\include\mesh\mesh_definition_interface.h" />
     <ClInclude Include="..\_util\include\mesh\mesh_definition_tetrahedron.h" />
     <ClInclude Include="..\_util\include\mesh\mesh_definition_octahedron.h" />

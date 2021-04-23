@@ -36,6 +36,7 @@
 #include <mesh/mesh_definition_tetrahedron.h>
 #include <mesh/mesh_definition_octahedron.h>
 #include <mesh/mesh_definition_hexahedron.h>
+#include <mesh/mesh_definition_dodecahedron.h>
 
 // glm
 # define GLM_ENABLE_EXPERIMENTAL
@@ -219,12 +220,17 @@ MyFrame::MyFrame()
     auto control_text = new wxStaticText(_control_panel, wxID_ANY, wxString("controls"), wxPoint(10, 10));
     controls_sizer->Add(control_text);
 
-    auto itme1 = wxT("Tetrahedron");
+    auto shape_names = std::vector<std::wstring>
+    {
+       wxT("Tetrahedron"),
+       wxT("Hexahedron"),
+       wxT("Octahedron"),
+       wxT("Dodecahedron"),
+    };
     wxArrayString strings;
-    strings.Add(itme1);
-    strings.Add(wxT("Octahedron"));
-    strings.Add(wxT("Hexahedron"));
-    auto combo_box = new wxComboBox(_control_panel, wxID_ANY, itme1, wxDefaultPosition, wxDefaultSize, strings, wxCB_DROPDOWN | wxCB_READONLY);
+    for (const auto& name : shape_names)
+        strings.Add(name.c_str());
+    auto combo_box = new wxComboBox(_control_panel, wxID_ANY, shape_names[0], wxDefaultPosition, wxDefaultSize, strings, wxCB_DROPDOWN | wxCB_READONLY);
     controls_sizer->Add(combo_box);
     combo_box->Bind(wxEVT_COMBOBOX, &MyFrame::shape_changed, this);
 }
@@ -384,13 +390,15 @@ void MyOpenGLView::init(const view::CanvasInterface& canvas)
      */
        
     auto tetrahedron_mesh_data = mesh::MeshDefinitonTetrahedron<float, unsigned int>(1.0f).generate_mesh_data();
-    auto octahedron_mesh_data = mesh::MeshDefinitonOctahedron<float, unsigned int>(1.0f).generate_mesh_data();
     auto hexahedron_mesh_data = mesh::MeshDefinitonHexahedron<float, unsigned int>(1.0f).generate_mesh_data();
+    auto octahedron_mesh_data = mesh::MeshDefinitonOctahedron<float, unsigned int>(1.0f).generate_mesh_data();
+    auto dodecahedron_mesh_data = mesh::MeshDefinitonDodecahedron<float, unsigned int>(1.0f).generate_mesh_data();
     _meshs = OpenGL::mesh::MeshVector(std::vector<std::shared_ptr<OpenGL::mesh::MeshInterface>>
     {
         std::make_shared<OpenGL::mesh::SingleMesh>(*tetrahedron_mesh_data),
-        std::make_shared<OpenGL::mesh::SingleMesh>(*octahedron_mesh_data),
         std::make_shared<OpenGL::mesh::SingleMesh>(*hexahedron_mesh_data),
+        std::make_shared<OpenGL::mesh::SingleMesh>(*octahedron_mesh_data),
+        std::make_shared<OpenGL::mesh::SingleMesh>(*dodecahedron_mesh_data),
     });
 
     glGenBuffers(1, &_shader_storag_buffer_object);
