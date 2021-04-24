@@ -87,6 +87,7 @@
       <AdditionalIncludeDirectories>.\;$(SolutionDir);$(SolutionDir)\_util\include;$(SolutionDir)\$(OwnGraphicsLibDir)include\Render;$(SolutionDir)\$(GlmDir);$(SolutionDir)\$(StbDir);$(SolutionDir)\$(GlewDir)\include;$(SolutionDir)\$(GlfwDir)\include;$(SolutionDir)\$(FreeGlutDir)\include;$(SolutionDir)\$(FreetypeDir)\include;$(SolutionDir)\$(wxWidgetDir)\include;$(SolutionDir)\$(wxWidgetDir)\include\msvc;$(SolutionDir)\$(AssimpDir)\include\msvc</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -126,8 +127,11 @@
     <ClInclude Include="..\_util\include\mesh\mesh_definition_tetrahedron.h" />
     <ClInclude Include="..\_util\include\mesh\mesh_definition_octahedron.h" />
     <ClInclude Include="..\_util\include\mesh\mesh_definition_hexahedron.h" />
+    <ClInclude Include="..\_util\include\mesh\mesh_include.h" />
     <ClInclude Include="..\_util\include\view\canvas_interface.h" />
     <ClInclude Include="..\_util\include\view\view_interface.h" />
+    <ClInclude Include="..\_util\include\wxutil\wx_control_factory.h" />
+    <ClInclude Include="..\_util\include\wxutil\wx_include.h" />
     <ClInclude Include="..\_util\include\wxutil\wx_opengl_canvas.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

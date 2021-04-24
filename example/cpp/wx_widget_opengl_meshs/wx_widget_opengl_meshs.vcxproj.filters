@@ -63,6 +63,15 @@
     <ClInclude Include="..\_util\include\gl\opengl_include.h">
       <Filter>opengl</Filter>
     </ClInclude>
+    <ClInclude Include="..\_util\include\wxutil\wx_control_factory.h">
+      <Filter>wxutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\_util\include\wxutil\wx_include.h">
+      <Filter>wxutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\_util\include\mesh\mesh_include.h">
+      <Filter>mesh</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="mesh">

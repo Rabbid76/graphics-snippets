@@ -1,34 +1,19 @@
 #include <pch.h>
 
+#include <wxutil/wx_include.h>
 #include <wxutil/wx_opengl_canvas.h>
-
-#include <wx/wxprec.h>
-#ifndef WX_PRECOMP
-#define _CRT_SECURE_NO_WARNINGS
-#include <wx/wx.h>
-#undef _CRT_SECURE_NO_WARNINGS
-#endif
-
-#include "wx/glcanvas.h" 
-
-// project includes
+#include <wxutil/wx_control_factory.h>
 #include <gl/opengl_include.h>
 #include <gl/gl_debug.h>
 #include <gl/gl_shader.h>
 #include <view/view_interface.h>
-#include <mesh/mesh_data_interface.h>
-#include <mesh/mesh_data_container.h>
-#include <mesh/mesh_definition_tetrahedron.h>
-#include <mesh/mesh_definition_octahedron.h>
-#include <mesh/mesh_definition_hexahedron.h>
-#include <mesh/mesh_definition_dodecahedron.h>
-#include <mesh/mesh_definition_icosahedron.h>
+#include <mesh/mesh_include.h>
 #include <gl/opengl_mesh_interface.h>
 #include <gl/opengl_mesh_vector.h>
 #include <gl/opengl_mesh_single.h>
 
 // glm
-# define GLM_ENABLE_EXPERIMENTAL
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -149,12 +134,9 @@ MyFrame::MyFrame()
        wxT("Dodecahedron"),
        wxT("Icosahedron"),
     };
-    wxArrayString strings;
-    for (const auto& name : shape_names)
-        strings.Add(name.c_str());
-    auto combo_box = new wxComboBox(_control_panel, wxID_ANY, shape_names[0], wxDefaultPosition, wxDefaultSize, strings, wxCB_DROPDOWN | wxCB_READONLY);
-    controls_sizer->Add(combo_box);
-    combo_box->Bind(wxEVT_COMBOBOX, &MyFrame::shape_changed, this);
+    auto shape_selection = wx_utility::new_selction_box(
+        _control_panel, wxID_ANY, std::move(shape_names), 0, this, &MyFrame::shape_changed);
+    controls_sizer->Add(shape_selection);
 }
 
 void MyFrame::shape_changed(wxCommandEvent& event)

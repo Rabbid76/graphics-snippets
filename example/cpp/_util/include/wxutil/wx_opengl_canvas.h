@@ -1,7 +1,7 @@
 #ifndef __WX_OPENGL_CANVAS__
 #define __WX_OPENGL_CANVAS__
 
-#include "wx/glcanvas.h" 
+#include <wxutil/wx_include.h>
 #include <view/canvas_interface.h>
 #include <view/view_interface.h>
 
