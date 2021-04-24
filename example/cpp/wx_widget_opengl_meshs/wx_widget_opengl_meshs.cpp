@@ -40,6 +40,8 @@ public:
     MyFrame();
 
     void shape_changed(wxCommandEvent& event);
+    void polygon_mode_changed(wxCommandEvent& event);
+    void face_culling_changed(wxCommandEvent& event);
 
 private:
 
@@ -61,6 +63,8 @@ private:
     GLfloat _angle1 = 0.0f;
     GLfloat _angle2 = 0.0f;
     int _selected_shape = 0;
+    int _selected_polygon_mode = 2;
+    int _selected_culling_mode = 0;
 
 public:
 
@@ -75,6 +79,16 @@ public:
     {
         _selected_shape = shape;
     }
+
+    void select_polygon_mode(int polygon_mode)
+    {
+        _selected_polygon_mode = polygon_mode;
+    }
+
+    void select_culling_mode(int culling_mode)
+    {
+        _selected_culling_mode = culling_mode;
+    }
 };
 
 // SubSystem Windows (/SUBSYSTEM:WINDOWS)
@@ -87,6 +101,7 @@ bool MyApp::OnInit()
     return true;
 }
 
+// Platonic solid https://en.wikipedia.org/wiki/Platonic_solid
 MyFrame::MyFrame()
     : wxFrame(NULL, wxID_ANY, "OpenGL view", wxDefaultPosition, wxSize(600, 400))
 {
@@ -115,9 +130,7 @@ MyFrame::MyFrame()
     _control_panel->SetSizer(controls_sizer);
     _control_panel->SetAutoLayout(true);
 
-    auto control_text = new wxStaticText(_control_panel, wxID_ANY, wxString("controls"), wxPoint(10, 10));
-    controls_sizer->Add(control_text);
-
+    auto shape_text = wx_utility::new_static_text(_control_panel, wxID_ANY, controls_sizer, wxT("Shape"));
     auto shape_names = std::vector<std::wstring>
     {
        wxT("Tetrahedron"),
@@ -127,13 +140,42 @@ MyFrame::MyFrame()
        wxT("Icosahedron"),
     };
     auto shape_selection = wx_utility::new_selction_box(
-        _control_panel, wxID_ANY, std::move(shape_names), 0, this, &MyFrame::shape_changed);
-    controls_sizer->Add(shape_selection);
+        _control_panel, wxID_ANY, controls_sizer, std::move(shape_names), 0, this, &MyFrame::shape_changed);
+    
+    auto polygone_mode_text = wx_utility::new_static_text(_control_panel, wxID_ANY, controls_sizer, wxT("Polygon mode"));
+    auto polygon_mode_names = std::vector<std::wstring>
+    {
+       wxT("Point"),
+       wxT("Line"),
+       wxT("Polygon"),
+    };
+    auto polygon_mode_selection = wx_utility::new_selction_box(
+        _control_panel, wxID_ANY, controls_sizer, std::move(polygon_mode_names), 2, this, &MyFrame::polygon_mode_changed);
+
+    auto culling_mode_text = wx_utility::new_static_text(_control_panel, wxID_ANY, controls_sizer, wxT("Culling mode"));
+    auto culling_mode_names = std::vector<std::wstring>
+    {
+       wxT("None"),
+       wxT("Back face culling"),
+       wxT("Front face culling"),
+    };
+    auto culling_mode_selection = wx_utility::new_selction_box(
+        _control_panel, wxID_ANY, controls_sizer, std::move(culling_mode_names), 0, this, &MyFrame::face_culling_changed);
 }
 
 void MyFrame::shape_changed(wxCommandEvent& event)
 {
     _view->select_shape(event.GetInt());
+}
+
+void MyFrame::polygon_mode_changed(wxCommandEvent& event)
+{
+    _view->select_polygon_mode(event.GetInt());
+}
+
+void MyFrame::face_culling_changed(wxCommandEvent& event)
+{
+    _view->select_culling_mode(event.GetInt());
 }
 
 std::string phong_vert = R"(
@@ -264,9 +306,21 @@ void MyOpenGLView::resize(const view::CanvasInterface& canvas)
 void MyOpenGLView::render(const view::CanvasInterface& canvas)
 {
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
-    glFrontFace(GL_CCW);
+    if (_selected_culling_mode == 0)
+    {
+        glDisable(GL_CULL_FACE);
+    }
+    else
+    {
+        glEnable(GL_CULL_FACE);
+        glCullFace(_selected_culling_mode == 1 ? GL_FRONT : GL_BACK);
+        glFrontFace(GL_CCW);
+    }
+
+    GLenum polygon_mode = _selected_polygon_mode == 0
+        ? GL_POINT
+        : _selected_polygon_mode == 1 ? GL_LINE : GL_POLYGON;
+    glPolygonMode(GL_FRONT_AND_BACK, polygon_mode);
 
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
