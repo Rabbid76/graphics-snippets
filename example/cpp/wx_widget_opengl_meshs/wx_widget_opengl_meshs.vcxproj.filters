@@ -6,6 +6,9 @@
     <ClCompile Include="..\_util\source\wxutil\wx_opengl_canvas.cpp">
       <Filter>wxutil</Filter>
     </ClCompile>
+    <ClCompile Include="..\_util\source\gl\opengl_mesh_single.cpp">
+      <Filter>opengl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\pch.h" />
@@ -47,6 +50,18 @@
     </ClInclude>
     <ClInclude Include="..\_util\include\mesh\mesh_definition_icosahedron.h">
       <Filter>mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\_util\include\gl\opengl_mesh_interface.h">
+      <Filter>opengl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\_util\include\gl\opengl_mesh_vector.h">
+      <Filter>opengl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\_util\include\gl\opengl_mesh_single.h">
+      <Filter>opengl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\_util\include\gl\opengl_include.h">
+      <Filter>opengl</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

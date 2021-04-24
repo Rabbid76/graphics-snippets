@@ -1,14 +1,5 @@
 #include <pch.h>
 
-#include <GL/glew.h>
-#ifdef __WXMAC__
-#include "OpenGL/glu.h"
-#include "OpenGL/gl.h"
-#else
-#include <GL/glu.h>
-#include <GL/gl.h>
-#endif
-
 #include <wxutil/wx_opengl_canvas.h>
 
 #include <wx/wxprec.h>
@@ -20,14 +11,8 @@
 
 #include "wx/glcanvas.h" 
 
-#include <memory>
-#include <vector>
-#include <numeric>
-#include <tuple>
-#include <string>
-#include <utility>
-
 // project includes
+#include <gl/opengl_include.h>
 #include <gl/gl_debug.h>
 #include <gl/gl_shader.h>
 #include <view/view_interface.h>
@@ -38,6 +23,9 @@
 #include <mesh/mesh_definition_hexahedron.h>
 #include <mesh/mesh_definition_dodecahedron.h>
 #include <mesh/mesh_definition_icosahedron.h>
+#include <gl/opengl_mesh_interface.h>
+#include <gl/opengl_mesh_vector.h>
+#include <gl/opengl_mesh_single.h>
 
 // glm
 # define GLM_ENABLE_EXPERIMENTAL
@@ -45,86 +33,19 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <memory>
+#include <vector>
+#include <numeric>
+#include <tuple>
+#include <string>
+#include <utility>
+
 namespace OpenGL::mesh
 {
-    class MeshInterface
-    {
-    public:
-
-        // destroy
-
-        virtual void draw(void) const = 0;
-    };
-
-    class MultiMeshInterface
-    {
-        virtual void draw(size_t from, size_t to) const = 0;
-    };
-
-    class SingleMesh
-        : public MeshInterface
-    {
-    private:
-
-        GLuint _vertex_array_object = 0;
-        GLuint _vertex_buffer_object = 0;
-        GLuint _index_buffer_object = 0;
-        size_t _no_of_vertices = 0;
-        size_t _no_of_indices = 0;
-
-    public:
-
-        size_t no_of_vertices(void) const
-        {
-            return _no_of_vertices;
-        }
-
-        size_t no_of_indices(void) const
-        {
-            return _no_of_indices;
-        }
-
-        SingleMesh(const ::mesh::MeshDataInterface<float, unsigned int>& specification);
-
-        virtual void draw(void) const override;
-    };
-
     class SingleMeshSeparateAttributeFormat
         : public MeshInterface
     {
 
-    };
-
-    class MeshVector
-        : public MeshInterface
-        , public MultiMeshInterface
-    {
-    private:
-
-        std::vector<std::shared_ptr<OpenGL::mesh::MeshInterface>> _meshs;
-
-    public:
-
-        MeshVector(void) = default;
-        MeshVector(const std::vector<std::shared_ptr<OpenGL::mesh::MeshInterface>> &meshs)
-            : _meshs(meshs)
-        {}
-
-        virtual ~MeshVector() = default;
-
-        virtual void draw(void) const override
-        {
-            std::for_each(_meshs.begin(), _meshs.end(), [](const auto& mesh)
-                {
-                    mesh->draw();
-                });
-        }
-
-        virtual void draw(size_t from, size_t to) const override
-        {
-            for (auto i = from; i < to; ++i)
-                _meshs[i]->draw();
-        }
     };
 }
 
@@ -239,57 +160,6 @@ MyFrame::MyFrame()
 void MyFrame::shape_changed(wxCommandEvent& event)
 {
     _view->select_shape(event.GetInt());
-}
-
-
-namespace OpenGL::mesh
-{
-    SingleMesh::SingleMesh(const ::mesh::MeshDataInterface<float, unsigned int>& definition)
-    {
-        auto [no_of_values, vertex_array] = definition.get_vertex_attributes();
-        auto [no_of_indices, index_array] = definition.get_indices();
-        auto specification = definition.get_specification();
-        auto attribute_size = definition.get_attribute_size();
-
-        _no_of_vertices = no_of_values / attribute_size;
-        _no_of_indices = index_array != nullptr ? no_of_indices : 0;
-        
-        glCreateVertexArrays(1, &_vertex_array_object);
-        glBindVertexArray(_vertex_array_object);
-
-        GLuint buffer_objects[2];
-        glGenBuffers(2, buffer_objects);
-
-        if (_no_of_indices > 0)
-        {
-            _index_buffer_object = buffer_objects[0];
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _index_buffer_object);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, no_of_indices * sizeof(GLuint), index_array, GL_STATIC_DRAW);
-        }
-
-        _vertex_buffer_object = buffer_objects[1];
-        glBindBuffer(GL_ARRAY_BUFFER, _vertex_buffer_object);
-        glBufferData(GL_ARRAY_BUFFER, no_of_values*sizeof(GLfloat), vertex_array, GL_STATIC_DRAW);
-
-        size_t offset = 0;
-        for (const auto& [attribute_type, size] : specification)
-        {
-            auto attribute_index = static_cast<GLuint>(attribute_type);
-            glEnableVertexAttribArray(attribute_index);
-            glVertexAttribPointer(attribute_index, size, GL_FLOAT, GL_FALSE, 
-                attribute_size * sizeof(GLfloat), reinterpret_cast<const void*>(offset * sizeof(GLfloat)));
-            offset += size;
-        }
-    }
-
-    void SingleMesh::draw(void) const
-    {
-        glBindVertexArray(_vertex_array_object);
-        if (_no_of_indices > 0)
-            glDrawElements(GL_TRIANGLES, _no_of_indices, GL_UNSIGNED_INT, nullptr);
-        else
-            glDrawArrays(GL_TRIANGLES, 0, _no_of_vertices);
-    }
 }
 
 std::string phong_vert = R"(
