@@ -11,6 +11,7 @@
 #include <gl/opengl_mesh_interface.h>
 #include <gl/opengl_mesh_vector.h>
 #include <gl/opengl_mesh_single.h>
+#include <gl/opengl_mesh_single_separate_attribute.h>
 
 // glm
 #define GLM_ENABLE_EXPERIMENTAL
@@ -24,15 +25,6 @@
 #include <tuple>
 #include <string>
 #include <utility>
-
-namespace OpenGL::mesh
-{
-    class SingleMeshSeparateAttributeFormat
-        : public MeshInterface
-    {
-
-    };
-}
 
 class MyApp : public wxApp
 {
@@ -236,11 +228,11 @@ void MyOpenGLView::init(const view::CanvasInterface& canvas)
     auto icosahedron_mesh_data = mesh::MeshDefinitonIcosahedron<float, unsigned int>(1.0f).generate_mesh_data();
     _meshs = OpenGL::mesh::MeshVector(std::vector<std::shared_ptr<OpenGL::mesh::MeshInterface>>
     {
-        std::make_shared<OpenGL::mesh::SingleMesh>(*tetrahedron_mesh_data),
-        std::make_shared<OpenGL::mesh::SingleMesh>(*hexahedron_mesh_data),
-        std::make_shared<OpenGL::mesh::SingleMesh>(*octahedron_mesh_data),
-        std::make_shared<OpenGL::mesh::SingleMesh>(*dodecahedron_mesh_data),
-        std::make_shared<OpenGL::mesh::SingleMesh>(*icosahedron_mesh_data),
+        std::make_shared<OpenGL::mesh::SingleMeshSeparateAttributeFormat>(*tetrahedron_mesh_data),
+        std::make_shared<OpenGL::mesh::SingleMeshSeparateAttributeFormat>(*hexahedron_mesh_data),
+        std::make_shared<OpenGL::mesh::SingleMeshSeparateAttributeFormat>(*octahedron_mesh_data),
+        std::make_shared<OpenGL::mesh::SingleMeshSeparateAttributeFormat>(*dodecahedron_mesh_data),
+        std::make_shared<OpenGL::mesh::SingleMeshSeparateAttributeFormat>(*icosahedron_mesh_data),
     });
 
     glGenBuffers(1, &_shader_storag_buffer_object);

@@ -108,6 +108,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\_util\source\gl\opengl_mesh_single.cpp" />
+    <ClCompile Include="..\_util\source\gl\opengl_mesh_single_separate_attribute.cpp" />
     <ClCompile Include="..\_util\source\wxutil\wx_opengl_canvas.cpp" />
     <ClCompile Include="wx_widget_opengl_meshs.cpp" />
   </ItemGroup>
@@ -118,6 +119,7 @@
     <ClInclude Include="..\_util\include\gl\opengl_include.h" />
     <ClInclude Include="..\_util\include\gl\opengl_mesh_interface.h" />
     <ClInclude Include="..\_util\include\gl\opengl_mesh_single.h" />
+    <ClInclude Include="..\_util\include\gl\opengl_mesh_single_separate_attribute.h" />
     <ClInclude Include="..\_util\include\gl\opengl_mesh_vector.h" />
     <ClInclude Include="..\_util\include\mesh\mesh_data_container.h" />
     <ClInclude Include="..\_util\include\mesh\mesh_data_interface.h" />

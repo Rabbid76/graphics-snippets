@@ -9,6 +9,9 @@
     <ClCompile Include="..\_util\source\gl\opengl_mesh_single.cpp">
       <Filter>opengl</Filter>
     </ClCompile>
+    <ClCompile Include="..\_util\source\gl\opengl_mesh_single_separate_attribute.cpp">
+      <Filter>opengl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\pch.h" />
@@ -71,6 +74,9 @@
     </ClInclude>
     <ClInclude Include="..\_util\include\mesh\mesh_include.h">
       <Filter>mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\_util\include\gl\opengl_mesh_single_separate_attribute.h">
+      <Filter>opengl</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
