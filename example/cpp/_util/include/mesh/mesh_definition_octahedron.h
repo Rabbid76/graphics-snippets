@@ -48,7 +48,7 @@ namespace mesh
                     {
                         l * v[e[i] * 3], l * v[e[i] * 3 + 1], l * v[e[i] * 3 + 2],
                         n.x, n.y, n.z,
-                        t[e[i] * 2], t[e[i] * 2 + 1], static_cast<T_VERTEX>(si) / 8
+                        t[e[i] * 2], t[e[i] * 2 + 1], static_cast<T_VERTEX>(si / 2 + si % 2 * 4) / 8
                     });
             }
         }

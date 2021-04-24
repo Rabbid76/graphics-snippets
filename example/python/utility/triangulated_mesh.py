@@ -133,6 +133,7 @@ class Dodecahedron(TriangulatedMeshBase):
 
 class Icosahedron(TriangulatedMeshBase):
     def __init__(self, l = 1):
+
         v = [0,0,1, 0.894,0,0.447, 0.276,0.851,0.447, -0.724,0.526,0.447, -0.724,-0.526,0.447, 0.276,-0.851, 0.447,
              0.724,0.526,-0.447, -0.276,0.851,-0.447, -0.894,0,-0.447, -0.276,-0.851,-0.447, 0.724,-0.526,-0.447, 0,0,-1 ]
         e = [1,2,0, 2,3,0, 3,4,0, 4,5,0, 5,1,0, 7,6,11, 8,7,11, 9,8,11, 10,9,11, 6,10,11,
@@ -149,7 +150,7 @@ class Icosahedron(TriangulatedMeshBase):
         self._attributes = []
         for i in range(len(e)):
             ti, fi = i % 3, i // 3
-            shift = 0 if (math.floor(fi) >= 10 or ti == 0) else 2
+            shift = 0 if (fi >= 10 or ti == 0) else 2
             self._attributes += [
                 l*v[e[i]*3], l*v[e[i]*3+1], l*v[e[i]*3+2],
                 n[fi*3], n[fi*3+1], n[fi*3+2],

@@ -35,7 +35,7 @@ namespace mesh
         const auto n = std::vector<T_VERTEX>{ 0,0,1, 1,0,0, 0,0,-1, -1,0,0, 0,1,0, 0,-1,0 };
         const auto e = std::vector<T_INDEX>{ 0,1,2,3, 1,5,6,2, 5,4,7,6, 4,0,3,7, 3,2,6,7, 1,0,4,5 };
            
-        T_VERTEX l = _radius / std::sqrt(2.0f);
+        T_VERTEX l = _radius / std::sqrt(3.0f);
         std::vector<T_VERTEX> vertex_attributes;
         std::vector<T_INDEX> indices;
         for (int si = 0; si < 6; ++si)

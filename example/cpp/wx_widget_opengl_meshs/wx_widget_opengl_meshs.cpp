@@ -37,6 +37,7 @@
 #include <mesh/mesh_definition_octahedron.h>
 #include <mesh/mesh_definition_hexahedron.h>
 #include <mesh/mesh_definition_dodecahedron.h>
+#include <mesh/mesh_definition_icosahedron.h>
 
 // glm
 # define GLM_ENABLE_EXPERIMENTAL
@@ -225,6 +226,7 @@ MyFrame::MyFrame()
        wxT("Hexahedron"),
        wxT("Octahedron"),
        wxT("Dodecahedron"),
+       wxT("Icosahedron"),
     };
     wxArrayString strings;
     for (const auto& name : shape_names)
@@ -375,29 +377,18 @@ void MyOpenGLView::init(const view::CanvasInterface& canvas)
 
     _program = OpenGL::CreateProgram(phong_vert, phong_frag);
 
-    // TODO: triangle definition
-    /*
-    _mesh = std::make_unique<OpenGL::mesh::SingleMesh>(
-        mesh::MeshDataContainer<float, unsigned int>::new_mesh(
-            {
-                -0.866f, -0.75f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-                 0.866f, -0.75f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f,
-                 0.0f,    0.75f, 0.0f, 0.0f, 0.0f, -1.0f, 1.0f, 0.5f, 0.5f,
-            },
-            { 0, 1, 2 },
-            { {mesh::AttributeType::vertex, 3}, {mesh::AttributeType::normal_vector, 3}, {mesh::AttributeType::texture_uvw, 3} }));
-     */
-       
     auto tetrahedron_mesh_data = mesh::MeshDefinitonTetrahedron<float, unsigned int>(1.0f).generate_mesh_data();
     auto hexahedron_mesh_data = mesh::MeshDefinitonHexahedron<float, unsigned int>(1.0f).generate_mesh_data();
     auto octahedron_mesh_data = mesh::MeshDefinitonOctahedron<float, unsigned int>(1.0f).generate_mesh_data();
     auto dodecahedron_mesh_data = mesh::MeshDefinitonDodecahedron<float, unsigned int>(1.0f).generate_mesh_data();
+    auto icosahedron_mesh_data = mesh::MeshDefinitonIcosahedron<float, unsigned int>(1.0f).generate_mesh_data();
     _meshs = OpenGL::mesh::MeshVector(std::vector<std::shared_ptr<OpenGL::mesh::MeshInterface>>
     {
         std::make_shared<OpenGL::mesh::SingleMesh>(*tetrahedron_mesh_data),
         std::make_shared<OpenGL::mesh::SingleMesh>(*hexahedron_mesh_data),
         std::make_shared<OpenGL::mesh::SingleMesh>(*octahedron_mesh_data),
         std::make_shared<OpenGL::mesh::SingleMesh>(*dodecahedron_mesh_data),
+        std::make_shared<OpenGL::mesh::SingleMesh>(*icosahedron_mesh_data),
     });
 
     glGenBuffers(1, &_shader_storag_buffer_object);
@@ -422,12 +413,7 @@ void MyOpenGLView::resize(const view::CanvasInterface& canvas)
         return;
     
     float aspect = static_cast<float>(cx) / static_cast<float>(cy);
-    
-    //glm::mat4 projection = aspect < 1.0f
-    //    ? glm::ortho(-1.0f, 1.0f, -1.0f / aspect, 1.0f / aspect, -1.0f, 1.0f)
-    //    : glm::ortho(-aspect, aspect, -1.0f, 1.0f, -10.0f, 10.0f);
-
-    glm::mat4 projection = glm::perspective(glm::radians(45.0f), aspect, 0.01f, 10.0f);
+    glm::mat4 projection = glm::perspective(glm::radians(30.0f), aspect, 0.01f, 10.0f);
     glProgramUniformMatrix4fv(_program, 0, 1, false, glm::value_ptr(projection));
 }
 

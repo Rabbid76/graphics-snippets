@@ -14,6 +14,9 @@
     <ClCompile Include="mesh_definition_dodecahedron_test.cpp">
       <Filter>mesh</Filter>
     </ClCompile>
+    <ClCompile Include="mesh_definition_icosahedron_test.cpp">
+      <Filter>mesh</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />

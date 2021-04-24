@@ -57,7 +57,7 @@ namespace mesh
                 n += glm::vec3(v[e[si * 5 + pi] * 3], v[e[si * 5 + pi] * 3 + 1], v[e[si * 5 + pi] * 3 + 2]);
             auto cpt = n / static_cast<T_VERTEX>(5);
             n = normalize(n);
-            auto w = static_cast<T_VERTEX>(si) / 12;
+            auto w = static_cast<T_VERTEX>(si / 2 + si % 2 * 6) / 12;
             vertex_attributes.insert(vertex_attributes.end(),
                 {
                     l * cpt[0], l * cpt[1], l * cpt[2], n.x, n.y, n.z, 0.5, 0.5, w

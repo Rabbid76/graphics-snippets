@@ -45,6 +45,9 @@
     <ClInclude Include="..\_util\include\mesh\mesh_definition_dodecahedron.h">
       <Filter>mesh</Filter>
     </ClInclude>
+    <ClInclude Include="..\_util\include\mesh\mesh_definition_icosahedron.h">
+      <Filter>mesh</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="mesh">
