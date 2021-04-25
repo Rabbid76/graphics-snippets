@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "utility_unit_test", "_util\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "wx_widget_opengl_meshs", "wx_widget_opengl_meshs\wx_widget_opengl_meshs.vcxproj", "{D0C5D354-54F7-4251-BA71-074C1C17AE47}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "wx_widget_opengl_platonic_solid", "wx_widget_opengl_platonic_solid\wx_widget_opengl_platonic_solid.vcxproj", "{94B4137B-AC1E-468B-9803-5B69DD2F43E3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -27,6 +29,10 @@ Global
 		{D0C5D354-54F7-4251-BA71-074C1C17AE47}.Debug|x64.Build.0 = Debug|x64
 		{D0C5D354-54F7-4251-BA71-074C1C17AE47}.Release|x64.ActiveCfg = Release|x64
 		{D0C5D354-54F7-4251-BA71-074C1C17AE47}.Release|x64.Build.0 = Release|x64
+		{94B4137B-AC1E-468B-9803-5B69DD2F43E3}.Debug|x64.ActiveCfg = Debug|x64
+		{94B4137B-AC1E-468B-9803-5B69DD2F43E3}.Debug|x64.Build.0 = Debug|x64
+		{94B4137B-AC1E-468B-9803-5B69DD2F43E3}.Release|x64.ActiveCfg = Release|x64
+		{94B4137B-AC1E-468B-9803-5B69DD2F43E3}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

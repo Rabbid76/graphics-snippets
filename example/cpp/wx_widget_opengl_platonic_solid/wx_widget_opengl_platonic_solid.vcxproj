@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{94B4137B-AC1E-468B-9803-5B69DD2F43E3}</ProjectGuid>
+    <RootNamespace>openglexample</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\cpp_external_libraries.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\cpp_external_libraries.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WXUSINGDLL;GLEW_STATIC;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>.\;$(SolutionDir);$(SolutionDir)\_util\include;$(SolutionDir)\$(OwnGraphicsLibDir)include\Render;$(SolutionDir)\$(GlmDir);$(SolutionDir)\$(StbDir);$(SolutionDir)\$(GlewDir)\include;$(SolutionDir)\$(GlfwDir)\include;$(SolutionDir)\$(FreeGlutDir)\include;$(SolutionDir)\$(FreetypeDir)\include;$(SolutionDir)\$(wxWidgetDir)\include;$(SolutionDir)\$(wxWidgetDir)\include\msvc;$(SolutionDir)\$(AssimpDir)\include\msvc</AdditionalIncludeDirectories>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)\$(GlewDir)\lib\Release\$(PlatformName)\;$(SolutionDir)\$(FreeGlutDir)\lib\$(Platform)\;$(SolutionDir)\$(GlfwDir)\lib-vc2015;$(SolutionDir)\$(AssimpDir)\lib\x64\;$(SolutionDir)\$(FreetypeDir)\objs\$(PlatformName)\$(Configuration)\;$(SolutionDir)\$(wxWidgetDir)\lib\vc_x64_dll\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glew32s.lib;Opengl32.lib;Glu32.lib;glfw3.lib;freetype.lib;wxbase31ud.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreAllDefaultLibraries>
+      </IgnoreAllDefaultLibraries>
+      <IgnoreSpecificDefaultLibraries>LIBCMT.lib</IgnoreSpecificDefaultLibraries>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WXUSINGDLL;GLEW_STATIC;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>.\;$(SolutionDir);$(SolutionDir)\_util\include;$(SolutionDir)\$(OwnGraphicsLibDir)include\Render;$(SolutionDir)\$(GlmDir);$(SolutionDir)\$(StbDir);$(SolutionDir)\$(GlewDir)\include;$(SolutionDir)\$(GlfwDir)\include;$(SolutionDir)\$(FreeGlutDir)\include;$(SolutionDir)\$(FreetypeDir)\include;$(SolutionDir)\$(wxWidgetDir)\include;$(SolutionDir)\$(wxWidgetDir)\include\msvc;$(SolutionDir)\$(AssimpDir)\include\msvc</AdditionalIncludeDirectories>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalLibraryDirectories>$(SolutionDir)\$(GlewDir)\lib\Release\$(PlatformName)\;$(SolutionDir)\$(FreeGlutDir)\lib\$(Platform)\;$(SolutionDir)\$(GlfwDir)\lib-vc2015;$(SolutionDir)\$(AssimpDir)\lib\x64\;$(SolutionDir)\$(FreetypeDir)\objs\$(PlatformName)\$(Configuration)\;$(SolutionDir)\$(wxWidgetDir)\lib\vc_x64_dll\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glew32s.lib;Opengl32.lib;Glu32.lib;glfw3.lib;freetype.lib;wxbase31u.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreAllDefaultLibraries>
+      </IgnoreAllDefaultLibraries>
+      <IgnoreSpecificDefaultLibraries>LIBCMT.lib</IgnoreSpecificDefaultLibraries>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\pch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\_util\source\gl\opengl_mesh_single.cpp" />
+    <ClCompile Include="..\_util\source\gl\opengl_mesh_single_separate_attribute.cpp" />
+    <ClCompile Include="..\_util\source\wxutil\wx_opengl_canvas.cpp" />
+    <ClCompile Include="wx_widget_opengl_platonic_solid.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\pch.h" />
+    <ClInclude Include="..\_util\include\gl\gl_debug.h" />
+    <ClInclude Include="..\_util\include\gl\gl_shader.h" />
+    <ClInclude Include="..\_util\include\gl\opengl_include.h" />
+    <ClInclude Include="..\_util\include\gl\opengl_mesh_interface.h" />
+    <ClInclude Include="..\_util\include\gl\opengl_mesh_single.h" />
+    <ClInclude Include="..\_util\include\gl\opengl_mesh_single_separate_attribute.h" />
+    <ClInclude Include="..\_util\include\gl\opengl_mesh_vector.h" />
+    <ClInclude Include="..\_util\include\mesh\mesh_data_container.h" />
+    <ClInclude Include="..\_util\include\mesh\mesh_data_interface.h" />
+    <ClInclude Include="..\_util\include\mesh\mesh_definition_dodecahedron.h" />
+    <ClInclude Include="..\_util\include\mesh\mesh_definition_icosahedron.h" />
+    <ClInclude Include="..\_util\include\mesh\mesh_definition_interface.h" />
+    <ClInclude Include="..\_util\include\mesh\mesh_definition_tetrahedron.h" />
+    <ClInclude Include="..\_util\include\mesh\mesh_definition_octahedron.h" />
+    <ClInclude Include="..\_util\include\mesh\mesh_definition_hexahedron.h" />
+    <ClInclude Include="..\_util\include\mesh\mesh_include.h" />
+    <ClInclude Include="..\_util\include\view\canvas_interface.h" />
+    <ClInclude Include="..\_util\include\view\view_interface.h" />
+    <ClInclude Include="..\_util\include\wxutil\wx_control_factory.h" />
+    <ClInclude Include="..\_util\include\wxutil\wx_include.h" />
+    <ClInclude Include="..\_util\include\wxutil\wx_opengl_canvas.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

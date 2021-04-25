@@ -4,6 +4,8 @@
 # Can I search directory and subdirectories for header files? [https://stackoverflow.com/questions/19738956/can-i-search-directory-and-subdirectories-for-header-files]
 # How to run pre- and post-recipes for every target using GNU Make? [https://stackoverflow.com/questions/37952098/how-to-run-pre-and-post-recipes-for-every-target-using-gnu-make]
 
+# make: Nothing to be done for `all' [https://stackoverflow.com/questions/8561640/make-nothing-to-be-done-for-all]
+# Sometimes "Nothing to be done for all" error can be caused by spaces before command in makefile rule instead of tab. Please ensure that you use tabs instead of spaces inside of your rules.
 
 filePathName = $(fileDirname)/$(fileBasenameNoExtension)
 filePathNameExt = $(fileDirname)/$(fileBasename)

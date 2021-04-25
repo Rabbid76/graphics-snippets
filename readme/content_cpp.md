@@ -31,6 +31,15 @@ Robert C. Martin, Clean Architecture
 [stippled_line_shader](../example/cpp/opengl_line_stipple/stippled_line_shader.cpp)  
 [![stippled_line_shader](../documentation/image/stippled_line_shader.png)](../example/cpp/opengl_line_stipple/stippled_line_shader.cpp)  
 
+## Platonic solid
+
+> [Wikipedia - Platonic solid](https://en.wikipedia.org/wiki/Platonic_solid)
+>
+>In three-dimensional space, a Platonic solid is a regular, convex polyhedron. It is constructed by congruent (identical in shape and size), regular (all angles equal and all sides equal), polygonal faces with the same number of faces meeting at each vertex. Five solids meet these criteria.
+
+[Platonic solid](../example/cpp/wx_widget_opengl_platonic_solid)  
+[![stippled_line_shader](../screenshot/example/cpp/wx_widget_opengl_platonic_solid/wx_widget_opengl_platonic_solid.png)](../example/cpp/wx_widget_opengl_platonic_solid)  
+
 ## OpenGL 4 Examples
 
 [example_glm_animation_1](../example/cpp/opengl/example_glm_animation_1.cpp)  
