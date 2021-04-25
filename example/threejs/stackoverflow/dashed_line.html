@@ -12,7 +12,7 @@
 
 <body>
 <!--script src="https://threejs.org/build/three.js"></!--script-->
-<script src="https://rawcdn.githack.com/mrdoob/three.js/r124/build/three.js"></script>
+<script src="https://rawcdn.githack.com/mrdoob/three.js/r128/build/three.js"></script>
 
 
 <a id="ref-link" href="https://stackoverflow.com/questions/54516794/three-js-uniform-dashed-line-relative-to-camera">
@@ -55,8 +55,8 @@ void main(){
 <script>
 var scene = new THREE.Scene();
 var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
-var canvas = document.createElement( 'canvas' );
-var context = canvas.getContext( 'webgl2' );
+var canvas = document.createElement('canvas');
+var context = canvas.getContext('webgl2');
 var renderer = new THREE.WebGLRenderer( { canvas: canvas, context: context } );
 
 var vpSize = [window.innerWidth, window.innerHeight];

@@ -30,13 +30,9 @@ canvas {
 </head>
 
 <body>
-<script src="https://threejs.org/build/three.js"></script>
-<script src="https://threejs.org/examples/js/libs/dat.gui.min.js"></script>
-<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
-<script src="https://rawgit.com/Wilt/ThreeCSG/develop/ThreeCSG.js"></script>
-<script src="https://threejs.org/examples/js/loaders/MTLLoader.js"></script>
-<script src="https://rawgit.com/mrdoob/three.js/dev/examples/js/loaders/LoaderSupport.js"></script>
-<script src="https://rawgit.com/mrdoob/three.js/dev/examples/js/loaders/OBJLoader2.js"></script>
+  <script src="https://rawcdn.githack.com/mrdoob/three.js/r124/build/three.js"></script>
+  <script src="https://rawcdn.githack.com/mrdoob/three.js/r124/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://rawgit.com/Wilt/ThreeCSG/develop/ThreeCSG.js"></script>
 
 <div id="container"></div>
 
@@ -84,7 +80,7 @@ Unexpected result using ThreeCSG
   function createModel() {
 
     // left cuboid
-  	var cubeGeoL = new THREE.CubeGeometry(125, 250, 250);
+  	var cubeGeoL = new THREE.BoxGeometry(125, 250, 250);
     var cubeMeshL = new THREE.Mesh(cubeGeoL);
     cubeMeshL.position.x -= 62.5;
     var cubeBSPL = new ThreeBSP(cubeMeshL);

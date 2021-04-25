@@ -11,8 +11,8 @@
 </head>
 
 <body>
-<script src="https://threejs.org/build/three.min.js"></script>
-<!--script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/100/three.min.js"></script-->
+<!--script src="https://threejs.org/build/three.min.js"></script-->
+<script src="https://cdn.jsdelivr.net/npm/three@0.128/build/three.js"></script>
 <!--script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script-->
 
 
@@ -66,7 +66,7 @@ var canvas = document.createElement( 'canvas' );
 var context = canvas.getContext( "experimental-webgl" );
 var renderer = new THREE.WebGLRenderer( { canvas: canvas, context : context } );
 
-this.context = renderer.context;
+this.context = renderer.getContext();
 this.available_extensions = context.getSupportedExtensions();
 this.ext_noperspective = context.getExtension("GL_NV_shader_noperspective_interpolation");
 
