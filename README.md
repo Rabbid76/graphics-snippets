@@ -53,6 +53,7 @@ Lloyd Alexander, The Book of Three
 --><a href="https://github.com/Rabbid76/graphics-snippets/blob/master/readme/content_cpp.md"><img src="screenshot/example/cpp/opengl_legacy/example_fixedattribute_cube_1.gif" height="100"></a><!--
 --><a href="https://github.com/Rabbid76/graphics-snippets/blob/master/readme/content_cpp.md"><img src="screenshot/example/cpp/opengl_legacy/example_fixedattribute_sphere_1_slices.gif" height="100"></a><!--
 --><a href="https://github.com/Rabbid76/graphics-snippets/blob/master/readme/content_cpp.md"><img src="screenshot/example/cpp/opengl_legacy/example_glu_sphere_1.gif" height="100"></a><!--
+--><a href="https://github.com/Rabbid76/graphics-snippets/blob/master/readme/content_cpp.md"><img src="screenshot/example/cpp/wx_widget_opengl_platonic_solid/wx_widget_opengl_platonic_solid.png" height="100"></a><!--
 --><a href="https://github.com/Rabbid76/graphics-snippets/blob/master/readme/content_threejs.md"><img src="https://i.stack.imgur.com/Arv4J.gif" height="100"></a><!--
 --><a href="https://github.com/Rabbid76/graphics-snippets/blob/master/readme/content_threejs.md"><img src="https://i.stack.imgur.com/yFnQd.gif" height="100"></a><!--
 --><a href="https://github.com/Rabbid76/graphics-snippets/blob/master/readme/content_threejs.md"><img src="https://i.stack.imgur.com/K89Mz.png" height="100"></a><!--
