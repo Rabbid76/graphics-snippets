@@ -15,6 +15,8 @@ Robert C. Martin, The Robert C. Martin Clean Code Collection (Collection)
 
 [![](../processing/p5js/image/circle_line_intersection.png) Circle by 3 points - p5.js](https://rabbid76.github.io/graphics-snippets/processing/p5js/p5js_circle_line_intersection.html)
 
+[![](https://i.stack.imgur.com/bH996.png) Random shape - p5.js](https://rabbid76.github.io/graphics-snippets/example/p5.js/random_shape_1.html)
+
 ## [p5.js](https://p5js.org/) StackOverflow examples
 
 [Bouncing ball](https://rabbid76.github.io/graphics-snippets/processing/p5_js_stackoverflow/p5js_so_bounceing_ball_1.html)

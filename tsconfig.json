@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+      //"module": "commonjs",
+      //"module": "system",
+      "module": "None",
+      //"outDir": "./bin",
+      "sourceMap": true,
+  
+      // ???
+      "target": "es6",
+  
+      // remove later
+      //"noImplicitUseStrict": true
+    }
+  }
