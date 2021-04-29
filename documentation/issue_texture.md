@@ -367,11 +367,8 @@ To proper read the image the last parameter of `stbi_load` has to be 0 (since th
 
 By default OpenGL assumes that the start of each row of an image is aligned to 4 bytes.
 
-This is because the [`GL_UNPACK_ALIGNMENT`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml) parameter by default is 4.
-
-Since the image has 3 color channels (`GL_RGB`), and is tightly packed the size of a row of the image may not be aligned to 4 bytes.
-
-When a RGB image with 3 color channels is loaded to a texture object, then [`GL_UNPACK_ALIGNMENT`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml) has to be set to 1: 
+This is because the [`GL_UNPACK_ALIGNMENT`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml) parameter by default is 4. Since the image has 3 color channels (`GL_RGB`), and is tightly packed the size of a row of the image may not be aligned to 4 bytes.  
+When a RGB image with 3 color channels is loaded to a texture object and 3*width is not divisible by 4, [`GL_UNPACK_ALIGNMENT`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml) has to be set to 1:
 
 ```cpp
 glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
