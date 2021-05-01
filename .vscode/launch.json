@@ -22,6 +22,13 @@
       ]
     },
     {
+      "type": "chrome",
+      "request": "launch",
+      "name": "p5js Launch Chrome against localhost:4200",
+      "url": "http://localhost:4200",
+      "webRoot": "${workspaceFolder}/example/p5.js/angularP5js"
+    },
+    {
       "name": "PySpark",
       "type": "python",
       "request": "launch",

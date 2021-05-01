@@ -3,9 +3,9 @@ import { Component } from '@angular/core';
 @Component({
   selector: 'app-root',
   //template: 'html content',
-  templateUrl: './app.component.html',
+  templateUrl: './home.component.html',
   styles: []
 })
-export class AppComponent {
+export class HomeComponent {
   title = 'p5.js examples';
 }
