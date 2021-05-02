@@ -17,3 +17,5 @@ _shadercode_log
 packages
 _extern
 __pycache__
+dist
+node_modules
