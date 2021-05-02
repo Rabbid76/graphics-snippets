@@ -12,6 +12,7 @@
 #include <gl/opengl_mesh_vector.h>
 #include <gl/opengl_mesh_single.h>
 #include <gl/opengl_mesh_single_separate_attribute.h>
+#include <controls/spinnning_controls.h>
 
 // glm
 #define GLM_ENABLE_EXPERIMENTAL
