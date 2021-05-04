@@ -90,6 +90,9 @@
     <ClInclude Include="..\_util\include\controls\controls_view_interface.h">
       <Filter>controls</Filter>
     </ClInclude>
+    <ClInclude Include="..\_util\include\view\mouse_event_interface.h">
+      <Filter>view</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="mesh">

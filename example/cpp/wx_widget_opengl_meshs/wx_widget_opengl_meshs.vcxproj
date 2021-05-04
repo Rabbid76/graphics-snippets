@@ -135,6 +135,7 @@
     <ClInclude Include="..\_util\include\mesh\mesh_definition_hexahedron.h" />
     <ClInclude Include="..\_util\include\mesh\mesh_include.h" />
     <ClInclude Include="..\_util\include\view\canvas_interface.h" />
+    <ClInclude Include="..\_util\include\view\mouse_event_interface.h" />
     <ClInclude Include="..\_util\include\view\view_interface.h" />
     <ClInclude Include="..\_util\include\wxutil\wx_control_factory.h" />
     <ClInclude Include="..\_util\include\wxutil\wx_include.h" />

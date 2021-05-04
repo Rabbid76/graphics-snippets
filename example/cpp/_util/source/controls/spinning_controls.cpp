@@ -4,5 +4,7 @@
 
 namespace controls
 {
-    
+    SpinningControls::SpinningControls(const ControlsViewInterface& view)
+        : _view{ view }
+    {}
 }

@@ -12,7 +12,7 @@
 #include <gl/opengl_mesh_vector.h>
 #include <gl/opengl_mesh_single.h>
 #include <gl/opengl_mesh_single_separate_attribute.h>
-#include <controls/spinnning_controls.h>
+#include <controls/spinning_controls.h>
 
 // glm
 #define GLM_ENABLE_EXPERIMENTAL
@@ -54,18 +54,21 @@ private:
 
 class MyOpenGLView
     : public view::ViewInterface
+    , public controls::ControlsViewInterface
+    , public view::MouseEventInterface
 {
 private:
 
     const std::unique_ptr<OpenGL::CContext> _context;
     GLuint _program = 0;
-    GLuint _shader_storag_buffer_object;
+    GLuint _shader_storag_buffer_object = 0;
     OpenGL::mesh::MeshVector _meshs;
     GLfloat _angle1 = 0.0f;
     GLfloat _angle2 = 0.0f;
     int _selected_shape = 0;
     int _selected_polygon_mode = 2;
     int _selected_culling_mode = 0;
+    controls::TViewportRectangle _viewport_rectangle{ 0, 0, 0, 0 };
 
 public:
 
@@ -75,6 +78,16 @@ public:
     virtual void init(const view::CanvasInterface& canvas) override;
     virtual void resize(const view::CanvasInterface& canvas) override;
     virtual void render(const view::CanvasInterface& canvas) override;
+
+    virtual const controls::TViewportRectangle& get_viewport_rectangle(void) override
+    {
+        return _viewport_rectangle;
+    }
+
+    virtual void mouse_motion(int x, int y) const override
+    {
+        // [...]
+    }
 
     void select_shape(int shape)
     {
@@ -162,6 +175,8 @@ MyFrame::MyFrame()
     };
     auto culling_mode_selection = wx_utility::new_selction_box(
         _control_panel, wxID_ANY, controls_sizer, std::move(culling_mode_names), 0, this, &MyFrame::face_culling_changed);
+
+    _view_panel->add_mouse_event_client(_view.get());
 }
 
 void MyFrame::shape_changed(wxCommandEvent& event)
@@ -294,7 +309,9 @@ void MyOpenGLView::init(const view::CanvasInterface& canvas)
 void MyOpenGLView::resize(const view::CanvasInterface& canvas)
 {
     const auto [cx, cy] = canvas.get_size();
+    _viewport_rectangle = { 0, 0, static_cast<float>(cx), static_cast<float>(cy) };
     glViewport(0, 0, cx, cy);
+
 
     if (_program == 0)
         return;

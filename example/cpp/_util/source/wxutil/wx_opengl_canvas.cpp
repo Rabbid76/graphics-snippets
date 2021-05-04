@@ -124,7 +124,10 @@ namespace wxutil
     }
 
     void OpenGLCanvas::mouse_moved(wxMouseEvent& event)
-    {}
+    {
+        for (auto* mouse_event_client : _mouse_event_clients)
+            mouse_event_client->mouse_motion(event.GetX(), event.GetY());
+    }
     
     void OpenGLCanvas::mouse_down(wxMouseEvent& event)
     {}

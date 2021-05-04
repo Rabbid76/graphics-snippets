@@ -9,7 +9,7 @@ namespace controls
 
     class ControlsViewInterface
     {
-        virtual const TViewportRectangle get_viewport_rectangle(void) = 0;
+        virtual const TViewportRectangle& get_viewport_rectangle(void) = 0;
     };
 }
 

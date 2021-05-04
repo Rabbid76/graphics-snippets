@@ -22,7 +22,7 @@ namespace controls
 
     public:
 
-       
+        SpinningControls(const ControlsViewInterface& view);
     };
 }
 
