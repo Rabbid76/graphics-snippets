@@ -8,6 +8,7 @@
 [Workaround for lack of line width on Windows when using Three.js](https://stackoverflow.com/questions/21067461/workaround-for-lack-of-line-width-on-windows-when-using-three-js)  
 [Detecting support for WebGL thick lines in browser](https://stackoverflow.com/questions/38333977/detecting-support-for-webgl-thick-lines-in-browser)  
 [OpenGL : thick and smooth/non-broken lines *in 3D*](https://stackoverflow.com/questions/36655888/opengl-thick-and-smooth-non-broken-lines-in-3d/36663605)  
+[Drawing a thick line with OpenGl in C++](https://stackoverflow.com/questions/56891248/drawing-a-thick-line-with-opengl-in-c/56891294#56891294)  
 
 # Answered
 
