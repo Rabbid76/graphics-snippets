@@ -52,6 +52,7 @@ private:
     std::shared_ptr<MyOpenGLView> _view;
 };
 
+
 class MyOpenGLView
     : public view::ViewInterface
     , public controls::ControlsViewInterface
@@ -69,6 +70,10 @@ private:
     int _selected_polygon_mode = 2;
     int _selected_culling_mode = 0;
     controls::TViewportRectangle _viewport_rectangle{ 0, 0, 0, 0 };
+    std::unique_ptr<controls::ControlsInterface> _controls;
+    std::chrono::high_resolution_clock::time_point _start_time;
+    glm::mat4 _view_matrix{ glm::mat4(1.0f) };
+    glm::mat4 _projection_matrix{ glm::mat4(1.0f) };
 
 public:
 
@@ -79,10 +84,36 @@ public:
     virtual void resize(const view::CanvasInterface& canvas) override;
     virtual void render(const view::CanvasInterface& canvas) override;
 
-    virtual const controls::TViewportRectangle& get_viewport_rectangle(void) override
+    virtual const controls::TViewportRectangle& get_viewport_rectangle(void) const override
     {
         return _viewport_rectangle;
     }
+
+    virtual const double get_time(void) const override
+    {
+        auto current_time = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> diff = current_time - _start_time;
+        return diff.count();
+    }
+
+    virtual const glm::mat4 get_view_matrix(void) const override
+    {
+        return _view_matrix;
+    };
+
+    virtual const glm::mat4 get_inverse_view_matrix(void) const override
+    {
+        return glm::inverse(_view_matrix);
+    };
+
+    virtual const glm::mat4 get_projection_matrix(void) const override
+    {
+        return _projection_matrix;
+    };
+    virtual const glm::mat4 get_inverse_projection_matrix(void) const override
+    {
+        return glm::inverse(_projection_matrix);
+    };
 
     virtual void mouse_motion(int x, int y) const override
     {
@@ -264,6 +295,7 @@ void main()
 
 MyOpenGLView::MyOpenGLView()
     : _context{ std::make_unique<OpenGL::CContext>() }
+    , _controls{ std::make_unique<controls::SpinningControls>(*this) }
 {}
 
 MyOpenGLView::~MyOpenGLView()
@@ -300,10 +332,11 @@ void MyOpenGLView::init(const view::CanvasInterface& canvas)
 
     glUseProgram(_program);
 
-    glm::mat4 view = glm::lookAt(glm::vec3(0, 0, 5), glm::vec3(0), glm::vec3(0, 1, 0));
-    glProgramUniformMatrix4fv(_program, 1, 1, false, glm::value_ptr(view));
+    _view_matrix = glm::lookAt(glm::vec3(0, 0, 5), glm::vec3(0), glm::vec3(0, 1, 0));
+    glProgramUniformMatrix4fv(_program, 1, 1, false, glm::value_ptr(_view_matrix));
 
     resize(canvas);
+    _start_time = std::chrono::high_resolution_clock::now();
 }
 
 void MyOpenGLView::resize(const view::CanvasInterface& canvas)
@@ -317,8 +350,8 @@ void MyOpenGLView::resize(const view::CanvasInterface& canvas)
         return;
     
     float aspect = static_cast<float>(cx) / static_cast<float>(cy);
-    glm::mat4 projection = glm::perspective(glm::radians(30.0f), aspect, 0.01f, 10.0f);
-    glProgramUniformMatrix4fv(_program, 0, 1, false, glm::value_ptr(projection));
+    _projection_matrix = glm::perspective(glm::radians(30.0f), aspect, 0.01f, 10.0f);
+    glProgramUniformMatrix4fv(_program, 0, 1, false, glm::value_ptr(_projection_matrix));
 }
 
 void MyOpenGLView::render(const view::CanvasInterface& canvas)

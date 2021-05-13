@@ -9,7 +9,15 @@ namespace controls
 
     class ControlsViewInterface
     {
-        virtual const TViewportRectangle& get_viewport_rectangle(void) = 0;
+    public:
+
+        virtual const double get_time(void) const = 0; // TODO: SOLID - interface segregation
+
+        virtual const TViewportRectangle& get_viewport_rectangle(void) const = 0;
+        virtual const glm::mat4 get_view_matrix(void) const = 0;
+        virtual const glm::mat4 get_inverse_view_matrix(void) const = 0;
+        virtual const glm::mat4 get_projection_matrix(void) const = 0;
+        virtual const glm::mat4 get_inverse_projection_matrix(void) const = 0;
     };
 }
 
