@@ -19,7 +19,7 @@ namespace controls
 
     glm::mat4 SpinningControls::get_auto_model_matrix(void) const
     {
-        return (_drag || (_auto_rotate && _auto_spin)) ? _current_model_matrix * _model_matrix : _model_matrix;
+        return _auto_rotate ? _current_model_matrix * _model_matrix : _model_matrix;
     }
 
     SpinningControls& SpinningControls::start_drag(const glm::vec2& position)
@@ -37,7 +37,7 @@ namespace controls
     {
         _position = position;
         _hit = false;
-        if (_auto_roatate_active && _auto_rotate_mode)
+        if (_active && _auto_rotate_mode)
             finish_rotate(position);
 
         return *this;
@@ -76,7 +76,7 @@ namespace controls
         {
             float auto_angle_x = static_cast<float>(delta_time / 13.0 * 2.0 * M_PI);
             float auto_angle_y = static_cast<float>(delta_time / 17.0 * 2.0 * M_PI);
-            _current_orbit_matrix = glm::rotate(
+            _current_model_matrix = glm::rotate(
                 glm::rotate(glm::mat4(1.0f), auto_angle_x, glm::vec3(1.0f, 0.0f, 0.0f)),
                 auto_angle_y, glm::vec3(0.0f, 1.0f, 0.0f));
             return *this;

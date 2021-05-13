@@ -117,7 +117,28 @@ public:
 
     virtual void mouse_motion(int x, int y) const override
     {
-        // [...]
+        glm::vec2 position(static_cast<float>(x), static_cast<float>(y));
+        _controls->drag(position);
+    }
+
+    virtual void mouse_action(int x, int y, view::MouseButton button, view::MouseAction action) const override
+    {
+        glm::vec2 position(static_cast<float>(x), static_cast<float>(y));
+
+        switch (button)
+        {
+            case view::MouseButton::LEFT:
+                switch (action)
+                {
+                    case view::MouseAction::PRESS:
+                        _controls->start_drag(position);
+                        break;
+                    case view::MouseAction::RELEASE:
+                        _controls->end_drag(position);
+                        break;
+                }
+                break;
+        }
     }
 
     void select_shape(int shape)
@@ -192,7 +213,7 @@ MyFrame::MyFrame()
     {
        wxT("Point"),
        wxT("Line"),
-       wxT("Polygon"),
+       wxT("Fill"),
     };
     auto polygon_mode_selection = wx_utility::new_selction_box(
         _control_panel, wxID_ANY, controls_sizer, std::move(polygon_mode_names), 2, this, &MyFrame::polygon_mode_changed);
@@ -337,6 +358,7 @@ void MyOpenGLView::init(const view::CanvasInterface& canvas)
 
     resize(canvas);
     _start_time = std::chrono::high_resolution_clock::now();
+    _controls->set_attenution(1.0f, 0.05f, 0.0f);
 }
 
 void MyOpenGLView::resize(const view::CanvasInterface& canvas)
@@ -356,6 +378,8 @@ void MyOpenGLView::resize(const view::CanvasInterface& canvas)
 
 void MyOpenGLView::render(const view::CanvasInterface& canvas)
 {
+    auto model_matrix = _controls->update();
+
     glEnable(GL_DEPTH_TEST);
     if (_selected_culling_mode == 0)
     {
@@ -364,13 +388,13 @@ void MyOpenGLView::render(const view::CanvasInterface& canvas)
     else
     {
         glEnable(GL_CULL_FACE);
-        glCullFace(_selected_culling_mode == 1 ? GL_FRONT : GL_BACK);
+        glCullFace(_selected_culling_mode == 1 ? GL_BACK : GL_FRONT);
         glFrontFace(GL_CCW);
     }
 
     GLenum polygon_mode = _selected_polygon_mode == 0
         ? GL_POINT
-        : _selected_polygon_mode == 1 ? GL_LINE : GL_POLYGON;
+        : _selected_polygon_mode == 1 ? GL_LINE : GL_FILL;
     glPolygonMode(GL_FRONT_AND_BACK, polygon_mode);
 
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
@@ -379,7 +403,7 @@ void MyOpenGLView::render(const view::CanvasInterface& canvas)
     glm::mat4 model(1.0f);
     model = glm::rotate(model, _angle1, glm::vec3(1.0f, 0.0f, 0.0f));
     model = glm::rotate(model, _angle2, glm::vec3(0.0f, 1.0f, 0.0f));
-    glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(model));
+    glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(model_matrix));
     _angle1 += 0.02f;
     _angle2 += 0.01f;
 

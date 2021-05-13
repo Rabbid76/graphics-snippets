@@ -45,10 +45,11 @@ namespace wxutil
 
         // events
         void mouse_moved(wxMouseEvent& event);
-        void mouse_down(wxMouseEvent& event);
+        void mouse_left_down(wxMouseEvent& event);
+        void mouse_left_up(wxMouseEvent& event);
+        void mosue_right_down(wxMouseEvent& event);
+        void mouse_right_up(wxMouseEvent& event);
         void mouse_wheel_moved(wxMouseEvent& event);
-        void mouse_released(wxMouseEvent& event);
-        void right_click(wxMouseEvent& event);
         void mouse_left_window(wxMouseEvent& event);
         void key_pressed(wxKeyEvent& event);
         void key_released(wxKeyEvent& event);

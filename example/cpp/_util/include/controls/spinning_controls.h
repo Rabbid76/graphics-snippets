@@ -19,14 +19,13 @@ namespace controls
     private:
 
         const ControlsViewInterface& _view;
-        bool _active = false;
+        bool _active = true;
         bool _hit = false;
         bool _auto_spin = false;
         bool _auto_rotate = true;
         
         // TODO auto rotate object
-        bool _auto_rotate_mode = false;
-        bool _auto_roatate_active = false;
+        bool _auto_rotate_mode = true;
         double _rotate_start_time = 0.0;
 
         // TODO attenuation object;
@@ -37,7 +36,7 @@ namespace controls
         float _drag_angle = 0.0f;
         double _drag_start_time = 0.0;
         double _drag_time = 0.0;
-        glm::vec3 _drag_axis{ glm::vec3(0.0f) };
+        glm::vec3 _drag_axis{ glm::vec3(0.0f, 0.0f, 1.0f) };
         glm::vec2 _position{ glm::vec2(0.0f) };
         glm::vec2 _start_position{ glm::vec2(0.0f) };
 
@@ -57,12 +56,16 @@ namespace controls
         bool auto_rotate(void) const { return _auto_rotate; }
         bool auto_spin(void) const { return _auto_spin; }
 
-        SpinningControls& set_attenution(std::array<float, 3>&& attenuation) { _attenuation = attenuation; }
+        virtual SpinningControls& set_attenution(float constant, float linear, float quadratic) override
+        { 
+            _attenuation = { constant, linear, quadratic };
+            return *this;
+        }
 
-        SpinningControls& start_drag(const glm::vec2& position);
-        SpinningControls& end_drag(const glm::vec2& position);
-        SpinningControls& drag(const glm::vec2& position);
-        glm::mat4 update(void);
+        virtual SpinningControls& start_drag(const glm::vec2& position) override;
+        virtual SpinningControls& end_drag(const glm::vec2& position) override;
+        virtual SpinningControls& drag(const glm::vec2& position) override;
+        virtual glm::mat4 update(void) override;
 
     private:
         
