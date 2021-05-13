@@ -106,9 +106,10 @@ namespace wxutil
 
     BEGIN_EVENT_TABLE(OpenGLCanvas, wxGLCanvas)
     EVT_MOTION(OpenGLCanvas::mouse_moved)
-    EVT_LEFT_DOWN(OpenGLCanvas::mouse_down)
-    EVT_LEFT_UP(OpenGLCanvas::mouse_released)
-    EVT_RIGHT_DOWN(OpenGLCanvas::right_click)
+    EVT_LEFT_DOWN(OpenGLCanvas::mouse_left_down)
+    EVT_LEFT_UP(OpenGLCanvas::mouse_left_up)
+    EVT_RIGHT_DOWN(OpenGLCanvas::mosue_right_down)
+    EVT_RIGHT_UP(OpenGLCanvas::mouse_right_up)
     EVT_LEAVE_WINDOW(OpenGLCanvas::mouse_left_window)
     EVT_SIZE(OpenGLCanvas::resized)
     EVT_KEY_DOWN(OpenGLCanvas::key_pressed)
@@ -124,18 +125,36 @@ namespace wxutil
     }
 
     void OpenGLCanvas::mouse_moved(wxMouseEvent& event)
-    {}
+    {
+        for (auto* mouse_event_client : _mouse_event_clients)
+            mouse_event_client->mouse_motion(event.GetX(), event.GetY());
+    }
+
+    void OpenGLCanvas::mouse_left_down(wxMouseEvent& event)
+    {
+        for (auto* mouse_event_client : _mouse_event_clients)
+            mouse_event_client->mouse_action(event.GetX(), event.GetY(), view::MouseButton::LEFT, view::MouseAction::PRESS);
+    }
+
+    void OpenGLCanvas::mouse_left_up(wxMouseEvent& event)
+    {
+        for (auto* mouse_event_client : _mouse_event_clients)
+            mouse_event_client->mouse_action(event.GetX(), event.GetY(), view::MouseButton::LEFT, view::MouseAction::RELEASE);
+    }
+
+    void OpenGLCanvas::mosue_right_down(wxMouseEvent& event)
+    {
+        for (auto* mouse_event_client : _mouse_event_clients)
+            mouse_event_client->mouse_action(event.GetX(), event.GetY(), view::MouseButton::RIGHT, view::MouseAction::PRESS);
+    }
     
-    void OpenGLCanvas::mouse_down(wxMouseEvent& event)
-    {}
+    void OpenGLCanvas::mouse_right_up(wxMouseEvent& event)
+    {
+        for (auto* mouse_event_client : _mouse_event_clients)
+            mouse_event_client->mouse_action(event.GetX(), event.GetY(), view::MouseButton::RIGHT, view::MouseAction::RELEASE);
+    }
     
     void OpenGLCanvas::mouse_wheel_moved(wxMouseEvent& event)
-    {}
-    
-    void OpenGLCanvas::mouse_released(wxMouseEvent& event)
-    {}
-    
-    void OpenGLCanvas::right_click(wxMouseEvent& event)
     {}
     
     void OpenGLCanvas::mouse_left_window(wxMouseEvent& event)

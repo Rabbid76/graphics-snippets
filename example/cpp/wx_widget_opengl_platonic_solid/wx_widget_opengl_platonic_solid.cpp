@@ -147,7 +147,7 @@ MyFrame::MyFrame()
     {
        wxT("Point"),
        wxT("Line"),
-       wxT("Polygon"),
+       wxT("Fill"),
     };
     auto polygon_mode_selection = wx_utility::new_selction_box(
         _control_panel, wxID_ANY, controls_sizer, std::move(polygon_mode_names), 2, this, &MyFrame::polygon_mode_changed);
@@ -313,13 +313,13 @@ void MyOpenGLView::render(const view::CanvasInterface& canvas)
     else
     {
         glEnable(GL_CULL_FACE);
-        glCullFace(_selected_culling_mode == 1 ? GL_FRONT : GL_BACK);
+        glCullFace(_selected_culling_mode == 1 ? GL_BACK : GL_FRONT);
         glFrontFace(GL_CCW);
     }
 
     GLenum polygon_mode = _selected_polygon_mode == 0
         ? GL_POINT
-        : _selected_polygon_mode == 1 ? GL_LINE : GL_POLYGON;
+        : _selected_polygon_mode == 1 ? GL_LINE : GL_FILL;
     glPolygonMode(GL_FRONT_AND_BACK, polygon_mode);
 
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
