@@ -99,6 +99,9 @@
     <ClInclude Include="..\_util\include\math\glm_include.h">
       <Filter>math</Filter>
     </ClInclude>
+    <ClInclude Include="..\_util\include\controls\drag_operation.h">
+      <Filter>controls</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="mesh">

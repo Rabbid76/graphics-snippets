@@ -117,6 +117,7 @@
     <ClInclude Include="..\pch.h" />
     <ClInclude Include="..\_util\include\controls\controls_interface.h" />
     <ClInclude Include="..\_util\include\controls\controls_view_interface.h" />
+    <ClInclude Include="..\_util\include\controls\drag_operation.h" />
     <ClInclude Include="..\_util\include\controls\spinning_controls.h" />
     <ClInclude Include="..\_util\include\controls\transformation_matrix.h" />
     <ClInclude Include="..\_util\include\gl\gl_debug.h" />

@@ -4,6 +4,7 @@
 #include <controls/controls_interface.h>
 #include <controls/controls_view_interface.h>
 #include <controls/transformation_matrix.h>
+#include <controls/drag_operation.h>
 #include <math/glm_include.h>
 
 #include <memory>
@@ -21,6 +22,9 @@ namespace controls
     private:
 
         const ControlsViewInterface& _view;
+        DragOperation _drag_operation;
+        TransformationMatrix _model_transformation;
+        TransformationMatrix _orbit_transformation;
         bool _active = true;
         bool _hit = false;
         bool _auto_spin = false;
@@ -33,17 +37,8 @@ namespace controls
         // TODO attenuation object;
         std::array<float, 3> _attenuation{ 0.0, 0.0, 0.0 };
 
-        // TODO: drag object
-        bool _drag = false;
-        float _drag_angle = 0.0f;
-        double _drag_start_time = 0.0;
-        double _drag_time = 0.0;
-        glm::vec3 _drag_axis{ glm::vec3(0.0f, 0.0f, 1.0f) };
         glm::vec2 _position{ glm::vec2(0.0f) };
         glm::vec2 _start_position{ glm::vec2(0.0f) };
-
-        TransformationMatrix _model_transformation;
-        TransformationMatrix _orbit_transformation;
 
     public:
 
