@@ -13,16 +13,6 @@ namespace controls
         , _drag_operation(M_PI)
     {}
 
-    glm::mat4 SpinningControls::get_orbit_matrix(void) const
-    {
-        return _orbit_transformation.get_transformation();
-    }
-
-    glm::mat4 SpinningControls::get_auto_model_matrix(void) const
-    {
-       return _model_transformation.get_transformation();
-    }
-
     SpinningControls& SpinningControls::start_drag(const glm::vec2& position)
     {
         _position = position;
@@ -54,21 +44,22 @@ namespace controls
     glm::mat4 SpinningControls::update(void)
     {
         update_model();
-        return get_orbit_matrix() * get_auto_model_matrix();
+        return get_tranformation_matrix();
     }
 
     SpinningControls& SpinningControls::update_model(void)
     {
-        _model_transformation.apply_transformation(glm::mat4(1.0f));
-
         if (_drag_operation.is_dragging())
         {
-            _orbit_transformation.apply_transformation(_drag_operation.get_roatation());
+            _transformation.apply_transformation(_drag_operation.get_roatation());
             return *this;
         }
 
         if (!_auto_rotate)
+        {
+            _transformation.apply_transformation(glm::mat4(1.0f));
             return *this;
+        }
 
         double current_time = _view.get_time();
         double delta_time = current_time - _rotate_start_time;
@@ -76,7 +67,7 @@ namespace controls
         {
             float auto_angle_x = static_cast<float>(delta_time / 13.0 * 2.0 * M_PI);
             float auto_angle_y = static_cast<float>(delta_time / 17.0 * 2.0 * M_PI);
-            _model_transformation.apply_transformation(
+            _transformation.apply_transformation(
                 glm::rotate(
                     glm::rotate(glm::mat4(1.0f), auto_angle_x, glm::vec3(1.0f, 0.0f, 0.0f)),
                     auto_angle_y, glm::vec3(0.0f, 1.0f, 0.0f)));
@@ -85,7 +76,7 @@ namespace controls
 
         if (_drag_operation.time() > 0)
         {
-            _orbit_transformation.apply_transformation(
+            _transformation.apply_transformation(
                 _drag_operation.get_roatation(delta_time, _attenuation.get()));
         }
 
@@ -114,8 +105,7 @@ namespace controls
 
         _auto_rotate = new_auto;
         _auto_spin = new_spin;
-        _model_transformation.update();
-        _orbit_transformation.update();
+        _transformation.update();
         
         return *this;
     }

@@ -24,8 +24,7 @@ namespace controls
 
         const ControlsViewInterface& _view;
         DragOperation _drag_operation;
-        TransformationMatrix _model_transformation;
-        TransformationMatrix _orbit_transformation;
+        TransformationMatrix _transformation;
         std::shared_ptr<AttenuationInterface> _attenuation;
 
         bool _active = true;
@@ -44,9 +43,7 @@ namespace controls
 
         SpinningControls(const ControlsViewInterface& view);
 
-        glm::mat4 get_orbit_matrix(void) const;
-        glm::mat4 get_auto_model_matrix(void) const;
-
+        glm::mat4 get_tranformation_matrix(void) const { return _transformation.get_transformation(); }
         bool auto_rotate(void) const { return _auto_rotate; }
         bool auto_spin(void) const { return _auto_spin; }
 
