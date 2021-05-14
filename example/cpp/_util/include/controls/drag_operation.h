@@ -1,6 +1,9 @@
 #ifndef __DRAG_OPERATION__
 #define __DRAG_OPERATION__
 
+#include <controls/attenuation_interface.h>
+#include <math/glm_include.h>
+
 namespace controls
 {
     class DragOperation
@@ -29,12 +32,11 @@ namespace controls
             return glm::rotate(glm::mat4(1.0f), _angle, _axis);
         }
 
-        glm::mat3 get_roatation(double delta_time, const std::array<float, 3> &attenuation) const
+        glm::mat3 get_roatation(double delta_time, const AttenuationInterface* attenuation) const
         {
-            // TODO attenuation object
             float angle = static_cast<float>(delta_time * _angle / _time);
-            if (std::fabs(attenuation[0]) > 0)
-                angle /= attenuation[0] + attenuation[1] * angle + attenuation[2] * angle * angle;
+            if (attenuation)
+                angle = attenuation->attenuate(angle);
             return glm::rotate(glm::mat4(1.0f), angle, _axis);
         }
 

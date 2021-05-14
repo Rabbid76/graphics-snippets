@@ -102,6 +102,12 @@
     <ClInclude Include="..\_util\include\controls\drag_operation.h">
       <Filter>controls</Filter>
     </ClInclude>
+    <ClInclude Include="..\_util\include\controls\attenuation_interface.h">
+      <Filter>controls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\_util\include\controls\quadratic_attenuation.h">
+      <Filter>controls</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="mesh">

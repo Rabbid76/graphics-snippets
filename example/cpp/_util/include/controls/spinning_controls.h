@@ -5,6 +5,7 @@
 #include <controls/controls_view_interface.h>
 #include <controls/transformation_matrix.h>
 #include <controls/drag_operation.h>
+#include <controls/attenuation_interface.h>
 #include <math/glm_include.h>
 
 #include <memory>
@@ -25,6 +26,8 @@ namespace controls
         DragOperation _drag_operation;
         TransformationMatrix _model_transformation;
         TransformationMatrix _orbit_transformation;
+        std::shared_ptr<AttenuationInterface> _attenuation;
+
         bool _active = true;
         bool _hit = false;
         bool _auto_spin = false;
@@ -33,9 +36,6 @@ namespace controls
         // TODO auto rotate object
         bool _auto_rotate_mode = true;
         double _rotate_start_time = 0.0;
-
-        // TODO attenuation object;
-        std::array<float, 3> _attenuation{ 0.0, 0.0, 0.0 };
 
         glm::vec2 _position{ glm::vec2(0.0f) };
         glm::vec2 _start_position{ glm::vec2(0.0f) };
@@ -50,9 +50,9 @@ namespace controls
         bool auto_rotate(void) const { return _auto_rotate; }
         bool auto_spin(void) const { return _auto_spin; }
 
-        virtual SpinningControls& set_attenution(float constant, float linear, float quadratic) override
+        virtual SpinningControls& set_attenution(std::shared_ptr<AttenuationInterface> attenuation) override
         { 
-            _attenuation = { constant, linear, quadratic };
+            _attenuation = attenuation;
             return *this;
         }
 

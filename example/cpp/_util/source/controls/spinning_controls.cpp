@@ -86,7 +86,7 @@ namespace controls
         if (_drag_operation.time() > 0)
         {
             _orbit_transformation.apply_transformation(
-                _drag_operation.get_roatation(delta_time, _attenuation));
+                _drag_operation.get_roatation(delta_time, _attenuation.get()));
         }
 
         return *this;
