@@ -13,12 +13,7 @@
 #include <gl/opengl_mesh_single.h>
 #include <gl/opengl_mesh_single_separate_attribute.h>
 #include <controls/spinning_controls.h>
-
-// glm
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
+#include <math/glm_include.h>
 
 #include <memory>
 #include <vector>

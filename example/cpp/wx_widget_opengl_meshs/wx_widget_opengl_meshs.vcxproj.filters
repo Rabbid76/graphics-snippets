@@ -93,6 +93,12 @@
     <ClInclude Include="..\_util\include\view\mouse_event_interface.h">
       <Filter>view</Filter>
     </ClInclude>
+    <ClInclude Include="..\_util\include\controls\transformation_matrix.h">
+      <Filter>controls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\_util\include\math\glm_include.h">
+      <Filter>math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="mesh">
@@ -109,6 +115,9 @@
     </Filter>
     <Filter Include="controls">
       <UniqueIdentifier>{3401aed1-c788-4552-889b-b3ca137cbfab}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="math">
+      <UniqueIdentifier>{bb2d5bfe-5e71-48b4-966a-0d90188deed1}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

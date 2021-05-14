@@ -1,6 +1,8 @@
 #ifndef __CONTROLS_VIEW_INTERFACE__
 #define __CONTROLS_VIEW_INTERFACE__
 
+#include <math/glm_include.h>
+
 #include <array>
 
 namespace controls

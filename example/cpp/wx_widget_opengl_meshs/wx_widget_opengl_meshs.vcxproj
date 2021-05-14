@@ -118,6 +118,7 @@
     <ClInclude Include="..\_util\include\controls\controls_interface.h" />
     <ClInclude Include="..\_util\include\controls\controls_view_interface.h" />
     <ClInclude Include="..\_util\include\controls\spinning_controls.h" />
+    <ClInclude Include="..\_util\include\controls\transformation_matrix.h" />
     <ClInclude Include="..\_util\include\gl\gl_debug.h" />
     <ClInclude Include="..\_util\include\gl\gl_shader.h" />
     <ClInclude Include="..\_util\include\gl\opengl_include.h" />
@@ -125,6 +126,7 @@
     <ClInclude Include="..\_util\include\gl\opengl_mesh_single.h" />
     <ClInclude Include="..\_util\include\gl\opengl_mesh_single_separate_attribute.h" />
     <ClInclude Include="..\_util\include\gl\opengl_mesh_vector.h" />
+    <ClInclude Include="..\_util\include\math\glm_include.h" />
     <ClInclude Include="..\_util\include\mesh\mesh_data_container.h" />
     <ClInclude Include="..\_util\include\mesh\mesh_data_interface.h" />
     <ClInclude Include="..\_util\include\mesh\mesh_definition_dodecahedron.h" />

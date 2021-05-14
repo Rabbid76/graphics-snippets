@@ -3,6 +3,8 @@
 
 #include <controls/controls_interface.h>
 #include <controls/controls_view_interface.h>
+#include <controls/transformation_matrix.h>
+#include <math/glm_include.h>
 
 #include <memory>
 #include <chrono>
@@ -40,11 +42,8 @@ namespace controls
         glm::vec2 _position{ glm::vec2(0.0f) };
         glm::vec2 _start_position{ glm::vec2(0.0f) };
 
-        // TODO current matrix object
-        glm::mat4 _model_matrix{ glm::mat4(1.0f) };
-        glm::mat4 _orbit_matrix{ glm::mat4(1.0f) };
-        glm::mat4 _current_model_matrix{ glm::mat4(1.0f) };
-        glm::mat4 _current_orbit_matrix{ glm::mat4(1.0f) };
+        TransformationMatrix _model_transformation;
+        TransformationMatrix _orbit_transformation;
 
     public:
 
