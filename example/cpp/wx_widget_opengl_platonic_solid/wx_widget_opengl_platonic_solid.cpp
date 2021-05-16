@@ -12,12 +12,10 @@
 #include <gl/opengl_mesh_vector.h>
 #include <gl/opengl_mesh_single.h>
 #include <gl/opengl_mesh_single_separate_attribute.h>
-
-// glm
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
+#include <animation/time_interface.h>
+#include <controls/spinning_controls.h>
+#include <controls/quadratic_attenuation.h>
+#include <math/glm_include.h>
 
 #include <memory>
 #include <vector>
@@ -46,25 +44,38 @@ public:
 private:
 
     // wxWindows don't need to be deleted. See [Window Deletion](https://docs.wxwidgets.org/3.0/overview_windowdeletion.html)
-    wxPanel *_control_panel;
-    wxutil::OpenGLCanvas*_view_panel;
+    wxPanel* _control_panel;
+    wxutil::OpenGLCanvas* _view_panel;
     std::shared_ptr<MyOpenGLView> _view;
 };
 
+
 class MyOpenGLView
-    : public view::ViewInterface
+    : public animation::TimeInterface
+    , public view::ViewInterface
+    , public controls::ControlsViewInterface
+    , public view::MouseEventInterface
 {
 private:
 
     const std::unique_ptr<OpenGL::CContext> _context;
     GLuint _program = 0;
-    GLuint _shader_storag_buffer_object;
+    GLuint _shader_storag_buffer_object = 0;
     OpenGL::mesh::MeshVector _meshs;
     GLfloat _angle1 = 0.0f;
     GLfloat _angle2 = 0.0f;
     int _selected_shape = 0;
     int _selected_polygon_mode = 2;
     int _selected_culling_mode = 0;
+    controls::TViewportRectangle _viewport_rectangle{ 0, 0, 0, 0 };
+    std::unique_ptr<controls::ControlsInterface> _controls;
+    std::chrono::high_resolution_clock::time_point _start_time;
+
+    // TODO transformation matrix class
+    glm::mat4 _view_matrix{ glm::mat4(1.0f) };
+    glm::mat4 _inverse_view_matrix{ glm::mat4(1.0f) };
+    glm::mat4 _projection_matrix{ glm::mat4(1.0f) };
+    glm::mat4 _inverse_projection_matrix{ glm::mat4(1.0f) };
 
 public:
 
@@ -74,6 +85,75 @@ public:
     virtual void init(const view::CanvasInterface& canvas) override;
     virtual void resize(const view::CanvasInterface& canvas) override;
     virtual void render(const view::CanvasInterface& canvas) override;
+
+    void set_view_matrix(const glm::mat4& view_matrix)
+    {
+        _view_matrix = view_matrix;
+        _inverse_view_matrix = glm::inverse(_inverse_view_matrix);
+    }
+
+    void set_projection_matrix(const glm::mat4& projection_matrix)
+    {
+        _projection_matrix = projection_matrix;
+        _inverse_projection_matrix = glm::inverse(_projection_matrix);
+    }
+
+    virtual double get_time(void) const override
+    {
+        auto current_time = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> diff = current_time - _start_time;
+        return diff.count();
+    }
+
+    virtual const controls::TViewportRectangle& get_viewport_rectangle(void) const override
+    {
+        return _viewport_rectangle;
+    }
+
+    virtual const glm::mat4& get_view_matrix(void) const override
+    {
+        return _view_matrix;
+    };
+
+    virtual const glm::mat4& get_inverse_view_matrix(void) const override
+    {
+        return _inverse_view_matrix;
+    };
+
+    virtual const glm::mat4& get_projection_matrix(void) const override
+    {
+        return _projection_matrix;
+    };
+    virtual const glm::mat4& get_inverse_projection_matrix(void) const override
+    {
+        return _inverse_projection_matrix;
+    };
+
+    virtual void mouse_motion(int x, int y) const override
+    {
+        glm::vec2 position(static_cast<float>(x), static_cast<float>(y));
+        _controls->drag(position);
+    }
+
+    virtual void mouse_action(int x, int y, view::MouseButton button, view::MouseAction action) const override
+    {
+        glm::vec2 position(static_cast<float>(x), static_cast<float>(y));
+
+        switch (button)
+        {
+        case view::MouseButton::LEFT:
+            switch (action)
+            {
+            case view::MouseAction::PRESS:
+                _controls->start_drag(position);
+                break;
+            case view::MouseAction::RELEASE:
+                _controls->end_drag(position);
+                break;
+            }
+            break;
+        }
+    }
 
     void select_shape(int shape)
     {
@@ -103,12 +183,12 @@ bool MyApp::OnInit()
 
 // Platonic solid https://en.wikipedia.org/wiki/Platonic_solid
 MyFrame::MyFrame()
-    : wxFrame(NULL, wxID_ANY, "Platonic solid", wxDefaultPosition, wxSize(600, 400))
+    : wxFrame(NULL, wxID_ANY, "OpenGL view", wxDefaultPosition, wxSize(600, 400))
 {
     _view = std::make_shared< MyOpenGLView>();
 
     CreateStatusBar();
-    SetStatusText("https://en.wikipedia.org/wiki/Platonic_solid");
+    SetStatusText("Status");
 
     wxFlexGridSizer* sizer = new wxFlexGridSizer(1, 2, 0, 0);
     SetSizer(sizer);
@@ -141,7 +221,7 @@ MyFrame::MyFrame()
     };
     auto shape_selection = wx_utility::new_selction_box(
         _control_panel, wxID_ANY, controls_sizer, std::move(shape_names), 0, this, &MyFrame::shape_changed);
-    
+
     auto polygone_mode_text = wx_utility::new_static_text(_control_panel, wxID_ANY, controls_sizer, wxT("Polygon mode"));
     auto polygon_mode_names = std::vector<std::wstring>
     {
@@ -161,6 +241,8 @@ MyFrame::MyFrame()
     };
     auto culling_mode_selection = wx_utility::new_selction_box(
         _control_panel, wxID_ANY, controls_sizer, std::move(culling_mode_names), 0, this, &MyFrame::face_culling_changed);
+
+    _view_panel->add_mouse_event_client(_view.get());
 }
 
 void MyFrame::shape_changed(wxCommandEvent& event)
@@ -248,6 +330,7 @@ void main()
 
 MyOpenGLView::MyOpenGLView()
     : _context{ std::make_unique<OpenGL::CContext>() }
+    , _controls{ std::make_unique<controls::SpinningControls>(*this, *this) }
 {}
 
 MyOpenGLView::~MyOpenGLView()
@@ -271,10 +354,10 @@ void MyOpenGLView::init(const view::CanvasInterface& canvas)
     _meshs = OpenGL::mesh::MeshVector(std::vector<std::shared_ptr<OpenGL::mesh::MeshInterface>>
     {
         std::make_shared<OpenGL::mesh::SingleMeshSeparateAttributeFormat>(*tetrahedron_mesh_data),
-        std::make_shared<OpenGL::mesh::SingleMeshSeparateAttributeFormat>(*hexahedron_mesh_data),
-        std::make_shared<OpenGL::mesh::SingleMeshSeparateAttributeFormat>(*octahedron_mesh_data),
-        std::make_shared<OpenGL::mesh::SingleMeshSeparateAttributeFormat>(*dodecahedron_mesh_data),
-        std::make_shared<OpenGL::mesh::SingleMeshSeparateAttributeFormat>(*icosahedron_mesh_data),
+            std::make_shared<OpenGL::mesh::SingleMeshSeparateAttributeFormat>(*hexahedron_mesh_data),
+            std::make_shared<OpenGL::mesh::SingleMeshSeparateAttributeFormat>(*octahedron_mesh_data),
+            std::make_shared<OpenGL::mesh::SingleMeshSeparateAttributeFormat>(*dodecahedron_mesh_data),
+            std::make_shared<OpenGL::mesh::SingleMeshSeparateAttributeFormat>(*icosahedron_mesh_data),
     });
 
     glGenBuffers(1, &_shader_storag_buffer_object);
@@ -284,27 +367,33 @@ void MyOpenGLView::init(const view::CanvasInterface& canvas)
 
     glUseProgram(_program);
 
-    glm::mat4 view = glm::lookAt(glm::vec3(0, 0, 5), glm::vec3(0), glm::vec3(0, 1, 0));
-    glProgramUniformMatrix4fv(_program, 1, 1, false, glm::value_ptr(view));
+    set_view_matrix(glm::lookAt(glm::vec3(0, 0, 5), glm::vec3(0), glm::vec3(0, 1, 0)));
+    glProgramUniformMatrix4fv(_program, 1, 1, false, glm::value_ptr(_view_matrix));
 
     resize(canvas);
+    _start_time = std::chrono::high_resolution_clock::now();
+    _controls->set_attenution(std::make_shared<controls::QudraticAttenuation>(1.0f, 0.05f, 0.0f));
 }
 
 void MyOpenGLView::resize(const view::CanvasInterface& canvas)
 {
     const auto [cx, cy] = canvas.get_size();
+    _viewport_rectangle = { 0, 0, static_cast<float>(cx), static_cast<float>(cy) };
     glViewport(0, 0, cx, cy);
+
 
     if (_program == 0)
         return;
-    
+
     float aspect = static_cast<float>(cx) / static_cast<float>(cy);
-    glm::mat4 projection = glm::perspective(glm::radians(30.0f), aspect, 0.01f, 10.0f);
-    glProgramUniformMatrix4fv(_program, 0, 1, false, glm::value_ptr(projection));
+    set_projection_matrix(glm::perspective(glm::radians(30.0f), aspect, 0.01f, 10.0f));
+    glProgramUniformMatrix4fv(_program, 0, 1, false, glm::value_ptr(_projection_matrix));
 }
 
 void MyOpenGLView::render(const view::CanvasInterface& canvas)
 {
+    auto model_matrix = _controls->update();
+
     glEnable(GL_DEPTH_TEST);
     if (_selected_culling_mode == 0)
     {
@@ -328,9 +417,9 @@ void MyOpenGLView::render(const view::CanvasInterface& canvas)
     glm::mat4 model(1.0f);
     model = glm::rotate(model, _angle1, glm::vec3(1.0f, 0.0f, 0.0f));
     model = glm::rotate(model, _angle2, glm::vec3(0.0f, 1.0f, 0.0f));
-    glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(model));
+    glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(model_matrix));
     _angle1 += 0.02f;
     _angle2 += 0.01f;
 
-    _meshs.draw(_selected_shape, _selected_shape+1);
+    _meshs.draw(_selected_shape, _selected_shape + 1);
 }
