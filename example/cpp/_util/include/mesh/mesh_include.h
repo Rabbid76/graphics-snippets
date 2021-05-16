@@ -1,5 +1,5 @@
-#ifndef __MESH_INCLUDE__
-#define __MESH_INCLUDE__
+#ifndef __MESH_INCLUDE__H__
+#define __MESH_INCLUDE__H__
 
 #include <mesh/mesh_data_interface.h>
 #include <mesh/mesh_data_container.h>

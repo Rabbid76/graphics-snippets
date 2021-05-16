@@ -1,5 +1,8 @@
-#ifndef __CONTROLS_INTERFACE__
-#define __CONTROLS_INTERFACE__
+#ifndef __CONTROLS_INTERFACE__H__
+#define __CONTROLS_INTERFACE__H__
+
+#include <controls/attenuation_interface.h>
+#include <math/glm_include.h>
 
 namespace controls
 {
@@ -7,7 +10,7 @@ namespace controls
     {
     public:
 
-        virtual ControlsInterface& set_attenution(float constant, float linear, float quadratic) = 0; // TODO attenuation object
+        virtual ControlsInterface& set_attenution(std::shared_ptr<AttenuationInterface> attenuation) = 0;
         virtual ControlsInterface& start_drag(const glm::vec2& position) = 0;
         virtual ControlsInterface& end_drag(const glm::vec2& position) = 0;
         virtual ControlsInterface& drag(const glm::vec2& position) = 0;

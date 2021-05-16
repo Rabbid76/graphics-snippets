@@ -1,5 +1,5 @@
-#ifndef __OPENGL_INCLUDE__
-#define __OPENGL_INCLUDE__
+#ifndef __OPENGL_INCLUDE__H__
+#define __OPENGL_INCLUDE__H__
 
 #include <GL/glew.h>
 #ifdef __WXMAC__

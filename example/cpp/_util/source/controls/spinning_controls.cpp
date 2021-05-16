@@ -1,5 +1,6 @@
 #include <pch.h>
 
+#include <animation/rotation_animation.h>
 #include <controls/spinning_controls.h>
 
 #define _USE_MATH_DEFINES
@@ -8,18 +9,24 @@
 
 namespace controls
 {
-    SpinningControls::SpinningControls(const ControlsViewInterface& view)
-        : _view{ view }
-    {}
-
-    glm::mat4 SpinningControls::get_orbit_matrix(void) const
+    SpinningControls::SpinningControls(const animation::TimeInterface& time, const ControlsViewInterface& view)
+        : _time{ time }
+        , _view{ view }
+        , _drag_operation(M_PI)
     {
-        return (_drag || (_auto_rotate && _auto_spin)) ? _current_orbit_matrix * _orbit_matrix : _orbit_matrix;
-    }
-
-    glm::mat4 SpinningControls::get_auto_model_matrix(void) const
-    {
-        return _auto_rotate ? _current_model_matrix * _model_matrix : _model_matrix;
+        // TODO no animation
+        // TODO concatenated animation
+        // TODO composite animation builder
+        /*
+        float auto_angle_x = static_cast<float>(delta_time / 13.0 * 2.0 * M_PI);
+            float auto_angle_y = static_cast<float>(delta_time / 17.0 * 2.0 * M_PI);
+            _transformation.apply_transformation(
+                glm::rotate(
+                    glm::rotate(glm::mat4(1.0f), auto_angle_x, glm::vec3(1.0f, 0.0f, 0.0f)),
+                    auto_angle_y, glm::vec3(0.0f, 1.0f, 0.0f)));
+        */
+        _animation = std::make_unique<animation::RotationAnimation>(time, static_cast<float>(1.0 / 13.0 * 2.0 * M_PI), glm::vec3(1.0f, 0.7f, 0.0f));
+        _animation->start();
     }
 
     SpinningControls& SpinningControls::start_drag(const glm::vec2& position)
@@ -53,43 +60,33 @@ namespace controls
     glm::mat4 SpinningControls::update(void)
     {
         update_model();
-        return get_orbit_matrix() * get_auto_model_matrix();
+        return get_tranformation_matrix();
     }
 
     SpinningControls& SpinningControls::update_model(void)
     {
-        
-        _current_model_matrix = glm::mat4(1.0f);
-
-        if (_drag)
+        if (_drag_operation.is_dragging())
         {
-            _current_orbit_matrix = glm::rotate(glm::mat4(1.0f), _drag_angle, _drag_axis);
+            _transformation.apply_transformation(_drag_operation.get_roatation());
             return *this;
         }
 
-        if (!_auto_rotate)
-            return *this;
-
-        double current_time = _view.get_time();
-        double delta_time = current_time - _rotate_start_time;
-        if (!_auto_spin)
+        if (_auto_spin && _drag_operation.time() > 0)
         {
-            float auto_angle_x = static_cast<float>(delta_time / 13.0 * 2.0 * M_PI);
-            float auto_angle_y = static_cast<float>(delta_time / 17.0 * 2.0 * M_PI);
-            _current_model_matrix = glm::rotate(
-                glm::rotate(glm::mat4(1.0f), auto_angle_x, glm::vec3(1.0f, 0.0f, 0.0f)),
-                auto_angle_y, glm::vec3(0.0f, 1.0f, 0.0f));
+            double delta_time = _time.get_time() - _spin_start_time;
+            _transformation.apply_transformation(
+                _drag_operation.get_roatation(delta_time, _attenuation.get()));
             return *this;
         }
 
-        if (_drag_time > 0)
+        if (_auto_rotate && !_auto_spin)
         {
-            float angle = static_cast<float>(delta_time * _drag_angle / _drag_time);
-            if (std::fabs(_attenuation[0]) > 0)
-                angle /= _attenuation[0] + _attenuation[1] * angle + _attenuation[2] * angle * angle;
-            _current_orbit_matrix = glm::rotate(glm::mat4(1.0f), angle, _drag_axis);
+            _animation->update(glm::mat4(1));
+            _transformation.apply_transformation(glm::mat4(_animation->get_matrix()));
+            return *this;
         }
 
+        _transformation.apply_transformation(glm::mat4(1.0f));
         return *this;
     }
 
@@ -99,65 +96,53 @@ namespace controls
         bool new_auto = new_drag ? false : automatically;
         bool new_spin = new_auto ? spin : false;
 
-        if (_drag == new_drag && _auto_rotate == new_auto && _auto_spin == new_spin)
+        if (_drag_operation.is_dragging() == new_drag && _auto_rotate == new_auto && _auto_spin == new_spin)
             return *this;
        
-        if (new_drag && !_drag)
+        if (new_drag != _drag_operation.is_dragging())
         {
-            _drag_start_time = _view.get_time();
-            _drag_angle = 0;
-            _drag_time = 0;
+            if (new_drag)
+            {
+                _drag_operation.start(_time.get_time());
+                _animation->stop();
+            }
+            else
+                _drag_operation.end();
         }
 
         if (new_auto && !_auto_rotate)
-            _rotate_start_time = _view.get_time();
+        {
+            _animation->start();
+            _spin_start_time = _time.get_time();
+        }
 
-        _drag = new_drag;
         _auto_rotate = new_auto;
         _auto_spin = new_spin;
-        _orbit_matrix = _current_orbit_matrix * _orbit_matrix;
-        _current_orbit_matrix = glm::mat4(1.0f);
-        _model_matrix = _current_model_matrix * _model_matrix;
-        _current_model_matrix = glm::mat4(1.0f);
+        _transformation.update();
         
         return *this;
     }
 
     SpinningControls& SpinningControls::update_position(const glm::vec2& position)
     {
-        if (_drag == false)
-            return *this;
-
-        _position = position;
-        auto viewport_rectangle = _view.get_viewport_rectangle();
-        auto distance = _position - _start_position;
-        auto viewport_diagonal = glm::vec2(
-            viewport_rectangle[2] - viewport_rectangle[0], 
-            viewport_rectangle[3] - viewport_rectangle[2]);
-
-        float dx = distance.x / viewport_diagonal.x;
-        float dy = distance.y / viewport_diagonal.y;
-        float len_2 = dx * dx + dy * dy;
-        if (len_2 <= 0.0)
-            return *this;
-
-        float len = std::sqrt(len_2);
-        _drag_angle = M_PI * len;
-        glm::mat4 inverse_view = _view.get_inverse_view_matrix();
-        _drag_axis = glm::mat3(inverse_view) * glm::vec3(-dy / len, dx / len, 0);
-        _drag_time = _view.get_time() - _drag_start_time;
-        
+        _drag_operation.update(
+            position,
+            _view.get_viewport_rectangle(),
+            _view.get_inverse_view_matrix(),
+            _time.get_time());
         return *this;
     }
 
     SpinningControls& SpinningControls::start_rotate(const glm::vec2& position)
     {
         _start_position = position;
+        _drag_operation.set_start_positon(position);
         return change_motion_mode(true, false, false);
     }
 
     SpinningControls& SpinningControls::finish_rotate(const glm::vec2& position)
     {
+        _position = position;
         update_position(position);
         return change_motion_mode(false, true, true);
     }

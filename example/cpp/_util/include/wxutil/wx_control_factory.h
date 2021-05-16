@@ -1,5 +1,5 @@
-#ifndef __WX_UTILITY_FACTORY__
-#define __WX_UTILITY_FACTORY__
+#ifndef __WX_UTILITY_FACTORY__H__
+#define __WX_UTILITY_FACTORY__H__
 
 #include <wxutil/wx_include.h>
 

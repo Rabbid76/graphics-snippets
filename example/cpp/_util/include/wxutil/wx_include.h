@@ -1,5 +1,5 @@
-#ifndef __WX_INCLUDE__
-#define __WX_INCLUDE__
+#ifndef __WX_INCLUDE__H__
+#define __WX_INCLUDE__H__
 
 #include <wx/wxprec.h>
 #ifndef WX_PRECOMP

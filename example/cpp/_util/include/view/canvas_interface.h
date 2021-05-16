@@ -1,5 +1,5 @@
-#ifndef __CANVAS_INTERFACE__
-#define __CANVAS_INTERFACE__
+#ifndef __CANVAS_INTERFACE__H__
+#define __CANVAS_INTERFACE__H__
 
 #include <tuple>
 

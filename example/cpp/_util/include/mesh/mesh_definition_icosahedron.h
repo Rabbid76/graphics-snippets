@@ -1,5 +1,5 @@
-#ifndef __MESH_DEFINION_ICOSAHEDRON__
-#define __MESH_DEFINION_ICOSAHEDRON__
+#ifndef __MESH_DEFINION_ICOSAHEDRON__H__
+#define __MESH_DEFINION_ICOSAHEDRON__H__
 
 #include <mesh/mesh_definition_interface.h>
 #include <mesh/mesh_data_container.h>

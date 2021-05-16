@@ -1,5 +1,5 @@
-#ifndef __MESH_DATA_CONTAINER__
-#define __MESH_DATA_CONTAINER__
+#ifndef __MESH_DATA_CONTAINER__H__
+#define __MESH_DATA_CONTAINER__H__
 
 #include <mesh/mesh_data_interface.h>
 

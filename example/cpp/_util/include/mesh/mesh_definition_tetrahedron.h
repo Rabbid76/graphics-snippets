@@ -1,5 +1,5 @@
-#ifndef __MESH_DEFINITION_TETRAHEDRON__
-#define __MESH_DEFINITION_TETRAHEDRON__
+#ifndef __MESH_DEFINITION_TETRAHEDRON__H__
+#define __MESH_DEFINITION_TETRAHEDRON__H__
 
 #include <mesh/mesh_definition_interface.h>
 #include <mesh/mesh_data_container.h>

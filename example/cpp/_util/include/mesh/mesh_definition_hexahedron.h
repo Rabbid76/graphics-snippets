@@ -1,5 +1,5 @@
-#ifndef __MESH_DEFINITION_HEXAHEDRON__
-#define __MESH_DEFINITION_HEXAHEDRON__
+#ifndef __MESH_DEFINITION_HEXAHEDRON__H__
+#define __MESH_DEFINITION_HEXAHEDRON__H__
 
 #include <mesh/mesh_definition_interface.h>
 #include <mesh/mesh_data_container.h>
