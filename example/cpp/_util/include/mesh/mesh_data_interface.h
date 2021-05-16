@@ -1,5 +1,5 @@
-#ifndef __MESH_DATA_INTERFACE__
-#define __MESH_DATA_INTERFACE__
+#ifndef __MESH_DATA_INTERFACE__H__
+#define __MESH_DATA_INTERFACE__H__
 
 #include <vector>
 #include <tuple>

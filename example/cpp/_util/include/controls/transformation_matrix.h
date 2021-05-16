@@ -1,5 +1,5 @@
-#ifndef __TRANSFORMATION_MATRIX__
-#define __TRNASFORMATION_MATRIX__
+#ifndef __TRANSFORMATION_MATRIX__H__
+#define __TRNASFORMATION_MATRIX__H__
 
 #include <math/glm_include.h>
 

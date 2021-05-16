@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __MOUSEVENT_INTERFACE__H__
+#define __MOUSEVENT_INTERFACE__H__
 
 namespace view
 {
@@ -22,3 +23,5 @@ namespace view
         virtual void mouse_action(int x, int y, MouseButton button, MouseAction action) const = 0;
     };
 }
+
+#endif

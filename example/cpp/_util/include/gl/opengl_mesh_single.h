@@ -1,5 +1,5 @@
-#ifndef __OPENGL_MESH_SINGLE__
-#define __OPENGL_MESH_SINGLE__
+#ifndef __OPENGL_MESH_SINGLE__H__
+#define __OPENGL_MESH_SINGLE__H__
 
 #include <mesh/mesh_data_interface.h>
 #include <gl/opengl_mesh_interface.h>

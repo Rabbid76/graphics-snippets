@@ -1,5 +1,5 @@
-#ifndef __VIEW_INTERFACE__
-#define __VIEW_INTERFACE__
+#ifndef __VIEW_INTERFACE__H__
+#define __VIEW_INTERFACE__H__
 
 #include <view/canvas_interface.h>
 

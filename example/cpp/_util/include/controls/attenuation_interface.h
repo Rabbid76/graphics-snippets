@@ -1,5 +1,5 @@
-#ifndef __ATTENUATION_INTERFACE__
-#define __ATTENUATION_INTERFACE__
+#ifndef __ATTENUATION_INTERFACE__H__
+#define __ATTENUATION_INTERFACE__H__
 
 namespace controls
 {

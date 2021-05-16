@@ -1,5 +1,6 @@
 #include <pch.h>
 
+#include <animation/rotation_animation.h>
 #include <controls/spinning_controls.h>
 
 #define _USE_MATH_DEFINES
@@ -8,10 +9,25 @@
 
 namespace controls
 {
-    SpinningControls::SpinningControls(const ControlsViewInterface& view)
-        : _view{ view }
+    SpinningControls::SpinningControls(const animation::TimeInterface& time, const ControlsViewInterface& view)
+        : _time{ time }
+        , _view{ view }
         , _drag_operation(M_PI)
-    {}
+    {
+        // TODO no animation
+        // TODO concatenated animation
+        // TODO composite animation builder
+        /*
+        float auto_angle_x = static_cast<float>(delta_time / 13.0 * 2.0 * M_PI);
+            float auto_angle_y = static_cast<float>(delta_time / 17.0 * 2.0 * M_PI);
+            _transformation.apply_transformation(
+                glm::rotate(
+                    glm::rotate(glm::mat4(1.0f), auto_angle_x, glm::vec3(1.0f, 0.0f, 0.0f)),
+                    auto_angle_y, glm::vec3(0.0f, 1.0f, 0.0f)));
+        */
+        _animation = std::make_unique<animation::RotationAnimation>(time, static_cast<float>(1.0 / 13.0 * 2.0 * M_PI), glm::vec3(1.0f, 0.7f, 0.0f));
+        _animation->start();
+    }
 
     SpinningControls& SpinningControls::start_drag(const glm::vec2& position)
     {
@@ -55,31 +71,22 @@ namespace controls
             return *this;
         }
 
-        if (!_auto_rotate)
+        if (_auto_spin && _drag_operation.time() > 0)
         {
-            _transformation.apply_transformation(glm::mat4(1.0f));
-            return *this;
-        }
-
-        double current_time = _view.get_time();
-        double delta_time = current_time - _rotate_start_time;
-        if (!_auto_spin)
-        {
-            float auto_angle_x = static_cast<float>(delta_time / 13.0 * 2.0 * M_PI);
-            float auto_angle_y = static_cast<float>(delta_time / 17.0 * 2.0 * M_PI);
-            _transformation.apply_transformation(
-                glm::rotate(
-                    glm::rotate(glm::mat4(1.0f), auto_angle_x, glm::vec3(1.0f, 0.0f, 0.0f)),
-                    auto_angle_y, glm::vec3(0.0f, 1.0f, 0.0f)));
-            return *this;
-        }
-
-        if (_drag_operation.time() > 0)
-        {
+            double delta_time = _time.get_time() - _spin_start_time;
             _transformation.apply_transformation(
                 _drag_operation.get_roatation(delta_time, _attenuation.get()));
+            return *this;
         }
 
+        if (_auto_rotate && !_auto_spin)
+        {
+            _animation->update(glm::mat4(1));
+            _transformation.apply_transformation(glm::mat4(_animation->get_matrix()));
+            return *this;
+        }
+
+        _transformation.apply_transformation(glm::mat4(1.0f));
         return *this;
     }
 
@@ -95,13 +102,19 @@ namespace controls
         if (new_drag != _drag_operation.is_dragging())
         {
             if (new_drag)
-                _drag_operation.start(_view.get_time());
+            {
+                _drag_operation.start(_time.get_time());
+                _animation->stop();
+            }
             else
                 _drag_operation.end();
         }
 
         if (new_auto && !_auto_rotate)
-            _rotate_start_time = _view.get_time();
+        {
+            _animation->start();
+            _spin_start_time = _time.get_time();
+        }
 
         _auto_rotate = new_auto;
         _auto_spin = new_spin;
@@ -116,7 +129,7 @@ namespace controls
             position,
             _view.get_viewport_rectangle(),
             _view.get_inverse_view_matrix(),
-            _view.get_time());
+            _time.get_time());
         return *this;
     }
 

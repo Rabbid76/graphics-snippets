@@ -1,5 +1,5 @@
-#ifndef __CONTROLS_INTERFACE__
-#define __CONTROLS_INTERFACE__
+#ifndef __CONTROLS_INTERFACE__H__
+#define __CONTROLS_INTERFACE__H__
 
 #include <controls/attenuation_interface.h>
 #include <math/glm_include.h>

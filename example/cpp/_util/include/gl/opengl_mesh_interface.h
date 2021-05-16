@@ -1,5 +1,5 @@
-#ifndef __OPENGL_MESH_INTERFACE__
-#define __OPENGL_MESH_INTERFACE__
+#ifndef __OPENGL_MESH_INTERFACE__H__
+#define __OPENGL_MESH_INTERFACE__H__
 
 namespace OpenGL::mesh
 {

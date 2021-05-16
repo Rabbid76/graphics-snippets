@@ -1,5 +1,5 @@
-#ifndef __DRAG_OPERATION__
-#define __DRAG_OPERATION__
+#ifndef __DRAG_OPERATION__H__
+#define __DRAG_OPERATION__H__
 
 #include <controls/attenuation_interface.h>
 #include <math/glm_include.h>

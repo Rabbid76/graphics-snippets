@@ -12,6 +12,9 @@
     <ClCompile Include="..\_util\source\gl\opengl_mesh_single_separate_attribute.cpp">
       <Filter>opengl</Filter>
     </ClCompile>
+    <ClCompile Include="..\_util\source\controls\spinning_controls.cpp">
+      <Filter>controls</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\pch.h" />
@@ -91,6 +94,9 @@
     </Filter>
     <Filter Include="wxutil">
       <UniqueIdentifier>{c36935cd-70d3-4798-888c-bb81c9aebd4b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="controls">
+      <UniqueIdentifier>{97be82fb-b07b-48e7-b8ca-196d47082b12}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

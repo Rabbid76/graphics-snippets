@@ -12,6 +12,7 @@
 #include <gl/opengl_mesh_vector.h>
 #include <gl/opengl_mesh_single.h>
 #include <gl/opengl_mesh_single_separate_attribute.h>
+#include <animation/time_interface.h>
 #include <controls/spinning_controls.h>
 #include <controls/quadratic_attenuation.h>
 #include <math/glm_include.h>
@@ -50,7 +51,8 @@ private:
 
 
 class MyOpenGLView
-    : public view::ViewInterface
+    : public animation::TimeInterface
+    , public view::ViewInterface
     , public controls::ControlsViewInterface
     , public view::MouseEventInterface
 {
@@ -68,8 +70,12 @@ private:
     controls::TViewportRectangle _viewport_rectangle{ 0, 0, 0, 0 };
     std::unique_ptr<controls::ControlsInterface> _controls;
     std::chrono::high_resolution_clock::time_point _start_time;
+
+    // TODO transformation matrix class
     glm::mat4 _view_matrix{ glm::mat4(1.0f) };
+    glm::mat4 _inverse_view_matrix{ glm::mat4(1.0f) };
     glm::mat4 _projection_matrix{ glm::mat4(1.0f) };
+    glm::mat4 _inverse_projection_matrix{ glm::mat4(1.0f) };
 
 public:
 
@@ -80,35 +86,47 @@ public:
     virtual void resize(const view::CanvasInterface& canvas) override;
     virtual void render(const view::CanvasInterface& canvas) override;
 
-    virtual const controls::TViewportRectangle& get_viewport_rectangle(void) const override
+    void set_view_matrix(const glm::mat4& view_matrix)
     {
-        return _viewport_rectangle;
+        _view_matrix = view_matrix;
+        _inverse_view_matrix = glm::inverse(_inverse_view_matrix);
     }
 
-    virtual const double get_time(void) const override
+    void set_projection_matrix(const glm::mat4& projection_matrix)
+    {
+        _projection_matrix = projection_matrix;
+        _inverse_projection_matrix = glm::inverse(_projection_matrix);
+    }
+
+    virtual double get_time(void) const override
     {
         auto current_time = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> diff = current_time - _start_time;
         return diff.count();
     }
 
-    virtual const glm::mat4 get_view_matrix(void) const override
+    virtual const controls::TViewportRectangle& get_viewport_rectangle(void) const override
+    {
+        return _viewport_rectangle;
+    }
+
+    virtual const glm::mat4& get_view_matrix(void) const override
     {
         return _view_matrix;
     };
 
-    virtual const glm::mat4 get_inverse_view_matrix(void) const override
+    virtual const glm::mat4& get_inverse_view_matrix(void) const override
     {
-        return glm::inverse(_view_matrix);
+        return _inverse_view_matrix;
     };
 
-    virtual const glm::mat4 get_projection_matrix(void) const override
+    virtual const glm::mat4& get_projection_matrix(void) const override
     {
         return _projection_matrix;
     };
-    virtual const glm::mat4 get_inverse_projection_matrix(void) const override
+    virtual const glm::mat4& get_inverse_projection_matrix(void) const override
     {
-        return glm::inverse(_projection_matrix);
+        return _inverse_projection_matrix;
     };
 
     virtual void mouse_motion(int x, int y) const override
@@ -312,7 +330,7 @@ void main()
 
 MyOpenGLView::MyOpenGLView()
     : _context{ std::make_unique<OpenGL::CContext>() }
-    , _controls{ std::make_unique<controls::SpinningControls>(*this) }
+    , _controls{ std::make_unique<controls::SpinningControls>(*this, *this) }
 {}
 
 MyOpenGLView::~MyOpenGLView()
@@ -349,7 +367,7 @@ void MyOpenGLView::init(const view::CanvasInterface& canvas)
 
     glUseProgram(_program);
 
-    _view_matrix = glm::lookAt(glm::vec3(0, 0, 5), glm::vec3(0), glm::vec3(0, 1, 0));
+    set_view_matrix(glm::lookAt(glm::vec3(0, 0, 5), glm::vec3(0), glm::vec3(0, 1, 0)));
     glProgramUniformMatrix4fv(_program, 1, 1, false, glm::value_ptr(_view_matrix));
 
     resize(canvas);
@@ -368,7 +386,7 @@ void MyOpenGLView::resize(const view::CanvasInterface& canvas)
         return;
     
     float aspect = static_cast<float>(cx) / static_cast<float>(cy);
-    _projection_matrix = glm::perspective(glm::radians(30.0f), aspect, 0.01f, 10.0f);
+    set_projection_matrix(glm::perspective(glm::radians(30.0f), aspect, 0.01f, 10.0f));
     glProgramUniformMatrix4fv(_program, 0, 1, false, glm::value_ptr(_projection_matrix));
 }
 

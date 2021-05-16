@@ -1,5 +1,5 @@
-#ifndef __QUADRATIC_ATTENUATION__
-#define __QUADRATIC_ATTENUATION__
+#ifndef __QUADRATIC_ATTENUATION__H__
+#define __QUADRATIC_ATTENUATION__H__
 
 #include <controls/attenuation_interface.h>
 

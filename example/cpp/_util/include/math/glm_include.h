@@ -1,5 +1,5 @@
-#ifndef __GLM_INCLUDE__
-#define __GLM_INCLUDE__
+#ifndef __GLM_INCLUDE__H__
+#define __GLM_INCLUDE__H__
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>

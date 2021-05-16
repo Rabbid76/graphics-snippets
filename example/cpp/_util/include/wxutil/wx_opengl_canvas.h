@@ -1,5 +1,5 @@
-#ifndef __WX_OPENGL_CANVAS__
-#define __WX_OPENGL_CANVAS__
+#ifndef __WX_OPENGL_CANVAS__H__
+#define __WX_OPENGL_CANVAS__H__
 
 #include <wxutil/wx_include.h>
 #include <view/canvas_interface.h>
