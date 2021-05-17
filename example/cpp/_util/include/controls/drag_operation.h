@@ -1,7 +1,6 @@
 #ifndef __DRAG_OPERATION__H__
 #define __DRAG_OPERATION__H__
 
-#include <controls/attenuation_interface.h>
 #include <math/glm_include.h>
 
 namespace controls
@@ -26,18 +25,12 @@ namespace controls
 
         bool is_dragging(void) const { return _is_dragging; }
         double time(void) const { return _time; }
+        double angle(void) const { return _angle; }
+        glm::vec3 axis(void) const { return _axis; }
 
         glm::mat3 get_roatation(void) const
         {
             return glm::rotate(glm::mat4(1.0f), _angle, _axis);
-        }
-
-        glm::mat3 get_roatation(double delta_time, const AttenuationInterface* attenuation) const
-        {
-            float angle = static_cast<float>(delta_time * _angle / _time);
-            if (attenuation)
-                angle = attenuation->attenuate(angle);
-            return glm::rotate(glm::mat4(1.0f), angle, _axis);
         }
 
         DragOperation& set_start_positon(const glm::vec2& position)
@@ -82,7 +75,7 @@ namespace controls
                 return *this;
 
             float len = std::sqrt(len_2);
-            _angle = M_PI * len;
+            _angle = _angle_scale * len;
             _axis = glm::mat3(inverse_view) * glm::vec3(-dy / len, dx / len, 0);
             _time = current_time - _start_time;
 

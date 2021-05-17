@@ -25,7 +25,7 @@ namespace controls
                     glm::rotate(glm::mat4(1.0f), auto_angle_x, glm::vec3(1.0f, 0.0f, 0.0f)),
                     auto_angle_y, glm::vec3(0.0f, 1.0f, 0.0f)));
         */
-        _animation = std::make_unique<animation::RotationAnimation>(time, static_cast<float>(1.0 / 13.0 * 2.0 * M_PI), glm::vec3(1.0f, 0.7f, 0.0f));
+        _animation = std::make_unique<animation::RotationAnimation>(_time, static_cast<float>(1.0 / 13.0 * 2.0 * M_PI), glm::vec3(1.0f, 0.7f, 0.0f), nullptr);
         _animation->start();
     }
 
@@ -71,15 +71,7 @@ namespace controls
             return *this;
         }
 
-        if (_auto_spin && _drag_operation.time() > 0)
-        {
-            double delta_time = _time.get_time() - _spin_start_time;
-            _transformation.apply_transformation(
-                _drag_operation.get_roatation(delta_time, _attenuation.get()));
-            return *this;
-        }
-
-        if (_auto_rotate && !_auto_spin)
+        if (_animation)
         {
             _animation->update(glm::mat4(1));
             _transformation.apply_transformation(glm::mat4(_animation->get_matrix()));
@@ -104,7 +96,8 @@ namespace controls
             if (new_drag)
             {
                 _drag_operation.start(_time.get_time());
-                _animation->stop();
+                if (_animation)
+                    _animation->stop();
             }
             else
                 _drag_operation.end();
@@ -112,8 +105,13 @@ namespace controls
 
         if (new_auto && !_auto_rotate)
         {
-            _animation->start();
-            _spin_start_time = _time.get_time();
+            if (new_spin && _drag_operation.time() > 0)
+            {
+                 _animation = std::make_unique<animation::RotationAnimation>(_time, _drag_operation.angle(), glm::vec3(_drag_operation.axis()), _attenuation);
+                _animation->start();
+            }
+            else
+                _animation.reset();
         }
 
         _auto_rotate = new_auto;

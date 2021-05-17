@@ -102,12 +102,6 @@
     <ClInclude Include="..\_util\include\controls\drag_operation.h">
       <Filter>controls</Filter>
     </ClInclude>
-    <ClInclude Include="..\_util\include\controls\attenuation_interface.h">
-      <Filter>controls</Filter>
-    </ClInclude>
-    <ClInclude Include="..\_util\include\controls\quadratic_attenuation.h">
-      <Filter>controls</Filter>
-    </ClInclude>
     <ClInclude Include="..\_util\include\animation\animation_interface.h">
       <Filter>animation</Filter>
     </ClInclude>
@@ -115,6 +109,12 @@
       <Filter>animation</Filter>
     </ClInclude>
     <ClInclude Include="..\_util\include\animation\rotation_animation.h">
+      <Filter>animation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\_util\include\animation\attenuation_interface.h">
+      <Filter>animation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\_util\include\animation\quadratic_attenuation.h">
       <Filter>animation</Filter>
     </ClInclude>
   </ItemGroup>

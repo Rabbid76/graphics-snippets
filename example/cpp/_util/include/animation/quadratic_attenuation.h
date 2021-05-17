@@ -1,12 +1,12 @@
 #ifndef __QUADRATIC_ATTENUATION__H__
 #define __QUADRATIC_ATTENUATION__H__
 
-#include <controls/attenuation_interface.h>
+#include <animation/attenuation_interface.h>
 
 #include <array>
 #include <cmath>
 
-namespace controls
+namespace animation
 {
     class QudraticAttenuation
         : public AttenuationInterface

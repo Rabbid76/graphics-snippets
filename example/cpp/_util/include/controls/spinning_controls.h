@@ -3,11 +3,11 @@
 
 #include <animation/time_interface.h>
 #include <animation/animation_interface.h>
+#include <animation/attenuation_interface.h>
 #include <controls/controls_interface.h>
 #include <controls/controls_view_interface.h>
 #include <controls/transformation_matrix.h>
 #include <controls/drag_operation.h>
-#include <controls/attenuation_interface.h>
 #include <math/glm_include.h>
 
 #include <memory>
@@ -29,13 +29,12 @@ namespace controls
         std::unique_ptr<animation::AnimationInterface> _animation;
         DragOperation _drag_operation;
         TransformationMatrix _transformation;
-        std::shared_ptr<AttenuationInterface> _attenuation;
+        std::shared_ptr<animation::AttenuationInterface> _attenuation;
         bool _auto_rotate_mode = true;
         bool _active = true;
         bool _hit = false;
         bool _auto_spin = false;
         bool _auto_rotate = true;
-        double _spin_start_time = 0; // TODO animation::RotationAnimation with attenuation
         glm::vec2 _position{ glm::vec2(0.0f) };
         glm::vec2 _start_position{ glm::vec2(0.0f) };
 
@@ -45,7 +44,7 @@ namespace controls
 
         glm::mat4 get_tranformation_matrix(void) const { return _transformation.get_transformation(); }
 
-        virtual SpinningControls& set_attenution(std::shared_ptr<AttenuationInterface> attenuation) override
+        virtual SpinningControls& set_attenution(std::shared_ptr<animation::AttenuationInterface> attenuation) override
         { 
             _attenuation = attenuation;
             return *this;

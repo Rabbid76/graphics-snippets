@@ -13,8 +13,8 @@
 #include <gl/opengl_mesh_single.h>
 #include <gl/opengl_mesh_single_separate_attribute.h>
 #include <animation/time_interface.h>
+#include <animation/quadratic_attenuation.h>
 #include <controls/spinning_controls.h>
-#include <controls/quadratic_attenuation.h>
 #include <math/glm_include.h>
 
 #include <memory>
@@ -372,7 +372,7 @@ void MyOpenGLView::init(const view::CanvasInterface& canvas)
 
     resize(canvas);
     _start_time = std::chrono::high_resolution_clock::now();
-    _controls->set_attenution(std::make_shared<controls::QudraticAttenuation>(1.0f, 0.05f, 0.0f));
+    _controls->set_attenution(std::make_shared<animation::QudraticAttenuation>(0.5f, 0.05f, 0.0f));
 }
 
 void MyOpenGLView::resize(const view::CanvasInterface& canvas)

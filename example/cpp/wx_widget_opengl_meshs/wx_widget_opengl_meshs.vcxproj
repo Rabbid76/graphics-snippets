@@ -116,13 +116,13 @@
   <ItemGroup>
     <ClInclude Include="..\pch.h" />
     <ClInclude Include="..\_util\include\animation\animation_interface.h" />
+    <ClInclude Include="..\_util\include\animation\attenuation_interface.h" />
+    <ClInclude Include="..\_util\include\animation\quadratic_attenuation.h" />
     <ClInclude Include="..\_util\include\animation\rotation_animation.h" />
     <ClInclude Include="..\_util\include\animation\time_interface.h" />
-    <ClInclude Include="..\_util\include\controls\attenuation_interface.h" />
     <ClInclude Include="..\_util\include\controls\controls_interface.h" />
     <ClInclude Include="..\_util\include\controls\controls_view_interface.h" />
     <ClInclude Include="..\_util\include\controls\drag_operation.h" />
-    <ClInclude Include="..\_util\include\controls\quadratic_attenuation.h" />
     <ClInclude Include="..\_util\include\controls\spinning_controls.h" />
     <ClInclude Include="..\_util\include\controls\transformation_matrix.h" />
     <ClInclude Include="..\_util\include\gl\gl_debug.h" />
