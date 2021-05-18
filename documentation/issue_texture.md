@@ -860,7 +860,20 @@ See GLSL version 4.60 (most recent) (from [OpenGL Shading Language 4.60 Specific
 I recommend to use `samplerCubeArray` (see [Sampler](https://www.khronos.org/opengl/wiki/Sampler_(GLSL))) rather than an array of `samplerCube`.  
 When you use a `samplerCubeArray`, then you don't need any indexing at all, because the "index" is encoded in the 4th component of the texture coordinate at texture lookup (see [`texture`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/texture.xhtml)). 
 
+---
 
+[Accessing the index of an implicitly defined array in GLSL](https://stackoverflow.com/questions/67410447/accessing-the-index-of-an-implicitly-defined-array-in-glsl/67411999#67411999)
+
+You are getting the error because you have code that violates the specification. See the (most recent) [OpenGL Shading Language 4.60 Specification - 4.1.9. Arrays](https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.4.60.html#basic-types):
+
+> It is legal to declare an array without a size (unsized) and then later redeclare the same name as an array of the same type and specify a size, or **index it only with constant integral expressions** (implicitly sized).
+
+---
+
+What you try to do is not the create an implicitly-sized array, but an dynamically-sized array.
+
+It is not possible to create uniform array with a variable size. A variable size is just possible for the bottommost variable in a [Shader Storage Block](https://www.khronos.org/opengl/wiki/Interface_Block_(GLSL)#Shader_storage_blocks).  
+Anyway you should prefer to use an `sampler2DArray` instead of an array of `sampler2D`. With a sampler array, you must use a separate texture unit for each element, and the array index must be a [Dynamically uniform expression](https://www.khronos.org/opengl/wiki/Core_Language_(GLSL)#Dynamically_uniform_expression)  
 
 ## Texture format and texture swizzle
 

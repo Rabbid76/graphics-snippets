@@ -19,7 +19,7 @@ namespace animation
         double _angle_per_time;
         glm::vec3 _axis;
         glm::mat4 _rotation_matrix{ glm::mat4(1.0f) };
-        std::shared_ptr<AttenuationInterface> _attenuation;
+        std::shared_ptr<AttenuationInterface> _attenuation; // TODO decorator (static decorator)
 
     public:
 
