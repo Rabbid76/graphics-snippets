@@ -11,7 +11,7 @@
 ### Shapes
 
 [glut solid cylinder](../example/python/legacy_opengl/glut_solid_cylinder.py)  
-![glut solid cylinder](image/cylinder.gif)
+![glut solid cylinder](https://i.stack.imgur.com/z1EHb.gif)
 
 ### Text
 
