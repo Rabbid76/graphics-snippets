@@ -4,6 +4,17 @@
 
 # Immediate mode and legacy OpenGL
 
+## Primitive
+
+### Point
+
+[point size and smooth point](../example/python/legacy_opengl/point_size_point_smooth.py)  
+
+### Line
+
+[wireframe cube](../example/python/legacy_opengl/line_wireframe_cube.py)  
+[wireframe cube](https://i.stack.imgur.com/auu2U.png)
+
 ## Glut
 
 [glut minimal example](../example/python/legacy_opengl/glut_minimal_example.py)
@@ -12,6 +23,11 @@
 
 [glut solid cylinder](../example/python/legacy_opengl/glut_solid_cylinder.py)  
 ![glut solid cylinder](https://i.stack.imgur.com/z1EHb.gif)
+
+[glut solid cylinder between 2 points](../example/python/legacy_opengl/glut_solid_cylinder_between_points.py)  
+![glut solid cylinder between 2 points](https://i.stack.imgur.com/knCvT.png)
+
+[glut solid teapot](../example/python/legacy_opengl/glut_solid_teapot.py)  
 
 ### Text
 
