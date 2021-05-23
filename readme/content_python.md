@@ -59,3 +59,7 @@ See
 
 - [PyGame Examples and Answers](https://github.com/Rabbid76/PyGameExamplesAndAnswers)
 - [PyGameRayTracing](https://github.com/Rabbid76/PyGameRayTracing)
+
+## Legacy OpenGL
+
+[Immediate mode and legacy OpenGL](immediate_mode/content_python_legacy.md)
