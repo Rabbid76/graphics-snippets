@@ -13,7 +13,7 @@
 ### Line
 
 [wireframe cube](../example/python/legacy_opengl/line_wireframe_cube.py)  
-[wireframe cube](https://i.stack.imgur.com/auu2U.png)
+![wireframe cube](https://i.stack.imgur.com/auu2U.png)
 
 ## Glut
 
