@@ -62,4 +62,4 @@ See
 
 ## Legacy OpenGL
 
-[Immediate mode and legacy OpenGL](immediate_mode/content_python_legacy.md)
+[Immediate mode and legacy OpenGL](content_python_legacy.md)
