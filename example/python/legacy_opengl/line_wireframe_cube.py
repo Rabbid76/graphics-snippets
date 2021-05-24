@@ -5,9 +5,12 @@ from OpenGL.GL import *
 from OpenGL.GLU import *
 from OpenGL.GLUT import *
 
-vertices = (((1, -1, -1), (1, 1, -1), (-1, 1, -1), (-1, -1, -1), 
-             (1, -1, 1), (1, 1, 1), (-1, -1, 1), (-1, 1, 1)))
-edges = ((0,1), (0,3), (0,4), (2,1), (2,3), (2,7), (6,3), (6,4), (6,7), (5,1), (5,4), (5,7))
+#vertices = [(-1,-1,-1), ( 1,-1,-1), ( 1, 1,-1), (-1, 1,-1), (-1,-1, 1), ( 1,-1, 1), ( 1, 1, 1), (-1, 1, 1)]
+#edges = [(0,1), (1,2), (2,3), (3,0), (4,5), (5,6), (6,7), (7,4), (0,4), (1,5), (2,6), (3,7)]
+
+vertices = [((i%2)*2-1, (i//2%2)*2-1, (i//4)*2-1) for i in range(8)]
+v_distance = lambda i, j : sum(abs(vertices[i][k]-vertices[j][k]) for k in range(3))
+edges =  [(i, j) for i in range(8) for j in range(i+1, 8) if v_distance(i, j) == 2]
 
 def Display():
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)

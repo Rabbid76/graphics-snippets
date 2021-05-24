@@ -1,3 +1,6 @@
+# PyOpenGL Glut Window
+# https://stackoverflow.com/questions/67256146/pyopengl-glut-window
+
 from OpenGL.GL import *
 from OpenGL.GLU import *
 from OpenGL.GLUT import *

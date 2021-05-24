@@ -27,6 +27,7 @@
 [glut solid cylinder between 2 points](../example/python/legacy_opengl/glut_solid_cylinder_between_points.py)  
 ![glut solid cylinder between 2 points](https://i.stack.imgur.com/knCvT.png)
 
+[glut wire teapot](../example/python/legacy_opengl/glut_wire_teapot.py)  
 [glut solid teapot](../example/python/legacy_opengl/glut_solid_teapot.py)  
 
 ### Text
@@ -36,3 +37,7 @@
 [glut bitmap character - raster position](../example/python/legacy_opengl/glut_text_bitmap_character_raster_position.py)  
 
 [glut stroke character](../example/python/legacy_opengl/glut_text_stroke_character.py)  
+
+### Event loop
+
+[glut event loop - close window](../example/python/legacy_opengl/glut_event_loop_close.py)
