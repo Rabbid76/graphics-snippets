@@ -33,7 +33,8 @@ Denis Diderot, Pensées philosophiques
 
 [Normal, Parallax and Relief mapping (under construction)](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/normal_parallax_relief.md)
 
+[Cylindrical_projection](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/cylindrical_projection.md)
+
 ## Common mistakes and issues
 
 [Common texture mistakes and issues](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/issue_texture.md)
-
