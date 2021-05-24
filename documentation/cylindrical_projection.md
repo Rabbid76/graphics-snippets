@@ -1,6 +1,6 @@
 # Cylindrical projection
 
-[How to project top and bottom area of openGL control](https://stackoverflow.com/questions/53943867/how-to-project-top-and-bottom-area-of-opengl-control/53947821#comment94752319_53947821)
+[How to project top and bottom area of OpenGL control (cylindrical projection)?](https://stackoverflow.com/questions/53943867/how-to-project-top-and-bottom-area-of-opengl-control-cylindrical-projection/53947821#53947821)
 
 If you want to project a 2D texture on a 2d plane as it would be a 3D cylinder, then you have to transform the texture coordinate by an [arcus function](https://en.wikipedia.org/wiki/Inverse_trigonometric_functions) ([`asin`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/asin.xhtml) or [`acos`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/acos.xhtml)) in the fragment shader.
 
