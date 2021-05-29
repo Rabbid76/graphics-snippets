@@ -15,7 +15,7 @@
 [wireframe cube](../example/python/legacy_opengl/line_wireframe_cube.py)  
 ![wireframe cube](https://i.stack.imgur.com/auu2U.png)
 
-### Bodies
+### Shapes
 
 [platonic solids](../example/python/legacy_opengl/platonic_solids.py)  
 ![platonic solids](../screenshot/example/python/legacy_opengl/platonic_solids.gif)
