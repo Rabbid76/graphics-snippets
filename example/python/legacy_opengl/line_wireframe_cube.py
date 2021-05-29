@@ -12,7 +12,7 @@ vertices = [((i%2)*2-1, (i//2%2)*2-1, (i//4)*2-1) for i in range(8)]
 v_distance = lambda i, j : sum(abs(vertices[i][k]-vertices[j][k]) for k in range(3))
 edges =  [(i, j) for i in range(8) for j in range(i+1, 8) if v_distance(i, j) == 2]
 
-def Display():
+def display():
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
     glRotate(1, 0, 1, 0)
@@ -31,7 +31,7 @@ glutInit(sys.argv)
 glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB)
 glutInitWindowSize(width, height)
 glutCreateWindow(b"OpenGl Window")
-glutDisplayFunc(Display)
+glutDisplayFunc(display)
 
 glClearColor(0.0, 0.0, 0.0, 1.0) 
     

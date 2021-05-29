@@ -15,6 +15,11 @@
 [wireframe cube](../example/python/legacy_opengl/line_wireframe_cube.py)  
 ![wireframe cube](https://i.stack.imgur.com/auu2U.png)
 
+### Bodies
+
+[platonic solids](../example/python/legacy_opengl/platonic_solids.py)  
+![platonic solids](../screenshot/example/python/legacy_opengl/platonic_solids.gif)
+
 ## Glut
 
 [glut minimal example](../example/python/legacy_opengl/glut_minimal_example.py)
@@ -41,3 +46,13 @@
 ### Event loop
 
 [glut event loop - close window](../example/python/legacy_opengl/glut_event_loop_close.py)
+
+## Glfw
+
+[glut minimal example - CamelCase](../example/python/legacy_opengl/glfw_minimal_example_CamelCase.py)
+
+[glut minimal example - snake case](../example/python/legacy_opengl/glfw_minimal_example_snake_case.py)
+
+## PyGame
+
+[pygame minimal example](../example/python/legacy_opengl/pygame_minimal_example.py)
