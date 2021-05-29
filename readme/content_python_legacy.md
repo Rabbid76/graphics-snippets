@@ -20,11 +20,18 @@
 [platonic solids](../example/python/legacy_opengl/platonic_solids.py)  
 ![platonic solids](../screenshot/example/python/legacy_opengl/platonic_solids.gif)
 
+## Glu
+
+### Glu Shapes
+
+[glu sphere - PLI texture](../example/python/legacy_opengl/glu_sphere_pli_texture.py)  
+![glu sphere - PLI texture](https://i.stack.imgur.com/QlSNW.gif)
+
 ## Glut
 
 [glut minimal example](../example/python/legacy_opengl/glut_minimal_example.py)
 
-### Shapes
+### Glut Shapes
 
 [glut solid cylinder](../example/python/legacy_opengl/glut_solid_cylinder.py)  
 ![glut solid cylinder](https://i.stack.imgur.com/z1EHb.gif)
