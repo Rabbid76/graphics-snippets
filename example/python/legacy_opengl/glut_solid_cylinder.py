@@ -20,10 +20,18 @@ def display():
     glutSwapBuffers()
     glutPostRedisplay()
 
+def reshape(width, height):
+    glViewport(0, 0, width, height)
+    glMatrixMode(GL_PROJECTION)
+    glLoadIdentity()
+    gluPerspective(45, width / height, 0.1, 10.0)
+    glMatrixMode(GL_MODELVIEW)
+
 glutInit(sys.argv)
 glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA)
 glutInitWindowSize(400, 400)
 glutCreateWindow(b"OpenGL Window")
+glutReshapeFunc(reshape)
 glutDisplayFunc(display)
 
 glEnable(GL_DEPTH_TEST)
@@ -32,9 +40,6 @@ glEnable(GL_LIGHTING)
 glEnable(GL_LIGHT0)                           
 glLightfv(GL_LIGHT0, GL_POSITION, (1, 1, 1))   
 
-glMatrixMode(GL_PROJECTION)
-glLoadIdentity()
-gluPerspective(90, 1, 0.1, 10)
 glMatrixMode(GL_MODELVIEW)
 glLoadIdentity()
 glTranslatef(0, 0, -2)

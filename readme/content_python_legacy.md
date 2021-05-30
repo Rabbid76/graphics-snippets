@@ -20,6 +20,10 @@
 [platonic solids](../example/python/legacy_opengl/platonic_solids.py)  
 ![platonic solids](../screenshot/example/python/legacy_opengl/platonic_solids.gif)
 
+## Shader
+
+[legacy shader minimal example](../example/python/legacy_opengl/shader_legacy_minimal_example.py)
+
 ## Glu
 
 ### Glu Shapes

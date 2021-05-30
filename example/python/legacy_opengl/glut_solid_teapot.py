@@ -18,18 +18,17 @@ def display():
     glRotatef(rotate[2], 0, 0, 1)
     glScalef(1, 1, 1)
     glutSolidTeapot(1)
+    rotate[1] += 0.01
     glFlush()
     glutSwapBuffers()
+    glutPostRedisplay()
 
-def reshapeFunc(x, y):
+def reshape(width, height):
+    glViewport(0, 0, width, height)
     glMatrixMode(GL_PROJECTION)
     glLoadIdentity()
-    gluPerspective(40.0, x / y, 0.5, 20.0)
-    glViewport(0, 0, x, y)
-
-def idleFunc():
-    rotate[1] += 0.01
-    display()
+    gluPerspective(40.0, width / height, 0.5, 20.0)
+    glMatrixMode(GL_MODELVIEW)
 
 glutInit(sys.argv)
 glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB)
@@ -38,6 +37,5 @@ glutCreateWindow(b"OpenGL Window")
 glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
 glClearColor(0.0, 0.0, 0.0, 0.0)
 glutDisplayFunc(display)
-glutReshapeFunc(reshapeFunc)
-glutIdleFunc(idleFunc)
+glutReshapeFunc(reshape)
 glutMainLoop()

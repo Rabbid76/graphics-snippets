@@ -21,11 +21,7 @@ def cylinder_between(x1, y1, z1, x2, y2, z2, rad):
     glutSolidCylinder(rad, height, 32, 16)
     glPopMatrix()
 
-def draw():
-
-    glMatrixMode(GL_PROJECTION)
-    glLoadIdentity()
-    gluPerspective(45, wnd_w/wnd_h, 0.1, 10)
+def display():
     glMatrixMode(GL_MODELVIEW)
     glLoadIdentity()
     gluLookAt(0, -2, 0, 0, 0, 0, 0, 0, 1)
@@ -42,13 +38,20 @@ def draw():
     glutSwapBuffers()
     glutPostRedisplay()
 
-wnd_w, wnd_h = 300, 300
+def reshape(width, height):
+    glViewport(0, 0, width, height)
+    glMatrixMode(GL_PROJECTION)
+    glLoadIdentity()
+    gluPerspective(45, width / height, 0.1, 10)
+    glMatrixMode(GL_MODELVIEW)
+
 glutInit()
 glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH)
-glutInitWindowSize(wnd_w, wnd_h)
+glutInitWindowSize(300, 300)
 glutInitWindowPosition(50, 50)
 glutCreateWindow(b"OpenGL Window")
-glutDisplayFunc(draw)
+glutReshapeFunc(reshape)
+glutDisplayFunc(display)
 glutMainLoop()
 
 glutMainLoop()

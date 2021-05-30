@@ -26,20 +26,22 @@ def display():
     glutSwapBuffers()
     glutPostRedisplay()
 
-width, height = 400, 300
+def reshape(width, height):
+    glViewport(0, 0, width, height)
+    glMatrixMode(GL_PROJECTION)
+    glLoadIdentity()
+    gluPerspective(45, width / height, 0.1, 10.0)
+    glMatrixMode(GL_MODELVIEW)
+
 glutInit(sys.argv)
 glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB)
-glutInitWindowSize(width, height)
+glutInitWindowSize(400, 300)
 glutCreateWindow(b"OpenGl Window")
+glutReshapeFunc(reshape)
 glutDisplayFunc(display)
 
 glClearColor(0.0, 0.0, 0.0, 1.0) 
-    
-glMatrixMode(GL_PROJECTION)
-glLoadIdentity()
-gluPerspective(45, width / height, 0.1, 10.0)
-
-glMatrixMode(GL_MODELVIEW)
+glMatrixMode(GL_MODELVIEW)    
 glLoadIdentity()
 glTranslate(0, 0, -5)
 
