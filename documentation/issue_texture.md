@@ -257,6 +257,23 @@ A [Windows Bitmap](https://de.wikipedia.org/wiki/Windows_Bitmap) file has a file
 
 ## Texture alignment (GL_UNPACK_ALIGNMENT, GL_PACK_ALIGNMENT)
 
+[Calculating texture coordinates from a heightmap](https://stackoverflow.com/questions/55739024/calculating-texture-coordinates-from-a-heightmap/55739265#55739265), [C++]  
+
+**By default OpenGL assumes that the start of each row of an image is aligned to 4 bytes**.
+
+**This is because the [`GL_UNPACK_ALIGNMENT`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml) parameter by default is 4. Since the image has 3 color channels (`GL_RGB`), and is tightly packed the size of a row of the image may not be aligned to 4 bytes**.  
+**When a RGB image with 3 color channels is loaded to a texture object and 3*width is not divisible by 4, [`GL_UNPACK_ALIGNMENT`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml) has to be set to 1, before specifying the texture image with  `glTexImage2D`**:
+
+```cpp
+glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0,
+             GL_RGB, GL_UNSIGNED_BYTE, this->diffuseData);
+             
+``` 
+
+The diffuse image in the question has a dimension of 390x390. So each row of the image has a size of `390 * 3 = 1170` bytes.  
+Since 1170 is not divisible by 4 (`1170 / 4 = 292,5`), the start of a row is not aligned to 4 bytes.
+
 [Failing to map a simple unsigned byte rgb texture to a quad](https://stackoverflow.com/questions/46202452/failing-to-map-a-simple-unsigned-byte-rgb-texture-to-a-quad/46203044#46203044), [C++] [GLSL]  
 ![Failing to map a simple unsigned byte rgb texture to a quad](https://i.stack.imgur.com/zlGqd.png)
 
@@ -360,24 +377,6 @@ To proper read the image the last parameter of `stbi_load` has to be 0 (since th
     unsigned char* imageData = stbi_load(filePath.c_str(),
          &width, &height, &numComponents, 0);
 
-
----
-
-[Calculating texture coordinates from a heightmap](https://stackoverflow.com/questions/55739024/calculating-texture-coordinates-from-a-heightmap/55739265#55739265), [C++]  
-
-By default OpenGL assumes that the start of each row of an image is aligned to 4 bytes.
-
-This is because the [`GL_UNPACK_ALIGNMENT`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml) parameter by default is 4. Since the image has 3 color channels (`GL_RGB`), and is tightly packed the size of a row of the image may not be aligned to 4 bytes.  
-When a RGB image with 3 color channels is loaded to a texture object and 3*width is not divisible by 4, [`GL_UNPACK_ALIGNMENT`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml) has to be set to 1:
-
-```cpp
-glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0,
-             GL_RGB, GL_UNSIGNED_BYTE, this->diffuseData);
-``` 
-
-The diffuse image in the question has a dimension of 390x390. So each row of the image has a size of `390 * 3 = 1170` bytes.  
-Since 1170 is not divisible by 4 (`1170 / 4 = 292,5`), the start of a row is not aligned to 4 bytes.
 
 ---
 

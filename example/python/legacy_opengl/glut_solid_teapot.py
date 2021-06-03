@@ -18,8 +18,7 @@ def display():
     glRotatef(rotate[2], 0, 0, 1)
     glScalef(1, 1, 1)
     glutSolidTeapot(1)
-    rotate[1] += 0.01
-    glFlush()
+    rotate[1] += 0.1
     glutSwapBuffers()
     glutPostRedisplay()
 
@@ -31,7 +30,7 @@ def reshape(width, height):
     glMatrixMode(GL_MODELVIEW)
 
 glutInit(sys.argv)
-glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB)
+glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB)
 glutInitWindowSize(400, 350)
 glutCreateWindow(b"OpenGL Window")
 glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
