@@ -80,4 +80,6 @@ It does not contain an application, just a collection of examples. Initially I j
 
 [p5.js and Processing](readme/content_processing_p5js.md)
 
+[GLSL examples](readme/content_glsl.md)
+
 [Documentation](readme/content_documentation.md)

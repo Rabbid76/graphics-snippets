@@ -63,3 +63,7 @@ See
 ## Legacy OpenGL
 
 [Immediate mode and legacy OpenGL](content_python_legacy.md)
+
+## Math
+
+[.obj to raw vertices converter with normals in python](https://stackoverflow.com/questions/54649416/obj-to-raw-vertices-converter-with-normals-in-python/54847016#54847016)  
