@@ -20,6 +20,14 @@
 [platonic solids](../example/python/legacy_opengl/platonic_solids.py)  
 ![platonic solids](../screenshot/example/python/legacy_opengl/platonic_solids.gif)
 
+### Light
+
+[light, solid cube](../example/python/legacy_opengl/light_solid_cube.py)  
+
+### Texture
+
+[texture PLI, solid cube](../example/python/legacy_opengl/texture_pli_solid_cube.py)
+
 ## Shader
 
 [legacy shader minimal example](../example/python/legacy_opengl/shader_legacy_minimal_example.py)
