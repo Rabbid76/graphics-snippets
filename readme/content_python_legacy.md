@@ -8,25 +8,35 @@
 
 ### Point
 
-[point size and smooth point](../example/python/legacy_opengl/point_size_point_smooth.py)  
+[point size and smooth point](../example/python/legacy_opengl/primitive_point_size_point_smooth.py)  
 
 ### Line
 
-[wireframe cube](../example/python/legacy_opengl/line_wireframe_cube.py)  
+[wireframe cube](../example/python/legacy_opengl/primitive_line_wireframe_cube.py)  
 ![wireframe cube](https://i.stack.imgur.com/auu2U.png)
 
-### Shapes
+## Triangle
 
-[platonic solids](../example/python/legacy_opengl/platonic_solids.py)  
+[triangle strip to octagonal](../example/python/legacy_opengl/primitive_triangle_strip_to_octagonal.py)  
+![triangle strip to octagonal](https://i.stack.imgur.com/aLniZ.png)
+
+## Shapes
+
+[platonic solids](../example/python/legacy_opengl/shape_platonic_solids.py)  
 ![platonic solids](../screenshot/example/python/legacy_opengl/platonic_solids.gif)
 
-### Light
+## Light
 
 [light, solid cube](../example/python/legacy_opengl/light_solid_cube.py)  
 
-### Texture
+## Texture
 
 [texture PLI, solid cube](../example/python/legacy_opengl/texture_pli_solid_cube.py)
+
+## Text
+
+[freetype - hello wolrd](../example/python/legacy_opengl/text_freetype_hello_world.py)
+![freetype - hello wolrd](../screenshot/example/python/legacy_opengl/text_freetype_hello_world.png)
 
 ## Shader
 
