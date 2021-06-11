@@ -35,7 +35,7 @@
 
 ## Text
 
-[freetype - hello wolrd](../example/python/legacy_opengl/text_freetype_hello_world.py)
+[freetype - hello wolrd](../example/python/legacy_opengl/text_freetype_hello_world.py)  
 ![freetype - hello wolrd](../screenshot/example/python/legacy_opengl/text_freetype_hello_world.png)
 
 ## Shader
