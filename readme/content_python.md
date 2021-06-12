@@ -53,6 +53,10 @@ Robert C. Martin, Clean Architecture
 [Parallax](../example/python/parallax/glut_opengl_shader_glm_cube_parallax.py)  
 [![Parallax](../screenshot/example/python/parallax/glut_opengl_shader_glm_cube_parallax.png)](../example/python/parallax/glut_opengl_shader_glm_cube_parallax.py)  
 
+## Minimal example
+
+[Texture](../example/python/opengl_minimal_example/minimal_example_texture.py)
+
 ## PyGame
 
 See
