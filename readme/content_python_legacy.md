@@ -29,6 +29,10 @@
 
 [light, solid cube](../example/python/legacy_opengl/light_solid_cube.py)  
 
+## Raster and bitmap
+
+[Raster bitmap](../example/python/legacy_opengl/raster_bitmap.py)
+
 ## Texture
 
 [texture PLI, solid cube](../example/python/legacy_opengl/texture_pli_solid_cube.py)
