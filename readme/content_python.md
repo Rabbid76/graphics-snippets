@@ -60,7 +60,13 @@ Robert C. Martin, Clean Architecture
 [Mesh](../example/python/opengl_minimal_example/minimal_example_shader_mesh.py)
 
 [Wood shader](../example/python/opengl_minimal_example/minimal_example_wood_shader.py)  
-[![Wood shader](../screenshot/example/python/opengl_minimal_example/minimal_example_wood_shader.png)](../example/python/opengl_minimal_example/minimal_example_wood_shader.py)  
+[![Wood shader](../screenshot/example/python/opengl_minimal_example/minimal_example_wood_shader.png)](../example/python/opengl_minimal_example/minimal_example_wood_shader.py) 
+
+[Zoom](../example/python/opengl_minimal_example/minimal_example_zoom.py)  
+
+[Pan cube 1](../example/python/opengl_minimal_example/minimal_example_pan_1.py)  
+[Pan cube 2](../example/python/opengl_minimal_example/minimal_example_pan_2.py)
+
 ## PyGame
 
 See

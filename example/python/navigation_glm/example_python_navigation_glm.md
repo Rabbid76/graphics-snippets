@@ -5,20 +5,20 @@
 <!-- TOC -->
 
 - [Python OpenGL 4.6, GLM navigation](#python-opengl-46-glm-navigation)
-  - [TODO](#todo)
-  - [Overview](#overview)
-    - [Data source](#data-source)
-    - [Perspective "zoom" - move view position along view ray](#perspective-zoom---move-view-position-along-view-ray)
-      - [Using `glm.unproject`](#using-glmunproject)
-      - [Using the view projection and window matrix](#using-the-view-projection-and-window-matrix)
-    - [Pane](#pane)
-    - [Rotate](#rotate)
-      - [Orbit](#orbit)
-        - [Rotate world up vector and local x axis](#rotate-world-up-vector-and-local-x-axis)
-  - [Code listing](#code-listing)
-    - [Vertex shader](#vertex-shader)
-    - [Fragment shader](#fragment-shader)
-    - [Python script](#python-script)
+    - [TODO](#todo)
+    - [Overview](#overview)
+        - [Data source](#data-source)
+        - [Perspective "zoom" - move view position along view ray](#perspective-zoom---move-view-position-along-view-ray)
+            - [Using `glm.unproject`](#using-glmunproject)
+            - [Using the view projection and window matrix](#using-the-view-projection-and-window-matrix)
+        - [Pane](#pane)
+        - [Rotate](#rotate)
+            - [Orbit](#orbit)
+                - [Rotate world up vector and local x axis](#rotate-world-up-vector-and-local-x-axis)
+    - [Code listing](#code-listing)
+        - [Vertex shader](#vertex-shader)
+        - [Fragment shader](#fragment-shader)
+        - [Python script](#python-script)
 
 <!-- /TOC -->
 
@@ -27,6 +27,12 @@
 # Python OpenGL 4.6, GLM navigation
 
 ![](image/cube_glut_glm_navigate.gif)
+
+See also
+
+- [Zoom](../../../example/python/opengl_minimal_example/minimal_example_zoom.py)  
+- [Pan cube 1](../../../example/python/opengl_minimal_example/minimal_example_pan_1.py)  
+- [Pan cube 2](../../../example/python/opengl_minimal_example/minimal_example_pan_2.py)
 
 ## TODO
 

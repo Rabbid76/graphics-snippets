@@ -1,3 +1,9 @@
+# How to implement camera pan like in 3dsMax?
+# https://stackoverflow.com/questions/53758319/how-to-implement-camera-pan-like-in-3dsmax
+
+# How to implement zoom towards mouse like in 3dsMax?
+# https://stackoverflow.com/questions/54057549/how-to-implement-zoom-towards-mouse-like-in-3dsmax
+
 import os
 import sys
 currentWDir = os.getcwd()
