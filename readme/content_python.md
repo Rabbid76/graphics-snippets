@@ -57,6 +57,10 @@ Robert C. Martin, Clean Architecture
 
 [Texture](../example/python/opengl_minimal_example/minimal_example_texture.py)
 
+[Mesh](../example/python/opengl_minimal_example/minimal_example_shader_mesh.py)
+
+[Wood shader](../example/python/opengl_minimal_example/minimal_example_wood_shader.py)  
+[![Wood shader](../screenshot/example/python/opengl_minimal_example/minimal_example_wood_shader.png)](../example/python/opengl_minimal_example/minimal_example_wood_shader.py)  
 ## PyGame
 
 See

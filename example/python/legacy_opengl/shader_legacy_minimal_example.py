@@ -45,7 +45,8 @@ def reshape(width, height):
     glMatrixMode(GL_MODELVIEW)
 
 glutInit(sys.argv)
-glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA)
+glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_MULTISAMPLE)
+glutSetOption(GLUT_MULTISAMPLE, 8)
 width, height = 400, 400
 glutInitWindowSize(width, height)
 glutCreateWindow(b"OpenGL Window")
@@ -78,5 +79,6 @@ glMatrixMode(GL_MODELVIEW)
 glLoadIdentity()
 glTranslate(0, 0, -5)
 glEnable(GL_DEPTH_TEST)
+glEnable(GL_MULTISAMPLE) # default
 
 glutMainLoop()

@@ -88,7 +88,8 @@ def reshape(width, height):
     glMatrixMode(GL_MODELVIEW)
 
 glutInit(sys.argv)
-glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB)
+glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_MULTISAMPLE)
+glutSetOption(GLUT_MULTISAMPLE, 8)
 glutInitWindowSize(400, 400)
 glutCreateWindow(b"Platonic solids")
 glutKeyboardFunc(key_pressed)
@@ -100,6 +101,7 @@ glMatrixMode(GL_MODELVIEW)
 glLoadIdentity()
 glTranslate(0, 0, -3)
 
+glEnable(GL_MULTISAMPLE) # default
 glEnable(GL_DEPTH_TEST)
 
 glutMainLoop()
