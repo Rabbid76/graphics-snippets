@@ -1,5 +1,5 @@
 # Convert triangle strips to Octagonal?
-# https://stackoverflow.com/questions/65141581/convert-triangle-strips-to-octagonal
+# https://stackoverflow.com/questions/65141581/convert-triangle-strips-to-octagonal/65144613#65144613
 
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
