@@ -67,6 +67,8 @@ Robert C. Martin, Clean Architecture
 [Pan cube 1](../example/python/opengl_minimal_example/minimal_example_pan_1.py)  
 [Pan cube 2](../example/python/opengl_minimal_example/minimal_example_pan_2.py)
 
+[Compute shader](../example/python/opengl_minimal_example/minimal_example_compute_shader.py)
+
 ## PyGame
 
 See
