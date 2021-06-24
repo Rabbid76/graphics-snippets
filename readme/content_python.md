@@ -55,6 +55,8 @@ Robert C. Martin, Clean Architecture
 
 ## Minimal example
 
+[Debug Output](../example/python/opengl_minimal_example/minimal_example_debug_output.py)
+
 [Texture](../example/python/opengl_minimal_example/minimal_example_texture.py)
 
 [Mesh](../example/python/opengl_minimal_example/minimal_example_shader_mesh.py)
