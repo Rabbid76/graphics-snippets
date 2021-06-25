@@ -42,6 +42,10 @@
 [freetype - hello wolrd](../example/python/legacy_opengl/text_freetype_hello_world.py)  
 ![freetype - hello wolrd](../screenshot/example/python/legacy_opengl/text_freetype_hello_world.png)
 
+## Buffer
+
+[update buffer](../example/python/legacy_opengl/vbo_update_buffer.py)
+
 ## Shader
 
 [legacy shader minimal example](../example/python/legacy_opengl/shader_legacy_minimal_example.py)
