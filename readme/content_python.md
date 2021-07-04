@@ -59,7 +59,7 @@ Robert C. Martin, Clean Architecture
 [![2D rounded rectangle](https://i.stack.imgur.com/RTVLv.png)](../example/python/parallax/minimal_example_shader_2d_rounded_rectangle.py)
 
 [2D rounded rectangle with shadow](../example/python/opengl_minimal_example/minimal_example_shader_2d_rounded_rectangle_shadow.py)  
-[![2D rounded rectangle with shadow](https://i.stack.imgur.com/XPNb4.png)](../example/python/parallax/minimal_example_shader_2d_rounded_rectangle_shadow.py)
+[![2D rounded rectangle with shadow](https://i.stack.imgur.com/wwYb4.gif)](../example/python/parallax/minimal_example_shader_2d_rounded_rectangle_shadow.py)
 
 ## Minimal example
 
