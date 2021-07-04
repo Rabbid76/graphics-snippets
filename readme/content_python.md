@@ -53,6 +53,14 @@ Robert C. Martin, Clean Architecture
 [Parallax](../example/python/parallax/glut_opengl_shader_glm_cube_parallax.py)  
 [![Parallax](../screenshot/example/python/parallax/glut_opengl_shader_glm_cube_parallax.png)](../example/python/parallax/glut_opengl_shader_glm_cube_parallax.py)  
 
+### 2D shader and ray marching
+
+[2D rounded rectangle](../example/python/opengl_minimal_example/minimal_example_shader_2d_rounded_rectangle.py)  
+[![2D rounded rectangle](https://i.stack.imgur.com/RTVLv.png)](../example/python/parallax/minimal_example_shader_2d_rounded_rectangle.py)
+
+[2D rounded rectangle with shadow](../example/python/opengl_minimal_example/minimal_example_shader_2d_rounded_rectangle_shadow.py)  
+[![2D rounded rectangle with shadow](https://i.stack.imgur.com/XPNb4.png)](../example/python/parallax/minimal_example_shader_2d_rounded_rectangle_shadow.py)
+
 ## Minimal example
 
 [Debug Output](../example/python/opengl_minimal_example/minimal_example_debug_output.py)
