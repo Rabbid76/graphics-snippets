@@ -71,6 +71,8 @@ Robert C. Martin, Clean Architecture
 
 [Compute shader](../example/python/opengl_minimal_example/minimal_example_compute_shader.py)
 
+[shader 2D](../example/python/opengl_minimal_example/minimal_example_shader_2d.py)
+
 ## PyGame
 
 See
