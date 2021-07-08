@@ -39,8 +39,8 @@
 
 ## Text
 
-[freetype - hello wolrd](../example/python/legacy_opengl/text_freetype_hello_world.py)  
-![freetype - hello wolrd](../screenshot/example/python/legacy_opengl/text_freetype_hello_world.png)
+[freetype - hello world](../example/python/legacy_opengl/text_freetype_hello_world.py)  
+![freetype - hello world](../screenshot/example/python/legacy_opengl/text_freetype_hello_world.png)
 
 ## Buffer
 
