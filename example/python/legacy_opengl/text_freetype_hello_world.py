@@ -80,7 +80,7 @@ def reshape(width, height):
     glMatrixMode(GL_MODELVIEW)
 
 glutInit(sys.argv)
-glutInitDisplayMode( GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH )
+glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH)
 glutInitWindowSize(400, 100)
 glutCreateWindow('Hello World - FreeType')
 glutDisplayFunc(display)

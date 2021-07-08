@@ -85,6 +85,9 @@ Robert C. Martin, Clean Architecture
 
 [shader 2D](../example/python/opengl_minimal_example/minimal_example_shader_2d.py)
 
+[freetype - hello wolrd](../example/python/opengl_minimal_example/minimal_example_shader_text_freetype_hello_world.py)  
+![freetype - hello wolrd](../screenshot/example/python/legacy_opengl/text_freetype_hello_world.png)
+
 ## PyGame
 
 See
