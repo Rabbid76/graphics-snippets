@@ -83,10 +83,12 @@ Robert C. Martin, Clean Architecture
 
 [Compute shader](../example/python/opengl_minimal_example/minimal_example_compute_shader.py)
 
-[shader 2D](../example/python/opengl_minimal_example/minimal_example_shader_2d.py)
+[Shader 2D](../example/python/opengl_minimal_example/minimal_example_shader_2d.py)
 
-[freetype - hello world](../example/python/opengl_minimal_example/minimal_example_shader_text_freetype_hello_world.py)  
-![freetype - hello world](../screenshot/example/python/legacy_opengl/text_freetype_hello_world.png)
+[Freetype - Hello world](../example/python/opengl_minimal_example/minimal_example_shader_text_freetype_hello_world.py)  
+![Freetype - Hello World](../screenshot/example/python/legacy_opengl/text_freetype_hello_world.png)
+
+[Shared context](../example/python/opengl_minimal_example/minimal_example_shared_context.py)
 
 ## PyGame
 
