@@ -36,7 +36,7 @@ if glfw.init() == glfw.FALSE:
     exit()
 
 loaded_lock = threading.Lock()
-terminate_load_thread = False
+terminate_load_thread_event = threading.Event()
 def load_thread_function():
     global vbo, ebo, program
 
@@ -62,8 +62,7 @@ def load_thread_function():
 
     loaded_lock.release()
 
-    while not glfw.window_should_close(load_window) and not terminate_load_thread:
-        time.sleep(0.01)
+    while not glfw.window_should_close(load_window) and not terminate_load_thread_event.wait(0.01):
         glfw.swap_buffers(load_window)
         glfw.poll_events()
     print("terminate load thread")
@@ -99,7 +98,7 @@ while not glfw.window_should_close(window):
     glfw.swap_buffers(window)
     glfw.poll_events()
 
-terminate_load_thread = True
+terminate_load_thread_event.set()
 load_thread.join()
 print("terminate")
 
