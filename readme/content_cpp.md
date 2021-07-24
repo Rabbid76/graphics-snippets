@@ -101,5 +101,8 @@ Robert C. Martin, Clean Architecture
 
 [emscripten](https://emscripten.org/)
 
-[Emscrpten OpenGL ES 2.0 triangle](../example/cpp/emscripten_opengl_minimal_example/emscripten_opengl_sdl/emscripten_opengl_es2_sdl.cpp)  
-[Preview](https://rabbid76.github.io/graphics-snippets/example/cpp/emscripten_opengl_minimal_example/emscripten_opengl_sdl/emscripten_opengl_es2_sdl.html)
+[Emscrpten OpenGL ES 2.0 triangle](../example/cpp/emscripten_opengl_minimal_example/emscripten_opengl_es2_sdl/emscripten_opengl_es2_sdl.cpp) &nbsp;&nbsp;&nbsp;&nbsp;
+[Preview](https://rabbid76.github.io/graphics-snippets/example/cpp/emscripten_opengl_minimal_example/emscripten_opengl_es2_sdl/emscripten_opengl_es2_sdl.html)
+
+[Emscrpten OpenGL ES 3.0 triangle](../example/cpp/emscripten_opengl_minimal_example/emscripten_opengl_es3_sdl/emscripten_opengl_es3_sdl.cpp) &nbsp;&nbsp;&nbsp;&nbsp;
+[Preview](https://rabbid76.github.io/graphics-snippets/example/cpp/emscripten_opengl_minimal_example/emscripten_opengl_es3_sdl/emscripten_opengl_es3_sdl.html)

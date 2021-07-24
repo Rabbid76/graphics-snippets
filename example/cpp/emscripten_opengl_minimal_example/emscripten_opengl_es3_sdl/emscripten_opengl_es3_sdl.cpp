@@ -23,21 +23,24 @@
 #include <vector>
 #include <chrono>
 
-std::string vert_shader = R"(
-#version 100
+std::string vert_shader = R"(#version 300 es
 //precision mediump float;
 
-attribute vec3 a_pos;
+layout (location = 0) in vec3 a_pos;
+out float v_id;
 
 void main()
 {
+    v_id = float(gl_VertexID);
     gl_Position = vec4(a_pos, 1.0);
 }
 )";
 
-std::string frag_shader = R"(
+std::string frag_shader = R"(#version 300 es
 precision mediump float;
 
+in float v_id;
+layout (location = 0) out vec4 frag_color; 
 uniform float u_time;
 
 vec3 HUEtoRGB(in float H)
@@ -50,8 +53,8 @@ vec3 HUEtoRGB(in float H)
 
 void main()
 {
-    float hue = fract(u_time);
-    gl_FragColor = vec4(HUEtoRGB(hue), 1.0);
+    float hue = fract(u_time * 0.3 + v_id * 0.5);
+    frag_color = vec4(HUEtoRGB(hue), 1.0);
 }
 )";
 
@@ -88,8 +91,7 @@ bool LinkStatus(GLuint program)
 }
 
 GLuint shader_program_object = 0;
-GLuint triangle_vbo;
-GLint pos_attribute_index;
+GLuint triangle_vbo, triangle_vao;
 GLint time_uniform_location;
 std::chrono::high_resolution_clock::time_point start_time;
 
@@ -116,8 +118,6 @@ void gl_init()
     glDeleteShader(vert_sh_obj);
     glDeleteShader(frag_sh_obj);
 
-    pos_attribute_index = glGetAttribLocation(shader_program_object, "a_pos");
-    std::cout << "`a_pos` attribute index: " << pos_attribute_index << std::endl;
     time_uniform_location = glGetUniformLocation(shader_program_object, "u_time");
     std::cout << "`u_time` uniform location: " << time_uniform_location << std::endl;
 
@@ -125,6 +125,11 @@ void gl_init()
     glGenBuffers(1, &triangle_vbo);
     glBindBuffer(GL_ARRAY_BUFFER, triangle_vbo);
     glBufferData(GL_ARRAY_BUFFER, varray.size()*sizeof(*varray.data()), varray.data(), GL_STATIC_DRAW );
+
+    glGenVertexArrays(1, &triangle_vao);
+    glBindVertexArray(triangle_vao);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
 
     start_time = std::chrono::high_resolution_clock::now();
 }
@@ -163,9 +168,7 @@ void gl_draw()
     glUseProgram(shader_program_object);
     glUniform1f(time_uniform_location, static_cast<float>(time_s));
 
-    glEnableVertexAttribArray(pos_attribute_index);
-    glBindBuffer(GL_ARRAY_BUFFER, triangle_vbo);
-    glVertexAttribPointer(pos_attribute_index, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+    glBindVertexArray(triangle_vao);
     glDrawArrays(GL_TRIANGLES, 0, 3);
 }
 
@@ -177,6 +180,7 @@ EM_BOOL gl_animation_frame(double time, void* userData)
 
 int main(int argc, char *argv[])
 {
+    std::cout << "SDL, OpenGL ES 3.0" << std::endl;
     std::cout << "initialize view ..." << std::endl;
 
     if (SDL_Init(SDL_INIT_VIDEO) != 0)
