@@ -96,3 +96,9 @@ Robert C. Martin, Clean Architecture
 
 [example_glu_sphere_1](../example/cpp/opengl_legacy/example_glu_sphere_1.cpp)  
 [![example_glu_sphere_1](../screenshot/example/cpp/opengl_legacy/example_glu_sphere_1.gif)](../example/cpp/opengl_legacy/example_glu_sphere_1.cpp)  
+
+## Emscripten examples
+
+[emscripten](https://emscripten.org/) 
+
+[example_glu_sphere_1](../example/cpp/emscripten_opengl_minimal_example/emscripten_opengl_sdl/emscripten_opengl_es2_sdl.cpp) 

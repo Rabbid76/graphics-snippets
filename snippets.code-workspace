@@ -72,7 +72,14 @@
 			"xstring": "cpp",
 			"xtr1common": "cpp",
 			"xtree": "cpp",
-			"xutility": "cpp"
+			"xutility": "cpp",
+			"charconv": "cpp",
+			"format": "cpp",
+			"forward_list": "cpp",
+			"locale": "cpp",
+			"optional": "cpp",
+			"xlocbuf": "cpp",
+			"xlocmes": "cpp"
 		}
 	}
 }
