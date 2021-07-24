@@ -99,6 +99,7 @@ Robert C. Martin, Clean Architecture
 
 ## Emscripten examples
 
-[emscripten](https://emscripten.org/) 
+[emscripten](https://emscripten.org/)
 
-[example_glu_sphere_1](../example/cpp/emscripten_opengl_minimal_example/emscripten_opengl_sdl/emscripten_opengl_es2_sdl.cpp) 
+[Emscrpten OpenGL ES 2.0 triangle](../example/cpp/emscripten_opengl_minimal_example/emscripten_opengl_sdl/emscripten_opengl_es2_sdl.cpp)  
+[Preview](https://rabbid76.github.io/graphics-snippets/example/cpp/emscripten_opengl_minimal_example/emscripten_opengl_sdl/emscripten_opengl_es2_sdl.html)
