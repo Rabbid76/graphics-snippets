@@ -1,0 +1,234 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="core">
+      <UniqueIdentifier>{7e9441f6-29e8-4de7-ad04-09d7baf478a5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="library">
+      <UniqueIdentifier>{23077125-ae35-468e-a09e-af87199b86ec}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="device">
+      <UniqueIdentifier>{7de504b4-9e67-4a88-a79c-dd300a76d990}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="exception">
+      <UniqueIdentifier>{a632026e-5149-4051-9f6b-27d7441e1827}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="type">
+      <UniqueIdentifier>{8330bed2-48ff-41a2-b0a5-ba816e3ecb9f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="logging">
+      <UniqueIdentifier>{b055ce28-6c8b-4d3e-b600-fda7558875d1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="buffer">
+      <UniqueIdentifier>{cb13d4a3-6ca1-42b4-8428-74eae46206a0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="swap">
+      <UniqueIdentifier>{840c606e-0499-4b56-a1ac-38ea97ed8453}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="image">
+      <UniqueIdentifier>{af5d396a-713b-415a-bb97-231cca4a400d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="shader">
+      <UniqueIdentifier>{26e22b2d-d6f7-4b0b-b3eb-63e1554f08fb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="pipeline">
+      <UniqueIdentifier>{d733a029-b12e-4341-bdf4-eeb01074600c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h">
+      <Filter>library</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_vulkan_include.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_object.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="framework.h">
+      <Filter>library</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_device_memory.h">
+      <Filter>device</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_physical_device.h">
+      <Filter>device</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_device.h">
+      <Filter>device</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_surface.h">
+      <Filter>device</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_instance.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_debug.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_validation_layers.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_extensions.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_exception.h">
+      <Filter>exception</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_parameter_helper.h">
+      <Filter>type</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_instance_factory.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_surface_factory.h">
+      <Filter>device</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_surface_factory_windows.h">
+      <Filter>device</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_physical_device_extensions.h">
+      <Filter>device</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_physical_device_rate.h">
+      <Filter>device</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_physical_device_rate_default.h">
+      <Filter>device</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_logging.h">
+      <Filter>logging</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_logging_physical_device.h">
+      <Filter>logging</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_buffer.h">
+      <Filter>buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_buffer_and_memory.h">
+      <Filter>buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_buffer_operator_copy_data.h">
+      <Filter>buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_buffer_operator_copy_data_to_memory.h">
+      <Filter>buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_buffer_operator_copy_buffer.h">
+      <Filter>buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_buffer_operator_copy_data_staging.h">
+      <Filter>buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_device_memory_information.h">
+      <Filter>device</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_buffer_information.h">
+      <Filter>buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_buffer_and_memory_information.h">
+      <Filter>buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_device_factory.h">
+      <Filter>device</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_device_factory_default.h">
+      <Filter>device</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_render_pass_factory.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_render_pass_factory_default.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_render_pass.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_descriptor_set_layout.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_descriptor_set_layout_factory_default.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_descriptor_set_layout_factory.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_swap_extent_selector.h">
+      <Filter>swap</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_swap_present_mode_selector.h">
+      <Filter>swap</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_swap_present_mode_selector_default.h">
+      <Filter>swap</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_swap_surface_format_selector.h">
+      <Filter>swap</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_swap_surface_fromat_selector_default.h">
+      <Filter>swap</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_swapchain.h">
+      <Filter>swap</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_swapchain_factory.h">
+      <Filter>swap</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_swapchain_factory_default.h">
+      <Filter>swap</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_swapchain_information.h">
+      <Filter>swap</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_image.h">
+      <Filter>image</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_descriptor_set_layout_binding.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_shader_module.h">
+      <Filter>shader</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_shader_stage_create_information.h">
+      <Filter>shader</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_pipeline.h">
+      <Filter>pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_pipeline_factory_default.h">
+      <Filter>pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_pipeline_factory.h">
+      <Filter>pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_shader_module_factory.h">
+      <Filter>shader</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_shader_module_factory_spirv_file.h">
+      <Filter>shader</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_pipeline_layout.h">
+      <Filter>pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_image_view.h">
+      <Filter>image</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_image_view_memory.h">
+      <Filter>image</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_image_view_factory.h">
+      <Filter>image</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_image_view_factory_default.h">
+      <Filter>image</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp">
+      <Filter>library</Filter>
+    </ClCompile>
+    <ClCompile Include="source\vk_utility.cpp">
+      <Filter>library</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

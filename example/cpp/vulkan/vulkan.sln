@@ -1,0 +1,67 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30104.148
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "vulkan_utility", "vulkan_utility\vulkan_utility.vcxproj", "{AAFFC38D-6634-4789-9B10-B9E118A437F1}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "vulkan_utility_test", "vulkan_utility_test\vulkan_utility_test.vcxproj", "{966C0472-1813-46F8-BB17-BBBC15734876}"
+	ProjectSection(ProjectDependencies) = postProject
+		{AAFFC38D-6634-4789-9B10-B9E118A437F1} = {AAFFC38D-6634-4789-9B10-B9E118A437F1}
+		{922DEFE3-AC2A-4EA4-ACAD-4B36772AAB29} = {922DEFE3-AC2A-4EA4-ACAD-4B36772AAB29}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "vulkan_sdk_test", "vulkan_sdk_test\vulkan_sdk_test.vcxproj", "{9049972C-4B23-4C46-9CB4-8202353F902E}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "vulkan_tutorial_glfw", "vulkan_tutorial_glfw\vulkan_glfw_test.vcxproj", "{B20618C8-BC5B-4B30-B04B-97D439602DB0}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "vulkan_tutorial_hpp_glfw", "vulkan_tutorial_hpp_glfw\vulkan_tutorial_hpp_glfw.vcxproj", "{C268EEEE-5D8E-4983-98C0-E9E1C9C54E3E}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "vulkan_glfw_utility", "vulkan_glfw_utility\vulkan_glfw_utility.vcxproj", "{922DEFE3-AC2A-4EA4-ACAD-4B36772AAB29}"
+	ProjectSection(ProjectDependencies) = postProject
+		{AAFFC38D-6634-4789-9B10-B9E118A437F1} = {AAFFC38D-6634-4789-9B10-B9E118A437F1}
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8AD9357F-7C7C-4248-955C-0AEB94847090}"
+	ProjectSection(SolutionItems) = preProject
+		readme.md = readme.md
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AAFFC38D-6634-4789-9B10-B9E118A437F1}.Debug|x64.ActiveCfg = Debug|x64
+		{AAFFC38D-6634-4789-9B10-B9E118A437F1}.Debug|x64.Build.0 = Debug|x64
+		{AAFFC38D-6634-4789-9B10-B9E118A437F1}.Release|x64.ActiveCfg = Release|x64
+		{AAFFC38D-6634-4789-9B10-B9E118A437F1}.Release|x64.Build.0 = Release|x64
+		{966C0472-1813-46F8-BB17-BBBC15734876}.Debug|x64.ActiveCfg = Debug|x64
+		{966C0472-1813-46F8-BB17-BBBC15734876}.Debug|x64.Build.0 = Debug|x64
+		{966C0472-1813-46F8-BB17-BBBC15734876}.Release|x64.ActiveCfg = Release|x64
+		{966C0472-1813-46F8-BB17-BBBC15734876}.Release|x64.Build.0 = Release|x64
+		{9049972C-4B23-4C46-9CB4-8202353F902E}.Debug|x64.ActiveCfg = Debug|x64
+		{9049972C-4B23-4C46-9CB4-8202353F902E}.Debug|x64.Build.0 = Debug|x64
+		{9049972C-4B23-4C46-9CB4-8202353F902E}.Release|x64.ActiveCfg = Release|x64
+		{9049972C-4B23-4C46-9CB4-8202353F902E}.Release|x64.Build.0 = Release|x64
+		{B20618C8-BC5B-4B30-B04B-97D439602DB0}.Debug|x64.ActiveCfg = Debug|x64
+		{B20618C8-BC5B-4B30-B04B-97D439602DB0}.Debug|x64.Build.0 = Debug|x64
+		{B20618C8-BC5B-4B30-B04B-97D439602DB0}.Release|x64.ActiveCfg = Release|x64
+		{B20618C8-BC5B-4B30-B04B-97D439602DB0}.Release|x64.Build.0 = Release|x64
+		{C268EEEE-5D8E-4983-98C0-E9E1C9C54E3E}.Debug|x64.ActiveCfg = Debug|x64
+		{C268EEEE-5D8E-4983-98C0-E9E1C9C54E3E}.Debug|x64.Build.0 = Debug|x64
+		{C268EEEE-5D8E-4983-98C0-E9E1C9C54E3E}.Release|x64.ActiveCfg = Release|x64
+		{C268EEEE-5D8E-4983-98C0-E9E1C9C54E3E}.Release|x64.Build.0 = Release|x64
+		{922DEFE3-AC2A-4EA4-ACAD-4B36772AAB29}.Debug|x64.ActiveCfg = Debug|x64
+		{922DEFE3-AC2A-4EA4-ACAD-4B36772AAB29}.Debug|x64.Build.0 = Debug|x64
+		{922DEFE3-AC2A-4EA4-ACAD-4B36772AAB29}.Release|x64.ActiveCfg = Release|x64
+		{922DEFE3-AC2A-4EA4-ACAD-4B36772AAB29}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D4FA6019-3895-4E3C-A0CC-2902BD041417}
+	EndGlobalSection
+EndGlobal

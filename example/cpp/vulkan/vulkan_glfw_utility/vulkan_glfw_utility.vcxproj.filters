@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="library">
+      <UniqueIdentifier>{9d618e85-d2e5-4a33-8252-af08dcb19458}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="core">
+      <UniqueIdentifier>{c614cc98-e011-4750-b546-1143ca93de6e}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="framework.h">
+      <Filter>library</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>library</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_glfw_utility_include.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_glfw_utility_extensions.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_glfw_utility_surface_factory.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_glfw_utility_swap_extent_selector.h">
+      <Filter>core</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp">
+      <Filter>library</Filter>
+    </ClCompile>
+    <ClCompile Include="source\vk_glfw_utility.cpp">
+      <Filter>library</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

@@ -5,7 +5,7 @@
     <TempBuildDir>c:\temp\_devenv</TempBuildDir>
     <OwnGraohicsLibDir>..\..\cpp\</OwnGraohicsLibDir>
     <GlewDir>..\..\..\_cpp_extern\glew-2.1.0\</GlewDir>
-    <VulkanDir>..\..\..\_cpp_extern\VulkanSDK\1.2.148.1\</VulkanDir>
+    <VulkanDir>..\..\..\_cpp_extern\VulkanSDK\1.2.182.0\</VulkanDir>
     <VulkanHppDir>..\..\..\Vulkan\Vulkan-Hpp</VulkanHppDir>
     <GlmDir>..\..\..\_cpp_extern\glm-0.9.9.3\glm\</GlmDir>
     <StbDir>..\..\..\_cpp_extern\stb\</StbDir>
@@ -16,6 +16,7 @@
     <wxWidgetDir>..\..\..\_cpp_extern\wxMSW-3.1.4_vc14x</wxWidgetDir>
     <FreetypeDir>..\..\..\_cpp_extern\freetype-2.9\</FreetypeDir>
     <AssimpDir>..\..\..\_cpp_extern\assimp_4_x\</AssimpDir>
+    <TinyObjLoaderDir>_3rdparty\tinyobjectloader</TinyObjLoaderDir>
   </PropertyGroup>
   <PropertyGroup />
   <ItemDefinitionGroup />
@@ -61,6 +62,9 @@
     </BuildMacro>
     <BuildMacro Include="AssimpDir">
       <Value>$(AssimpDir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="TinyObjLoaderDir">
+      <Value>$(TinyObjLoaderDir)</Value>
     </BuildMacro>
   </ItemGroup>
 </Project>
