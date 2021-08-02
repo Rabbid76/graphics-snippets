@@ -101,6 +101,16 @@ namespace vk_utility
                 return _vk_object.destroyBuffer(buffer);
             }
 
+            auto create_framebuffer(const vk::FramebufferCreateInfo& framebuffer_information) const
+            {
+                return _vk_object.createFramebuffer(framebuffer_information);
+            }
+
+            auto destroy_framebuffer(vk::Framebuffer framebuffer) const
+            {
+                return _vk_object.destroyFramebuffer(framebuffer);
+            }
+
             auto get_buffer_memory_requirements(vk::Buffer buffer) const
             {
                 return _vk_object.getBufferMemoryRequirements(buffer);

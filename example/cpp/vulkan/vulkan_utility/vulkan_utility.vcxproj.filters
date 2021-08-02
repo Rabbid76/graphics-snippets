@@ -222,6 +222,9 @@
     <ClInclude Include="include\vk_utility_image_view_factory_default.h">
       <Filter>image</Filter>
     </ClInclude>
+    <ClInclude Include="include\vk_utility_framebuffer.h">
+      <Filter>buffer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">

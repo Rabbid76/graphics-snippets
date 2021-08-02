@@ -83,6 +83,7 @@
 #include <vk_utility_image_view.h>
 #include <vk_utility_image_view_memory.h>
 #include <vk_utility_image_view_factory_default.h>
+#include <vk_utility_framebuffer.h>
 
 
 // GLFW
@@ -397,7 +398,7 @@ private: // private attributes
     std::vector<vk::DescriptorSet> _descriptorSets;           //!< Vulkan descriptor sets
     vk_utility::pipeline::PipelineLayoutPtr             _pipeline_layout;            //!< Vulkan pipeline layout handle
     vk_utility::pipeline::PipelinePtr                   _graphics_pipeline;          //!< Vulkan graphics pipeline handle
-    std::vector<vk::Framebuffer>   _swapChainFramebuffers;    //!< Vulkan frame buffers
+    std::vector<vk_utility::buffer::FramebufferPtr>     _swapchain_framebuffers;     //!< Vulkan framebuffers
     vk::CommandPool                _commandPool;              //!< Vulkan command pool
     std::vector<vk::CommandBuffer> _commandBuffers;           //!< Vulkan command buffers
     std::vector<vk::Semaphore>     _imageAvailableSemaphores; //!< Vulkan semaphore
@@ -625,9 +626,9 @@ void CAppliction::initVulkan( void )
         std::cout << "descriptor pool handle:        " << std::hex << _descriptorPool << "h" << std::endl;
         std::cout << "pipeline layout handle:        " << std::hex << _pipeline_layout->handle() << "h" << std::endl;
         std::cout << "graphics pipeline handle:      " << std::hex << _graphics_pipeline->handle() << "h" << std::endl;
-        std::cout << "swap chain framebuffers:       " << std::hex << _swapChainFramebuffers[0] << "h";
-        for ( size_t i= 1; i < _swapChainFramebuffers.size(); ++ i )
-            std::cout << ", " << std::hex << _swapChainFramebuffers[i] << "h";
+        std::cout << "swap chain framebuffers:       " << std::hex << _swapchain_framebuffers[0]->handle() << "h";
+        for ( size_t i= 1; i < _swapchain_framebuffers.size(); ++ i )
+            std::cout << ", " << std::hex << _swapchain_framebuffers[i]->handle() << "h";
         std::cout << std::endl;
         std::cout << "command pool handle:           " << std::hex << _commandPool << "h" << std::endl;
         std::cout << "command buffer handles:        " << std::hex << _commandBuffers[0] << "h";
@@ -922,10 +923,7 @@ void CAppliction::cleanupSwapChain( void ) {
     _descriptorSets.clear();
 
 
-    for (auto framebuffer : _swapChainFramebuffers) {
-        _device->get()->destroyFramebuffer(framebuffer);
-    }
-    _swapChainFramebuffers.clear();
+    _swapchain_framebuffers.clear();
 
     if (_commandPool)
         _device->get()->freeCommandBuffers(_commandPool, _commandBuffers);
@@ -953,7 +951,7 @@ void CAppliction::createFramebuffers( void ) {
     if ( !_device )
         throw CException("no logical vulkan device!");
 
-    _swapChainFramebuffers.resize(_swapchain_image_views.size());
+    _swapchain_framebuffers.resize(_swapchain_image_views.size());
 
     for (size_t i = 0; i < _swapchain_image_views.size(); i++) {
         std::vector<vk::ImageView> attachments = {
@@ -972,7 +970,7 @@ void CAppliction::createFramebuffers( void ) {
             1
         );
 
-        _swapChainFramebuffers[i] = _device->get()->createFramebuffer(framebufferInfo);
+        _swapchain_framebuffers[i] = vk_utility::buffer::Framebuffer::New(_device, framebufferInfo);
     }
 }
 
@@ -1973,7 +1971,7 @@ void CAppliction::createCommandBuffers( void ) {
     //! - `VK_COMMAND_BUFFER_LEVEL_PRIMARY`: Can be submitted to a queue for execution, but cannot be called from other command buffers.
     //! - `VK_COMMAND_BUFFER_LEVEL_SECONDARY`: Cannot be submitted directly, but can be called from primary command buffers.
 
-    _commandBuffers.resize(_swapChainFramebuffers.size());
+    _commandBuffers.resize(_swapchain_framebuffers.size());
     
     vk::CommandBufferAllocateInfo allocInfo(_commandPool, vk::CommandBufferLevel::ePrimary, (uint32_t)_commandBuffers.size());
 
@@ -2029,7 +2027,7 @@ void CAppliction::createCommandBuffers( void ) {
         vk::RenderPassBeginInfo renderPassInfo
         (
             _render_pass->handle(),
-            _swapChainFramebuffers[i],
+            _swapchain_framebuffers[i]->handle(),
             vk::Rect2D(vk::Offset2D(0, 0), _swapchain->get().image_extent_2D()),
             clearValues
         );
