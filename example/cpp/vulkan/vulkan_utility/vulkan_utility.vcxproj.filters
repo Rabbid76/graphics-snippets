@@ -225,6 +225,12 @@
     <ClInclude Include="include\vk_utility_framebuffer.h">
       <Filter>buffer</Filter>
     </ClInclude>
+    <ClInclude Include="include\vk_utility_framebuffer_factory.h">
+      <Filter>buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_framebuffer_factory_default.h">
+      <Filter>buffer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">

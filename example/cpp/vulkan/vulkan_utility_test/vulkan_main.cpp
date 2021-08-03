@@ -84,6 +84,7 @@
 #include <vk_utility_image_view_memory.h>
 #include <vk_utility_image_view_factory_default.h>
 #include <vk_utility_framebuffer.h>
+#include <vk_utility_framebuffer_factory_default.h>
 
 
 // GLFW
@@ -323,7 +324,6 @@ private: // private operations
     void recreateSwapChain( void );                  //!< recreate the entire swapchain (e.g. when the window was resized)
     void createSwapChain( bool initilaize );         //!< create the entire swapchain (e.g. when the window was resized)
     void cleanupSwapChain( void );                   //!< cleanup everything which will be recreated till swapchain is recreated
-    void createFramebuffers( void );                 //!< create the framebuffers
     void createCommandPool( void );                  //!< create the command pool
     void createColorResources(void);                 //!< create the color image
     void createDepthResources(void);                 //!< create the depth image
@@ -854,7 +854,14 @@ void CAppliction::createSwapChain(bool initilaize)
     createCommandPool();
     createColorResources();
     createDepthResources();
-    createFramebuffers();
+    
+    _swapchain_framebuffers = vk_utility::buffer::FramebufferFactoryDefault()
+        .set_swapchain(_swapchain)
+        .set_swapchain_image_views(_swapchain_image_views)
+        .set_color_image_view(_color_image_view_memory.front())
+        .set_depth_image_view(_depth_image_view_memory.front())
+        .set_render_pass(_render_pass)
+        .New(_device);
 
     if (initilaize)
     {
@@ -936,42 +943,6 @@ void CAppliction::cleanupSwapChain( void ) {
     _swapchain_image_views.clear();
 
     _swapchain = nullptr;
-}
-
-
-/******************************************************************//**
-* \brief   Create the framebuffers.
-* 
-* \author  gernot
-* \date    2018-05-25
-* \version 1.0
-**********************************************************************/
-void CAppliction::createFramebuffers( void ) {
-
-    if ( !_device )
-        throw CException("no logical vulkan device!");
-
-    _swapchain_framebuffers.resize(_swapchain_image_views.size());
-
-    for (size_t i = 0; i < _swapchain_image_views.size(); i++) {
-        std::vector<vk::ImageView> attachments = {
-            _color_image_view_memory.front()->get().image_view(),
-            _depth_image_view_memory.front()->get().image_view(),
-            _swapchain_image_views[i]->handle(),
-        };
-
-        vk::FramebufferCreateInfo framebufferInfo
-        (
-            vk::FramebufferCreateFlags{},
-            _render_pass->handle(),
-            attachments,
-            _swapchain->get().image_width_2D(),
-            _swapchain->get().image_height_2D(),
-            1
-        );
-
-        _swapchain_framebuffers[i] = vk_utility::buffer::Framebuffer::New(_device, framebufferInfo);
-    }
 }
 
 

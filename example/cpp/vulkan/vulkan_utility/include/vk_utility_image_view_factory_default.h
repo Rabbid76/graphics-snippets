@@ -2,6 +2,7 @@
 
 
 #include "vk_utility_image_view_factory.h"
+#include "vk_utility_swapchain.h"
 
 
 namespace vk_utility
@@ -12,7 +13,7 @@ namespace vk_utility
         /// <summary>
         /// Interface for image view (`vk::ImageView`) factories
         /// </summary>
-        class ImageViewFactoryDefault : IImageViewFactory  
+        class ImageViewFactoryDefault : public IImageViewFactory  
         {
         private:
 
@@ -36,12 +37,12 @@ namespace vk_utility
                 // You could then create multiple image views for each image representing the views for the left and right eyes by accessing different layers.
 
                 auto& swapchain_images = _swapchain->get().get_swapchain_images();
-                std::vector<vk_utility::image::ImageViewPtr> swapchain_image_views;
-                std::transform(swapchain_images.begin(), swapchain_images.end(), std::back_inserter(swapchain_image_views), [&](auto& swapchain_image) -> auto
+                std::vector<vk_utility::image::ImageViewPtr> image_views;
+                std::transform(swapchain_images.begin(), swapchain_images.end(), std::back_inserter(image_views), [&](auto& swapchain_image) -> auto
                 {
                     return vk_utility::image::ImageView::New(device, swapchain_image, _swapchain->get().image_format(), vk::ImageAspectFlagBits::eColor, 1);
                 });
-                return swapchain_image_views;
+                return image_views;
             };
         };
     }
