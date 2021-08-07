@@ -35,7 +35,8 @@
 
 ## Texture
 
-[texture PLI, solid cube](../example/python/legacy_opengl/texture_pli_solid_cube.py)
+[texture PLI, solid cube](../example/python/legacy_opengl/texture_pli_solid_cube.py)  
+[texture - glDrawPixels](../example/python/legacy_opengl/texture_glDrawPixels.py)
 
 ## Text
 
