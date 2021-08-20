@@ -1,14 +1,17 @@
 #include <pch.h>
 
-#define main example_camera_and_matrix
-#include <example_camera_and_matrix.cpp>
+
+#define main EXAMPLE
+//#include <example_camera_and_matrix.cpp>
+//#include <example_mesh_1.cpp>
+#include <example_mesh_3_c_cube.cpp>
 #undef main
 
 int main()
 {
     int ret = 0;
 
-    ret = example_camera_and_matrix();
+    ret = EXAMPLE();
 
     return ret;
 }

@@ -194,9 +194,9 @@ int main(void)
         float orthoY = ascpect > 1.0f ? 1.0f : 1.0 / ascpect;
 
         float aspect = (float)vpSize[0]/(float)vpSize[1];
-        float near = 0.01f;
-        float far = 1000.0f;
-        glm::mat4 project = glm::perspective( (float)M_PI/3.0f, aspect, near, far );
+        float near_dist = 0.01f;
+        float far_dist = 1000.0f;
+        glm::mat4 project = glm::perspective( (float)M_PI/3.0f, aspect, near_dist, far_dist );
         
         static bool invert = false;
         glm::mat4 view( 1.0f );
@@ -206,8 +206,8 @@ int main(void)
           glm::vec3(0.0f, 0.0f,  0.0f),
           glm::vec3(0.0f, 0.0f, 1.0f));
 
-        //glm::vec3 pos( 0.0f, 0.0f, (near + far) / 2.0f );
-        glm::vec3 pos( 0.0f, 0.0f, near * 0.99f + far * 0.01f );
+        //glm::vec3 pos( 0.0f, 0.0f, (near_dist + far) / 2.0f );
+        glm::vec3 pos( 0.0f, 0.0f, near_dist * 0.99f + far_dist * 0.01f );
         //pos = glm::vec3( 0.0f, 0.0f, 3.0f );
         //view = glm::translate( glm::mat4( 1.0f ), -pos );
 

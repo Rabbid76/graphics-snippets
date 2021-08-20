@@ -52,8 +52,13 @@ Robert C. Martin, Clean Architecture
 
 ---
 
+[example_mesh_3_c_cube](../example/cpp/opengl/example_mesh_3_c_cube.cpp)  
+[![example_mesh_3_c_cube](../screenshot/example/cpp/opengl/example_mesh_3_c_cube.gif)](../example/cpp/opengl/example_mesh_3_c_cube.cpp)  
+
+---
+
 [example_mesh_4_cube_flat](../example/cpp/opengl/example_mesh_4_cube_flat.cpp)  
-[![ example_mesh_4_cube_flat](../screenshot/example/cpp/opengl/example_mesh_4_cube_flat.gif)](../example/cpp/opengl/example_mesh_4_cube_flat.cpp)  
+[![example_mesh_4_cube_flat](../screenshot/example/cpp/opengl/example_mesh_4_cube_flat.gif)](../example/cpp/opengl/example_mesh_4_cube_flat.cpp)  
 
 ---
 
