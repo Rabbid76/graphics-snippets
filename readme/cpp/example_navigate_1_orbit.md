@@ -9,6 +9,8 @@ Richard P. Feynman
 
 ## Orbit
 
+See also [How to implement interactive rotation operations in a decent way](https://stackoverflow.com/questions/62468005/how-to-implement-interactive-rotation-operations-in-a-decent-way/68865987#68865987)
+
 When dragging the mouse, the object must be rotated around an axis that is perpendicular to the direction of movement of the mouse. The pivot is the orin of the model.
 
 [![example_navigate_1_orbit](../../screenshot/example/cpp/opengl/example_navigate_1_orbit_mouse_drag.png)](../../example/cpp/opengl/example_navigate_1_orbit.cpp)  
