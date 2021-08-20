@@ -62,6 +62,7 @@ Lloyd Alexander, The Book of Three
 --><a href="https://github.com/Rabbid76/graphics-snippets/blob/master/readme/content_python_legacy.md"><img src="./screenshot/example/python/legacy_opengl/platonic_solids.gif" height="100"></a><!--
 --><a href="https://github.com/Rabbid76/graphics-snippets/blob/master/readme/content_python_legacy.md"><img src="https://i.stack.imgur.com/QlSNW.gif" height="100"></a><!--
 --><a href="https://github.com/Rabbid76/graphics-snippets/blob/master/readme/content_python.md"><img src="./screenshot/example/python/opengl_minimal_example/minimal_example_wood_shader.png" height="100"></a><!--
+--><a href="https://github.com/Rabbid76/graphics-snippets/blob/master/readme/content_cpp.md"><img src="./screenshot/example/cpp/opengl/example_navigate_1_orbit.gif" height="100"></a><!--
 --></div>
 
 This repository contains examples of rendering with OpenGL and WebGL in multiple languages.
