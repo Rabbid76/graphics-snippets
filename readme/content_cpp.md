@@ -40,6 +40,11 @@ Robert C. Martin, Clean Architecture
 [Platonic solid](../example/cpp/wx_widget_opengl_platonic_solid)  
 [![stippled_line_shader](../screenshot/example/cpp/wx_widget_opengl_platonic_solid/wx_widget_opengl_platonic_solid.png)](../example/cpp/wx_widget_opengl_platonic_solid)  
 
+## Navigate
+
+[example_navigate_1_orbit](../example/cpp/opengl/example_navigate_1_orbit.cpp)  
+[![example_navigate_1_orbit](../screenshot/example/cpp/opengl/example_navigate_1_orbit.gif)](../example/cpp/opengl/example_navigate_1_orbit.cpp)  
+
 ## OpenGL 4 Examples
 
 [example_glm_animation_1](../example/cpp/opengl/example_glm_animation_1.cpp)  
