@@ -58,7 +58,7 @@ while not glfwWindowShouldClose(window):
     glTranslatef(-model_center[0], -model_center[1], -model_center[2])
     model.render()
     glPopMatrix()
-    #angle_x += 0.5
+    angle_x += 0.5
     
     glfwSwapBuffers(window)
     glfwPollEvents()
