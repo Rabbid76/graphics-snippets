@@ -53,8 +53,8 @@
 
 ## Wavefront
 
-[glfw wave front viewer](../example/python/legacy_opengl/glfw_minimal_example_wavefront.py)  
-![glfw wave front viewer](../screenshot/example/python/legacy_opengl/glfw_minimal_example_wavefront.png)
+[glfw wavefront viewer](../example/python/legacy_opengl/glfw_minimal_example_wavefront.py)  
+![glfw wavefront viewer](../screenshot/example/python/legacy_opengl/glfw_minimal_example_wavefront.png)
 
 ## Glu
 
