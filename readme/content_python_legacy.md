@@ -51,6 +51,11 @@
 
 [legacy shader minimal example](../example/python/legacy_opengl/shader_legacy_minimal_example.py)
 
+## Wavefront
+
+[glfw wave front viewer](../example/python/legacy_opengl/glfw_minimal_example_wavefront.py)  
+![glfw wave front viewer](../screenshot/example/python/legacy_opengl/glfw_minimal_example_wavefront.png)
+
 ## Glu
 
 ### Glu Shapes
