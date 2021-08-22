@@ -5,6 +5,7 @@ import numpy as np
 from ctypes import c_void_p
 import glm
 import math
+from wavefrontloader import *
 import os
 os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../../resource'))
 
@@ -136,7 +137,12 @@ program = OpenGL.GL.shaders.compileProgram(
 glUseProgram(program)
 
 background_vao = create_vao(*create_background_mesh())
-cube_vao = create_vao(*create_cube_mesh())
+
+#model = WavefrontMesh('./model/wavefront/bunny.obj')
+#model = WavefrontMesh('./model/wavefront/buddha.obj')
+model = WavefrontMesh('./model/wavefront/dragon.obj')
+model_center, model_size = model.center, model.size
+mesh_vao = create_vao(model.attributes, model.indices)
 
 glEnable(GL_MULTISAMPLE) # default
 
@@ -152,11 +158,12 @@ while not glfwWindowShouldClose(window):
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     
     identity = glm.mat4(1)
-    projection = glm.perspective(glm.radians(60), vp_size[0]/vp_size[1], 0.1, 10.0)
-    view = glm.lookAt(glm.vec3(0, 0, 4), glm.vec3(0, 0, 0), glm.vec3(0, 1, 0))
+    projection = glm.perspective(glm.radians(45), vp_size[0]/vp_size[1], min(model_size)/4, max(model_size)*4)
+
+    view = glm.translate(glm.mat4(1), glm.vec3(0, 0, -max(model_size)*2))
     angle = delta_time_s * math.pi * 2 / 5
-    model = glm.rotate(glm.mat4(1), angle * 0.5, glm.vec3(0, 1, 0))
-    model = glm.rotate(model, angle, glm.vec3(1, 0, 0))
+    model = glm.rotate(glm.mat4(1), delta_time_s * math.pi / 2 / 5, glm.vec3(0, 1, 0))
+    model = glm.translate(model, glm.vec3(-model_center[0], -model_center[1], -model_center[2]))
 
     glUniformMatrix4fv(0, 1, GL_FALSE, glm.value_ptr(identity))
     glUniformMatrix4fv(1, 1, GL_FALSE, glm.value_ptr(identity))
@@ -173,8 +180,8 @@ while not glfwWindowShouldClose(window):
     glUniform4fv(3, 1, [0.5, 0.5, 0.1, 100])
 
     glEnable(GL_DEPTH_TEST)
-    glBindVertexArray(cube_vao[0])
-    glDrawElements(GL_TRIANGLES, cube_vao[1], GL_UNSIGNED_INT, None)
+    glBindVertexArray(mesh_vao[0])
+    glDrawElements(GL_TRIANGLES, mesh_vao[1], GL_UNSIGNED_INT, None)
 
     glfwSwapBuffers(window)
     glfwPollEvents()

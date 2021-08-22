@@ -84,6 +84,9 @@ Robert C. Martin, Clean Architecture
 [Pan cube 1](../example/python/opengl_minimal_example/minimal_example_pan_1.py)  
 [Pan cube 2](../example/python/opengl_minimal_example/minimal_example_pan_2.py)
 
+[Wavefront (obj) - viewer](../example/python/opengl_minimal_example/minimal_example_wavefront_viewer.py)  
+![Wavefront (obj) - viewer](../screenshot/example/python/opengl_minimal_example/minimal_example_wavefront_viewer.png)
+
 [Compute shader](../example/python/opengl_minimal_example/minimal_example_compute_shader.py)
 
 [Shader 2D](../example/python/opengl_minimal_example/minimal_example_shader_2d.py)
