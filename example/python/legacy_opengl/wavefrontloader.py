@@ -51,13 +51,16 @@ class WaveFrontMaterialLoader:
         return contents    
 
 class WavefrontLoader:
-    def __init__(self, filename):
+    def __init__(self, filename, vertex_normals = True):
         value_list = self.__read_data_from_file(filename)
         self.__load_attributes(value_list)
         self.__load_material(value_list, os.path.dirname(filename))
         self.__load_faces(value_list)
         self.__calcualte_box()
-        self.__create_face_normals()
+        if vertex_normals:
+            self.__create_vertex_normals()
+        else:
+            self.__create_face_normals()
 
     def __read_data_from_file(self, filename):
         content = None
@@ -110,13 +113,32 @@ class WavefrontLoader:
 
     def __create_face_normals(self):
         if not self.normals:
+            self.normals = self.__create_face_normal_list()
             face_size = (len(self.faces[0]) - 1) // 3
-            for face in self.faces:
-                v0, v1, v2 = self.vertices[face[0]-1], self.vertices[face[1]-1], self.vertices[face[2]-1]
-                nv = normalize(cross(sub(v1, v0), sub(v2, v0)))
-                self.normals.append(nv)
-                ni = len(self.normals)
-                face[face_size:face_size*2] = [ni] * face_size
+            for fi, face in enumerate(self.faces):
+                face[face_size:face_size*2] = [fi+1] * face_size
+
+    def __create_vertex_normals(self):
+        if not self.normals:
+            face_normals = self.__create_face_normal_list()
+            self.normals = [[0, 0, 0] for _ in range(len(self.vertices))]
+            face_size = (len(self.faces[0]) - 1) // 3
+            for fi, face in enumerate(self.faces):
+                for vi in face[0:face_size]:
+                    self.normals[vi-1][0] += face_normals[fi][0]
+                    self.normals[vi-1][1] += face_normals[fi][1]
+                    self.normals[vi-1][2] += face_normals[fi][2]
+                face[face_size:face_size*2] = face[0:face_size]
+            for ni in range(len(self.normals)):
+                self.normals[ni] = normalize(self.normals[ni])
+
+    def __create_face_normal_list(self):
+        face_normals = []
+        for face in self.faces:
+            v0, v1, v2 = self.vertices[face[0]-1], self.vertices[face[1]-1], self.vertices[face[2]-1]
+            nv = normalize(cross(sub(v1, v0), sub(v2, v0)))
+            face_normals.append(nv)
+        return face_normals
 
     @property
     def box(self):
