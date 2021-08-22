@@ -36,6 +36,30 @@ void main()
 sh_frag = """
 #version 460 core
 
+layout (location = 0) in vec4 a_position;
+layout (location = 1) in vec3 a_normal;
+layout (location = 2) in vec3 a_uvw;
+
+out vec3 v_pos;
+out vec3 v_nv;
+out vec3 v_uvw;
+
+layout (location = 0) uniform mat4 u_projection;
+layout (location = 1) uniform mat4 u_view;
+layout (location = 2) uniform mat4 u_model;
+
+void main() 
+{
+    v_pos = vec3(u_model * a_position);
+    v_nv = inverse(transpose(mat3(u_model))) * a_normal;
+    v_uvw = a_uvw;
+    gl_Position = u_projection * u_view * u_model * a_position;
+}
+"""
+
+sh_frag = """
+#version 460 core
+
 out vec4 frag_color;
 
 in vec3 v_pos;
@@ -43,7 +67,8 @@ in vec3 v_nv;
 in vec3 v_uvw;
 
 layout (location = 1) uniform mat4 u_view;
-layout (location = 3) uniform vec4 u_k_ads;
+layout (location = 3) uniform vec4 u_k_ads = vec4(0.5, 0.5, 0.1, 100.0);
+layout (location = 4) uniform vec4 u_light_vec = vec4(0.0, 0.0, 1.0, 0.0);
 
 vec3 HUEtoRGB(in float H)
 {
@@ -65,7 +90,7 @@ vec3 HSLtoRGB(in vec3 HSL)
 vec3 light_model(float hue)
 {
     vec4  color = vec4(hue < 0.0 ? vec3(abs(hue)) : HUEtoRGB(hue), 1.0);
-    vec3  L = normalize(vec3(1.0, -1.0, 1.0));
+    vec3  L = normalize(u_light_vec.xyz);
     vec3  eye = inverse(u_view)[3].xyz;
     vec3  V = normalize(eye - v_pos);
     float face = sign(dot(v_nv, V));
@@ -101,22 +126,6 @@ def create_vao(attributes, indices):
     glBindVertexArray(0)
     glDeleteBuffers(2, buffer_objects)
     return vao, indices.size
-
-def create_cube_mesh():
-    vertices = [(-1,-1,-1), (1,-1,-1), (1, 1,-1), (-1, 1,-1), (-1,-1, 1), (1,-1, 1), (1, 1, 1), (-1, 1, 1)]
-    uv = [(0,0), (1,0), (1, 1), (0,1)]
-    faces = [[0,1,2,3], [1,5,6,2], [5,4,7,6], [4,0,3,7], [3,2,6,7], [1,0,4,5]]
-    normals = [(0,0,-1), (1,0,0), (0,0,1), (-1,0,0), (0,1,0), (0,-1,0)]
-
-    attributes = []
-    indices = []
-    for si, f in enumerate(faces):
-        for qi, i in enumerate(f):
-            attributes.append(list(vertices[i]) + list(normals[si]) + [*uv[qi], si/len(faces)])
-        indices.append([4*si, 4*si+1, 4*si+2, 4*si, 4*si+2, 4*si+3])
-    attributes = np.array(attributes, dtype=np.float32) 
-    indices = np.array(indices, dtype=np.uint32)
-    return attributes, indices
 
 def create_background_mesh():
     attributes = np.array([(-1,-1,0, 0,0,0, 0.5,0.1,120/360), (1,-1,0, 0,0,0, 0.5,0.1,120/360), (1,1,0, 0,0,0, 1.0,0.2,240/360), (-1,1,0, 0,0,0, 1.0,0.2,240/360)], dtype=np.float32) 
@@ -161,7 +170,6 @@ while not glfwWindowShouldClose(window):
     projection = glm.perspective(glm.radians(45), vp_size[0]/vp_size[1], min(model_size)/4, max(model_size)*4)
 
     view = glm.translate(glm.mat4(1), glm.vec3(0, 0, -max(model_size)*2))
-    angle = delta_time_s * math.pi * 2 / 5
     model = glm.rotate(glm.mat4(1), delta_time_s * math.pi / 2 / 5, glm.vec3(0, 1, 0))
     model = glm.translate(model, glm.vec3(-model_center[0], -model_center[1], -model_center[2]))
 

@@ -42,7 +42,8 @@ in vec3 v_nv;
 in vec3 v_uvw;
 
 layout (location = 1) uniform mat4 u_view;
-layout (location = 3) uniform vec4 u_k_ads;
+layout (location = 3) uniform vec4 u_k_ads = vec4(0.5, 0.5, 0.1, 100.0);
+layout (location = 4) uniform vec4 u_light_vec = vec4(0.0, 0.0, 1.0, 0.0);
 
 vec3 HUEtoRGB(in float H)
 {
@@ -64,7 +65,7 @@ vec3 HSLtoRGB(in vec3 HSL)
 vec3 light_model(float hue)
 {
     vec4  color = vec4(hue < 0.0 ? vec3(abs(hue)) : HUEtoRGB(hue), 1.0);
-    vec3  L = normalize(vec3(1.0, -1.0, 1.0));
+    vec3  L = normalize(u_light_vec.xyz);
     vec3  eye = inverse(u_view)[3].xyz;
     vec3  V = normalize(eye - v_pos);
     float face = sign(dot(v_nv, V));
@@ -171,6 +172,7 @@ while not glfwWindowShouldClose(window):
     glUniformMatrix4fv(1, 1, GL_FALSE, glm.value_ptr(view))
     glUniformMatrix4fv(2, 1, GL_FALSE, glm.value_ptr(model))
     glUniform4fv(3, 1, [0.5, 0.5, 0.1, 100])
+    glUniform4fv(4, 1, [1.0, -1.0, 1.0, 0.0])
 
     glEnable(GL_DEPTH_TEST)
     glBindVertexArray(cube_vao[0])
