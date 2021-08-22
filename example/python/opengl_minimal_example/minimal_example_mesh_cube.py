@@ -127,7 +127,7 @@ if glfwInit() == GLFW_FALSE:
     exit()
 
 glfwWindowHint(GLFW_SAMPLES, 8)
-window = glfwCreateWindow(400, 300, "OpenGL Window", None, None)
+window = glfwCreateWindow(800, 600, "OpenGL Window", None, None)
 glfwMakeContextCurrent(window)
 
 program = OpenGL.GL.shaders.compileProgram(

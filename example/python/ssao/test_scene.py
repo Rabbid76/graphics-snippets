@@ -172,6 +172,8 @@ class TestScene:
         identity = glm.mat4(1)
         wall_back_dist = 0.6
         wall_side_dist = 0.65
+        wall_height = 1.2
+        pillar_height = 1.2
 
         glUniformMatrix4fv(0, 1, GL_FALSE, glm.value_ptr(identity))
         glUniformMatrix4fv(1, 1, GL_FALSE, glm.value_ptr(identity))
@@ -187,19 +189,18 @@ class TestScene:
         glUniform4fv(3, 1, [0.5, 0.5, 0.1, 100])
         glUniform4fv(4, 1, [0.0, 0.5, 1.0, 0.0])
 
-
         glEnable(GL_DEPTH_TEST)
 
         glBindVertexArray(self.rect_vao[0])
         ground_model = glm.scale(glm.rotate(glm.mat4(1), -math.pi/2, glm.vec3(1, 0, 0)), glm.vec3(1, 1, 1))
         glUniformMatrix4fv(2, 1, GL_FALSE, glm.value_ptr(ground_model))
         glDrawElements(GL_TRIANGLES, self.rect_vao[1], GL_UNSIGNED_INT, None)
-        backwall_model = glm.scale(glm.translate(glm.mat4(1), glm.vec3(0, 0.5, -wall_back_dist)), glm.vec3(wall_side_dist, 0.5, 1))
+        backwall_model = glm.scale(glm.translate(glm.mat4(1), glm.vec3(0, wall_height/2, -wall_back_dist)), glm.vec3(wall_side_dist, wall_height/2, 1))
         glUniformMatrix4fv(2, 1, GL_FALSE, glm.value_ptr(backwall_model))
         glDrawElements(GL_TRIANGLES, self.rect_vao[1], GL_UNSIGNED_INT, None)
 
         glBindVertexArray(self.cylinder_vao[0])
-        pillar_model = glm.scale(glm.translate(glm.rotate(glm.mat4(1), -math.pi/2, glm.vec3(1, 0, 0)), glm.vec3(0, 0, 0.5)), glm.vec3(0.05, 0.05, 0.5))
+        pillar_model = glm.scale(glm.translate(glm.rotate(glm.mat4(1), -math.pi/2, glm.vec3(1, 0, 0)), glm.vec3(0, 0, pillar_height/2)), glm.vec3(0.05, 0.05, pillar_height/2))
         for x in [-1, 1]:
             for y in [-1, -1/3, 1/3, 1]:
                 pos_mat = glm.translate(glm.mat4(1), glm.vec3(wall_side_dist * x, 0, wall_back_dist * y))
