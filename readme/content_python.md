@@ -71,7 +71,10 @@ Robert C. Martin, Clean Architecture
 
 [Texture](../example/python/opengl_minimal_example/minimal_example_texture.py)
 
-[Mesh](../example/python/opengl_minimal_example/minimal_example_shader_mesh.py)
+[Cub Mesh (glut)](../example/python/opengl_minimal_example/minimal_example_shader_mesh.py)
+
+[Cube Mesh (glfw)](../example/python/opengl_minimal_example/minimal_example_mesh_cube.py)  
+[![Wood shader](../screenshot/example/python/opengl_minimal_example/minimal_example_mesh_cube.png)](../example/python/opengl_minimal_example/minimal_example_mesh_cube.py) 
 
 [Wood shader](../example/python/opengl_minimal_example/minimal_example_wood_shader.py)  
 [![Wood shader](../screenshot/example/python/opengl_minimal_example/minimal_example_wood_shader.png)](../example/python/opengl_minimal_example/minimal_example_wood_shader.py) 
