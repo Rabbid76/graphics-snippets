@@ -26,11 +26,10 @@ void main()
 sh_ssao_frag = """
 #version 460 core
 
-layout (binding = 1) uniform sampler2D u_colorSampler;
-layout (binding = 2) uniform sampler2D u_depthSampler;
-layout (binding = 3) uniform sampler2D u_ssaoNoiseSampler;
+layout (binding = 1) uniform sampler2D u_depthSampler;
+layout (binding = 2) uniform sampler2D u_ssaoNoiseSampler;
 layout (location = 1) uniform vec2 u_viewportsize; 
-layout (location = 2) uniform float u_radius = 0.01;
+layout (location = 2) uniform float u_radius = 0.005;
 out vec4 frag_color;
 
 float Depth(in sampler2D depthSampler, in vec2 texC)
@@ -57,15 +56,12 @@ vec3 GetNormalFromDepth( in float depth, in vec2 vUV )
 
 void main() 
 {
-    vec2 uv = gl_FragCoord.xy / u_viewportsize;
-    vec4 texture_color = texture(u_colorSampler, uv);
-
     float ssaoRadius = u_radius;
     float ssaoFalloff = 0.0001;
     float ssaoArea = 1.0;
     float ssaoBase = 0.0;
     float ssaoStrength = 1.0;
-    vec2  uvVarying = uv;
+    vec2  uvVarying = gl_FragCoord.xy / u_viewportsize;
     float depth = Depth(u_depthSampler, uvVarying);
 
     float ambientOcclusion = 1.0;
@@ -117,7 +113,47 @@ void main()
         alpha = 1.0;
 
     }
-    frag_color = vec4(vec3(ambientOcclusion), alpha); // * texture_color; // * depth;
+    frag_color = vec4(vec3(ambientOcclusion), alpha);
+}
+"""
+
+sh_blend_vert = """
+#version 460 core
+
+layout (location = 0) in vec4 a_position;
+
+void main() 
+{
+    gl_Position = a_position;
+}
+"""
+
+sh_blend_frag = """
+#version 460 core
+
+layout (binding = 1) uniform sampler2D u_colorSampler;
+layout (binding = 2) uniform sampler2D u_ssaoSampler;
+layout (location = 1) uniform vec2 u_viewportsize; 
+out vec4 frag_color;
+
+float SSAO44(in sampler2D ssaoSampler, in vec2 texC)
+{
+    vec2 texOffs = 1.0 / u_viewportsize;
+    float ssao = 0.0;  
+    for (int inxX = -1; inxX < 3; ++ inxX)
+    {
+        for (int inxY = -1; inxY < 3; ++ inxY)
+            ssao += texture(ssaoSampler, texC.st + texOffs * vec2(inxX, inxY)).x;
+    }
+    return ssao / 16.0;
+}
+
+void main() 
+{
+    vec2 uv = gl_FragCoord.xy / u_viewportsize;
+    vec4 texture_color = texture(u_colorSampler, uv);
+    float ssao = SSAO44(u_ssaoSampler, uv);
+    frag_color = vec4(texture_color.rgb * ssao, texture_color.a);
 }
 """
 
@@ -165,17 +201,22 @@ def create_frambuffer(width, height, format, internal_format, filter, depth_buff
     glBindFramebuffer(GL_FRAMEBUFFER, 0)
     return fbo, color_texture, depth_texture
 
-scene_fbo, scene_color_texture, scene_depth_texture = None, None, None
+scene_fbo, scene_color_texture, scene_depth_texture = 0, 0, 0
+ssao_fbo, ssao_texture = 0, 0
 def create_frambuffers(vp_size):
     global scene_fbo, scene_color_texture, scene_depth_texture
+    global ssao_fbo, ssao_texture
     delete_textures = []
     delete_buffers = []
     if scene_color_texture: delete_textures.append(scene_color_texture)
     if scene_depth_texture: delete_textures.append(scene_depth_texture)
     if scene_fbo: delete_buffers.append(scene_fbo) 
+    if ssao_texture: delete_textures.append(ssao_texture)
+    if ssao_fbo: delete_buffers.append(ssao_fbo) 
     glDeleteTextures(len(delete_textures), delete_textures)
     glDeleteBuffers(len(delete_buffers), delete_buffers)
     scene_fbo, scene_color_texture, scene_depth_texture = create_frambuffer(*vp_size, GL_RGBA, GL_RGB8, GL_LINEAR, True)
+    ssao_fbo, ssao_texture, _ = create_frambuffer(*vp_size, GL_RED, GL_R16_SNORM, GL_LINEAR, False)
 
 def create_noise(noise_size):
     noise = numpy.empty((noise_size * noise_size, 4), dtype = numpy.float32)
@@ -201,6 +242,11 @@ ssao_program = OpenGL.GL.shaders.compileProgram(
     OpenGL.GL.shaders.compileShader(sh_ssao_frag, GL_FRAGMENT_SHADER)
 )
 
+blend_program = OpenGL.GL.shaders.compileProgram(
+    OpenGL.GL.shaders.compileShader(sh_blend_vert, GL_VERTEX_SHADER),
+    OpenGL.GL.shaders.compileShader(sh_blend_frag, GL_FRAGMENT_SHADER)
+)
+
 scene = TestScene('./model/wavefront')
 scene.create()
 navigate = Navigation(window, glm.vec3(0, -0.5, -3.0), "ssao_simple")
@@ -220,16 +266,26 @@ while not glfwWindowShouldClose(window):
 
     scene.draw(navigate.view_matrix, navigate.projection_matrix)
     
-    glBindFramebuffer(GL_FRAMEBUFFER, 0)
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+    glBindFramebuffer(GL_FRAMEBUFFER, ssao_fbo)
+    glClear(GL_COLOR_BUFFER_BIT)
 
     glUseProgram(ssao_program)
     glActiveTexture(GL_TEXTURE1)
+    glBindTexture(GL_TEXTURE_2D, scene_depth_texture)
+    glActiveTexture(GL_TEXTURE2)
+    glBindTexture(GL_TEXTURE_2D, noise_texture)
+    glUniform2fv(1, 1, navigate.viewport_size)
+    glBindVertexArray(screensapce_vao)
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4)
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0)
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+
+    glUseProgram(blend_program)
+    glActiveTexture(GL_TEXTURE1)
     glBindTexture(GL_TEXTURE_2D, scene_color_texture)
     glActiveTexture(GL_TEXTURE2)
-    glBindTexture(GL_TEXTURE_2D, scene_depth_texture)
-    glActiveTexture(GL_TEXTURE3)
-    glBindTexture(GL_TEXTURE_2D, noise_texture)
+    glBindTexture(GL_TEXTURE_2D, ssao_texture)
     glUniform2fv(1, 1, navigate.viewport_size)
     glBindVertexArray(screensapce_vao)
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4)

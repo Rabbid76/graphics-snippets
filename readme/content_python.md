@@ -53,6 +53,13 @@ Robert C. Martin, Clean Architecture
 [Parallax](../example/python/parallax/glut_opengl_shader_glm_cube_parallax.py)  
 [![Parallax](../screenshot/example/python/parallax/glut_opengl_shader_glm_cube_parallax.png)](../example/python/parallax/glut_opengl_shader_glm_cube_parallax.py)  
 
+### SSAO
+
+[no SSAO, diffuse light](../example/python\/ssao_and_hbao/no_ssao_diffuse_light.py)  
+[very simple SSAO](../example/python/ssao_and_hbao/ssao_simple.py)  
+![No SSAO, diffuse light](../screenshot/example/python/ssao_and_hbao/no_ssao_diffuse_light.png)
+![No SSAO, diffuse light](..screenshot/example/python/ssao_and_hbao/ssao_simple.png)
+
 ### 2D shader
 
 [2D rounded rectangle](../example/python/opengl_minimal_example/minimal_example_shader_2d_rounded_rectangle.py)  
