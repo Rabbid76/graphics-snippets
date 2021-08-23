@@ -46,7 +46,7 @@ class Navigation:
 
     @property
     def projection_matrix(self):
-        return glm.perspective(glm.radians(45), self.vp_size[0]/self.vp_size[1], 0.01, 10.0)
+        return glm.perspective(glm.radians(45), self.vp_size[0]/self.vp_size[1], 0.1, 10.0)
 
     @property
     def delta_time_s(self):
