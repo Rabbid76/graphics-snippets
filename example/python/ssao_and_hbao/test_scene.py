@@ -123,7 +123,7 @@ def create_background_mesh():
     return attributes, indices
 
 def create_quad_mesh():
-    attributes = np.array([(-1,-1,0, 0,0,1, 0,0,-0.5), (1,-1,0, 0,0,1, 0,0,-0.5), (1,1,0, 0,0,1, 0,0,-0.5), (-1,1,0, 0,0,1, 0,0,-0.5)], dtype=np.float32) 
+    attributes = np.array([(-1,-1,0, 0,0,1, 0,0,-1), (1,-1,0, 0,0,1, 0,0,-1), (1,1,0, 0,0,1, 0,0,-1), (-1,1,0, 0,0,1, 0,0,-1)], dtype=np.float32) 
     indices = np.array([0, 1, 2, 0, 2, 3], dtype=np.uint32)
     return attributes, indices
 
@@ -134,8 +134,8 @@ def create_cylinder_mesh():
         s = math.sin(glm.radians(i))
         c = math.cos(glm.radians(i))
         nv = glm.normalize(glm.vec3(c, s, 0))
-        attributes.append([c, s, -1, *nv, i/360, -1, -0.5])
-        attributes.append([c, s, 1, *nv, i/360, 1, -0.5])
+        attributes.append([c, s, -1, *nv, i/360, -1, -1])
+        attributes.append([c, s, 1, *nv, i/360, 1, -1])
         indices.append([i*2, i*2+1])
     attributes = np.array([attributes], dtype=np.float32) 
     indices = np.array(indices, dtype=np.uint32)
@@ -195,7 +195,7 @@ class TestScene:
         ground_model = glm.scale(glm.rotate(glm.mat4(1), -math.pi/2, glm.vec3(1, 0, 0)), glm.vec3(1, 1, 1))
         glUniformMatrix4fv(2, 1, GL_FALSE, glm.value_ptr(ground_model))
         glDrawElements(GL_TRIANGLES, self.rect_vao[1], GL_UNSIGNED_INT, None)
-        backwall_model = glm.scale(glm.translate(glm.mat4(1), glm.vec3(0, wall_height/2, -wall_back_dist)), glm.vec3(wall_side_dist, wall_height/2, 1))
+        backwall_model = glm.scale(glm.translate(glm.mat4(1), glm.vec3(0, wall_height/2, -wall_back_dist)), glm.vec3(wall_side_dist-0.05, wall_height/2, 1))
         glUniformMatrix4fv(2, 1, GL_FALSE, glm.value_ptr(backwall_model))
         glDrawElements(GL_TRIANGLES, self.rect_vao[1], GL_UNSIGNED_INT, None)
 

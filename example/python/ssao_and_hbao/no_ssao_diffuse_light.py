@@ -15,12 +15,12 @@ if glfwInit() == GLFW_FALSE:
     exit()
 
 glfwWindowHint(GLFW_SAMPLES, 8)
-window = glfwCreateWindow(800, 600, "OpenGL Window", None, None)
+window = glfwCreateWindow(400, 300, "OpenGL Window", None, None)
 glfwMakeContextCurrent(window)
 
 scene = TestScene('./model/wavefront')
 scene.create()
-navigate = Navigation(window, glm.vec3(0, -0.5, -3.0))
+navigate = Navigation(window, glm.vec3(0, -0.5, -3.0), "no_ssao_diffuse_light")
 
 glEnable(GL_MULTISAMPLE)
 glClearColor(0.0, 0.0, 0.0, 0.0)
@@ -30,6 +30,7 @@ while not glfwWindowShouldClose(window):
     scene.draw(navigate.view_matrix, navigate.projection_matrix)
     glfwSwapBuffers(window)
     glfwPollEvents()
+    navigate.handle_post_rehresh_actions()
 
 glfwTerminate()
 exit()

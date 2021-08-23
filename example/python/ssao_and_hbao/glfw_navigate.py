@@ -2,9 +2,10 @@ from OpenGL.GL import *
 from glfw.GLFW import *
 import glm
 import math
-
+from PIL import Image
+import time
 class Navigation:
-    def __init__(self, glfw_window, camera_translate):
+    def __init__(self, glfw_window, camera_translate, screenshot_prefix):
         self.glfw_window = glfw_window
         self.camera_translate = camera_translate
         self.drag_start = glm.vec2(0)
@@ -13,9 +14,12 @@ class Navigation:
         self.drag = False
         self.vp_size = glfwGetFramebufferSize(self.glfw_window)
         self.start_time_s = glfwGetTime()
+        self.screenshot = False
+        self.screenshot_prefix = screenshot_prefix
         glfwSetWindowSizeCallback(self.glfw_window, self.window_size_callback)
         glfwSetMouseButtonCallback(self.glfw_window, self.mouse_button_callback)
         glfwSetCursorPosCallback(self.glfw_window, self.cursor_position_callback)
+        glfwSetKeyCallback(self.glfw_window, self.key_callback)
         
     @property
     def drag_vector(self):
@@ -47,6 +51,13 @@ class Navigation:
     def start(self):
         self.start_time_s = glfwGetTime()
 
+    def handle_post_rehresh_actions(self):
+        if self.screenshot:
+            self.screenshor = False
+            image_data = glReadPixels(0, 0, *self.vp_size, GL_RGBA, GL_UNSIGNED_BYTE)
+            image = Image.frombytes('RGBA', self.vp_size, image_data).transpose(method=Image.FLIP_TOP_BOTTOM)
+            image.save(self.screenshot_prefix + time.strftime("_%Y%m%d_%H%M%S") + '.png', 'PNG')
+
     def window_size_callback(self, window, width, height):
         self.vp_size = width, height
         glViewport(0, 0, *self.vp_size)
@@ -66,3 +77,6 @@ class Navigation:
     def cursor_position_callback(self, window, xpos, ypos):
         if self.drag:
             self.drag_vec = glm.vec2(xpos - self.drag_start.x, self.drag_start.y - ypos) / glm.vec2(self.vp_size[0], self.vp_size[1]/2)
+
+    def key_callback(self, window, key, scancode, action, mods):
+        self.screenshot = action == GLFW_PRESS and key == GLFW_KEY_F1
