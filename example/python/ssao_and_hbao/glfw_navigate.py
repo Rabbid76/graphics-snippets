@@ -13,6 +13,7 @@ class Navigation:
         self.rotate_vec = glm.vec2(0)
         self.drag = False
         self.vp_size = glfwGetFramebufferSize(self.glfw_window)
+        self.change_vp_size_callback = None
         self.start_time_s = glfwGetTime()
         self.screenshot = False
         self.screenshot_prefix = screenshot_prefix
@@ -21,6 +22,10 @@ class Navigation:
         glfwSetCursorPosCallback(self.glfw_window, self.cursor_position_callback)
         glfwSetKeyCallback(self.glfw_window, self.key_callback)
         
+    @property
+    def viewport_size(self):
+        return self.vp_size
+
     @property
     def drag_vector(self):
         v = self.drag_vec + self.rotate_vec
@@ -61,6 +66,8 @@ class Navigation:
     def window_size_callback(self, window, width, height):
         self.vp_size = width, height
         glViewport(0, 0, *self.vp_size)
+        if self.change_vp_size_callback:
+            self.change_vp_size_callback(self.vp_size)
 
     def mouse_button_callback(self, window, button, action, mods):
         if button != GLFW_MOUSE_BUTTON_LEFT:
