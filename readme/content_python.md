@@ -58,7 +58,7 @@ Robert C. Martin, Clean Architecture
 [no SSAO, diffuse light](../example/python\/ssao_and_hbao/no_ssao_diffuse_light.py)  
 [very simple SSAO](../example/python/ssao_and_hbao/ssao_simple.py)  
 ![No SSAO, diffuse light](../screenshot/example/python/ssao_and_hbao/no_ssao_diffuse_light.png)
-![No SSAO, diffuse light](..screenshot/example/python/ssao_and_hbao/ssao_simple.png)
+![very simple SSAO](../screenshot/example/python/ssao_and_hbao/ssao_simple.png)
 
 ### 2D shader
 
