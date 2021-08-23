@@ -5,6 +5,7 @@ import numpy as np
 from ctypes import c_void_p
 import glm
 import math
+import random
 from wavefrontloader import *
 from test_scene import *
 from glfw_navigate import *
@@ -176,11 +177,23 @@ def create_frambuffers(vp_size):
     glDeleteBuffers(len(delete_buffers), delete_buffers)
     scene_fbo, scene_color_texture, scene_depth_texture = create_frambuffer(*vp_size, GL_RGBA, GL_RGB8, GL_LINEAR, True)
 
+def create_noise(noise_size):
+    noise = numpy.empty((noise_size * noise_size, 4), dtype = numpy.float32)
+    for i in range(noise_size * noise_size):
+        v = glm.normalize(glm.vec3(random.uniform(-1, 1), random.uniform(-1, 1), random.uniform(-1, 1)))
+        noise[i,:] = [*v, 1.0]
+    noise_texture = glGenTextures(1)
+    glBindTexture(GL_TEXTURE_2D, noise_texture)
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, noise_size, noise_size, 0, GL_RGBA, GL_FLOAT, None);            
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+    return noise_texture
+
 if glfwInit() == GLFW_FALSE:
     exit()
 
 glfwWindowHint(GLFW_SAMPLES, 8)
-window = glfwCreateWindow(800, 600, "OpenGL Window", None, None)
+window = glfwCreateWindow(400, 300, "OpenGL Window", None, None)
 glfwMakeContextCurrent(window)
 
 ssao_program = OpenGL.GL.shaders.compileProgram(
@@ -194,6 +207,7 @@ navigate = Navigation(window, glm.vec3(0, -0.5, -3.0), "ssao_simple")
 navigate.change_vp_size_callback = create_frambuffers
 
 screensapce_vao = create_screenspace_vao()
+noise_texture = create_noise(4)
 create_frambuffers(navigate.viewport_size)
 
 glEnable(GL_MULTISAMPLE)
@@ -214,6 +228,8 @@ while not glfwWindowShouldClose(window):
     glBindTexture(GL_TEXTURE_2D, scene_color_texture)
     glActiveTexture(GL_TEXTURE2)
     glBindTexture(GL_TEXTURE_2D, scene_depth_texture)
+    glActiveTexture(GL_TEXTURE3)
+    glBindTexture(GL_TEXTURE_2D, noise_texture)
     glUniform2fv(1, 1, navigate.viewport_size)
     glBindVertexArray(screensapce_vao)
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4)
