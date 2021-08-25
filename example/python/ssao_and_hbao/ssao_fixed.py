@@ -182,7 +182,7 @@ if glfwInit() == GLFW_FALSE:
     exit()
 
 glfwWindowHint(GLFW_SAMPLES, 8)
-window = glfwCreateWindow(800, 600, "OpenGL Window", None, None)
+window = glfwCreateWindow(400, 300, "OpenGL Window", None, None)
 glfwMakeContextCurrent(window)
 
 ssao_program = OpenGL.GL.shaders.compileProgram(
@@ -223,6 +223,7 @@ while not glfwWindowShouldClose(window):
     glActiveTexture(GL_TEXTURE2)
     glBindTexture(GL_TEXTURE_2D, noise_texture)
     glUniform2fv(1, 1, navigate.viewport_size)
+    glUniform1f(2, 0.01)
     glBindVertexArray(screensapce_vao)
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4)
 

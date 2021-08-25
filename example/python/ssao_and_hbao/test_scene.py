@@ -133,7 +133,7 @@ void main()
     vec3  N = normalize(v_nv) * face;
     vec3 color = u_k_ads.x < 0.0 ? HSLtoRGB(v_uvw.zxy) : light_model(v_uvw.z, V, N);
     frag_color = vec4(color.rgb, 1.0);
-    normal_vector = N;
+    normal_vector = inverse(transpose(mat3(u_view))) * N;
 }
 """
 

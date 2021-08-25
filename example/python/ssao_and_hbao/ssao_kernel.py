@@ -31,51 +31,60 @@ layout (binding = 1) uniform sampler2D u_depthSampler;
 layout (binding = 2) uniform sampler2D u_normalSampler;
 layout (binding = 3) uniform sampler2D u_ssaoKernelSampler;
 layout (binding = 4) uniform sampler2D u_ssaoNoiseSampler;
-layout (location = 1) uniform vec2 u_viewportsize; 
-layout (location = 2) uniform float u_radius = 0.01;
+layout (location = 1) uniform mat4 u_projectionMat44;
+layout (location = 2) uniform mat4 u_InverseProjectionMat44;
+layout (location = 3) uniform vec2 u_viewportsize; 
+layout (location = 4) uniform float u_radius = 0.01;
 out vec4 frag_color;
+
+vec3 DecodePosDepth(in vec2 texC, in float depth)
+{
+    vec4 viewPos = u_InverseProjectionMat44 * vec4(vec3(texC.st, depth) * 2.0 - 1.0, 1.0);
+    viewPos.xyz /= viewPos.w;
+    return vec3(viewPos.xyz);
+}
+
+vec4 SSAO(in vec2 texC)
+{
+    float occlusion       = 1.0;
+    float fragDepth       = texture(u_depthSampler, texC).x;
+    float alpha           = 0.0;
+    if (fragDepth < 1.0)
+    {
+        vec3  fragPos         = DecodePosDepth(texC, fragDepth); 
+        float radius          = u_radius;
+        vec3  fragNV          = texture(u_normalSampler, texC).xyz;
+        vec2  noiseScale      = u_viewportsize / float(4.0);
+        vec3  randomVec       = texture2D(u_ssaoNoiseSampler, texC.st * noiseScale).xyz;
+        vec3  tangent         = normalize(randomVec - fragNV * dot(randomVec, fragNV));
+        mat3  TBN             = mat3(tangent, cross(fragNV, tangent), fragNV);
+        float kernelPtCount   = 0.0;
+        int   kernelSize      = textureSize(u_ssaoKernelSampler, 0).x;
+        for( int inx = 0; inx < kernelSize; ++ inx )
+        {
+            vec4  kernelVec       = texelFetch(u_ssaoKernelSampler, ivec2(inx, 0), 0);
+            vec3  sampleRel       = TBN * kernelVec.xyz * kernelVec.w;
+            sampleRel             = fragPos.xyz + sampleRel * radius;
+            vec4  sampleTexC      = u_projectionMat44 * vec4(sampleRel, 1.0);             // view to clip space
+            sampleTexC.xyz        = 0.5 + 0.5 * sampleTexC.xyz / sampleTexC.w; // clip space -> NDC [-1.0, 1.0] -> [0.0, 1.0]
+            float sampleDepth     = sampleTexC.z;
+            vec2  rangeTest       = step(vec2(0.0, 0.0), sampleTexC.xy) * step(sampleTexC.xy, vec2(1.0, 1.0));
+            float w               = rangeTest.x * rangeTest.y;
+            kernelPtCount        += w;
+            float testDepth       = texture(u_depthSampler, sampleTexC.xy).x;
+            float sampleDelta     = testDepth - sampleDepth;
+            occlusion            += w * step(-0.00005, sampleDelta);
+        }
+        occlusion = occlusion / kernelPtCount;
+        alpha     = 1.0;
+    }
+    return vec4(vec3(occlusion), alpha);
+}
 
 void main() 
 {
-    float ssaoRadius = u_radius;
-    float ssaoFalloff = 0.0001;
-    float ssaoArea = 1.0;
-    float ssaoBase = 0.0;
-    float ssaoStrength = 1.0;
-    vec2  uvVarying = gl_FragCoord.xy / u_viewportsize;
-    float depth = texture(u_depthSampler, uvVarying).x;
-    float ambientOcclusion = 1.0;
-    float alpha = 0.0;
-    if (depth > 0.0)
-    {
-        vec3 random = texture(u_ssaoNoiseSampler, uvVarying.st * u_viewportsize.xy / 4.0).xyz;
-        vec3 position = vec3(uvVarying, depth);
-        vec3 normal = texture(u_normalSampler, uvVarying).xyz;
-        float radiusDepth = ssaoRadius/depth;
-        float occlusion = 0.0;
-        int kernelSize = textureSize(u_ssaoKernelSampler, 0).x;
-        for(int i=0; i < kernelSize; i++)
-        {
-            vec3 sample_vec = texelFetch(u_ssaoKernelSampler, ivec2(i, 0), 0).xyz;
-            vec3 ray = radiusDepth * reflect(sample_vec, random);
-            vec3 hemiRay = position + sign(dot(ray, normal)) * ray;
-    
-            float occDepth = texture(u_depthSampler, clamp(hemiRay.xy, 0.0, 1.0)).x;
-            float difference = depth - occDepth;
-    
-            occlusion += step(ssaoFalloff, difference) * (1.0 - smoothstep(ssaoFalloff, ssaoArea, difference));
-    
-            // float rangeCheck = abs(difference) < radiusDepth ? 1.0 : 0.0;
-            // occlusion += (occDepth <= position.z ? 1.0 : 0.0) * rangeCheck;
-        }
-    
-        float ao = 1.0 - ssaoStrength * occlusion * (1.0 / float(kernelSize));
-
-        ambientOcclusion = clamp(ao + ssaoBase, 0.0, 1.0);
-        alpha = 1.0;
-
-    }
-    frag_color = vec4(vec3(ambientOcclusion), alpha);
+    vec2 uvVarying = gl_FragCoord.xy / u_viewportsize;
+    frag_color = SSAO(uvVarying.st);
 }
 """
 
@@ -144,15 +153,15 @@ def create_noise(noise_size):
     return noise_texture
 
 def create_kernel(kernel_size):
-    kernel = numpy.empty((kernel_size * 3), dtype = numpy.float32)
+    kernel = numpy.empty((kernel_size * 4), dtype = numpy.float32)
     for i in range(kernel_size):
         v = glm.normalize(glm.vec3(random.uniform(-1, 1), random.uniform(-1, 1), random.uniform(-1, 1)))
         len_xy = glm.length(glm.vec2(v))
         v.z = v.z * (1 + len_xy) - len_xy
-        kernel[i,:] = [*v]
+        kernel[i,:] = [*v, 1]
     kernel_texture = glGenTextures(1)
     glBindTexture(GL_TEXTURE_2D, kernel_texture)
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16_SNORM, kernel_size, 0, 0, GL_RGB, GL_FLOAT, kernel)          
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16_SNORM, kernel_size, 0, 0, GL_RGBA, GL_FLOAT, kernel)          
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
     return kernel_texture
@@ -176,7 +185,7 @@ blend_program = OpenGL.GL.shaders.compileProgram(
 
 scene = TestScene('./model/wavefront', True)
 scene.create()
-navigate = Navigation(window, glm.vec3(0, -0.5, -3.0), "ssao_fixed")
+navigate = Navigation(window, glm.vec3(0, -0.5, -3.0), "ssao_kernel")
 navigate.change_vp_size_callback = create_frambuffers
 
 screensapce_vao = create_screenspace_vao()
@@ -206,7 +215,10 @@ while not glfwWindowShouldClose(window):
     glBindTexture(GL_TEXTURE_2D, kernel_texture)
     glActiveTexture(GL_TEXTURE4)
     glBindTexture(GL_TEXTURE_2D, noise_texture)
-    glUniform2fv(1, 1, navigate.viewport_size)
+    glUniformMatrix4fv(1, 1, GL_FALSE, glm.value_ptr(navigate.projection_matrix))
+    glUniformMatrix4fv(2, 1, GL_FALSE, glm.value_ptr(glm.inverse(navigate.projection_matrix)))
+    glUniform2fv(3, 1, navigate.viewport_size)
+    glUniform1f(4, 0.02)
     glBindVertexArray(screensapce_vao)
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4)
 
