@@ -9,6 +9,7 @@ import random
 from wavefrontloader import *
 from test_scene import *
 from glfw_navigate import *
+from buffers import *
 import os
 os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../../resource'))
 
@@ -157,66 +158,11 @@ void main()
 }
 """
 
-def create_screenspace_vao():
-    attributes = np.array([(-1,-1), (1,-1), (-1,1), (1,1)], dtype=np.float32) 
-    vao = glGenVertexArrays(1)
-    vbo = glGenBuffers(1)
-    glBindVertexArray(vao)
-    glBindBuffer(GL_ARRAY_BUFFER, vbo)
-    glBufferData(GL_ARRAY_BUFFER, attributes, GL_STATIC_DRAW)
-    glVertexAttribPointer(0, 2, GL_FLOAT, False, 2 * attributes.itemsize, None)
-    glEnableVertexAttribArray(0)
-    glBindVertexArray(0)
-    glDeleteBuffers(1, [vbo])
-    return vao
-
-def create_frambuffer(width, height, format, internal_format, filter, depth_buffer):
-    fbo = glGenFramebuffers(1)
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo)
-
-    color_texture = glGenTextures(1)
-    glBindTexture(GL_TEXTURE_2D, color_texture)
-    glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, None);            
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter)
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, color_texture, 0)
-
-    depth_texture = None
-    if depth_buffer:
-        depth_texture = glGenTextures(1)
-        glBindTexture(GL_TEXTURE_2D, depth_texture)
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, None)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)       
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depth_texture, 0)
-    
-    glDrawBuffers(1, [GL_COLOR_ATTACHMENT0])
-    status = glCheckFramebufferStatus(GL_FRAMEBUFFER)
-    if status != GL_FRAMEBUFFER_COMPLETE:
-        print("frambuffer inclomplete")
-    glBindFramebuffer(GL_FRAMEBUFFER, 0)
-    return fbo, color_texture, depth_texture
-
-scene_fbo, scene_color_texture, scene_depth_texture = 0, 0, 0
-ssao_fbo, ssao_texture = 0, 0
+scene_fbo = FrameBuffer([(GL_RGBA, GL_RGB8)], True, GL_LINEAR)
+ssao_fbo = FrameBuffer([(GL_RED, GL_R16_SNORM)], False, GL_LINEAR)
 def create_frambuffers(vp_size):
-    global scene_fbo, scene_color_texture, scene_depth_texture
-    global ssao_fbo, ssao_texture
-    delete_textures = []
-    delete_buffers = []
-    if scene_color_texture: delete_textures.append(scene_color_texture)
-    if scene_depth_texture: delete_textures.append(scene_depth_texture)
-    if scene_fbo: delete_buffers.append(scene_fbo) 
-    if ssao_texture: delete_textures.append(ssao_texture)
-    if ssao_fbo: delete_buffers.append(ssao_fbo) 
-    glDeleteTextures(len(delete_textures), delete_textures)
-    glDeleteBuffers(len(delete_buffers), delete_buffers)
-    scene_fbo, scene_color_texture, scene_depth_texture = create_frambuffer(*vp_size, GL_RGBA, GL_RGB8, GL_LINEAR, True)
-    ssao_fbo, ssao_texture, _ = create_frambuffer(*vp_size, GL_RED, GL_R16_SNORM, GL_LINEAR, False)
+    scene_fbo.create(*vp_size)
+    ssao_fbo.create(*vp_size)
 
 def create_noise(noise_size):
     noise = numpy.empty((noise_size * noise_size, 4), dtype = numpy.float32)
@@ -261,17 +207,17 @@ glClearColor(0.0, 0.0, 0.0, 0.0)
 
 while not glfwWindowShouldClose(window):
       
-    glBindFramebuffer(GL_FRAMEBUFFER, scene_fbo)
+    glBindFramebuffer(GL_FRAMEBUFFER, scene_fbo.fbo)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
     scene.draw(navigate.view_matrix, navigate.projection_matrix)
     
-    glBindFramebuffer(GL_FRAMEBUFFER, ssao_fbo)
+    glBindFramebuffer(GL_FRAMEBUFFER, ssao_fbo.fbo)
     glClear(GL_COLOR_BUFFER_BIT)
 
     glUseProgram(ssao_program)
     glActiveTexture(GL_TEXTURE1)
-    glBindTexture(GL_TEXTURE_2D, scene_depth_texture)
+    glBindTexture(GL_TEXTURE_2D, scene_fbo.depth_texture)
     glActiveTexture(GL_TEXTURE2)
     glBindTexture(GL_TEXTURE_2D, noise_texture)
     glUniform2fv(1, 1, navigate.viewport_size)
@@ -283,9 +229,9 @@ while not glfwWindowShouldClose(window):
 
     glUseProgram(blend_program)
     glActiveTexture(GL_TEXTURE1)
-    glBindTexture(GL_TEXTURE_2D, scene_color_texture)
+    glBindTexture(GL_TEXTURE_2D, scene_fbo.color_textures[0])
     glActiveTexture(GL_TEXTURE2)
-    glBindTexture(GL_TEXTURE_2D, ssao_texture)
+    glBindTexture(GL_TEXTURE_2D, ssao_fbo.color_textures[0])
     glUniform2fv(1, 1, navigate.viewport_size)
     glBindVertexArray(screensapce_vao)
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4)
@@ -297,4 +243,3 @@ while not glfwWindowShouldClose(window):
 glfwTerminate()
 exit()
    
-
