@@ -35,13 +35,13 @@ class FrameBuffer:
             color_attachmnets.append(color_attachment)
             if len(self.color_textures) <= i:
                 self.color_textures.append(glGenTextures(1))
-            glBindTexture(GL_TEXTURE_2D, self.color_textures[0])
+            glBindTexture(GL_TEXTURE_2D, self.color_textures[i])
             glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, None);            
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, self.filter)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, self.filter)
-            glFramebufferTexture2D(GL_FRAMEBUFFER, color_attachment, GL_TEXTURE_2D, self.color_textures[0], 0)
+            glFramebufferTexture2D(GL_FRAMEBUFFER, color_attachment, GL_TEXTURE_2D, self.color_textures[i], 0)
 
         if self.depth_buffer:
             if not self.depth_texture:

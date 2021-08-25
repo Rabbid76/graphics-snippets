@@ -83,6 +83,60 @@ void main()
 }
 """
 
+sh_frag_g_buffer = """
+#version 460 core
+
+layout (location = 0) out vec4 frag_color;
+layout (location = 1) out vec3 normal_vector;
+
+in vec3 v_pos;
+in vec3 v_nv;
+in vec3 v_uvw;
+
+layout (location = 1) uniform mat4 u_view;
+layout (location = 3) uniform vec4 u_k_ads = vec4(0.5, 0.5, 0.1, 100.0);
+layout (location = 4) uniform vec4 u_light_vec = vec4(0.0, 0.0, 1.0, 0.0);
+
+vec3 HUEtoRGB(in float H)
+{
+    float R = abs(H * 6.0 - 3.0) - 1.0;
+    float G = 2.0 - abs(H * 6.0 - 2.0);
+    float B = 2.0 - abs(H * 6.0 - 4.0);
+    return clamp(vec3(R, G, B), 0.0, 1.0);
+}
+
+vec3 HSLtoRGB(in vec3 HSL)
+{
+    if (HSL.y <= 0.0001)
+        return vec3(HSL.z);
+    vec3 RGB = HUEtoRGB(HSL.x);
+    float C = (1.0 - abs(2.0 * HSL.z - 1.0)) * HSL.y;
+    return (RGB - 0.5) * C + HSL.z;
+}
+
+vec3 light_model(float hue, vec3 V, vec3 N)
+{
+    vec4  color = vec4(hue < 0.0 ? vec3(abs(hue)) : HUEtoRGB(hue), 1.0);
+    vec3  L = normalize(u_light_vec.xyz);
+    vec3  H = normalize(V + L);
+    float kd = max(0.0, dot(N, L)) * u_k_ads[1];
+    float NdotH = max(0.0, dot(N, H));
+    float ks = pow(NdotH, max(1.0, u_k_ads[3])) * u_k_ads[2];
+    return color.rgb * (u_k_ads[0] + kd + ks);
+}
+
+void main()
+{
+    vec3  eye = inverse(u_view)[3].xyz;
+    vec3  V = normalize(eye - v_pos);
+    float face = sign(dot(v_nv, V));
+    vec3  N = normalize(v_nv) * face;
+    vec3 color = u_k_ads.x < 0.0 ? HSLtoRGB(v_uvw.zxy) : light_model(v_uvw.z, V, N);
+    frag_color = vec4(color.rgb, 1.0);
+    normal_vector = N;
+}
+"""
+
 def create_vao(attributes, indices):
     vao = glGenVertexArrays(1)
     buffer_objects = glGenBuffers(2)
@@ -146,13 +200,14 @@ def model_mat_ground_center(model_center, model_size):
     return glm.translate(model, glm.vec3(0, model_size[1]/2, 0) - glm.vec3(model_center))
 
 class TestScene:
-    def __init__(self, model_filepath):
+    def __init__(self, model_filepath, g_buffer):
         self.model_filepath = model_filepath
+        self.g_buffer = g_buffer
 
     def create(self):
         self.program = OpenGL.GL.shaders.compileProgram(
             OpenGL.GL.shaders.compileShader(sh_vert, GL_VERTEX_SHADER),
-            OpenGL.GL.shaders.compileShader(sh_frag, GL_FRAGMENT_SHADER)
+            OpenGL.GL.shaders.compileShader(sh_frag_g_buffer if self.g_buffer else sh_frag, GL_FRAGMENT_SHADER)
         )
 
         self.background_vao = create_vao(*create_background_mesh())

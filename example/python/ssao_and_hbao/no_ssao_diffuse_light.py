@@ -18,7 +18,7 @@ glfwWindowHint(GLFW_SAMPLES, 8)
 window = glfwCreateWindow(800, 600, "OpenGL Window", None, None)
 glfwMakeContextCurrent(window)
 
-scene = TestScene('./model/wavefront')
+scene = TestScene('./model/wavefront', False)
 scene.create()
 navigate = Navigation(window, glm.vec3(0, -0.5, -3.0), "no_ssao_diffuse_light")
 

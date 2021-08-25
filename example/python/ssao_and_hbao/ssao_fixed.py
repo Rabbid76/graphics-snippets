@@ -30,7 +30,7 @@ sh_ssao_frag = """
 layout (binding = 1) uniform sampler2D u_depthSampler;
 layout (binding = 2) uniform sampler2D u_ssaoNoiseSampler;
 layout (location = 1) uniform vec2 u_viewportsize; 
-layout (location = 2) uniform float u_radius = 0.005;
+layout (location = 2) uniform float u_radius = 0.01;
 out vec4 frag_color;
 
 float Depth(in sampler2D depthSampler, in vec2 texC)
@@ -165,13 +165,15 @@ def create_frambuffers(vp_size):
     ssao_fbo.create(*vp_size)
 
 def create_noise(noise_size):
-    noise = numpy.empty((noise_size * noise_size, 4), dtype = numpy.float32)
+    noise = numpy.empty((noise_size * noise_size, 3), dtype = numpy.float32)
     for i in range(noise_size * noise_size):
         v = glm.normalize(glm.vec3(random.uniform(-1, 1), random.uniform(-1, 1), random.uniform(-1, 1)))
-        noise[i,:] = [*v, 1.0]
+        noise[i,:] = [*v]
     noise_texture = glGenTextures(1)
     glBindTexture(GL_TEXTURE_2D, noise_texture)
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, noise_size, noise_size, 0, GL_RGBA, GL_FLOAT, None);            
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16_SNORM, noise_size, noise_size, 0, GL_RGB, GL_FLOAT, noise)   
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 4)      
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
     return noise_texture
@@ -180,7 +182,7 @@ if glfwInit() == GLFW_FALSE:
     exit()
 
 glfwWindowHint(GLFW_SAMPLES, 8)
-window = glfwCreateWindow(400, 300, "OpenGL Window", None, None)
+window = glfwCreateWindow(800, 600, "OpenGL Window", None, None)
 glfwMakeContextCurrent(window)
 
 ssao_program = OpenGL.GL.shaders.compileProgram(
@@ -193,9 +195,9 @@ blend_program = OpenGL.GL.shaders.compileProgram(
     OpenGL.GL.shaders.compileShader(sh_blend_frag, GL_FRAGMENT_SHADER)
 )
 
-scene = TestScene('./model/wavefront')
+scene = TestScene('./model/wavefront', False)
 scene.create()
-navigate = Navigation(window, glm.vec3(0, -0.5, -3.0), "ssao_simple")
+navigate = Navigation(window, glm.vec3(0, -0.5, -3.0), "ssao_fixed")
 navigate.change_vp_size_callback = create_frambuffers
 
 screensapce_vao = create_screenspace_vao()
