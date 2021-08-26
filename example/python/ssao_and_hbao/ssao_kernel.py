@@ -155,10 +155,14 @@ def create_noise(noise_size):
 def create_kernel(kernel_size):
     kernel = numpy.empty((kernel_size * 4), dtype = numpy.float32)
     for i in range(kernel_size):
-        v = glm.normalize(glm.vec3(random.uniform(-1, 1), random.uniform(-1, 1), random.uniform(-1, 1)))
-        len_xy = glm.length(glm.vec2(v))
-        v.z = v.z * (1 + len_xy) - len_xy
-        kernel[i,:] = [*v, 1]
+        v = glm.vec3(random.uniform(-1, 1), random.uniform(-1, 1), random.uniform(0, 1))
+        #len_xy = glm.length(glm.vec2(v))
+        #v.z = v.z * (1 + len_xy) - len_xy
+        v = glm.normalize(v)
+        scale = i / kernel_size
+        scale = 0.01 + 0.99 * scale
+        #scale = 0.1 + 0.9 * scale * scale
+        kernel[i,:] = [*v, scale]
     kernel_texture = glGenTextures(1)
     glBindTexture(GL_TEXTURE_2D, kernel_texture)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16_SNORM, kernel_size, 0, 0, GL_RGBA, GL_FLOAT, kernel)          
