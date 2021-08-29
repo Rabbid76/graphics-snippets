@@ -33,7 +33,7 @@ namespace vk_utility
             static Pipeline Create(const vk_utility::device::DevicePtr& device, vk::GraphicsPipelineCreateInfo pipeline_information)
             {
                 auto pipeline = device->get().create_graphics_pipeline(vk::PipelineCache(), pipeline_information);
-                return Pipeline(device, pipeline);
+                return Pipeline(device, pipeline.value);
             }
 
             static PipelinePtr New(const vk_utility::device::DevicePtr& device, vk::GraphicsPipelineCreateInfo pipeline_information)
@@ -44,7 +44,7 @@ namespace vk_utility
             static Pipeline Create(const vk_utility::device::DevicePtr& device, vk::PipelineCache pipeline_cache, vk::GraphicsPipelineCreateInfo pipeline_information)
             {
                 auto pipeline = device->get().create_graphics_pipeline(pipeline_cache, pipeline_information);
-                return Pipeline(device, pipeline);
+                return Pipeline(device, pipeline.value);
             }
 
             static PipelinePtr New(const vk_utility::device::DevicePtr& device, vk::PipelineCache pipeline_cache, vk::GraphicsPipelineCreateInfo pipeline_information)

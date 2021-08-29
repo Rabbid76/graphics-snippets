@@ -19,7 +19,7 @@ namespace vk_utility
         {
         public:
 
-            virtual std::vector<FramebufferPtr> New(vk_utility::device::DevicePtr device) = 0;
+            virtual std::vector<FramebufferPtr> New(vk::Device device) = 0;
         };
     }
 }

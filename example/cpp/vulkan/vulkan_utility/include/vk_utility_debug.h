@@ -72,7 +72,7 @@ namespace vk_utility
                 create_info.setPfnCallback(&DebugCallback);
                 create_info.pUserData = this;
 
-                _instance->get()->createDebugReportCallbackEXT(&create_info, nullptr, &_vk_object);
+                auto result = _instance->get()->createDebugReportCallbackEXT(&create_info, nullptr, &_vk_object);
             }
 
             virtual void destroy(void) override

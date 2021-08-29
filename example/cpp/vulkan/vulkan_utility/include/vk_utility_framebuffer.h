@@ -23,16 +23,16 @@ namespace vk_utility
         {
         private:
 
-            vk_utility::device::DevicePtr _device;
+            vk::Device _device;
 
         public:
 
-            static Framebuffer Create(vk_utility::device::DevicePtr device, const vk::FramebufferCreateInfo& framebuffer_infomration)
+            static Framebuffer Create(vk::Device device, const vk::FramebufferCreateInfo& framebuffer_infomration)
             {
-                return Framebuffer(device, device->get().create_framebuffer(framebuffer_infomration));
+                return Framebuffer(device, device.createFramebuffer(framebuffer_infomration));
             }
 
-            static FramebufferPtr New(vk_utility::device::DevicePtr device, const vk::FramebufferCreateInfo& framebuffer_infomration)
+            static FramebufferPtr New(vk::Device device, const vk::FramebufferCreateInfo& framebuffer_infomration)
             {
                 return vk_utility::make_shared(Create(device, framebuffer_infomration));
             }
@@ -41,7 +41,7 @@ namespace vk_utility
             Framebuffer(const Framebuffer&) = default;
             Framebuffer& operator = (const Framebuffer&) = default;
 
-            Framebuffer(vk_utility::device::DevicePtr device, vk::Framebuffer framebuffer)
+            Framebuffer(vk::Device device, vk::Framebuffer framebuffer)
                 : GenericObject(framebuffer)
                 , _device(device)
             {}
@@ -50,7 +50,7 @@ namespace vk_utility
             {
                 if (_vk_object && _device)
                 {
-                    _device->get().destroy_framebuffer(_vk_object);
+                    _device.destroyFramebuffer(_vk_object);
                     _vk_object = vk::Framebuffer();
                 }
             }

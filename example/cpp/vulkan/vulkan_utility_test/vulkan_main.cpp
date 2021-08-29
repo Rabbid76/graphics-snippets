@@ -861,7 +861,7 @@ void CAppliction::createSwapChain(bool initilaize)
         .set_color_image_view(_color_image_view_memory.front())
         .set_depth_image_view(_depth_image_view_memory.front())
         .set_render_pass(_render_pass)
-        .New(_device);
+        .New(_device->get());
 
     if (initilaize)
     {
@@ -2154,7 +2154,7 @@ void CAppliction::drawFrame( void ) {
     //! The `VK_TRUE` we pass here indicates that we want to wait for all fences, but in the case of a single one it obviously doesn't matter.
     //! Just like `vkAcquireNextImageKHR` this function also takes a timeout. Unlike the semaphores, we manually need to restore the fence to the unsignaled state by resetting it with the vkResetFences call.
 
-    _device->get()->waitForFences(1, &_inFlightFences[_currentFrame], VK_TRUE, std::numeric_limits<uint64_t>::max());
+    auto result = _device->get()->waitForFences(1, &_inFlightFences[_currentFrame], VK_TRUE, std::numeric_limits<uint64_t>::max());
 
     //-------------------------------------------
     // Acquiring an image from the swap chain
@@ -2173,7 +2173,7 @@ void CAppliction::drawFrame( void ) {
 
     uint32_t imageIndex;
     vk::Result acquireNextImageResult;
-    auto result = _device->get()->acquireNextImageKHR(*_swapchain, std::numeric_limits<uint64_t>::max(), _imageAvailableSemaphores[_currentFrame], vk::Fence(), &imageIndex);
+    result = _device->get()->acquireNextImageKHR(*_swapchain, std::numeric_limits<uint64_t>::max(), _imageAvailableSemaphores[_currentFrame], vk::Fence(), &imageIndex);
     acquireNextImageResult = result;
     
     if (acquireNextImageResult == vk::Result::eErrorOutOfDateKHR || acquireNextImageResult == vk::Result::eSuboptimalKHR || _framebufferResized) {
@@ -2182,7 +2182,7 @@ void CAppliction::drawFrame( void ) {
         return;
     } 
 
-    _device->get()->resetFences(1, &_inFlightFences[_currentFrame]);
+    result = _device->get()->resetFences(1, &_inFlightFences[_currentFrame]);
 
 
     //-------------------------------------------
@@ -2213,7 +2213,7 @@ void CAppliction::drawFrame( void ) {
 
     vk::SubmitInfo submitInfo(waitSemaphores, waitStages, commandbuffers, signalSemaphores);
 
-    _graphicsQueue.submit(1, &submitInfo, _inFlightFences[_currentFrame]);
+    result = _graphicsQueue.submit(1, &submitInfo, _inFlightFences[_currentFrame]);
  
     //-------------------------------------------
     // Presentation
@@ -2232,7 +2232,7 @@ void CAppliction::drawFrame( void ) {
 
     vk::PresentInfoKHR presentInfo(signalSemaphores, swapChains, imageIndexs, resutl);
 
-    _presentQueue.presentKHR(presentInfo);
+    result = _presentQueue.presentKHR(presentInfo);
 
     //-------------------------------------------
     // Frames in flight
