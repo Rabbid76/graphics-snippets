@@ -1,3 +1,9 @@
+# Can't display texture in pyopengl(without opengl context)
+# https://stackoverflow.com/questions/69055234/cant-display-texture-in-pyopenglwithout-opengl-context
+#
+# Vertex/fragment shaders for a OpenGL firsrt-person shooter view?
+# https://stackoverflow.com/questions/59896103/vertex-fragment-shaders-for-a-opengl-firsrt-person-shooter-view
+
 from OpenGL.GL import *
 from OpenGL.GLU import *
 from OpenGL.GLUT import *
