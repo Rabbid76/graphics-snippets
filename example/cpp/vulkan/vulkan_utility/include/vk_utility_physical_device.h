@@ -117,6 +117,11 @@ namespace vk_utility
                 return *_queue_information;
             }
 
+            const auto get_queue_information_ptr(void) const
+            {
+                return _queue_information;
+            }
+
             const auto &get_swapchain_support(void) const
             {
                 return *_swapchain_support;

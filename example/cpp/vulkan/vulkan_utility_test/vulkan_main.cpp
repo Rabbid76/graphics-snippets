@@ -85,6 +85,8 @@
 #include <vk_utility_image_view_factory_default.h>
 #include <vk_utility_framebuffer.h>
 #include <vk_utility_framebuffer_factory_default.h>
+#include <vk_utility_command_pool.h>
+#include <vk_utility_command_pool_factory_default.h>
 
 
 // GLFW
@@ -324,7 +326,6 @@ private: // private operations
     void recreateSwapChain( void );                  //!< recreate the entire swapchain (e.g. when the window was resized)
     void createSwapChain( bool initilaize );         //!< create the entire swapchain (e.g. when the window was resized)
     void cleanupSwapChain( void );                   //!< cleanup everything which will be recreated till swapchain is recreated
-    void createCommandPool( void );                  //!< create the command pool
     void createColorResources(void);                 //!< create the color image
     void createDepthResources(void);                 //!< create the depth image
     void loadModel(void);                            //!< load scene
@@ -399,7 +400,7 @@ private: // private attributes
     vk_utility::pipeline::PipelineLayoutPtr             _pipeline_layout;            //!< Vulkan pipeline layout handle
     vk_utility::pipeline::PipelinePtr                   _graphics_pipeline;          //!< Vulkan graphics pipeline handle
     std::vector<vk_utility::buffer::FramebufferPtr>     _swapchain_framebuffers;     //!< Vulkan framebuffers
-    vk::CommandPool                _commandPool;              //!< Vulkan command pool
+    vk_utility::command::CommandPoolPtr                 _command_pool;               //!< Vulkan command pool
     std::vector<vk::CommandBuffer> _commandBuffers;           //!< Vulkan command buffers
     std::vector<vk::Semaphore>     _imageAvailableSemaphores; //!< Vulkan semaphore
     std::vector<vk::Semaphore>     _renderFinishedSemaphores; //!< Vulkan semaphore
@@ -630,7 +631,7 @@ void CAppliction::initVulkan( void )
         for ( size_t i= 1; i < _swapchain_framebuffers.size(); ++ i )
             std::cout << ", " << std::hex << _swapchain_framebuffers[i]->handle() << "h";
         std::cout << std::endl;
-        std::cout << "command pool handle:           " << std::hex << _commandPool << "h" << std::endl;
+        std::cout << "command pool handle:           " << std::hex << _command_pool->handle() << "h" << std::endl;
         std::cout << "command buffer handles:        " << std::hex << _commandBuffers[0] << "h";
         for ( size_t i= 1; i < _commandBuffers.size(); ++ i )
             std::cout << ", " << std::hex << _commandBuffers[i] << "h";
@@ -715,12 +716,9 @@ void CAppliction::cleanup( void ) {
              _device->get()->destroySemaphore(imageSemaphore);
         }
         _imageAvailableSemaphores.clear();
-
-        if (_commandPool)
-            _device->get()->destroyCommandPool(_commandPool);
-        _commandPool = vk::CommandPool();
     }
   
+    _command_pool = nullptr;
     _device = nullptr;
     _physical_device = nullptr;
     _surface = nullptr;
@@ -851,7 +849,11 @@ void CAppliction::createSwapChain(bool initilaize)
         .set_render_pass(_render_pass)
         .New(_device, _swapchain);
 
-    createCommandPool();
+    _command_pool = vk_utility::command::CommandPool::NewPtr(
+        _device->get(),
+        vk_utility::command::CommandPoolFactoryDefault()
+        .set_device_queue_information(_physical_device->get().get_queue_information_ptr()));
+
     createColorResources();
     createDepthResources();
     
@@ -932,8 +934,8 @@ void CAppliction::cleanupSwapChain( void ) {
 
     _swapchain_framebuffers.clear();
 
-    if (_commandPool)
-        _device->get()->freeCommandBuffers(_commandPool, _commandBuffers);
+    if (_command_pool)
+        _device->get()->freeCommandBuffers(_command_pool->get(), _commandBuffers);
     _commandBuffers.clear();
 
     _graphics_pipeline = nullptr;
@@ -943,54 +945,6 @@ void CAppliction::cleanupSwapChain( void ) {
     _swapchain_image_views.clear();
 
     _swapchain = nullptr;
-}
-
-
-/******************************************************************//**
-* \brief   create the command pool.
-* 
-* \author  gernot
-* \date    2018-05-25
-* \version 1.0
-**********************************************************************/
-void CAppliction::createCommandPool( void ) {
-
-    if ( !_device )
-        throw CException("no logical vulkan device!");
-    if (_physical_device == nullptr)
-        throw CException("no physical device!");
-
-    if (_physical_device->get().get_queue_information()._graphics.empty() )
-        throw CException("no graphics device queue!");
-
-    //! Commands in Vulkan, like drawing operations and memory transfers, are not executed directly using function calls.
-    //! You have to record all of the operations you want to perform in command buffer objects.
-    //! The advantage of this is that all of the hard work of setting up the drawing commands can be done in advance and in multiple threads.
-    //! After that, you just have to tell Vulkan to execute the commands in the main loop.
-
-
-    //-------------------------------------------
-    // Command pools
-    //-------------------------------------------
-
-    //! We have to create a command pool before we can create command buffers.
-    //! Command pools manage the memory that is used to store the buffers and command buffers are allocated from them.
-   
-    //! Command buffers are executed by submitting them on one of the device queues, like the graphics and presentation queues we retrieved.
-    //! Each command pool can only allocate command buffers that are submitted on a single type of queue.
-    //! We're going to record commands for drawing, which is why we've chosen the graphics queue family.
-    
-    //! There are two possible flags for command pools:
-    //! - `VK_COMMAND_POOL_CREATE_TRANSIENT_BIT`: Hint that command buffers are rerecorded with new commands very often (may change memory allocation behavior)
-    //! - `VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT`: Allow command buffers to be rerecorded individually, without this flag they all have to be reset together
-
-    vk::CommandPoolCreateInfo poolInfo
-    (
-        vk::CommandPoolCreateFlags{}, 
-        _physical_device->get().get_queue_information()._graphics[0]
-    );
-    
-    _commandPool = _device->get()->createCommandPool(poolInfo);
 }
 
 
@@ -1011,7 +965,7 @@ vk::CommandBuffer CAppliction::beginSingleTimeCommands( void ) {
     //! You may wish to create a separate command pool for these kinds of short-lived buffers, because the implementation may be able to apply memory allocation optimizations.
     //! You should use the VK_COMMAND_POOL_CREATE_TRANSIENT_BIT flag during command pool generation in that case.
 
-    vk::CommandBufferAllocateInfo allocInfo(_commandPool, vk::CommandBufferLevel::ePrimary, 1);
+    vk::CommandBufferAllocateInfo allocInfo(_command_pool->get(), vk::CommandBufferLevel::ePrimary, 1);
 
     vk::CommandBuffer commandBuffer = _device->get()->allocateCommandBuffers(allocInfo).front();
     
@@ -1069,7 +1023,7 @@ void CAppliction::endSingleTimeCommands(
     //! A fence would allow you to schedule multiple transfers simultaneously and wait for all of them complete, instead of executing one at a time.
     //! That may give the driver more opportunities to optimize.
 
-    _device->get()->freeCommandBuffers(_commandPool, commandBuffer);
+    _device->get()->freeCommandBuffers(_command_pool->get(), commandBuffer);
 }
 
 
@@ -1930,7 +1884,7 @@ void CAppliction::createCommandBuffers( void ) {
 
     if (!_device)
         throw CException("no logical vulkan device!");
-    if (!_commandPool)
+    if (!_command_pool)
         throw CException("no vulkan command pool!");
    
 
@@ -1944,7 +1898,7 @@ void CAppliction::createCommandBuffers( void ) {
 
     _commandBuffers.resize(_swapchain_framebuffers.size());
     
-    vk::CommandBufferAllocateInfo allocInfo(_commandPool, vk::CommandBufferLevel::ePrimary, (uint32_t)_commandBuffers.size());
+    vk::CommandBufferAllocateInfo allocInfo(_command_pool->get(), vk::CommandBufferLevel::ePrimary, (uint32_t)_commandBuffers.size());
 
     _commandBuffers = _device->get()->allocateCommandBuffers(allocInfo);
 

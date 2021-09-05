@@ -55,7 +55,7 @@ namespace vk_utility
                 return *this;
             }
 
-            virtual std::vector<FramebufferPtr> New(vk::Device device) override
+            virtual std::vector<FramebufferPtr> New(vk::Device device) const override
             {
                 std::vector<vk_utility::buffer::FramebufferPtr> framebuffers;
                 std::transform(_swapchain_image_views.begin(), _swapchain_image_views.end(), std::back_inserter(framebuffers), [&](auto& swapchain_image_view) -> auto

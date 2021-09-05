@@ -34,6 +34,9 @@
     <Filter Include="pipeline">
       <UniqueIdentifier>{d733a029-b12e-4341-bdf4-eeb01074600c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="command">
+      <UniqueIdentifier>{39b7b519-8bbd-4bed-9bd2-cc9d302b65c1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -230,6 +233,15 @@
     </ClInclude>
     <ClInclude Include="include\vk_utility_framebuffer_factory_default.h">
       <Filter>buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_command_pool.h">
+      <Filter>command</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_command_pool_factory.h">
+      <Filter>command</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_command_pool_factory_default.h">
+      <Filter>command</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
