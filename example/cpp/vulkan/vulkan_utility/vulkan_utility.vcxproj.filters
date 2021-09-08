@@ -243,6 +243,15 @@
     <ClInclude Include="include\vk_utility_command_pool_factory_default.h">
       <Filter>command</Filter>
     </ClInclude>
+    <ClInclude Include="include\vk_utility_command_buffer.h">
+      <Filter>command</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_command_buffer_factory.h">
+      <Filter>command</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_command_buffer_factory_single_time_command.h">
+      <Filter>command</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">

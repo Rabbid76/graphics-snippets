@@ -87,6 +87,8 @@
 #include <vk_utility_framebuffer_factory_default.h>
 #include <vk_utility_command_pool.h>
 #include <vk_utility_command_pool_factory_default.h>
+#include <vk_utility_command_buffer.h>
+#include <vk_utility_command_buffer_factory_single_time_command.h>
 
 
 // GLFW
@@ -340,9 +342,6 @@ private: // private operations
 
     void drawFrame( void ); //! do the drawing
                                                  //!< create shader module from byte code
-    vk::CommandBuffer        beginSingleTimeCommands( void );                                                                      //!< begin executing a command buffer 
-    void                     endSingleTimeCommands( vk::CommandBuffer commandBuffer );                                             //!< end execute command buffer
-
     //!  image generation
     vk_utility::image::ImagePtr createImage( uint32_t width, uint32_t height, uint32_t mipLevels, vk::SampleCountFlagBits numSamples, vk::Format format, vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties, vk_utility::device::DeviceMemoryPtr &imageMemory );
     //! handle image layout transition
@@ -449,10 +448,15 @@ public:
         //! The regions are defined in `vk::BufferCopy` structures and consist of a source buffer offset, destination buffer offset and size.
         //! It is not possible to specify VK_WHOLE_SIZE here, unlike the vkMapMemory command.
 
-        vk::CommandBuffer commandBuffer = _app.beginSingleTimeCommands();
+        auto command_buffer_factory = vk_utility::command::CommandBufferFactorySingleTimeCommand()
+            .set_graphics_queue(_app._graphicsQueue);
+        auto command_buffer = vk_utility::command::CommandBuffer::NewPtr(_app._device->get(), _app._command_pool->get(), command_buffer_factory);
+
+
         std::vector<vk::BufferCopy> copyRegions{vk::BufferCopy(0, 0, destination_buffer->buffer().size())};
-        commandBuffer.copyBuffer(source_buffer->buffer(), destination_buffer->buffer(), copyRegions);
-        _app.endSingleTimeCommands(commandBuffer);
+        command_buffer->get()->copyBuffer(source_buffer->buffer(), destination_buffer->buffer(), copyRegions);
+        
+        command_buffer_factory.End(command_buffer->get());
 
         return *this;
     }
@@ -949,85 +953,6 @@ void CAppliction::cleanupSwapChain( void ) {
 
 
 /******************************************************************//**
-* \brief Begin executing a command buffer.  
-* 
-* \author  gernot
-* \date    2019-05-05
-* \version 1.0
-**********************************************************************/
-vk::CommandBuffer CAppliction::beginSingleTimeCommands( void ) {
-
-    if ( !_device )
-        throw CException("no logical vulkan device!");
-
-    //! Memory transfer operations are executed using command buffers, just like drawing commands. 
-    //! Therefore we must first allocate a temporary command buffer. 
-    //! You may wish to create a separate command pool for these kinds of short-lived buffers, because the implementation may be able to apply memory allocation optimizations.
-    //! You should use the VK_COMMAND_POOL_CREATE_TRANSIENT_BIT flag during command pool generation in that case.
-
-    vk::CommandBufferAllocateInfo allocInfo(_command_pool->get(), vk::CommandBufferLevel::ePrimary, 1);
-
-    vk::CommandBuffer commandBuffer = _device->get()->allocateCommandBuffers(allocInfo).front();
-    
-    //! The VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT flag that we used for the drawing command buffers is not necessary here,
-    //! because we're only going to use the command buffer once and wait with returning from the function until the copy operation has finished executing.
-    //! It's good practice to tell the driver about our intent using VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT.
-
-    vk::CommandBufferBeginInfo beginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit, nullptr);
-
-    commandBuffer.begin(beginInfo);
-
-    return commandBuffer;
-}
-
-
-/******************************************************************//**
-* \brief End execute command buffer.  
-* 
-* \author  gernot
-* \date    2019-05-05
-* \version 1.0
-**********************************************************************/
-void CAppliction::endSingleTimeCommands( 
-    vk::CommandBuffer commandBuffer //!< I - command buffer
-    ) {
-
-    //! Contents of buffers are transferred using the vkCmdCopyBuffer command.
-    //! It takes the source and destination buffers as arguments, and an array of regions to copy.
-    //! The regions are defined in `vk::BufferCopy` structures and consist of a source buffer offset, destination buffer offset and size.
-    //! It is not possible to specify VK_WHOLE_SIZE here, unlike the vkMapMemory command.
-
-    commandBuffer.end();
-
-    //! This command buffer only contains the copy command, so we can stop recording right after that.
-    //! Now execute the command buffer to complete the transfer:
-
-    std::vector<vk::Semaphore> waitSemaphores;
-    std::vector<vk::PipelineStageFlags> waitDstStageMasks;
-    std::vector<vk::CommandBuffer> commadBuffers{commandBuffer};
-    std::vector<vk::Semaphore> signalSemaphores;
-    vk::SubmitInfo submitInfo
-    (
-        waitSemaphores,
-        waitDstStageMasks,
-        commadBuffers,
-        signalSemaphores
-    );
-
-    _graphicsQueue.submit(submitInfo, vk::Fence());
-    _graphicsQueue.waitIdle();
-
-    //! Unlike the draw commands, there are no events we need to wait on this time. We just want to execute the transfer on the buffers immediately.
-    //! There are again two possible ways to wait on this transfer to complete.
-    //! We could use a fence and wait with vkWaitForFences, or simply wait for the transfer queue to become idle with vkQueueWaitIdle.
-    //! A fence would allow you to schedule multiple transfers simultaneously and wait for all of them complete, instead of executing one at a time.
-    //! That may give the driver more opportunities to optimize.
-
-    _device->get()->freeCommandBuffers(_command_pool->get(), commandBuffer);
-}
-
-
-/******************************************************************//**
 * \brief Abstract image creation.  
 * 
 * \author  gernot
@@ -1093,9 +1018,11 @@ void CAppliction::transitionImageLayout(
     vk::ImageLayout oldLayout, //!< I -
     vk::ImageLayout newLayout, //!< I -
     uint32_t      mipLevels  //!< I -
-    ) {
-
-    vk::CommandBuffer commandBuffer = beginSingleTimeCommands();
+    )
+{
+    auto command_buffer_factory = vk_utility::command::CommandBufferFactorySingleTimeCommand()
+        .set_graphics_queue(_graphicsQueue);
+    auto command_buffer = vk_utility::command::CommandBuffer::NewPtr(_device->get(), _command_pool->get(), command_buffer_factory);
 
     //-------------------------------------------
     // Layout transitions
@@ -1197,15 +1124,14 @@ void CAppliction::transitionImageLayout(
         subresourceRange
     );
 
-    commandBuffer.pipelineBarrier(
+    command_buffer->get()->pipelineBarrier(
         sourceStage, destinationStage,
         vk::DependencyFlags(),
         0, nullptr,
         0, nullptr,
         1, &barrier
     );
-     
-    endSingleTimeCommands(commandBuffer);
+    command_buffer_factory.End(command_buffer->get());
 }
 
 
@@ -1221,9 +1147,11 @@ void CAppliction::copyBufferToImage(
     vk::Image  image,  //!< I - 
     uint32_t width,  //!< I - 
     uint32_t height  //!< I - 
-    ) {
-
-     vk::CommandBuffer commandBuffer = beginSingleTimeCommands();
+    )
+{
+    auto command_buffer_factory = vk_utility::command::CommandBufferFactorySingleTimeCommand()
+        .set_graphics_queue(_graphicsQueue);
+    auto command_buffer = vk_utility::command::CommandBuffer::NewPtr(_device->get(), _command_pool->get(), command_buffer_factory);
 
     //-------------------------------------------
     // Copying buffer to image
@@ -1260,15 +1188,14 @@ void CAppliction::copyBufferToImage(
     //! I'm assuming here that the image has already been transitioned to the layout that is optimal for copying pixels to.
     //! Right now we're only copying one chunk of pixels to the whole image, but it's possible to specify an array of `vk::BufferImageCopy` to perform many different copies from this buffer to the image in one operation.
 
-    commandBuffer.copyBufferToImage(
+    command_buffer->get()->copyBufferToImage(
         buffer,
         image,
         vk::ImageLayout::eTransferDstOptimal,
         1,
         &region
     );
-
-    endSingleTimeCommands(commandBuffer);
+    command_buffer_factory.End(command_buffer->get());
 }
 
 
@@ -1475,7 +1402,8 @@ void CAppliction::createTextureImage( void ) {
 * \date    2020-06-01
 * \version 1.0
 **********************************************************************/
-void CAppliction::generateMipmaps(vk::Image image, vk::Format imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels) {
+void CAppliction::generateMipmaps(vk::Image image, vk::Format imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels)
+{
     // Check if image format supports linear blitting
     vk::FormatProperties formatProperties = _physical_device->get()->getFormatProperties(imageFormat);
 
@@ -1483,7 +1411,9 @@ void CAppliction::generateMipmaps(vk::Image image, vk::Format imageFormat, int32
         throw std::runtime_error("texture image format does not support linear blitting!");
     }
 
-    vk::CommandBuffer commandBuffer = beginSingleTimeCommands();
+    auto command_buffer_factory = vk_utility::command::CommandBufferFactorySingleTimeCommand()
+        .set_graphics_queue(_graphicsQueue);
+    auto command_buffer = vk_utility::command::CommandBuffer::NewPtr(_device->get(), _command_pool->get(), command_buffer_factory);
 
     vk::ImageSubresourceRange subresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
     vk::ImageMemoryBarrier barrier
@@ -1515,7 +1445,7 @@ void CAppliction::generateMipmaps(vk::Image image, vk::Format imageFormat, int32
             .setSrcAccessMask(vk::AccessFlagBits::eTransferWrite)
             .setDstAccessMask(vk::AccessFlagBits::eTransferRead);
 
-        commandBuffer.pipelineBarrier(
+        command_buffer->get()->pipelineBarrier(
             vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer, vk::DependencyFlags(),
             0, nullptr,
             0, nullptr,
@@ -1544,7 +1474,7 @@ void CAppliction::generateMipmaps(vk::Image image, vk::Format imageFormat, int32
         //! The X and Y dimensions of the dstOffsets[1] are divided by two since each mipmap level is half the size of the previous level.
         //! The Z dimension of srcOffsets[1] and dstOffsets[1] must be 1, since a 2D image has a depth of 1.
 
-        commandBuffer.blitImage(
+        command_buffer->get()->blitImage(
             image, vk::ImageLayout::eTransferSrcOptimal,
             image, vk::ImageLayout::eTransferDstOptimal,
             1, &blit,
@@ -1564,7 +1494,7 @@ void CAppliction::generateMipmaps(vk::Image image, vk::Format imageFormat, int32
             .setSrcAccessMask(vk::AccessFlagBits::eTransferRead)
             .setDstAccessMask(vk::AccessFlagBits::eShaderRead);
 
-        commandBuffer.pipelineBarrier(
+        command_buffer->get()->pipelineBarrier(
             vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eFragmentShader, vk::DependencyFlags(),
             0, nullptr,
             0, nullptr,
@@ -1590,13 +1520,12 @@ void CAppliction::generateMipmaps(vk::Image image, vk::Format imageFormat, int32
         .setSrcAccessMask(vk::AccessFlagBits::eTransferWrite)
         .setDstAccessMask(vk::AccessFlagBits::eShaderRead);
 
-    commandBuffer.pipelineBarrier(
+    command_buffer->get()->pipelineBarrier(
         vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eFragmentShader, vk::DependencyFlags(),
         0, nullptr,
         0, nullptr,
         1, &barrier);
-
-    endSingleTimeCommands(commandBuffer);
+    command_buffer_factory.End(command_buffer->get());
 }
 
 

@@ -166,6 +166,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
+    <ClInclude Include="include\vk_utility_command_buffer.h" />
+    <ClInclude Include="include\vk_utility_command_buffer_factory.h" />
+    <ClInclude Include="include\vk_utility_command_buffer_factory_single_time_command.h" />
     <ClInclude Include="include\vk_utility_command_pool.h" />
     <ClInclude Include="include\vk_utility_command_pool_factory.h" />
     <ClInclude Include="include\vk_utility_command_pool_factory_default.h" />

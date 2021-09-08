@@ -44,6 +44,7 @@ namespace vk_utility
                 if (_vk_object && _device)
                 {
                     _device.destroyCommandPool(_vk_object);
+                    _vk_object = vk::CommandPool();
                 }
             }
         };
