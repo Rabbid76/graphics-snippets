@@ -258,6 +258,12 @@
     <ClInclude Include="include\vk_utility_image_factory_2d.h">
       <Filter>image</Filter>
     </ClInclude>
+    <ClInclude Include="include\vk_utility_device_memory_factory.h">
+      <Filter>device</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_image_device_memory_factroy.h">
+      <Filter>image</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">

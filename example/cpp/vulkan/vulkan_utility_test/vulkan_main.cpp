@@ -90,6 +90,7 @@
 #include <vk_utility_command_buffer.h>
 #include <vk_utility_command_buffer_factory_single_time_command.h>
 #include <vk_utility_image_factory_2d.h>
+#include <vk_utility_image_device_memory_factroy.h>
 
 
 // GLFW
@@ -969,7 +970,7 @@ vk_utility::image::ImagePtr CAppliction::createImage(
     vk::ImageTiling          tiling,     //!< I -
     vk::ImageUsageFlags      usage,      //!< I -
     vk::MemoryPropertyFlags  properties, //!< I -
-    vk_utility::device::DeviceMemoryPtr &imageMemory //!< O - texture image memory
+    vk_utility::device::DeviceMemoryPtr &image_memory //!< O - texture image memory
 ) {
     auto image_factory_2d = vk_utility::image::ImageFactory2D()
         .set_size(width, height)
@@ -981,14 +982,13 @@ vk_utility::image::ImagePtr CAppliction::createImage(
 
     auto image = vk_utility::image::Image::NewPtr(_device->get(), image_factory_2d);
 
-    vk::MemoryRequirements memRequirements = _device->get()->getImageMemoryRequirements(*image);
-    imageMemory = vk_utility::device::DeviceMemory::New(
-        _device,
-        vk_utility::device::DeviceMemoryInformation::New(_device, memRequirements, properties)
-    );
+    auto image_memory_factory = vk_utility::image::ImageDeviceMemoryFactory()
+        .set_image(image->get())
+        .set_memory_properties(properties)
+        .set_from_physical_device(_device->get().physical_device());
 
-    _device->get()->bindImageMemory(*image, imageMemory->handle(), 0);
-
+    image_memory = vk_utility::device::DeviceMemory::NewPtr(*_device->get(), image_memory_factory);
+    
     return image;
 }
 

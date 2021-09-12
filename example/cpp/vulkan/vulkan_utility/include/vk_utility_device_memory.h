@@ -6,6 +6,7 @@
 #include <vk_utility_vulkan_include.h>
 #include <vk_utility_device.h>
 #include <vk_utility_device_memory_information.h>
+#include <vk_utility_device_memory_factory.h>
 
 
 // TODO $$$
@@ -30,53 +31,67 @@ namespace vk_utility
         {
         private:
 
-            DevicePtr _device;
-            DeviceMemoryInformation _allocate_information;
+            vk::Device _device;
+            vk::DeviceSize _memory_size;
 
         public:
 
-            static DeviceMemory Create(DevicePtr &device, const DeviceMemoryInformation &allocate_information)
+            static DeviceMemory Create(vk::Device &device, const DeviceMemoryInformation &allocate_information)
             {
-                return DeviceMemory(device, allocate_information);
+                return DeviceMemory(device, device.allocateMemory(allocate_information), allocate_information.size());
             }
 
-            static DeviceMemoryPtr New(DevicePtr &device, const DeviceMemoryInformation &allocate_information)
+            static DeviceMemoryPtr New(vk::Device &device, const DeviceMemoryInformation &allocate_information)
             {
                 return vk_utility::make_shared(Create(device, allocate_information));
             }
 
-            static DeviceMemory Create(DevicePtr &device, const DeviceMemoryInformation &allocate_information, void * source_data)
+            static DeviceMemory Create(vk::Device &device, const DeviceMemoryInformation &allocate_information, void * source_data)
             {
-                auto device_memory = DeviceMemory(device, allocate_information);
+                auto device_memory = DeviceMemory::Create(device, allocate_information);
                 device_memory.copy(source_data);
                 return device_memory;
             }
 
-            static DeviceMemoryPtr New(DevicePtr &device, const DeviceMemoryInformation &allocate_information, void * source_data)
+            static DeviceMemoryPtr New(vk::Device &device, const DeviceMemoryInformation &allocate_information, void * source_data)
             {
                 return vk_utility::make_shared(Create(device, allocate_information, source_data));
+            }
+
+            static DeviceMemory New(vk::Device& device, const DeviceMemoryFactory& device_memory_factory)
+            {
+                auto [device_memory, memory_size] = device_memory_factory.New(device);
+                return DeviceMemory(device, device_memory, memory_size);
+            }
+
+            static DeviceMemoryPtr NewPtr(vk::Device& device, const DeviceMemoryFactory& device_memory_factory)
+            {
+                return vk_utility::make_shared(New(device, device_memory_factory));
             }
 
             DeviceMemory(void) = default;
             DeviceMemory(const DeviceMemory &) = default;
             DeviceMemory &operator = (const DeviceMemory &) = default;
 
-            DeviceMemory(DevicePtr &device, const vk::MemoryAllocateInfo &allocate_information)
-                : _device( device )
-                , _allocate_information(allocate_information)
-                , GenericObject(device->get().allocate_memory(allocate_information))
+            DeviceMemory(vk::Device &device, vk::DeviceMemory device_memory, vk::DeviceSize memory_size)
+                : _device(device)
+                , _memory_size(memory_size)
+                , GenericObject(device_memory)
             {}
 
             virtual void destroy() override
             {
                 if (_device && _vk_object)
                 {
-                    _device->get().free_memory(_vk_object);
+                    _device.freeMemory(_vk_object);
                     _vk_object = vk::DeviceMemory();
                 }
             }
 
-            vk::DeviceSize size(void) const { return _allocate_information.size(); }
+            vk::DeviceSize size(void) const
+            { 
+                return _memory_size; 
+            }
 
             /// <summary>
             /// It is now time to copy the data to the buffer. 
@@ -101,15 +116,15 @@ namespace vk_utility
             /// <returns></returns>
             const DeviceMemory & copy(vk::DeviceSize offset, vk::DeviceSize size, const void * source_data) const
             {
-                void * data = _device->get()->mapMemory(_vk_object, 0, size);
+                void * data = _device.mapMemory(_vk_object, 0, size);
                 std::memcpy(data, source_data, (size_t)size);
-                _device->get()->unmapMemory(_vk_object);
+                _device.unmapMemory(_vk_object);
                 return *this;
             }
 
             const DeviceMemory & copy(const void * source_data) const
             {
-                return copy(0, _allocate_information.size(), source_data);
+                return copy(0, size(), source_data);
             }
         };
     }

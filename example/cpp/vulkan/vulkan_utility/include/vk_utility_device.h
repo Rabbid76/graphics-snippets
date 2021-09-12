@@ -62,7 +62,7 @@ namespace vk_utility
                 }
             }
 
-            auto physical_divice(void)
+            auto physical_device_ptr(void)
             {
                 return _physical_device;
             }

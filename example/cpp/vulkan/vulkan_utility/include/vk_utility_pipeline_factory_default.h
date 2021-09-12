@@ -160,7 +160,7 @@ namespace vk_utility
 
             Pipeline create_pipeline(vk_utility::device::DevicePtr device, vk_utility::swap::SwapchainPtr swapchain)
             {
-                auto physical_device = device->get().physical_divice();
+                auto physical_device = device->get().physical_device_ptr();
 
                 // The graphics pipeline in Vulkan is almost completely immutable,
                 // so you must recreate the pipeline from scratch if you want to change shaders,

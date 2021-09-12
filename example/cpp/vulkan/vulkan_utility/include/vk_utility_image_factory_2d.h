@@ -114,8 +114,8 @@ namespace vk_utility
 
             virtual vk::Image New(vk::Device device) const override
             {
-                std::vector<uint32_t> queue_family_indices;
-                vk::ImageCreateInfo image_create_information
+                const std::vector<uint32_t> queue_family_indices;
+                const vk::ImageCreateInfo image_create_information
                 (
                     vk::ImageCreateFlags(),
                     vk::ImageType::e2D,

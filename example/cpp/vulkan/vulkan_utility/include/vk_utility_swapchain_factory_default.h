@@ -59,7 +59,7 @@ namespace vk_utility
 
             virtual Swapchain Create(vk_utility::device::DevicePtr device, vk_utility::device::SurfacePtr surface) override
             {
-                auto physical_device = device->get().physical_divice();
+                auto physical_device = device->get().physical_device_ptr();
                 auto &swapchain_support = physical_device->get().get_swapchain_support();
 
                 auto surface_format = _format_selector->Select(physical_device);

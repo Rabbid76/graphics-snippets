@@ -67,7 +67,7 @@ namespace vk_utility
             {
                 BufferPtr buffer = Buffer::New(device, buffer_and_memory_information.buffer_Information());
                 vk_utility::device::DeviceMemoryPtr memory = vk_utility::device::DeviceMemory::New(
-                    device,
+                    *device->get(),
                     buffer_and_memory_information.memory_Information(device, buffer)
                 );
                 return New(device, memory, buffer);
@@ -91,7 +91,7 @@ namespace vk_utility
             {
                 BufferPtr buffer = Buffer::New(device, buffer_and_memory_information.buffer_Information());
                 vk_utility::device::DeviceMemoryPtr memory = vk_utility::device::DeviceMemory::New(
-                    device,
+                    *device->get(),
                     buffer_and_memory_information.memory_Information(device, buffer)
                 );
                 auto buffer_and_memory = New(device, memory, buffer);
@@ -119,7 +119,7 @@ namespace vk_utility
             {
                 BufferPtr buffer = Buffer::New(device, buffer_and_memory_information.buffer_Information());
                 vk_utility::device::DeviceMemoryPtr memory = vk_utility::device::DeviceMemory::New(
-                    device,
+                    *device->get(),
                     buffer_and_memory_information.memory_Information(device, buffer)
                 );
                 auto buffer_and_memory = New(device, memory, buffer);

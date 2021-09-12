@@ -43,14 +43,12 @@ namespace vk_utility
 
             virtual vk::CommandPool New(vk::Device device) const override
             {
-                uint32_t queue_famili_index = _device_queue_information->_graphics[0];
-
-                vk::CommandPoolCreateInfo command_pool_create_information
+                const uint32_t queue_famili_index = _device_queue_information->_graphics[0];
+                const vk::CommandPoolCreateInfo command_pool_create_information
                 {
                     vk::CommandPoolCreateFlags{},
                     queue_famili_index,
                 };
-
                 return device.createCommandPool(command_pool_create_information);
             }
         };
