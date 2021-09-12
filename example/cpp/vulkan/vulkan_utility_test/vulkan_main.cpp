@@ -89,6 +89,7 @@
 #include <vk_utility_command_pool_factory_default.h>
 #include <vk_utility_command_buffer.h>
 #include <vk_utility_command_buffer_factory_single_time_command.h>
+#include <vk_utility_image_factory_2d.h>
 
 
 // GLFW
@@ -970,28 +971,15 @@ vk_utility::image::ImagePtr CAppliction::createImage(
     vk::MemoryPropertyFlags  properties, //!< I -
     vk_utility::device::DeviceMemoryPtr &imageMemory //!< O - texture image memory
 ) {
+    auto image_factory_2d = vk_utility::image::ImageFactory2D()
+        .set_size(width, height)
+        .set_format(format)
+        .set_mipmap_levels(mipLevels)
+        .set_samples(numSamples)
+        .set_tiling(tiling)
+        .set_usage(usage);
 
-    if (!_device)
-        throw CException("no logical vulkan device!");
-
-    std::vector<uint32_t> queueFamilyIndices;
-    vk::ImageCreateInfo imageInfo
-    (
-        vk::ImageCreateFlags{},
-        vk::ImageType::e2D,
-        format,
-        vk::Extent3D(static_cast<uint32_t>(width), static_cast<uint32_t>(height), 1),
-        mipLevels,
-        1,
-        numSamples,
-        tiling,
-        usage,
-        vk::SharingMode::eExclusive,
-        queueFamilyIndices,
-        vk::ImageLayout::eUndefined
-    );
-
-    auto image = vk_utility::image::Image::New(_device, imageInfo);
+    auto image = vk_utility::image::Image::NewPtr(_device->get(), image_factory_2d);
 
     vk::MemoryRequirements memRequirements = _device->get()->getImageMemoryRequirements(*image);
     imageMemory = vk_utility::device::DeviceMemory::New(

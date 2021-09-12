@@ -252,6 +252,12 @@
     <ClInclude Include="include\vk_utility_command_buffer_factory_single_time_command.h">
       <Filter>command</Filter>
     </ClInclude>
+    <ClInclude Include="include\vk_utility_image_factory.h">
+      <Filter>image</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_image_factory_2d.h">
+      <Filter>image</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
