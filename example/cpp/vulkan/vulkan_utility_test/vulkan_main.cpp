@@ -91,6 +91,7 @@
 #include <vk_utility_command_buffer_factory_single_time_command.h>
 #include <vk_utility_image_factory_2d.h>
 #include <vk_utility_image_device_memory_factroy.h>
+#include <vk_utility_image_and_memory.h>
 
 
 // GLFW
@@ -345,7 +346,7 @@ private: // private operations
     void drawFrame( void ); //! do the drawing
                                                  //!< create shader module from byte code
     //!  image generation
-    vk_utility::image::ImagePtr createImage( uint32_t width, uint32_t height, uint32_t mipLevels, vk::SampleCountFlagBits numSamples, vk::Format format, vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties, vk_utility::device::DeviceMemoryPtr &imageMemory );
+    std::tuple<vk_utility::image::ImagePtr, vk_utility::device::DeviceMemoryPtr> createImage(uint32_t width, uint32_t height, uint32_t mipLevels, vk::SampleCountFlagBits numSamples, vk::Format format, vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties);
     //! handle image layout transition
     void transitionImageLayout(vk::Image image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, uint32_t mipLevels);
     //! copy buffer to image
@@ -961,7 +962,7 @@ void CAppliction::cleanupSwapChain( void ) {
 * \date    2019-05-05
 * \version 1.0
 **********************************************************************/
-vk_utility::image::ImagePtr CAppliction::createImage(
+std::tuple<vk_utility::image::ImagePtr, vk_utility::device::DeviceMemoryPtr> CAppliction::createImage(
     uint32_t               width,      //!< I -
     uint32_t               height,     //!< I -
     uint32_t               mipLevels,  //!< I -
@@ -969,9 +970,8 @@ vk_utility::image::ImagePtr CAppliction::createImage(
     vk::Format               format,     //!< I -
     vk::ImageTiling          tiling,     //!< I -
     vk::ImageUsageFlags      usage,      //!< I -
-    vk::MemoryPropertyFlags  properties, //!< I -
-    vk_utility::device::DeviceMemoryPtr &image_memory //!< O - texture image memory
-) {
+    vk::MemoryPropertyFlags  properties) //!< I -
+{
     auto image_factory_2d = vk_utility::image::ImageFactory2D()
         .set_size(width, height)
         .set_format(format)
@@ -981,15 +981,15 @@ vk_utility::image::ImagePtr CAppliction::createImage(
         .set_usage(usage);
 
     auto image = vk_utility::image::Image::NewPtr(_device->get(), image_factory_2d);
-
+    
     auto image_memory_factory = vk_utility::image::ImageDeviceMemoryFactory()
         .set_image(image->get())
         .set_memory_properties(properties)
         .set_from_physical_device(_device->get().physical_device());
 
-    image_memory = vk_utility::device::DeviceMemory::NewPtr(*_device->get(), image_memory_factory);
+    auto image_memory = vk_utility::device::DeviceMemory::NewPtr(*_device->get(), image_memory_factory);
     
-    return image;
+    return std::make_tuple(image, image_memory);
 }
 
     
@@ -1251,14 +1251,13 @@ void CAppliction::createColorResources(void) {
 
     vk::Format colorFormat = _swapchain->get().image_format();
 
-    auto image_memory = vk_utility::device::DeviceMemoryPtr();
-    auto image = createImage(
+    auto [image, image_memory] = createImage(
         _swapchain->get().image_width_2D(), _swapchain->get().image_height_2D(), 1, _physical_device->get().get_max_usable_sample_count(),
         colorFormat,
         vk::ImageTiling::eOptimal,
         vk::ImageUsageFlagBits::eTransientAttachment | vk::ImageUsageFlagBits::eColorAttachment,
-        vk::MemoryPropertyFlagBits::eDeviceLocal,
-        image_memory);
+        vk::MemoryPropertyFlagBits::eDeviceLocal);
+
     auto image_view = vk_utility::image::ImageView::New(_device, *image, colorFormat, vk::ImageAspectFlagBits::eColor, 1);
     
     _color_image_view_memory.emplace_back(vk_utility::image::ImageViewMemory::New(image_memory, image, image_view));
@@ -1279,14 +1278,12 @@ void CAppliction::createDepthResources( void )
 
     vk::Format depthFormat = findDepthFormat();
 
-    auto image_memory = vk_utility::device::DeviceMemoryPtr();
-    auto image = createImage(
+    auto [image, image_memory] = createImage(
         _swapchain->get().image_width_2D(), _swapchain->get().image_height_2D(), 1, _physical_device->get().get_max_usable_sample_count(),
         depthFormat,
         vk::ImageTiling::eOptimal,
         vk::ImageUsageFlagBits::eDepthStencilAttachment,
-        vk::MemoryPropertyFlagBits::eDeviceLocal,
-        image_memory);
+        vk::MemoryPropertyFlagBits::eDeviceLocal);
     
     auto image_view = vk_utility::image::ImageView::New(_device, *image, depthFormat, vk::ImageAspectFlagBits::eDepth, 1);
  
@@ -1343,14 +1340,12 @@ void CAppliction::createTextureImage( void ) {
     if (_texture_image_mipmap_level.back() > 1)
         usage_flags |= vk::ImageUsageFlagBits::eTransferSrc;
 
-    auto image_memory = vk_utility::device::DeviceMemoryPtr();
-    auto image = createImage(
+    auto [image, image_memory] = createImage(
         texWidth, texHeight, _texture_image_mipmap_level.back(), vk::SampleCountFlagBits::e1,
         vk::Format::eR8G8B8A8Srgb,
         vk::ImageTiling::eOptimal,
         usage_flags,
-        vk::MemoryPropertyFlagBits::eDeviceLocal,
-        image_memory);
+        vk::MemoryPropertyFlagBits::eDeviceLocal);
 
     //-------------------------------------------
     // Preparing the texture image
