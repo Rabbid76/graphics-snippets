@@ -28,7 +28,8 @@ stbInc = -I$(stbDir)
 # GLEW
 glewDir = $(workspaceRoot)/example/cpp/_glew
 glewInc = -D GLEW_STATIC -I$(glewDir)/include
-glewLib = -L$(glewDir)/lib -lglew32
+#glewLib = -L$(glewDir)/lib -lglew32
+glewLib = -L$(glewDir)/lib -lglew64
 
 # GLUT [http://freeglut.sourceforge.net/]
 # Using freeglut or glut with MinGW [https://www.transmissionzero.co.uk/computing/using-glut-with-mingw/]
@@ -37,12 +38,15 @@ freeglutDir = ${workspaceRoot}/../_cpp_extern/freeglut/freeglut-3.0.0
 #freeglutInc = -D FREEGLUT_STATIC -I${freeglutDir}/include
 glutInc = -I${freeglutDir}/include
 #glutLib = -L${freeglutDir}/lib -lfreeglut_static -Wl,--subsystem,windows
-glutLib = -L${freeglutDir}/lib -lfreeglut -Wl,--subsystem,windows
+#glutLib = -L${freeglutDir}/lib -lfreeglut -Wl,--subsystem,windows
+glutLib = -L${freeglutDir}/lib/x64 -lfreeglut -Wl,--subsystem,windows
 
-# GLEW [https://www.glfw.org/]
-glfwDir = ${workspaceRoot}/../_cpp_extern/glfw-3.2.1.bin.WIN32
+# GLFW [https://www.glfw.org/]
+#glfwDir = ${workspaceRoot}/../_cpp_extern/glfw-3.2.1.bin.WIN32
+glfwDir = ${workspaceRoot}/../_cpp_extern/glfw-3.2.1.bin.WIN64
 glfwInc = -I${glfwDir}/include
-glfwLib = -L${glfwDir}/lib-mingw -lglfw3
+#glfwLib = -L${glfwDir}/lib-mingw -lglfw3
+glfwLib = -L${glfwDir}/lib-mingw-w64 -lglfw3
 
 INCLUDEALL = $(utilInc) $(glmInc) $(stbInc) $(glewInc) $(glutInc) $(glfwInc)
 
@@ -59,13 +63,18 @@ $(filePathNameOut).o: $(filePathNameExt)
 clean:
 	rm $(filePathNameOut).o $(filePathNameOut).exe	
 
-target: ${dirNameOut}	${dirNameOut}/freeglut.dll	${dirNameOut}/glfw3.dll
+target: ${dirNameOut}	${dirNameOut}/freeglut.dll
+#target: ${dirNameOut}	${dirNameOut}/freeglut.dll	${dirNameOut}/glfw3.dll
 
 ${dirNameOut}:
 	mkdir -p $@
 
-${dirNameOut}/freeglut.dll: ${freeglutDir}/bin/freeglut.dll
+#${dirNameOut}/freeglut.dll: ${freeglutDir}/bin/freeglut.dll
+#	cp $< $@
+${dirNameOut}/freeglut.dll: ${freeglutDir}/bin/x64/freeglut.dll
 	cp $< $@
 
-${dirNameOut}/glfw3.dll: ${glfwDir}/lib-mingw/glfw3.dll
+#${dirNameOut}/glfw3.dll: ${glfwDir}/lib-mingw/glfw3.dll
+#	cp $< $@
+${dirNameOut}/glfw3.dll: ${glfwDir}/lib-mingw-w64/glfw3.dll
 	cp $< $@
