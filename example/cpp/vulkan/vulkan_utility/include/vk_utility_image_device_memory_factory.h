@@ -19,7 +19,7 @@ namespace vk_utility
         private:
 
             vk::Image _image;
-            vk::MemoryPropertyFlags _properties;
+            vk::MemoryPropertyFlags _properties = vk::MemoryPropertyFlagBits::eDeviceLocal;
             FindMemoryTypeFunction _find_memory_type;
             vk_utility::device::PhysicalDevice* _physical_device;
 

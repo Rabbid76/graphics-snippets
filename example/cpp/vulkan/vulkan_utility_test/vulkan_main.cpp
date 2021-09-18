@@ -90,8 +90,9 @@
 #include <vk_utility_command_buffer.h>
 #include <vk_utility_command_buffer_factory_single_time_command.h>
 #include <vk_utility_image_factory_2d.h>
-#include <vk_utility_image_device_memory_factroy.h>
+#include <vk_utility_image_device_memory_factory.h>
 #include <vk_utility_image_and_memory.h>
+#include <vk_utility_image_and_memory_factory_default.h>
 
 
 // GLFW
@@ -345,8 +346,6 @@ private: // private operations
 
     void drawFrame( void ); //! do the drawing
                                                  //!< create shader module from byte code
-    //!  image generation
-    std::tuple<vk_utility::image::ImagePtr, vk_utility::device::DeviceMemoryPtr> createImage(uint32_t width, uint32_t height, uint32_t mipLevels, vk::SampleCountFlagBits numSamples, vk::Format format, vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties);
     //! handle image layout transition
     void transitionImageLayout(vk::Image image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, uint32_t mipLevels);
     //! copy buffer to image
@@ -954,44 +953,6 @@ void CAppliction::cleanupSwapChain( void ) {
     _swapchain = nullptr;
 }
 
-
-/******************************************************************//**
-* \brief Abstract image creation.  
-* 
-* \author  gernot
-* \date    2019-05-05
-* \version 1.0
-**********************************************************************/
-std::tuple<vk_utility::image::ImagePtr, vk_utility::device::DeviceMemoryPtr> CAppliction::createImage(
-    uint32_t               width,      //!< I -
-    uint32_t               height,     //!< I -
-    uint32_t               mipLevels,  //!< I -
-    vk::SampleCountFlagBits  numSamples, //!< I -
-    vk::Format               format,     //!< I -
-    vk::ImageTiling          tiling,     //!< I -
-    vk::ImageUsageFlags      usage,      //!< I -
-    vk::MemoryPropertyFlags  properties) //!< I -
-{
-    auto image_factory_2d = vk_utility::image::ImageFactory2D()
-        .set_size(width, height)
-        .set_format(format)
-        .set_mipmap_levels(mipLevels)
-        .set_samples(numSamples)
-        .set_tiling(tiling)
-        .set_usage(usage);
-
-    auto image = vk_utility::image::Image::NewPtr(_device->get(), image_factory_2d);
-    
-    auto image_memory_factory = vk_utility::image::ImageDeviceMemoryFactory()
-        .set_image(image->get())
-        .set_memory_properties(properties)
-        .set_from_physical_device(_device->get().physical_device());
-
-    auto image_memory = vk_utility::device::DeviceMemory::NewPtr(*_device->get(), image_memory_factory);
-    
-    return std::make_tuple(image, image_memory);
-}
-
     
 /******************************************************************//**
 * \brief Handle image layout transition.  
@@ -1251,16 +1212,23 @@ void CAppliction::createColorResources(void) {
 
     vk::Format colorFormat = _swapchain->get().image_format();
 
-    auto [image, image_memory] = createImage(
-        _swapchain->get().image_width_2D(), _swapchain->get().image_height_2D(), 1, _physical_device->get().get_max_usable_sample_count(),
-        colorFormat,
-        vk::ImageTiling::eOptimal,
-        vk::ImageUsageFlagBits::eTransientAttachment | vk::ImageUsageFlagBits::eColorAttachment,
-        vk::MemoryPropertyFlagBits::eDeviceLocal);
+    auto image_and_memory = vk_utility::image::ImageAndMemory::NewPtr(
+        _device->get(),
+        vk_utility::image::ImageAndMemoryFactoryDefault()
+        .set_image_factory(&vk_utility::image::ImageFactory2D()
+            .set_size(_swapchain->get().image_width_2D(), _swapchain->get().image_height_2D())
+            .set_format(colorFormat)
+            .set_mipmap_levels(1)
+            .set_samples(_physical_device->get().get_max_usable_sample_count())
+            .set_usage(vk::ImageUsageFlagBits::eTransientAttachment | vk::ImageUsageFlagBits::eColorAttachment))
+        .set_device_memory_factory(&vk_utility::image::ImageDeviceMemoryFactory()
+            .set_memory_properties(vk::MemoryPropertyFlagBits::eDeviceLocal)
+            .set_from_physical_device(_device->get().physical_device()))
+    );
 
-    auto image_view = vk_utility::image::ImageView::New(_device, *image, colorFormat, vk::ImageAspectFlagBits::eColor, 1);
+    auto image_view = vk_utility::image::ImageView::New(_device, *image_and_memory->image(), colorFormat, vk::ImageAspectFlagBits::eColor, 1);
     
-    _color_image_view_memory.emplace_back(vk_utility::image::ImageViewMemory::New(image_memory, image, image_view));
+    _color_image_view_memory.emplace_back(vk_utility::image::ImageViewMemory::New(image_and_memory->detach_device_memory(), image_and_memory->detach_image(), image_view));
 }
 
 
@@ -1278,16 +1246,23 @@ void CAppliction::createDepthResources( void )
 
     vk::Format depthFormat = findDepthFormat();
 
-    auto [image, image_memory] = createImage(
-        _swapchain->get().image_width_2D(), _swapchain->get().image_height_2D(), 1, _physical_device->get().get_max_usable_sample_count(),
-        depthFormat,
-        vk::ImageTiling::eOptimal,
-        vk::ImageUsageFlagBits::eDepthStencilAttachment,
-        vk::MemoryPropertyFlagBits::eDeviceLocal);
-    
-    auto image_view = vk_utility::image::ImageView::New(_device, *image, depthFormat, vk::ImageAspectFlagBits::eDepth, 1);
+    auto image_and_memory = vk_utility::image::ImageAndMemory::NewPtr(
+        _device->get(),
+        vk_utility::image::ImageAndMemoryFactoryDefault()
+        .set_image_factory(&vk_utility::image::ImageFactory2D()
+            .set_size(_swapchain->get().image_width_2D(), _swapchain->get().image_height_2D())
+            .set_format(depthFormat)
+            .set_mipmap_levels(1)
+            .set_samples(_physical_device->get().get_max_usable_sample_count())
+            .set_usage(vk::ImageUsageFlagBits::eDepthStencilAttachment))
+        .set_device_memory_factory(&vk_utility::image::ImageDeviceMemoryFactory()
+            .set_memory_properties(vk::MemoryPropertyFlagBits::eDeviceLocal)
+            .set_from_physical_device(_device->get().physical_device()))
+    );
+
+    auto image_view = vk_utility::image::ImageView::New(_device, *image_and_memory->image(), depthFormat, vk::ImageAspectFlagBits::eDepth, 1);
  
-    _depth_image_view_memory.emplace_back(vk_utility::image::ImageViewMemory::New(image_memory, image, image_view));
+    _depth_image_view_memory.emplace_back(vk_utility::image::ImageViewMemory::New(image_and_memory->detach_device_memory(), image_and_memory->detach_image(), image_view));
 }
 
 
@@ -1340,12 +1315,19 @@ void CAppliction::createTextureImage( void ) {
     if (_texture_image_mipmap_level.back() > 1)
         usage_flags |= vk::ImageUsageFlagBits::eTransferSrc;
 
-    auto [image, image_memory] = createImage(
-        texWidth, texHeight, _texture_image_mipmap_level.back(), vk::SampleCountFlagBits::e1,
-        vk::Format::eR8G8B8A8Srgb,
-        vk::ImageTiling::eOptimal,
-        usage_flags,
-        vk::MemoryPropertyFlagBits::eDeviceLocal);
+    auto image_and_memory = vk_utility::image::ImageAndMemory::NewPtr(
+        _device->get(),
+        vk_utility::image::ImageAndMemoryFactoryDefault()
+        .set_image_factory(&vk_utility::image::ImageFactory2D()
+            .set_size(texWidth, texHeight)
+            .set_format(vk::Format::eR8G8B8A8Srgb)
+            .set_mipmap_levels(_texture_image_mipmap_level.back())
+            .set_samples(vk::SampleCountFlagBits::e1)
+            .set_usage(usage_flags))
+        .set_device_memory_factory(&vk_utility::image::ImageDeviceMemoryFactory()
+            .set_memory_properties(vk::MemoryPropertyFlagBits::eDeviceLocal)
+            .set_from_physical_device(_device->get().physical_device()))
+    );
 
     //-------------------------------------------
     // Preparing the texture image
@@ -1358,23 +1340,23 @@ void CAppliction::createTextureImage( void ) {
     //! The image was created with the VK_IMAGE_LAYOUT_UNDEFINED layout, so that one should be specified as old layout when transitioning textureImage.
     //! Remember that we can do this because we don't care about its contents before performing the copy operation.
 
-    transitionImageLayout(*image, vk::Format::eR8G8B8A8Unorm, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, _texture_image_mipmap_level.back());
-    copyBufferToImage(staging_buffer->buffer(), *image, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
+    transitionImageLayout(*image_and_memory->image(), vk::Format::eR8G8B8A8Unorm, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, _texture_image_mipmap_level.back());
+    copyBufferToImage(staging_buffer->buffer(), *image_and_memory->image(), static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
 
     //! To be able to start sampling from the texture image in the shader, we need one last transition to prepare it for shader access:
     //transitioned to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL while generating mipmaps
     if (_texture_image_mipmap_level.back() == 1)
-        transitionImageLayout(*image, vk::Format::eR8G8B8A8Unorm, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal, 1);
+        transitionImageLayout(*image_and_memory->image(), vk::Format::eR8G8B8A8Unorm, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal, 1);
 
     staging_buffer->destroy();
 
      if (_texture_image_mipmap_level.back() > 1)
-         generateMipmaps(*image, vk::Format::eR8G8B8A8Srgb, texWidth, texHeight, _texture_image_mipmap_level.back());
+         generateMipmaps(*image_and_memory->image(), vk::Format::eR8G8B8A8Srgb, texWidth, texHeight, _texture_image_mipmap_level.back());
 
     auto image_view = 
-         vk_utility::image::ImageView::New(_device, *image, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor, _texture_image_mipmap_level.back());
+         vk_utility::image::ImageView::New(_device, *image_and_memory->image(), vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor, _texture_image_mipmap_level.back());
 
-    _texture_image_view_memory.emplace_back(vk_utility::image::ImageViewMemory::New(image_memory, image, image_view));
+    _texture_image_view_memory.emplace_back(vk_utility::image::ImageViewMemory::New(image_and_memory->detach_device_memory(), image_and_memory->detach_image(), image_view));
 }
 
 

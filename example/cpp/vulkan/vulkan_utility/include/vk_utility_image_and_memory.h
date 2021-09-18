@@ -2,6 +2,7 @@
 
 #include "vk_utility_image.h"
 #include "vk_utility_device_memory.h"
+#include "vk_utility_image_and_memory_factory.h"
 
 #include <memory>
 
@@ -20,6 +21,17 @@ namespace vk_utility
             device::DeviceMemoryPtr _device_memory;
 
         public:
+
+            static ImageAndMemory New(vk::Device device, ImageAndMemoryFactory &image_and_memory_factory)
+            {
+                auto [image, image_memory, memory_size] = image_and_memory_factory.New(device);
+                return ImageAndMemory(device, image, image_memory, memory_size);
+            }
+
+            static ImageAndMemoryPtr NewPtr(vk::Device device, ImageAndMemoryFactory& image_and_memory_factory)
+            {
+                return std::make_shared<ImageAndMemory>(New(device, image_and_memory_factory));
+            }
 
             ImageAndMemory(void) = default;
             ImageAndMemory(const ImageAndMemory&) = default;
@@ -40,6 +52,9 @@ namespace vk_utility
             const auto image(void) const { return _image; }
             auto device_memory(void) { return _device_memory; }
             const auto device_memory(void) const { return _device_memory; }
+
+            auto&& detach_image(void) { return std::move(_image); }
+            auto&& detach_device_memory(void) { return std::move(_device_memory); }
         };
     }
 }

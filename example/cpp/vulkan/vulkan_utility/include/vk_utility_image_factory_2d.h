@@ -67,7 +67,7 @@ namespace vk_utility
 
             uint32_t _width;
             uint32_t _height;
-            uint32_t _mipmap_levels;
+            uint32_t _mipmap_levels = 1;
             vk::Format _format = vk::Format::eR8G8B8A8Srgb;
             vk::SampleCountFlagBits _sample_count = vk::SampleCountFlagBits::e1;
             vk::ImageTiling _tiling = vk::ImageTiling::eOptimal;
@@ -100,13 +100,13 @@ namespace vk_utility
                 return *this;
             }
 
-            ImageFactory2D& set_tiling(vk::ImageTiling& tiling)
+            ImageFactory2D& set_tiling(vk::ImageTiling tiling)
             {
                 _tiling = tiling;
                 return *this;
             }
 
-            ImageFactory2D& set_usage(vk::ImageUsageFlags& usage_flags)
+            ImageFactory2D& set_usage(vk::ImageUsageFlags usage_flags)
             {
                 _usage_flags = usage_flags;
                 return *this;
