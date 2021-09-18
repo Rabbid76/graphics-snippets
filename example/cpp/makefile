@@ -63,8 +63,7 @@ $(filePathNameOut).o: $(filePathNameExt)
 clean:
 	rm $(filePathNameOut).o $(filePathNameOut).exe	
 
-target: ${dirNameOut}	${dirNameOut}/freeglut.dll
-#target: ${dirNameOut}	${dirNameOut}/freeglut.dll	${dirNameOut}/glfw3.dll
+target: ${dirNameOut}	${dirNameOut}/freeglut.dll	${dirNameOut}/glfw3.dll
 
 ${dirNameOut}:
 	mkdir -p $@
