@@ -13,36 +13,77 @@ namespace vk_utility
         /// <summary>
         /// Interface for image view (`vk::ImageView`) factories
         /// </summary>
-        class ImageViewFactoryDefault : public IImageViewFactory  
+        class ImageViewFactoryDefault : public ImageViewFactory  
         {
         private:
 
-            vk_utility::swap::SwapchainPtr _swapchain;
+            vk::Image _image;
+            uint32_t _mipmap_levels = 1;
+            vk::Format _format = vk::Format::eR8G8B8A8Srgb;
+            vk::ImageAspectFlags _aspect_flags = vk::ImageAspectFlagBits::eColor;
 
         public:
 
-            ImageViewFactoryDefault& set_swapchain(vk_utility::swap::SwapchainPtr swapchain)
+            virtual ImageViewFactoryDefault& set_image(vk::Image image) override
             {
-                _swapchain = swapchain;
+                _image = image;
                 return *this;
             }
 
-            virtual std::vector<vk_utility::image::ImageViewPtr> New(vk_utility::device::DevicePtr device) override
+            ImageViewFactoryDefault& set_mipmap_levels(uint32_t mipmap_levels)
             {
-                // To use any `vk::Image`, including those in the swap chain, in the render pipeline we have to create a `vk::ImageView` object.
-                // An image view is quite literally a view into an image.
-                // It describes how to access the image and which part of the image to access, for example if it should be treated as a 2D texture depth texture without any mipmapping levels.
+                _mipmap_levels = mipmap_levels;
+                return *this;
+            }
 
-                // If you were working on a stereographic 3D application, then you would create a swap chain with multiple layers.
-                // You could then create multiple image views for each image representing the views for the left and right eyes by accessing different layers.
+            ImageViewFactoryDefault& set_format(vk::Format format)
+            {
+                _format = format;
+                return *this;
+            }
 
-                auto& swapchain_images = _swapchain->get().get_swapchain_images();
-                std::vector<vk_utility::image::ImageViewPtr> image_views;
-                std::transform(swapchain_images.begin(), swapchain_images.end(), std::back_inserter(image_views), [&](auto& swapchain_image) -> auto
-                {
-                    return vk_utility::image::ImageView::New(device, swapchain_image, _swapchain->get().image_format(), vk::ImageAspectFlagBits::eColor, 1);
-                });
-                return image_views;
+            ImageViewFactoryDefault& set_aspect_flags(vk::ImageAspectFlags aspect_flags)
+            {
+                _aspect_flags = aspect_flags;
+                return *this;
+            }
+
+            virtual vk::ImageView New(vk::Device device) const override
+            {
+                // The `viewType` and `format` fields specify how the image data should be interpreted.
+                // The `viewType` parameter allows you to treat images as 1D textures,+
+                // 2D textures, 3D textures and cube maps.
+
+                // The `components` field allows you to swizzle the color channels around.
+                // For example, you can map all of the channels to the red channel for a monochrome texture.
+                // You can also map constant values of 0 and 1 to a channel.
+                // In our case we'll stick to the default mapping.
+
+                // The subresourceRange field describes what the image's purpose is
+                // and which part of the image should be accessed.
+                // Our images will be used as color targets without any mipmapping levels or multiple layers.
+
+                vk::ImageSubresourceRange subresource_range(_aspect_flags, 0, _mipmap_levels, 0, 1);
+                vk::ComponentMapping components
+                (
+                    vk::ComponentSwizzle::eIdentity,
+                    vk::ComponentSwizzle::eIdentity,
+                    vk::ComponentSwizzle::eIdentity,
+                    vk::ComponentSwizzle::eIdentity
+                );
+
+                vk::ImageViewCreateInfo image_view_infoirmation
+                (
+                    vk::ImageViewCreateFlags{},
+                    _image,
+                    vk::ImageViewType::e2D,
+                    _format,
+                    components,
+                    subresource_range
+                );
+
+                auto image_view = device.createImageView(image_view_infoirmation);
+                return image_view;
             };
         };
     }

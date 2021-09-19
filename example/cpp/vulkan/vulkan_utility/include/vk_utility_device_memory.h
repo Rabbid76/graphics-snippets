@@ -73,7 +73,7 @@ namespace vk_utility
             DeviceMemory(const DeviceMemory &) = default;
             DeviceMemory &operator = (const DeviceMemory &) = default;
 
-            DeviceMemory(vk::Device &device, vk::DeviceMemory device_memory, vk::DeviceSize memory_size)
+            DeviceMemory(vk::Device device, vk::DeviceMemory device_memory, vk::DeviceSize memory_size)
                 : _device(device)
                 , _memory_size(memory_size)
                 , GenericObject(device_memory)

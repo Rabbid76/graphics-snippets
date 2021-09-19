@@ -81,8 +81,8 @@
 #include <vk_utility_pipeline_layout.h>
 #include <vk_utility_pipeline_factory_default.h>
 #include <vk_utility_image_view.h>
-#include <vk_utility_image_view_memory.h>
-#include <vk_utility_image_view_factory_default.h>
+#include <vk_utility_image_view_and_image_memory.h>
+#include <vk_utility_swapchain_image_views_factory_default.h>
 #include <vk_utility_framebuffer.h>
 #include <vk_utility_framebuffer_factory_default.h>
 #include <vk_utility_command_pool.h>
@@ -93,7 +93,8 @@
 #include <vk_utility_image_device_memory_factory.h>
 #include <vk_utility_image_and_memory.h>
 #include <vk_utility_image_and_memory_factory_default.h>
-
+#include <vk_utility_image_view_factory_default.h>
+#include <vk_utility_image_view and_image_memory_factory_default.h>
 
 // GLFW
 
@@ -386,33 +387,33 @@ private: // private attributes
     size_t                  _currentFrame = 0;                          //!< current frame semaphore index
     bool                    _framebufferResized = false;                //!< state which indicates that the widow has been resized
 
-    vk_utility::core::InstancePtr                       _instance;                   //!< Vulkan instance handle
-    vk_utility::device::SurfacePtr                      _surface;                    //!< Vulkan surface handle
-    vk_utility::device::PhysicalDevicePtr               _physical_device;
-    vk_utility::device::DevicePtr                       _device;                     //!< Vulkan logical device handle 
+    vk_utility::core::InstancePtr                              _instance;                   //!< Vulkan instance handle
+    vk_utility::device::SurfacePtr                             _surface;                    //!< Vulkan surface handle
+    vk_utility::device::PhysicalDevicePtr                      _physical_device;
+    vk_utility::device::DevicePtr                              _device;                     //!< Vulkan logical device handle 
     vk::Queue                      _graphicsQueue;            //!< Vulkan graphics queue handle 
     vk::Queue                      _presentQueue;             //!< Vulkan presentation queue handle 
-    vk_utility::swap::SwapchainPtr                      _swapchain;                  //!< Vulkan swap chain handle 
-    std::vector<vk_utility::image::ImageViewPtr>        _swapchain_image_views;      //!< Vulkan swap chain image handles
-    vk_utility::core::RenderPassPtr                     _render_pass;                //!< Vulkan render pass handle
-    vk_utility::core::DescriptorSetLayoutPtr            _descriptor_set_layout;      //!< Vulkan descriptor set layout
+    vk_utility::swap::SwapchainPtr                             _swapchain;                  //!< Vulkan swap chain handle 
+    std::vector<vk_utility::image::ImageViewPtr>               _swapchain_image_views;      //!< Vulkan swap chain image handles
+    vk_utility::core::RenderPassPtr                            _render_pass;                //!< Vulkan render pass handle
+    vk_utility::core::DescriptorSetLayoutPtr                   _descriptor_set_layout;      //!< Vulkan descriptor set layout
     vk::DescriptorPool             _descriptorPool;           //!< Vulkan descriptor set pool
     std::vector<vk::DescriptorSet> _descriptorSets;           //!< Vulkan descriptor sets
-    vk_utility::pipeline::PipelineLayoutPtr             _pipeline_layout;            //!< Vulkan pipeline layout handle
-    vk_utility::pipeline::PipelinePtr                   _graphics_pipeline;          //!< Vulkan graphics pipeline handle
-    std::vector<vk_utility::buffer::FramebufferPtr>     _swapchain_framebuffers;     //!< Vulkan framebuffers
-    vk_utility::command::CommandPoolPtr                 _command_pool;               //!< Vulkan command pool
+    vk_utility::pipeline::PipelineLayoutPtr                    _pipeline_layout;            //!< Vulkan pipeline layout handle
+    vk_utility::pipeline::PipelinePtr                          _graphics_pipeline;          //!< Vulkan graphics pipeline handle
+    std::vector<vk_utility::buffer::FramebufferPtr>            _swapchain_framebuffers;     //!< Vulkan framebuffers
+    vk_utility::command::CommandPoolPtr                        _command_pool;               //!< Vulkan command pool
     std::vector<vk::CommandBuffer> _commandBuffers;           //!< Vulkan command buffers
     std::vector<vk::Semaphore>     _imageAvailableSemaphores; //!< Vulkan semaphore
     std::vector<vk::Semaphore>     _renderFinishedSemaphores; //!< Vulkan semaphore
     std::vector<vk::Fence>         _inFlightFences;           //!< Vulkan fence
-    std::vector<vk_utility::buffer::BufferAndMemoryPtr> _vertex_buffers;              //!< Vulkan vertex buffer
-    std::vector<vk_utility::buffer::BufferAndMemoryPtr> _index_buffers;               //!< Vulkan index buffer
-    std::vector<vk_utility::buffer::BufferAndMemoryPtr> _uniform_buffers;             //!< Vulkan uniform buffer
-    std::vector<vk_utility::image::ImageViewMemoryPtr>  _depth_image_view_memory;     //!< Vulkan depth image view memory
-    std::vector<vk_utility::image::ImageViewMemoryPtr>  _color_image_view_memory;     //!< Vulkan color image view memory
+    std::vector<vk_utility::buffer::BufferAndMemoryPtr>        _vertex_buffers;              //!< Vulkan vertex buffer
+    std::vector<vk_utility::buffer::BufferAndMemoryPtr>        _index_buffers;               //!< Vulkan index buffer
+    std::vector<vk_utility::buffer::BufferAndMemoryPtr>        _uniform_buffers;             //!< Vulkan uniform buffer
+    std::vector<vk_utility::image::ImageViewAndImageMemoryPtr> _depth_image_view_memory;     //!< Vulkan depth image view memory
+    std::vector<vk_utility::image::ImageViewAndImageMemoryPtr> _color_image_view_memory;     //!< Vulkan color image view memory
     std::vector<uint32_t> _texture_image_mipmap_level;  //!< mipmap levels TODO $$$ add to vk_utility::image::ImageViewMemory
-    std::vector<vk_utility::image::ImageViewMemoryPtr>  _texture_image_view_memory;   //!< Vulkan texture image view memory
+    std::vector<vk_utility::image::ImageViewAndImageMemoryPtr> _texture_image_view_memory;   //!< Vulkan texture image view memory
     std::vector<vk::Sampler>       _textureSampler;           //!< Vulkan texture sampler
 };
 
@@ -824,9 +825,9 @@ void CAppliction::createSwapChain(bool initilaize)
         .set_extent_selector(std::make_shared<vk_glfw_utility::swap::SwapExtentSelector>(_wnd))
         .New(_device, _surface);
 
-    _swapchain_image_views = vk_utility::image::ImageViewFactoryDefault()
+    _swapchain_image_views = vk_utility::image::SwapchainImageViewFactoryDefault()
         .set_swapchain(_swapchain)
-        .New(_device);
+        .New(*_device);
 
     _render_pass = vk_utility::core::RenderPassFactoryDefault()
         .set_color_format(_swapchain->get().image_format())
@@ -1212,6 +1213,24 @@ void CAppliction::createColorResources(void) {
 
     vk::Format colorFormat = _swapchain->get().image_format();
 
+    auto [image_view, image, image_memory, memory_size] = vk_utility::image::ImageViewAndImageMemoryFactoryDefault()
+        .set_image_and_memory_factory(&vk_utility::image::ImageAndMemoryFactoryDefault()
+            .set_image_factory(&vk_utility::image::ImageFactory2D()
+                .set_size(_swapchain->get().image_width_2D(), _swapchain->get().image_height_2D())
+                .set_format(colorFormat)
+                .set_mipmap_levels(1)
+                .set_samples(_physical_device->get().get_max_usable_sample_count())
+                .set_usage(vk::ImageUsageFlagBits::eTransientAttachment | vk::ImageUsageFlagBits::eColorAttachment))
+            .set_device_memory_factory(&vk_utility::image::ImageDeviceMemoryFactory()
+                .set_memory_properties(vk::MemoryPropertyFlagBits::eDeviceLocal)
+                .set_from_physical_device(_device->get().physical_device())))
+        .set_image_view_factory(&vk_utility::image::ImageViewFactoryDefault()
+            .set_format(colorFormat)
+            .set_aspect_flags(vk::ImageAspectFlagBits::eColor)
+            .set_mipmap_levels(1))
+        .New(*_device);
+
+    /*
     auto image_and_memory = vk_utility::image::ImageAndMemory::NewPtr(
         _device->get(),
         vk_utility::image::ImageAndMemoryFactoryDefault()
@@ -1226,9 +1245,20 @@ void CAppliction::createColorResources(void) {
             .set_from_physical_device(_device->get().physical_device()))
     );
 
-    auto image_view = vk_utility::image::ImageView::New(_device, *image_and_memory->image(), colorFormat, vk::ImageAspectFlagBits::eColor, 1);
+    auto image_view_ = vk_utility::image::ImageView::NewPtr(
+        _device->get(),
+        vk_utility::image::ImageViewFactoryDefault()
+            .set_image(*image_and_memory->image())
+            .set_format(colorFormat)
+            .set_aspect_flags(vk::ImageAspectFlagBits::eColor)
+            .set_mipmap_levels(1));
+    */
     
-    _color_image_view_memory.emplace_back(vk_utility::image::ImageViewMemory::New(image_and_memory->detach_device_memory(), image_and_memory->detach_image(), image_view));
+    _color_image_view_memory.emplace_back(
+        vk_utility::image::ImageViewAndImageMemory::New(
+            vk_utility::make_shared(vk_utility::device::DeviceMemory(*_device, image_memory, memory_size)),
+            vk_utility::make_shared(vk_utility::image::Image(*_device, image)),
+            vk_utility::make_shared(vk_utility::image::ImageView(*_device, image_view))));
 }
 
 
@@ -1260,9 +1290,16 @@ void CAppliction::createDepthResources( void )
             .set_from_physical_device(_device->get().physical_device()))
     );
 
-    auto image_view = vk_utility::image::ImageView::New(_device, *image_and_memory->image(), depthFormat, vk::ImageAspectFlagBits::eDepth, 1);
- 
-    _depth_image_view_memory.emplace_back(vk_utility::image::ImageViewMemory::New(image_and_memory->detach_device_memory(), image_and_memory->detach_image(), image_view));
+    auto image_view = vk_utility::image::ImageView::NewPtr(
+        _device->get(),
+        vk_utility::image::ImageViewFactoryDefault()
+        .set_image(*image_and_memory->image())
+        .set_format(depthFormat)
+        .set_aspect_flags(vk::ImageAspectFlagBits::eDepth)
+        .set_mipmap_levels(1));
+
+    _depth_image_view_memory.emplace_back(
+        vk_utility::image::ImageViewAndImageMemory::New(image_and_memory->detach_device_memory(), image_and_memory->detach_image(), image_view));
 }
 
 
@@ -1353,10 +1390,15 @@ void CAppliction::createTextureImage( void ) {
      if (_texture_image_mipmap_level.back() > 1)
          generateMipmaps(*image_and_memory->image(), vk::Format::eR8G8B8A8Srgb, texWidth, texHeight, _texture_image_mipmap_level.back());
 
-    auto image_view = 
-         vk_utility::image::ImageView::New(_device, *image_and_memory->image(), vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor, _texture_image_mipmap_level.back());
+     auto image_view = vk_utility::image::ImageView::NewPtr(
+         _device->get(),
+         vk_utility::image::ImageViewFactoryDefault()
+         .set_image(*image_and_memory->image())
+         .set_format(vk::Format::eR8G8B8A8Srgb)
+         .set_aspect_flags(vk::ImageAspectFlagBits::eColor)
+         .set_mipmap_levels(_texture_image_mipmap_level.back()));
 
-    _texture_image_view_memory.emplace_back(vk_utility::image::ImageViewMemory::New(image_and_memory->detach_device_memory(), image_and_memory->detach_image(), image_view));
+    _texture_image_view_memory.emplace_back(vk_utility::image::ImageViewAndImageMemory::New(image_and_memory->detach_device_memory(), image_and_memory->detach_image(), image_view));
 }
 
 

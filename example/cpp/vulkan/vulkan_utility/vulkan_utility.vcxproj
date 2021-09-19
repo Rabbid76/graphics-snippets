@@ -182,10 +182,12 @@
     <ClInclude Include="include\vk_utility_framebuffer_factory.h" />
     <ClInclude Include="include\vk_utility_framebuffer_factory_default.h" />
     <ClInclude Include="include\vk_utility_image_factory.h" />
+    <ClInclude Include="include\vk_utility_image_view and_image_memory_factory.h" />
+    <ClInclude Include="include\vk_utility_image_view and_image_memory_factory_default.h" />
     <ClInclude Include="include\vk_utility_image_view.h" />
     <ClInclude Include="include\vk_utility_image_view_factory.h" />
     <ClInclude Include="include\vk_utility_image_view_factory_default.h" />
-    <ClInclude Include="include\vk_utility_image_view_memory.h" />
+    <ClInclude Include="include\vk_utility_image_view_and_image_memory.h" />
     <ClInclude Include="include\vk_utility_pipeline_layout.h" />
     <ClInclude Include="include\vk_utility_shader_module_factory_spirv_file.h" />
     <ClInclude Include="include\vk_utility_descriptor_set_layout_binding.h" />
@@ -233,6 +235,8 @@
     <ClInclude Include="include\vk_utility_swapchain.h" />
     <ClInclude Include="include\vk_utility_swapchain_factory.h" />
     <ClInclude Include="include\vk_utility_swapchain_factory_default.h" />
+    <ClInclude Include="include\vk_utility_swapchain_image_views_factory.h" />
+    <ClInclude Include="include\vk_utility_swapchain_image_views_factory_default.h" />
     <ClInclude Include="include\vk_utility_swapchain_information.h" />
     <ClInclude Include="include\vk_utility_swap_extent_selector.h" />
     <ClInclude Include="include\vk_utility_swap_present_mode_selector.h" />

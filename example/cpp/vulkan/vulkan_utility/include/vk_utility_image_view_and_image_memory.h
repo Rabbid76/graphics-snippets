@@ -16,13 +16,13 @@ namespace vk_utility
 {
     namespace image
     {
-        class ImageViewMemory;
-        using ImageViewMemoryPtr = vk_utility::Ptr<ImageViewMemory>;
+        class ImageViewAndImageMemory;
+        using ImageViewAndImageMemoryPtr = vk_utility::Ptr<ImageViewAndImageMemory>;
 
         /// <summary>
         /// Collection of Image, ImageView and DeviceMemory (`vk::Image`, `vk::ImageView`, `vk::DeviceMemory`)
         /// </summary>
-        class ImageViewMemory
+        class ImageViewAndImageMemory
             : public GenericObject<int>
         {
         private:
@@ -33,25 +33,25 @@ namespace vk_utility
 
         public:
 
-            static ImageViewMemory Create(device::DeviceMemoryPtr device_memory, ImagePtr image, ImageViewPtr image_view)
+            static ImageViewAndImageMemory Create(device::DeviceMemoryPtr device_memory, ImagePtr image, ImageViewPtr image_view)
             {
-                return ImageViewMemory(device_memory, image, image_view);
+                return ImageViewAndImageMemory(device_memory, image, image_view);
             }
 
-            static ImageViewMemoryPtr New(device::DeviceMemoryPtr device_memory, ImagePtr image, ImageViewPtr image_view)
+            static ImageViewAndImageMemoryPtr New(device::DeviceMemoryPtr device_memory, ImagePtr image, ImageViewPtr image_view)
             {
                 return vk_utility::make_shared(Create(device_memory, image, image_view));
             }
 
-            ImageViewMemory(void) = default;
-            ImageViewMemory(const ImageViewMemory&) = default;
-            ImageViewMemory& operator = (const ImageViewMemory&) = default;
+            ImageViewAndImageMemory(void) = default;
+            ImageViewAndImageMemory(const ImageViewAndImageMemory&) = default;
+            ImageViewAndImageMemory& operator = (const ImageViewAndImageMemory&) = default;
 
             const device::DeviceMemory& device_memory(void) const { return *_device_memory; }
             const Image  image(void) const { return *_image; }
             const ImageView  image_view(void) const { return *_image_view; }
 
-            ImageViewMemory(device::DeviceMemoryPtr device_memory, ImagePtr image, ImageViewPtr image_view)
+            ImageViewAndImageMemory(device::DeviceMemoryPtr device_memory, ImagePtr image, ImageViewPtr image_view)
                 : GenericObject(0)
                 , _device_memory(device_memory)
                 , _image(image)
