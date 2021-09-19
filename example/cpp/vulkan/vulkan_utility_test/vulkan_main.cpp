@@ -94,7 +94,7 @@
 #include <vk_utility_image_and_memory.h>
 #include <vk_utility_image_and_memory_factory_default.h>
 #include <vk_utility_image_view_factory_default.h>
-#include <vk_utility_image_view and_image_memory_factory_default.h>
+#include <vk_utility_image_view_and_image_memory_factory_default.h>
 
 // GLFW
 
@@ -333,8 +333,6 @@ private: // private operations
     void recreateSwapChain( void );                  //!< recreate the entire swapchain (e.g. when the window was resized)
     void createSwapChain( bool initilaize );         //!< create the entire swapchain (e.g. when the window was resized)
     void cleanupSwapChain( void );                   //!< cleanup everything which will be recreated till swapchain is recreated
-    void createColorResources(void);                 //!< create the color image
-    void createDepthResources(void);                 //!< create the depth image
     void loadModel(void);                            //!< load scene
     void createTextureImage( void );                 //!< create texture image
     void createTextureImageView( void );             //!< create texture image view
@@ -861,8 +859,45 @@ void CAppliction::createSwapChain(bool initilaize)
         vk_utility::command::CommandPoolFactoryDefault()
         .set_device_queue_information(_physical_device->get().get_queue_information_ptr()));
 
-    createColorResources();
-    createDepthResources();
+    vk::Format colorFormat = _swapchain->get().image_format();
+    _color_image_view_memory.emplace_back(
+        vk_utility::image::ImageViewAndImageMemory::NewPtr(
+            *_device,
+            vk_utility::image::ImageViewAndImageMemoryFactoryDefault()
+            .set_image_and_memory_factory(&vk_utility::image::ImageAndMemoryFactoryDefault()
+                .set_image_factory(&vk_utility::image::ImageFactory2D()
+                    .set_size(_swapchain->get().image_width_2D(), _swapchain->get().image_height_2D())
+                    .set_format(colorFormat)
+                    .set_mipmap_levels(1)
+                    .set_samples(_physical_device->get().get_max_usable_sample_count())
+                    .set_usage(vk::ImageUsageFlagBits::eTransientAttachment | vk::ImageUsageFlagBits::eColorAttachment))
+                .set_device_memory_factory(&vk_utility::image::ImageDeviceMemoryFactory()
+                    .set_memory_properties(vk::MemoryPropertyFlagBits::eDeviceLocal)
+                    .set_from_physical_device(_device->get().physical_device())))
+            .set_image_view_factory(&vk_utility::image::ImageViewFactoryDefault()
+                .set_format(colorFormat)
+                .set_aspect_flags(vk::ImageAspectFlagBits::eColor)
+                .set_mipmap_levels(1))));
+
+    vk::Format depthFormat = findDepthFormat();
+    _depth_image_view_memory.emplace_back(
+        vk_utility::image::ImageViewAndImageMemory::NewPtr(
+            *_device,
+            vk_utility::image::ImageViewAndImageMemoryFactoryDefault()
+            .set_image_and_memory_factory(&vk_utility::image::ImageAndMemoryFactoryDefault()
+                .set_image_factory(&vk_utility::image::ImageFactory2D()
+                    .set_size(_swapchain->get().image_width_2D(), _swapchain->get().image_height_2D())
+                    .set_format(depthFormat)
+                    .set_mipmap_levels(1)
+                    .set_samples(_physical_device->get().get_max_usable_sample_count())
+                    .set_usage(vk::ImageUsageFlagBits::eDepthStencilAttachment))
+                .set_device_memory_factory(&vk_utility::image::ImageDeviceMemoryFactory()
+                    .set_memory_properties(vk::MemoryPropertyFlagBits::eDeviceLocal)
+                    .set_from_physical_device(_device->get().physical_device())))
+            .set_image_view_factory(&vk_utility::image::ImageViewFactoryDefault()
+                .set_format(depthFormat)
+                .set_aspect_flags(vk::ImageAspectFlagBits::eDepth)
+                .set_mipmap_levels(1))));
     
     _swapchain_framebuffers = vk_utility::buffer::FramebufferFactoryDefault()
         .set_swapchain(_swapchain)
@@ -1198,111 +1233,6 @@ vk::Format CAppliction::findDepthFormat() {
     );
 }
 
-
-/******************************************************************//**
-* \brief Create color image.  
-* 
-* \author  gernot
-* \date    2020-06-01
-* \version 1.0
-**********************************************************************/
-void CAppliction::createColorResources(void) {
-
-    if ( !_device )
-        throw CException("no logical vulkan device!");
-
-    vk::Format colorFormat = _swapchain->get().image_format();
-
-    auto [image_view, image, image_memory, memory_size] = vk_utility::image::ImageViewAndImageMemoryFactoryDefault()
-        .set_image_and_memory_factory(&vk_utility::image::ImageAndMemoryFactoryDefault()
-            .set_image_factory(&vk_utility::image::ImageFactory2D()
-                .set_size(_swapchain->get().image_width_2D(), _swapchain->get().image_height_2D())
-                .set_format(colorFormat)
-                .set_mipmap_levels(1)
-                .set_samples(_physical_device->get().get_max_usable_sample_count())
-                .set_usage(vk::ImageUsageFlagBits::eTransientAttachment | vk::ImageUsageFlagBits::eColorAttachment))
-            .set_device_memory_factory(&vk_utility::image::ImageDeviceMemoryFactory()
-                .set_memory_properties(vk::MemoryPropertyFlagBits::eDeviceLocal)
-                .set_from_physical_device(_device->get().physical_device())))
-        .set_image_view_factory(&vk_utility::image::ImageViewFactoryDefault()
-            .set_format(colorFormat)
-            .set_aspect_flags(vk::ImageAspectFlagBits::eColor)
-            .set_mipmap_levels(1))
-        .New(*_device);
-
-    /*
-    auto image_and_memory = vk_utility::image::ImageAndMemory::NewPtr(
-        _device->get(),
-        vk_utility::image::ImageAndMemoryFactoryDefault()
-        .set_image_factory(&vk_utility::image::ImageFactory2D()
-            .set_size(_swapchain->get().image_width_2D(), _swapchain->get().image_height_2D())
-            .set_format(colorFormat)
-            .set_mipmap_levels(1)
-            .set_samples(_physical_device->get().get_max_usable_sample_count())
-            .set_usage(vk::ImageUsageFlagBits::eTransientAttachment | vk::ImageUsageFlagBits::eColorAttachment))
-        .set_device_memory_factory(&vk_utility::image::ImageDeviceMemoryFactory()
-            .set_memory_properties(vk::MemoryPropertyFlagBits::eDeviceLocal)
-            .set_from_physical_device(_device->get().physical_device()))
-    );
-
-    auto image_view_ = vk_utility::image::ImageView::NewPtr(
-        _device->get(),
-        vk_utility::image::ImageViewFactoryDefault()
-            .set_image(*image_and_memory->image())
-            .set_format(colorFormat)
-            .set_aspect_flags(vk::ImageAspectFlagBits::eColor)
-            .set_mipmap_levels(1));
-    */
-    
-    _color_image_view_memory.emplace_back(
-        vk_utility::image::ImageViewAndImageMemory::New(
-            vk_utility::make_shared(vk_utility::device::DeviceMemory(*_device, image_memory, memory_size)),
-            vk_utility::make_shared(vk_utility::image::Image(*_device, image)),
-            vk_utility::make_shared(vk_utility::image::ImageView(*_device, image_view))));
-}
-
-
-/******************************************************************//**
-* \brief Create depth image.  
-* 
-* \author  gernot
-* \date    2020-05-31
-* \version 1.0
-**********************************************************************/
-void CAppliction::createDepthResources( void )
-{
-    if ( !_device )
-        throw CException("no logical vulkan device!");
-
-    vk::Format depthFormat = findDepthFormat();
-
-    auto image_and_memory = vk_utility::image::ImageAndMemory::NewPtr(
-        _device->get(),
-        vk_utility::image::ImageAndMemoryFactoryDefault()
-        .set_image_factory(&vk_utility::image::ImageFactory2D()
-            .set_size(_swapchain->get().image_width_2D(), _swapchain->get().image_height_2D())
-            .set_format(depthFormat)
-            .set_mipmap_levels(1)
-            .set_samples(_physical_device->get().get_max_usable_sample_count())
-            .set_usage(vk::ImageUsageFlagBits::eDepthStencilAttachment))
-        .set_device_memory_factory(&vk_utility::image::ImageDeviceMemoryFactory()
-            .set_memory_properties(vk::MemoryPropertyFlagBits::eDeviceLocal)
-            .set_from_physical_device(_device->get().physical_device()))
-    );
-
-    auto image_view = vk_utility::image::ImageView::NewPtr(
-        _device->get(),
-        vk_utility::image::ImageViewFactoryDefault()
-        .set_image(*image_and_memory->image())
-        .set_format(depthFormat)
-        .set_aspect_flags(vk::ImageAspectFlagBits::eDepth)
-        .set_mipmap_levels(1));
-
-    _depth_image_view_memory.emplace_back(
-        vk_utility::image::ImageViewAndImageMemory::New(image_and_memory->detach_device_memory(), image_and_memory->detach_image(), image_view));
-}
-
-
 /******************************************************************//**
 * \brief Create texture image.  
 * 
@@ -1377,28 +1307,29 @@ void CAppliction::createTextureImage( void ) {
     //! The image was created with the VK_IMAGE_LAYOUT_UNDEFINED layout, so that one should be specified as old layout when transitioning textureImage.
     //! Remember that we can do this because we don't care about its contents before performing the copy operation.
 
-    transitionImageLayout(*image_and_memory->image(), vk::Format::eR8G8B8A8Unorm, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, _texture_image_mipmap_level.back());
-    copyBufferToImage(staging_buffer->buffer(), *image_and_memory->image(), static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
+    transitionImageLayout(*image_and_memory->get().image(), vk::Format::eR8G8B8A8Unorm, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, _texture_image_mipmap_level.back());
+    copyBufferToImage(staging_buffer->buffer(), *image_and_memory->get().image(), static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
 
     //! To be able to start sampling from the texture image in the shader, we need one last transition to prepare it for shader access:
     //transitioned to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL while generating mipmaps
     if (_texture_image_mipmap_level.back() == 1)
-        transitionImageLayout(*image_and_memory->image(), vk::Format::eR8G8B8A8Unorm, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal, 1);
+        transitionImageLayout(*image_and_memory->get().image(), vk::Format::eR8G8B8A8Unorm, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal, 1);
 
     staging_buffer->destroy();
 
      if (_texture_image_mipmap_level.back() > 1)
-         generateMipmaps(*image_and_memory->image(), vk::Format::eR8G8B8A8Srgb, texWidth, texHeight, _texture_image_mipmap_level.back());
+         generateMipmaps(*image_and_memory->get().image(), vk::Format::eR8G8B8A8Srgb, texWidth, texHeight, _texture_image_mipmap_level.back());
 
      auto image_view = vk_utility::image::ImageView::NewPtr(
          _device->get(),
          vk_utility::image::ImageViewFactoryDefault()
-         .set_image(*image_and_memory->image())
+         .set_image(*image_and_memory->get().image())
          .set_format(vk::Format::eR8G8B8A8Srgb)
          .set_aspect_flags(vk::ImageAspectFlagBits::eColor)
          .set_mipmap_levels(_texture_image_mipmap_level.back()));
 
-    _texture_image_view_memory.emplace_back(vk_utility::image::ImageViewAndImageMemory::New(image_and_memory->detach_device_memory(), image_and_memory->detach_image(), image_view));
+    _texture_image_view_memory.emplace_back(
+        vk_utility::image::ImageViewAndImageMemory::New(image_and_memory->get().detach_device_memory(), image_and_memory->get().detach_image(), image_view));
 }
 
 

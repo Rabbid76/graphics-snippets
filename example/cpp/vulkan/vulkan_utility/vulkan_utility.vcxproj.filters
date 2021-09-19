@@ -279,10 +279,10 @@
     <ClInclude Include="include\vk_utility_swapchain_image_views_factory_default.h">
       <Filter>image</Filter>
     </ClInclude>
-    <ClInclude Include="include\vk_utility_image_view and_image_memory_factory.h">
+    <ClInclude Include="include\vk_utility_image_view_and_image_memory_factory.h">
       <Filter>image</Filter>
     </ClInclude>
-    <ClInclude Include="include\vk_utility_image_view and_image_memory_factory_default.h">
+    <ClInclude Include="include\vk_utility_image_view_and_image_memory_factory_default.h">
       <Filter>image</Filter>
     </ClInclude>
   </ItemGroup>

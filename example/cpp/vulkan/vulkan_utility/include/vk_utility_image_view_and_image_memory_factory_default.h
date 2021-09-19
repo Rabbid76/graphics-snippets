@@ -1,6 +1,6 @@
 #pragma once
 
-#include "vk_utility_image_view and_image_memory_factory.h"
+#include "vk_utility_image_view_and_image_memory_factory.h"
 #include "vk_utility_image_and_memory_factory.h"
 #include "vk_utility_image_view_factory.h"
 

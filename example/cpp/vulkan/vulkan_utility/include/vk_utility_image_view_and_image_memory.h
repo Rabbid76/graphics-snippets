@@ -8,6 +8,7 @@
 #include "vk_utility_device_memory.h"
 #include "vk_utility_image_view.h"
 #include "vk_utility_image.h"
+#include "vk_utility_image_view_and_image_memory_factory.h"
 
 #include <memory>
 
@@ -41,6 +42,20 @@ namespace vk_utility
             static ImageViewAndImageMemoryPtr New(device::DeviceMemoryPtr device_memory, ImagePtr image, ImageViewPtr image_view)
             {
                 return vk_utility::make_shared(Create(device_memory, image, image_view));
+            }
+
+            static ImageViewAndImageMemory New(vk::Device device, ImageViewAndImageMemoryFactory& image_view_and_image_memory_factory)
+            {
+                auto [image_view, image, image_memory, memory_size] = image_view_and_image_memory_factory.New(device);
+                return ImageViewAndImageMemory(
+                    vk_utility::make_shared(vk_utility::device::DeviceMemory(device, image_memory, memory_size)),
+                    vk_utility::make_shared(vk_utility::image::Image(device, image)),
+                    vk_utility::make_shared(vk_utility::image::ImageView(device, image_view)));
+            }
+
+            static ImageViewAndImageMemoryPtr NewPtr(vk::Device device, ImageViewAndImageMemoryFactory& image_view_and_image_memory_factory)
+            {
+                return vk_utility::make_shared<ImageViewAndImageMemory>(New(device, image_view_and_image_memory_factory));
             }
 
             ImageViewAndImageMemory(void) = default;
