@@ -1229,7 +1229,7 @@ void CAppliction::createInstance( void ) {
     //! This `struct` is called `vk::ApplicationInfo`:
 
     vk::ApplicationInfo appInfo(
-        "Vulkan tutorial (HPP)", VK_MAKE_VERSION(1, 0, 0), "No Engine", VK_MAKE_VERSION(1, 0, 0), VK_API_VERSION_1_0);   
+        "Vulkan tutorial (HPP)", VK_MAKE_VERSION(1, 0, 0), "No Engine", VK_MAKE_VERSION(1, 0, 0), VK_API_VERSION_1_2);   
 
 
     //-------------------------------------------

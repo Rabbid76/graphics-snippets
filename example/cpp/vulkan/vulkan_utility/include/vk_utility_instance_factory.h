@@ -147,7 +147,7 @@ namespace vk_utility
                 // for example because it uses a well-known graphics engine with certain special behavior.
 
                 vk::ApplicationInfo app_info(
-                    _title.c_str(), VK_MAKE_VERSION(1, 0, 0), "No Engine", VK_MAKE_VERSION(1, 0, 0), VK_API_VERSION_1_0);
+                    _title.c_str(), VK_MAKE_VERSION(1, 0, 0), "No Engine", VK_MAKE_VERSION(1, 0, 0), VK_API_VERSION_1_2);
                 return app_info;
             }
         };
