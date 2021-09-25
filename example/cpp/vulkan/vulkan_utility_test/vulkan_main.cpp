@@ -96,6 +96,7 @@
 #include <vk_utility_image_view_factory_default.h>
 #include <vk_utility_image_view_and_image_memory_factory_default.h>
 #include <vk_utility_image_transition_command.h>
+#include <vk_utility_image_copy_buffer_to_image_command.h>
 
 // GLFW
 
@@ -346,8 +347,6 @@ private: // private operations
 
     void drawFrame( void ); //! do the drawing
                                                  //!< create shader module from byte code
-    //! copy buffer to image
-    void copyBufferToImage( vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height );
     //! find supported format
     vk::Format findSupportedFormat(const std::vector<vk::Format> &candidates, vk::ImageTiling tiling, vk::FormatFeatureFlags features);
     //! find depth format
@@ -990,70 +989,6 @@ void CAppliction::cleanupSwapChain( void ) {
 
 
 /******************************************************************//**
-* \brief Copy buffer to image.  
-* 
-* \author  gernot
-* \date    2019-05-05
-* \version 1.0
-**********************************************************************/
-void CAppliction::copyBufferToImage(
-    vk::Buffer buffer, //!< I - 
-    vk::Image  image,  //!< I - 
-    uint32_t width,  //!< I - 
-    uint32_t height  //!< I - 
-    )
-{
-    auto command_buffer_factory = vk_utility::command::CommandBufferFactorySingleTimeCommand()
-        .set_graphics_queue(_graphicsQueue);
-    auto command_buffer = vk_utility::command::CommandBuffer::NewPtr(_device->get(), _command_pool->get(), command_buffer_factory);
-
-    //-------------------------------------------
-    // Copying buffer to image
-    //-------------------------------------------
-
-    //! The bufferOffset specifies the byte offset in the buffer at which the pixel values start.
-    //! The bufferRowLength and bufferImageHeight fields specify how the pixels are laid out in memory.
-    //! For example, you could have some padding bytes between rows of the image.
-    //! Specifying 0 for both indicates that the pixels are simply tightly packed like they are in our case. 
-    //! The imageSubresource, imageOffset and imageExtent fields indicate to which part of the image we want to copy the pixels.
-
-   vk::ImageSubresourceLayers imageSubresource
-    (
-        vk::ImageAspectFlagBits::eColor,
-        0,
-        0,
-        1
-    );
-
-    vk::Offset3D imageOffset(0, 0, 0);
-    vk::Extent3D imageExtent(width, height, 1);
-
-    vk::BufferImageCopy region
-    (
-        0,
-        0,
-        0,
-        imageSubresource,
-        imageOffset,
-        imageExtent
-    );
-
-    //! The fourth parameter indicates which layout the image is currently using.
-    //! I'm assuming here that the image has already been transitioned to the layout that is optimal for copying pixels to.
-    //! Right now we're only copying one chunk of pixels to the whole image, but it's possible to specify an array of `vk::BufferImageCopy` to perform many different copies from this buffer to the image in one operation.
-
-    command_buffer->get()->copyBufferToImage(
-        buffer,
-        image,
-        vk::ImageLayout::eTransferDstOptimal,
-        1,
-        &region
-    );
-    command_buffer_factory.End(command_buffer->get());
-}
-
-
-/******************************************************************//**
 * \brief find supported format
 * 
 * \author  gernot
@@ -1176,23 +1111,29 @@ void CAppliction::createTextureImage( void ) {
     //! The image was created with the VK_IMAGE_LAYOUT_UNDEFINED layout, so that one should be specified as old layout when transitioning textureImage.
     //! Remember that we can do this because we don't care about its contents before performing the copy operation.
 
+    auto single_time_command_factory = vk_utility::command::CommandBufferFactorySingleTimeCommand()
+        .set_graphics_queue(_graphicsQueue);
+
     vk_utility::image::ImageTransitionCommand()
-        .set_command_buffer_factory(&vk_utility::command::CommandBufferFactorySingleTimeCommand()
-            .set_graphics_queue(_graphicsQueue))
+        .set_command_buffer_factory(&single_time_command_factory)
         .set_image(*image_and_memory->get().image())
         .set_mipmap_levels(_texture_image_mipmap_level.back())
         .set_old_layout(vk::ImageLayout::eUndefined)
         .set_new_layout(vk::ImageLayout::eTransferDstOptimal)
         .execute_command(*_device, *_command_pool);
 
-    copyBufferToImage(staging_buffer->buffer(), *image_and_memory->get().image(), static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
+    vk_utility::image::ImageCopyBufferToImageCommand()
+        .set_command_buffer_factory(&single_time_command_factory)
+        .set_buffer(staging_buffer->buffer())
+        .set_image(*image_and_memory->get().image())
+        .set_size(static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight))
+        .execute_command(*_device, *_command_pool);
 
     //! To be able to start sampling from the texture image in the shader, we need one last transition to prepare it for shader access:
     //transitioned to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL while generating mipmaps
     if (_texture_image_mipmap_level.back() == 1)
         vk_utility::image::ImageTransitionCommand()
-            .set_command_buffer_factory(&vk_utility::command::CommandBufferFactorySingleTimeCommand()
-                .set_graphics_queue(_graphicsQueue))
+            .set_command_buffer_factory(&single_time_command_factory)
             .set_image(*image_and_memory->get().image())
             .set_mipmap_levels(1)
             .set_old_layout(vk::ImageLayout::eTransferDstOptimal)

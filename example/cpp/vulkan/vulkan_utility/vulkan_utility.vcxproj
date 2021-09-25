@@ -170,6 +170,7 @@
     <ClInclude Include="include\vk_utility_image_and_memory.h" />
     <ClInclude Include="include\vk_utility_device_memory_factory.h" />
     <ClInclude Include="include\vk_utility_image_and_memory_factory.h" />
+    <ClInclude Include="include\vk_utility_image_copy_buffer_to_image_command.h" />
     <ClInclude Include="include\vk_utility_image_device_memory_factory.h" />
     <ClInclude Include="include\vk_utility_image_factory_2d.h" />
     <ClInclude Include="include\vk_utility_command_buffer.h" />
