@@ -1,23 +1,16 @@
 #pragma once
 
-
 #include "vk_utility_object.h"
 #include "vk_utility_vulkan_include.h"
 #include "vk_utility_image_factory.h"
-
-#include <memory>
-
 
 namespace vk_utility
 {
     namespace image
     {
         class Image;
-        using ImagePtr = vk_utility::Ptr<Image>;
+        using ImagePtr = Ptr<Image>;
 
-        /// <summary>
-        /// Image (`vk::Image`)
-        /// </summary>
         class Image
             : public GenericObject<vk::Image>
         {
@@ -34,7 +27,7 @@ namespace vk_utility
 
             static ImagePtr NewPtr(vk::Device device, const ImageFactory& image_factory)
             {
-                return vk_utility::make_shared(New(device, image_factory));
+                return make_shared(New(device, image_factory));
             }
 
             Image(void) = default;

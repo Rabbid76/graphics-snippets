@@ -97,6 +97,8 @@
 #include <vk_utility_image_view_and_image_memory_factory_default.h>
 #include <vk_utility_image_transition_command.h>
 #include <vk_utility_image_copy_buffer_to_image_command.h>
+#include <vk_utility_sampler.h>
+#include <vk_utility_sampler_factory_default.h>
 
 // GLFW
 
@@ -338,7 +340,6 @@ private: // private operations
     void loadModel(void);                            //!< load scene
     void createTextureImage( void );                 //!< create texture image
     void createTextureImageView( void );             //!< create texture image view
-    void createTextureSampler( void );               //!< create texture sampler
     void createDescriptorPool( void );               //!< create descriptor pool 
     void createDescriptorSets( void );               //!< create descriptor sets
     void createCommandBuffers( void );               //!< create command buffers
@@ -406,11 +407,11 @@ private: // private attributes
     std::vector<vk_utility::buffer::BufferAndMemoryPtr>        _vertex_buffers;              //!< Vulkan vertex buffer
     std::vector<vk_utility::buffer::BufferAndMemoryPtr>        _index_buffers;               //!< Vulkan index buffer
     std::vector<vk_utility::buffer::BufferAndMemoryPtr>        _uniform_buffers;             //!< Vulkan uniform buffer
-    std::vector<vk_utility::image::ImageViewAndImageMemoryPtr> _depth_image_view_memory;     //!< Vulkan depth image view memory
-    std::vector<vk_utility::image::ImageViewAndImageMemoryPtr> _color_image_view_memory;     //!< Vulkan color image view memory
-    std::vector<uint32_t> _texture_image_mipmap_level;  //!< mipmap levels TODO $$$ add to vk_utility::image::ImageViewMemory
-    std::vector<vk_utility::image::ImageViewAndImageMemoryPtr> _texture_image_view_memory;   //!< Vulkan texture image view memory
-    std::vector<vk::Sampler>       _textureSampler;           //!< Vulkan texture sampler
+    std::vector<vk_utility::image::ImageViewAndImageMemoryPtr> _depth_image_view_memorys;    //!< Vulkan depth image view memory
+    std::vector<vk_utility::image::ImageViewAndImageMemoryPtr> _color_image_view_memorys;    //!< Vulkan color image view memory
+    std::vector<uint32_t> _texture_image_mipmap_levels;  //!< mipmap levels TODO $$$ add to vk_utility::image::ImageViewMemory
+    std::vector<vk_utility::image::ImageViewAndImageMemoryPtr> _texture_image_view_memorys;  //!< Vulkan texture image view memory
+    std::vector<vk_utility::image::SamplerPtr>                 _texture_samplers;            //!< Vulkan texture sampler
 };
 
 
@@ -695,12 +696,9 @@ void CAppliction::cleanup( void ) {
 
     if (_device)
     {
-        for (auto textureSampler : _textureSampler) {
-             _device->get()->destroySampler(textureSampler);
-        }
-        _textureSampler.clear();
-        _texture_image_view_memory.clear();
-        _texture_image_mipmap_level.clear();
+        _texture_samplers.clear();
+        _texture_image_view_memorys.clear();
+        _texture_image_mipmap_levels.clear();
         
         _index_buffers.clear();
         _vertex_buffers.clear();
@@ -858,7 +856,7 @@ void CAppliction::createSwapChain(bool initilaize)
         .set_device_queue_information(_physical_device->get().get_queue_information_ptr()));
 
     vk::Format colorFormat = _swapchain->get().image_format();
-    _color_image_view_memory.emplace_back(
+    _color_image_view_memorys.emplace_back(
         vk_utility::image::ImageViewAndImageMemory::NewPtr(
             *_device,
             vk_utility::image::ImageViewAndImageMemoryFactoryDefault()
@@ -878,7 +876,7 @@ void CAppliction::createSwapChain(bool initilaize)
                 .set_mipmap_levels(1))));
 
     vk::Format depthFormat = findDepthFormat();
-    _depth_image_view_memory.emplace_back(
+    _depth_image_view_memorys.emplace_back(
         vk_utility::image::ImageViewAndImageMemory::NewPtr(
             *_device,
             vk_utility::image::ImageViewAndImageMemoryFactoryDefault()
@@ -900,15 +898,19 @@ void CAppliction::createSwapChain(bool initilaize)
     _swapchain_framebuffers = vk_utility::buffer::FramebufferFactoryDefault()
         .set_swapchain(_swapchain)
         .set_swapchain_image_views(_swapchain_image_views)
-        .set_color_image_view(_color_image_view_memory.front())
-        .set_depth_image_view(_depth_image_view_memory.front())
+        .set_color_image_view(_color_image_view_memorys.front())
+        .set_depth_image_view(_depth_image_view_memorys.front())
         .set_render_pass(_render_pass)
         .New(_device->get());
 
     if (initilaize)
     {
         createTextureImage();
-        createTextureSampler();
+
+        _texture_samplers.push_back(vk_utility::image::Sampler::NewPtr(
+            *_device,
+            vk_utility::image::SamplerFactoryDefault()
+            .set_mipmap_levels(_texture_image_mipmap_levels.back())));
 
         loadModel();
     
@@ -959,8 +961,8 @@ void CAppliction::cleanupSwapChain( void ) {
     if ( !_device )
         return;
 
-    _depth_image_view_memory.clear();
-    _color_image_view_memory.clear();
+    _depth_image_view_memorys.clear();
+    _color_image_view_memorys.clear();
     
     _uniform_buffers.clear();
    
@@ -1080,10 +1082,10 @@ void CAppliction::createTextureImage( void ) {
     stbi_image_free( pixels );
 
     uint32_t mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
-    _texture_image_mipmap_level.push_back(mipLevels);
+    _texture_image_mipmap_levels.push_back(mipLevels);
 
     vk::ImageUsageFlags usage_flags = vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled;
-    if (_texture_image_mipmap_level.back() > 1)
+    if (_texture_image_mipmap_levels.back() > 1)
         usage_flags |= vk::ImageUsageFlagBits::eTransferSrc;
 
     auto image_and_memory = vk_utility::image::ImageAndMemory::NewPtr(
@@ -1092,7 +1094,7 @@ void CAppliction::createTextureImage( void ) {
         .set_image_factory(&vk_utility::image::ImageFactory2D()
             .set_size(texWidth, texHeight)
             .set_format(vk::Format::eR8G8B8A8Srgb)
-            .set_mipmap_levels(_texture_image_mipmap_level.back())
+            .set_mipmap_levels(_texture_image_mipmap_levels.back())
             .set_samples(vk::SampleCountFlagBits::e1)
             .set_usage(usage_flags))
         .set_device_memory_factory(&vk_utility::image::ImageDeviceMemoryFactory()
@@ -1117,7 +1119,7 @@ void CAppliction::createTextureImage( void ) {
     vk_utility::image::ImageTransitionCommand()
         .set_command_buffer_factory(&single_time_command_factory)
         .set_image(*image_and_memory->get().image())
-        .set_mipmap_levels(_texture_image_mipmap_level.back())
+        .set_mipmap_levels(_texture_image_mipmap_levels.back())
         .set_old_layout(vk::ImageLayout::eUndefined)
         .set_new_layout(vk::ImageLayout::eTransferDstOptimal)
         .execute_command(*_device, *_command_pool);
@@ -1131,7 +1133,7 @@ void CAppliction::createTextureImage( void ) {
 
     //! To be able to start sampling from the texture image in the shader, we need one last transition to prepare it for shader access:
     //transitioned to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL while generating mipmaps
-    if (_texture_image_mipmap_level.back() == 1)
+    if (_texture_image_mipmap_levels.back() == 1)
         vk_utility::image::ImageTransitionCommand()
             .set_command_buffer_factory(&single_time_command_factory)
             .set_image(*image_and_memory->get().image())
@@ -1142,8 +1144,8 @@ void CAppliction::createTextureImage( void ) {
     
     staging_buffer->destroy();
 
-     if (_texture_image_mipmap_level.back() > 1)
-         generateMipmaps(*image_and_memory->get().image(), vk::Format::eR8G8B8A8Srgb, texWidth, texHeight, _texture_image_mipmap_level.back());
+     if (_texture_image_mipmap_levels.back() > 1)
+         generateMipmaps(*image_and_memory->get().image(), vk::Format::eR8G8B8A8Srgb, texWidth, texHeight, _texture_image_mipmap_levels.back());
 
      auto image_view = vk_utility::image::ImageView::NewPtr(
          _device->get(),
@@ -1151,9 +1153,9 @@ void CAppliction::createTextureImage( void ) {
          .set_image(*image_and_memory->get().image())
          .set_format(vk::Format::eR8G8B8A8Srgb)
          .set_aspect_flags(vk::ImageAspectFlagBits::eColor)
-         .set_mipmap_levels(_texture_image_mipmap_level.back()));
+         .set_mipmap_levels(_texture_image_mipmap_levels.back()));
 
-    _texture_image_view_memory.emplace_back(
+    _texture_image_view_memorys.emplace_back(
         vk_utility::image::ImageViewAndImageMemory::New(image_and_memory->get().detach_device_memory(), image_and_memory->get().detach_image(), image_view));
 }
 
@@ -1289,80 +1291,6 @@ void CAppliction::generateMipmaps(vk::Image image, vk::Format imageFormat, int32
         0, nullptr,
         1, &barrier);
     command_buffer_factory.End(command_buffer->get());
-}
-
-
-/******************************************************************//**
-* \brief Create texture sampler. 
-* 
-* \author  gernot
-* \date    2020-05-26
-* \version 1.0
-**********************************************************************/
-void CAppliction::createTextureSampler( void )
-{
-    if ( !_device )
-        throw CException("no logical vulkan device!");
-
-    //! Samplers are configured through a `vk::SamplerCreateInfo` structure, which specifies all filters and transformations that it should apply.
-
-    //! The magFilter and minFilter fields specify how to interpolate texels that are magnified or minified.
-    //! Magnification concerns the oversampling problem describes above, and minification concerns under-sampling.
-    //! The choices are VK_FILTER_NEAREST and VK_FILTER_LINEAR, corresponding to the modes demonstrated in the images above.
-
-    //! The addressing mode can be specified per axis using the addressMode fields.
-    //! The available values are listed below. Most of these are demonstrated in the image above.
-    //! Note that the axes are called U, V and W instead of X, Y and Z. This is a convention for texture space coordinates.
-    //! 
-    //! - VK_SAMPLER_ADDRESS_MODE_REPEAT: Repeat the texture when going beyond the image dimensions.
-    //! - VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT: Like repeat, but inverts the coordinates to mirror the image when going beyond the dimensions.
-    //! - VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE: Take the color of the edge closest to the coordinate beyond the image dimensions.
-    //! - VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE: Like clamp to edge, but instead uses the edge opposite to the closest edge.
-    //! - VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER: Return a solid color when sampling beyond the dimensions of the image.
-    //! 
-    //! It doesn't really matter which addressing mode we use here, because we're not going to sample outside of the image in this tutorial. 
-    //! However, the repeat mode is probably the most common mode, because it can be used to tile textures like floors and walls.
-
-    //! These two fields specify if anisotropic filtering should be used. There is no reason not to use this unless performance is a concern.
-    //! The maxAnisotropy field limits the amount of texel samples that can be used to calculate the final color. 
-    //! A lower value results in better performance, but lower quality results. There is no graphics hardware available today that will use more than 16 samples, because the difference is negligible beyond that point.
-
-    //! The borderColor field specifies which color is returned when sampling beyond the image with clamp to border addressing mode. 
-    //! It is possible to return black, white or transparent in either float or int formats. You cannot specify an arbitrary color.
-
-    //! The unnormalizedCoordinates field specifies which coordinate system you want to use to address texels in an image. 
-    //! If this field is VK_TRUE, then you can simply use coordinates within the [0, texWidth) and [0, texHeight) range.
-    //! If it is VK_FALSE, then the texels are addressed using the [0, 1) range on all axes. 
-    //! Real-world applications almost always use normalized coordinates, because then it's possible to use textures of varying resolutions with the exact same coordinates.
-
-    //! If a comparison function is enabled, then texels will first be compared to a value, and the result of that comparison is used in filtering operations. This is mainly used for percentage-closer filtering on shadow maps.
-    //! We'll look at this in a future chapter.
-
-    vk::SamplerCreateInfo samplerInfo
-    (
-        vk::SamplerCreateFlags{},
-        vk::Filter::eLinear,
-        vk::Filter::eLinear,
-        vk::SamplerMipmapMode::eLinear,
-        vk::SamplerAddressMode::eRepeat,
-        vk::SamplerAddressMode::eRepeat,
-        vk::SamplerAddressMode::eRepeat,
-        0.0f,
-        VK_TRUE,
-        16.0f,
-        VK_FALSE,
-        vk::CompareOp::eAlways,
-        0.0f, // static_cast<float>(_textureImageMipmapLevel.back() / 2)
-        static_cast<float>(_texture_image_mipmap_level.back()),
-        vk::BorderColor::eIntOpaqueBlack,
-        VK_FALSE
-    );
-
-    
-    //! All of these fields apply to mipmapping. We will look at mipmapping in a later chapter,
-    //! but basically it's another type of filter that can be applied.
-    
-    _textureSampler.push_back(_device->get()->createSampler(samplerInfo));
 }
 
 
@@ -1538,9 +1466,9 @@ void CAppliction::createDescriptorSets( void ) {
         //! and pTexelBufferView is used for descriptors that refer to buffer views.
         //! Our descriptor is based on buffers, so we're using pBufferInfo.
 
-        for (size_t j = 0; j < _texture_image_view_memory.size(); ++j)
+        for (size_t j = 0; j < _texture_image_view_memorys.size(); ++j)
         {
-            vk::DescriptorImageInfo imageInfo(_textureSampler[j], *_texture_image_view_memory[j]->get().image_view(),  vk::ImageLayout::eShaderReadOnlyOptimal);
+            vk::DescriptorImageInfo imageInfo(*_texture_samplers[j], *_texture_image_view_memorys[j]->get().image_view(),  vk::ImageLayout::eShaderReadOnlyOptimal);
 
             descriptorWrites.push_back(
                 vk::WriteDescriptorSet

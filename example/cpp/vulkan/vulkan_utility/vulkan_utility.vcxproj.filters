@@ -291,6 +291,15 @@
     <ClInclude Include="include\vk_utility_image_copy_buffer_to_image_command.h">
       <Filter>image</Filter>
     </ClInclude>
+    <ClInclude Include="include\vk_utility_sampler.h">
+      <Filter>image</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_sampler_factory.h">
+      <Filter>image</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_sampler_factory_default.h">
+      <Filter>image</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">

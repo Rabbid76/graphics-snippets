@@ -191,6 +191,8 @@
     <ClInclude Include="include\vk_utility_image_view_factory_default.h" />
     <ClInclude Include="include\vk_utility_image_view_and_image_memory.h" />
     <ClInclude Include="include\vk_utility_pipeline_layout.h" />
+    <ClInclude Include="include\vk_utility_sampler.h" />
+    <ClInclude Include="include\vk_utility_sampler_factory.h" />
     <ClInclude Include="include\vk_utility_shader_module_factory_spirv_file.h" />
     <ClInclude Include="include\vk_utility_descriptor_set_layout_binding.h" />
     <ClInclude Include="include\vk_utility_descriptor_set_layout_factory.h" />
@@ -231,6 +233,7 @@
     <ClInclude Include="include\vk_utility_shader_module.h" />
     <ClInclude Include="include\vk_utility_shader_module_factory.h" />
     <ClInclude Include="include\vk_utility_shader_stage_create_information.h" />
+    <ClInclude Include="include\vk_utility_sampler_factory_default.h" />
     <ClInclude Include="include\vk_utility_surface.h" />
     <ClInclude Include="include\vk_utility_surface_factory.h" />
     <ClInclude Include="include\vk_utility_surface_factory_windows.h" />
