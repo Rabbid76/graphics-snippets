@@ -99,6 +99,8 @@
 #include <vk_utility_image_copy_buffer_to_image_command.h>
 #include <vk_utility_sampler.h>
 #include <vk_utility_sampler_factory_default.h>
+#include <vk_utility_descriptor_pool.h>
+#include <vk_utility_descriptor_pool_factory_default.h>
 
 // GLFW
 
@@ -340,7 +342,6 @@ private: // private operations
     void loadModel(void);                            //!< load scene
     void createTextureImage( void );                 //!< create texture image
     void createTextureImageView( void );             //!< create texture image view
-    void createDescriptorPool( void );               //!< create descriptor pool 
     void createDescriptorSets( void );               //!< create descriptor sets
     void createCommandBuffers( void );               //!< create command buffers
     void createSyncObjects( void );                  //!< create semaphores and fences
@@ -394,7 +395,7 @@ private: // private attributes
     std::vector<vk_utility::image::ImageViewPtr>               _swapchain_image_views;      //!< Vulkan swap chain image handles
     vk_utility::core::RenderPassPtr                            _render_pass;                //!< Vulkan render pass handle
     vk_utility::core::DescriptorSetLayoutPtr                   _descriptor_set_layout;      //!< Vulkan descriptor set layout
-    vk::DescriptorPool             _descriptorPool;           //!< Vulkan descriptor set pool
+    vk_utility::core::DescriptorPoolPtr                        _descriptor_pool;           //!< Vulkan descriptor set pool
     std::vector<vk::DescriptorSet> _descriptorSets;           //!< Vulkan descriptor sets
     vk_utility::pipeline::PipelineLayoutPtr                    _pipeline_layout;            //!< Vulkan pipeline layout handle
     vk_utility::pipeline::PipelinePtr                          _graphics_pipeline;          //!< Vulkan graphics pipeline handle
@@ -628,7 +629,7 @@ void CAppliction::initVulkan( void )
         std::cout << std::endl;
         std::cout << "render pass handle:            " << std::hex << _render_pass->handle() << "h" << std::endl;
         std::cout << "descriptor set layout handle:  " << std::hex << _descriptor_set_layout->handle() << "h" << std::endl;
-        std::cout << "descriptor pool handle:        " << std::hex << _descriptorPool << "h" << std::endl;
+        std::cout << "descriptor pool handle:        " << std::hex << _descriptor_pool->handle() << "h" << std::endl;
         std::cout << "pipeline layout handle:        " << std::hex << _pipeline_layout->handle() << "h" << std::endl;
         std::cout << "graphics pipeline handle:      " << std::hex << _graphics_pipeline->handle() << "h" << std::endl;
         std::cout << "swap chain framebuffers:       " << std::hex << _swapchain_framebuffers[0]->handle() << "h";
@@ -942,7 +943,11 @@ void CAppliction::createSwapChain(bool initilaize)
             _device, vk_utility::buffer::BufferAndMemoryInformation::NewCoherentUniform(bufferSize)));
     }
 
-    createDescriptorPool();
+    _descriptor_pool = vk_utility::core::DescriptorPool::NewPtr(
+        *_device,
+        vk_utility::core::DescriptorPoolFactoryDefault()
+        .set_no_of_swapchain_images(_swapchain->get().no_of_swapchain_images()));
+
     createDescriptorSets();
     createCommandBuffers();
 }
@@ -958,22 +963,12 @@ void CAppliction::createSwapChain(bool initilaize)
 **********************************************************************/
 void CAppliction::cleanupSwapChain( void ) {
 
-    if ( !_device )
-        return;
-
     _depth_image_view_memorys.clear();
     _color_image_view_memorys.clear();
-    
     _uniform_buffers.clear();
-   
-    if (_descriptorPool)
-        _device->get()->destroyDescriptorPool(_descriptorPool);
-    _descriptorPool = vk::DescriptorPool();
-
+    _descriptor_pool = nullptr,
     //! You don't need to explicitly clean up descriptor sets, because they will be automatically freed when the descriptor pool is destroyed.
     _descriptorSets.clear();
-
-
     _swapchain_framebuffers.clear();
 
     if (_command_pool)
@@ -983,9 +978,7 @@ void CAppliction::cleanupSwapChain( void ) {
     _graphics_pipeline = nullptr;
     _pipeline_layout = nullptr;
     _render_pass = nullptr;
-
     _swapchain_image_views.clear();
-
     _swapchain = nullptr;
 }
 
@@ -1351,49 +1344,6 @@ void CAppliction::loadModel(void) {
 
 
 /******************************************************************//**
-* \brief Create uniform buffers.  
-* 
-* \author  gernot
-* \date    2019-05-04
-* \version 1.0
-**********************************************************************/
-void CAppliction::createDescriptorPool(void) {
-
-    if (!_device)
-        throw CException("no logical vulkan device!");
-
-    //-------------------------------------------
-    // Descriptor pool
-    //------------------------------------------- 
-
-    //! Descriptor sets can't be created directly, they must be allocated from a pool like command buffers.
-    //! The equivalent for descriptor sets is unsurprisingly called a descriptor pool.
-    //! We'll write a new function createDescriptorPool to set it up
-
-
-    //! We first need to describe which descriptor types our descriptor sets are going to contain and how many of them, using `vk::DescriptorPoolSize` structures.
-
-    std::vector<vk::DescriptorPoolSize> poolSizes
-    {
-        vk::DescriptorPoolSize(vk::DescriptorType::eUniformBuffer, _swapchain->get().no_of_swapchain_images()),
-        vk::DescriptorPoolSize(vk::DescriptorType::eCombinedImageSampler, _swapchain->get().no_of_swapchain_images()),
-    };
-
-    //! We will allocate one of these descriptors for every frame. This pool size structure is referenced by the main `vk::DescriptorPoolCreateInfo`:
-    //! Aside from the maximum number of individual descriptors that are available, we also need to specify the maximum number of descriptor sets that may be allocated:
-
-    vk::DescriptorPoolCreateInfo poolInfo
-    (
-        vk::DescriptorPoolCreateFlags{},
-        _swapchain->get().no_of_swapchain_images(),
-        poolSizes
-    );
-
-    _descriptorPool = _device->get()->createDescriptorPool(poolInfo);
-}
-
-
-/******************************************************************//**
 * \brief Create descriptor sets.
 * 
 * \author  gernot
@@ -1404,7 +1354,7 @@ void CAppliction::createDescriptorSets( void ) {
 
     if (!_device)
         throw CException("no logical vulkan device!");
-    if (!_descriptorPool)
+    if (!_descriptor_pool)
         throw CException("no descriptor pool!");
     if (_uniform_buffers.size() < _swapchain->get().no_of_swapchain_images())
         throw CException("missing uniform buffers");
@@ -1417,7 +1367,7 @@ void CAppliction::createDescriptorSets( void ) {
     //! You need to specify the descriptor pool to allocate from, the number of descriptor sets to allocate, and the descriptor layout to base them on:
     
     std::vector<vk::DescriptorSetLayout> layouts(_swapchain->get().no_of_swapchain_images(), _descriptor_set_layout->get());
-    vk::DescriptorSetAllocateInfo allocInfo(_descriptorPool, layouts);
+    vk::DescriptorSetAllocateInfo allocInfo(*_descriptor_pool, layouts);
 
     _descriptorSets = _device->get()->allocateDescriptorSets(allocInfo);
 

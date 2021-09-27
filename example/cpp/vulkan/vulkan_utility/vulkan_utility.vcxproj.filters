@@ -300,6 +300,15 @@
     <ClInclude Include="include\vk_utility_sampler_factory_default.h">
       <Filter>image</Filter>
     </ClInclude>
+    <ClInclude Include="include\vk_utility_descriptor_pool.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_descriptor_pool_factory.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_descriptor_pool_factory_default.h">
+      <Filter>core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
