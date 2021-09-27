@@ -169,6 +169,9 @@
     <ClInclude Include="include\vk_utility_descriptor_pool_factory_default.h" />
     <ClInclude Include="include\vk_utility_descriptor_pool_factory.h" />
     <ClInclude Include="include\vk_utility_descriptor_pool.h" />
+    <ClInclude Include="include\vk_utility_fence.h" />
+    <ClInclude Include="include\vk_utility_fence_factory.h" />
+    <ClInclude Include="include\vk_utility_fence_factory_default.h" />
     <ClInclude Include="include\vk_utility_image_and_memory_factory_default.h" />
     <ClInclude Include="include\vk_utility_image_and_memory.h" />
     <ClInclude Include="include\vk_utility_device_memory_factory.h" />
@@ -196,6 +199,8 @@
     <ClInclude Include="include\vk_utility_pipeline_layout.h" />
     <ClInclude Include="include\vk_utility_sampler.h" />
     <ClInclude Include="include\vk_utility_sampler_factory.h" />
+    <ClInclude Include="include\vk_utility_semaphore.h" />
+    <ClInclude Include="include\vk_utility_semaphore_factory_default.h" />
     <ClInclude Include="include\vk_utility_shader_module_factory_spirv_file.h" />
     <ClInclude Include="include\vk_utility_descriptor_set_layout_binding.h" />
     <ClInclude Include="include\vk_utility_descriptor_set_layout_factory.h" />
@@ -254,6 +259,7 @@
     <ClInclude Include="include\vk_utility_validation_layers.h" />
     <ClInclude Include="include\vk_utility_vulkan_include.h" />
     <ClInclude Include="include\vk_utility_buffer_and_memory.h" />
+    <ClInclude Include="include\vk_utility_semaphore_factory.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>

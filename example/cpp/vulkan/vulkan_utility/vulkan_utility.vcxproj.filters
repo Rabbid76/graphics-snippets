@@ -309,6 +309,24 @@
     <ClInclude Include="include\vk_utility_descriptor_pool_factory_default.h">
       <Filter>core</Filter>
     </ClInclude>
+    <ClInclude Include="include\vk_utility_semaphore.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_fence.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_semaphore_factory.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_fence_factory.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_semaphore_factory_default.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_fence_factory_default.h">
+      <Filter>core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">

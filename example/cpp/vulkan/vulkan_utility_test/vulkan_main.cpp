@@ -101,6 +101,10 @@
 #include <vk_utility_sampler_factory_default.h>
 #include <vk_utility_descriptor_pool.h>
 #include <vk_utility_descriptor_pool_factory_default.h>
+#include <vk_utility_semaphore.h>
+#include <vk_utility_semaphore_factory_default.h>
+#include <vk_utility_fence.h>
+#include <vk_utility_fence_factory_default.h>
 
 // GLFW
 
@@ -344,7 +348,6 @@ private: // private operations
     void createTextureImageView( void );             //!< create texture image view
     void createDescriptorSets( void );               //!< create descriptor sets
     void createCommandBuffers( void );               //!< create command buffers
-    void createSyncObjects( void );                  //!< create semaphores and fences
     void updateUniformBuffer( uint32_t imageIndex ); //!< update the uniform buffer for the current image
 
     void drawFrame( void ); //! do the drawing
@@ -385,34 +388,34 @@ private: // private attributes
     size_t                  _currentFrame = 0;                          //!< current frame semaphore index
     bool                    _framebufferResized = false;                //!< state which indicates that the widow has been resized
 
-    vk_utility::core::InstancePtr                              _instance;                   //!< Vulkan instance handle
-    vk_utility::device::SurfacePtr                             _surface;                    //!< Vulkan surface handle
+    vk_utility::core::InstancePtr                              _instance;                   // Vulkan instance handle
+    vk_utility::device::SurfacePtr                             _surface;                    // Vulkan surface handle
     vk_utility::device::PhysicalDevicePtr                      _physical_device;
-    vk_utility::device::DevicePtr                              _device;                     //!< Vulkan logical device handle 
+    vk_utility::device::DevicePtr                              _device;                     // Vulkan logical device handle 
     vk::Queue                      _graphicsQueue;            //!< Vulkan graphics queue handle 
     vk::Queue                      _presentQueue;             //!< Vulkan presentation queue handle 
-    vk_utility::swap::SwapchainPtr                             _swapchain;                  //!< Vulkan swap chain handle 
-    std::vector<vk_utility::image::ImageViewPtr>               _swapchain_image_views;      //!< Vulkan swap chain image handles
-    vk_utility::core::RenderPassPtr                            _render_pass;                //!< Vulkan render pass handle
-    vk_utility::core::DescriptorSetLayoutPtr                   _descriptor_set_layout;      //!< Vulkan descriptor set layout
-    vk_utility::core::DescriptorPoolPtr                        _descriptor_pool;           //!< Vulkan descriptor set pool
+    vk_utility::swap::SwapchainPtr                             _swapchain;                  // Vulkan swap chain handle 
+    std::vector<vk_utility::image::ImageViewPtr>               _swapchain_image_views;      // Vulkan swap chain image handles
+    vk_utility::core::RenderPassPtr                            _render_pass;                // Vulkan render pass handle
+    vk_utility::core::DescriptorSetLayoutPtr                   _descriptor_set_layout;      // Vulkan descriptor set layout
+    vk_utility::core::DescriptorPoolPtr                        _descriptor_pool;            // Vulkan descriptor set pool
     std::vector<vk::DescriptorSet> _descriptorSets;           //!< Vulkan descriptor sets
-    vk_utility::pipeline::PipelineLayoutPtr                    _pipeline_layout;            //!< Vulkan pipeline layout handle
-    vk_utility::pipeline::PipelinePtr                          _graphics_pipeline;          //!< Vulkan graphics pipeline handle
-    std::vector<vk_utility::buffer::FramebufferPtr>            _swapchain_framebuffers;     //!< Vulkan framebuffers
-    vk_utility::command::CommandPoolPtr                        _command_pool;               //!< Vulkan command pool
+    vk_utility::pipeline::PipelineLayoutPtr                    _pipeline_layout;            // Vulkan pipeline layout handle
+    vk_utility::pipeline::PipelinePtr                          _graphics_pipeline;          // Vulkan graphics pipeline handle
+    std::vector<vk_utility::buffer::FramebufferPtr>            _swapchain_framebuffers;     // Vulkan framebuffers
+    vk_utility::command::CommandPoolPtr                        _command_pool;               // Vulkan command pool
     std::vector<vk::CommandBuffer> _commandBuffers;           //!< Vulkan command buffers
-    std::vector<vk::Semaphore>     _imageAvailableSemaphores; //!< Vulkan semaphore
-    std::vector<vk::Semaphore>     _renderFinishedSemaphores; //!< Vulkan semaphore
-    std::vector<vk::Fence>         _inFlightFences;           //!< Vulkan fence
-    std::vector<vk_utility::buffer::BufferAndMemoryPtr>        _vertex_buffers;              //!< Vulkan vertex buffer
-    std::vector<vk_utility::buffer::BufferAndMemoryPtr>        _index_buffers;               //!< Vulkan index buffer
-    std::vector<vk_utility::buffer::BufferAndMemoryPtr>        _uniform_buffers;             //!< Vulkan uniform buffer
-    std::vector<vk_utility::image::ImageViewAndImageMemoryPtr> _depth_image_view_memorys;    //!< Vulkan depth image view memory
-    std::vector<vk_utility::image::ImageViewAndImageMemoryPtr> _color_image_view_memorys;    //!< Vulkan color image view memory
+    std::vector<vk_utility::core::SemaphorePtr>                _image_available_semaphores; // Vulkan semaphore
+    std::vector<vk_utility::core::SemaphorePtr>                _render_finished_semaphores; // Vulkan semaphore
+    std::vector<vk_utility::core::FencePtr>                    _in_flight_fences;           // Vulkan fence
+    std::vector<vk_utility::buffer::BufferAndMemoryPtr>        _vertex_buffers;             // Vulkan vertex buffer
+    std::vector<vk_utility::buffer::BufferAndMemoryPtr>        _index_buffers;              // Vulkan index buffer
+    std::vector<vk_utility::buffer::BufferAndMemoryPtr>        _uniform_buffers;            // Vulkan uniform buffer
+    std::vector<vk_utility::image::ImageViewAndImageMemoryPtr> _depth_image_view_memorys;   // Vulkan depth image view memory
+    std::vector<vk_utility::image::ImageViewAndImageMemoryPtr> _color_image_view_memorys;   // Vulkan color image view memory
     std::vector<uint32_t> _texture_image_mipmap_levels;  //!< mipmap levels TODO $$$ add to vk_utility::image::ImageViewMemory
-    std::vector<vk_utility::image::ImageViewAndImageMemoryPtr> _texture_image_view_memorys;  //!< Vulkan texture image view memory
-    std::vector<vk_utility::image::SamplerPtr>                 _texture_samplers;            //!< Vulkan texture sampler
+    std::vector<vk_utility::image::ImageViewAndImageMemoryPtr> _texture_image_view_memorys; // Vulkan texture image view memory
+    std::vector<vk_utility::image::SamplerPtr>                 _texture_samplers;           // Vulkan texture sampler
 };
 
 
@@ -601,60 +604,14 @@ void CAppliction::initVulkan( void )
 
     createSwapChain(true);
 
-    createSyncObjects();
-
-    if ( _physical_device == nullptr )
-        return;
-    
-    if ( Verbose() ) {
-
-        std::cout << std::endl;
-        std::cout << "instance handle:               " << std::hex << _instance->handle() << "h" << std::endl;
-        std::cout << "surface handle:                " << std::hex << _surface->handle()  << "h" << std::endl;
-        std::cout << "device handle:                 " << std::hex << _device->handle() << "h" << std::endl;
-        std::cout << "graphics queue handle:         " << std::hex << _graphicsQueue << "h; index: " << std::dec << _physical_device->get().get_queue_information()._graphics[0] << std::endl;
-        std::cout << "presentation queue handle:     " << std::hex << _presentQueue  << "h; index: " << std::dec << _physical_device->get().get_queue_information()._surface_support[0] << std::endl;
-        std::cout << "swap chain handle:             " << std::hex << _swapchain->handle() << "h" << std::endl;
-        std::cout << "swap chain image handles:      " << std::hex << _swapchain->get().get_swapchain_images()[0].handle() << "h";
-        for ( size_t i= 1; i < _swapchain->get().get_swapchain_images().size(); ++ i )
-            std::cout << ", " << std::hex << _swapchain->get().get_swapchain_images()[i].handle() << "h";
-        std::cout << std::endl;
-        std::cout << "swap chain color space:        " << std::dec << (int)_swapchain->get().image_color_space() << std::endl;
-        std::cout << "swap chain format:             " << std::dec << (int)_swapchain->get().image_format() << std::endl;
-        std::cout << "swap chain presentation mode:  " << std::hex << (int)_swapchain->get().present_mode() << "h" << std::endl;
-        std::cout << "swap chain 2D extent:          " << std::dec << "(" << _swapchain->get().image_width_2D() << ", " << _swapchain->get().image_height_2D() << ")" << std::endl;
-        std::cout << "swap chain image view handles: " << std::hex << _swapchain_image_views[0]->handle() << "h";
-        for ( size_t i= 1; i < _swapchain_image_views.size(); ++ i )
-            std::cout << ", " << std::hex << _swapchain_image_views[i]->handle() << "h";
-        std::cout << std::endl;
-        std::cout << "render pass handle:            " << std::hex << _render_pass->handle() << "h" << std::endl;
-        std::cout << "descriptor set layout handle:  " << std::hex << _descriptor_set_layout->handle() << "h" << std::endl;
-        std::cout << "descriptor pool handle:        " << std::hex << _descriptor_pool->handle() << "h" << std::endl;
-        std::cout << "pipeline layout handle:        " << std::hex << _pipeline_layout->handle() << "h" << std::endl;
-        std::cout << "graphics pipeline handle:      " << std::hex << _graphics_pipeline->handle() << "h" << std::endl;
-        std::cout << "swap chain framebuffers:       " << std::hex << _swapchain_framebuffers[0]->handle() << "h";
-        for ( size_t i= 1; i < _swapchain_framebuffers.size(); ++ i )
-            std::cout << ", " << std::hex << _swapchain_framebuffers[i]->handle() << "h";
-        std::cout << std::endl;
-        std::cout << "command pool handle:           " << std::hex << _command_pool->handle() << "h" << std::endl;
-        std::cout << "command buffer handles:        " << std::hex << _commandBuffers[0] << "h";
-        for ( size_t i= 1; i < _commandBuffers.size(); ++ i )
-            std::cout << ", " << std::hex << _commandBuffers[i] << "h";
-        std::cout << std::endl;
-        std::cout << "image semaphore handles:       " << std::hex << _imageAvailableSemaphores[0] << "h";
-        for ( size_t i= 1; i < _imageAvailableSemaphores.size(); ++ i )
-            std::cout << ", " << std::hex << _imageAvailableSemaphores[i] << "h";
-        std::cout << std::endl;
-        std::cout << "render semaphore handles:      " << std::hex << _renderFinishedSemaphores[0] << "h";
-        for ( size_t i= 1; i < _renderFinishedSemaphores.size(); ++ i )
-            std::cout << ", " << std::hex << _renderFinishedSemaphores[i] << "h";
-        std::cout << std::endl;
-        std::cout << "in fight fence handles:        " << std::hex << _inFlightFences[0] << "h";
-        for ( size_t i= 1; i < _inFlightFences.size(); ++ i )
-            std::cout << ", " << std::hex << _inFlightFences[i] << "h";
-        std::cout << std::endl;
-
-        std::cout << std::dec << std::endl;
+    const int MAX_FRAMES_IN_FLIGHT = 2;
+    auto semaphore_factory = vk_utility::core::SemaphoreFactoryDefault();
+    auto fence_factory = vk_utility::core::FenceFactoryDefault();
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        _image_available_semaphores.push_back(vk_utility::core::Semaphore::NewPtr(*_device, vk_utility::core::SemaphoreFactoryDefault()));
+        _render_finished_semaphores.push_back(vk_utility::core::Semaphore::NewPtr(*_device, vk_utility::core::SemaphoreFactoryDefault()));
+        _in_flight_fences.push_back(vk_utility::core::Fence::NewPtr(*_device, vk_utility::core::FenceFactoryDefault()));
     }
 }
 
@@ -694,32 +651,14 @@ void CAppliction::cleanup( void ) {
     cleanupSwapChain();
 
     _descriptor_set_layout = nullptr;
-
-    if (_device)
-    {
-        _texture_samplers.clear();
-        _texture_image_view_memorys.clear();
-        _texture_image_mipmap_levels.clear();
-        
-        _index_buffers.clear();
-        _vertex_buffers.clear();
-        
-        for (auto inFghtFence : _inFlightFences) {
-             _device->get()->destroyFence(inFghtFence);
-        }
-        _inFlightFences.clear();
-
-        for (auto finishSemaphore : _renderFinishedSemaphores) {
-             _device->get()->destroySemaphore(finishSemaphore);
-        }
-        _renderFinishedSemaphores.clear();
-
-        for (auto imageSemaphore : _imageAvailableSemaphores) {
-             _device->get()->destroySemaphore(imageSemaphore);
-        }
-        _imageAvailableSemaphores.clear();
-    }
-  
+    _texture_samplers.clear();
+    _texture_image_view_memorys.clear();
+    _texture_image_mipmap_levels.clear();
+    _index_buffers.clear();
+    _vertex_buffers.clear();
+    _in_flight_fences.clear();
+    _render_finished_semaphores.clear();
+    _image_available_semaphores.clear();
     _command_pool = nullptr;
     _device = nullptr;
     _physical_device = nullptr;
@@ -1611,61 +1550,6 @@ void CAppliction::createCommandBuffers( void ) {
 
 
 /******************************************************************//**
-* \brief   create semaphores 
-* 
-* \author  gernot
-* \date    2018-05-27
-* \version 1.0
-**********************************************************************/
-void CAppliction::createSyncObjects( void ) {
-
-    if ( !_device )
-        throw CException("no logical vulkan device!");
-
-
-    //! The drawFrame function will perform the following operations:
-    //! - Acquire an image from the swap chain
-    //! - Execute the command buffer with that image as attachment in the framebuffer
-    //! - Return the image to the swap chain for presentation
-
-    //! Each of these events is set in motion using a single function call, but they are executed asynchronously.
-    //! The function calls will return before the operations are actually finished and the order of execution is also undefined.
-    //! That is unfortunate, because each of the operations depends on the previous one finishing.
-
-    //! There are two ways of synchronizing swap chain events: fences and semaphores.
-    //! They're both objects that can be used for coordinating operations by having one operation signal and another operation wait for a fence or semaphore to go from the unsignaled to signaled state.
-
-    //! The difference is that the state of fences can be accessed from your program using calls like `vkWaitForFences` and semaphores cannot be.
-    //! Fences are mainly designed to synchronize your application itself with rendering operation, whereas semaphores are used to synchronize operations within or across command queues.
-
-
-    //-------------------------------------------
-    // Semaphores
-    //-------------------------------------------
-
-    const int MAX_FRAMES_IN_FLIGHT = 2;
-
-    _imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-    _renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-    _inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
-
-    vk::SemaphoreCreateInfo semaphoreInfo = {};
-    
-    vk::FenceCreateInfo fenceInfo = {};
-    
-    //! initialize in the signaled state as if we had rendered an initial frame that finished
-    fenceInfo.flags = vk::FenceCreateFlagBits::eSignaled;
-
-    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        _imageAvailableSemaphores[i] = _device->get()->createSemaphore(semaphoreInfo);
-        _renderFinishedSemaphores[i] = _device->get()->createSemaphore(semaphoreInfo);
-        _inFlightFences[i] = _device->get()->createFence(fenceInfo);
-    }
-
-}
-
-
-/******************************************************************//**
 * \brief   do the drawing
 * 
 * \author  gernot
@@ -1678,7 +1562,8 @@ void CAppliction::drawFrame( void ) {
     //! The `VK_TRUE` we pass here indicates that we want to wait for all fences, but in the case of a single one it obviously doesn't matter.
     //! Just like `vkAcquireNextImageKHR` this function also takes a timeout. Unlike the semaphores, we manually need to restore the fence to the unsignaled state by resetting it with the vkResetFences call.
 
-    auto result = _device->get()->waitForFences(1, &_inFlightFences[_currentFrame], VK_TRUE, std::numeric_limits<uint64_t>::max());
+    std::vector<vk::Fence> fences{ *_in_flight_fences[_currentFrame] };
+    auto result = _device->get()->waitForFences(fences, VK_TRUE, std::numeric_limits<uint64_t>::max());
 
     //-------------------------------------------
     // Acquiring an image from the swap chain
@@ -1697,7 +1582,7 @@ void CAppliction::drawFrame( void ) {
 
     uint32_t imageIndex;
     vk::Result acquireNextImageResult;
-    result = _device->get()->acquireNextImageKHR(*_swapchain, std::numeric_limits<uint64_t>::max(), _imageAvailableSemaphores[_currentFrame], vk::Fence(), &imageIndex);
+    result = _device->get()->acquireNextImageKHR(*_swapchain, std::numeric_limits<uint64_t>::max(), *_image_available_semaphores[_currentFrame], vk::Fence(), &imageIndex);
     acquireNextImageResult = result;
     
     if (acquireNextImageResult == vk::Result::eErrorOutOfDateKHR || acquireNextImageResult == vk::Result::eSuboptimalKHR || _framebufferResized) {
@@ -1706,7 +1591,7 @@ void CAppliction::drawFrame( void ) {
         return;
     } 
 
-    result = _device->get()->resetFences(1, &_inFlightFences[_currentFrame]);
+    result = _device->get()->resetFences(1, &fences[0]);
 
 
     //-------------------------------------------
@@ -1730,14 +1615,14 @@ void CAppliction::drawFrame( void ) {
     //! The signalSemaphoreCount and pSignalSemaphores parameters specify which semaphores to signal once the command buffer(s) have finished execution.
     //! In our case we're using the renderFinishedSemaphore for that purpose.
 
-    std::vector<vk::Semaphore> waitSemaphores{_imageAvailableSemaphores[_currentFrame]};
-    std::vector<vk::Semaphore> signalSemaphores{_renderFinishedSemaphores[_currentFrame]};
+    std::vector<vk::Semaphore> waitSemaphores{*_image_available_semaphores[_currentFrame]};
+    std::vector<vk::Semaphore> signalSemaphores{*_render_finished_semaphores[_currentFrame]};
     std::vector<vk::PipelineStageFlags> waitStages{vk::PipelineStageFlagBits::eColorAttachmentOutput};
     std::vector<vk::CommandBuffer> commandbuffers{_commandBuffers[imageIndex]};
 
     vk::SubmitInfo submitInfo(waitSemaphores, waitStages, commandbuffers, signalSemaphores);
 
-    result = _graphicsQueue.submit(1, &submitInfo, _inFlightFences[_currentFrame]);
+    result = _graphicsQueue.submit(1, &submitInfo, *_in_flight_fences[_currentFrame]);
  
     //-------------------------------------------
     // Presentation
@@ -1775,7 +1660,7 @@ void CAppliction::drawFrame( void ) {
     //vkQueueWaitIdle(_presentQueue);
 
 
-    _currentFrame = (_currentFrame + 1) % _imageAvailableSemaphores.size();
+    _currentFrame = (_currentFrame + 1) % _image_available_semaphores.size();
 }
 
 

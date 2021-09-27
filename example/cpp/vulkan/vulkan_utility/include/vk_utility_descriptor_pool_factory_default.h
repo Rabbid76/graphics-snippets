@@ -11,7 +11,7 @@ namespace vk_utility
         /// The equivalent for descriptor sets is unsurprisingly called a descriptor pool.
         /// </summary>
         class DescriptorPoolFactoryDefault
-            : DescriptorPoolFactory
+            : public DescriptorPoolFactory
         {
         private:
 
