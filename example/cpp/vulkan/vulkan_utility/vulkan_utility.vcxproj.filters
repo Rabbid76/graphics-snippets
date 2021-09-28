@@ -327,6 +327,9 @@
     <ClInclude Include="include\vk_utility_fence_factory_default.h">
       <Filter>core</Filter>
     </ClInclude>
+    <ClInclude Include="include\vk_utility_format_selector.h">
+      <Filter>core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
