@@ -106,6 +106,7 @@
 #include <vk_utility_fence.h>
 #include <vk_utility_fence_factory_default.h>
 #include <vk_utility_format_selector.h>
+#include <vk_utility_image_generate_mipmaps_command.h>
 
 // GLFW
 
@@ -353,9 +354,6 @@ private: // private operations
 
     void drawFrame( void ); //! do the drawing
 
-    //! generate mipmaps
-    void generateMipmaps(vk::Image image, vk::Format imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels);
-
     static void framebufferResizeCallback( GLFWwindow* window, int width, int height );
 
 private: // private attributes
@@ -410,7 +408,6 @@ private: // private attributes
     std::vector<vk_utility::buffer::BufferAndMemoryPtr>        _uniform_buffers;            // Vulkan uniform buffer
     std::vector<vk_utility::image::ImageViewAndImageMemoryPtr> _depth_image_view_memorys;   // Vulkan depth image view memory
     std::vector<vk_utility::image::ImageViewAndImageMemoryPtr> _color_image_view_memorys;   // Vulkan color image view memory
-    std::vector<uint32_t> _texture_image_mipmap_levels;  //!< mipmap levels TODO $$$ add to vk_utility::image::ImageViewMemory
     std::vector<vk_utility::image::ImageViewAndImageMemoryPtr> _texture_image_view_memorys; // Vulkan texture image view memory
     std::vector<vk_utility::image::SamplerPtr>                 _texture_samplers;           // Vulkan texture sampler
 };
@@ -464,7 +461,6 @@ public:
 };
 
 
-
 /******************************************************************//**
 * \brief   ctor
 * 
@@ -496,8 +492,8 @@ CAppliction::~CAppliction()
 * \date    2017-09-30
 * \version 1.0
 **********************************************************************/
-void CAppliction::run( void ) {
-     
+void CAppliction::run( void ) 
+{     
     if ( _requestedValidationLayers.empty() && _enableAllValidationLayers == false )
         _enableAllValidationLayers = debug_true;
 
@@ -507,6 +503,7 @@ void CAppliction::run( void ) {
     cleanup();
 }
 
+
 /******************************************************************//**
 * \brief   Initialize GLFW and create GLFW window
 * 
@@ -514,8 +511,8 @@ void CAppliction::run( void ) {
 * \date    2017-09-30
 * \version 1.0
 **********************************************************************/
-void CAppliction::initWindow( void ) {
-
+void CAppliction::initWindow( void ) 
+{
     //! glfwInit() initializes the GLFW library. 
     if ( glfwInit() == GLFW_FALSE )
         throw CException( "error initializing GLFW" ); 
@@ -544,6 +541,61 @@ void CAppliction::initWindow( void ) {
 
 
 /******************************************************************//**
+* \brief Load scene.
+*
+* \author  gernot
+* \date    2018-11-04
+* \version 1.0
+**********************************************************************/
+void CAppliction::loadModel(void)
+{
+    if (_load_model == false)
+    {
+        _vertices = cube_vertices;
+        _indices = cube_indices;
+        return;
+    }
+
+    tinyobj::attrib_t attrib;
+    std::vector<tinyobj::shape_t> shapes;
+    std::vector<tinyobj::material_t> materials;
+    std::string warn, err;
+
+    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, MODEL_PATH.c_str())) {
+        throw std::runtime_error(warn + err);
+    }
+
+    std::unordered_map<Vertex, uint32_t> uniqueVertices{};
+
+    for (const auto& shape : shapes) {
+        for (const auto& index : shape.mesh.indices) {
+            Vertex vertex{};
+
+            vertex.pos = {
+                attrib.vertices[3 * index.vertex_index + 0],
+                attrib.vertices[3 * index.vertex_index + 1],
+                attrib.vertices[3 * index.vertex_index + 2]
+            };
+
+            vertex.texCoord = {
+                attrib.texcoords[2 * index.texcoord_index + 0],
+                1.0f - attrib.texcoords[2 * index.texcoord_index + 1]
+            };
+
+            vertex.color = { 5.0f, 5.0f, 5.0f };
+
+            if (uniqueVertices.count(vertex) == 0) {
+                uniqueVertices[vertex] = static_cast<uint32_t>(_vertices.size());
+                _vertices.push_back(vertex);
+            }
+
+            _indices.push_back(uniqueVertices[vertex]);
+        }
+    }
+}
+
+
+/******************************************************************//**
 * \brief   Set up Vulkan
 * 
 * \author  gernot
@@ -552,7 +604,6 @@ void CAppliction::initWindow( void ) {
 **********************************************************************/
 void CAppliction::initVulkan( void )
 {
-
     vk_utility::logging::Log log;
 
     //vk_utility::Init();
@@ -620,8 +671,8 @@ void CAppliction::initVulkan( void )
 * \date    2017-09-30
 * \version 1.0
 **********************************************************************/
-void CAppliction::mainLoop( void ) {
-
+void CAppliction::mainLoop( void ) 
+{
     //! To keep the application running until either an error occurs or the window is closed, we need to add an event loop 
     while (!glfwWindowShouldClose(_wnd)) {
         glfwPollEvents();
@@ -643,14 +694,13 @@ void CAppliction::mainLoop( void ) {
 * \date    2017-09-30
 * \version 1.0
 **********************************************************************/
-void CAppliction::cleanup( void ) {
-
+void CAppliction::cleanup( void ) 
+{
     cleanupSwapChain();
 
     _descriptor_set_layout = nullptr;
     _texture_samplers.clear();
     _texture_image_view_memorys.clear();
-    _texture_image_mipmap_levels.clear();
     _index_buffers.clear();
     _vertex_buffers.clear();
     _in_flight_fences.clear();
@@ -681,8 +731,8 @@ void CAppliction::framebufferResizeCallback(
     GLFWwindow* window, //!< GLFW window handle (pointer)
     int         width,  //!< new width of the window
     int         height  //!< new height of the window
-    ) {
-
+    ) 
+{
     if ( window == nullptr )
         return;
     CAppliction *appPtr = (CAppliction*)glfwGetWindowUserPointer( window );
@@ -703,8 +753,8 @@ void CAppliction::framebufferResizeCallback(
 void CAppliction::resize( 
     int width, //!< new width of the window
     int height //!< new height of the window
-    ) {
-
+    ) 
+{
   _framebufferResized = true;
 }
 
@@ -716,8 +766,8 @@ void CAppliction::resize(
 * \date    2018-11-03
 * \version 1.0
 **********************************************************************/
-void CAppliction::recreateSwapChain( void ) {
-    
+void CAppliction::recreateSwapChain( void ) 
+{    
     if ( !_device )
         return;
 
@@ -848,11 +898,6 @@ void CAppliction::createSwapChain(bool initilaize)
     {
         createTextureImage();
 
-        _texture_samplers.push_back(vk_utility::image::Sampler::NewPtr(
-            *_device,
-            vk_utility::image::SamplerFactoryDefault()
-            .set_mipmap_levels(_texture_image_mipmap_levels.back())));
-
         loadModel();
     
         _vertex_buffers.push_back(vk_utility::buffer::BufferAndMemory::New(
@@ -965,11 +1010,10 @@ void CAppliction::createTextureImage( void ) {
         _device, vk_utility::buffer::BufferAndMemoryInformation::NewStaging(imageSize), pixels, vk_utility::buffer::BufferOperatorCopyDataToMemory::New());
     stbi_image_free( pixels );
 
-    uint32_t mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
-    _texture_image_mipmap_levels.push_back(mipLevels);
-
+    uint32_t mipmap_levels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
+   
     vk::ImageUsageFlags usage_flags = vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled;
-    if (_texture_image_mipmap_levels.back() > 1)
+    if (mipmap_levels > 1)
         usage_flags |= vk::ImageUsageFlagBits::eTransferSrc;
 
     auto image_and_memory = vk_utility::image::ImageAndMemory::NewPtr(
@@ -978,7 +1022,7 @@ void CAppliction::createTextureImage( void ) {
         .set_image_factory(&vk_utility::image::ImageFactory2D()
             .set_size(texWidth, texHeight)
             .set_format(vk::Format::eR8G8B8A8Srgb)
-            .set_mipmap_levels(_texture_image_mipmap_levels.back())
+            .set_mipmap_levels(mipmap_levels)
             .set_samples(vk::SampleCountFlagBits::e1)
             .set_usage(usage_flags))
         .set_device_memory_factory(&vk_utility::image::ImageDeviceMemoryFactory()
@@ -1003,7 +1047,7 @@ void CAppliction::createTextureImage( void ) {
     vk_utility::image::ImageTransitionCommand()
         .set_command_buffer_factory(&single_time_command_factory)
         .set_image(*image_and_memory->get().image())
-        .set_mipmap_levels(_texture_image_mipmap_levels.back())
+        .set_mipmap_levels(mipmap_levels)
         .set_old_layout(vk::ImageLayout::eUndefined)
         .set_new_layout(vk::ImageLayout::eTransferDstOptimal)
         .execute_command(*_device, *_command_pool);
@@ -1017,7 +1061,7 @@ void CAppliction::createTextureImage( void ) {
 
     //! To be able to start sampling from the texture image in the shader, we need one last transition to prepare it for shader access:
     //transitioned to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL while generating mipmaps
-    if (_texture_image_mipmap_levels.back() == 1)
+    if (mipmap_levels == 1)
         vk_utility::image::ImageTransitionCommand()
             .set_command_buffer_factory(&single_time_command_factory)
             .set_image(*image_and_memory->get().image())
@@ -1028,209 +1072,30 @@ void CAppliction::createTextureImage( void ) {
     
     staging_buffer->destroy();
 
-     if (_texture_image_mipmap_levels.back() > 1)
-         generateMipmaps(*image_and_memory->get().image(), vk::Format::eR8G8B8A8Srgb, texWidth, texHeight, _texture_image_mipmap_levels.back());
+    if (mipmap_levels > 1)
+        vk_utility::image::GeneratrMipmapsCommand()
+            .set_command_buffer_factory(&single_time_command_factory)
+            .set_image(*image_and_memory->get().image())
+            .set_size(static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight))
+            .set_mipmap_levels(mipmap_levels)
+            .set_format(vk::Format::eR8G8B8A8Srgb)
+            .execute_command(*_device, *_command_pool);
 
      auto image_view = vk_utility::image::ImageView::NewPtr(
          _device->get(),
          vk_utility::image::ImageViewFactoryDefault()
-         .set_image(*image_and_memory->get().image())
-         .set_format(vk::Format::eR8G8B8A8Srgb)
-         .set_aspect_flags(vk::ImageAspectFlagBits::eColor)
-         .set_mipmap_levels(_texture_image_mipmap_levels.back()));
+             .set_image(*image_and_memory->get().image())
+             .set_format(vk::Format::eR8G8B8A8Srgb)
+             .set_aspect_flags(vk::ImageAspectFlagBits::eColor)
+             .set_mipmap_levels(mipmap_levels));
 
     _texture_image_view_memorys.emplace_back(
         vk_utility::image::ImageViewAndImageMemory::New(image_and_memory->get().detach_device_memory(), image_and_memory->get().detach_image(), image_view));
-}
 
-
-/******************************************************************//**
-* \brief Generate mipmaps
-* 
-* \author  gernot
-* \date    2020-06-01
-* \version 1.0
-**********************************************************************/
-void CAppliction::generateMipmaps(vk::Image image, vk::Format imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels)
-{
-    // Check if image format supports linear blitting
-    vk::FormatProperties formatProperties = _physical_device->get()->getFormatProperties(imageFormat);
-
-    if (!(formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImageFilterLinear)) {
-        throw std::runtime_error("texture image format does not support linear blitting!");
-    }
-
-    auto command_buffer_factory = vk_utility::command::CommandBufferFactorySingleTimeCommand()
-        .set_graphics_queue(_graphicsQueue);
-    auto command_buffer = vk_utility::command::CommandBuffer::NewPtr(_device->get(), _command_pool->get(), command_buffer_factory);
-
-    vk::ImageSubresourceRange subresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
-    vk::ImageMemoryBarrier barrier
-    (
-        vk::AccessFlags{},
-        vk::AccessFlags{},
-        vk::ImageLayout::eUndefined,
-        vk::ImageLayout::eUndefined,
-        VK_QUEUE_FAMILY_IGNORED,
-        VK_QUEUE_FAMILY_IGNORED,
-        image,
-        subresourceRange
-    );
-
-    //! We're going to make several transitions, so we'll reuse this `vk::ImageMemoryBarrier`. 
-    //! The fields set above will remain the same for all barriers. subresourceRange.miplevel, oldLayout, newLayout, srcAccessMask, and dstAccessMask will be changed for each transition.
-
-    int32_t mipWidth = texWidth;
-    int32_t mipHeight = texHeight;
-
-    for (uint32_t i = 1; i < mipLevels; i++) {
-
-        //! This loop will record each of the `vk::CmdBlitImage` commands. Note that the loop variable starts at 1, not 0.
-
-        barrier.subresourceRange.setBaseMipLevel(i - 1);
-        barrier
-            .setOldLayout(vk::ImageLayout::eTransferDstOptimal)
-            .setNewLayout(vk::ImageLayout::eTransferSrcOptimal)
-            .setSrcAccessMask(vk::AccessFlagBits::eTransferWrite)
-            .setDstAccessMask(vk::AccessFlagBits::eTransferRead);
-
-        command_buffer->get()->pipelineBarrier(
-            vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer, vk::DependencyFlags(),
-            0, nullptr,
-            0, nullptr,
-            1, &barrier);
-
-        //! First, we transition level i - 1 to VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL.
-        //! This transition will wait for level i - 1 to be filled, either from the previous blit command, or from vkCmdCopyBufferToImage.
-        //! The current blit command will wait on this transition.
-
-        vk::ImageSubresourceLayers srcSubresource(vk::ImageAspectFlagBits::eColor, i - 1, 0, 1);
-        std::array<vk::Offset3D, 2> srcOffsets{vk::Offset3D(0, 0, 0), vk::Offset3D(mipWidth, mipHeight, 1)};
-        vk::ImageSubresourceLayers dstSubresource(vk::ImageAspectFlagBits::eColor, i, 0, 1);
-        std::array<vk::Offset3D, 2> dstOffsets{vk::Offset3D(0, 0, 0), vk::Offset3D(mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1)};
-        vk::ImageBlit blit
-        (
-            srcSubresource,
-            srcOffsets,
-            dstSubresource,
-            dstOffsets
-        );
-
-        //! Next, we specify the regions that will be used in the blit operation. 
-        //! The source mipmap level is i - 1 and the destination mipmap level is i. 
-        //! The two elements of the srcOffsets array determine the 3D region that data will be blitted from.
-        //! dstOffsets determines the region that data will be blitted to. 
-        //! The X and Y dimensions of the dstOffsets[1] are divided by two since each mipmap level is half the size of the previous level.
-        //! The Z dimension of srcOffsets[1] and dstOffsets[1] must be 1, since a 2D image has a depth of 1.
-
-        command_buffer->get()->blitImage(
-            image, vk::ImageLayout::eTransferSrcOptimal,
-            image, vk::ImageLayout::eTransferDstOptimal,
-            1, &blit,
-            vk::Filter::eLinear);
-
-        //! Now, we record the blit command. Note that textureImage is used for both the srcImage and dstImage parameter. 
-        //! This is because we're blitting between different levels of the same image.
-        //! The source mipmap level was just transitioned to VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL and the destination level is still in VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL from createTextureImage.
-
-        //! The last parameter allows us to specify a `vk::Filter` to use in the blit. 
-        //! We have the same filtering options here that we had when making the `vk::Sampler`. 
-        //! We use the VK_FILTER_LINEAR to enable interpolation.
-
-        barrier
-            .setOldLayout(vk::ImageLayout::eTransferSrcOptimal)
-            .setNewLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
-            .setSrcAccessMask(vk::AccessFlagBits::eTransferRead)
-            .setDstAccessMask(vk::AccessFlagBits::eShaderRead);
-
-        command_buffer->get()->pipelineBarrier(
-            vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eFragmentShader, vk::DependencyFlags(),
-            0, nullptr,
-            0, nullptr,
-            1, &barrier);
-
-        if (mipWidth > 1) mipWidth /= 2;
-        if (mipHeight > 1) mipHeight /= 2;
-
-        //! At the end of the loop, we divide the current mipmap dimensions by two. 
-        //! We check each dimension before the division to ensure that dimension never becomes 0. 
-        //! This handles cases where the image is not square, since one of the mipmap dimensions would reach 1 before the other dimension. 
-        //! When this happens, that dimension should remain 1 for all remaining levels.
-    }
-
-    //! Before we end the command buffer, we insert one more pipeline barrier. 
-    //! This barrier transitions the last mipmap level from VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL. 
-    //! This wasn't handled by the loop, since the last mipmap level is never blitted from.
-
-    barrier.subresourceRange.setBaseMipLevel(mipLevels - 1);
-    barrier
-        .setOldLayout(vk::ImageLayout::eTransferDstOptimal)
-        .setNewLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
-        .setSrcAccessMask(vk::AccessFlagBits::eTransferWrite)
-        .setDstAccessMask(vk::AccessFlagBits::eShaderRead);
-
-    command_buffer->get()->pipelineBarrier(
-        vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eFragmentShader, vk::DependencyFlags(),
-        0, nullptr,
-        0, nullptr,
-        1, &barrier);
-    command_buffer_factory.End(command_buffer->get());
-}
-
-
-/******************************************************************//**
-* \brief Load scene.  
-* 
-* \author  gernot
-* \date    2018-11-04
-* \version 1.0
-**********************************************************************/
-void CAppliction::loadModel(void) {
-
-    if (_load_model == false)
-    {
-        _vertices = cube_vertices;
-        _indices = cube_indices;
-        return;
-    }
-
-
-    tinyobj::attrib_t attrib;
-    std::vector<tinyobj::shape_t> shapes;
-    std::vector<tinyobj::material_t> materials;
-    std::string warn, err;
-
-    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, MODEL_PATH.c_str())) {
-        throw std::runtime_error(warn + err);
-    }
-
-    std::unordered_map<Vertex, uint32_t> uniqueVertices{};
-
-    for (const auto& shape : shapes) {
-        for (const auto& index : shape.mesh.indices) {
-            Vertex vertex{};
-
-            vertex.pos = {
-                attrib.vertices[3 * index.vertex_index + 0],
-                attrib.vertices[3 * index.vertex_index + 1],
-                attrib.vertices[3 * index.vertex_index + 2]
-            };
-
-            vertex.texCoord = {
-                attrib.texcoords[2 * index.texcoord_index + 0],
-                1.0f - attrib.texcoords[2 * index.texcoord_index + 1]
-            };
-
-            vertex.color = {5.0f, 5.0f, 5.0f};
-
-            if (uniqueVertices.count(vertex) == 0) {
-                uniqueVertices[vertex] = static_cast<uint32_t>(_vertices.size());
-                _vertices.push_back(vertex);
-            }
-
-            _indices.push_back(uniqueVertices[vertex]);
-        }
-    }
+    _texture_samplers.push_back(vk_utility::image::Sampler::NewPtr(
+        *_device,
+        vk_utility::image::SamplerFactoryDefault()
+            .set_mipmap_levels(mipmap_levels)));
 }
 
 
@@ -1241,8 +1106,8 @@ void CAppliction::loadModel(void) {
 * \date    2019-05-04
 * \version 1.0
 **********************************************************************/
-void CAppliction::createDescriptorSets( void ) {
-
+void CAppliction::createDescriptorSets( void )
+{
     if (!_device)
         throw CException("no logical vulkan device!");
     if (!_descriptor_pool)
@@ -1341,8 +1206,8 @@ void CAppliction::createDescriptorSets( void ) {
 * \date    2018-05-25
 * \version 1.0
 **********************************************************************/
-void CAppliction::createCommandBuffers( void ) {
-
+void CAppliction::createCommandBuffers( void ) 
+{
     if (!_device)
         throw CException("no logical vulkan device!");
     if (!_command_pool)
@@ -1508,8 +1373,8 @@ void CAppliction::createCommandBuffers( void ) {
 * \date    2018-05-27
 * \version 1.0
 **********************************************************************/
-void CAppliction::drawFrame( void ) {
-
+void CAppliction::drawFrame( void )
+{
     //! The `vkWaitForFences` function takes an array of fences and waits for either any or all of them to be signaled before returning.
     //! The `VK_TRUE` we pass here indicates that we want to wait for all fences, but in the case of a single one it obviously doesn't matter.
     //! Just like `vkAcquireNextImageKHR` this function also takes a timeout. Unlike the semaphores, we manually need to restore the fence to the unsignaled state by resetting it with the vkResetFences call.
@@ -1657,8 +1522,8 @@ void CAppliction::updateUniformBuffer( uint32_t imageIndex )
 using HelloTriangleApplication = VulkanLoader::CAppliction;
 
 
-int main() {
-    
+int main() 
+{    
     static bool verbose                      = true;
     static bool enable_all_validation_layers = false;
     static bool enable_surface_extensions    = true;

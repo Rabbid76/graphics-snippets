@@ -155,8 +155,8 @@ namespace vk_utility
                     0, nullptr,
                     1, &barrier
                 );
-                _command_buffer_factory->End(command_buffer);
 
+                _command_buffer_factory->End(command_buffer);
                 device.freeCommandBuffers(command_pool, command_buffer);
                 return *this;
             }

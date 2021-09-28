@@ -190,6 +190,7 @@
     <ClInclude Include="include\vk_utility_framebuffer_factory.h" />
     <ClInclude Include="include\vk_utility_framebuffer_factory_default.h" />
     <ClInclude Include="include\vk_utility_image_factory.h" />
+    <ClInclude Include="include\vk_utility_image_generate_mipmaps_command.h" />
     <ClInclude Include="include\vk_utility_image_transition_command.h" />
     <ClInclude Include="include\vk_utility_image_view_and_image_memory_factory.h" />
     <ClInclude Include="include\vk_utility_image_view_and_image_memory_factory_default.h" />
