@@ -3,7 +3,6 @@
 
 #include <vk_utility_exception.h>
 #include <vk_utility_vulkan_include.h>
-#include <vk_utility_instance.h>
 
 
 #include <string>

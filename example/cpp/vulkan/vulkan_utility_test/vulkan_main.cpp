@@ -619,12 +619,12 @@ void CAppliction::initVulkan( void )
     if (Verbose())
          vk_utility::logging::LogList(log).log("GLFW extensions supported", vk_glfw_utility::core::Extensions().get_names());
 
-    _instance = vk_utility::core::InstanceFactory()
-        .verbose(Verbose())
-        .title("Vulkan tutorial - utility")
-        .validation_layers(_enableAllValidationLayers, _requestedValidationLayers, _excludedValidationLayers)
-        .extensions(_requestedExtensions, _enableDebugExtensions)
-        .New();
+    _instance = vk_utility::core::Instance::New(
+        vk_utility::core::InstanceFactoryDefault()
+            .verbose(Verbose())
+            .title("Vulkan tutorial - utility")
+            .validation_layers(_enableAllValidationLayers, _requestedValidationLayers, _excludedValidationLayers)
+            .extensions(_requestedExtensions, _enableDebugExtensions));
 
     _debubCallback = vk_utility::core::Debug::New(_instance, _enableDebugInformation, _enableValidationWarnings);
 
@@ -1082,7 +1082,7 @@ void CAppliction::createTextureImage( void ) {
             .execute_command(*_device, *_command_pool);
 
      auto image_view = vk_utility::image::ImageView::NewPtr(
-         _device->get(),
+         *_device,
          vk_utility::image::ImageViewFactoryDefault()
              .set_image(*image_and_memory->get().image())
              .set_format(vk::Format::eR8G8B8A8Srgb)

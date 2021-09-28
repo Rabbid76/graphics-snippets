@@ -1,9 +1,7 @@
 #pragma once
 
-
 #include <vk_utility_exception.h>
 #include <vk_utility_vulkan_include.h>
-#include <vk_utility_instance.h>
 #include <vk_utility_validation_layers.h>
 #include <vk_utility_extensions.h>
 #include <vk_utility_logging.h>
@@ -20,25 +18,24 @@ namespace vk_utility
         /// <summary>
         /// Interface for Vulkan instance (`vk::Instance`) factories
         /// </summary>
-        class IInstanceFactory
+        class InstanceFactory
         {
         public:
 
-            virtual IInstanceFactory &verbose(bool verbose) = 0;
-            virtual IInstanceFactory &title(const std::string &title) = 0;
-            virtual IInstanceFactory &validation_layers(bool include_all, const std::vector<std::string> &include, const std::vector<std::string> &exclude) = 0;
-            virtual IInstanceFactory &extensions(const std::vector<std::string> &include, bool enable_debug_extension) = 0;
+            virtual InstanceFactory &verbose(bool verbose) = 0;
+            virtual InstanceFactory &title(const std::string &title) = 0;
+            virtual InstanceFactory &validation_layers(bool include_all, const std::vector<std::string> &include, const std::vector<std::string> &exclude) = 0;
+            virtual InstanceFactory &extensions(const std::vector<std::string> &include, bool enable_debug_extension) = 0;
 
-            virtual Instance Create(void) = 0;
-            virtual InstancePtr New(void) = 0;
+            virtual vk::Instance New(void) = 0;
         };
 
 
         /// <summary>
         /// DEfault Vulkan instance (`vk::Instance`) factory
         /// </summary>
-        class InstanceFactory
-            : public IInstanceFactory
+        class InstanceFactoryDefault
+            : public InstanceFactory
         {
         private:
 
@@ -81,18 +78,24 @@ namespace vk_utility
                 return *this;
             }
 
-            virtual Instance Create(void)
+            virtual vk::Instance New(void) override
             {
                 auto selected_validation_layers = _validation_layers.select(_enable_all_validation_layers, _requested_validation_layers, _excluded_validation_layers);
                 add_debug_extensions(selected_validation_layers);
                 auto selected_extensions = _extensions.select(_requested_extensions);
                 log(selected_validation_layers, selected_extensions);
-                return Instance::Create(create_application_information(), selected_validation_layers, selected_extensions);
-            }
+                
+                vk_utility::type::StringPointerArray validation_layer_list(selected_validation_layers);
+                vk_utility::type::StringPointerArray extension_list(selected_extensions);
+                auto application_info = create_application_information();
+                vk::InstanceCreateInfo instance_information(
+                    {},
+                    &application_info,
+                    validation_layer_list.list(),
+                    extension_list.list()
+                );
 
-            virtual InstancePtr New(void)
-            {
-                return vk_utility::make_shared(Create());
+                return vk::createInstance(instance_information);
             }
 
         private:

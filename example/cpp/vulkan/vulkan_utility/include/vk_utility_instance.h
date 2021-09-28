@@ -1,9 +1,8 @@
 #pragma once
 
-
-#include <vk_utility_object.h>
-#include <vk_utility_exception.h>
-#include <vk_utility_vulkan_include.h>
+#include "vk_utility_object.h"
+#include "vk_utility_exception.h"
+#include "vk_utility_instance_factory.h"
 
 #include <memory>
 
@@ -25,35 +24,14 @@ namespace vk_utility
         {
         public:
 
-            template <typename T_VALIDAITON_LAYERS, typename T_EXTENSIONS>
-            static Instance Create(const vk::ApplicationInfo &application_info, const T_VALIDAITON_LAYERS &validation_layers, const T_EXTENSIONS &extensions)
+            static Instance Create(InstanceFactory &instance_factory)
             {
-                vk_utility::type::StringPointerArray validation_layer_list(validation_layers);
-                vk_utility::type::StringPointerArray extension_list(extensions);
-                
-                vk::InstanceCreateInfo create_info(
-                    {},
-                    &application_info,
-                    validation_layer_list.list(),
-                    extension_list.list());
-
-                return Instance(create_info);
+                return Instance(instance_factory.New());
             }
 
-            template <typename T_VALIDAITON_LAYERS, typename T_EXTENSIONS>
-            static InstancePtr New(const vk::ApplicationInfo &application_info, const T_VALIDAITON_LAYERS &validation_layers, const T_EXTENSIONS &extensions)
+            static InstancePtr New(InstanceFactory& instance_factory)
             {
-                return vk_utility::make_shared(Create(application_info, validation_layers, extensions));
-            }
-
-            static Instance Create(vk::InstanceCreateInfo create_info)
-            {
-                return Instance(create_info);
-            }
-
-            static InstancePtr New(vk::InstanceCreateInfo create_info)
-            {
-                return vk_utility::make_shared(Create(create_info));
+                return vk_utility::make_shared(Create(instance_factory));
             }
 
             Instance(void) = default;
@@ -62,10 +40,6 @@ namespace vk_utility
 
             Instance(vk::Instance device)
                 : GenericObject(device)
-            {}
-
-            Instance(vk::InstanceCreateInfo createInfo)
-                : GenericObject(vk::createInstance(createInfo))
             {
 #if VK_UTILITY_DYNAMIC_LOADING == 1
                 VULKAN_HPP_DEFAULT_DISPATCHER.init(_vk_object);
@@ -76,8 +50,6 @@ namespace vk_utility
             {
                 if (_vk_object)
                 {
-                    // The `VkInstance` should be only destroyed right before the program exits. 
-                    // It can be destroyed in cleanup with the `VkDestroyInstance` function.
                     _vk_object.destroy();
                     _vk_object = vk::Instance();
                 }
