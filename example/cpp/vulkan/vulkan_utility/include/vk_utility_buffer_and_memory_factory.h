@@ -12,7 +12,7 @@ namespace vk_utility
         {
         public:
 
-            virtual std::tuple<vk::Buffer, vk::DeviceMemory, vk::DeviceSize> New(vk::Device device) const = 0;
+            virtual std::tuple<vk::Buffer, vk::DeviceSize, vk::DeviceMemory, vk::DeviceSize> New(vk::Device device) const = 0;
         };
     }
 }

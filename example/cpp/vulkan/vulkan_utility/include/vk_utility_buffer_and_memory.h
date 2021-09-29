@@ -40,35 +40,10 @@ namespace vk_utility
 
         public:
 
-            
-            static BufferAndMemory New(device::DeviceMemoryPtr memory, BufferPtr buffer)
-            {
-                return BufferAndMemory(buffer, memory);
-            }
-
-            template<typename T>
-            static BufferAndMemoryPtr New(
-                vk_utility::device::DevicePtr device,
-                const BufferFactory& buffer_factory,
-                BufferDeviceMemoryFactory& buffer_memory_factory,
-                const std::vector<T> &source_data,
-                BufferOperatorCopyDataPtr copy_operator)
-            {
-                BufferPtr buffer = Buffer::NewPtr(*device, buffer_factory);
-                vk_utility::device::DeviceMemoryPtr memory = vk_utility::device::DeviceMemory::NewPtr(
-                    *device->get(),
-                    buffer_memory_factory.set_from_physical_device(device->get().physical_device()).set_buffer(*buffer->get())
-                );
-                auto buffer_and_memory = make_shared(New(memory, buffer));
-                copy_operator->copy(buffer_and_memory, 0, sizeof(T) * source_data.size(), source_data.data());
-                return buffer_and_memory;
-            }
-            
-
             static BufferAndMemory New(vk::Device device, const BufferAndMemoryFactory& buffer_and_memory_factory)
             {
-                auto [buffer, buffer_memory, memory_size] = buffer_and_memory_factory.New(device);
-                return BufferAndMemory(device, buffer, buffer_memory, memory_size);
+                auto [buffer, buffer_size, buffer_memory, memory_size] = buffer_and_memory_factory.New(device);
+                return BufferAndMemory(device, buffer, buffer_size, buffer_memory, memory_size);
             }
 
             static BufferAndMemoryPtr NewPtr(vk::Device device, const BufferAndMemoryFactory& buffer_and_memory_factory)
@@ -85,8 +60,8 @@ namespace vk_utility
                 , _device_memory(device_memory)
             {}
 
-            BufferAndMemory(vk::Device device, vk::Buffer buffer, vk::DeviceMemory device_memory, vk::DeviceSize memory_size)
-                : _buffer(make_shared(Buffer(device, buffer, memory_size)))
+            BufferAndMemory(vk::Device device, vk::Buffer buffer, vk::DeviceSize buffer_size, vk::DeviceMemory device_memory, vk::DeviceSize memory_size)
+                : _buffer(make_shared(Buffer(device, buffer, buffer_size)))
                 , _device_memory(make_shared(device::DeviceMemory(device, device_memory, memory_size)))
             {}
 

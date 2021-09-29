@@ -417,6 +417,7 @@ private: // private attributes
 };
 
 
+// TODO $$$ BufferCopyCommand
 class CopyBufferHelper
     : public vk_utility::buffer::BufferOperatorCopyBuffer
 {
@@ -904,7 +905,6 @@ void CAppliction::createSwapChain(bool initilaize)
 
         loadModel();
 
-        /*
         auto vertex_buffer = vk_utility::buffer::BufferAndMemory::NewPtr(
             *_device,
             vk_utility::buffer::BufferAndMemoryFactoryDefault()
@@ -918,25 +918,20 @@ void CAppliction::createSwapChain(bool initilaize)
         vk_utility::buffer::BufferOperatorCopyDataStaging::New(_device, std::make_shared<CopyBufferHelper>(*this))
             ->copy(vertex_buffer, 0, sizeof(_vertices[0]) * _vertices.size(), _vertices.data());
         _vertex_buffers.push_back(vertex_buffer);
-        */
-        
-        _vertex_buffers.push_back(vk_utility::buffer::BufferAndMemory::New(
-            _device, 
-            vk_utility::buffer::BufferFactoryDefault()
-                .set_buffer_size(sizeof(_vertices[0]) * _vertices.size())
-                .set_vertex_buffer_usage(),
-            vk_utility::buffer::BufferDeviceMemoryFactory(),
-            _vertices, 
-            vk_utility::buffer::BufferOperatorCopyDataStaging::New(_device, std::make_shared<CopyBufferHelper>(*this))));
-        
-        _index_buffers.push_back(vk_utility::buffer::BufferAndMemory::New(
-            _device,
-            vk_utility::buffer::BufferFactoryDefault()
-                .set_buffer_size(sizeof(_indices[0]) * _indices.size())
-                .set_index_buffer_usage(),
-            vk_utility::buffer::BufferDeviceMemoryFactory(),
-            _indices,
-            vk_utility::buffer::BufferOperatorCopyDataStaging::New(_device, std::make_shared<CopyBufferHelper>(*this))));
+
+        auto index_buffer = vk_utility::buffer::BufferAndMemory::NewPtr(
+            *_device,
+            vk_utility::buffer::BufferAndMemoryFactoryDefault()
+            .set_buffer_factory(
+                &vk_utility::buffer::BufferFactoryDefault()
+                    .set_buffer_size(sizeof(_indices[0]) * _indices.size())
+                    .set_index_buffer_usage())
+            .set_buffer_memory_factory(
+                &vk_utility::buffer::BufferDeviceMemoryFactory()
+                    .set_from_physical_device(*_device->get().physical_device())));
+        vk_utility::buffer::BufferOperatorCopyDataStaging::New(_device, std::make_shared<CopyBufferHelper>(*this))
+            ->copy(index_buffer, 0, sizeof(_indices[0]) * _indices.size(), _indices.data());
+        _index_buffers.push_back(index_buffer);
     }
 
     // We're going to copy new data to the uniform buffer every frame, so it doesn't really make any sense to have a staging buffer.

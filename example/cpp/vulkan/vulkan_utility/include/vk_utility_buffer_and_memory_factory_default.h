@@ -30,13 +30,13 @@ namespace vk_utility
                 return *this;
             }
 
-            std::tuple<vk::Buffer, vk::DeviceMemory, vk::DeviceSize> New(vk::Device device) const override
+            std::tuple<vk::Buffer, vk::DeviceSize, vk::DeviceMemory, vk::DeviceSize> New(vk::Device device) const override
             {
                 auto [buffer, buffer_size] = _buffer_factory->New(device);
                 auto [buffer_memory, memory_size] = _buffer_device_memory_factory
                     ->set_buffer(buffer)
                     .New(device);
-                return std::make_tuple(buffer, buffer_memory, memory_size);
+                return std::make_tuple(buffer, buffer_size, buffer_memory, memory_size);
             }
         };
     }

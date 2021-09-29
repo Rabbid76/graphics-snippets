@@ -75,7 +75,7 @@ namespace vk_utility
                                 .set_staging_memory_properties()
                                 .set_from_physical_device(*_device->get().physical_device())));
                 BufferOperatorCopyDataToMemory::New()
-                    ->copy(staging_buffer, 0, size, source_data);
+                    ->copy(staging_buffer, 0, staging_buffer->get().buffer().size(), source_data);
                 _buffer_copy_operator->copy(buffer_and_memory, staging_buffer);
                 staging_buffer->get().destroy();
                 return *this;
