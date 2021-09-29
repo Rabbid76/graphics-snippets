@@ -10,7 +10,7 @@ namespace vk_utility
     namespace image
     {
         class ImageAndMemory;
-        using ImageAndMemoryPtr = vk_utility::Ptr<ImageAndMemory>;
+        using ImageAndMemoryPtr = Ptr<ImageAndMemory>;
 
         class ImageAndMemory
             : public GenericObject<int>
@@ -30,7 +30,7 @@ namespace vk_utility
 
             static ImageAndMemoryPtr NewPtr(vk::Device device, ImageAndMemoryFactory& image_and_memory_factory)
             {
-                return vk_utility::make_shared<ImageAndMemory>(New(device, image_and_memory_factory));
+                return make_shared<ImageAndMemory>(New(device, image_and_memory_factory));
             }
 
             ImageAndMemory(void) = default;
@@ -39,8 +39,8 @@ namespace vk_utility
 
             ImageAndMemory(vk::Device device, vk::Image image, vk::DeviceMemory device_memory, vk::DeviceSize memory_size)
                 : GenericObject(0)
-                , _image(vk_utility::make_shared(Image(device, image)))
-                , _device_memory(vk_utility::make_shared(vk_utility::device::DeviceMemory(device, device_memory, memory_size)))
+                , _image(make_shared(Image(device, image)))
+                , _device_memory(make_shared(device::DeviceMemory(device, device_memory, memory_size)))
             {}
 
             virtual void destroy(void) override

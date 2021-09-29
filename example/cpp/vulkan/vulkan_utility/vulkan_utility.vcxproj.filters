@@ -330,13 +330,19 @@
     <ClInclude Include="include\vk_utility_device_memory_factory_find_type.h">
       <Filter>device</Filter>
     </ClInclude>
-    <ClInclude Include="include\vk_utility_buffer_device_memory_factory_default.h">
+    <ClInclude Include="include\vk_utility_buffer_device_memory_factory.h">
       <Filter>buffer</Filter>
     </ClInclude>
     <ClInclude Include="include\vk_utility_buffer_factory.h">
       <Filter>buffer</Filter>
     </ClInclude>
     <ClInclude Include="include\vk_utility_buffer_factory_default.h">
+      <Filter>buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_buffer_and_memory_factory.h">
+      <Filter>buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_buffer_and_memory_factory_default.h">
       <Filter>buffer</Filter>
     </ClInclude>
   </ItemGroup>

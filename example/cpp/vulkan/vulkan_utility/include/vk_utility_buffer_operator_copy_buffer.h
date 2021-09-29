@@ -13,7 +13,7 @@ namespace vk_utility
     namespace buffer
     {
         class BufferAndMemory;
-        using BufferAndMemoryPtr = std::shared_ptr<BufferAndMemory>;
+        using BufferAndMemoryPtr = Ptr<BufferAndMemory>;
         class BufferOperatorCopyBuffer;
         using BufferOperatorCopyBufferPtr = std::shared_ptr<BufferOperatorCopyBuffer>;
         

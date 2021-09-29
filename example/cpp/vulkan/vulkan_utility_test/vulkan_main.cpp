@@ -107,9 +107,10 @@
 #include <vk_utility_fence_factory_default.h>
 #include <vk_utility_format_selector.h>
 #include <vk_utility_image_generate_mipmaps_command.h>
-#include <vk_utility_buffer_device_memory_factory_default.h>
+#include <vk_utility_buffer_device_memory_factory.h>
 #include "vk_utility_buffer_factory_default.h"
 #include "vk_utility_device_memory_factory_default.h"
+#include "vk_utility_buffer_and_memory_factory_default.h"
 
 // GLFW
 
@@ -454,8 +455,8 @@ public:
         auto command_buffer = vk_utility::command::CommandBuffer::NewPtr(_app._device->get(), _app._command_pool->get(), command_buffer_factory);
 
 
-        std::vector<vk::BufferCopy> copyRegions{vk::BufferCopy(0, 0, destination_buffer->buffer().size())};
-        command_buffer->get()->copyBuffer(source_buffer->buffer(), destination_buffer->buffer(), copyRegions);
+        std::vector<vk::BufferCopy> copyRegions{vk::BufferCopy(0, 0, destination_buffer->get().buffer().size())};
+        command_buffer->get()->copyBuffer(source_buffer->get().buffer(), destination_buffer->get().buffer(), copyRegions);
         
         command_buffer_factory.End(command_buffer->get());
 
@@ -902,7 +903,23 @@ void CAppliction::createSwapChain(bool initilaize)
         createTextureImage();
 
         loadModel();
-    
+
+        /*
+        auto vertex_buffer = vk_utility::buffer::BufferAndMemory::NewPtr(
+            *_device,
+            vk_utility::buffer::BufferAndMemoryFactoryDefault()
+            .set_buffer_factory(
+                &vk_utility::buffer::BufferFactoryDefault()
+                    .set_buffer_size(sizeof(_vertices[0]) * _vertices.size())
+                    .set_vertex_buffer_usage())
+            .set_buffer_memory_factory(
+                &vk_utility::buffer::BufferDeviceMemoryFactory()
+                    .set_from_physical_device(*_device->get().physical_device())));
+        vk_utility::buffer::BufferOperatorCopyDataStaging::New(_device, std::make_shared<CopyBufferHelper>(*this))
+            ->copy(vertex_buffer, 0, sizeof(_vertices[0]) * _vertices.size(), _vertices.data());
+        _vertex_buffers.push_back(vertex_buffer);
+        */
+        
         _vertex_buffers.push_back(vk_utility::buffer::BufferAndMemory::New(
             _device, 
             vk_utility::buffer::BufferFactoryDefault()
@@ -911,6 +928,7 @@ void CAppliction::createSwapChain(bool initilaize)
             vk_utility::buffer::BufferDeviceMemoryFactory(),
             _vertices, 
             vk_utility::buffer::BufferOperatorCopyDataStaging::New(_device, std::make_shared<CopyBufferHelper>(*this))));
+        
         _index_buffers.push_back(vk_utility::buffer::BufferAndMemory::New(
             _device,
             vk_utility::buffer::BufferFactoryDefault()
@@ -933,12 +951,17 @@ void CAppliction::createSwapChain(bool initilaize)
     vk::DeviceSize bufferSize = sizeof(UniformBufferObject);
     for (size_t i = 0; i < _swapchain->get().no_of_swapchain_images(); i++)
     {
-        _uniform_buffers.push_back(vk_utility::buffer::BufferAndMemory::New(
-            _device, 
-            vk_utility::buffer::BufferFactoryDefault()
-                .set_buffer_size(bufferSize)
-                .set_coherent_uniform_buffer_usage(),
-            vk_utility::buffer::BufferDeviceMemoryFactory().set_coherent_memory_properties()));
+        _uniform_buffers.push_back(vk_utility::buffer::BufferAndMemory::NewPtr(
+            *_device, 
+            vk_utility::buffer::BufferAndMemoryFactoryDefault()
+                .set_buffer_factory(
+                    &vk_utility::buffer::BufferFactoryDefault()
+                        .set_buffer_size(bufferSize)
+                        .set_coherent_uniform_buffer_usage())
+                .set_buffer_memory_factory(
+                    &vk_utility::buffer::BufferDeviceMemoryFactory()
+                        .set_coherent_memory_properties()
+                        .set_from_physical_device(_device->get().physical_device()))));
     }
 
     _descriptor_pool = vk_utility::core::DescriptorPool::NewPtr(
@@ -1019,14 +1042,20 @@ void CAppliction::createTextureImage( void ) {
     //! The buffer should be in host visible memory so that we can map it and it should be usable as a transfer source so that we can copy it to an image later on:
     //! We can then directly copy the pixel values that we got from the image loading library to the buffer:
 
-    auto staging_buffer = vk_utility::buffer::BufferAndMemory::New(
-        _device, 
-        vk_utility::buffer::BufferFactoryDefault()
-            .set_buffer_size(imageSize)
-            .set_staging_buffer_usage(),
-        vk_utility::buffer::BufferDeviceMemoryFactory().set_staging_memory_properties(),
-        pixels, 
-        vk_utility::buffer::BufferOperatorCopyDataToMemory::New());
+    auto staging_buffer = vk_utility::buffer::BufferAndMemory::NewPtr(
+        *_device,
+        vk_utility::buffer::BufferAndMemoryFactoryDefault()
+            .set_buffer_factory(
+                &vk_utility::buffer::BufferFactoryDefault()
+                    .set_buffer_size(imageSize)
+                    .set_staging_buffer_usage())
+            .set_buffer_memory_factory(
+                &vk_utility::buffer::BufferDeviceMemoryFactory()
+                    .set_staging_memory_properties()
+                    .set_from_physical_device(*_device->get().physical_device())));
+    vk_utility::buffer::BufferOperatorCopyDataToMemory::New()
+        ->copy(staging_buffer, 0, staging_buffer->get().memory().size(), pixels);
+
     stbi_image_free( pixels );
 
     uint32_t mipmap_levels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
@@ -1073,7 +1102,7 @@ void CAppliction::createTextureImage( void ) {
 
     vk_utility::image::ImageCopyBufferToImageCommand()
         .set_command_buffer_factory(&single_time_command_factory)
-        .set_buffer(staging_buffer->buffer())
+        .set_buffer(staging_buffer->get().buffer())
         .set_image(*image_and_memory->get().image())
         .set_size(static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight))
         .execute_command(*_device, *_command_pool);
@@ -1089,7 +1118,7 @@ void CAppliction::createTextureImage( void ) {
             .set_new_layout(vk::ImageLayout::eShaderReadOnlyOptimal)
             .execute_command(*_device, *_command_pool);
     
-    staging_buffer->destroy();
+    staging_buffer->get().destroy();
 
     if (mipmap_levels > 1)
         vk_utility::image::GeneratrMipmapsCommand()
@@ -1170,7 +1199,7 @@ void CAppliction::createDescriptorSets( void )
         std::vector<vk::DescriptorImageInfo> image_infos;
         std::vector<vk::DescriptorBufferInfo> bufferInfos
         { 
-            vk::DescriptorBufferInfo(_uniform_buffers[i]->buffer(), 0, sizeof(UniformBufferObject))
+            vk::DescriptorBufferInfo(_uniform_buffers[i]->get().buffer(), 0, sizeof(UniformBufferObject))
         };
         std::vector<vk::BufferView> texel_buffer_view;
         descriptorWrites.push_back(
@@ -1332,7 +1361,7 @@ void CAppliction::createCommandBuffers( void )
         //! The last two parameters specify the array of vertex buffers to bind and the byte offsets to start reading vertex data from.
         //! You should also change the call to vkCmdDraw to pass the number of vertices in the buffer as opposed to the hardcoded number 3.
 
-        std::vector<vk::Buffer> vertexBuffers = { _vertex_buffers.back()->buffer() };
+        std::vector<vk::Buffer> vertexBuffers = { _vertex_buffers.back()->get().buffer() };
         std::vector<vk::DeviceSize> offsets = { 0 };
         _commandBuffers[i].bindVertexBuffers(0, vertexBuffers, offsets);
 
@@ -1353,7 +1382,7 @@ void CAppliction::createCommandBuffers( void )
         //! and the type of index data as parameters. As mentioned before, the possible types are VK_INDEX_TYPE_UINT16 and VK_INDEX_TYPE_UINT32.
 
         vk::IndexType index_type = sizeof(*_indices.data()) == 4 ? vk::IndexType::eUint32 : (sizeof(*_indices.data()) == 2 ? vk::IndexType::eUint16 : vk::IndexType::eUint8EXT);
-        _commandBuffers[i].bindIndexBuffer(_index_buffers.back()->buffer(), 0, index_type);
+        _commandBuffers[i].bindIndexBuffer(_index_buffers.back()->get().buffer(), 0, index_type);
 
     
         //-------------------------------------------
@@ -1531,7 +1560,7 @@ void CAppliction::updateUniformBuffer( uint32_t imageIndex )
     // If you don't do this, then the image will be rendered upside down.
     ubo.proj[1][1] *= -1;
 
-    _uniform_buffers[imageIndex]->memory().copy(&ubo);
+    _uniform_buffers[imageIndex]->get().memory().copy(&ubo);
 }
 
 

@@ -11,6 +11,7 @@
 #include "vk_utility_device.h"
 #include "vk_utility_buffer_factory_default.h"
 #include "vk_utility_device_memory_factory_default.h"
+#include "vk_utility_buffer_and_memory_factory_default.h"
 
 #include <memory>
 
@@ -62,20 +63,21 @@ namespace vk_utility
                 vk::DeviceSize size, 
                 const void *source_data) override
             {
-                // create stating buffer and copy from data array to staging buffer
-                auto staging_buffer = BufferAndMemory::New(
-                    _device,
-                    BufferFactoryDefault()
-                        .set_buffer_size(size)
-                        .set_staging_buffer_usage(),
-                    BufferDeviceMemoryFactory()
-                        .set_staging_memory_properties()
-                        .set_from_physical_device(*_device->get().physical_device()),
-                    source_data, 
-                    vk_utility::buffer::BufferOperatorCopyDataToMemory::New());
-                // copy from staging buffer to target buffer
+                auto staging_buffer = BufferAndMemory::NewPtr(
+                    *_device,
+                    BufferAndMemoryFactoryDefault()
+                        .set_buffer_factory(
+                            &BufferFactoryDefault()
+                                .set_buffer_size(size)
+                                .set_staging_buffer_usage())
+                        .set_buffer_memory_factory(
+                            &BufferDeviceMemoryFactory()
+                                .set_staging_memory_properties()
+                                .set_from_physical_device(*_device->get().physical_device())));
+                BufferOperatorCopyDataToMemory::New()
+                    ->copy(staging_buffer, 0, size, source_data);
                 _buffer_copy_operator->copy(buffer_and_memory, staging_buffer);
-                staging_buffer->destroy();
+                staging_buffer->get().destroy();
                 return *this;
             }
 

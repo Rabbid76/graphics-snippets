@@ -166,6 +166,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
+    <ClInclude Include="include\vk_utility_buffer_and_memory_factory_default.h" />
+    <ClInclude Include="include\vk_utility_buffer_and_memory_factory.h" />
     <ClInclude Include="include\vk_utility_buffer_factory.h" />
     <ClInclude Include="include\vk_utility_buffer_factory_default.h" />
     <ClInclude Include="include\vk_utility_descriptor_pool_factory_default.h" />
@@ -263,7 +265,7 @@
     <ClInclude Include="include\vk_utility_vulkan_include.h" />
     <ClInclude Include="include\vk_utility_buffer_and_memory.h" />
     <ClInclude Include="include\vk_utility_semaphore_factory.h" />
-    <ClInclude Include="include\vk_utility_buffer_device_memory_factory_default.h" />
+    <ClInclude Include="include\vk_utility_buffer_device_memory_factory.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>

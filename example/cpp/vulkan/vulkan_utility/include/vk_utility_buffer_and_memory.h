@@ -9,7 +9,8 @@
 #include "vk_utility_buffer.h"
 #include "vk_utility_buffer_operator_copy_data.h"
 #include "vk_utility_buffer_factory.h"
-#include "vk_utility_buffer_device_memory_factory_default.h"
+#include "vk_utility_buffer_device_memory_factory.h"
+#include "vk_utility_buffer_and_memory_factory.h"
 
 #include <memory>
 
@@ -19,7 +20,7 @@ namespace vk_utility
     namespace buffer
     {
         class BufferAndMemory;
-        using BufferAndMemoryPtr = std::shared_ptr<BufferAndMemory>;
+        using BufferAndMemoryPtr = Ptr<BufferAndMemory>;
 
         /// <summary>
         /// Buffer and memory management. Association of `vk::DeviceMemory` and `vk::Buffer`.
@@ -30,77 +31,21 @@ namespace vk_utility
         /// If the offset is non-zero, then it is required to be divisible by `memRequirements.alignment`.
         /// </summary>
         class BufferAndMemory
-            : Object
+            : public GenericObject<int>
         {
         private:
 
-            vk_utility::device::DeviceMemoryPtr _memory;
             BufferPtr _buffer;
+            device::DeviceMemoryPtr _device_memory;
 
         public:
 
-            static BufferAndMemoryPtr New(vk_utility::device::DeviceMemoryPtr memory, BufferPtr buffer)
+            
+            static BufferAndMemory New(device::DeviceMemoryPtr memory, BufferPtr buffer)
             {
-                return std::make_shared<BufferAndMemory>(memory, buffer);
+                return BufferAndMemory(buffer, memory);
             }
 
-            /// <summary>
-            /// Construction of a buffer and its device memory.
-            /// </summary>
-            /// <param name="device"></param>
-            /// <param name="buffer_and_memory_information"></param>
-            /// <returns></returns>
-            static BufferAndMemoryPtr New(
-                vk_utility::device::DevicePtr device, 
-                const BufferFactory &buffer_factory,
-                BufferDeviceMemoryFactory &buffer_memory_factory)
-            {
-                BufferPtr buffer = Buffer::NewPtr(*device, buffer_factory);
-                vk_utility::device::DeviceMemoryPtr memory = vk_utility::device::DeviceMemory::NewPtr(
-                    *device->get(),
-                    buffer_memory_factory.set_from_physical_device(device->get().physical_device()).set_buffer(*buffer->get())
-                );
-                return New(memory, buffer);
-            }
-
-            /// <summary>
-            /// Construction of a buffer and its device memory.
-            /// The buffer is initialized by a data array.
-            /// The data copying process is carried out by a copy operator, with the data either copied directly or in stages.
-            /// </summary>
-            /// <param name="device"></param>
-            /// <param name="buffer_and_memory_information"></param>
-            /// <param name="source_data"></param>
-            /// <param name="copy_operator"></param>
-            /// <returns></returns>
-            static BufferAndMemoryPtr New(
-                vk_utility::device::DevicePtr device,
-                const BufferFactory& buffer_factory,
-                BufferDeviceMemoryFactory& buffer_memory_factory,
-                const void * source_data,
-                BufferOperatorCopyDataPtr copy_operator)
-            {
-                BufferPtr buffer = Buffer::NewPtr(*device, buffer_factory);
-                vk_utility::device::DeviceMemoryPtr memory = vk_utility::device::DeviceMemory::NewPtr(
-                    *device->get(),
-                    buffer_memory_factory.set_from_physical_device(device->get().physical_device()).set_buffer(*buffer->get())
-                );
-                auto buffer_and_memory = New(memory, buffer);
-                copy_operator->copy(buffer_and_memory, 0, memory->get().size(), source_data);
-                return buffer_and_memory;
-            }
-
-            /// <summary>
-            /// Construction of a buffer and its device memory.
-            /// The buffer is initialized by a data array.
-            /// The data copying process is carried out by a copy operator, with the data either copied directly or in stages.
-            /// </summary>
-            /// <typeparam name="T"></typeparam>
-            /// <param name="device"></param>
-            /// <param name="buffer_and_memory_information"></param>
-            /// <param name="source_data"></param>
-            /// <param name="copy_operator"></param>
-            /// <returns></returns>
             template<typename T>
             static BufferAndMemoryPtr New(
                 vk_utility::device::DevicePtr device,
@@ -114,36 +59,45 @@ namespace vk_utility
                     *device->get(),
                     buffer_memory_factory.set_from_physical_device(device->get().physical_device()).set_buffer(*buffer->get())
                 );
-                auto buffer_and_memory = New(memory, buffer);
+                auto buffer_and_memory = make_shared(New(memory, buffer));
                 copy_operator->copy(buffer_and_memory, 0, sizeof(T) * source_data.size(), source_data.data());
                 return buffer_and_memory;
             }
+            
 
-            BufferAndMemory(void) = delete;
-            BufferAndMemory(const BufferAndMemory &) = delete;
-            BufferAndMemory &operator = (const BufferAndMemory &) = delete;
+            static BufferAndMemory New(vk::Device device, const BufferAndMemoryFactory& buffer_and_memory_factory)
+            {
+                auto [buffer, buffer_memory, memory_size] = buffer_and_memory_factory.New(device);
+                return BufferAndMemory(device, buffer, buffer_memory, memory_size);
+            }
 
-            BufferAndMemory(vk_utility::device::DeviceMemoryPtr memory, BufferPtr buffer)
-                :_memory(memory)
-                ,_buffer(buffer)
+            static BufferAndMemoryPtr NewPtr(vk::Device device, const BufferAndMemoryFactory& buffer_and_memory_factory)
+            {
+                return make_shared<BufferAndMemory>(New(device, buffer_and_memory_factory));
+            }
+
+            BufferAndMemory(void) = default;
+            BufferAndMemory(const BufferAndMemory &) = default;
+            BufferAndMemory &operator = (const BufferAndMemory &) = default;
+
+            BufferAndMemory(const BufferPtr &buffer, const vk_utility::device::DeviceMemoryPtr &device_memory)
+                : _buffer(buffer)
+                , _device_memory(device_memory)
+            {}
+
+            BufferAndMemory(vk::Device device, vk::Buffer buffer, vk::DeviceMemory device_memory, vk::DeviceSize memory_size)
+                : _buffer(make_shared(Buffer(device, buffer, memory_size)))
+                , _device_memory(make_shared(device::DeviceMemory(device, device_memory, memory_size)))
             {}
 
             virtual void destroy(void) override
             {
-                if (_buffer)
-                {
-                    _buffer->get().destroy();
-                    _buffer = BufferPtr();
-                }
-                if (_memory)
-                {
-                    _memory->get().destroy();
-                    _memory = vk_utility::device::DeviceMemoryPtr();
-                }
+                _buffer = nullptr;
+                _device_memory = nullptr;
             }
 
-            vk_utility::device::DeviceMemory & memory(void) { return _memory->get(); }
-            const vk_utility::device::DeviceMemory & memory(void) const { return _memory->get(); }
+            device::DeviceMemory & memory(void) { return _device_memory->get(); }
+            const device::DeviceMemory & memory(void) const { return _device_memory->get(); }
 
             Buffer & buffer(void) { return _buffer->get(); }
             const Buffer & buffer(void) const { return _buffer->get(); }

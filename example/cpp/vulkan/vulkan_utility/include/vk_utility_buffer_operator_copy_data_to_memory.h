@@ -32,7 +32,7 @@ namespace vk_utility
 
             virtual BufferOperatorCopyDataToMemory &copy(BufferAndMemoryPtr buffer_and_memory, vk::DeviceSize offset, vk::DeviceSize size, const void *source_data) override
             {
-                buffer_and_memory->memory().copy(offset, size, source_data);
+                buffer_and_memory->get().memory().copy(offset, size, source_data);
                 return *this;
             }
 
