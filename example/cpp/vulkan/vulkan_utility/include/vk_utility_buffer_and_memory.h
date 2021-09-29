@@ -3,13 +3,12 @@
 
 #include "vk_utility_object.h"
 #include "vk_utility_exception.h"
-#include "vk_utility_vulkan_include.h"
 #include "vk_utility_physical_device.h"
 #include "vk_utility_device_memory.h"
 #include "vk_utility_device.h"
 #include "vk_utility_buffer.h"
-#include "vk_utility_buffer_and_memory_information.h"
 #include "vk_utility_buffer_operator_copy_data.h"
+#include "vk_utility_buffer_factory.h"
 #include "vk_utility_buffer_device_memory_factory_default.h"
 
 #include <memory>
@@ -53,10 +52,10 @@ namespace vk_utility
             /// <returns></returns>
             static BufferAndMemoryPtr New(
                 vk_utility::device::DevicePtr device, 
-                const BufferAndMemoryInformation & buffer_and_memory_information,
+                const BufferFactory &buffer_factory,
                 BufferDeviceMemoryFactory &buffer_memory_factory)
             {
-                BufferPtr buffer = Buffer::New(device, buffer_and_memory_information.buffer_Information());
+                BufferPtr buffer = Buffer::NewPtr(*device, buffer_factory);
                 vk_utility::device::DeviceMemoryPtr memory = vk_utility::device::DeviceMemory::NewPtr(
                     *device->get(),
                     buffer_memory_factory.set_from_physical_device(device->get().physical_device()).set_buffer(*buffer->get())
@@ -76,18 +75,18 @@ namespace vk_utility
             /// <returns></returns>
             static BufferAndMemoryPtr New(
                 vk_utility::device::DevicePtr device,
-                const BufferAndMemoryInformation & buffer_and_memory_information,
+                const BufferFactory& buffer_factory,
                 BufferDeviceMemoryFactory& buffer_memory_factory,
                 const void * source_data,
                 BufferOperatorCopyDataPtr copy_operator)
             {
-                BufferPtr buffer = Buffer::New(device, buffer_and_memory_information.buffer_Information());
+                BufferPtr buffer = Buffer::NewPtr(*device, buffer_factory);
                 vk_utility::device::DeviceMemoryPtr memory = vk_utility::device::DeviceMemory::NewPtr(
                     *device->get(),
                     buffer_memory_factory.set_from_physical_device(device->get().physical_device()).set_buffer(*buffer->get())
                 );
                 auto buffer_and_memory = New(memory, buffer);
-                copy_operator->copy(buffer_and_memory, 0, buffer_and_memory_information.size(), source_data);
+                copy_operator->copy(buffer_and_memory, 0, memory->get().size(), source_data);
                 return buffer_and_memory;
             }
 
@@ -105,12 +104,12 @@ namespace vk_utility
             template<typename T>
             static BufferAndMemoryPtr New(
                 vk_utility::device::DevicePtr device,
-                const BufferAndMemoryInformation & buffer_and_memory_information,
+                const BufferFactory& buffer_factory,
                 BufferDeviceMemoryFactory& buffer_memory_factory,
                 const std::vector<T> &source_data,
                 BufferOperatorCopyDataPtr copy_operator)
             {
-                BufferPtr buffer = Buffer::New(device, buffer_and_memory_information.buffer_Information());
+                BufferPtr buffer = Buffer::NewPtr(*device, buffer_factory);
                 vk_utility::device::DeviceMemoryPtr memory = vk_utility::device::DeviceMemory::NewPtr(
                     *device->get(),
                     buffer_memory_factory.set_from_physical_device(device->get().physical_device()).set_buffer(*buffer->get())

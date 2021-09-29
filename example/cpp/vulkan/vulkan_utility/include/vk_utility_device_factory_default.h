@@ -56,8 +56,6 @@ namespace vk_utility
                 vk_utility::type::StringPointerArray device_extension_list(_requested_device_extensions);
                 vk_utility::type::StringPointerArray validation_layer_list(_requested_validation_layers);
 
-                // TODO [...] `DeviceInformation` similar `vk_utility::buffer::BufferInformation`
-
                 vk::DeviceCreateInfo create_inforamtion(
                     vk::DeviceCreateFlags{},
                     queue_create_information,

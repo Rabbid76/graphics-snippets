@@ -166,6 +166,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
+    <ClInclude Include="include\vk_utility_buffer_factory.h" />
+    <ClInclude Include="include\vk_utility_buffer_factory_default.h" />
     <ClInclude Include="include\vk_utility_descriptor_pool_factory_default.h" />
     <ClInclude Include="include\vk_utility_descriptor_pool_factory.h" />
     <ClInclude Include="include\vk_utility_descriptor_pool.h" />
@@ -210,8 +212,6 @@
     <ClInclude Include="include\vk_utility_descriptor_set_layout_factory.h" />
     <ClInclude Include="include\vk_utility_descriptor_set_layout_factory_default.h" />
     <ClInclude Include="include\vk_utility_buffer.h" />
-    <ClInclude Include="include\vk_utility_buffer_and_memory_information.h" />
-    <ClInclude Include="include\vk_utility_buffer_information.h" />
     <ClInclude Include="include\vk_utility_buffer_operator_copy_data_staging.h" />
     <ClInclude Include="include\vk_utility_buffer_operator_copy_buffer.h" />
     <ClInclude Include="include\vk_utility_buffer_operator_copy_data.h" />

@@ -9,6 +9,8 @@
 #include "vk_utility_buffer_operator_copy_data_to_memory.h"
 #include "vk_utility_buffer_operator_copy_buffer.h"
 #include "vk_utility_device.h"
+#include "vk_utility_buffer_factory_default.h"
+#include "vk_utility_device_memory_factory_default.h"
 
 #include <memory>
 
@@ -63,7 +65,9 @@ namespace vk_utility
                 // create stating buffer and copy from data array to staging buffer
                 auto staging_buffer = BufferAndMemory::New(
                     _device,
-                    BufferAndMemoryInformation::NewStaging(size),
+                    BufferFactoryDefault()
+                        .set_buffer_size(size)
+                        .set_staging_buffer_usage(),
                     BufferDeviceMemoryFactory()
                         .set_staging_memory_properties()
                         .set_from_physical_device(*_device->get().physical_device()),

@@ -108,6 +108,8 @@
 #include <vk_utility_format_selector.h>
 #include <vk_utility_image_generate_mipmaps_command.h>
 #include <vk_utility_buffer_device_memory_factory_default.h>
+#include "vk_utility_buffer_factory_default.h"
+#include "vk_utility_device_memory_factory_default.h"
 
 // GLFW
 
@@ -903,13 +905,17 @@ void CAppliction::createSwapChain(bool initilaize)
     
         _vertex_buffers.push_back(vk_utility::buffer::BufferAndMemory::New(
             _device, 
-            vk_utility::buffer::BufferAndMemoryInformation::NewVertex(sizeof(_vertices[0]) * _vertices.size()),
+            vk_utility::buffer::BufferFactoryDefault()
+                .set_buffer_size(sizeof(_vertices[0]) * _vertices.size())
+                .set_vertex_buffer_usage(),
             vk_utility::buffer::BufferDeviceMemoryFactory(),
             _vertices, 
             vk_utility::buffer::BufferOperatorCopyDataStaging::New(_device, std::make_shared<CopyBufferHelper>(*this))));
         _index_buffers.push_back(vk_utility::buffer::BufferAndMemory::New(
-            _device, 
-            vk_utility::buffer::BufferAndMemoryInformation::NewIndex(sizeof(_indices[0]) * _indices.size()), 
+            _device,
+            vk_utility::buffer::BufferFactoryDefault()
+                .set_buffer_size(sizeof(_indices[0]) * _indices.size())
+                .set_index_buffer_usage(),
             vk_utility::buffer::BufferDeviceMemoryFactory(),
             _indices,
             vk_utility::buffer::BufferOperatorCopyDataStaging::New(_device, std::make_shared<CopyBufferHelper>(*this))));
@@ -929,7 +935,9 @@ void CAppliction::createSwapChain(bool initilaize)
     {
         _uniform_buffers.push_back(vk_utility::buffer::BufferAndMemory::New(
             _device, 
-            vk_utility::buffer::BufferAndMemoryInformation::NewCoherentUniform(bufferSize),
+            vk_utility::buffer::BufferFactoryDefault()
+                .set_buffer_size(bufferSize)
+                .set_coherent_uniform_buffer_usage(),
             vk_utility::buffer::BufferDeviceMemoryFactory().set_coherent_memory_properties()));
     }
 
@@ -1013,7 +1021,9 @@ void CAppliction::createTextureImage( void ) {
 
     auto staging_buffer = vk_utility::buffer::BufferAndMemory::New(
         _device, 
-        vk_utility::buffer::BufferAndMemoryInformation::NewStaging(imageSize), 
+        vk_utility::buffer::BufferFactoryDefault()
+            .set_buffer_size(imageSize)
+            .set_staging_buffer_usage(),
         vk_utility::buffer::BufferDeviceMemoryFactory().set_staging_memory_properties(),
         pixels, 
         vk_utility::buffer::BufferOperatorCopyDataToMemory::New());

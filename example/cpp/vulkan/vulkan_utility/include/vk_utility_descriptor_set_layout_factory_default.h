@@ -30,8 +30,6 @@ namespace vk_utility
 
             virtual DescriptorSetLayout Create(const vk_utility::device::DevicePtr &device) override
             {
-                // TODO [...] `DescriptorSetLayoutInformation` similar `vk_utility::buffer::BufferInformation`
-                
                 // We need to provide details about every descriptor binding used in the shaders for pipeline creation,
                 // just like we had to do for every vertex attribute and its location index.
                 // We'll set up a new function to define all of this information called createDescriptorSetLayout.

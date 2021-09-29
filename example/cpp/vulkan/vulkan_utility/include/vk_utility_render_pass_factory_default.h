@@ -53,9 +53,6 @@ namespace vk_utility
 
             virtual RenderPass Create(const vk_utility::device::DevicePtr &device) override
             {
-                // TODO [...] `RenderPassInformation` similar `vk_utility::buffer::BufferInformation`
-                // TODO [...] `AttachmentDescription` `AttachmentReference` `SubpassDescription` `SubpassDependency`
-
                 vk::AttachmentDescription color_attachment
                 (
                     vk::AttachmentDescriptionFlags{},
