@@ -123,9 +123,6 @@
     <ClInclude Include="include\vk_utility_buffer_operator_copy_data_staging.h">
       <Filter>buffer</Filter>
     </ClInclude>
-    <ClInclude Include="include\vk_utility_device_memory_information.h">
-      <Filter>device</Filter>
-    </ClInclude>
     <ClInclude Include="include\vk_utility_buffer_information.h">
       <Filter>buffer</Filter>
     </ClInclude>
@@ -332,6 +329,15 @@
     </ClInclude>
     <ClInclude Include="include\vk_utility_image_generate_mipmaps_command.h">
       <Filter>image</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_device_memory_factory_default.h">
+      <Filter>device</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_device_memory_factory_find_type.h">
+      <Filter>device</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_buffer_device_memory_factory_default.h">
+      <Filter>buffer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

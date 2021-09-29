@@ -3,14 +3,12 @@
 #include "vk_utility_device_memory_factory.h"
 #include "vk_utility_physical_device.h"
 
-#include <functional>
-
 namespace vk_utility
 {
-    namespace image
+    namespace device
     {
-        class ImageDeviceMemoryFactory
-            : public device::DeviceMemoryFactory
+        class DeviceMemoryFactoryFindType
+            : public DeviceMemoryFactory
         {
         public:
 
@@ -18,25 +16,32 @@ namespace vk_utility
 
         private:
 
-            vk::Image _image;
+            vk::DeviceSize _memory_size;
+            vk::MemoryRequirements _memory_requirements;
             vk::MemoryPropertyFlags _properties = vk::MemoryPropertyFlagBits::eDeviceLocal;
             FindMemoryTypeFunction _find_memory_type;
 
-        public:
+        private:
 
-            ImageDeviceMemoryFactory& set_image(vk::Image image)
+            DeviceMemoryFactoryFindType& set_memory_size(vk::DeviceSize memory_size)
             {
-                _image = image;
+                _memory_size = memory_size;
                 return *this;
             }
 
-            ImageDeviceMemoryFactory& set_memory_properties(vk::MemoryPropertyFlags properties)
+            class DeviceMemoryFactoryFindType& set_memory_properties(vk::MemoryRequirements memory_requirements)
+            {
+                _memory_requirements = memory_requirements;
+                return *this;
+            }
+
+            class DeviceMemoryFactoryFindType& set_memory_properties(vk::MemoryPropertyFlags properties)
             {
                 _properties = properties;
                 return *this;
             }
 
-            ImageDeviceMemoryFactory& set_from_physical_device(const vk_utility::device::PhysicalDevice& physical_device)
+            class DeviceMemoryFactoryFindType& set_from_physical_device(const vk_utility::device::PhysicalDevice& physical_device)
             {
                 _find_memory_type = [physical_device](uint32_t mempry_type_btis, vk::MemoryPropertyFlags properties) -> uint32_t
                 {
@@ -47,15 +52,13 @@ namespace vk_utility
 
             virtual std::tuple<vk::DeviceMemory, vk::DeviceSize> New(vk::Device device) const override
             {
-                const vk::MemoryRequirements memory_requirements = device.getImageMemoryRequirements(_image);
                 const vk::MemoryAllocateInfo allocate_information
                 (
-                    memory_requirements.size,
-                    _find_memory_type(memory_requirements.memoryTypeBits, _properties)
+                    _memory_size,
+                    _find_memory_type(_memory_requirements.memoryTypeBits, _properties)
                 );
-                vk::DeviceMemory image_memory = device.allocateMemory(allocate_information);
-                device.bindImageMemory(_image, image_memory, 0);
-                return { image_memory, memory_requirements.size };
+                vk::DeviceMemory memory = device.allocateMemory(allocate_information);
+                return { memory, _memory_size };
             }
         };
     }

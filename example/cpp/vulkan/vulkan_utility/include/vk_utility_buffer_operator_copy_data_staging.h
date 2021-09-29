@@ -54,11 +54,21 @@ namespace vk_utility
                 , _buffer_copy_operator(buffer_copy_operator)
             {}
 
-            virtual BufferOperatorCopyDataStaging &copy(BufferAndMemoryPtr buffer_and_memory, vk::DeviceSize offset, vk::DeviceSize size, const void *source_data) override
+            virtual BufferOperatorCopyDataStaging &copy(
+                BufferAndMemoryPtr buffer_and_memory, 
+                vk::DeviceSize offset, 
+                vk::DeviceSize size, 
+                const void *source_data) override
             {
                 // create stating buffer and copy from data array to staging buffer
                 auto staging_buffer = BufferAndMemory::New(
-                    _device, BufferAndMemoryInformation::NewStaging(size), source_data, vk_utility::buffer::BufferOperatorCopyDataToMemory::New());
+                    _device,
+                    BufferAndMemoryInformation::NewStaging(size),
+                    BufferDeviceMemoryFactory()
+                        .set_staging_memory_properties()
+                        .set_from_physical_device(*_device->get().physical_device()),
+                    source_data, 
+                    vk_utility::buffer::BufferOperatorCopyDataToMemory::New());
                 // copy from staging buffer to target buffer
                 _buffer_copy_operator->copy(buffer_and_memory, staging_buffer);
                 staging_buffer->destroy();

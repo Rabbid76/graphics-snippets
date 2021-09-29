@@ -1,16 +1,10 @@
 #pragma once
 
-
-#include <vk_utility_object.h>
-#include <vk_utility_exception.h>
-#include <vk_utility_vulkan_include.h>
-#include <vk_utility_device.h>
-#include <vk_utility_device_memory_information.h>
-#include <vk_utility_device_memory_factory.h>
-
-
-// TODO $$$
-// class for MemoryAllocateInfo 
+#include "vk_utility_object.h"
+#include "vk_utility_exception.h"
+#include "vk_utility_vulkan_include.h"
+#include "vk_utility_device.h"
+#include "vk_utility_device_memory_factory.h"
 
 namespace vk_utility
 {
@@ -35,28 +29,6 @@ namespace vk_utility
             vk::DeviceSize _memory_size;
 
         public:
-
-            static DeviceMemory Create(vk::Device &device, const DeviceMemoryInformation &allocate_information)
-            {
-                return DeviceMemory(device, device.allocateMemory(allocate_information), allocate_information.size());
-            }
-
-            static DeviceMemoryPtr New(vk::Device &device, const DeviceMemoryInformation &allocate_information)
-            {
-                return vk_utility::make_shared(Create(device, allocate_information));
-            }
-
-            static DeviceMemory Create(vk::Device &device, const DeviceMemoryInformation &allocate_information, void * source_data)
-            {
-                auto device_memory = DeviceMemory::Create(device, allocate_information);
-                device_memory.copy(source_data);
-                return device_memory;
-            }
-
-            static DeviceMemoryPtr New(vk::Device &device, const DeviceMemoryInformation &allocate_information, void * source_data)
-            {
-                return vk_utility::make_shared(Create(device, allocate_information, source_data));
-            }
 
             static DeviceMemory New(vk::Device& device, const DeviceMemoryFactory& device_memory_factory)
             {

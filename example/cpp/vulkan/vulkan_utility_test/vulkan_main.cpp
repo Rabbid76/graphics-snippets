@@ -107,6 +107,7 @@
 #include <vk_utility_fence_factory_default.h>
 #include <vk_utility_format_selector.h>
 #include <vk_utility_image_generate_mipmaps_command.h>
+#include <vk_utility_buffer_device_memory_factory_default.h>
 
 // GLFW
 
@@ -902,12 +903,14 @@ void CAppliction::createSwapChain(bool initilaize)
     
         _vertex_buffers.push_back(vk_utility::buffer::BufferAndMemory::New(
             _device, 
-            vk_utility::buffer::BufferAndMemoryInformation::NewVertex(sizeof(_vertices[0]) * _vertices.size()), 
+            vk_utility::buffer::BufferAndMemoryInformation::NewVertex(sizeof(_vertices[0]) * _vertices.size()),
+            vk_utility::buffer::BufferDeviceMemoryFactory(),
             _vertices, 
             vk_utility::buffer::BufferOperatorCopyDataStaging::New(_device, std::make_shared<CopyBufferHelper>(*this))));
         _index_buffers.push_back(vk_utility::buffer::BufferAndMemory::New(
             _device, 
             vk_utility::buffer::BufferAndMemoryInformation::NewIndex(sizeof(_indices[0]) * _indices.size()), 
+            vk_utility::buffer::BufferDeviceMemoryFactory(),
             _indices,
             vk_utility::buffer::BufferOperatorCopyDataStaging::New(_device, std::make_shared<CopyBufferHelper>(*this))));
     }
@@ -925,7 +928,9 @@ void CAppliction::createSwapChain(bool initilaize)
     for (size_t i = 0; i < _swapchain->get().no_of_swapchain_images(); i++)
     {
         _uniform_buffers.push_back(vk_utility::buffer::BufferAndMemory::New(
-            _device, vk_utility::buffer::BufferAndMemoryInformation::NewCoherentUniform(bufferSize)));
+            _device, 
+            vk_utility::buffer::BufferAndMemoryInformation::NewCoherentUniform(bufferSize),
+            vk_utility::buffer::BufferDeviceMemoryFactory().set_coherent_memory_properties()));
     }
 
     _descriptor_pool = vk_utility::core::DescriptorPool::NewPtr(
@@ -1007,7 +1012,11 @@ void CAppliction::createTextureImage( void ) {
     //! We can then directly copy the pixel values that we got from the image loading library to the buffer:
 
     auto staging_buffer = vk_utility::buffer::BufferAndMemory::New(
-        _device, vk_utility::buffer::BufferAndMemoryInformation::NewStaging(imageSize), pixels, vk_utility::buffer::BufferOperatorCopyDataToMemory::New());
+        _device, 
+        vk_utility::buffer::BufferAndMemoryInformation::NewStaging(imageSize), 
+        vk_utility::buffer::BufferDeviceMemoryFactory().set_staging_memory_properties(),
+        pixels, 
+        vk_utility::buffer::BufferOperatorCopyDataToMemory::New());
     stbi_image_free( pixels );
 
     uint32_t mipmap_levels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;

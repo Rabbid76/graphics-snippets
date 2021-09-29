@@ -80,17 +80,6 @@ namespace vk_utility
             vk_utility::device::PhysicalDevice & physical_device(void) { return _physical_device->get(); }
             const vk_utility::device::PhysicalDevice & physical_device(void) const { return _physical_device->get(); }
 
-            auto allocate_memory(const vk::MemoryAllocateInfo &allocate_information) const
-            {
-                auto device_memory = _vk_object.allocateMemory(allocate_information);
-                return device_memory;
-            }
-
-            void free_memory(const vk::DeviceMemory &device_memory) const
-            {
-                _vk_object.freeMemory(device_memory);
-            }
-
             auto create_buffer(const vk::BufferCreateInfo & buffer_information) const
             {
                 return _vk_object.createBuffer(buffer_information);
