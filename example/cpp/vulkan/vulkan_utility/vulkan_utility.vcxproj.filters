@@ -34,8 +34,41 @@
     <Filter Include="pipeline">
       <UniqueIdentifier>{d733a029-b12e-4341-bdf4-eeb01074600c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="command">
+    <Filter Include="commands">
+      <UniqueIdentifier>{47038d01-ca70-4dec-9a32-4f7a955db726}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="commands\image">
+      <UniqueIdentifier>{781d83d3-2974-4f28-adf2-f0022d15b870}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="objects">
+      <UniqueIdentifier>{812b1044-18e7-40cd-806c-4ff6f87a0eda}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="factories">
+      <UniqueIdentifier>{b6f205fd-ac0e-4ec2-957b-77db9481c5c7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="objects\buffer">
+      <UniqueIdentifier>{a1f3959a-230d-4343-ad6f-2f42072a22d5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="factories\buffer">
+      <UniqueIdentifier>{089b45ab-d8d5-4e5e-b874-1e65f665830f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="factories\command">
       <UniqueIdentifier>{39b7b519-8bbd-4bed-9bd2-cc9d302b65c1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="objects\command">
+      <UniqueIdentifier>{f898d0b2-135a-4be3-a728-d379eee60270}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="factories\core">
+      <UniqueIdentifier>{0caa597f-17f8-4970-96fa-3e278e26fc09}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="objects\core">
+      <UniqueIdentifier>{364b336f-d4c3-4261-939e-6cc825d67b2b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="objects\image">
+      <UniqueIdentifier>{d3c02492-2d98-4f68-b79d-4d068ebcab60}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="factories\image">
+      <UniqueIdentifier>{781fa1ac-e300-4829-8a90-cabe2c10e111}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -63,9 +96,6 @@
     <ClInclude Include="include\vk_utility_surface.h">
       <Filter>device</Filter>
     </ClInclude>
-    <ClInclude Include="include\vk_utility_instance.h">
-      <Filter>core</Filter>
-    </ClInclude>
     <ClInclude Include="include\vk_utility_debug.h">
       <Filter>core</Filter>
     </ClInclude>
@@ -80,9 +110,6 @@
     </ClInclude>
     <ClInclude Include="include\vk_utility_parameter_helper.h">
       <Filter>type</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_instance_factory.h">
-      <Filter>core</Filter>
     </ClInclude>
     <ClInclude Include="include\vk_utility_surface_factory.h">
       <Filter>device</Filter>
@@ -104,12 +131,6 @@
     </ClInclude>
     <ClInclude Include="include\vk_utility_logging_physical_device.h">
       <Filter>logging</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_buffer.h">
-      <Filter>buffer</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_buffer_and_memory.h">
-      <Filter>buffer</Filter>
     </ClInclude>
     <ClInclude Include="include\vk_utility_buffer_operator_copy_data.h">
       <Filter>buffer</Filter>
@@ -174,9 +195,6 @@
     <ClInclude Include="include\vk_utility_swapchain_information.h">
       <Filter>swap</Filter>
     </ClInclude>
-    <ClInclude Include="include\vk_utility_image.h">
-      <Filter>image</Filter>
-    </ClInclude>
     <ClInclude Include="include\vk_utility_descriptor_set_layout_binding.h">
       <Filter>core</Filter>
     </ClInclude>
@@ -204,16 +222,7 @@
     <ClInclude Include="include\vk_utility_pipeline_layout.h">
       <Filter>pipeline</Filter>
     </ClInclude>
-    <ClInclude Include="include\vk_utility_image_view.h">
-      <Filter>image</Filter>
-    </ClInclude>
     <ClInclude Include="include\vk_utility_image_view_and_image_memory.h">
-      <Filter>image</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_image_view_factory.h">
-      <Filter>image</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_image_view_factory_default.h">
       <Filter>image</Filter>
     </ClInclude>
     <ClInclude Include="include\vk_utility_framebuffer.h">
@@ -225,44 +234,20 @@
     <ClInclude Include="include\vk_utility_framebuffer_factory_default.h">
       <Filter>buffer</Filter>
     </ClInclude>
-    <ClInclude Include="include\vk_utility_command_pool.h">
-      <Filter>command</Filter>
-    </ClInclude>
     <ClInclude Include="include\vk_utility_command_pool_factory.h">
-      <Filter>command</Filter>
+      <Filter>factories\command</Filter>
     </ClInclude>
     <ClInclude Include="include\vk_utility_command_pool_factory_default.h">
-      <Filter>command</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_command_buffer.h">
-      <Filter>command</Filter>
+      <Filter>factories\command</Filter>
     </ClInclude>
     <ClInclude Include="include\vk_utility_command_buffer_factory.h">
-      <Filter>command</Filter>
+      <Filter>factories\command</Filter>
     </ClInclude>
     <ClInclude Include="include\vk_utility_command_buffer_factory_single_time_command.h">
-      <Filter>command</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_image_factory.h">
-      <Filter>image</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_image_factory_2d.h">
-      <Filter>image</Filter>
+      <Filter>factories\command</Filter>
     </ClInclude>
     <ClInclude Include="include\vk_utility_device_memory_factory.h">
       <Filter>device</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_image_device_memory_factory.h">
-      <Filter>image</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_image_and_memory.h">
-      <Filter>image</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_image_and_memory_factory.h">
-      <Filter>image</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_image_and_memory_factory_default.h">
-      <Filter>image</Filter>
     </ClInclude>
     <ClInclude Include="include\vk_utility_swapchain_image_views_factory.h">
       <Filter>image</Filter>
@@ -270,59 +255,8 @@
     <ClInclude Include="include\vk_utility_swapchain_image_views_factory_default.h">
       <Filter>image</Filter>
     </ClInclude>
-    <ClInclude Include="include\vk_utility_image_view_and_image_memory_factory.h">
-      <Filter>image</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_image_view_and_image_memory_factory_default.h">
-      <Filter>image</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_image_transition_command.h">
-      <Filter>image</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_image_copy_buffer_to_image_command.h">
-      <Filter>image</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_sampler.h">
-      <Filter>image</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_sampler_factory.h">
-      <Filter>image</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_sampler_factory_default.h">
-      <Filter>image</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_descriptor_pool.h">
-      <Filter>core</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_descriptor_pool_factory.h">
-      <Filter>core</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_descriptor_pool_factory_default.h">
-      <Filter>core</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_semaphore.h">
-      <Filter>core</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_fence.h">
-      <Filter>core</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_semaphore_factory.h">
-      <Filter>core</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_fence_factory.h">
-      <Filter>core</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_semaphore_factory_default.h">
-      <Filter>core</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_fence_factory_default.h">
-      <Filter>core</Filter>
-    </ClInclude>
     <ClInclude Include="include\vk_utility_format_selector.h">
       <Filter>core</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_image_generate_mipmaps_command.h">
-      <Filter>image</Filter>
     </ClInclude>
     <ClInclude Include="include\vk_utility_device_memory_factory_default.h">
       <Filter>device</Filter>
@@ -330,20 +264,119 @@
     <ClInclude Include="include\vk_utility_device_memory_factory_find_type.h">
       <Filter>device</Filter>
     </ClInclude>
-    <ClInclude Include="include\vk_utility_buffer_device_memory_factory.h">
-      <Filter>buffer</Filter>
+    <ClInclude Include="include\vk_utility_image_transition_command.h">
+      <Filter>commands\image</Filter>
     </ClInclude>
-    <ClInclude Include="include\vk_utility_buffer_factory.h">
-      <Filter>buffer</Filter>
+    <ClInclude Include="include\vk_utility_image_copy_buffer_to_image_command.h">
+      <Filter>commands\image</Filter>
     </ClInclude>
-    <ClInclude Include="include\vk_utility_buffer_factory_default.h">
-      <Filter>buffer</Filter>
+    <ClInclude Include="include\vk_utility_image_generate_mipmaps_command.h">
+      <Filter>commands\image</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_buffer.h">
+      <Filter>objects\buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_buffer_and_memory.h">
+      <Filter>objects\buffer</Filter>
     </ClInclude>
     <ClInclude Include="include\vk_utility_buffer_and_memory_factory.h">
-      <Filter>buffer</Filter>
+      <Filter>factories\buffer</Filter>
     </ClInclude>
     <ClInclude Include="include\vk_utility_buffer_and_memory_factory_default.h">
-      <Filter>buffer</Filter>
+      <Filter>factories\buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_buffer_device_memory_factory.h">
+      <Filter>factories\buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_buffer_factory.h">
+      <Filter>factories\buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_buffer_factory_default.h">
+      <Filter>factories\buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_command_buffer.h">
+      <Filter>objects\command</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_command_pool.h">
+      <Filter>objects\command</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_descriptor_pool.h">
+      <Filter>objects\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_descriptor_pool_factory.h">
+      <Filter>factories\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_descriptor_pool_factory_default.h">
+      <Filter>factories\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_fence.h">
+      <Filter>objects\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_fence_factory.h">
+      <Filter>factories\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_fence_factory_default.h">
+      <Filter>factories\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_instance.h">
+      <Filter>objects\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_instance_factory.h">
+      <Filter>factories\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_semaphore.h">
+      <Filter>objects\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_semaphore_factory.h">
+      <Filter>factories\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_semaphore_factory_default.h">
+      <Filter>factories\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_image.h">
+      <Filter>objects\image</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_image_and_memory.h">
+      <Filter>objects\image</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_image_and_memory_factory.h">
+      <Filter>factories\image</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_image_and_memory_factory_default.h">
+      <Filter>factories\image</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_image_device_memory_factory.h">
+      <Filter>factories\image</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_image_factory.h">
+      <Filter>factories\image</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_image_factory_2d.h">
+      <Filter>factories\image</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_image_view.h">
+      <Filter>objects\image</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_image_view_and_image_memory_factory.h">
+      <Filter>factories\image</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_image_view_and_image_memory_factory_default.h">
+      <Filter>factories\image</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_image_view_factory.h">
+      <Filter>factories\image</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_image_view_factory_default.h">
+      <Filter>factories\image</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_sampler.h">
+      <Filter>objects\image</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_sampler_factory.h">
+      <Filter>factories\image</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_sampler_factory_default.h">
+      <Filter>factories\image</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

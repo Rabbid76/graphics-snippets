@@ -3,7 +3,6 @@
 #include "vk_utility_object.h"
 #include "vk_utility_exception.h"
 #include "vk_utility_instance_factory.h"
-
 #include <memory>
 
 
