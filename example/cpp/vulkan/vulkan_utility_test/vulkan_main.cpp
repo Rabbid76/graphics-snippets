@@ -55,9 +55,6 @@
 #include <vk_utility_device_memory.h>
 #include <vk_utility_buffer.h>
 #include <vk_utility_buffer_and_memory.h>
-#include <vk_utility_buffer_operator_copy_data_to_memory.h>
-#include <vk_utility_buffer_operator_copy_data_staging.h>
-#include <vk_utility_buffer_operator_copy_buffer.h>
 #include <vk_utility_logging.h>
 #include <vk_utility_logging_physical_device.h>
 #include <vk_utility_render_pass.h>
@@ -111,6 +108,7 @@
 #include "vk_utility_buffer_factory_default.h"
 #include "vk_utility_device_memory_factory_default.h"
 #include "vk_utility_buffer_and_memory_factory_default.h"
+#include "vk_utility_buffer_copy_data_staging_command.h"
 
 // GLFW
 
@@ -253,9 +251,6 @@ public:
 };
 
 
-class CopyBufferHelper;
-
-
 /******************************************************************//**
 * \brief   Vulkan application object.
 *
@@ -269,8 +264,6 @@ class CopyBufferHelper;
 **********************************************************************/
 class CAppliction 
 {
-    friend class CopyBufferHelper;
-
 public: // public operations
     
     CAppliction( bool verbose );
@@ -414,55 +407,6 @@ private: // private attributes
     std::vector<vk_utility::image::ImageViewAndImageMemoryPtr> _color_image_view_memorys;   // Vulkan color image view memory
     std::vector<vk_utility::image::ImageViewAndImageMemoryPtr> _texture_image_view_memorys; // Vulkan texture image view memory
     std::vector<vk_utility::image::SamplerPtr>                 _texture_samplers;           // Vulkan texture sampler
-};
-
-
-// TODO $$$ BufferCopyCommand
-class CopyBufferHelper
-    : public vk_utility::buffer::BufferOperatorCopyBuffer
-{
-private: 
-    CAppliction &_app;
-
-public:
-    CopyBufferHelper(CAppliction &app)
-        : _app(app)
-    {}
-    
-    virtual CopyBufferHelper &copy(vk_utility::buffer::BufferAndMemoryPtr destination_buffer, vk_utility::buffer::BufferAndMemoryPtr source_buffer) override
-    {
-        //! TODO $$$
-        //! [Transfer queue](https://vulkan-tutorial.com/Vertex_buffers/Staging_buffer)
-        //! The buffer copy command requires a queue family that supports transfer operations, which is indicated using VK_QUEUE_TRANSFER_BIT.
-        //! The good news is that any queue family with VK_QUEUE_GRAPHICS_BIT or VK_QUEUE_COMPUTE_BIT capabilities already implicitly support VK_QUEUE_TRANSFER_BIT operations.
-        //! The implementation is not required to explicitly list it in queueFlags in those cases.
-        //!
-        //! If you like a challenge, then you can still try to use a different queue family specifically for transfer operations. 
-        //! It will require you to make the following modifications to your program:
-        //! - Modify QueueFamilyIndices and findQueueFamilies to explicitly look for a queue family with the VK_QUEUE_TRANSFER bit, but not the VK_QUEUE_GRAPHICS_BIT.
-        //! - Modify createLogicalDevice to request a handle to the transfer queue
-        //! - Create a second command pool for command buffers that are submitted on the transfer queue family
-        //! - Change the sharingMode of resources to be VK_SHARING_MODE_CONCURRENT and specify both the graphics and transfer queue families
-        //! - Submit any transfer commands like vkCmdCopyBuffer (which we'll be using in this chapter) to the transfer queue instead of the graphics queue
-
-        
-        //! Contents of buffers are transferred using the vkCmdCopyBuffer command.
-        //! It takes the source and destination buffers as arguments, and an array of regions to copy.
-        //! The regions are defined in `vk::BufferCopy` structures and consist of a source buffer offset, destination buffer offset and size.
-        //! It is not possible to specify VK_WHOLE_SIZE here, unlike the vkMapMemory command.
-
-        auto command_buffer_factory = vk_utility::command::CommandBufferFactorySingleTimeCommand()
-            .set_graphics_queue(_app._graphicsQueue);
-        auto command_buffer = vk_utility::command::CommandBuffer::NewPtr(_app._device->get(), _app._command_pool->get(), command_buffer_factory);
-
-
-        std::vector<vk::BufferCopy> copyRegions{vk::BufferCopy(0, 0, destination_buffer->get().buffer().size())};
-        command_buffer->get()->copyBuffer(source_buffer->get().buffer(), destination_buffer->get().buffer(), copyRegions);
-        
-        command_buffer_factory.End(command_buffer->get());
-
-        return *this;
-    }
 };
 
 
@@ -805,6 +749,9 @@ void CAppliction::recreateSwapChain( void )
 
 void CAppliction::createSwapChain(bool initilaize)
 {
+    auto single_time_command_factory = vk_utility::command::CommandBufferFactorySingleTimeCommand()
+        .set_graphics_queue(_graphicsQueue);
+
     vk::Format depthFormat = vk_utility::core::FormatSelector()
         .set_tiling(vk::ImageTiling::eOptimal)
         .set_feataures(vk::FormatFeatureFlagBits::eDepthStencilAttachment)
@@ -906,7 +853,7 @@ void CAppliction::createSwapChain(bool initilaize)
 
         loadModel();
 
-        auto vertex_buffer = vk_utility::buffer::BufferAndMemory::NewPtr(
+        _vertex_buffers.push_back(vk_utility::buffer::BufferAndMemory::NewPtr(
             *_device,
             vk_utility::buffer::BufferAndMemoryFactoryDefault()
             .set_buffer_factory(
@@ -915,12 +862,16 @@ void CAppliction::createSwapChain(bool initilaize)
                     .set_vertex_buffer_usage())
             .set_buffer_memory_factory(
                 &vk_utility::buffer::BufferDeviceMemoryFactory()
-                    .set_from_physical_device(*_device->get().physical_device())));
-        vk_utility::buffer::BufferOperatorCopyDataStaging::New(_device, std::make_shared<CopyBufferHelper>(*this))
-            ->copy(vertex_buffer, 0, sizeof(_vertices[0]) * _vertices.size(), _vertices.data());
-        _vertex_buffers.push_back(vertex_buffer);
+                    .set_from_physical_device(*_device->get().physical_device()))));
 
-        auto index_buffer = vk_utility::buffer::BufferAndMemory::NewPtr(
+        vk_utility::buffer::CopyDataToBufferStagingCommand()
+            .set_command_buffer_factory(&single_time_command_factory)
+            .set_physical_device(_physical_device)
+            .set_source_data(sizeof(_vertices[0]) * _vertices.size(), _vertices.data())
+            .set_destination_buffer(_vertex_buffers.back()->get().buffer())
+            .execute_command(*_device, *_command_pool);
+
+        _index_buffers.push_back(vk_utility::buffer::BufferAndMemory::NewPtr(
             *_device,
             vk_utility::buffer::BufferAndMemoryFactoryDefault()
             .set_buffer_factory(
@@ -929,10 +880,14 @@ void CAppliction::createSwapChain(bool initilaize)
                     .set_index_buffer_usage())
             .set_buffer_memory_factory(
                 &vk_utility::buffer::BufferDeviceMemoryFactory()
-                    .set_from_physical_device(*_device->get().physical_device())));
-        vk_utility::buffer::BufferOperatorCopyDataStaging::New(_device, std::make_shared<CopyBufferHelper>(*this))
-            ->copy(index_buffer, 0, sizeof(_indices[0]) * _indices.size(), _indices.data());
-        _index_buffers.push_back(index_buffer);
+                    .set_from_physical_device(*_device->get().physical_device()))));
+
+        vk_utility::buffer::CopyDataToBufferStagingCommand()
+            .set_command_buffer_factory(&single_time_command_factory)
+            .set_physical_device(_physical_device)
+            .set_source_data(sizeof(_indices[0]) * _indices.size(), _indices.data())
+            .set_destination_buffer(_index_buffers.back()->get().buffer())
+            .execute_command(*_device, *_command_pool);
     }
 
     // We're going to copy new data to the uniform buffer every frame, so it doesn't really make any sense to have a staging buffer.
@@ -1049,8 +1004,12 @@ void CAppliction::createTextureImage( void ) {
                 &vk_utility::buffer::BufferDeviceMemoryFactory()
                     .set_staging_memory_properties()
                     .set_from_physical_device(*_device->get().physical_device())));
-    vk_utility::buffer::BufferOperatorCopyDataToMemory::New()
-        ->copy(staging_buffer, 0, staging_buffer->get().memory().size(), pixels);
+    
+    vk_utility::buffer::CopyDataToBufferMemoryCommand()
+        .set_source_data(staging_buffer->get().memory().size(), pixels)
+        .set_destination_offset(0)
+        .set_destination_memory(staging_buffer->get().memory())
+        .execute_command(*_device, *_command_pool);
 
     stbi_image_free( pixels );
 

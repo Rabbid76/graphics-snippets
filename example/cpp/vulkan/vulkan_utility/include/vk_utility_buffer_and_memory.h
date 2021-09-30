@@ -7,7 +7,6 @@
 #include "vk_utility_device_memory.h"
 #include "vk_utility_device.h"
 #include "vk_utility_buffer.h"
-#include "vk_utility_buffer_operator_copy_data.h"
 #include "vk_utility_buffer_factory.h"
 #include "vk_utility_buffer_device_memory_factory.h"
 #include "vk_utility_buffer_and_memory_factory.h"

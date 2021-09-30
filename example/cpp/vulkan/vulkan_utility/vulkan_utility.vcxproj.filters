@@ -67,6 +67,12 @@
     <Filter Include="factories\image">
       <UniqueIdentifier>{781fa1ac-e300-4829-8a90-cabe2c10e111}</UniqueIdentifier>
     </Filter>
+    <Filter Include="commands\buffer">
+      <UniqueIdentifier>{2797e7b1-6fbc-431b-82ec-8f522d163472}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="commands\core">
+      <UniqueIdentifier>{f769327d-b36e-4fde-b72a-105a813061fd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -128,18 +134,6 @@
     </ClInclude>
     <ClInclude Include="include\vk_utility_logging_physical_device.h">
       <Filter>logging</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_buffer_operator_copy_data.h">
-      <Filter>buffer</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_buffer_operator_copy_data_to_memory.h">
-      <Filter>buffer</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_buffer_operator_copy_buffer.h">
-      <Filter>buffer</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_buffer_operator_copy_data_staging.h">
-      <Filter>buffer</Filter>
     </ClInclude>
     <ClInclude Include="include\vk_utility_device_factory.h">
       <Filter>device</Filter>
@@ -374,6 +368,18 @@
     </ClInclude>
     <ClInclude Include="include\vk_utility_image_view_and_image_memory.h">
       <Filter>objects\image</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_core_command.h">
+      <Filter>commands\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_buffer_copy_data_to_memory_command.h">
+      <Filter>commands\image</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_buffer_copy_to_buffer_command.h">
+      <Filter>commands\image</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_buffer_copy_data_staging_command.h">
+      <Filter>commands\image</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

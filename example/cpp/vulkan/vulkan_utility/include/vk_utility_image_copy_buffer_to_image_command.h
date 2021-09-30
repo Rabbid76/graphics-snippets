@@ -1,5 +1,6 @@
 #pragma once
 
+#include "vk_utility_core_command.h"
 #include "vk_utility_command_buffer_factory.h"
 
 namespace vk_utility
@@ -19,6 +20,7 @@ namespace vk_utility
         /// but it's possible to specify an array of `vk::BufferImageCopy` to perform many different copies from this buffer to the image in one operation.
         /// </summary>
         class ImageCopyBufferToImageCommand
+            : public core::CoreCommand
         {
         private:
 
@@ -55,7 +57,7 @@ namespace vk_utility
                 return *this;
             }
 
-            ImageCopyBufferToImageCommand& execute_command(vk::Device device, vk::CommandPool command_pool)
+            virtual void execute_command(vk::Device device, vk::CommandPool command_pool) const override
             {
                 auto command_buffer = _command_buffer_factory->Begin(device, command_pool);
 
@@ -73,7 +75,6 @@ namespace vk_utility
 
                 _command_buffer_factory->End(command_buffer);
                 device.freeCommandBuffers(command_pool, command_buffer);
-                return *this;
             }
         };
     }

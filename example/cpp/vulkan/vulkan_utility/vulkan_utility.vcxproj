@@ -168,6 +168,9 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="include\vk_utility_buffer_and_memory_factory_default.h" />
     <ClInclude Include="include\vk_utility_buffer_and_memory_factory.h" />
+    <ClInclude Include="include\vk_utility_buffer_copy_to_buffer_command.h" />
+    <ClInclude Include="include\vk_utility_buffer_copy_data_staging_command.h" />
+    <ClInclude Include="include\vk_utility_buffer_copy_data_to_memory_command.h" />
     <ClInclude Include="include\vk_utility_buffer_factory.h" />
     <ClInclude Include="include\vk_utility_buffer_factory_default.h" />
     <ClInclude Include="include\vk_utility_descriptor_pool_factory_default.h" />
@@ -214,10 +217,6 @@
     <ClInclude Include="include\vk_utility_descriptor_set_layout_factory.h" />
     <ClInclude Include="include\vk_utility_descriptor_set_layout_factory_default.h" />
     <ClInclude Include="include\vk_utility_buffer.h" />
-    <ClInclude Include="include\vk_utility_buffer_operator_copy_data_staging.h" />
-    <ClInclude Include="include\vk_utility_buffer_operator_copy_buffer.h" />
-    <ClInclude Include="include\vk_utility_buffer_operator_copy_data.h" />
-    <ClInclude Include="include\vk_utility_buffer_operator_copy_data_to_memory.h" />
     <ClInclude Include="include\vk_utility_debug.h" />
     <ClInclude Include="include\vk_utility_descriptor_set_layout.h" />
     <ClInclude Include="include\vk_utility_device.h" />
@@ -266,6 +265,7 @@
     <ClInclude Include="include\vk_utility_buffer_and_memory.h" />
     <ClInclude Include="include\vk_utility_semaphore_factory.h" />
     <ClInclude Include="include\vk_utility_buffer_device_memory_factory.h" />
+    <ClInclude Include="include\vk_utility_core_command.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
