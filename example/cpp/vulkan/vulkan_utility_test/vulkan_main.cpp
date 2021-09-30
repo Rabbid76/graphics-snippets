@@ -816,9 +816,10 @@ void CAppliction::createSwapChain(bool initilaize)
         .set_extent_selector(std::make_shared<vk_glfw_utility::swap::SwapExtentSelector>(_wnd))
         .New(_device, _surface);
 
-    _swapchain_image_views = vk_utility::image::SwapchainImageViewFactoryDefault()
-        .set_swapchain(_swapchain)
-        .New(*_device);
+    _swapchain_image_views = vk_utility::image::ImageView::NewPtrVector(
+        *_device,
+        vk_utility::image::SwapchainImageViewFactoryDefault()
+            .set_swapchain(_swapchain));
 
     _render_pass = vk_utility::core::RenderPassFactoryDefault()
         .set_color_format(_swapchain->get().image_format())
@@ -1133,7 +1134,7 @@ void CAppliction::createTextureImage( void ) {
              .set_mipmap_levels(mipmap_levels));
 
     _texture_image_view_memorys.emplace_back(
-        vk_utility::image::ImageViewAndImageMemory::New(image_and_memory->get().detach_device_memory(), image_and_memory->get().detach_image(), image_view));
+        vk_utility::image::ImageViewAndImageMemory::NewPtr(image_and_memory->get().detach_device_memory(), image_and_memory->get().detach_image(), image_view));
 
     _texture_samplers.push_back(vk_utility::image::Sampler::NewPtr(
         *_device,

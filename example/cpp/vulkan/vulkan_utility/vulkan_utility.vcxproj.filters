@@ -25,9 +25,6 @@
     <Filter Include="swap">
       <UniqueIdentifier>{840c606e-0499-4b56-a1ac-38ea97ed8453}</UniqueIdentifier>
     </Filter>
-    <Filter Include="image">
-      <UniqueIdentifier>{af5d396a-713b-415a-bb97-231cca4a400d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="shader">
       <UniqueIdentifier>{26e22b2d-d6f7-4b0b-b3eb-63e1554f08fb}</UniqueIdentifier>
     </Filter>
@@ -222,9 +219,6 @@
     <ClInclude Include="include\vk_utility_pipeline_layout.h">
       <Filter>pipeline</Filter>
     </ClInclude>
-    <ClInclude Include="include\vk_utility_image_view_and_image_memory.h">
-      <Filter>image</Filter>
-    </ClInclude>
     <ClInclude Include="include\vk_utility_framebuffer.h">
       <Filter>buffer</Filter>
     </ClInclude>
@@ -248,12 +242,6 @@
     </ClInclude>
     <ClInclude Include="include\vk_utility_device_memory_factory.h">
       <Filter>device</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_swapchain_image_views_factory.h">
-      <Filter>image</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_swapchain_image_views_factory_default.h">
-      <Filter>image</Filter>
     </ClInclude>
     <ClInclude Include="include\vk_utility_format_selector.h">
       <Filter>core</Filter>
@@ -377,6 +365,15 @@
     </ClInclude>
     <ClInclude Include="include\vk_utility_sampler_factory_default.h">
       <Filter>factories\image</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_swapchain_image_views_factory.h">
+      <Filter>factories\image</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_swapchain_image_views_factory_default.h">
+      <Filter>factories\image</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_image_view_and_image_memory.h">
+      <Filter>objects\image</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

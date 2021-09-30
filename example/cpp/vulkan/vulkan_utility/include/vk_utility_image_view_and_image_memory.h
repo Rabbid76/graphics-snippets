@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include "vk_utility_object.h"
 #include "vk_utility_exception.h"
 #include "vk_utility_vulkan_include.h"
@@ -10,9 +9,6 @@
 #include "vk_utility_image.h"
 #include "vk_utility_image_view_and_image_memory_factory.h"
 
-#include <memory>
-
-
 namespace vk_utility
 {
     namespace image
@@ -20,9 +16,6 @@ namespace vk_utility
         class ImageViewAndImageMemory;
         using ImageViewAndImageMemoryPtr = vk_utility::Ptr<ImageViewAndImageMemory>;
 
-        /// <summary>
-        /// Collection of Image, ImageView and DeviceMemory (`vk::Image`, `vk::ImageView`, `vk::DeviceMemory`)
-        /// </summary>
         class ImageViewAndImageMemory
             : public GenericObject<int>
         {
@@ -34,14 +27,9 @@ namespace vk_utility
 
         public:
 
-            static ImageViewAndImageMemory Create(device::DeviceMemoryPtr device_memory, ImagePtr image, ImageViewPtr image_view)
+            static ImageViewAndImageMemoryPtr NewPtr(device::DeviceMemoryPtr device_memory, ImagePtr image, ImageViewPtr image_view)
             {
-                return ImageViewAndImageMemory(device_memory, image, image_view);
-            }
-
-            static ImageViewAndImageMemoryPtr New(device::DeviceMemoryPtr device_memory, ImagePtr image, ImageViewPtr image_view)
-            {
-                return vk_utility::make_shared(Create(device_memory, image, image_view));
+                return vk_utility::make_shared(ImageViewAndImageMemory(device_memory, image, image_view));
             }
 
             static ImageViewAndImageMemory New(vk::Device device, ImageViewAndImageMemoryFactory& image_view_and_image_memory_factory)

@@ -5,8 +5,9 @@
 #include "vk_utility_exception.h"
 #include "vk_utility_vulkan_include.h"
 #include "vk_utility_image_view_factory.h"
-
-#include <memory>
+#include "vk_utility_swapchain_image_views_factory.h"
+#include <vector>
+#include <algorithm>
 
 
 namespace vk_utility
@@ -27,6 +28,18 @@ namespace vk_utility
             vk::Device _device;
 
         public:
+
+            static std::vector<ImageViewPtr> NewPtrVector(vk::Device device, const SwapchainImageViewsFactory& image_view_factory)
+            {
+                auto swapchain_image_views = image_view_factory.New(device);
+                std::vector<ImageViewPtr> swapchain_image_view_ptrs;
+                std::transform(swapchain_image_views.begin(), swapchain_image_views.end(),
+                    std::back_inserter(swapchain_image_view_ptrs), [&device](auto image_view) -> auto
+                {
+                    return vk_utility::make_shared(ImageView(device, image_view));
+                });
+                return swapchain_image_view_ptrs;
+            }
 
             static ImageView New(vk::Device device, ImageViewFactory & image_view_factory)
             {
