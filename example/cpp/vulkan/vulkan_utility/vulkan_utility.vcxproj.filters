@@ -19,9 +19,6 @@
     <Filter Include="logging">
       <UniqueIdentifier>{b055ce28-6c8b-4d3e-b600-fda7558875d1}</UniqueIdentifier>
     </Filter>
-    <Filter Include="buffer">
-      <UniqueIdentifier>{cb13d4a3-6ca1-42b4-8428-74eae46206a0}</UniqueIdentifier>
-    </Filter>
     <Filter Include="swap">
       <UniqueIdentifier>{840c606e-0499-4b56-a1ac-38ea97ed8453}</UniqueIdentifier>
     </Filter>
@@ -213,15 +210,6 @@
     <ClInclude Include="include\vk_utility_pipeline_layout.h">
       <Filter>pipeline</Filter>
     </ClInclude>
-    <ClInclude Include="include\vk_utility_framebuffer.h">
-      <Filter>buffer</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_framebuffer_factory.h">
-      <Filter>buffer</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_framebuffer_factory_default.h">
-      <Filter>buffer</Filter>
-    </ClInclude>
     <ClInclude Include="include\vk_utility_command_pool_factory.h">
       <Filter>factories\command</Filter>
     </ClInclude>
@@ -372,14 +360,29 @@
     <ClInclude Include="include\vk_utility_core_command.h">
       <Filter>commands\core</Filter>
     </ClInclude>
-    <ClInclude Include="include\vk_utility_buffer_copy_data_to_memory_command.h">
-      <Filter>commands\image</Filter>
+    <ClInclude Include="include\vk_utility_framebuffer_factory.h">
+      <Filter>factories\buffer</Filter>
     </ClInclude>
-    <ClInclude Include="include\vk_utility_buffer_copy_to_buffer_command.h">
-      <Filter>commands\image</Filter>
+    <ClInclude Include="include\vk_utility_framebuffer_factory_default.h">
+      <Filter>factories\buffer</Filter>
     </ClInclude>
     <ClInclude Include="include\vk_utility_buffer_copy_data_staging_command.h">
-      <Filter>commands\image</Filter>
+      <Filter>commands\buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_buffer_copy_data_to_memory_command.h">
+      <Filter>commands\buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_buffer_copy_to_buffer_command.h">
+      <Filter>commands\buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_swapchain_framebuffer_factory.h">
+      <Filter>factories\buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_swapchain_framebuffer_factory_default.h">
+      <Filter>factories\buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_framebuffer.h">
+      <Filter>objects\buffer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

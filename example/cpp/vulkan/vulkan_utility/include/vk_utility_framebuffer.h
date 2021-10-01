@@ -1,10 +1,8 @@
 #pragma once
 
 #include "vk_utility_object.h"
-#include "vk_utility_exception.h"
-#include "vk_utility_vulkan_include.h"
-#include "vk_utility_device.h"
-
+#include "vk_utility_framebuffer_factory.h"
+#include "vk_utility_swapchain_framebuffer_factory.h"
 #include <memory>
 
 namespace vk_utility
@@ -26,14 +24,26 @@ namespace vk_utility
 
         public:
 
-            static Framebuffer Create(vk::Device device, const vk::FramebufferCreateInfo& framebuffer_infomration)
+            static std::vector<FramebufferPtr> NewPtrVector(vk::Device device, const SwapchainFramebufferFactory& framebuffer_factory)
             {
-                return Framebuffer(device, device.createFramebuffer(framebuffer_infomration));
+                auto framebuffers = framebuffer_factory.New(device);
+                std::vector<FramebufferPtr> framebuffer_ptrs;
+                std::transform(framebuffers.begin(), framebuffers.end(),
+                    std::back_inserter(framebuffer_ptrs), [&device](auto framebuffer) -> auto
+                {
+                    return vk_utility::make_shared(Framebuffer(device, framebuffer));
+                });
+                return framebuffer_ptrs;
             }
 
-            static FramebufferPtr New(vk::Device device, const vk::FramebufferCreateInfo& framebuffer_infomration)
+            static Framebuffer New(vk::Device device, const FramebufferFactory& framebuffer_factory)
             {
-                return vk_utility::make_shared(Create(device, framebuffer_infomration));
+                return Framebuffer(device, framebuffer_factory.New(device));
+            }
+
+            static FramebufferPtr NewPtr(vk::Device device, const FramebufferFactory& framebuffer_factory)
+            {
+                return make_shared(New(device, framebuffer_factory));
             }
 
             Framebuffer(void) = default;

@@ -6,11 +6,11 @@ namespace vk_utility
 {
     namespace buffer
     {
-        class FramebufferFactory
+        class SwapchainFramebufferFactory
         {
         public:
 
-            virtual vk::Framebuffer New(vk::Device device) const = 0;
+            virtual std::vector<vk::Framebuffer> New(vk::Device device) const = 0;
         };
     }
 }

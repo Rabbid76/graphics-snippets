@@ -81,7 +81,7 @@
 #include <vk_utility_image_view_and_image_memory.h>
 #include <vk_utility_swapchain_image_views_factory_default.h>
 #include <vk_utility_framebuffer.h>
-#include <vk_utility_framebuffer_factory_default.h>
+#include <vk_utility_swapchain_framebuffer_factory_default.h>
 #include <vk_utility_command_pool.h>
 #include <vk_utility_command_pool_factory_default.h>
 #include <vk_utility_command_buffer.h>
@@ -839,13 +839,14 @@ void CAppliction::createSwapChain(bool initilaize)
                 .set_aspect_flags(vk::ImageAspectFlagBits::eDepth)
                 .set_mipmap_levels(1))));
     
-    _swapchain_framebuffers = vk_utility::buffer::FramebufferFactoryDefault()
-        .set_swapchain(_swapchain)
-        .set_swapchain_image_views(_swapchain_image_views)
-        .set_color_image_view(_color_image_view_memorys.front())
-        .set_depth_image_view(_depth_image_view_memorys.front())
-        .set_render_pass(_render_pass)
-        .New(_device->get());
+    _swapchain_framebuffers = vk_utility::buffer::Framebuffer::NewPtrVector(
+        *_device,
+        vk_utility::buffer::SwapchainFramebufferFactoryDefault()
+            .set_swapchain(_swapchain)
+            .set_swapchain_image_views(_swapchain_image_views)
+            .set_color_image_view(_color_image_view_memorys.front())
+            .set_depth_image_view(_depth_image_view_memorys.front())
+            .set_render_pass(_render_pass));
 
     if (initilaize)
     {
