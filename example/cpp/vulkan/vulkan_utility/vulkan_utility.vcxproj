@@ -166,6 +166,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
+    <ClInclude Include="include\vk_utility_sampler_and_imageview_image_memory.h" />
+    <ClInclude Include="include\vk_utility_texture_factory.h" />
     <ClInclude Include="include\vk_utility_buffer_and_memory_factory_default.h" />
     <ClInclude Include="include\vk_utility_buffer_and_memory_factory.h" />
     <ClInclude Include="include\vk_utility_buffer_copy_to_buffer_command.h" />
@@ -261,6 +263,7 @@
     <ClInclude Include="include\vk_utility_swap_present_mode_selector_default.h" />
     <ClInclude Include="include\vk_utility_swap_surface_format_selector.h" />
     <ClInclude Include="include\vk_utility_swap_surface_fromat_selector_default.h" />
+    <ClInclude Include="include\vk_utility_texture_factory_default.h" />
     <ClInclude Include="include\vk_utility_validation_layers.h" />
     <ClInclude Include="include\vk_utility_vulkan_include.h" />
     <ClInclude Include="include\vk_utility_buffer_and_memory.h" />

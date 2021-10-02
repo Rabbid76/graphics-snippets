@@ -27,18 +27,28 @@ namespace vk_utility
 
         public:
 
-            static ImageViewAndImageMemoryPtr NewPtr(device::DeviceMemoryPtr device_memory, ImagePtr image, ImageViewPtr image_view)
+            static ImageViewAndImageMemory New(
+                vk::Device device, vk::ImageView image_view, vk::Image image, vk::DeviceMemory image_memory, vk::DeviceSize memory_size)
             {
-                return vk_utility::make_shared(ImageViewAndImageMemory(device_memory, image, image_view));
+                return ImageViewAndImageMemory(
+                    make_shared(vk_utility::device::DeviceMemory(device, image_memory, memory_size)),
+                    make_shared(vk_utility::image::Image(device, image)),
+                    make_shared(vk_utility::image::ImageView(device, image_view)));
+            }
+
+            static ImageViewAndImageMemoryPtr NewPtr(
+                vk::Device device, vk::ImageView image_view, vk::Image image, vk::DeviceMemory image_memory, vk::DeviceSize memory_size)
+            {
+                return make_shared(New(device, image_view, image, image_memory, memory_size));
             }
 
             static ImageViewAndImageMemory New(vk::Device device, ImageViewAndImageMemoryFactory& image_view_and_image_memory_factory)
             {
                 auto [image_view, image, image_memory, memory_size] = image_view_and_image_memory_factory.New(device);
                 return ImageViewAndImageMemory(
-                    vk_utility::make_shared(vk_utility::device::DeviceMemory(device, image_memory, memory_size)),
-                    vk_utility::make_shared(vk_utility::image::Image(device, image)),
-                    vk_utility::make_shared(vk_utility::image::ImageView(device, image_view)));
+                    make_shared(vk_utility::device::DeviceMemory(device, image_memory, memory_size)),
+                    make_shared(vk_utility::image::Image(device, image)),
+                    make_shared(vk_utility::image::ImageView(device, image_view)));
             }
 
             static ImageViewAndImageMemoryPtr NewPtr(vk::Device device, ImageViewAndImageMemoryFactory& image_view_and_image_memory_factory)
@@ -51,8 +61,8 @@ namespace vk_utility
             ImageViewAndImageMemory& operator = (const ImageViewAndImageMemory&) = default;
 
             const device::DeviceMemory& device_memory(void) const { return *_device_memory; }
-            const Image  image(void) const { return *_image; }
-            const ImageView  image_view(void) const { return *_image_view; }
+            const Image image(void) const { return *_image; }
+            const ImageView image_view(void) const { return *_image_view; }
 
             ImageViewAndImageMemory(device::DeviceMemoryPtr device_memory, ImagePtr image, ImageViewPtr image_view)
                 : GenericObject(0)

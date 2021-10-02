@@ -20,6 +20,16 @@ namespace vk_utility
 
         public:
 
+            static Sampler New(vk::Device device, vk::Sampler sampler)
+            {
+                return Sampler(device, sampler);
+            }
+
+            static SamplerPtr NewPtr(vk::Device device, vk::Sampler sampler)
+            {
+                return make_shared(New(device, sampler));
+            }
+
             static Sampler New(vk::Device device, const SamplerFactory &sampler_factory)
             {
                 return Sampler(device, sampler_factory.New(device));

@@ -109,6 +109,8 @@
 #include "vk_utility_device_memory_factory_default.h"
 #include "vk_utility_buffer_and_memory_factory_default.h"
 #include "vk_utility_buffer_copy_data_staging_command.h"
+#include "vk_utility_texture_factory_default.h"
+#include "vk_utility_sampler_and_imageview_image_memory.h"
 
 // GLFW
 
@@ -343,8 +345,7 @@ private: // private operations
     void createSwapChain( bool initilaize );         //!< create the entire swapchain (e.g. when the window was resized)
     void cleanupSwapChain( void );                   //!< cleanup everything which will be recreated till swapchain is recreated
     void loadModel(void);                            //!< load scene
-    void createTextureImage( void );                 //!< create texture image
-    void createTextureImageView( void );             //!< create texture image view
+    void loadTexture(const std::string &file_name);  //!< load texture
     void createDescriptorSets( void );               //!< create descriptor sets
     void createCommandBuffers( void );               //!< create command buffers
     void updateUniformBuffer( uint32_t imageIndex ); //!< update the uniform buffer for the current image
@@ -380,67 +381,45 @@ private: // private attributes
     size_t                  _currentFrame = 0;                          //!< current frame semaphore index
     bool                    _framebufferResized = false;                //!< state which indicates that the widow has been resized
 
-    vk_utility::core::InstancePtr                              _instance;                   // Vulkan instance handle
-    vk_utility::device::SurfacePtr                             _surface;                    // Vulkan surface handle
-    vk_utility::device::PhysicalDevicePtr                      _physical_device;
-    vk_utility::device::DevicePtr                              _device;                     // Vulkan logical device handle 
+    vk_utility::core::InstancePtr                                     _instance;                   // Vulkan instance handle
+    vk_utility::device::SurfacePtr                                    _surface;                    // Vulkan surface handle
+    vk_utility::device::PhysicalDevicePtr                             _physical_device;
+    vk_utility::device::DevicePtr                                     _device;                     // Vulkan logical device handle 
     vk::Queue                      _graphicsQueue;            //!< Vulkan graphics queue handle 
     vk::Queue                      _presentQueue;             //!< Vulkan presentation queue handle 
-    vk_utility::swap::SwapchainPtr                             _swapchain;                  // Vulkan swap chain handle 
-    std::vector<vk_utility::image::ImageViewPtr>               _swapchain_image_views;      // Vulkan swap chain image handles
-    vk_utility::core::RenderPassPtr                            _render_pass;                // Vulkan render pass handle
-    vk_utility::core::DescriptorSetLayoutPtr                   _descriptor_set_layout;      // Vulkan descriptor set layout
-    vk_utility::core::DescriptorPoolPtr                        _descriptor_pool;            // Vulkan descriptor set pool
+    vk_utility::swap::SwapchainPtr                                    _swapchain;                  // Vulkan swap chain handle 
+    std::vector<vk_utility::image::ImageViewPtr>                      _swapchain_image_views;      // Vulkan swap chain image handles
+    vk_utility::core::RenderPassPtr                                   _render_pass;                // Vulkan render pass handle
+    vk_utility::core::DescriptorSetLayoutPtr                          _descriptor_set_layout;      // Vulkan descriptor set layout
+    vk_utility::core::DescriptorPoolPtr                               _descriptor_pool;            // Vulkan descriptor set pool
     std::vector<vk::DescriptorSet> _descriptorSets;           //!< Vulkan descriptor sets
-    vk_utility::pipeline::PipelineLayoutPtr                    _pipeline_layout;            // Vulkan pipeline layout handle
-    vk_utility::pipeline::PipelinePtr                          _graphics_pipeline;          // Vulkan graphics pipeline handle
-    std::vector<vk_utility::buffer::FramebufferPtr>            _swapchain_framebuffers;     // Vulkan framebuffers
-    vk_utility::command::CommandPoolPtr                        _command_pool;               // Vulkan command pool
+    vk_utility::pipeline::PipelineLayoutPtr                           _pipeline_layout;            // Vulkan pipeline layout handle
+    vk_utility::pipeline::PipelinePtr                                 _graphics_pipeline;          // Vulkan graphics pipeline handle
+    std::vector<vk_utility::buffer::FramebufferPtr>                   _swapchain_framebuffers;     // Vulkan framebuffers
+    vk_utility::command::CommandPoolPtr                               _command_pool;               // Vulkan command pool
     std::vector<vk::CommandBuffer> _commandBuffers;           //!< Vulkan command buffers
-    std::vector<vk_utility::core::SemaphorePtr>                _image_available_semaphores; // Vulkan semaphore
-    std::vector<vk_utility::core::SemaphorePtr>                _render_finished_semaphores; // Vulkan semaphore
-    std::vector<vk_utility::core::FencePtr>                    _in_flight_fences;           // Vulkan fence
-    std::vector<vk_utility::buffer::BufferAndMemoryPtr>        _vertex_buffers;             // Vulkan vertex buffer
-    std::vector<vk_utility::buffer::BufferAndMemoryPtr>        _index_buffers;              // Vulkan index buffer
-    std::vector<vk_utility::buffer::BufferAndMemoryPtr>        _uniform_buffers;            // Vulkan uniform buffer
-    std::vector<vk_utility::image::ImageViewAndImageMemoryPtr> _depth_image_view_memorys;   // Vulkan depth image view memory
-    std::vector<vk_utility::image::ImageViewAndImageMemoryPtr> _color_image_view_memorys;   // Vulkan color image view memory
-    std::vector<vk_utility::image::ImageViewAndImageMemoryPtr> _texture_image_view_memorys; // Vulkan texture image view memory
-    std::vector<vk_utility::image::SamplerPtr>                 _texture_samplers;           // Vulkan texture sampler
+    std::vector<vk_utility::core::SemaphorePtr>                       _image_available_semaphores; // Vulkan semaphore
+    std::vector<vk_utility::core::SemaphorePtr>                       _render_finished_semaphores; // Vulkan semaphore
+    std::vector<vk_utility::core::FencePtr>                           _in_flight_fences;           // Vulkan fence
+    std::vector<vk_utility::buffer::BufferAndMemoryPtr>               _vertex_buffers;             // Vulkan vertex buffer
+    std::vector<vk_utility::buffer::BufferAndMemoryPtr>               _index_buffers;              // Vulkan index buffer
+    std::vector<vk_utility::buffer::BufferAndMemoryPtr>               _uniform_buffers;            // Vulkan uniform buffer
+    std::vector<vk_utility::image::ImageViewAndImageMemoryPtr>        _depth_image_view_memorys;   // Vulkan depth image view memory
+    std::vector<vk_utility::image::ImageViewAndImageMemoryPtr>        _color_image_view_memorys;   // Vulkan color image view memory
+    std::vector<vk_utility::image::SamplerAndImageViewImageMemoryPtr> _texture_samplers;           // Vulkan texture sampler
 };
 
 
-/******************************************************************//**
-* \brief   ctor
-* 
-* \author  gernot
-* \date    2017-11-16
-* \version 1.0
-**********************************************************************/
 CAppliction::CAppliction( 
   bool verbose ) //!< control of log messages
   : _verbose( verbose )
 {}
 
 
-/******************************************************************//**
-* \brief   dtor
-* 
-* \author  gernot
-* \date    2017-11-16
-* \version 1.0
-**********************************************************************/
 CAppliction::~CAppliction()
 {}
 
 
-/******************************************************************//**
-* \brief   Run Vulkan application
-* 
-* \author  gernot
-* \date    2017-09-30
-* \version 1.0
-**********************************************************************/
 void CAppliction::run( void ) 
 {     
     if ( _requestedValidationLayers.empty() && _enableAllValidationLayers == false )
@@ -453,13 +432,6 @@ void CAppliction::run( void )
 }
 
 
-/******************************************************************//**
-* \brief   Initialize GLFW and create GLFW window
-* 
-* \author  gernot
-* \date    2017-09-30
-* \version 1.0
-**********************************************************************/
 void CAppliction::initWindow( void ) 
 {
     //! glfwInit() initializes the GLFW library. 
@@ -489,13 +461,26 @@ void CAppliction::initWindow( void )
 }
 
 
-/******************************************************************//**
-* \brief Load scene.
-*
-* \author  gernot
-* \date    2018-11-04
-* \version 1.0
-**********************************************************************/
+void CAppliction::loadTexture(const std::string& file_name)
+{
+    int tex_width, tex_height, tex_channels;
+    stbi_uc* pixels = stbi_load(file_name.c_str(), &tex_width, &tex_height, &tex_channels, STBI_rgb_alpha);
+
+    if (!pixels)
+        throw CException("failed to load texture image!");
+
+    _texture_samplers.emplace_back(vk_utility::image::SamplerAndImageViewImageMemory::NewPtr(
+        *_device,
+        *_command_pool,
+        vk_utility::image::TextureFactoryDefault()
+        .set_source_data(static_cast<uint32_t>(tex_width), static_cast<uint32_t>(tex_height), pixels)
+        .set_physical_device(_physical_device)
+        .set_graphics_queue(_graphicsQueue)));
+
+    stbi_image_free(pixels);
+}
+
+
 void CAppliction::loadModel(void)
 {
     if (_load_model == false)
@@ -544,13 +529,6 @@ void CAppliction::loadModel(void)
 }
 
 
-/******************************************************************//**
-* \brief   Set up Vulkan
-* 
-* \author  gernot
-* \date    2017-09-30
-* \version 1.0
-**********************************************************************/
 void CAppliction::initVulkan( void )
 {
     vk_utility::logging::Log log;
@@ -613,13 +591,6 @@ void CAppliction::initVulkan( void )
 }
 
 
-/******************************************************************//**
-* \brief   Event loop
-* 
-* \author  gernot
-* \date    2017-09-30
-* \version 1.0
-**********************************************************************/
 void CAppliction::mainLoop( void ) 
 {
     //! To keep the application running until either an error occurs or the window is closed, we need to add an event loop 
@@ -636,20 +607,12 @@ void CAppliction::mainLoop( void )
 }
 
 
-/******************************************************************//**
-* \brief   Cleanup GLFW
-* 
-* \author  gernot
-* \date    2017-09-30
-* \version 1.0
-**********************************************************************/
 void CAppliction::cleanup( void ) 
 {
     cleanupSwapChain();
 
     _descriptor_set_layout = nullptr;
     _texture_samplers.clear();
-    _texture_image_view_memorys.clear();
     _index_buffers.clear();
     _vertex_buffers.clear();
     _in_flight_fences.clear();
@@ -669,13 +632,6 @@ void CAppliction::cleanup( void )
 }
 
 
-/******************************************************************//**
-* \brief Resize notification.  
-* 
-* \author  gernot
-* \date    2018-11-03
-* \version 1.0
-**********************************************************************/
 void CAppliction::framebufferResizeCallback( 
     GLFWwindow* window, //!< GLFW window handle (pointer)
     int         width,  //!< new width of the window
@@ -692,13 +648,6 @@ void CAppliction::framebufferResizeCallback(
 }
 
 
-/******************************************************************//**
-* \brief Resize notification  
-* 
-* \author  gernot
-* \date    2018-11-03
-* \version 1.0
-**********************************************************************/
 void CAppliction::resize( 
     int width, //!< new width of the window
     int height //!< new height of the window
@@ -708,13 +657,6 @@ void CAppliction::resize(
 }
 
 
-/******************************************************************//**
-* \brief Recreate the entire swapchain (e.g. when the window was resized). 
-* 
-* \author  gernot
-* \date    2018-11-03
-* \version 1.0
-**********************************************************************/
 void CAppliction::recreateSwapChain( void ) 
 {    
     if ( !_device )
@@ -850,8 +792,7 @@ void CAppliction::createSwapChain(bool initilaize)
 
     if (initilaize)
     {
-        createTextureImage();
-
+        loadTexture(_load_model ? TEXTURE_PATH : "../../../_data/wood.png");
         loadModel();
 
         _vertex_buffers.push_back(vk_utility::buffer::BufferAndMemory::NewPtr(
@@ -957,153 +898,6 @@ void CAppliction::cleanupSwapChain( void ) {
 
 
 /******************************************************************//**
-* \brief Create texture image.  
-* 
-* \author  gernot
-* \date    2019-05-05
-* \version 1.0
-**********************************************************************/
-void CAppliction::createTextureImage( void ) {
-
-    if ( !_device )
-        throw CException("no logical vulkan device!");
-
-    //-------------------------------------------
-    // Loading an image
-    //-------------------------------------------
-    
-    std::string image_name = "../../../_data/wood.png";
-    if (_load_model)
-        image_name = TEXTURE_PATH;
-
-    int texWidth, texHeight, texChannels;
-    stbi_uc* pixels = stbi_load(image_name.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-    vk::DeviceSize imageSize = (size_t)texWidth * texHeight * 4;
-
-    if (!pixels) {
-        throw CException("failed to load texture image!");
-    }
-
-
-    //-------------------------------------------
-    // Staging buffer
-    //-------------------------------------------
-
-    //! We're now going to create a buffer in host visible memory so that we can use vkMapMemory and copy the pixels to it.
-    //! Add variables for this temporary buffer to the createTextureImage function:
-    //! The buffer should be in host visible memory so that we can map it and it should be usable as a transfer source so that we can copy it to an image later on:
-    //! We can then directly copy the pixel values that we got from the image loading library to the buffer:
-
-    auto staging_buffer = vk_utility::buffer::BufferAndMemory::NewPtr(
-        *_device,
-        vk_utility::buffer::BufferAndMemoryFactoryDefault()
-            .set_buffer_factory(
-                &vk_utility::buffer::BufferFactoryDefault()
-                    .set_buffer_size(imageSize)
-                    .set_staging_buffer_usage())
-            .set_buffer_memory_factory(
-                &vk_utility::buffer::BufferDeviceMemoryFactory()
-                    .set_staging_memory_properties()
-                    .set_from_physical_device(*_device->get().physical_device())));
-    
-    vk_utility::buffer::CopyDataToBufferMemoryCommand()
-        .set_source_data(staging_buffer->get().memory().size(), pixels)
-        .set_destination_offset(0)
-        .set_destination_memory(staging_buffer->get().memory())
-        .execute_command(*_device, *_command_pool);
-
-    stbi_image_free( pixels );
-
-    uint32_t mipmap_levels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
-   
-    vk::ImageUsageFlags usage_flags = vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled;
-    if (mipmap_levels > 1)
-        usage_flags |= vk::ImageUsageFlagBits::eTransferSrc;
-
-    auto image_and_memory = vk_utility::image::ImageAndMemory::NewPtr(
-        _device->get(),
-        vk_utility::image::ImageAndMemoryFactoryDefault()
-        .set_image_factory(&vk_utility::image::ImageFactory2D()
-            .set_size(texWidth, texHeight)
-            .set_format(vk::Format::eR8G8B8A8Srgb)
-            .set_mipmap_levels(mipmap_levels)
-            .set_samples(vk::SampleCountFlagBits::e1)
-            .set_usage(usage_flags))
-        .set_device_memory_factory(&vk_utility::image::ImageDeviceMemoryFactory()
-            .set_memory_properties(vk::MemoryPropertyFlagBits::eDeviceLocal)
-            .set_from_physical_device(_device->get().physical_device()))
-    );
-
-    //-------------------------------------------
-    // Preparing the texture image
-    //-------------------------------------------
- 
-    //! Copy the staging buffer to the texture image. This involves two steps:
-    //!     Transition the texture image to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
-    //!     Execute the buffer to image copy operation
-
-    //! The image was created with the VK_IMAGE_LAYOUT_UNDEFINED layout, so that one should be specified as old layout when transitioning textureImage.
-    //! Remember that we can do this because we don't care about its contents before performing the copy operation.
-
-    auto single_time_command_factory = vk_utility::command::CommandBufferFactorySingleTimeCommand()
-        .set_graphics_queue(_graphicsQueue);
-
-    vk_utility::image::ImageTransitionCommand()
-        .set_command_buffer_factory(&single_time_command_factory)
-        .set_image(*image_and_memory->get().image())
-        .set_mipmap_levels(mipmap_levels)
-        .set_old_layout(vk::ImageLayout::eUndefined)
-        .set_new_layout(vk::ImageLayout::eTransferDstOptimal)
-        .execute_command(*_device, *_command_pool);
-
-    vk_utility::image::ImageCopyBufferToImageCommand()
-        .set_command_buffer_factory(&single_time_command_factory)
-        .set_buffer(staging_buffer->get().buffer())
-        .set_image(*image_and_memory->get().image())
-        .set_size(static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight))
-        .execute_command(*_device, *_command_pool);
-
-    //! To be able to start sampling from the texture image in the shader, we need one last transition to prepare it for shader access:
-    //transitioned to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL while generating mipmaps
-    if (mipmap_levels == 1)
-        vk_utility::image::ImageTransitionCommand()
-            .set_command_buffer_factory(&single_time_command_factory)
-            .set_image(*image_and_memory->get().image())
-            .set_mipmap_levels(1)
-            .set_old_layout(vk::ImageLayout::eTransferDstOptimal)
-            .set_new_layout(vk::ImageLayout::eShaderReadOnlyOptimal)
-            .execute_command(*_device, *_command_pool);
-    
-    staging_buffer->get().destroy();
-
-    if (mipmap_levels > 1)
-        vk_utility::image::GeneratrMipmapsCommand()
-            .set_command_buffer_factory(&single_time_command_factory)
-            .set_image(*image_and_memory->get().image())
-            .set_size(static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight))
-            .set_mipmap_levels(mipmap_levels)
-            .set_format(vk::Format::eR8G8B8A8Srgb)
-            .execute_command(*_device, *_command_pool);
-
-     auto image_view = vk_utility::image::ImageView::NewPtr(
-         *_device,
-         vk_utility::image::ImageViewFactoryDefault()
-             .set_image(*image_and_memory->get().image())
-             .set_format(vk::Format::eR8G8B8A8Srgb)
-             .set_aspect_flags(vk::ImageAspectFlagBits::eColor)
-             .set_mipmap_levels(mipmap_levels));
-
-    _texture_image_view_memorys.emplace_back(
-        vk_utility::image::ImageViewAndImageMemory::NewPtr(image_and_memory->get().detach_device_memory(), image_and_memory->get().detach_image(), image_view));
-
-    _texture_samplers.push_back(vk_utility::image::Sampler::NewPtr(
-        *_device,
-        vk_utility::image::SamplerFactoryDefault()
-            .set_mipmap_levels(mipmap_levels)));
-}
-
-
-/******************************************************************//**
 * \brief Create descriptor sets.
 * 
 * \author  gernot
@@ -1176,9 +970,12 @@ void CAppliction::createDescriptorSets( void )
         //! and pTexelBufferView is used for descriptors that refer to buffer views.
         //! Our descriptor is based on buffers, so we're using pBufferInfo.
 
-        for (size_t j = 0; j < _texture_image_view_memorys.size(); ++j)
+        for (size_t j = 0; j < _texture_samplers.size(); ++j)
         {
-            vk::DescriptorImageInfo imageInfo(*_texture_samplers[j], *_texture_image_view_memorys[j]->get().image_view(),  vk::ImageLayout::eShaderReadOnlyOptimal);
+            vk::DescriptorImageInfo imageInfo(
+                _texture_samplers[j]->get().sampler(), 
+                _texture_samplers[j]->get().image_view_and_memory().image_view(),
+                vk::ImageLayout::eShaderReadOnlyOptimal);
 
             descriptorWrites.push_back(
                 vk::WriteDescriptorSet

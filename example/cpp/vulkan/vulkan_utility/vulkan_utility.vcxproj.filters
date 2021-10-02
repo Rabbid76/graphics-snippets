@@ -40,9 +40,6 @@
     <Filter Include="factories">
       <UniqueIdentifier>{b6f205fd-ac0e-4ec2-957b-77db9481c5c7}</UniqueIdentifier>
     </Filter>
-    <Filter Include="objects\buffer">
-      <UniqueIdentifier>{a1f3959a-230d-4343-ad6f-2f42072a22d5}</UniqueIdentifier>
-    </Filter>
     <Filter Include="factories\buffer">
       <UniqueIdentifier>{089b45ab-d8d5-4e5e-b874-1e65f665830f}</UniqueIdentifier>
     </Filter>
@@ -69,6 +66,9 @@
     </Filter>
     <Filter Include="commands\core">
       <UniqueIdentifier>{f769327d-b36e-4fde-b72a-105a813061fd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="objects\buffer">
+      <UniqueIdentifier>{a1f3959a-230d-4343-ad6f-2f42072a22d5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -383,6 +383,15 @@
     </ClInclude>
     <ClInclude Include="include\vk_utility_framebuffer.h">
       <Filter>objects\buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_texture_factory.h">
+      <Filter>factories\image</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_texture_factory_default.h">
+      <Filter>factories\image</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_sampler_and_imageview_image_memory.h">
+      <Filter>objects\image</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

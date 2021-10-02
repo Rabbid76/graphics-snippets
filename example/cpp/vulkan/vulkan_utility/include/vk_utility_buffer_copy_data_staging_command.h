@@ -19,7 +19,7 @@ namespace vk_utility
         private:
 
             const command::CommandBufferFactory* _command_buffer_factory;
-            device::PhysicalDevicePtr _phyiscal_dievice;
+            device::PhysicalDevicePtr _physical_device;
             vk::DeviceSize _size;
             const void* _source_data;
             vk::Buffer _destination_buffer;
@@ -32,9 +32,9 @@ namespace vk_utility
                 return *this;
             }
 
-            CopyDataToBufferStagingCommand& set_physical_device(device::PhysicalDevicePtr phyiscal_dievice)
+            CopyDataToBufferStagingCommand& set_physical_device(device::PhysicalDevicePtr physical_device)
             {
-                _phyiscal_dievice = phyiscal_dievice;
+                _physical_device = physical_device;
                 return *this;
             }
 
@@ -63,7 +63,7 @@ namespace vk_utility
                     .set_buffer_memory_factory(
                         &BufferDeviceMemoryFactory()
                         .set_staging_memory_properties()
-                        .set_from_physical_device(*_phyiscal_dievice)));
+                        .set_from_physical_device(*_physical_device)));
 
                 CopyDataToBufferMemoryCommand()
                     .set_source_data(_size, _source_data)
