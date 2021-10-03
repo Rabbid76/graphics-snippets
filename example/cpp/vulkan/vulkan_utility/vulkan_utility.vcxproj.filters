@@ -70,6 +70,12 @@
     <Filter Include="objects\buffer">
       <UniqueIdentifier>{a1f3959a-230d-4343-ad6f-2f42072a22d5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="objects\device">
+      <UniqueIdentifier>{b2034040-48c1-4813-9281-2abc45f5b34a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="factories\device">
+      <UniqueIdentifier>{5f394487-d759-4ca5-b528-852871a509a4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -83,9 +89,6 @@
     </ClInclude>
     <ClInclude Include="framework.h">
       <Filter>library</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_device_memory.h">
-      <Filter>device</Filter>
     </ClInclude>
     <ClInclude Include="include\vk_utility_physical_device.h">
       <Filter>device</Filter>
@@ -222,17 +225,8 @@
     <ClInclude Include="include\vk_utility_command_buffer_factory_single_time_command.h">
       <Filter>factories\command</Filter>
     </ClInclude>
-    <ClInclude Include="include\vk_utility_device_memory_factory.h">
-      <Filter>device</Filter>
-    </ClInclude>
     <ClInclude Include="include\vk_utility_format_selector.h">
       <Filter>core</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_device_memory_factory_default.h">
-      <Filter>device</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_device_memory_factory_find_type.h">
-      <Filter>device</Filter>
     </ClInclude>
     <ClInclude Include="include\vk_utility_image_transition_command.h">
       <Filter>commands\image</Filter>
@@ -392,6 +386,18 @@
     </ClInclude>
     <ClInclude Include="include\vk_utility_sampler_and_imageview_image_memory.h">
       <Filter>objects\image</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_device_memory.h">
+      <Filter>objects\device</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_device_memory_factory.h">
+      <Filter>factories\device</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_device_memory_factory_default.h">
+      <Filter>factories\device</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_device_memory_factory_find_type.h">
+      <Filter>factories\device</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -40,6 +40,7 @@ namespace vk_utility
         {
         private:
 
+            const command::CommandBufferFactory *_command_buffer_factory;
             uint32_t _width;
             uint32_t _height;
             const void* _source_data;
@@ -47,6 +48,12 @@ namespace vk_utility
             vk::Queue _graphics_queue;
 
         public:
+
+            TextureFactoryDefault& set_command_buffer_factory(const command::CommandBufferFactory * command_buffer_factory)
+            {
+                _command_buffer_factory = command_buffer_factory;
+                return *this;
+            }
 
             TextureFactoryDefault& set_source_data(uint32_t width, uint32_t height, const void* source_data)
             {
@@ -108,11 +115,8 @@ namespace vk_utility
                         .set_from_physical_device(*_physical_device))
                     .New(device);
 
-                auto single_time_command_factory = command::CommandBufferFactorySingleTimeCommand()
-                    .set_graphics_queue(_graphics_queue);
-
                 ImageTransitionCommand()
-                    .set_command_buffer_factory(&single_time_command_factory)
+                    .set_command_buffer_factory(_command_buffer_factory)
                     .set_image(image)
                     .set_mipmap_levels(mipmap_levels)
                     .set_old_layout(vk::ImageLayout::eUndefined)
@@ -120,7 +124,7 @@ namespace vk_utility
                     .execute_command(device, command_pool);
 
                 ImageCopyBufferToImageCommand()
-                    .set_command_buffer_factory(&single_time_command_factory)
+                    .set_command_buffer_factory(_command_buffer_factory)
                     .set_buffer(staging_buffer)
                     .set_image(image)
                     .set_size(_width, _height)
@@ -128,7 +132,7 @@ namespace vk_utility
 
                 if (mipmap_levels == 1)
                     ImageTransitionCommand()
-                        .set_command_buffer_factory(&single_time_command_factory)
+                        .set_command_buffer_factory(_command_buffer_factory)
                         .set_image(image)
                         .set_mipmap_levels(1)
                         .set_old_layout(vk::ImageLayout::eTransferDstOptimal)
@@ -140,7 +144,7 @@ namespace vk_utility
 
                 if (mipmap_levels > 1)
                     GeneratrMipmapsCommand()
-                        .set_command_buffer_factory(&single_time_command_factory)
+                        .set_command_buffer_factory(_command_buffer_factory)
                         .set_image(image)
                         .set_size(_width, _height)
                         .set_mipmap_levels(mipmap_levels)

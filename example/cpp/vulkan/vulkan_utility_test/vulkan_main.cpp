@@ -469,13 +469,17 @@ void CAppliction::loadTexture(const std::string& file_name)
     if (!pixels)
         throw CException("failed to load texture image!");
 
+    auto single_time_command_factory = vk_utility::command::CommandBufferFactorySingleTimeCommand()
+        .set_graphics_queue(_graphicsQueue);
+
     _texture_samplers.emplace_back(vk_utility::image::SamplerAndImageViewImageMemory::NewPtr(
         *_device,
         *_command_pool,
         vk_utility::image::TextureFactoryDefault()
-        .set_source_data(static_cast<uint32_t>(tex_width), static_cast<uint32_t>(tex_height), pixels)
-        .set_physical_device(_physical_device)
-        .set_graphics_queue(_graphicsQueue)));
+            .set_command_buffer_factory(&single_time_command_factory)
+            .set_source_data(static_cast<uint32_t>(tex_width), static_cast<uint32_t>(tex_height), pixels)
+            .set_physical_device(_physical_device)
+            .set_graphics_queue(_graphicsQueue)));
 
     stbi_image_free(pixels);
 }
@@ -526,6 +530,45 @@ void CAppliction::loadModel(void)
             _indices.push_back(uniqueVertices[vertex]);
         }
     }
+
+    auto single_time_command_factory = vk_utility::command::CommandBufferFactorySingleTimeCommand()
+        .set_graphics_queue(_graphicsQueue);
+
+    _vertex_buffers.push_back(vk_utility::buffer::BufferAndMemory::NewPtr(
+        *_device,
+        vk_utility::buffer::BufferAndMemoryFactoryDefault()
+        .set_buffer_factory(
+            &vk_utility::buffer::BufferFactoryDefault()
+            .set_buffer_size(sizeof(_vertices[0]) * _vertices.size())
+            .set_vertex_buffer_usage())
+        .set_buffer_memory_factory(
+            &vk_utility::buffer::BufferDeviceMemoryFactory()
+            .set_from_physical_device(*_device->get().physical_device()))));
+
+    vk_utility::buffer::CopyDataToBufferStagingCommand()
+        .set_command_buffer_factory(&single_time_command_factory)
+        .set_physical_device(_physical_device)
+        .set_source_data(sizeof(_vertices[0]) * _vertices.size(), _vertices.data())
+        .set_destination_buffer(_vertex_buffers.back()->get().buffer())
+        .execute_command(*_device, *_command_pool);
+
+    _index_buffers.push_back(vk_utility::buffer::BufferAndMemory::NewPtr(
+        *_device,
+        vk_utility::buffer::BufferAndMemoryFactoryDefault()
+        .set_buffer_factory(
+            &vk_utility::buffer::BufferFactoryDefault()
+            .set_buffer_size(sizeof(_indices[0]) * _indices.size())
+            .set_index_buffer_usage())
+        .set_buffer_memory_factory(
+            &vk_utility::buffer::BufferDeviceMemoryFactory()
+            .set_from_physical_device(*_device->get().physical_device()))));
+
+    vk_utility::buffer::CopyDataToBufferStagingCommand()
+        .set_command_buffer_factory(&single_time_command_factory)
+        .set_physical_device(_physical_device)
+        .set_source_data(sizeof(_indices[0]) * _indices.size(), _indices.data())
+        .set_destination_buffer(_index_buffers.back()->get().buffer())
+        .execute_command(*_device, *_command_pool);
 }
 
 
@@ -794,42 +837,6 @@ void CAppliction::createSwapChain(bool initilaize)
     {
         loadTexture(_load_model ? TEXTURE_PATH : "../../../_data/wood.png");
         loadModel();
-
-        _vertex_buffers.push_back(vk_utility::buffer::BufferAndMemory::NewPtr(
-            *_device,
-            vk_utility::buffer::BufferAndMemoryFactoryDefault()
-            .set_buffer_factory(
-                &vk_utility::buffer::BufferFactoryDefault()
-                    .set_buffer_size(sizeof(_vertices[0]) * _vertices.size())
-                    .set_vertex_buffer_usage())
-            .set_buffer_memory_factory(
-                &vk_utility::buffer::BufferDeviceMemoryFactory()
-                    .set_from_physical_device(*_device->get().physical_device()))));
-
-        vk_utility::buffer::CopyDataToBufferStagingCommand()
-            .set_command_buffer_factory(&single_time_command_factory)
-            .set_physical_device(_physical_device)
-            .set_source_data(sizeof(_vertices[0]) * _vertices.size(), _vertices.data())
-            .set_destination_buffer(_vertex_buffers.back()->get().buffer())
-            .execute_command(*_device, *_command_pool);
-
-        _index_buffers.push_back(vk_utility::buffer::BufferAndMemory::NewPtr(
-            *_device,
-            vk_utility::buffer::BufferAndMemoryFactoryDefault()
-            .set_buffer_factory(
-                &vk_utility::buffer::BufferFactoryDefault()
-                    .set_buffer_size(sizeof(_indices[0]) * _indices.size())
-                    .set_index_buffer_usage())
-            .set_buffer_memory_factory(
-                &vk_utility::buffer::BufferDeviceMemoryFactory()
-                    .set_from_physical_device(*_device->get().physical_device()))));
-
-        vk_utility::buffer::CopyDataToBufferStagingCommand()
-            .set_command_buffer_factory(&single_time_command_factory)
-            .set_physical_device(_physical_device)
-            .set_source_data(sizeof(_indices[0]) * _indices.size(), _indices.data())
-            .set_destination_buffer(_index_buffers.back()->get().buffer())
-            .execute_command(*_device, *_command_pool);
     }
 
     // We're going to copy new data to the uniform buffer every frame, so it doesn't really make any sense to have a staging buffer.
