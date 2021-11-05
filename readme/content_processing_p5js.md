@@ -11,9 +11,9 @@ Robert C. Martin, The Robert C. Martin Clean Code Collection (Collection)
 
 [![](../processing/p5js/image/circle_3_points.png) Circle by 3 points - p5.js](https://rabbid76.github.io/graphics-snippets/processing/p5js/p5js_circle_3_points.html)
 
-[![](../processing/p5js/image/endless_line.png) Circle by 3 points - p5.js](https://rabbid76.github.io/graphics-snippets/processing/p5js/p5js_endless_line.html)
+[![](../processing/p5js/image/endless_line.png) Endless line through by 2 points - p5.js](https://rabbid76.github.io/graphics-snippets/processing/p5js/p5js_endless_line.html)
 
-[![](../processing/p5js/image/circle_line_intersection.png) Circle by 3 points - p5.js](https://rabbid76.github.io/graphics-snippets/processing/p5js/p5js_circle_line_intersection.html)
+[![](../processing/p5js/image/circle_line_intersection.png) Intersect line and circle - p5.js](https://rabbid76.github.io/graphics-snippets/processing/p5js/p5js_circle_line_intersection.html)
 
 [![](https://i.stack.imgur.com/bH996.png) Random shape - p5.js](https://rabbid76.github.io/graphics-snippets/example/p5.js/random_shape_1.html)
 
