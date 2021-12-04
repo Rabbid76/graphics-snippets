@@ -19,8 +19,8 @@ TODO:
 <body>
 <!--script src="https://threejs.org/build/three.min.js"></script>
 <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script-->
-<script src="https://cdn.jsdelivr.net/npm/three@0.131/build/three.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.131/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.135/build/three.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.135/examples/js/controls/OrbitControls.js"></script>
 
 <div id="container">
     <canvas id="my_canvas"> </canvas>
@@ -148,7 +148,7 @@ Model View Projection and Depth
         shape.absarc( width - radius * 2, height -  radius * 2, eps, Math.PI / 2, 0, true );
         shape.absarc( width - radius * 2, eps, eps, 0, -Math.PI / 2, true );
         let geometry = new THREE.ExtrudeBufferGeometry( shape, {
-            amount: depth - radius0 * 2,
+            depth: depth - radius0 * 2,
             bevelEnabled: true,
             bevelSegments: smoothness * 2,
             steps: 1,
