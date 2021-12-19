@@ -4,8 +4,9 @@
 
 # Legacy OpenGL - immediate mode and fixed function pipeline
 
-[Fixed Function Pipeline](https://www.khronos.org/opengl/wiki/Fixed_Function_Pipeline)  
+[OpenGL Context](https://www.khronos.org/opengl/wiki/OpenGL_Context)  
 [Legacy OpenGL](https://www.khronos.org/opengl/wiki/Legacy_OpenGL)  
+[Fixed Function Pipeline](https://www.khronos.org/opengl/wiki/Fixed_Function_Pipeline)  
 
 [What is fixed function pipeline(PyOpenGL)?](https://stackoverflow.com/questions/53930214/what-is-fixed-function-pipelinepyopengl/53930912#53930912)  
 
@@ -171,6 +172,9 @@ See also the answer to [What are the Attribute locations for fixed function pipe
 
 [How to rotate 2 objects independently in pygame and pyopengl](https://stackoverflow.com/questions/53157171/how-to-rotate-2-objects-independently-in-pygame-and-pyopengl/53159418#53159418)  
 
+[Animate cube inside an animation](https://stackoverflow.com/questions/59600532/animate-cube-inside-an-animation/59601017#59601017)  
+![[Animate cube inside an animation](https://i.stack.imgur.com/PMIvw.gif)  
+
 ## Write to Framebuffer
 
 [Using gl_FragColor vs. out vec4 color?](https://stackoverflow.com/questions/51459596/using-gl-fragcolor-vs-out-vec4-color/51459750#51459750)
@@ -204,7 +208,7 @@ glEnable(GL_LIGHTING)
 [Basic OpenGL Lighting](https://www.sjbaker.org/steve/omniv/opengl_lighting.html)  
 [Per Fragment Lighting](https://www.opengl.org/sdk/docs/tutorials/ClockworkCoders/lighting.php)  
 
-![texture coordinates](image/opengl_lighting_flowchart.png)
+![legacy lighting flowchart](https://www.khronos.org/opengl/wiki_opengl/images/Opengl_lighting_flowchart.png)
 
 [OpenGL lighting position is fixed at undesired location](https://stackoverflow.com/questions/50516210/opengl-lighting-position-is-fixed-at-undesired-location/50516879#50516879)  
 
@@ -305,7 +309,9 @@ In the case of specular highlights, the light distribution is not linear and can
 
 ## Drawing geometry and mesh
 
-### GLUT
+### GLU
+
+[“invalid value” when calling gluNewQuadric](https://stackoverflow.com/questions/54263677/invalid-value-when-calling-glunewquadric/54265534#54265534)  
 
 [texturing a moving sphere in OpenGL C++](https://stackoverflow.com/questions/49464644/texturing-a-moving-sphere-in-opengl-c/49475387#49475387)  
 ![sphere texture](https://i.stack.imgur.com/Vf4A4.png)
@@ -327,7 +333,7 @@ glPopMatrix();
 glDisable(GL_TEXTURE_2D);
 ```
 
-### PArticles
+### Particles
 
 [OpenGL - Stop spray and stay in its position](https://stackoverflow.com/questions/53833514/opengl-stop-spray-and-stay-in-its-position/53838943#53838943)  
 ![spray](https://i.stack.imgur.com/5VMco.gif)
