@@ -189,7 +189,7 @@ void display( void )
 
     glClear( GL_STENCIL_BUFFER_BIT );
     glEnable( GL_STENCIL_TEST );
-    glColorMask( GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE );
+    glColorMask( GL_FALSE,GL_FALSE,GL_FALSE, GL_FALSE );
     glStencilOp( GL_KEEP, GL_KEEP, GL_INVERT );
     glStencilFunc( GL_ALWAYS, 0x1, 0x1 );
 
