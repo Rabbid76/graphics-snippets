@@ -35,6 +35,10 @@ Denis Diderot, Pensées philosophiques
 
 [Cylindrical_projection](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/cylindrical_projection.md)
 
-## Common mistakes and issues
+## OpenGL Resources and References
+
+[OpenGL resources](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/opengl_resources.md)
 
 [Common texture mistakes and issues](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/issue_texture.md)
+
+[Legacy OpenGL - immediate mode and fixed function pipeline](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/opengl_legacy.md)
