@@ -258,8 +258,8 @@ class TestScene:
         pillar_model = glm.scale(glm.translate(glm.rotate(glm.mat4(1), -math.pi/2, glm.vec3(1, 0, 0)), glm.vec3(0, 0, pillar_height/2)), glm.vec3(0.05, 0.05, pillar_height/2))
         for x in [-1, 1]:
             for y in [-1, -1/3, 1/3, 1]:
-                pos_mat = glm.translate(glm.mat4(1), glm.vec3(wall_side_dist * x, 0, wall_back_dist * y))
-                glUniformMatrix4fv(2, 1, GL_FALSE, glm.value_ptr(pos_mat * pillar_model))
+                pos_mat = glm.translate(glm.mat4(1), glm.vec3(wall_side_dist * x, 0, wall_back_dist * y)) * pillar_model
+                glUniformMatrix4fv(2, 1, GL_FALSE, glm.value_ptr(pos_mat))
                 glDrawElements(GL_TRIANGLE_STRIP, self.cylinder_vao[1], GL_UNSIGNED_INT, None)
         
         glUniformMatrix4fv(2, 1, GL_FALSE, glm.value_ptr(self.model1))
