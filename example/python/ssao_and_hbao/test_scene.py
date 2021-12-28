@@ -152,7 +152,7 @@ def create_vao(attributes, indices):
     glEnableVertexAttribArray(1)
     glEnableVertexAttribArray(2)
     glBindVertexArray(0)
-    glDeleteBuffers(2, buffer_objects)
+    #glDeleteBuffers(2, buffer_objects)
     return vao, indices.size
 
 def create_cube_mesh():
