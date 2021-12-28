@@ -59,7 +59,7 @@ vec4 SSAO(in vec2 texC)
         vec3  tangent         = normalize(randomVec - fragNV * dot(randomVec, fragNV));
         mat3  TBN             = mat3(tangent, cross(fragNV, tangent), fragNV);
         float kernelPtCount   = 0.0;
-        int   kernelSize      = textureSize(u_ssaoKernelSampler, 0).x;
+        int   kernelSize      = 64;//textureSize(u_ssaoKernelSampler, 0).x;
         for( int inx = 0; inx < kernelSize; ++ inx )
         {
             vec4  kernelVec       = texelFetch(u_ssaoKernelSampler, ivec2(inx, 0), 0);
@@ -73,7 +73,7 @@ vec4 SSAO(in vec2 texC)
             kernelPtCount        += w;
             float testDepth       = texture(u_depthSampler, sampleTexC.xy).x;
             float sampleDelta     = testDepth - sampleDepth;
-            occlusion            += w * step(-0.00005, sampleDelta);
+            occlusion            += w * step(0.00001, sampleDelta);
         }
         occlusion = occlusion / kernelPtCount;
         alpha     = 1.0;
@@ -153,12 +153,12 @@ def create_noise(noise_size):
     return noise_texture
 
 def create_kernel(kernel_size):
-    kernel = numpy.empty((kernel_size * 4), dtype = numpy.float32)
+    kernel = numpy.empty((kernel_size, 4), dtype = numpy.float32)
     for i in range(kernel_size):
         v = glm.vec3(random.uniform(-1, 1), random.uniform(-1, 1), random.uniform(0, 1))
         #len_xy = glm.length(glm.vec2(v))
         #v.z = v.z * (1 + len_xy) - len_xy
-        v = glm.normalize(v)
+        #v = glm.normalize(v)
         scale = i / kernel_size
         scale = 0.01 + 0.99 * scale
         #scale = 0.1 + 0.9 * scale * scale
@@ -174,7 +174,7 @@ if glfwInit() == GLFW_FALSE:
     exit()
 
 glfwWindowHint(GLFW_SAMPLES, 8)
-window = glfwCreateWindow(400, 300, "OpenGL Window", None, None)
+window = glfwCreateWindow(800, 600, "OpenGL Window", None, None)
 glfwMakeContextCurrent(window)
 
 ssao_program = OpenGL.GL.shaders.compileProgram(
@@ -194,7 +194,7 @@ navigate.change_vp_size_callback = create_frambuffers
 
 screensapce_vao = create_screenspace_vao()
 noise_texture = create_noise(4)
-kernel_texture = create_noise(64)
+kernel_texture = create_kernel(64)
 create_frambuffers(navigate.viewport_size)
 
 glEnable(GL_MULTISAMPLE)
@@ -222,7 +222,7 @@ while not glfwWindowShouldClose(window):
     glUniformMatrix4fv(1, 1, GL_FALSE, glm.value_ptr(navigate.projection_matrix))
     glUniformMatrix4fv(2, 1, GL_FALSE, glm.value_ptr(glm.inverse(navigate.projection_matrix)))
     glUniform2fv(3, 1, navigate.viewport_size)
-    glUniform1f(4, 0.02)
+    glUniform1f(4, 0.1)
     glBindVertexArray(screensapce_vao)
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4)
 
