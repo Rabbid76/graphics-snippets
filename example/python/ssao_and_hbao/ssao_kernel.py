@@ -160,12 +160,12 @@ def create_kernel(kernel_size):
         #v.z = v.z * (1 + len_xy) - len_xy
         #v = glm.normalize(v)
         scale = i / kernel_size
-        scale = 0.01 + 0.99 * scale
-        #scale = 0.1 + 0.9 * scale * scale
+        #scale = 0.01 + 0.99 * scale
+        scale = 0.01 + 0.99 * scale * scale
         kernel[i,:] = [*v, scale]
     kernel_texture = glGenTextures(1)
     glBindTexture(GL_TEXTURE_2D, kernel_texture)
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16_SNORM, kernel_size, 0, 0, GL_RGBA, GL_FLOAT, kernel)          
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16_SNORM, kernel_size, 1, 0, GL_RGBA, GL_FLOAT, kernel)          
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
     return kernel_texture
@@ -222,7 +222,7 @@ while not glfwWindowShouldClose(window):
     glUniformMatrix4fv(1, 1, GL_FALSE, glm.value_ptr(navigate.projection_matrix))
     glUniformMatrix4fv(2, 1, GL_FALSE, glm.value_ptr(glm.inverse(navigate.projection_matrix)))
     glUniform2fv(3, 1, navigate.viewport_size)
-    glUniform1f(4, 0.1)
+    glUniform1f(4, 0.05)
     glBindVertexArray(screensapce_vao)
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4)
 
