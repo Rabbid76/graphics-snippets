@@ -102,14 +102,14 @@ void main()
 {
     vec3 camera_pos = inverse(u_view)[3].xyz;
 
-    float shadow = 0.0;
-    if (-v_shadow_pos.w < v_shadow_pos.z && v_shadow_pos.z < v_shadow_pos.w)
+    vec3 shadow_pos = v_shadow_pos.xyz / v_shadow_pos.w * 0.5 + 0.5;
+    //float shadow_depth = texture(u_shadow_depth, shadow_pos.st).x;
+    //if (shadow_depth >= shadow_pos.z)
+    //    shadow = 1.0;
+    float shadow = texture(u_shadow_depth, shadow_pos.xyz);
+    if (!(-v_shadow_pos.w < v_shadow_pos.z && v_shadow_pos.z < v_shadow_pos.w))
     {
-        vec3 shadow_pos = v_shadow_pos.xyz / v_shadow_pos.w * 0.5 + 0.5;
-        //float shadow_depth = texture(u_shadow_depth, shadow_pos.st).x;
-        //if (shadow_depth >= shadow_pos.z)
-        //    shadow = 1.0;
-        shadow = texture(u_shadow_depth, shadow_pos.xyz);
+        shadow = 0.0;
     }
 
     vec4  color = vec4(HUEtoRGB(v_uvw.z), 1.0);
