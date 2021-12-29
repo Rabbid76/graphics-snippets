@@ -1747,7 +1747,8 @@ void CAppliction::createLogicalDevice( void ) {
 
     std::vector<const char*> validationLayerParam;
     if ( _enableAllValidationLayers ) {
-        validationLayerParam.swap( std::vector<const char*>( _validationLayersNames.size(), nullptr ) );
+        std::vector<const char*> layers(_validationLayersNames.size(), nullptr);
+        validationLayerParam.swap(layers);
         std::transform( _validationLayersNames.begin(), _validationLayersNames.end(), validationLayerParam.begin(), [](const std::string &str) -> const char * { return str.c_str(); } );
     } else {
         for ( auto &layerName : _requestedValidationLayers ) {

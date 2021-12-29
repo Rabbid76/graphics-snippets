@@ -100,11 +100,11 @@
       <PreprocessorDefinitions>GLEW_STATIC;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;$(SolutionDir)..\$(GlfwDir)include;$(SolutionDir)..\$(GlmDir);$(SolutionDir)..\$(TinyObjLoaderDir);..\vulkan_utility\include;$(SolutionDir)..\$(VulkanHppDir);$(SolutionDir)..\$(StbDir);$(SolutionDir)..\$(VulkanDir)Include</AdditionalIncludeDirectories>
       <CallingConvention>StdCall</CallingConvention>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <AdditionalLibraryDirectories>$(SolutionDir)..\$(GlfwDir)lib-vc2015;$(SolutionDir)..\$(VulkanDir)Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\$(GlfwDir)lib-vc2022;$(SolutionDir)..\$(VulkanDir)Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>MSVCRT.lib</IgnoreSpecificDefaultLibraries>
     </Link>
@@ -113,8 +113,8 @@
       </Command>
     </CustomBuildStep>
     <PostBuildEvent>
-      <Command>$(SolutionDir)..\$(VulkanDir)Bin32\glslangValidator.exe -V $(ProjectDir)shaders\shader_1.vert -o $(ProjectDir)shaders\shader_1_vert.spv
-$(SolutionDir)..\$(VulkanDir)Bin32\glslangValidator.exe -V $(ProjectDir)shaders\shader_1.frag -o $(ProjectDir)shaders\shader_1_frag.spv</Command>
+      <Command>$(SolutionDir)..\$(VulkanDir)Bin\glslangValidator.exe -V $(ProjectDir)shaders\shader_1.vert -o $(ProjectDir)shaders\shader_1_vert.spv
+$(SolutionDir)..\$(VulkanDir)Bin\glslangValidator.exe -V $(ProjectDir)shaders\shader_1.frag -o $(ProjectDir)shaders\shader_1_frag.spv</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -124,11 +124,11 @@ $(SolutionDir)..\$(VulkanDir)Bin32\glslangValidator.exe -V $(ProjectDir)shaders\
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>GLEW_STATIC;WIN32;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;$(SolutionDir)..\$(GlfwDir)include;$(SolutionDir)..\$(GlmDir);$(SolutionDir)..\$(TinyObjLoaderDir);..\vulkan_utility\include;$(SolutionDir)..\$(VulkanHppDir);$(SolutionDir)..\$(VulkanDir)Include</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <AdditionalLibraryDirectories>$(SolutionDir)..\$(GlfwDir)lib-vc2015;$(SolutionDir)..\$(VulkanDir)Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\$(GlfwDir)lib-vc2022;$(SolutionDir)..\$(VulkanDir)Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;Glu32.lib;glew32sd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CustomBuildStep>
@@ -136,8 +136,8 @@ $(SolutionDir)..\$(VulkanDir)Bin32\glslangValidator.exe -V $(ProjectDir)shaders\
       </Command>
     </CustomBuildStep>
     <PostBuildEvent>
-      <Command>$(SolutionDir)..\$(VulkanDir)Bin32\glslangValidator.exe -V $(ProjectDir)shaders\shader_1.vert -o $(ProjectDir)shaders\shader_1_vert.spv
-$(SolutionDir)..\$(VulkanDir)Bin32\glslangValidator.exe -V $(ProjectDir)shaders\shader_1.frag -o $(ProjectDir)shaders\shader_1_frag.spv</Command>
+      <Command>$(SolutionDir)..\$(VulkanDir)Bin\glslangValidator.exe -V $(ProjectDir)shaders\shader_1.vert -o $(ProjectDir)shaders\shader_1_vert.spv
+$(SolutionDir)..\$(VulkanDir)Bin\glslangValidator.exe -V $(ProjectDir)shaders\shader_1.frag -o $(ProjectDir)shaders\shader_1_frag.spv</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -149,13 +149,13 @@ $(SolutionDir)..\$(VulkanDir)Bin32\glslangValidator.exe -V $(ProjectDir)shaders\
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>GLEW_STATIC;WIN32;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;$(SolutionDir)..\$(GlfwDir)include;$(SolutionDir)..\$(GlmDir);$(SolutionDir)..\$(TinyObjLoaderDir);..\vulkan_utility\include;$(SolutionDir)..\$(VulkanHppDir);$(SolutionDir)..\$(VulkanDir)Include</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(SolutionDir)..\$(GlfwDir)lib-vc2015;$(SolutionDir)..\$(VulkanDir)Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\$(GlfwDir)lib-vc2022;$(SolutionDir)..\$(VulkanDir)Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;Glu32.lib;glew32s.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CustomBuildStep>
@@ -163,8 +163,8 @@ $(SolutionDir)..\$(VulkanDir)Bin32\glslangValidator.exe -V $(ProjectDir)shaders\
       </Command>
     </CustomBuildStep>
     <PostBuildEvent>
-      <Command>$(SolutionDir)..\$(VulkanDir)Bin32\glslangValidator.exe -V $(ProjectDir)shaders\shader_1.vert -o $(ProjectDir)shaders\shader_1_vert.spv
-$(SolutionDir)..\$(VulkanDir)Bin32\glslangValidator.exe -V $(ProjectDir)shaders\shader_1.frag -o $(ProjectDir)shaders\shader_1_frag.spv</Command>
+      <Command>$(SolutionDir)..\$(VulkanDir)Bin\glslangValidator.exe -V $(ProjectDir)shaders\shader_1.vert -o $(ProjectDir)shaders\shader_1_vert.spv
+$(SolutionDir)..\$(VulkanDir)Bin\glslangValidator.exe -V $(ProjectDir)shaders\shader_1.frag -o $(ProjectDir)shaders\shader_1_frag.spv</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -176,13 +176,13 @@ $(SolutionDir)..\$(VulkanDir)Bin32\glslangValidator.exe -V $(ProjectDir)shaders\
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>GLEW_STATIC;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;$(SolutionDir)..\$(GlfwDir)include;$(SolutionDir)..\$(GlmDir);$(SolutionDir)..\$(TinyObjLoaderDir);..\vulkan_utility\include;$(SolutionDir)..\$(VulkanHppDir);$(SolutionDir)..\$(StbDir);$(SolutionDir)..\$(VulkanDir)Include</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(SolutionDir)..\$(GlfwDir)lib-vc2015;$(SolutionDir)..\$(VulkanDir)Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\$(GlfwDir)lib-vc2022;$(SolutionDir)..\$(VulkanDir)Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CustomBuildStep>
@@ -190,8 +190,8 @@ $(SolutionDir)..\$(VulkanDir)Bin32\glslangValidator.exe -V $(ProjectDir)shaders\
       </Command>
     </CustomBuildStep>
     <PostBuildEvent>
-      <Command>$(SolutionDir)..\$(VulkanDir)Bin32\glslangValidator.exe -V $(ProjectDir)shaders\shader_1.vert -o $(ProjectDir)shaders\shader_1_vert.spv
-$(SolutionDir)..\$(VulkanDir)Bin32\glslangValidator.exe -V $(ProjectDir)shaders\shader_1.frag -o $(ProjectDir)shaders\shader_1_frag.spv</Command>
+      <Command>$(SolutionDir)..\$(VulkanDir)Bin\glslangValidator.exe -V $(ProjectDir)shaders\shader_1.vert -o $(ProjectDir)shaders\shader_1_vert.spv
+$(SolutionDir)..\$(VulkanDir)Bin\glslangValidator.exe -V $(ProjectDir)shaders\shader_1.frag -o $(ProjectDir)shaders\shader_1_frag.spv</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

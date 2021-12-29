@@ -5,12 +5,12 @@
     <TempBuildDir>c:\temp\_devenv</TempBuildDir>
     <OwnGraohicsLibDir>..\..\cpp\</OwnGraohicsLibDir>
     <GlewDir>..\..\..\_cpp_extern\glew-2.1.0\</GlewDir>
-    <VulkanDir>..\..\..\_cpp_extern\VulkanSDK\1.2.182.0\</VulkanDir>
+    <VulkanDir>..\..\..\_cpp_extern\VulkanSDK\1.2.198.1\</VulkanDir>
     <VulkanHppDir>..\..\..\Vulkan\Vulkan-Hpp</VulkanHppDir>
     <GlmDir>..\..\..\_cpp_extern\glm-0.9.9.3\glm\</GlmDir>
     <StbDir>..\..\..\_cpp_extern\stb\</StbDir>
     <FreeGlutDir>..\..\..\_cpp_extern\freeglut\freeglut-3.0.0\</FreeGlutDir>
-    <GlfwDir>..\..\..\_cpp_extern\glfw-3.2.1.bin.WIN64\</GlfwDir>
+    <GlfwDir>..\..\..\_cpp_extern\glfw-3.3.6.bin.WIN64\</GlfwDir>
     <SdlDir>..\..\..\_cpp_extern\SDL2-2.0.10\</SdlDir>
     <SfmlDir>..\..\..\_cpp_extern\SFML-2.4.2\</SfmlDir>
     <wxWidgetDir>..\..\..\_cpp_extern\wxMSW-3.1.4_vc14x</wxWidgetDir>
