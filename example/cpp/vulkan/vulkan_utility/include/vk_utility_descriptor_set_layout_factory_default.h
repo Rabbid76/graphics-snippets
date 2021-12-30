@@ -1,12 +1,5 @@
 #pragma once
 
-
-#include <vk_utility_object.h>
-#include <vk_utility_exception.h>
-#include <vk_utility_vulkan_include.h>
-#include <vk_utility_parameter_helper.h>
-#include <vk_utility_descriptor_set_layout_binding.h>
-#include <vk_utility_descriptor_set_layout.h>
 #include <vk_utility_descriptor_set_layout_factory.h>
 
 #include <memory>
@@ -21,14 +14,14 @@ namespace vk_utility
         /// Interface for Vulkan redner pass (`vk::RenderPass`) factories
         /// </summary>
         class DescriptorSetLayoutFactoryDefault
-            : public IDescriptorSetLayoutFactory
+            : public DescriptorSetLayoutFactory
         {
         public:
 
             DescriptorSetLayoutFactoryDefault(void) = default;
             DescriptorSetLayoutFactoryDefault(const DescriptorSetLayoutFactoryDefault&) = delete;
 
-            virtual DescriptorSetLayout Create(const vk_utility::device::DevicePtr &device) override
+            virtual vk::DescriptorSetLayout New(vk::Device device) const override
             {
                 // We need to provide details about every descriptor binding used in the shaders for pipeline creation,
                 // just like we had to do for every vertex attribute and its location index.
@@ -45,8 +38,12 @@ namespace vk_utility
                 // The stageFlags field can be a combination of `vk::ShaderStageFlagBits` values or the value VK_SHADER_STAGE_ALL_GRAPHICS.
                 // In our case, we're only referencing the descriptor from the vertex shader.
 
-                vk::DescriptorSetLayoutBinding ubo_layout_binding
-                    = DescriptorSetLayoutBinding::New(0, vk::DescriptorType::eUniformBuffer, vk::ShaderStageFlagBits::eVertex);
+                vk::DescriptorSetLayoutBinding ubo_layout_binding(
+                    0,
+                    vk::DescriptorType::eUniformBuffer,
+                    1,
+                    vk::ShaderStageFlagBits::eVertex,
+                    nullptr);
 
                 // add a `vk::DescriptorSetLayoutBinding` for a combined image sampler descriptor. 
                 // Make sure to set the stageFlags to indicate that we intend to use the combined image sampler descriptor in the fragment shader.
@@ -54,24 +51,25 @@ namespace vk_utility
                 // It is possible to use texture sampling in the vertex shader,
                 // for example to dynamically deform a grid of vertices by a height map.
 
-                vk::DescriptorSetLayoutBinding sampler_layout_binding
-                    = DescriptorSetLayoutBinding::New(1, vk::DescriptorType::eCombinedImageSampler, vk::ShaderStageFlagBits::eFragment);
-
+                vk::DescriptorSetLayoutBinding sampler_layout_binding(
+                    1,
+                    vk::DescriptorType::eCombinedImageSampler,
+                    1,
+                    vk::ShaderStageFlagBits::eFragment,
+                    nullptr);
+                
                 //! All of the descriptor bindings are combined into a single `vk::DescriptorSetLayout` object. 
 
-                std::array<vk::DescriptorSetLayoutBinding, 2> bindings = {ubo_layout_binding, sampler_layout_binding};
-                vk::DescriptorSetLayoutCreateInfo layout_informatin
+                std::array<vk::DescriptorSetLayoutBinding, 2> bindings = 
+                {
+                    ubo_layout_binding, sampler_layout_binding
+                };
+                vk::DescriptorSetLayoutCreateInfo layout_information
                 (
                     vk::DescriptorSetLayoutCreateFlags{},
                     bindings
                 );
-
-                return DescriptorSetLayout::Create(device, layout_informatin);
-            }
-
-            virtual DescriptorSetLayoutPtr New(const vk_utility::device::DevicePtr &device)  override
-            {
-                return vk_utility::make_shared(Create(device));
+                return device.createDescriptorSetLayout(layout_information);
             }
         };
     }

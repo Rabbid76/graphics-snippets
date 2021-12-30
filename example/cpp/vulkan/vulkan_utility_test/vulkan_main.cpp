@@ -618,7 +618,9 @@ void CAppliction::initVulkan( void )
     _graphicsQueue = _device->get().get_first_graphics_queue(); // TODO [...] vk_utility::Queue 
     _presentQueue = _device->get().get_first_graphics_queue();  // TODO [...] vk_utility::Queue 
 
-    _descriptor_set_layout = vk_utility::core::DescriptorSetLayoutFactoryDefault().New(_device);
+    _descriptor_set_layout = vk_utility::core::DescriptorSetLayout::NewPtr(
+        *_device,
+        vk_utility::core::DescriptorSetLayoutFactoryDefault());
 
     createSwapChain(true);
 

@@ -115,16 +115,6 @@ namespace vk_utility
                 _vk_object.destroyRenderPass(render_pass);
             }
 
-            auto create_descriptor_set_layout(vk::DescriptorSetLayoutCreateInfo descriptor_set_layout_infomrationn)
-            {
-                return _vk_object.createDescriptorSetLayout(descriptor_set_layout_infomrationn);
-            }
-
-            void destroy_descriptor_set_layout(vk::DescriptorSetLayout descriptor_set_layout) const
-            {
-                _vk_object.destroyDescriptorSetLayout(descriptor_set_layout);
-            }
-
             auto create_swapchain(vk::SwapchainCreateInfoKHR swapchain_information) const
             {
                  return _vk_object.createSwapchainKHR(swapchain_information);

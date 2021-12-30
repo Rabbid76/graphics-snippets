@@ -216,7 +216,6 @@
     <ClInclude Include="include\vk_utility_semaphore.h" />
     <ClInclude Include="include\vk_utility_semaphore_factory_default.h" />
     <ClInclude Include="include\vk_utility_shader_module_factory_spirv_file.h" />
-    <ClInclude Include="include\vk_utility_descriptor_set_layout_binding.h" />
     <ClInclude Include="include\vk_utility_descriptor_set_layout_factory.h" />
     <ClInclude Include="include\vk_utility_descriptor_set_layout_factory_default.h" />
     <ClInclude Include="include\vk_utility_buffer.h" />

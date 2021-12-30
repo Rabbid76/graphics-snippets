@@ -150,15 +150,6 @@
     <ClInclude Include="include\vk_utility_render_pass.h">
       <Filter>core</Filter>
     </ClInclude>
-    <ClInclude Include="include\vk_utility_descriptor_set_layout.h">
-      <Filter>core</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_descriptor_set_layout_factory_default.h">
-      <Filter>core</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_descriptor_set_layout_factory.h">
-      <Filter>core</Filter>
-    </ClInclude>
     <ClInclude Include="include\vk_utility_swap_extent_selector.h">
       <Filter>swap</Filter>
     </ClInclude>
@@ -185,9 +176,6 @@
     </ClInclude>
     <ClInclude Include="include\vk_utility_swapchain_information.h">
       <Filter>swap</Filter>
-    </ClInclude>
-    <ClInclude Include="include\vk_utility_descriptor_set_layout_binding.h">
-      <Filter>core</Filter>
     </ClInclude>
     <ClInclude Include="include\vk_utility_shader_module.h">
       <Filter>shader</Filter>
@@ -398,6 +386,15 @@
     </ClInclude>
     <ClInclude Include="include\vk_utility_device_memory_factory_find_type.h">
       <Filter>factories\device</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_descriptor_set_layout_factory.h">
+      <Filter>factories\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_descriptor_set_layout_factory_default.h">
+      <Filter>factories\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_descriptor_set_layout.h">
+      <Filter>objects\core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
