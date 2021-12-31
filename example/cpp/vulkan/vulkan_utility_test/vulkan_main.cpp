@@ -111,6 +111,7 @@
 #include "vk_utility_buffer_copy_data_staging_command.h"
 #include "vk_utility_texture_factory_default.h"
 #include "vk_utility_sampler_and_imageview_image_memory.h"
+#include "vk_utility_descriptor_set_factory_default.h"
 
 // GLFW
 
@@ -346,7 +347,6 @@ private: // private operations
     void cleanupSwapChain( void );                   //!< cleanup everything which will be recreated till swapchain is recreated
     void loadModel(void);                            //!< load scene
     void loadTexture(const std::string &file_name);  //!< load texture
-    void createDescriptorSets( void );               //!< create descriptor sets
     void createCommandBuffers( void );               //!< create command buffers
     void updateUniformBuffer( uint32_t imageIndex ); //!< update the uniform buffer for the current image
 
@@ -392,7 +392,7 @@ private: // private attributes
     vk_utility::core::RenderPassPtr                                   _render_pass;                // Vulkan render pass handle
     vk_utility::core::DescriptorSetLayoutPtr                          _descriptor_set_layout;      // Vulkan descriptor set layout
     vk_utility::core::DescriptorPoolPtr                               _descriptor_pool;            // Vulkan descriptor set pool
-    std::vector<vk::DescriptorSet> _descriptorSets;           //!< Vulkan descriptor sets
+    std::vector<vk::DescriptorSet>                                    _descriptor_sets;            // Vulkan descriptor sets
     vk_utility::pipeline::PipelineLayoutPtr                           _pipeline_layout;            // Vulkan pipeline layout handle
     vk_utility::pipeline::PipelinePtr                                 _graphics_pipeline;          // Vulkan graphics pipeline handle
     std::vector<vk_utility::buffer::FramebufferPtr>                   _swapchain_framebuffers;     // Vulkan framebuffers
@@ -871,7 +871,14 @@ void CAppliction::createSwapChain(bool initilaize)
         vk_utility::core::DescriptorPoolFactoryDefault()
         .set_no_of_swapchain_images(_swapchain->get().no_of_swapchain_images()));
 
-    createDescriptorSets();
+    _descriptor_sets = vk_utility::core::DescriptorSetFactoryDefault()
+        .set_no_of_swapchain_images(_swapchain->get().no_of_swapchain_images())
+        .set_descriptor_set_layout(*_descriptor_set_layout)
+        .set_descriptor_pool(*_descriptor_pool)
+        .set_uniform_buffers(&_uniform_buffers, sizeof(UniformBufferObject))
+        .set_texture_samplers(&_texture_samplers)
+        .New(*_device);
+
     createCommandBuffers();
 }
 
@@ -891,7 +898,7 @@ void CAppliction::cleanupSwapChain( void ) {
     _uniform_buffers.clear();
     _descriptor_pool = nullptr,
     //! You don't need to explicitly clean up descriptor sets, because they will be automatically freed when the descriptor pool is destroyed.
-    _descriptorSets.clear();
+    _descriptor_sets.clear();
     _swapchain_framebuffers.clear();
 
     if (_command_pool)
@@ -903,109 +910,6 @@ void CAppliction::cleanupSwapChain( void ) {
     _render_pass = nullptr;
     _swapchain_image_views.clear();
     _swapchain = nullptr;
-}
-
-
-/******************************************************************//**
-* \brief Create descriptor sets.
-* 
-* \author  gernot
-* \date    2019-05-04
-* \version 1.0
-**********************************************************************/
-void CAppliction::createDescriptorSets( void )
-{
-    if (!_device)
-        throw CException("no logical vulkan device!");
-    if (!_descriptor_pool)
-        throw CException("no descriptor pool!");
-    if (_uniform_buffers.size() < _swapchain->get().no_of_swapchain_images())
-        throw CException("missing uniform buffers");
-
-    //-------------------------------------------
-    // Descriptor set
-    //------------------------------------------- 
-
-    //! A descriptor set allocation is described with a `vk::DescriptorSetAllocateInfo` structures.
-    //! You need to specify the descriptor pool to allocate from, the number of descriptor sets to allocate, and the descriptor layout to base them on:
-    
-    std::vector<vk::DescriptorSetLayout> layouts(_swapchain->get().no_of_swapchain_images(), _descriptor_set_layout->get());
-    vk::DescriptorSetAllocateInfo allocInfo(*_descriptor_pool, layouts);
-
-    _descriptorSets = _device->get()->allocateDescriptorSets(allocInfo);
-
-    //! The descriptor sets have been allocated now, but the descriptors within still need to be configured.
-    //! We'll now add a loop to populate every descriptor:
-
-    //! Descriptors that refer to buffers, like our uniform buffer descriptor, are configured with a `vk::DescriptorBufferInfo` structures.
-    // This structure specifies the buffer and the region within it that contains the data for the descriptor.
-
-    for (size_t i = 0; i < _swapchain->get().no_of_swapchain_images(); i++) {
-
-        std::vector<vk::WriteDescriptorSet> descriptorWrites;
-
-        //! If you're overwriting the whole buffer, like we are in this case, then it is also possible to use the VK_WHOLE_SIZE value for the range.
-        //! The configuration of descriptors is updated using the vkUpdateDescriptorSets function, which takes an array of `vk::WriteDescriptorSet` structures as parameter.
-
-        //! The first two fields specify the descriptor set to update and the binding.
-        //! We gave our uniform buffer binding index 0. Remember that descriptors can be arrays, so we also need to specify the first index in the array that we want to update.
-        //! We're not using an array, so the index is simply 0.
-
-        //! We need to specify the type of descriptor again.
-        //! It's possible to update multiple descriptors at once in an array, starting at index dstArrayElement.
-        //! The descriptorCount field specifies how many array elements you want to update.
-
-        std::vector<vk::DescriptorImageInfo> image_infos;
-        std::vector<vk::DescriptorBufferInfo> bufferInfos
-        { 
-            vk::DescriptorBufferInfo(_uniform_buffers[i]->get().buffer(), 0, sizeof(UniformBufferObject))
-        };
-        std::vector<vk::BufferView> texel_buffer_view;
-        descriptorWrites.push_back(
-            vk::WriteDescriptorSet
-            (
-                _descriptorSets[i],
-                0,
-                0,
-                vk::DescriptorType::eUniformBuffer,
-                image_infos,
-                bufferInfos,
-                texel_buffer_view
-            ));
-
-        //! The last field references an array with descriptorCount structures that actually configure the descriptors.
-        //! It depends on the type of descriptor which one of the three you actually need to use.
-        //! The pBufferInfo field is used for descriptors that refer to buffer data, pImageInfo is used for descriptors that refer to image data,
-        //! and pTexelBufferView is used for descriptors that refer to buffer views.
-        //! Our descriptor is based on buffers, so we're using pBufferInfo.
-
-        for (size_t j = 0; j < _texture_samplers.size(); ++j)
-        {
-            vk::DescriptorImageInfo imageInfo(
-                _texture_samplers[j]->get().sampler(), 
-                _texture_samplers[j]->get().image_view_and_memory().image_view(),
-                vk::ImageLayout::eShaderReadOnlyOptimal);
-
-            descriptorWrites.push_back(
-                vk::WriteDescriptorSet
-                (
-                    _descriptorSets[i],
-                    1,
-                    0,
-                    1,
-                    vk::DescriptorType::eCombinedImageSampler,
-                    &imageInfo,
-                    nullptr,
-                    nullptr
-                ));
-        }
-
-        _device->get()->updateDescriptorSets(descriptorWrites, nullptr);
-
-        //! The updates are applied using vkUpdateDescriptorSets. It accepts two kinds of arrays as parameters:
-        //! an array of `vk::WriteDescriptorSet` and an array of `vk::CopyDescriptorSet`. 
-        //! The latter can be used to copy descriptors to each other, as its name implies.
-    }
 }
 
 
@@ -1157,7 +1061,7 @@ void CAppliction::createCommandBuffers( void )
         //! The next three parameters specify the index of the first descriptor set, the number of sets to bind, and the array of sets to bind. We'll get back to this in a moment.
         //! The last two parameters specify an array of offsets that are used for dynamic descriptors.
 
-        _commandBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, *_pipeline_layout, 0, 1, &_descriptorSets[i], 0, nullptr);
+        _commandBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, *_pipeline_layout, 0, 1, &_descriptor_sets[i], 0, nullptr);
 
 
         //! Just binding an index buffer doesn't change anything yet, we also need to change the drawing command to tell Vulkan to use the index buffer.

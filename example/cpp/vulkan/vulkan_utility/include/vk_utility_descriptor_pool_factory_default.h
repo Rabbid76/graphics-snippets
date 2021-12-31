@@ -6,10 +6,6 @@ namespace vk_utility
 {
     namespace core
     {
-        /// <summary>
-        /// Descriptor sets can't be created directly, they must be allocated from a pool like command buffers.
-        /// The equivalent for descriptor sets is unsurprisingly called a descriptor pool.
-        /// </summary>
         class DescriptorPoolFactoryDefault
             : public DescriptorPoolFactory
         {

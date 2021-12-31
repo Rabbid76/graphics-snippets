@@ -166,6 +166,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
+    <ClInclude Include="include\vk_utility_descriptor_set_factory_default.h" />
+    <ClInclude Include="include\vk_utility_descriptor_set_factory.h" />
     <ClInclude Include="include\vk_utility_sampler_and_imageview_image_memory.h" />
     <ClInclude Include="include\vk_utility_texture_factory.h" />
     <ClInclude Include="include\vk_utility_buffer_and_memory_factory_default.h" />
