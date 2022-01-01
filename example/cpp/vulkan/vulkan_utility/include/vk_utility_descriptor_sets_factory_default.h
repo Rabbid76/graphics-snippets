@@ -1,6 +1,6 @@
 #pragma once
 
-#include "vk_utility_descriptor_set_factory.h"
+#include "vk_utility_descriptor_sets_factory.h"
 #include "vk_utility_buffer_and_memory.h"
 #include "vk_utility_sampler_and_imageview_image_memory.h"
 
@@ -8,8 +8,8 @@ namespace vk_utility
 {
     namespace core
     {
-        class DescriptorSetFactoryDefault
-            : public DescriptorSetFactory
+        class DescriptorSetsFactoryDefault
+            : public DescriptorSetsFactory
         {
         private:
 
@@ -22,25 +22,25 @@ namespace vk_utility
 
         public:
 
-            DescriptorSetFactoryDefault& set_no_of_swapchain_images(uint32_t no_of_swapchain_images)
+            DescriptorSetsFactoryDefault& set_no_of_swapchain_images(uint32_t no_of_swapchain_images)
             {
                 _no_of_swapchain_images = no_of_swapchain_images;
                 return *this;
             }
 
-            DescriptorSetFactoryDefault& set_descriptor_set_layout(vk::DescriptorSetLayout descriptor_set_layout)
+            DescriptorSetsFactoryDefault& set_descriptor_set_layout(vk::DescriptorSetLayout descriptor_set_layout)
             {
                 _descriptor_set_layout = descriptor_set_layout;
                 return *this;
             }
 
-            DescriptorSetFactoryDefault& set_descriptor_pool(vk::DescriptorPool descriptor_pool)
+            DescriptorSetsFactoryDefault& set_descriptor_pool(vk::DescriptorPool descriptor_pool)
             {
                 _descriptor_pool = descriptor_pool;
                 return *this;
             }
 
-            DescriptorSetFactoryDefault& set_uniform_buffers(
+            DescriptorSetsFactoryDefault& set_uniform_buffers(
                 const std::vector<vk_utility::buffer::BufferAndMemoryPtr>* uniform_buffers,
                 size_t uniform_buffer_size)
             {
@@ -49,7 +49,7 @@ namespace vk_utility
                 return *this;
             }
 
-            DescriptorSetFactoryDefault& set_texture_samplers(
+            DescriptorSetsFactoryDefault& set_texture_samplers(
                 const std::vector<vk_utility::image::SamplerAndImageViewImageMemoryPtr>* texture_samplers)
             {
                 _texture_samplers = texture_samplers;

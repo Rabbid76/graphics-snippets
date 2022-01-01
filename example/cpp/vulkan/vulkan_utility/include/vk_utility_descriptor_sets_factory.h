@@ -8,7 +8,7 @@ namespace vk_utility
 
     namespace core
     {
-        class DescriptorSetFactory
+        class DescriptorSetsFactory
         {
         public:
 

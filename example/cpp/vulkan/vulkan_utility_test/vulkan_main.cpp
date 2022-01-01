@@ -111,7 +111,9 @@
 #include "vk_utility_buffer_copy_data_staging_command.h"
 #include "vk_utility_texture_factory_default.h"
 #include "vk_utility_sampler_and_imageview_image_memory.h"
-#include "vk_utility_descriptor_set_factory_default.h"
+#include "vk_utility_descriptor_sets_factory_default.h"
+#include "vk_utility_command_buffers_factory_default.h"
+#include "vk_utility_command_buffers.h"
 
 // GLFW
 
@@ -347,7 +349,6 @@ private: // private operations
     void cleanupSwapChain( void );                   //!< cleanup everything which will be recreated till swapchain is recreated
     void loadModel(void);                            //!< load scene
     void loadTexture(const std::string &file_name);  //!< load texture
-    void createCommandBuffers( void );               //!< create command buffers
     void updateUniformBuffer( uint32_t imageIndex ); //!< update the uniform buffer for the current image
 
     void drawFrame( void ); //! do the drawing
@@ -397,7 +398,7 @@ private: // private attributes
     vk_utility::pipeline::PipelinePtr                                 _graphics_pipeline;          // Vulkan graphics pipeline handle
     std::vector<vk_utility::buffer::FramebufferPtr>                   _swapchain_framebuffers;     // Vulkan framebuffers
     vk_utility::command::CommandPoolPtr                               _command_pool;               // Vulkan command pool
-    std::vector<vk::CommandBuffer> _commandBuffers;           //!< Vulkan command buffers
+    vk_utility::command::CommandBuffersPtr                            _command_buffers;            // Vulkan command buffers
     std::vector<vk_utility::core::SemaphorePtr>                       _image_available_semaphores; // Vulkan semaphore
     std::vector<vk_utility::core::SemaphorePtr>                       _render_finished_semaphores; // Vulkan semaphore
     std::vector<vk_utility::core::FencePtr>                           _in_flight_fences;           // Vulkan fence
@@ -871,7 +872,7 @@ void CAppliction::createSwapChain(bool initilaize)
         vk_utility::core::DescriptorPoolFactoryDefault()
         .set_no_of_swapchain_images(_swapchain->get().no_of_swapchain_images()));
 
-    _descriptor_sets = vk_utility::core::DescriptorSetFactoryDefault()
+    _descriptor_sets = vk_utility::core::DescriptorSetsFactoryDefault()
         .set_no_of_swapchain_images(_swapchain->get().no_of_swapchain_images())
         .set_descriptor_set_layout(*_descriptor_set_layout)
         .set_descriptor_pool(*_descriptor_pool)
@@ -879,7 +880,19 @@ void CAppliction::createSwapChain(bool initilaize)
         .set_texture_samplers(&_texture_samplers)
         .New(*_device);
 
-    createCommandBuffers();
+    vk::IndexType index_type = sizeof(*_indices.data()) == 4 ? vk::IndexType::eUint32 : (sizeof(*_indices.data()) == 2 ? vk::IndexType::eUint16 : vk::IndexType::eUint8EXT);
+    _command_buffers = vk_utility::command::CommandBuffers::NewPtr(
+        *_device,
+        *_command_pool,
+        vk_utility::command::CommandBuffersFactoryDefault()
+            .set_swapchain_framebuffers(&_swapchain_framebuffers)
+            .set_render_pass(*_render_pass)
+            .set_image_size(_swapchain->get().image_extent_2D())
+            .set_graphics_pipeline(*_graphics_pipeline)
+            .set_pipeline_layout(*_pipeline_layout)
+            .set_descriptor_sets(&_descriptor_sets)
+            .set_vertex_buffer(_vertex_buffers.back()->get().buffer())
+            .set_index_buffer(_index_buffers.back()->get().buffer(), index_type, static_cast<uint32_t>(_indices.size())));
 }
 
 
@@ -900,183 +913,12 @@ void CAppliction::cleanupSwapChain( void ) {
     //! You don't need to explicitly clean up descriptor sets, because they will be automatically freed when the descriptor pool is destroyed.
     _descriptor_sets.clear();
     _swapchain_framebuffers.clear();
-
-    if (_command_pool)
-        _device->get()->freeCommandBuffers(_command_pool->get(), _commandBuffers);
-    _commandBuffers.clear();
-
+    _command_buffers = nullptr;
     _graphics_pipeline = nullptr;
     _pipeline_layout = nullptr;
     _render_pass = nullptr;
     _swapchain_image_views.clear();
     _swapchain = nullptr;
-}
-
-
-/******************************************************************//**
-* \brief   create command buffers.
-* 
-* \author  gernot
-* \date    2018-05-25
-* \version 1.0
-**********************************************************************/
-void CAppliction::createCommandBuffers( void ) 
-{
-    if (!_device)
-        throw CException("no logical vulkan device!");
-    if (!_command_pool)
-        throw CException("no vulkan command pool!");
-   
-
-    //-------------------------------------------
-    // Command buffer allocation
-    //-------------------------------------------
-
-    //! The level parameter specifies if the allocated command buffers are primary or secondary command buffers.
-    //! - `VK_COMMAND_BUFFER_LEVEL_PRIMARY`: Can be submitted to a queue for execution, but cannot be called from other command buffers.
-    //! - `VK_COMMAND_BUFFER_LEVEL_SECONDARY`: Cannot be submitted directly, but can be called from primary command buffers.
-
-    _commandBuffers.resize(_swapchain_framebuffers.size());
-    
-    vk::CommandBufferAllocateInfo allocInfo(_command_pool->get(), vk::CommandBufferLevel::ePrimary, (uint32_t)_commandBuffers.size());
-
-    _commandBuffers = _device->get()->allocateCommandBuffers(allocInfo);
-
-
-    //-------------------------------------------
-    // Starting command buffer recording
-    //-------------------------------------------
-
-    //! The flags parameter specifies how we're going to use the command buffer. The following values are available:
-    //! - `VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT`: The command buffer will be rerecorded right after executing it once.
-    //! - `VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT`: This is a secondary command buffer that will be entirely within a single render pass.
-    //! - `VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT`: The command buffer can be resubmitted while it is also already pending execution.
-
-    for (size_t i = 0; i < _commandBuffers.size(); i++)
-    {
-        vk::CommandBufferBeginInfo beginInfo(vk::CommandBufferUsageFlagBits::eSimultaneousUse, nullptr);
-
-        _commandBuffers[i].begin(beginInfo);
-
-        //! We have used the last flag because we may already be scheduling the drawing commands for the next frame while the last frame is not finished yet.
-        //! The pInheritanceInfo parameter is only relevant for secondary command buffers. It specifies which state to inherit from the calling primary command buffers.
-
-        //! If the command buffer was already recorded once, then a call to vkBeginCommandBuffer will implicitly reset it.
-        //! It's not possible to append commands to a buffer at a later time.
-       
-
-        //-------------------------------------------
-        // Starting a render pass
-        //-------------------------------------------
-
-        //! The render pass can now begin. All of the functions that record commands can be recognized by their vkCmd prefix.
-        //! They all return void, so there will be no error handling until we've finished recording.
-
-        //! The first parameters are the render pass itself and the attachments to bind. 
-        //! We created a framebuffer for each swap chain image that specifies it as color attachment.
-
-        //! The next two parameters define the size of the render area.
-        //! The render area defines where shader loads and stores will take place.
-        //! The pixels outside this region will have undefined values.
-        //! It should match the size of the attachments for best performance.
-
-        //! The last two parameters define the clear values to use for VK_ATTACHMENT_LOAD_OP_CLEAR, which we used as load operation for the color attachment.
-        //! I've defined the clear color to simply be black with 100% opacity.
-
-        std::vector<vk::ClearValue> clearValues
-        {
-            vk::ClearValue(vk::ClearColorValue(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f})),
-            vk::ClearValue(vk::ClearDepthStencilValue(1.0f, 0))
-        };
-
-        vk::RenderPassBeginInfo renderPassInfo
-        (
-            _render_pass->handle(),
-            _swapchain_framebuffers[i]->handle(),
-            vk::Rect2D(vk::Offset2D(0, 0), _swapchain->get().image_extent_2D()),
-            clearValues
-        );
-
-
-        //! The first parameter for every command is always the command buffer to record the command to.
-        //! The second parameter specifies the details of the render pass we've just provided. The final parameter controls how the drawing commands within the render pass will be provided.
-        //! It can have one of two values:
-        //! - `VK_SUBPASS_CONTENTS_INLINE`: The render pass commands will be embedded in the primary command buffer itself and no secondary command buffers will be executed.
-        //! - `VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS`: The render pass commands will be executed from secondary command buffers.
-
-        _commandBuffers[i].beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
-
-
-        //-------------------------------------------
-        // Basic drawing commands
-        //-------------------------------------------
-        
-        //! The second parameter specifies if the pipeline object is a graphics or compute pipeline.
-    
-        _commandBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, *_graphics_pipeline);
-
-        //! The actual vkCmdDraw function is a bit anticlimactic, but it's so simple because of all the information we specified in advance.
-        //! It has the following parameters, aside from the command buffer:
-        //! - vertexCount: Even though we don't have a vertex buffer, we technically still have 3 vertices to draw.
-        //! - instanceCount: Used for instanced rendering, use 1 if you're not doing that.
-        //! - firstVertex: Used as an offset into the vertex buffer, defines the lowest value of gl_VertexIndex.
-        //! - firstInstance: Used as an offset for instanced rendering, defines the lowest value of gl_InstanceIndex.
-
-        //! The `vkCmdBindVertexBuffers` function is used to bind vertex buffers to bindings, like the one we set up in the previous chapter.
-        //! The first two parameters, besides the command buffer, specify the offset and number of bindings we're going to specify vertex buffers for.
-        //! The last two parameters specify the array of vertex buffers to bind and the byte offsets to start reading vertex data from.
-        //! You should also change the call to vkCmdDraw to pass the number of vertices in the buffer as opposed to the hardcoded number 3.
-
-        std::vector<vk::Buffer> vertexBuffers = { _vertex_buffers.back()->get().buffer() };
-        std::vector<vk::DeviceSize> offsets = { 0 };
-        _commandBuffers[i].bindVertexBuffers(0, vertexBuffers, offsets);
-
-        // vkCmdDraw(_commandBuffers[i], static_cast<uint32_t>(vertices.size()), 1, 0, 0);
-
-
-        //-------------------------------------------
-        // Using an index buffer
-        //-------------------------------------------
-
-        //! Using an index buffer for drawing involves two changes to createCommandBuffers.
-        //! We first need to bind the index buffer, just like we did for the vertex buffer.
-        //! The difference is that you can only have a single index buffer.
-        //! It's unfortunately not possible to use different indices for each vertex attribute,
-        //! so we do still have to completely duplicate vertex data even if just one attribute varies.
-
-        //! An index buffer is bound with vkCmdBindIndexBuffer which has the index buffer, a byte offset into it,
-        //! and the type of index data as parameters. As mentioned before, the possible types are VK_INDEX_TYPE_UINT16 and VK_INDEX_TYPE_UINT32.
-
-        vk::IndexType index_type = sizeof(*_indices.data()) == 4 ? vk::IndexType::eUint32 : (sizeof(*_indices.data()) == 2 ? vk::IndexType::eUint16 : vk::IndexType::eUint8EXT);
-        _commandBuffers[i].bindIndexBuffer(_index_buffers.back()->get().buffer(), 0, index_type);
-
-    
-        //-------------------------------------------
-        // Using descriptor sets
-        //-------------------------------------------
-
-        //! Unlike vertex and index buffers, descriptor sets are not unique to graphics pipelines.
-        //! Therefore we need to specify if we want to bind descriptor sets to the graphics or compute pipeline.
-        //! The next parameter is the layout that the descriptors are based on.
-        //! The next three parameters specify the index of the first descriptor set, the number of sets to bind, and the array of sets to bind. We'll get back to this in a moment.
-        //! The last two parameters specify an array of offsets that are used for dynamic descriptors.
-
-        _commandBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, *_pipeline_layout, 0, 1, &_descriptor_sets[i], 0, nullptr);
-
-
-        //! Just binding an index buffer doesn't change anything yet, we also need to change the drawing command to tell Vulkan to use the index buffer.
-        //! Remove the vkCmdDraw line and replace it with vkCmdDrawIndexed:
-
-        vkCmdDrawIndexed(_commandBuffers[i], static_cast<uint32_t>(_indices.size()), 1, 0, 0, 0);
-
-
-        //-------------------------------------------
-        // Finishing up
-        //-------------------------------------------
-
-        _commandBuffers[i].endRenderPass();
-        _commandBuffers[i].end();
-    }    
 }
 
 
@@ -1149,7 +991,7 @@ void CAppliction::drawFrame( void )
     std::vector<vk::Semaphore> waitSemaphores{*_image_available_semaphores[_currentFrame]};
     std::vector<vk::Semaphore> signalSemaphores{*_render_finished_semaphores[_currentFrame]};
     std::vector<vk::PipelineStageFlags> waitStages{vk::PipelineStageFlagBits::eColorAttachmentOutput};
-    std::vector<vk::CommandBuffer> commandbuffers{_commandBuffers[imageIndex]};
+    std::vector<vk::CommandBuffer> commandbuffers{_command_buffers->handle()[imageIndex]};
 
     vk::SubmitInfo submitInfo(waitSemaphores, waitStages, commandbuffers, signalSemaphores);
 

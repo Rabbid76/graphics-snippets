@@ -166,8 +166,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
-    <ClInclude Include="include\vk_utility_descriptor_set_factory_default.h" />
-    <ClInclude Include="include\vk_utility_descriptor_set_factory.h" />
+    <ClInclude Include="include\vk_utility_command_buffers.h" />
+    <ClInclude Include="include\vk_utility_command_buffers_factory.h" />
+    <ClInclude Include="include\vk_utility_descriptor_sets_factory_default.h" />
+    <ClInclude Include="include\vk_utility_descriptor_sets_factory.h" />
     <ClInclude Include="include\vk_utility_sampler_and_imageview_image_memory.h" />
     <ClInclude Include="include\vk_utility_texture_factory.h" />
     <ClInclude Include="include\vk_utility_buffer_and_memory_factory_default.h" />
@@ -272,6 +274,7 @@
     <ClInclude Include="include\vk_utility_buffer_device_memory_factory.h" />
     <ClInclude Include="include\vk_utility_core_command.h" />
     <ClInclude Include="include\vk_utility_framebuffer_factory.h" />
+    <ClInclude Include="include\vk_utility_command_buffers_factory_default.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>

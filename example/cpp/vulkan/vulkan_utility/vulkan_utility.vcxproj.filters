@@ -396,11 +396,20 @@
     <ClInclude Include="include\vk_utility_descriptor_set_layout.h">
       <Filter>objects\core</Filter>
     </ClInclude>
-    <ClInclude Include="include\vk_utility_descriptor_set_factory.h">
+    <ClInclude Include="include\vk_utility_descriptor_sets_factory.h">
       <Filter>factories\core</Filter>
     </ClInclude>
-    <ClInclude Include="include\vk_utility_descriptor_set_factory_default.h">
+    <ClInclude Include="include\vk_utility_descriptor_sets_factory_default.h">
       <Filter>factories\core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_command_buffers_factory.h">
+      <Filter>factories\command</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_command_buffers_factory_default.h">
+      <Filter>factories\command</Filter>
+    </ClInclude>
+    <ClInclude Include="include\vk_utility_command_buffers.h">
+      <Filter>objects\command</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

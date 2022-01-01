@@ -274,7 +274,7 @@ namespace vk_utility
             _transfer.clear();
             _sparse_binding.clear();
 
-            if (!physical_device)
+            if (!*physical_device)
                 return *this;
 
             auto &queue_families = physical_device.get_queue_family_properties();
@@ -306,7 +306,7 @@ namespace vk_utility
         {
             _surface_support.clear();
 
-            if (!physical_device || !surface)
+            if (!*physical_device || !*surface)
                 return *this;
 
             auto &queue_families = physical_device.get_queue_family_properties();
@@ -369,7 +369,7 @@ namespace vk_utility
             _formats.clear();
             _presentModes.clear();
 
-            if (!physical_device || !surface)
+            if (!*physical_device || !*surface)
                 return *this;
 
             _capabilities = physical_device.get_surface_capabilities(surface);
