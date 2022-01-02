@@ -136,9 +136,20 @@ int main(void)
     glGetVertexAttribIuiv( 2, GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING, &b2 );
     GLenum error3 = glGetError();
       
+    auto start_time = std::chrono::high_resolution_clock::now();
+    auto prev_time = start_time;
     while (!glfwWindowShouldClose(wnd))
     {
-        static float angle = 1.0f;
+        std::chrono::high_resolution_clock::time_point current_time = std::chrono::high_resolution_clock::now();
+        auto frame_time = current_time - prev_time;
+        prev_time = current_time;
+        auto all_time = current_time - start_time;
+        double delta_s = (double)std::chrono::duration_cast<std::chrono::milliseconds>(frame_time).count() / 1000.0;
+        double time_s = (double)std::chrono::duration_cast<std::chrono::milliseconds>(all_time).count() / 1000.0;
+        std::string title = "FPS: " + std::to_string(1/ delta_s);
+        glfwSetWindowTitle(wnd, title.c_str());
+        
+        float angle = (float)(time_s * 90.0);
 
         int vpSize[2];
         glfwGetFramebufferSize( wnd, &vpSize[0], &vpSize[1] );
@@ -161,7 +172,6 @@ int main(void)
         glm::mat4 model( 1.0f );
         model = glm::translate( model, glm::vec3(0.1f, 0.0f, 1.0f) );
         model = glm::rotate( model, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f) );
-        angle += 1.0f;
         
         glUniformMatrix4fv( 0, 1, GL_FALSE, glm::value_ptr(project) );
         glUniformMatrix4fv( 1, 1, GL_FALSE, glm::value_ptr(view) );
