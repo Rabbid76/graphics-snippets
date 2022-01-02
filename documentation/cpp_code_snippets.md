@@ -268,7 +268,9 @@ for( int i_resource = 0; i_resource < no_of; i_resource++ ) {
 
 See also [`ARB_shader_storage_buffer_object`](https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_shader_storage_buffer_object.txt)
 
-## Load Wave front file (OBJ) 
+## Mesh
+
+### Load Wave front file (OBJ)
 
 Related Stack Overflow questions:
 
@@ -454,5 +456,38 @@ bool load_obj(
     }
 
     return true;
+}
+```
+
+### Spring
+
+Related Stack Overflow questions:
+
+```c++
+void createSpring(
+    GLfloat rounds, GLfloat height, GLfloat thickness, GLfloat radius, 
+    std::vector<GLfloat> &vertices, std::vector<GLuint> &indices)
+{
+    const int slices = 32;
+    const int step = 5;
+    for (int i = -slices; i <= rounds * 360 + step; i += step)
+    {
+        for (int j = 0; j < slices; j ++)
+        {
+            GLfloat t = (GLfloat)i / 360 + (GLfloat)j / slices * step / 360;
+            t = std::max(0.0f, std::min(rounds, t));
+            GLfloat a1 = t * M_PI * 2;
+            GLfloat a2 = (GLfloat)j / slices * M_PI * 2;
+            GLfloat d = radius + thickness * cos(a2);
+            vertices.push_back(d * cos(a1));
+            vertices.push_back(d * sin(a1));
+            vertices.push_back(thickness * sin(a2) + height * t / rounds);
+        }
+    }
+    for (GLuint i = 0; i < (GLuint)vertices.size() / 3 - slices; ++i)
+    {
+        indices.push_back(i);
+        indices.push_back(i + slices);
+    }
 }
 ```

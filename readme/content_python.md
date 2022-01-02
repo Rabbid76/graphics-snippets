@@ -7,6 +7,8 @@ Robert C. Martin, Clean Architecture
 
 # Python examples
 
+[Python code snippets](../documentation/python_code_snippets.md)
+
 ## Examples
 
 ### Mesh
