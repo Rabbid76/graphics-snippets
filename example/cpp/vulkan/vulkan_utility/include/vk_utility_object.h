@@ -30,7 +30,7 @@ namespace vk_utility
         GenericObject(const GenericObject &) = default;
         GenericObject(VK_TYPE vk_object) : _vk_object{ vk_object } {}
 
-        explicit operator bool() const noexcept { return _vk_object.operator bool(); }
+        //explicit operator bool() const noexcept { return _vk_object.operator bool(); }
 
         operator const VK_TYPE() const noexcept { return _vk_object; }
         operator VK_TYPE () noexcept { return _vk_object; }
@@ -89,8 +89,7 @@ namespace vk_utility
 
         virtual ~RAIIObject()
         {
-            if (_object)
-                _object.destroy();
+            _object.destroy();
         }
 
         explicit operator bool() const noexcept { return _object.operator bool(); }
