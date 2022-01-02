@@ -69,7 +69,7 @@ int main(int argc, char** argv)
 
     glutDisplayFunc(display);  
 
-    GLuint tex0, tex1;
+    GLuint tex0; // , tex1;
     int level = 0;
     int border = 0;
 

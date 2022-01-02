@@ -93,7 +93,7 @@ int main(void)
           }
         }
 
-        float angle = 0.25f * 360.0 * time_ms / 1000.0f;
+        float angle = 0.25f * 360.0f * (float)time_ms / 1000.0f;
 
         glm::mat4 aspect( 1.0f );
         aspect = glm::scale( aspect, 0.8f * glm::vec3(600.0f / 800.0f, 1.0f, 0.0f) );
