@@ -34,6 +34,8 @@
 
 #define MAIN_LOOP_EVENT 1
 
+const char* fontfilename = "../../../../../../resource/font/FreeSans.ttf";
+
 // prototypes
 
 void display(void);
@@ -82,7 +84,6 @@ OpenGL::ShaderProgramSimple* g_prog;
 FT_Library library;
 FT_Face face;
 GLuint vbo00;
-const char* fontfilename = "../../../../../../resource/font/FreeSans.ttf";
 
 void init()
 {

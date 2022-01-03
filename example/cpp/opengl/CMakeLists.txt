@@ -1,5 +1,5 @@
 set(GLUT_LINK_LIBRARIES opengl32 ${GLEW_LIB} ${GLUT_LIB} ${FREETYPE_LIB})
-set(GLFW_LINK_LIBRARIES opengl32 ${GLEW_LIB} ${GLFW_LIB})
+set(GLFW_LINK_LIBRARIES opengl32 ${GLEW_LIB} ${GLFW_LIB} ${FREETYPE_LIB})
 
 if (MAKE_CONFIG STREQUAL "MSVC")
 	add_definitions(-DWIN32 -DGLEW_STATIC)
@@ -20,15 +20,16 @@ endfunction()
 
 # GLUT
 glut_exe(example_freeglut_1 example_freeglut_1.cpp)
+glut_exe(example_freeglut_text_freetype example_freeglut_text_freetype.cpp)
 glut_exe(example_concave_polygon_stencil example_concave_polygon_stencil.cpp)
 glut_exe(example_fistperson_1 example_fistperson_1.cpp)
 glut_exe(example_framebuffer_1 example_framebuffer_1.cpp)
 glut_exe(example_map_buffer_1 example_map_buffer_1.cpp)
 glut_exe(example_texture_1_stb_freeglut example_texture_1_stb_freeglut.cpp)
-glut_exe(example_text_freetype_1 example_text_freetype_1.cpp)
 
 # GLFW
 glfw_exe(example_glfw_1 example_glfw_1.cpp)
+glfw_exe(example_glfw_text_freetype example_glfw_text_freetype.cpp)
 glfw_exe(example_glfw_2_perpspcetive example_glfw_2_perpspcetive.cpp)
 glfw_exe(example_glfw_fps example_glfw_fps.cpp)
 glfw_exe(example_glm_animation_1 example_glm_animation_1.cpp)

@@ -1,5 +1,5 @@
 set(GLUT_LINK_LIBRARIES opengl32 glu32 ${GLEW_LIB} ${GLUT_LIB})
-set(GLFW_LINK_LIBRARIES opengl32 glu32 ${GLEW_LIB} ${GLFW_LIB})
+set(GLFW_LINK_LIBRARIES opengl32 glu32 ${GLEW_LIB} ${GLFW_LIB} ${FREETYPE_LIB})
 
 if (MAKE_CONFIG STREQUAL "MSVC")
 	add_definitions(-DWIN32 -DGLEW_STATIC)
@@ -30,5 +30,8 @@ glut_exe(example_fixedattriubte_spring example_fixedattriubte_spring.cpp)
 
 # GLFW
 glfw_exe(example_beginend_shader_1 example_beginend_shader_1.cpp)
+glfw_exe(example_beginend_text_freetype example_beginend_text_freetype.cpp)
 glfw_exe(example_fixedattribute_1 example_fixedattribute_1.cpp)
+glfw_exe(example_fixedattribute_text_freetype example_fixedattribute_text_freetype.cpp)
+glfw_exe(example_shader_luminance_text_freetype example_shader_luminance_text_freetype.cpp)
 glfw_exe(example_fixedattribute_sphere_1_slices example_fixedattribute_sphere_1_slices.cpp)
