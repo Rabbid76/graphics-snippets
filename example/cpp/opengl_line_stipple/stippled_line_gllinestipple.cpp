@@ -131,7 +131,7 @@ int main(void)
     GLfloat  factor  = 2.0f;
     //glUniform1ui(loc_pattern, pattern);
     //glUniform1f(loc_factor, factor);
-    glLineStipple(2.0, pattern);
+    glLineStipple(2, pattern);
     glEnable(GL_LINE_STIPPLE);
 
     glm::vec3 p0(-1.0f, -1.0f, 0.0f);

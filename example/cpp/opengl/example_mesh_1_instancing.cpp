@@ -212,7 +212,7 @@ int main(void)
         
         float ascpect = (float)vpSize[0] / (float)vpSize[1];
         float orthoX = ascpect > 1.0f ? ascpect : 1.0f;
-        float orthoY = ascpect > 1.0f ? 1.0f : 1.0 / ascpect;
+        float orthoY = ascpect > 1.0f ? 1.0f : 1.0f / ascpect;
 
         float aspect = (float)vpSize[0]/(float)vpSize[1];
         float near_ = 0.01f;

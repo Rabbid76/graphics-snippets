@@ -250,11 +250,11 @@ int main(void)
         
         float ascpect = (float)vpSize[0] / (float)vpSize[1];
         float orthoX = ascpect > 1.0f ? ascpect : 1.0f;
-        float orthoY = ascpect > 1.0f ? 1.0f : 1.0 / ascpect;
+        float orthoY = ascpect > 1.0f ? 1.0f : 1.0f / ascpect;
 
         glm::mat4 project = glm::ortho( -orthoX, orthoX, -orthoY, orthoY, -1.0f, 1.0f );
         
-        float orthScale = ascpect > 1.0f ? 600.0 / vpSize[1] : 600.0 / vpSize[0];
+        float orthScale = ascpect > 1.0f ? 600.0f / vpSize[1] : 600.0f / vpSize[0];
         project = glm::scale(project, glm::vec3(orthScale, orthScale, 1.0f));
         
         project = glm::perspective( glm::radians( 120.0f ), ascpect, 0.1f, 10.0f );

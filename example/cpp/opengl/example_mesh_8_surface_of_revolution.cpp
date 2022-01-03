@@ -179,9 +179,9 @@ void init(void)
         float fY = fT;
         float fZ = sqrt(fT);
         for (int j = 0; j < _j; j++) {
-            float fS = 2 * M_PI * (float) j / (_j - 1);
+            float fS = (float)(2 * M_PI * (float) j / (_j - 1));
             vertices[i][j][0] = fZ * cos(fS);
-            vertices[i][j][1] = fY - 0.5; // offset by 0.5 to make center of mass the center
+            vertices[i][j][1] = fY - 0.5f; // offset by 0.5 to make center of mass the center
             vertices[i][j][2] = fZ * sin(fS);
         }
     }

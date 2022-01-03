@@ -132,7 +132,7 @@ void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
     glm::vec2 drag_vec = glm::vec2(xpos - drag_start.x, drag_start.y - ypos);
     
     glm::vec3 axis_vec = glm::normalize(to_world * glm::vec3(-drag_vec.y, drag_vec.x, 0));
-    GLfloat angle = glm::length(drag_vec) / height / 2 * M_PI;
+    GLfloat angle = (GLfloat)(glm::length(drag_vec) / height / 2 * M_PI);
     
     drag_rotation = glm::rotate(glm::mat4(1.0f), angle, axis_vec);
 }

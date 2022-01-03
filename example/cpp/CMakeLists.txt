@@ -39,7 +39,8 @@ include_directories(
     ${GLM_PATH}/glm
     ${GLUT_PATH}/include
     ${GLFW_PATH}/include
-    "_util/include"
+    _util/include
+    ../../cpp/include/Render
 )
 
 # link directories
@@ -61,5 +62,7 @@ set(GLFW_LIB glfw3)
 #set_target_properties(glew PROPERTIES IMPORTED_LOCATION ${GLEW_PATH}/lib/Release/x64/glew32s.lib)
 
 # include sub-projects
-add_subdirectory("opengl")
-add_subdirectory("opengl_legacy")
+add_subdirectory(opengl)
+add_subdirectory(opengl_legacy)
+add_subdirectory(opengl_line_stipple)
+add_subdirectory(opengl_line_thickness)

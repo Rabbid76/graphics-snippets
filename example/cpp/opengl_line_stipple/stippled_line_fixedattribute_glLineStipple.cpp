@@ -102,7 +102,7 @@ int main(void)
 
     GLushort pattern = 0x18ff;
     GLfloat  factor  = 2.0f;
-    glLineStipple(2.0, pattern);
+    glLineStipple(2, pattern);
     glEnable(GL_LINE_STIPPLE);
     
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
