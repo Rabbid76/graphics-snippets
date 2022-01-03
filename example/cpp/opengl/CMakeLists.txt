@@ -1,4 +1,4 @@
-set(GLUT_LINK_LIBRARIES opengl32 ${GLEW_LIB} ${GLUT_LIB})
+set(GLUT_LINK_LIBRARIES opengl32 ${GLEW_LIB} ${GLUT_LIB} ${FREETYPE_LIB})
 set(GLFW_LINK_LIBRARIES opengl32 ${GLEW_LIB} ${GLFW_LIB})
 
 if (MAKE_CONFIG STREQUAL "MSVC")
@@ -25,6 +25,7 @@ glut_exe(example_fistperson_1 example_fistperson_1.cpp)
 glut_exe(example_framebuffer_1 example_framebuffer_1.cpp)
 glut_exe(example_map_buffer_1 example_map_buffer_1.cpp)
 glut_exe(example_texture_1_stb_freeglut example_texture_1_stb_freeglut.cpp)
+glut_exe(example_text_freetype_1 example_text_freetype_1.cpp)
 
 # GLFW
 glfw_exe(example_glfw_1 example_glfw_1.cpp)

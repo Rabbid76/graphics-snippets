@@ -9,6 +9,7 @@ set(GLM_PATH ${EXTERN_LIBRARY_PATH}/glm-0.9.9.8)
 set(GLUT_PATH ${EXTERN_LIBRARY_PATH}/freeglut/freeglut-3.0.0)
 set(GLFW_PATH ${EXTERN_LIBRARY_PATH}/glfw-3.3.6.bin.WIN64)
 set(WXWIDGET_PATH ${EXTERN_LIBRARY_PATH}/wxMSW-3.1.5_vc14x_x64)
+set(FREETYPE_PATH ${EXTERN_LIBRARY_PATH}/freetype-2.11.1)
 
 # compiler options
 if(MAKE_CONFIG STREQUAL "MSVC")
@@ -42,6 +43,7 @@ include_directories(
     ${GLFW_PATH}/include
     ${WXWIDGET_PATH}/include
     ${WXWIDGET_PATH}/include/msvc
+    ${FREETYPE_PATH}/include
     _util/include
     ../../cpp/include/Render
 )
@@ -54,6 +56,7 @@ link_directories(
     ${GLUT_PATH}/lib/x64
     ${GLFW_LIBRARY_PATH}
     ${WXWIDGET_LIBRARY_PATH}
+    ${FREETYPE_PATH}/objs/x64
 )
 
 # GLEW
@@ -67,6 +70,9 @@ set(GLFW_LIB glfw3)
 
 # wxWidget
 set(WXWIDGET_LIB wxbase31ud)
+
+# freetype
+set(FREETYPE_LIB freetype_static)
 
 #add_library(glew SHARED STATIC IMPORTED)
 #set_target_properties(glew PROPERTIES IMPORTED_LOCATION ${GLEW_PATH}/lib/Release/x64/glew32s.lib)
