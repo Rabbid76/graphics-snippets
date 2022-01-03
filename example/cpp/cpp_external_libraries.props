@@ -13,7 +13,7 @@
     <GlfwDir>..\..\..\_cpp_extern\glfw-3.3.6.bin.WIN64\</GlfwDir>
     <SdlDir>..\..\..\_cpp_extern\SDL2-2.0.10\</SdlDir>
     <SfmlDir>..\..\..\_cpp_extern\SFML-2.4.2\</SfmlDir>
-    <wxWidgetDir>..\..\..\_cpp_extern\wxMSW-3.1.4_vc14x</wxWidgetDir>
+    <wxWidgetDir>..\..\..\_cpp_extern\wxMSW-3.1.5_vc14x_x64</wxWidgetDir>
     <FreetypeDir>..\..\..\_cpp_extern\freetype-2.9\</FreetypeDir>
     <AssimpDir>..\..\..\_cpp_extern\assimp_4_x\</AssimpDir>
     <TinyObjLoaderDir>_3rdparty\tinyobjectloader</TinyObjLoaderDir>
