@@ -45,7 +45,7 @@ include_directories(
     ${WXWIDGET_PATH}/include/msvc
     ${FREETYPE_PATH}/include
     _util/include
-    ../../cpp/include/Render
+    _render_util/include
 )
 
 # link directories
