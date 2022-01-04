@@ -13,12 +13,12 @@
 
 // OpenGL
 
-#include <OpenGLFramebuffer.h>
+#include "../../include/OpenGL/OpenGLFramebuffer.h"
 
 
 // OpenGL wrapper
 
-#include <OpenGL_include.h>
+#include "../../include/OpenGL/OpenGL_include.h"
 
 
 // STL

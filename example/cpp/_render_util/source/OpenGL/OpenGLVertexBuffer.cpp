@@ -12,12 +12,12 @@
 
 #include <stdafx.h>
 
-#include <OpenGLVertexBuffer.h>
+#include "../../include/OpenGL/OpenGLVertexBuffer.h"
 
 
 // OpenGL wrapper
 
-#include <OpenGL_include.h>
+#include "../../include/OpenGL/OpenGL_include.h"
 
 
 // STL

@@ -11,12 +11,12 @@
 
 // includes
 
-#include <OpenGLProgram.h>
+#include "../../include/OpenGL/OpenGLProgram.h"
 
 
 // OpenGL wrapper
 
-#include <OpenGL_include.h>
+#include "../../include/OpenGL/OpenGL_include.h"
 
 
 // STL

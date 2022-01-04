@@ -12,12 +12,12 @@
 
 // OpenGL
 
-#include <OpenGLError.h>
+#include "../../include/OpenGL/OpenGLError.h"
 
 
 // OpenGL wrapper
 
-#include <OpenGL_include.h>
+#include "../../include/OpenGL/OpenGL_include.h"
 
 
 // STL

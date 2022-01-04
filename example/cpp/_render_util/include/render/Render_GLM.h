@@ -12,7 +12,7 @@
 
 // includes
 
-#include <Render_GLSL.h>
+#include "Render_GLSL.h"
 
 // GLM
 #include <glm/glm.hpp>
@@ -56,7 +56,7 @@ struct CMat4
 
   CMat4( GLSL::mat4 &m ) : _m( m ) {}
 
-  GLSL::mat4 & operator = (glm::mat4 &source)
+  GLSL::mat4 & operator = (const glm::mat4 &source)
   {
     std::copy( glm::value_ptr(source), glm::value_ptr(source)+16, (float*)(&_m) );
     return _m;

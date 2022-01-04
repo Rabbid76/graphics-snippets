@@ -4,8 +4,8 @@
 
 // OpenGL
 
-#include <OpenGL_Matrix_Camera.h>
-#include <OpenGLProgram.h>
+#include "OpenGL_Matrix_Camera.h"
+#include "OpenGLProgram.h"
 
 
 // OpenGL wrapper
