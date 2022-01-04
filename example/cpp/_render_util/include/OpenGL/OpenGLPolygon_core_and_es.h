@@ -14,11 +14,11 @@
 
 // includes
 
-#include <Render_IDrawType.h>
-#include <Render_IDrawPolygon.h>
-#include <Render_IBuffer.h>
+#include "../render/Render_IDrawType.h"
+#include "../render/Render_IDrawPolygon.h"
+#include "../render/Render_IBuffer.h"
 
-#include <OpenGLDataBuffer_std140.h>
+#include "OpenGLDataBuffer_std140.h"
 
 
 // class definitions

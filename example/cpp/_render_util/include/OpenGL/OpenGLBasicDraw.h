@@ -14,18 +14,18 @@
 
 // render
 
-#include <Render_IDraw.h>
-#include <Render_IBuffer.h>
-#include <Render_IRenderPass.h>
-#include <Render_ITexture.h>
-#include <Render_IFont.h>
-#include <Render_IRender.h>
-#include <Render_IDrawLine.h>
+#include "../render/Render_IDraw.h>"
+#include "../render/Render_IBuffer.h"
+#include "../render/Render_IRenderPass.h"
+#include "../render/Render_ITexture.h"
+#include "../render/Render_IFont.h"
+#include "../render/Render_IRender.h"
+#include "../render/Render_IDrawLine.h"
 
 // OpenGL
 
-#include <OpenGL_Matrix_Camera.h>
-#include <OpenGL_SimpleShaderProgram_temp.h>
+#include "OpenGL_Matrix_Camera.h"
+#include "OpenGL_SimpleShaderProgram_temp.h"
 
 // STL
 

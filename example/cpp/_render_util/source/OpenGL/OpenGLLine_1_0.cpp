@@ -11,13 +11,13 @@
 
 // includes
 
-#include <OpenGLLine_1_0.h>
+#include "../../include/OpenGL/OpenGLLine_1_0.h"
 
 
 // OpenGL wrapper
 
-#include <OpenGL_include.h>
-#include <OpenGL_enumconst.h>
+#include "../../include/OpenGL/OpenGL_include.h"
+#include "../../include/OpenGL/OpenGL_enumconst.h"
 
 
 // STL

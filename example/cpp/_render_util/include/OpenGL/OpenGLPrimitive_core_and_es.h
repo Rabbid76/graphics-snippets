@@ -14,11 +14,11 @@
 
 // includes
 
-#include <Render_IDrawType.h>
-#include <Render_IProgram.h>
-#include <Render_IBuffer.h>
+#include "../render/Render_IDrawType.h"
+#include "../render/Render_IProgram.h"
+#include "../render/Render_IBuffer.h"
 
-#include <OpenGLDataBuffer_std140.h>
+#include "OpenGLDataBuffer_std140.h"
 
 // STL
 

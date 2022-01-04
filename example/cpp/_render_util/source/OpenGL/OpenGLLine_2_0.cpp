@@ -12,14 +12,14 @@
 
 // includes
 
-#include <OpenGLLine_2_0.h>
-#include <OpenGLPrimitive_2_0.h>
+#include "../../include/OpenGL/OpenGLLine_2_0.h"
+#include "../../include/OpenGL/OpenGLPrimitive_2_0.h"
 
 
 // OpenGL wrapper
 
-#include <OpenGL_include.h>
-#include <OpenGL_enumconst.h>
+#include "../../include/OpenGL/OpenGL_include.h"
+#include "../../include/OpenGL/OpenGL_enumconst.h"
 
 
 // STL

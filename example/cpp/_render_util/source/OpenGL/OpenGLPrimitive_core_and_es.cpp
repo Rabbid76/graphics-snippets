@@ -13,15 +13,15 @@
 
 // includes
 
-#include <OpenGLPrimitive_core_and_es.h>
-#include <OpenGLProgram.h>
-#include <OpenGLVertexBuffer.h>
+#include "../../include/OpenGL/OpenGLPrimitive_core_and_es.h"
+#include "../../include/OpenGL/OpenGLProgram.h"
+#include "../../include/OpenGL/OpenGLVertexBuffer.h"
 
 
 // OpenGL wrapper
 
-#include <OpenGL_include.h>
-#include <OpenGL_enumconst.h>
+#include "../../include/OpenGL/OpenGL_include.h"
+#include "../../include/OpenGL/OpenGL_enumconst.h"
 
 
 // STL

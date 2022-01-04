@@ -61,6 +61,11 @@ glfw_exe(
 )
 
 glfw_exe(
+	simple_glsl_subroutine
+	simple_glsl_subroutine.cpp
+)
+
+glfw_exe(
 	fixed_function_pipeline_matrix_stack
 	fixed_function_pipeline_matrix_stack.cpp
 )
@@ -68,4 +73,40 @@ glfw_exe(
 glfw_exe(
 	fixed_function_attibutes_glfw
 	fixed_function_attibutes_glfw.cpp
+)
+
+glfw_exe(
+	line_render
+	line_render.cpp
+	../_render_util/source/OpenGL/OpenGLError.cpp
+	../_render_util/source/OpenGL/OpenGLProgram.cpp
+	../_render_util/source/OpenGL/OpenGLDataBuffer_std140.cpp
+	../_render_util/source/OpenGL/OpenGLVertexBuffer.cpp
+	../_render_util/source/OpenGL/OpenGLPrimitive_2_0.cpp
+	../_render_util/source/OpenGL/OpenGLPrimitive_core_and_es.cpp
+	../_render_util/source/OpenGL/OpenGLLine_1_0.cpp
+	../_render_util/source/OpenGL/OpenGLLine_2_0.cpp
+	../_render_util/source/OpenGL/OpenGLLine_core_and_es.cpp
+	../_render_util/source/OpenGL/OpenGLLine_highquality.cpp
+)
+
+glfw_exe(
+	polygon_render
+	polygon_render.cpp
+	../_render_util/source/OpenGL/OpenGLError.cpp
+	../_render_util/source/OpenGL/OpenGLProgram.cpp
+	../_render_util/source/OpenGL/OpenGLDataBuffer_std140.cpp
+	../_render_util/source/OpenGL/OpenGLVertexBuffer.cpp
+	../_render_util/source/OpenGL/OpenGLPrimitive_2_0.cpp
+	../_render_util/source/OpenGL/OpenGLPrimitive_core_and_es.cpp
+	../_render_util/source/OpenGL/OpenGLPolygon_1_0.cpp
+	../_render_util/source/OpenGL/OpenGLPolygon_2_0.cpp
+	../_render_util/source/OpenGL/OpenGLPolygon_core_and_es.cpp
+)
+
+glfw_exe(
+	rubiks_cube_glfw
+	rubiks_cube_glfw.cpp
+	../_render_util/source/OpenGL/OpenGLError.cpp
+	../_render_util/source/OpenGL/OpenGLProgram.cpp
 )

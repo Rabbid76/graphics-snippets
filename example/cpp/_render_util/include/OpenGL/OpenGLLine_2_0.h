@@ -13,8 +13,8 @@
 
 // includes
 
-#include <Render_IDrawType.h>
-#include <Render_IDrawLine.h>
+#include "../render/Render_IDrawType.h"
+#include "../render/Render_IDrawLine.h"
 
 
 // STL

@@ -15,13 +15,13 @@
 
 // render
 
-#include <Render_IDrawType.h>
+#include "../render/Render_IDrawType.h"
 
 
 // OpenGL
 
-#include <OpenGL_include.h>
-#include <OpenGL_enumconst.h>
+#include "OpenGL_include.h"
+#include "OpenGL_enumconst.h"
 
 // STL
 

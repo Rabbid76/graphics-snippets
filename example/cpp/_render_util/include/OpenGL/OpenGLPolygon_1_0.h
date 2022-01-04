@@ -12,8 +12,8 @@
 
 // includes
 
-#include <Render_IDrawType.h>
-#include <Render_IDrawPolygon.h>
+#include "../render/Render_IDrawType.h"
+#include "../render/Render_IDrawPolygon.h"
 
 
 // class definitions

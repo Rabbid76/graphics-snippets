@@ -12,12 +12,12 @@
 
 // includes
 
-#include <OpenGLLine_highquality.h>
+#include "../../include/OpenGL/OpenGLLine_highquality.h"
 
 
 // OpenGL wrapper
 
-#include <OpenGL_include.h>
+#include "../../include/OpenGL/OpenGL_include.h"
 
 
 // class definitions

@@ -21,9 +21,9 @@
 
 // includes
 
-#include <Render_IBuffer.h>
-#include <OpenGLFixedFunctionPipelineTypes.h>
-#include <OpenGLVertexBuffer.h>
+#include "../render/Render_IBuffer.h"
+#include "OpenGLFixedFunctionPipelineTypes.h"
+#include "OpenGLVertexBuffer.h"
 
 
 // class declarations

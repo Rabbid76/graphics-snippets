@@ -47,6 +47,11 @@ Robert C. Martin, Clean Architecture
 [example_navigate_1_orbit](../example/cpp/opengl/example_navigate_1_orbit.cpp)  
 [![example_navigate_1_orbit](../screenshot/example/cpp/opengl/example_navigate_1_orbit.gif)](../example/cpp/opengl/example_navigate_1_orbit.cpp)  
 
+
+## Rubik's Cube
+
+[rubiks_cube_glfw](../example/cpp/opengl_render_utility/rubiks_cube_glfw.cpp)  
+
 ## OpenGL 4 Examples
 
 [example_glm_animation_1](../example/cpp/opengl/example_glm_animation_1.cpp)  

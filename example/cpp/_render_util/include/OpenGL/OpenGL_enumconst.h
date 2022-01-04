@@ -12,12 +12,12 @@
 
 // includes
 
-#include <Render_IDrawType.h>
+#include "../render/Render_IDrawType.h"
 
 
 // OpenGL wrapper
 
-#include <OpenGL_include.h>
+#include "OpenGL_include.h"
 
 
 // STL
