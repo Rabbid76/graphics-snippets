@@ -17,6 +17,10 @@
 
 ## Intersection of 2 lines (2 dimensional)
 
+Related questions
+
+- [Intersect a ray with a triangle in GLSL C++](https://stackoverflow.com/questions/59257678/intersect-a-ray-with-a-triangle-in-glsl-c/59261241#59261241)
+
 ![intersect line and line](image/isect_line_line_2d.png)
 
 ```txt
