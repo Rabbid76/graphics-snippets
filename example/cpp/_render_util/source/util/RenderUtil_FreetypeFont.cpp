@@ -10,8 +10,8 @@
 
 // includes
 
-#include <RenderUtil_FreetypeFont.h>
-#include <Render_IBuffer.h>
+#include "../../include/util/RenderUtil_FreetypeFont.h"
+#include "../../include/render/Render_IBuffer.h"
 
 
 // FREETYPE

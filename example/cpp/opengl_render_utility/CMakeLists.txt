@@ -110,3 +110,15 @@ glfw_exe(
 	../_render_util/source/OpenGL/OpenGLError.cpp
 	../_render_util/source/OpenGL/OpenGLProgram.cpp
 )
+
+glfw_exe(
+	draw_library_scenes
+	draw_library_scenes.cpp
+	../_render_util/source/OpenGL/OpenGLError.cpp
+	../_render_util/source/OpenGL/OpenGLProgram.cpp
+	../_render_util/source/OpenGL/OpenGLVertexBuffer.cpp
+	../_render_util/source/OpenGL/OpenGLFramebuffer.cpp
+	../_render_util/source/OpenGL/OpenGLTextureLoader.cpp
+	../_render_util/source/OpenGL/OpenGLBasicDraw.cpp
+	../_render_util/source/util/RenderUtil_FreetypeFont.cpp
+)

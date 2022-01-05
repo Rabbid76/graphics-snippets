@@ -12,12 +12,12 @@
 
 // includes
 
-#include <Render_IDrawType.h>
-#include <Render_ITexture.h>
-#include <Render_IBuffer.h>
-#include <Render_IRenderPass.h>
-#include <Render_IDrawLine.h>
-#include <Render_IDrawPolygon.h>
+#include "Render_IDrawType.h"
+#include "Render_ITexture.h"
+#include "Render_IBuffer.h"
+#include "Render_IRenderPass.h"
+#include "Render_IDrawLine.h"
+#include "Render_IDrawPolygon.h"
 
 
 // type declarations

@@ -13,11 +13,11 @@
 
 // OpenGL
 
-#include <OpenGLTextureLoader.h>
+#include "../../include/OpenGL/OpenGLTextureLoader.h"
 
 // OpenGL wrapper
 
-#include <OpenGL_include.h>
+#include "../../include/OpenGL/OpenGL_include.h"
 
 
 // STL

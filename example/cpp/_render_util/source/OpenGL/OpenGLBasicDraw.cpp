@@ -13,20 +13,20 @@
 
 // OpenGL
 
-#include <OpenGLBasicDraw.h>
-#include <OpenGLVertexBuffer.h>
-#include <OpenGLFrameBuffer.h>
-#include <OpenGLTextureLoader.h>
+#include "../../include/OpenGL/OpenGLBasicDraw.h"
+#include "../../include/OpenGL/OpenGLVertexBuffer.h"
+#include "../../include/OpenGL/OpenGLFrameBuffer.h"
+#include "../../include/OpenGL/OpenGLTextureLoader.h"
 
 
 // OpenGL wrapper
 
-#include <OpenGL_include.h>
+#include "../../include/OpenGL/OpenGL_include.h"
 
 
 // utility 
 
-#include <RenderUtil_FreetypeFont.h>
+#include "../../include/util/RenderUtil_FreetypeFont.h"
 
 
 // STL
@@ -1170,19 +1170,20 @@ bool CBasicDraw::LoadFont(
     return true;
   }
 
+  std::string font_directory = "../../../../../../resource/font/";
   std::string font_finename;
   int min_char;
   switch( font_id )
   {
     default: break;
 
-    case font_sans:        min_char = 32; font_finename = "../resource/font/FreeSans.ttf"; break;
-    case font_symbol:      min_char = 32; font_finename = "../resource/font/37043_SYMBOL.ttf"; break;
-    case font_pcifico:     min_char = 32; font_finename = "../resource/font/Pacifico.ttf"; break;
-    case font_alura:       min_char = 32; font_finename = "../resource/font/Allura-Regular.otf"; break;
-    case font_grandhotel:  min_char = 32; font_finename = "../resource/font/GrandHotel-Regular.otf"; break;
-    case font_greatevibes: min_char = 32; font_finename = "../resource/font/GreatVibes-Regular.otf"; break;
-    case font_pixslim_2:   min_char = 32; font_finename = "../resource/font/pixlim_2.ttf"; break;
+    case font_sans:        min_char = 32; font_finename = font_directory + "FreeSans.ttf"; break;
+    case font_symbol:      min_char = 32; font_finename = font_directory + "37043_SYMBOL.ttf"; break;
+    case font_pcifico:     min_char = 32; font_finename = font_directory + "Pacifico.ttf"; break;
+    case font_alura:       min_char = 32; font_finename = font_directory + "Allura-Regular.otf"; break;
+    case font_grandhotel:  min_char = 32; font_finename = font_directory + "GrandHotel-Regular.otf"; break;
+    case font_greatevibes: min_char = 32; font_finename = font_directory + "GreatVibes-Regular.otf"; break;
+    case font_pixslim_2:   min_char = 32; font_finename = font_directory + "pixlim_2.ttf"; break;
   }
 
   if ( font_finename.empty() )

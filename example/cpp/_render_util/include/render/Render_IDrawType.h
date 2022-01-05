@@ -12,15 +12,6 @@
 
 // includes
 
-
-// utility
-
-#ifdef RENDER_INCLUDE_UTCSTRING
-#include <UtCString.h>
-#else
-#define UtCString std::string
-#endif
-
 // STL
 
 #include <cstddef>
@@ -58,8 +49,8 @@
 namespace Render
 {
 
-using t_string  = UtCString;        //!< type for names and commands
-using t_s_param = const UtCString&; //!< type for name and command parameter
+using t_string  = std::string;        //!< type for names and commands
+using t_s_param = const std::string&; //!< type for name and command parameter
 using t_byte    = unsigned char;    //!< general unsigned  8bit data type (C++ 17 `std::byte`)
 using t_sbyte   = char;             //!< general signed 8bit data
 using t_fp      = float;            //!< general floating point data type

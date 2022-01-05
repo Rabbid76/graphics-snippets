@@ -12,8 +12,8 @@
 
 // includes
 
-#include <Render_IFont.h>
-#include <Render_ITexture.h>
+#include "../render/Render_IFont.h"
+#include "../render/Render_ITexture.h"
 
 
 /******************************************************************//**
