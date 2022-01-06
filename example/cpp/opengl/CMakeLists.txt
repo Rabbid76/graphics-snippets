@@ -9,8 +9,10 @@ if (MAKE_CONFIG STREQUAL "MSVC" OR MAKE_CONFIG STREQUAL "MINGW")
 endif()
 
 function(glut_exe target_name)
-	add_executable(${target_name} ${ARGN})
+    add_executable(${target_name} ${ARGN})
+	#target_compile_definitions(${target_name} PUBLIC -DGLEW_STATIC)
 	target_link_libraries(${target_name} ${GLUT_LINK_LIBRARIES})
+	#target_link_options(${target_name} PUBLIC "LINKER:--subsystem,windows")
 endfunction()
 
 function(glfw_exe target_name)
@@ -18,6 +20,7 @@ function(glfw_exe target_name)
 	target_link_libraries(${target_name} ${GLFW_LINK_LIBRARIES})
 endfunction()
 
+if(MAKE_CONFIG STREQUAL "MSVC")
 # GLUT
 glut_exe(example_freeglut_1 example_freeglut_1.cpp)
 glut_exe(example_freeglut_text_freetype example_freeglut_text_freetype.cpp)
@@ -58,6 +61,10 @@ glfw_exe(example_texture_3_lookup_table example_texture_3_lookup_table.cpp)
 glfw_exe(example_texture_5_test_texsubiamge example_texture_5_test_texsubiamge.cpp)
 glfw_exe(example_thread_1 example_thread_1.cpp)
 glfw_exe(example_thread_2_shared_context example_thread_2_shared_context.cpp)
+elseif (MAKE_CONFIG STREQUAL "MINGW")
+glut_exe(example_freeglut_1 example_freeglut_1.cpp)
+#glfw_exe(example_glfw_1 example_glfw_1.cpp)
+endif()
 
 # deprecated
 # glfw_exe(example_camera_and_matrix example_camera_and_matrix.cpp)

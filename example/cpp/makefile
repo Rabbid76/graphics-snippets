@@ -27,7 +27,7 @@ stbInc = -I$(stbDir)
 
 # GLEW
 glewDir = $(workspaceRoot)/example/cpp/_glew
-glewInc = -D GLEW_STATIC -I$(glewDir)/include
+glewInc = -DGLEW_STATIC -I$(glewDir)/include
 #glewLib = -L$(glewDir)/lib -lglew32
 glewLib = -L$(glewDir)/lib -lglew64
 
