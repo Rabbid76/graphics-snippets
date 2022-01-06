@@ -7,33 +7,36 @@
   "version": "2.0.0",
   "tasks": [
     {
-        "label": "build file",
-        "type": "shell",
-        "command": "make",
-        "args": [
-            "-f",
-            "${workspaceRoot}/example/cpp/makefile",
-            "workspaceRoot=${workspaceRoot}",
-            "fileDirname=${fileDirname}",
-            "fileBasenameNoExtension=${fileBasenameNoExtension}",
-            "fileBasename=${fileBasename}",
-            "--silent"
+      "label": "build file",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "-f",
+        "${workspaceRoot}/example/cpp/makefile",
+        "workspaceRoot=${workspaceRoot}",
+        "fileDirname=${fileDirname}",
+        "fileBasenameNoExtension=${fileBasenameNoExtension}",
+        "fileBasename=${fileBasename}",
+        "--silent"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": {
+        "owner": "cpp",
+        "fileLocation": [
+          "absolute"
         ],
-        "group": "build",
-        "problemMatcher": {
-            "owner": "cpp",
-            "fileLocation": [
-                "absolute"
-            ],
-            "pattern": {
-                "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
-                "file": 1,
-                "line": 2,
-                "column": 3,
-                "severity": 4,
-                "message": 5
-            }
+        "pattern": {
+          "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "message": 5
         }
+      }
     },
     {
       "type": "typescript",
@@ -41,10 +44,8 @@
       "problemMatcher": [
         "$tsc"
       ],
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      }
+      "group": "build",
+      "label": "tsc: build - tsconfig.json"
     }
-]
+  ]
 }
