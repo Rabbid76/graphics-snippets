@@ -13,7 +13,7 @@ add_executable(
 
 target_link_libraries(
 	wx_widget_opengl_meshs 
-	opengl32 
+	${DEFAULT_LIB} 
 	${GLEW_LIB}
 	${WXWIDGET_LIB}
 )

@@ -6,16 +6,17 @@ set(CMAKE_CXX_STANDARD 20)
 set(EXTERN_LIBRARY_PATH ../../../_cpp_extern)
 set(STB_PATH ${EXTERN_LIBRARY_PATH}/stb)
 set(GLM_PATH ${EXTERN_LIBRARY_PATH}/glm-0.9.9.8)
-set(GLUT_PATH ${EXTERN_LIBRARY_PATH}/freeglut/freeglut-3.0.0)
 set(GLFW_PATH ${EXTERN_LIBRARY_PATH}/glfw-3.3.6.bin.WIN64)
 set(WXWIDGET_PATH ${EXTERN_LIBRARY_PATH}/wxMSW-3.1.5_vc14x_x64)
 set(FREETYPE_PATH ${EXTERN_LIBRARY_PATH}/freetype-2.11.1)
 
 # compiler options
 if(MAKE_CONFIG STREQUAL "MSVC")
-    set (GLEW_PATH ${EXTERN_LIBRARY_PATH}/glew-2.1.0)
+    set(GLEW_PATH ${EXTERN_LIBRARY_PATH}/glew-2.1.0)
+    set(GLUT_PATH ${EXTERN_LIBRARY_PATH}/freeglut/freeglut-3.0.0)
 elseif (MAKE_CONFIG STREQUAL "MINGW")
-    set (GLEW_PATH _glew)
+    set(GLEW_PATH _glew)
+    set(GLUT_PATH ${EXTERN_LIBRARY_PATH}/freeglut/freeglut-MinGW-3.0.0-1.mp/freeglut)
 elseif (MAKE_CONFIG STREQUAL "Clang")
     # [...]
 endif()
@@ -49,10 +50,18 @@ include_directories(
 )
 
 # link directories
-set(GLFW_LIBRARY_PATH ${GLFW_PATH}/lib-vc2022)
+if(MAKE_CONFIG STREQUAL "MSVC")
+    set(GLEW_LIBRARY_PATH ${GLEW_PATH}/lib/Release/x64)
+    set(GLFW_LIBRARY_PATH ${GLFW_PATH}/lib-vc2022)
+elseif (MAKE_CONFIG STREQUAL "MINGW")
+    set(GLEW_LIBRARY_PATH ${GLEW_PATH}/lib)
+    set(GLFW_LIBRARY_PATH ${GLFW_PATH}/lib-mingw-w64)
+elseif (MAKE_CONFIG STREQUAL "Clang")
+    # [...]
+endif()
 set(WXWIDGET_LIBRARY_PATH ${WXWIDGET_PATH}/lib/vc_x64_dll)
 link_directories(
-    ${GLEW_PATH}/lib/Release/x64
+    ${GLEW_LIBRARY_PATH}
     ${GLUT_PATH}/lib/x64
     ${GLFW_LIBRARY_PATH}
     ${WXWIDGET_LIBRARY_PATH}
@@ -60,7 +69,22 @@ link_directories(
 )
 
 # GLEW
-set(GLEW_LIB glew32s)
+if(MAKE_CONFIG STREQUAL "MSVC")
+    set(GLEW_LIB glew32s)
+elseif (MAKE_CONFIG STREQUAL "MINGW")
+    set(GLEW_LIB glew64)
+elseif (MAKE_CONFIG STREQUAL "Clang")
+    # [...]
+endif()
+
+# default libraries
+if(MAKE_CONFIG STREQUAL "MSVC")
+    set(DEFAULT_LIB opengl32 glu32)
+elseif (MAKE_CONFIG STREQUAL "MINGW")
+    set(DEFAULT_LIB gdi32 opengl32 glu32)
+elseif (MAKE_CONFIG STREQUAL "Clang")
+    # [...]
+endif()
 
 # GLUT
 set(GLUT_LIB freeglut)
