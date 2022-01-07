@@ -1,9 +1,17 @@
 cmake_minimum_required (VERSION 3.12)
 
+project(cpp_examples)
+
 #set_property(TARGET tgt PROPERTY CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD 20)
 
+add_subdirectory(_libraries)
+
+set(REPOSITORY_LIBRARY_PATH _libraries)
 set(EXTERN_LIBRARY_PATH ../../../_cpp_extern)
+
+set(GLEW_PATH ${REPOSITORY_LIBRARY_PATH}/glew_opengl_4_6)
+#set(GLEW_PATH ${EXTERN_LIBRARY_PATH}/glew-2.1.0)
 set(STB_PATH ${EXTERN_LIBRARY_PATH}/stb)
 set(GLM_PATH ${EXTERN_LIBRARY_PATH}/glm-0.9.9.8)
 set(GLFW_PATH ${EXTERN_LIBRARY_PATH}/glfw-3.3.6.bin.WIN64)
@@ -12,17 +20,12 @@ set(FREETYPE_PATH ${EXTERN_LIBRARY_PATH}/freetype-2.11.1)
 
 # compiler options
 if(MAKE_CONFIG STREQUAL "MSVC")
-    set(GLEW_PATH ${EXTERN_LIBRARY_PATH}/glew-2.1.0)
     set(GLUT_PATH ${EXTERN_LIBRARY_PATH}/freeglut/freeglut-3.0.0)
 elseif (MAKE_CONFIG STREQUAL "MINGW")
-    set(GLEW_PATH _glew)
     set(GLUT_PATH ${EXTERN_LIBRARY_PATH}/freeglut/freeglut-MinGW-3.0.0-1.mp/freeglut)
 elseif (MAKE_CONFIG STREQUAL "Clang")
     # [...]
 endif()
-
-
-project(cpp_examples)
 
 # compiler options
 if(MAKE_CONFIG STREQUAL "MSVC")
@@ -50,11 +53,10 @@ include_directories(
 )
 
 # link directories
+#set(GLEW_LIBRARY_PATH ${GLEW_PATH}/lib/Release/x64)
 if(MAKE_CONFIG STREQUAL "MSVC")
-    set(GLEW_LIBRARY_PATH ${GLEW_PATH}/lib/Release/x64)
     set(GLFW_LIBRARY_PATH ${GLFW_PATH}/lib-vc2022)
 elseif (MAKE_CONFIG STREQUAL "MINGW")
-    set(GLEW_LIBRARY_PATH ${GLEW_PATH}/lib)
     set(GLFW_LIBRARY_PATH ${GLFW_PATH}/lib-mingw-w64)
 elseif (MAKE_CONFIG STREQUAL "Clang")
     # [...]
@@ -69,13 +71,8 @@ link_directories(
 )
 
 # GLEW
-if(MAKE_CONFIG STREQUAL "MSVC")
-    set(GLEW_LIB glew32s)
-elseif (MAKE_CONFIG STREQUAL "MINGW")
-    set(GLEW_LIB glew64)
-elseif (MAKE_CONFIG STREQUAL "Clang")
-    # [...]
-endif()
+set(GLEW_LIB glew)
+#set(GLEW_LIB glew32s)
 
 # default libraries
 if(MAKE_CONFIG STREQUAL "MSVC")

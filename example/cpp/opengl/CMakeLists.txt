@@ -1,8 +1,9 @@
-set(GLUT_LINK_LIBRARIES ${DEFAULT_LIB} ${GLEW_LIB} ${GLUT_LIB} ${FREETYPE_LIB})
-set(GLFW_LINK_LIBRARIES ${DEFAULT_LIB} ${GLEW_LIB} ${GLFW_LIB} ${FREETYPE_LIB})
+# for mingw, the order of the libraries seems to matter: glew before opengl32
+set(GLUT_LINK_LIBRARIES ${GLEW_LIB} ${DEFAULT_LIB} ${GLUT_LIB} ${FREETYPE_LIB})
+set(GLFW_LINK_LIBRARIES ${GLEW_LIB} ${DEFAULT_LIB} ${GLFW_LIB} ${FREETYPE_LIB})
 
 if (MAKE_CONFIG STREQUAL "MSVC" OR MAKE_CONFIG STREQUAL "MINGW")
-	add_definitions(-DWIN32 -DGLEW_STATIC)
+	add_definitions(-DWIN32 -DGLEW_STATIC -D_WIN32)
 	# set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:\"LIBCMT.LIB\"")
 	file(COPY ../${GLUT_PATH}/bin/x64/freeglut.dll DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 	file(COPY ../${GLFW_LIBRARY_PATH}/glfw3.dll DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -10,7 +11,6 @@ endif()
 
 function(glut_exe target_name)
     add_executable(${target_name} ${ARGN})
-	#target_compile_definitions(${target_name} PUBLIC -DGLEW_STATIC)
 	target_link_libraries(${target_name} ${GLUT_LINK_LIBRARIES})
 	#target_link_options(${target_name} PUBLIC "LINKER:--subsystem,windows")
 endfunction()
@@ -20,16 +20,19 @@ function(glfw_exe target_name)
 	target_link_libraries(${target_name} ${GLFW_LINK_LIBRARIES})
 endfunction()
 
-if(MAKE_CONFIG STREQUAL "MSVC")
+
 # GLUT
 glut_exe(example_freeglut_1 example_freeglut_1.cpp)
+if(MAKE_CONFIG STREQUAL "MSVC")
 glut_exe(example_freeglut_text_freetype example_freeglut_text_freetype.cpp)
+endif()
 glut_exe(example_concave_polygon_stencil example_concave_polygon_stencil.cpp)
 glut_exe(example_fistperson_1 example_fistperson_1.cpp)
 glut_exe(example_framebuffer_1 example_framebuffer_1.cpp)
 glut_exe(example_map_buffer_1 example_map_buffer_1.cpp)
 glut_exe(example_texture_1_stb_freeglut example_texture_1_stb_freeglut.cpp)
 
+if(MAKE_CONFIG STREQUAL "MSVC")
 # GLFW
 glfw_exe(example_glfw_1 example_glfw_1.cpp)
 glfw_exe(example_glfw_text_freetype example_glfw_text_freetype.cpp)
@@ -62,7 +65,6 @@ glfw_exe(example_texture_5_test_texsubiamge example_texture_5_test_texsubiamge.c
 glfw_exe(example_thread_1 example_thread_1.cpp)
 glfw_exe(example_thread_2_shared_context example_thread_2_shared_context.cpp)
 elseif (MAKE_CONFIG STREQUAL "MINGW")
-glut_exe(example_freeglut_1 example_freeglut_1.cpp)
 #glfw_exe(example_glfw_1 example_glfw_1.cpp)
 endif()
 
