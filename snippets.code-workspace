@@ -79,7 +79,13 @@
 			"locale": "cpp",
 			"optional": "cpp",
 			"xlocbuf": "cpp",
-			"xlocmes": "cpp"
+			"xlocmes": "cpp",
+			"condition_variable": "cpp",
+			"cstdarg": "cpp",
+			"future": "cpp",
+			"mutex": "cpp",
+			"random": "cpp",
+			"shared_mutex": "cpp"
 		}
 	}
 }

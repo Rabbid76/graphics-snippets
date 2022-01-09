@@ -1,34 +1,64 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
+#include <vector>
+#include <numeric>
 #include <string>
 #include <iostream>
+#include <cmath>
 
-int length_of_filename(std::string filename)
+#ifndef M_PI
+#define M_PI 3.1415926535f
+#endif
+
+void generate_spiral_mesh(
+    float rounds, float height, float thickness, float radius,
+    int slices, int step,
+    std::vector<float> &vertices, std::vector<unsigned int> &indices)
 {
-    int length = static_cast<int>(filename.size());
-    return length;
+    for (int i = -slices; i <= rounds * 360 + step; i += step)
+    {
+        for (int j = 0; j < slices; j++)
+        {
+            float t = (float)i / 360 + (float)j / slices * step / 360;
+            t = std::max(0.0f, std::min(rounds, t));
+            float a1 = t * (float)M_PI * 2.0f;
+            float a2 = (float)j / slices * (float)M_PI * 2.0f;
+            float d = radius + thickness * cos(a2);
+            vertices.push_back(d * std::cos(a1));
+            vertices.push_back(d * std::sin(a1));
+            vertices.push_back(thickness * sin(a2) + height * t / rounds - height / 2);
+        }
+    }
+    for (unsigned int i = 0; i < (unsigned int)vertices.size() / 3 - slices; ++i)
+    {
+        indices.push_back(i);
+        indices.push_back(i + slices);
+    }
 }
 
 extern "C"
 {
-    static PyObject * mesh_generator_read(PyObject *self, PyObject *args)
+    static PyObject * mesh_generate_spiral_mesh(PyObject *self, PyObject *args)
     {
-        int verbose;
-        const char *filename;
-        if (!PyArg_ParseTuple(args, "is", &verbose, &filename))
-            return NULL;
+        float rounds, height, thickness, radius;
+        int slices, step;
+        if (!PyArg_ParseTuple(args, "ffffii", &rounds, &height, &thickness, &radius, &slices, &step))
+            return nullptr;
 
-        int length = length_of_filename(filename);
-        if (verbose)
-            std::cout << "length(\"" << filename << "\"): " << length << std::endl;
-        //return PyLong_FromLong(length);
-        return Py_BuildValue("i", length);
+        std::vector<float> vertices;
+        std::vector<unsigned int> indices;
+        generate_spiral_mesh(rounds, height, thickness, radius, slices, step, vertices, indices);
+
+        return Py_BuildValue(
+            "iy#iy#", 
+            vertices.size(), vertices.data(), vertices.size() * sizeof(*vertices.data()),
+            indices.size(), indices.data(), indices.size() * sizeof(*indices.data()));
     }
 
     static PyMethodDef mesh_generator_methods[] = {
         
-        {"read",  (PyCFunction)mesh_generator_read, METH_VARARGS, "Execute read."},
+        {"generate_spiral",  (PyCFunction)mesh_generate_spiral_mesh, METH_VARARGS, "generate spiral"},
         {NULL, NULL, 0, NULL} // Sentinel
     };
 
