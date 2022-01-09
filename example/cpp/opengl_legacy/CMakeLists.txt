@@ -26,7 +26,7 @@ glut_exe(example_beginend_texture_stb_1 example_beginend_texture_stb_1.cpp)
 glut_exe(example_fixedattribute_cube_1 example_fixedattribute_cube_1.cpp)
 glut_exe(example_fixedattribute_texture_stb_1 example_fixedattribute_texture_stb_1.cpp)
 glut_exe(example_glu_sphere_1 example_glu_sphere_1.cpp)
-glut_exe(example_fixedattriubte_spring example_fixedattriubte_spring.cpp)
+glut_exe(example_fixedattriubte_spring example_fixedattribute_spring.cpp)
 
 # GLFW
 glfw_exe(example_beginend_shader_1 example_beginend_shader_1.cpp)

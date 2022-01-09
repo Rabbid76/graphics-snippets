@@ -4,13 +4,14 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${workspaceFolder}/example/cpp/_glew/include/**",
+                "${workspaceFolder}/example/cpp/_libraries/glew_opengl_4_6/include/**",
                 "${workspaceFolder}/example/cpp/_util/include/**",
+                "${workspaceFolder}/example/cpp/_render_util/include/**",
                 "${workspaceFolder}/../_cpp_extern/glm-0.9.9.8/glm/**",
                 "${workspaceFolder}/../_cpp_extern/freeglut/freeglut-3.0.0/include/**",
                 "${workspaceFolder}/../_cpp_extern/glfw-3.3.6.bin.WIN64/include/**",
                 "${workspaceFolder}/../_cpp_extern/stb/**",
-                "${workspaceFolder}/cpp/include/render/**"
+                "C:/Program Files/Python310/include/**"
             ],
             "defines": [
                 "_DEBUG",

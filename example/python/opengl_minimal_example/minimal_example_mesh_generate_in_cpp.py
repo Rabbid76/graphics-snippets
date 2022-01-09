@@ -1,3 +1,8 @@
+import os
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+import setup
+setup.build(['build_ext', '--inplace'])
+
 from OpenGL.GL import *
 from glfw.GLFW import *
 import OpenGL.GL.shaders
@@ -7,6 +12,11 @@ import glm
 import math
 import os
 os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../../resource'))
+
+import mesh_generator
+
+l = mesh_generator.read(True, r'C:\source\graphics-snippets\resource\model\wavefront\bunny.obj')
+print(l)
 
 sh_vert = """
 #version 460 core
