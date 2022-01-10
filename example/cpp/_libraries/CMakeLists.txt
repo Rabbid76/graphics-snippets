@@ -18,3 +18,6 @@ target_compile_definitions(
 	glew PUBLIC
 	-DWIN32 -D_LIB -DWIN32_LEAN_AND_MEAN -DGLEW_STATIC
 )
+
+# freetype
+add_subdirectory(freetype)

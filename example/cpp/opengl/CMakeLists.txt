@@ -23,16 +23,13 @@ endfunction()
 
 # GLUT
 glut_exe(example_freeglut_1 example_freeglut_1.cpp)
-if(MAKE_CONFIG STREQUAL "MSVC")
 glut_exe(example_freeglut_text_freetype example_freeglut_text_freetype.cpp)
-endif()
 glut_exe(example_concave_polygon_stencil example_concave_polygon_stencil.cpp)
 glut_exe(example_fistperson_1 example_fistperson_1.cpp)
 glut_exe(example_framebuffer_1 example_framebuffer_1.cpp)
 glut_exe(example_map_buffer_1 example_map_buffer_1.cpp)
 glut_exe(example_texture_1_stb_freeglut example_texture_1_stb_freeglut.cpp)
 
-if(MAKE_CONFIG STREQUAL "MSVC")
 # GLFW
 glfw_exe(example_glfw_1 example_glfw_1.cpp)
 glfw_exe(example_glfw_text_freetype example_glfw_text_freetype.cpp)
@@ -53,19 +50,31 @@ glfw_exe(example_mesh_7_raytrace example_mesh_7_raytrace.cpp)
 glfw_exe(example_mesh_8_surface_of_revolution example_mesh_8_surface_of_revolution.cpp)
 glfw_exe(example_navigate_1_orbit example_navigate_1_orbit.cpp)
 glfw_exe(example_noise_1 example_noise_1.cpp)
+
+if(MAKE_CONFIG STREQUAL "MSVC")
 glfw_exe(example_primitive_restart_1 example_primitive_restart_1.cpp)
+endif()
+
 glfw_exe(example_shader_geometry_1_line example_shader_geometry_1_line.cpp)
+
+if(MAKE_CONFIG STREQUAL "MSVC")
 glfw_exe(example_shader_integer_attribute_1 example_shader_integer_attribute_1.cpp)
+endif()
+
 glfw_exe(example_shader_tessellation_1 example_shader_tessellation_1.cpp)
 glfw_exe(example_shader_vbo_byte example_shader_vbo_byte.cpp)
 glfw_exe(example_ssbo_1 example_ssbo_1.cpp)
 glfw_exe(example_texture_2_stb_glfw example_texture_2_stb_glfw.cpp)
 glfw_exe(example_texture_3_lookup_table example_texture_3_lookup_table.cpp)
+
+if(MAKE_CONFIG STREQUAL "MSVC")
 glfw_exe(example_texture_5_test_texsubiamge example_texture_5_test_texsubiamge.cpp)
+endif()
+
 glfw_exe(example_thread_1 example_thread_1.cpp)
+
+if(MAKE_CONFIG STREQUAL "MSVC")
 glfw_exe(example_thread_2_shared_context example_thread_2_shared_context.cpp)
-elseif (MAKE_CONFIG STREQUAL "MINGW")
-#glfw_exe(example_glfw_1 example_glfw_1.cpp)
 endif()
 
 # deprecated

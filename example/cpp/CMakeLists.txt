@@ -12,11 +12,12 @@ set(EXTERN_LIBRARY_PATH ../../../_cpp_extern)
 
 set(GLEW_PATH ${REPOSITORY_LIBRARY_PATH}/glew_opengl_4_6)
 #set(GLEW_PATH ${EXTERN_LIBRARY_PATH}/glew-2.1.0)
+set(FREETYPE_PATH ${REPOSITORY_LIBRARY_PATH}/freetype)
+#set(FREETYPE_PATH ${EXTERN_LIBRARY_PATH}/freetype-2.11.1)
 set(STB_PATH ${EXTERN_LIBRARY_PATH}/stb)
 set(GLM_PATH ${EXTERN_LIBRARY_PATH}/glm-0.9.9.8)
 set(GLFW_PATH ${EXTERN_LIBRARY_PATH}/glfw-3.3.6.bin.WIN64)
 set(WXWIDGET_PATH ${EXTERN_LIBRARY_PATH}/wxMSW-3.1.5_vc14x_x64)
-set(FREETYPE_PATH ${EXTERN_LIBRARY_PATH}/freetype-2.11.1)
 
 # compiler options
 if(MAKE_CONFIG STREQUAL "MSVC")
@@ -67,7 +68,6 @@ link_directories(
     ${GLUT_PATH}/lib/x64
     ${GLFW_LIBRARY_PATH}
     ${WXWIDGET_LIBRARY_PATH}
-    ${FREETYPE_PATH}/objs/x64
 )
 
 # GLEW
@@ -93,20 +93,20 @@ set(GLFW_LIB glfw3)
 set(WXWIDGET_LIB wxbase31ud)
 
 # freetype
-set(FREETYPE_LIB freetype_static)
+set(FREETYPE_LIB freetype)
 
 #add_library(glew SHARED STATIC IMPORTED)
 #set_target_properties(glew PROPERTIES IMPORTED_LOCATION ${GLEW_PATH}/lib/Release/x64/glew32s.lib)
 
 # include sub-projects
+add_subdirectory(opengl)
+add_subdirectory(opengl_legacy)
 if(MAKE_CONFIG STREQUAL "MSVC")
-    add_subdirectory(opengl)
-    add_subdirectory(opengl_legacy)
     add_subdirectory(opengl_line_stipple)
     add_subdirectory(opengl_line_thickness)
     add_subdirectory(wx_widget_opengl_meshs)
     add_subdirectory(wx_widget_opengl_platonic_solid)
     add_subdirectory(opengl_render_utility)
 elseif (MAKE_CONFIG STREQUAL "MINGW")
-    add_subdirectory(opengl)
+    
 endif()

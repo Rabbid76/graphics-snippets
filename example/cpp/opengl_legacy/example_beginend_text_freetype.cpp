@@ -111,7 +111,7 @@ int main()
     // Load font as face
     FT_Face face;
     //if (FT_New_Face(ft, "fonts/arial.ttf", 0, &face))
-    if (FT_New_Face(ft, "font/FreeSans.ttf", 0, &face))
+    if (FT_New_Face(ft, fontfilename, 0, &face))
         std::cout << "ERROR::FREETYPE: Failed to load font" << std::endl;
 
     // Set size to load glyphs as
