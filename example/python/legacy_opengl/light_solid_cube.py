@@ -11,7 +11,9 @@ colors = [(1, 0, 0), (0, 1, 0), (0, 0, 1), (1, 1, 0), (1, 0, 1), (0, 1, 1)]
 def display():
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
-    glRotatef(1, 3, 1, 1)
+    glPushMatrix()
+    elapsed_seconds = glutGet(GLUT_ELAPSED_TIME) / 1000
+    glRotatef(elapsed_seconds * 90, 3, 1, 1)
     glBegin(GL_QUADS)
     for i, face in enumerate(faces):
         glColor3fv(colors[i])
@@ -19,6 +21,7 @@ def display():
         for vertex in face:
             glVertex3fv(vertices[vertex])
     glEnd()
+    glPopMatrix()
 
     glutSwapBuffers()
     glutPostRedisplay()
