@@ -9,9 +9,10 @@ set(SUBMODULES_PATH _submodules)
 add_subdirectory(${SUBMODULES_PATH})
 
 set(EXTERN_LIBRARY_PATH ../../../_cpp_extern)
+set(GLM_PATH ${SUBMODULES_PATH}/glm)
+#set(GLM_PATH ${EXTERN_LIBRARY_PATH}/glm-0.9.9.8)
 set(STB_PATH ${SUBMODULES_PATH}/stb)
 #set(STB_PATH ${EXTERN_LIBRARY_PATH}/stb)
-set(GLM_PATH ${EXTERN_LIBRARY_PATH}/glm-0.9.9.8)
 set(GLEW_PATH ${SUBMODULES_PATH}/glew_opengl_4_6)
 #set(GLEW_PATH ${EXTERN_LIBRARY_PATH}/glew-2.1.0)
 set(FREETYPE_PATH ${SUBMODULES_PATH}/freetype)
@@ -42,8 +43,8 @@ endif()
 # include directories
 include_directories(
     ${STB_PATH}
+    ${GLM_PATH}
     ${GLEW_PATH}/include
-    ${GLM_PATH}/glm
     ${GLUT_PATH}/include
     ${GLFW_PATH}/include
     ${WXWIDGET_PATH}/include
