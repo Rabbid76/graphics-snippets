@@ -34,19 +34,19 @@
 #include <atomic>
 
 // [How can I detect g++ and MinGW in C++ preprocessor?](https://stackoverflow.com/questions/17493759/how-can-i-detect-g-and-mingw-in-c-preprocessor)
-#if defined(__GNUC__) && defined(__MINGW32__)
+//#if defined(__GNUC__) && defined(__MINGW32__)
 //[Update WINVER and _WIN32_WINNT](https://docs.microsoft.com/en-us/cpp/porting/modifying-winver-and-win32-winnt?view=vs-2019)
-#define _WIN32_WINNT 0x0A00
+//#define _WIN32_WINNT 0x0A00
 // [std::thread error (thread not member of std)](https://stackoverflow.com/questions/2519607/stdthread-error-thread-not-member-of-std)
 // [meganz/mingw-std-threads](https://github.com/meganz/mingw-std-threads)
-#include<mingw/mingw.thread.h>
-#include<mingw/mingw.mutex.h>
-#include<mingw/mingw.condition_variable.h>
-#else
+//#include<mingw/mingw.thread.h>
+//#include<mingw/mingw.mutex.h>
+//#include<mingw/mingw.condition_variable.h>
+//#else
 #include <thread> 
 #include <mutex>
 #include <condition_variable>
-#endif
+//#endif
 
 #define _USE_MATH_DEFINES
 #include <cmath>

@@ -35,6 +35,8 @@ if(MAKE_CONFIG STREQUAL "MSVC")
 elseif(MAKE_CONFIG STREQUAL "MINGW")
     add_compile_options(
         -Wno-volatile
+        -Wno-narrowing
+        -Wno-return-type
     )
 elseif(MAKE_CONFIG STREQUAL "Clang")
     # [...]

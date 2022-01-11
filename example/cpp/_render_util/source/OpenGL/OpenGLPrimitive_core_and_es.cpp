@@ -302,7 +302,7 @@ void CPrimitiveOpenGL_core_and_es::InitProgram( void ) // shader program
   if ( _mvp_buffer != nullptr )
   {
     GLuint binding_point = (GLuint)_mvp_buffer->BufferBinding();
-    GLuint progrma_obj = _prog->ObjectHandle();
+    GLuint progrma_obj = static_cast<GLuint>(_prog->ObjectHandle());
     glUniformBlockBinding( progrma_obj, _view_data_loc, binding_point );
   }
 }

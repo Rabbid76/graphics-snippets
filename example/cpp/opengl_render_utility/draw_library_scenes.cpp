@@ -1357,7 +1357,7 @@ void CWindow_Glfw::OrthographicVolume(double time_ms)
 
     AxisCrossText(view_axis_len * 0.9f, view_axis_len, view_axis_len * 1.05f, 1, 1, 7, view_axis_text_height, view_axis_text_scale_y);
 
-    _draw->DrawText2DProjected(OpenGL::CBasicDraw::font_sans, "(right, top, far)", 1, view_text_height * 0.8, view_text_scale_y, 0.0f, { right, top, far }, Color_darkgray());
+    _draw->DrawText2DProjected(OpenGL::CBasicDraw::font_sans, "(right, top, far)", 1, view_text_height * 0.8f, view_text_scale_y, 0.0f, { right, top, far }, Color_darkgray());
     _draw->DrawText2DProjected(OpenGL::CBasicDraw::font_sans, "(left, bottom, near)", 9, view_text_height * 0.85f, view_text_scale_y, 0.0f, { left, bottom, near }, Color_darkgray());
 
     const char* view_title_text = "View volume";
