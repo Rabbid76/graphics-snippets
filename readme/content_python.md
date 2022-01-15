@@ -33,12 +33,12 @@ Robert C. Martin, Clean Architecture
 ### Geometry shader
 
 [Geometry](../documentation/geometry.md)  
-[](../example/python/tessellation_shader/tessellation_001/tess.py)  
+[example/python/geometry_shader/geometry_001/geo.py](../example/python/geometry_shader/geometry_001/geo.py)  
 ![Geometry](../documentation/image/geometry_001.gif)
 ### Tessellation shader
 
 [Tessellation](../documentation/tessellation.md)  
-[](../example/python/geometry_shader/geometry_001/geo.py)  
+[example/python/tessellation_shader/tessellation_001/tess.py](../example/python/tessellation_shader/tessellation_001/tess.py)  
 ![Tessellation](../documentation/image/tessellation_001.gif)
 
 ### Model, View and Projection
