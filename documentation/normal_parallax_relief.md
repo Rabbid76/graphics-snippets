@@ -32,10 +32,9 @@
         - [References](#references-6)
     - [Mesostructure](#mesostructure)
         - [References](#references-7)
+    - [Draft - Reliefmepping with geometry shader](#draft---reliefmepping-with-geometry-shader)
     - [Related](#related)
         - [References](#references-8)
-- [TODO](#todo)
-    - [Reliefmepping with geometry shader](#reliefmepping-with-geometry-shader)
 
 <!-- /TOC -->
 
@@ -638,6 +637,20 @@ A hybrid rugosity mesostructure (HRM) for rendering fine haptic detail; Victor T
 
 <br/><hr/>
 
+## Draft - Reliefmepping with geometry shader
+
+[Relief mapping with geometry shader](../example/python/parallax/parallax_009_protruded_displ_mapping_geo_tbn/protruded_displ_mapping_geo_tbn.py)  
+[![Parallax](../screenshot/example/python/parallax/protruded_displ_mapping_geo_tbn.gif)](../example/python/parallax/parallax_009_protruded_displ_mapping_geo_tbn/protruded_displ_mapping_geo_tbn.py)
+
+Relief mapping on a prism defined by the triangle primitive's contour and the minimum and maximum height of the heightmap.
+A ray can be defined from the viewing position to each of the 6 corners of the prism.
+The maximum distance for sampling the ray and searching intersections with the height field, can be limited by 4 planes.
+The first 2 are given by the minimum and maximum height of the height field. If the ray goes out of these bounds, the sampling can be aborted. If no point of intersection with the height field is found, the line of sight hits the prism outside the silhouette of the height field.
+A prism with a triangular base has at most two back surfaces. These 2 surfaces can be identified by the point with the largest distance to the eye position.If the edge through this point is not a silhouette then there are 2 back faces. For each of the 6 prism vertices, the distance to the intersection point with the surfaces along the line of sight can be calculated. These distances can be interpolated for each fragment. The maximum sample distance is given by the closest distance. If the distance is exceeded, then the view ray hits the prism outside of the silhouette of the height field. This also solves the issue of surfaces at the backface of the prism, because the closest distance will be 0, which means that the ray doesn't hit the height field. The only remaining problem is to map the distance from vertex coordinate space to texture coordinate space. This can be solved by transforming the vertices into (co)tangent space and measuring the distance in (co)tangent space.  
+This algorithm should well fit with cone step mapping.
+
+<br/><hr/>
+
 ## Related
 
 ### References
@@ -698,21 +711,6 @@ Survey of Texture Mapping Techniques for Representing and Rendering Volumetric M
 
 View-Dependent Displacement Mapping<br/>
 [https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/vdm.pdf]
-
-<br/><hr/>
-
-# TODO
-
-## Reliefmepping with geometry shader
-
-Reliefmapping on a prism, which is defined by the contur o the triangle primitive  and the minimum and maximum height of the heightmap.
-A ray from the view postion to each of the 6 cormers of the prism can be defined. 
-The maximum distance for sampling the ray and sarching intersections with the height field, can be limited by 4 planes.
-The first 2 lanes ar given by the minimum and maximum haight of the height field. If the ray goes out of this bounds, the sampling can be canceled. No intersection with the height field is found and the view ray hits the prism outside of the silhouette of the height field.
-A prism with a triangular base has at most to backfac body surfaces. This 2 surfaces can be identified by the point with the largest distance to the eye position. If the edge trough this point is no silhouette, then there are 2 backface surfaces. For each of the 6 prism corner points the distance to the intersection point with the surfaces along the view ray can be calcualted. This distances can be interpolated for each fragment. The maximum sample distance is given by the closest distance. If the disatance is exceeded, then the view ray hits the prism outside of the silhouette of the height field. This also solves the issue of surfaces at the backface of the prism, because the closest distance will be 0, which means that the ray doesn't hit the height field. The only issue left is to map the distance from the vertex ccordiante space to the texture coordiante space. This can be solved by transforming the vertex points to the (co-)tangent space and measuring the distance in the (co-)tangent space.
-
-This algorithm should well fit with cone step mapping.
-
 
   [1]: https://rabbid76.github.io/graphics-snippets/html/technique/parallax_001_no_parallax_mapping.html
   [2]: https://rabbid76.github.io/graphics-snippets/html/technique/parallax_002_normal_mapping.html

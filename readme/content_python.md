@@ -30,6 +30,17 @@ Robert C. Martin, Clean Architecture
 
 [Draw elements](../example/python/mesh/glut_opengl_draw_elements.py)
 
+### Geometry shader
+
+[Geometry](../documentation/geometry.md)  
+[](../example/python/tessellation_shader/tessellation_001/tess.py)  
+![Geometry](../documentation/image/geometry_001.gif)
+### Tessellation shader
+
+[Tessellation](../documentation/tessellation.md)  
+[](../example/python/geometry_shader/geometry_001/geo.py)  
+![Tessellation](../documentation/image/tessellation_001.gif)
+
 ### Model, View and Projection
 
 [OpenGL 4.6, Python OpenGL 4.6, GLM navigation](https://github.com/Rabbid76/graphics-snippets/blob/master/example/python/navigation_glm/example_python_navigation_glm.md)  
@@ -53,7 +64,10 @@ Robert C. Martin, Clean Architecture
 ### Parallax
 
 [Parallax](../example/python/parallax/glut_opengl_shader_glm_cube_parallax.py)  
-[![Parallax](../screenshot/example/python/parallax/glut_opengl_shader_glm_cube_parallax.png)](../example/python/parallax/glut_opengl_shader_glm_cube_parallax.py)  
+[![Parallax](../screenshot/example/python/parallax/glut_opengl_shader_glm_cube_parallax.png)](../example/python/parallax/glut_opengl_shader_glm_cube_parallax.py)
+
+[Relief mapping with geometry shader](../example/python/parallax/parallax_009_protruded_displ_mapping_geo_tbn/protruded_displ_mapping_geo_tbn.py)  
+[![Parallax](../screenshot/example/python/parallax/protruded_displ_mapping_geo_tbn.gif)](../example/python/parallax/parallax_009_protruded_displ_mapping_geo_tbn/protruded_displ_mapping_geo_tbn.py)
 
 ### SSAO
 
