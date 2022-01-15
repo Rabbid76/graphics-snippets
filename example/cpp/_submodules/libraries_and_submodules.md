@@ -27,3 +27,14 @@
 
 [FreeType](https://freetype.org/)  
 Submodule [freetype/freetype](https://github.com/freetype/freetype)
+
+## FreeGLUT
+
+[FreeGLUT](http://freeglut.sourceforge.net/)  
+[FreeGLUT - svn repository](https://sourceforge.net/p/freeglut/code/HEAD/tree/)  
+[FreeGLUT - git clone GitHub](https://github.com/dcnieho/FreeGLUT)  
+
+## GLFW
+
+[GLFW](https://www.glfw.org/)
+[GLFW - GitHub](https://github.com/glfw/glfw)

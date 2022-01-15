@@ -21,3 +21,9 @@ target_compile_definitions(
 
 # freetype
 add_subdirectory(freetype)
+
+# freeglut
+#add_subdirectory(freeglut/freeglut/freeglut)
+
+# glfw
+add_subdirectory(glfw)

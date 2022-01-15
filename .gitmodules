@@ -7,3 +7,9 @@
 [submodule "example/cpp/_submodules/glm"]
 	path = example/cpp/_submodules/glm
 	url = https://github.com/g-truc/glm
+[submodule "example/cpp/_submodules/freeglut"]
+	path = example/cpp/_submodules/freeglut
+	url = https://github.com/dcnieho/FreeGLUT
+[submodule "example/cpp/_submodules/glfw"]
+	path = example/cpp/_submodules/glfw
+	url = https://github.com/glfw/glfw

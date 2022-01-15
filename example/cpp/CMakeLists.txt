@@ -17,17 +17,11 @@ set(GLEW_PATH ${SUBMODULES_PATH}/glew_opengl_4_6)
 #set(GLEW_PATH ${EXTERN_LIBRARY_PATH}/glew-2.1.0)
 set(FREETYPE_PATH ${SUBMODULES_PATH}/freetype)
 #set(FREETYPE_PATH ${EXTERN_LIBRARY_PATH}/freetype-2.11.1)
+#set(GLUT_PATH ${SUBMODULES_PATH}/freeglut/freeglut/freeglut)
+set(GLUT_PATH ${EXTERN_LIBRARY_PATH}/freeglut/freeglut-3.0.0)
+#set(GLFW_PATH ${SUBMODULES_PATH}/glfw)
 set(GLFW_PATH ${EXTERN_LIBRARY_PATH}/glfw-3.3.6.bin.WIN64)
 set(WXWIDGET_PATH ${EXTERN_LIBRARY_PATH}/wxMSW-3.1.5_vc14x_x64)
-
-# compiler options
-if(MAKE_CONFIG STREQUAL "MSVC")
-    set(GLUT_PATH ${EXTERN_LIBRARY_PATH}/freeglut/freeglut-3.0.0)
-elseif (MAKE_CONFIG STREQUAL "MINGW")
-    set(GLUT_PATH ${EXTERN_LIBRARY_PATH}/freeglut/freeglut-MinGW-3.0.0-1.mp/freeglut)
-elseif (MAKE_CONFIG STREQUAL "Clang")
-    # [...]
-endif()
 
 # compiler options
 if(MAKE_CONFIG STREQUAL "MSVC")
