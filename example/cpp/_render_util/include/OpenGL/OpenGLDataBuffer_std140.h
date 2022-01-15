@@ -93,4 +93,4 @@ private:
 } // OpenGL
 
 
-#endif OpenGLDataBuffer_std140_h_INCLUDED
+#endif // OpenGLDataBuffer_std140_h_INCLUDED

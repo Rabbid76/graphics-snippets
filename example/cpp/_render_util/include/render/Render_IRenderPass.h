@@ -276,6 +276,14 @@ struct TPass
   //!< target buffer:
   struct TTarget
   {
+    enum TargetBuffers : size_t
+    {
+        no = (size_t)-1,
+        depth = (size_t)-1,
+        stencil = (size_t)-2,
+        depth_stencil = (size_t)-3
+    };
+
     TTarget( size_t bufferID, size_t attachment )
       : _bufferID( bufferID )
       , _attachment( attachment )
@@ -301,12 +309,6 @@ struct TPass
     TTarget( void ) : TTarget( 0, 0 ) {}
     TTarget( const TTarget & ) = default;
     TTarget & operator =( const TTarget & ) = default;
-
-    static const size_t no = (size_t)-1;
-    
-    static const size_t depth         = (size_t)-1;
-    static const size_t stencil       = (size_t)-2;
-    static const size_t depth_stencil = (size_t)-3;
 
     bool ClearTarget( void ) const { return _prop.test(TTargetProperty::e_clear); }
 

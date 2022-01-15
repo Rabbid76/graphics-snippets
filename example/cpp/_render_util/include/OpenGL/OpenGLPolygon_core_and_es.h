@@ -165,4 +165,4 @@ using CPolygonOpenGL_ES_3 = CPolygon_base_OpenGL4_OpenGLES3;
 
 } // OpenGL
 
-#endif OpenGLPolygon_4_h_INCLUDED
+#endif

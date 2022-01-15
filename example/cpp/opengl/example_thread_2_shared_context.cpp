@@ -17,7 +17,7 @@
 #include <GLFW/glfw3.h>
 
 // freeglut
-#include <GL/freeglut.h>
+//#include <GL/freeglut.h>
 
 // stb 
 #define STB_IMAGE_IMPLEMENTATION

@@ -1,11 +1,10 @@
-set(GLFW_LINK_LIBRARIES ${DEFAULT_LIB} ${GLEW_LIB} ${GLFW_LIB})
+# for mingw, the order of the libraries seems to matter: glew before opengl32
+set(GLFW_LINK_LIBRARIES ${GLEW_LIB} ${DEFAULT_LIB} ${GLFW_LIB} ${FREETYPE_LIB})
 
 if (MAKE_CONFIG STREQUAL "MSVC" OR MAKE_CONFIG STREQUAL "MINGW")
 	add_definitions(-DWIN32 -DGLEW_STATIC)
-	# set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:\"LIBCMT.LIB\"")
 	file(COPY ../${GLFW_LIBRARY_PATH}/glfw3.dll DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 endif()
-
 
 function(glfw_exe target_name)
 	add_executable(${target_name} ${ARGN})

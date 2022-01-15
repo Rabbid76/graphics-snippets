@@ -98,12 +98,12 @@ set(FREETYPE_LIB freetype)
 # include sub-projects
 add_subdirectory(opengl)
 add_subdirectory(opengl_legacy)
-if(MAKE_CONFIG STREQUAL "MSVC")
-    add_subdirectory(opengl_line_stipple)
-    add_subdirectory(opengl_line_thickness)
+add_subdirectory(opengl_line_stipple)
+add_subdirectory(opengl_line_thickness)
+add_subdirectory(opengl_render_utility)
+if(MAKE_CONFIG STREQUAL "MSVC")     
     add_subdirectory(wx_widget_opengl_meshs)
     add_subdirectory(wx_widget_opengl_platonic_solid)
-    add_subdirectory(opengl_render_utility)
 elseif (MAKE_CONFIG STREQUAL "MINGW")
-    
+    # [...]
 endif()

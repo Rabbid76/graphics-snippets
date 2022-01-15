@@ -1,9 +1,9 @@
-set(GLUT_LINK_LIBRARIES ${DEFAULT_LIB} ${GLEW_LIB} ${GLUT_LIB} ${FREETYPE_LIB})
-set(GLFW_LINK_LIBRARIES ${DEFAULT_LIB} ${GLEW_LIB} ${GLFW_LIB} ${FREETYPE_LIB})
+# for mingw, the order of the libraries seems to matter: glew before opengl32
+set(GLUT_LINK_LIBRARIES ${GLEW_LIB} ${DEFAULT_LIB} ${GLUT_LIB})
+set(GLFW_LINK_LIBRARIES ${GLEW_LIB} ${DEFAULT_LIB} ${GLFW_LIB} ${FREETYPE_LIB})
 
 if (MAKE_CONFIG STREQUAL "MSVC" OR MAKE_CONFIG STREQUAL "MINGW")
 	add_definitions(-DWIN32 -DGLEW_STATIC)
-	# set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:\"LIBCMT.LIB\"")
 	file(COPY ../${GLUT_PATH}/bin/x64/freeglut.dll DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 	file(COPY ../${GLFW_LIBRARY_PATH}/glfw3.dll DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 endif()
@@ -42,16 +42,17 @@ glfw_exe(
 	../_render_util/source/OpenGL/OpenGLProgram.cpp
 )
 
-glfw_exe(
+glut_exe(
 	cone_step_map_generator
 	cone_step_map_generator.cpp
 )
 
-glfw_exe(
+glut_exe(
 	example_map_generator
 	example_map_generator.cpp
 )
 
+if(MAKE_CONFIG STREQUAL "MSVC") 
 glfw_exe(
 	depth_pack_test
 	depth_pack_test.cpp
@@ -59,13 +60,14 @@ glfw_exe(
 	../_render_util/source/OpenGL/OpenGLFramebuffer.cpp
 	../_render_util/source/OpenGL/OpenGLVertexBuffer.cpp
 )
+endif()
 
 glfw_exe(
 	simple_glsl_subroutine
 	simple_glsl_subroutine.cpp
 )
 
-glfw_exe(
+glut_exe(
 	fixed_function_pipeline_matrix_stack
 	fixed_function_pipeline_matrix_stack.cpp
 )
@@ -111,6 +113,7 @@ glfw_exe(
 	../_render_util/source/OpenGL/OpenGLProgram.cpp
 )
 
+if(MAKE_CONFIG STREQUAL "MSVC") 
 glfw_exe(
 	draw_library_scenes
 	draw_library_scenes.cpp
@@ -122,3 +125,4 @@ glfw_exe(
 	../_render_util/source/OpenGL/OpenGLBasicDraw.cpp
 	../_render_util/source/util/RenderUtil_FreetypeFont.cpp
 )
+endif()

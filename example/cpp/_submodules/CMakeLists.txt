@@ -21,9 +21,12 @@ target_compile_definitions(
 
 # freetype
 add_subdirectory(freetype)
+if(MAKE_CONFIG STREQUAL "MSVC") 
+	target_compile_options(freetype PUBLIC /wd4244 /wd4267)
+endif()
 
 # freeglut
 #add_subdirectory(freeglut/freeglut/freeglut)
 
 # glfw
-add_subdirectory(glfw)
+#add_subdirectory(glfw)
