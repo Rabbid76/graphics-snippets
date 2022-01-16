@@ -7,19 +7,19 @@ set(CMAKE_CXX_STANDARD 20)
 
 set(SUBMODULES_PATH _submodules)
 add_subdirectory(${SUBMODULES_PATH})
+set(GLEW_PATH ${SUBMODULES_PATH}/glew_opengl_4_6)
+set(GLM_PATH ${SUBMODULES_PATH}/glm)
+set(STB_PATH ${SUBMODULES_PATH}/stb)
+set(FREETYPE_PATH ${SUBMODULES_PATH}/freetype)
+set(GLUT_PATH ${SUBMODULES_PATH}/freeglut/freeglut/freeglut)
+#set(GLFW_PATH ${SUBMODULES_PATH}/glfw)
 
 set(EXTERN_LIBRARY_PATH ../../../_cpp_extern)
-set(GLM_PATH ${SUBMODULES_PATH}/glm)
 #set(GLM_PATH ${EXTERN_LIBRARY_PATH}/glm-0.9.9.8)
-set(STB_PATH ${SUBMODULES_PATH}/stb)
 #set(STB_PATH ${EXTERN_LIBRARY_PATH}/stb)
-set(GLEW_PATH ${SUBMODULES_PATH}/glew_opengl_4_6)
 #set(GLEW_PATH ${EXTERN_LIBRARY_PATH}/glew-2.1.0)
-set(FREETYPE_PATH ${SUBMODULES_PATH}/freetype)
 #set(FREETYPE_PATH ${EXTERN_LIBRARY_PATH}/freetype-2.11.1)
-#set(GLUT_PATH ${SUBMODULES_PATH}/freeglut/freeglut/freeglut)
-set(GLUT_PATH ${EXTERN_LIBRARY_PATH}/freeglut/freeglut-3.0.0)
-#set(GLFW_PATH ${SUBMODULES_PATH}/glfw)
+#set(GLUT_PATH ${EXTERN_LIBRARY_PATH}/freeglut/freeglut-3.0.0)
 set(GLFW_PATH ${EXTERN_LIBRARY_PATH}/glfw-3.3.6.bin.WIN64)
 set(WXWIDGET_PATH ${EXTERN_LIBRARY_PATH}/wxMSW-3.1.5_vc14x_x64)
 
@@ -50,6 +50,11 @@ include_directories(
     _render_util/include
 )
 
+# global prprocessor defintions
+if (MAKE_CONFIG STREQUAL "MSVC" OR MAKE_CONFIG STREQUAL "MINGW")
+	add_definitions(-DWIN32 -DGLEW_STATIC -DFREEGLUT_STATIC)
+endif()
+
 # link directories
 #set(GLEW_LIBRARY_PATH ${GLEW_PATH}/lib/Release/x64)
 if(MAKE_CONFIG STREQUAL "MSVC")
@@ -61,8 +66,8 @@ elseif (MAKE_CONFIG STREQUAL "Clang")
 endif()
 set(WXWIDGET_LIBRARY_PATH ${WXWIDGET_PATH}/lib/vc_x64_dll)
 link_directories(
-    ${GLEW_LIBRARY_PATH}
-    ${GLUT_PATH}/lib/x64
+    #${GLEW_LIBRARY_PATH}
+    #${GLUT_PATH}/lib/x64
     ${GLFW_LIBRARY_PATH}
     ${WXWIDGET_LIBRARY_PATH}
 )
@@ -81,7 +86,7 @@ elseif (MAKE_CONFIG STREQUAL "Clang")
 endif()
 
 # GLUT
-set(GLUT_LIB freeglut)
+set(GLUT_LIB freeglut_static)
 
 # GLFW
 set(GLFW_LIB glfw3)

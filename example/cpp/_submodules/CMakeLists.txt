@@ -26,7 +26,11 @@ if(MAKE_CONFIG STREQUAL "MSVC")
 endif()
 
 # freeglut
-#add_subdirectory(freeglut/freeglut/freeglut)
+add_subdirectory(freeglut/freeglut/freeglut)
+if(MAKE_CONFIG STREQUAL "MSVC") 
+    target_compile_options(freeglut PUBLIC /wd4312)
+	target_compile_options(freeglut_static PUBLIC /wd4312)
+endif()
 
 # glfw
 #add_subdirectory(glfw)
