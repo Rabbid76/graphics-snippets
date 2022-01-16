@@ -37,6 +37,8 @@ Denis Diderot, Pensées philosophiques
 
 ## OpenGL Resources and References
 
+[Resources](../documentation/resources.md)
+
 [OpenGL resources](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/opengl_resources.md)
 
 [Common texture mistakes and issues](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/issue_texture.md)

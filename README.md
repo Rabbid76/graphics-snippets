@@ -90,5 +90,3 @@ It does not contain an application, just a collection of examples. Initially I j
 [GLSL examples](readme/content_glsl.md)
 
 [Documentation](readme/content_documentation.md)
-
-[Resources](readme/resources.md)
