@@ -12,7 +12,7 @@ set(GLM_PATH ${SUBMODULES_PATH}/glm)
 set(STB_PATH ${SUBMODULES_PATH}/stb)
 set(FREETYPE_PATH ${SUBMODULES_PATH}/freetype)
 set(GLUT_PATH ${SUBMODULES_PATH}/freeglut/freeglut/freeglut)
-#set(GLFW_PATH ${SUBMODULES_PATH}/glfw)
+set(GLFW_PATH ${SUBMODULES_PATH}/glfw)
 
 set(EXTERN_LIBRARY_PATH ../../../_cpp_extern)
 #set(GLM_PATH ${EXTERN_LIBRARY_PATH}/glm-0.9.9.8)
@@ -20,7 +20,7 @@ set(EXTERN_LIBRARY_PATH ../../../_cpp_extern)
 #set(GLEW_PATH ${EXTERN_LIBRARY_PATH}/glew-2.1.0)
 #set(FREETYPE_PATH ${EXTERN_LIBRARY_PATH}/freetype-2.11.1)
 #set(GLUT_PATH ${EXTERN_LIBRARY_PATH}/freeglut/freeglut-3.0.0)
-set(GLFW_PATH ${EXTERN_LIBRARY_PATH}/glfw-3.3.6.bin.WIN64)
+#set(GLFW_PATH ${EXTERN_LIBRARY_PATH}/glfw-3.3.6.bin.WIN64)
 set(WXWIDGET_PATH ${EXTERN_LIBRARY_PATH}/wxMSW-3.1.5_vc14x_x64)
 
 # compiler options
@@ -57,18 +57,19 @@ endif()
 
 # link directories
 #set(GLEW_LIBRARY_PATH ${GLEW_PATH}/lib/Release/x64)
+set(WXWIDGET_LIBRARY_PATH "unknown")
 if(MAKE_CONFIG STREQUAL "MSVC")
-    set(GLFW_LIBRARY_PATH ${GLFW_PATH}/lib-vc2022)
+    #set(GLFW_LIBRARY_PATH ${GLFW_PATH}/lib-vc2022)
+    set(WXWIDGET_LIBRARY_PATH ${WXWIDGET_PATH}/lib/vc_x64_dll)
 elseif (MAKE_CONFIG STREQUAL "MINGW")
-    set(GLFW_LIBRARY_PATH ${GLFW_PATH}/lib-mingw-w64)
+    #set(GLFW_LIBRARY_PATH ${GLFW_PATH}/lib-mingw-w64)
 elseif (MAKE_CONFIG STREQUAL "Clang")
     # [...]
 endif()
-set(WXWIDGET_LIBRARY_PATH ${WXWIDGET_PATH}/lib/vc_x64_dll)
 link_directories(
     #${GLEW_LIBRARY_PATH}
     #${GLUT_PATH}/lib/x64
-    ${GLFW_LIBRARY_PATH}
+    #${GLFW_LIBRARY_PATH}
     ${WXWIDGET_LIBRARY_PATH}
 )
 
@@ -85,17 +86,20 @@ elseif (MAKE_CONFIG STREQUAL "Clang")
     # [...]
 endif()
 
+# freetype
+set(FREETYPE_LIB freetype)
+
 # GLUT
 set(GLUT_LIB freeglut_static)
 
 # GLFW
-set(GLFW_LIB glfw3)
+set(GLFW_LIB glfw)
 
 # wxWidget
-set(WXWIDGET_LIB wxbase31ud)
-
-# freetype
-set(FREETYPE_LIB freetype)
+get_filename_component(FULL_WXWIDGET_LIBRARY_PATH "${WXWIDGET_LIBRARY_PATH}" REALPATH)
+if(EXISTS ${FULL_WXWIDGET_LIBRARY_PATH})
+    set(WXWIDGET_LIB wxbase31ud)
+endif()
 
 #add_library(glew SHARED STATIC IMPORTED)
 #set_target_properties(glew PROPERTIES IMPORTED_LOCATION ${GLEW_PATH}/lib/Release/x64/glew32s.lib)
@@ -106,9 +110,9 @@ add_subdirectory(opengl_legacy)
 add_subdirectory(opengl_line_stipple)
 add_subdirectory(opengl_line_thickness)
 add_subdirectory(opengl_render_utility)
-if(MAKE_CONFIG STREQUAL "MSVC")     
+
+
+if(EXISTS ${FULL_WXWIDGET_LIBRARY_PATH})
     add_subdirectory(wx_widget_opengl_meshs)
     add_subdirectory(wx_widget_opengl_platonic_solid)
-elseif (MAKE_CONFIG STREQUAL "MINGW")
-    # [...]
 endif()

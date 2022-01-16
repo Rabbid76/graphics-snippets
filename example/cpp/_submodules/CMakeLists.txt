@@ -33,4 +33,4 @@ if(MAKE_CONFIG STREQUAL "MSVC")
 endif()
 
 # glfw
-#add_subdirectory(glfw)
+add_subdirectory(glfw)
