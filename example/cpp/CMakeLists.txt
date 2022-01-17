@@ -111,8 +111,11 @@ add_subdirectory(opengl_line_stipple)
 add_subdirectory(opengl_line_thickness)
 add_subdirectory(opengl_render_utility)
 
-
 if(EXISTS ${FULL_WXWIDGET_LIBRARY_PATH})
     add_subdirectory(wx_widget_opengl_meshs)
     add_subdirectory(wx_widget_opengl_platonic_solid)
+endif()
+
+if(MAKE_CONFIG STREQUAL "MSVC" OR MAKE_CONFIG STREQUAL "MINGW")
+    add_subdirectory(windows_opengl)
 endif()
