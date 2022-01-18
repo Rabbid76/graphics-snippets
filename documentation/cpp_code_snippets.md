@@ -4,15 +4,293 @@
 
 # C++ code snippets
 
+## OpenGL Window
+
+
+### GLUT
+
+[GLUT](https://www.opengl.org/resources/libraries/glut/)  
+[freeglut - The Open-Source OpenGL Utility Toolkit](http://freeglut.sourceforge.net/docs/api.php)
+
+Set up [*GLUT*](https://www.opengl.org/resources/libraries/glut/) by [`glutInit`](https://www.opengl.org/resources/libraries/glut/spec3/node10.html)
+
+```cpp
+glutInit(&argc, argv);
+glutCreateWindow("OGL window");
+```
+
+GLUT uses Legacy Profile as default for all created OpenGL contexts.
+
+[freeglut](http://freeglut.sourceforge.net/docs/api.php) extends glut by `glutLeaveMainLoop` and `glutMainLoopEvent`.
+
+e.g.:
+
+```cpp
+bool condtion = true;
+while (condtion)
+{
+    glutMainLoopEvent(); // handle the main loop once
+    glutPostRedisplay(); // cause `display` to be called in `glutMainLoopEvent`
+
+    condtion = ...;
+}
+```
+
+**[Render a frame on demand](https://stackoverflow.com/questions/52960066/render-a-frame-on-demand/52976088#52976088)**:  
+
+```c++
+void display( void )
+{
+    glClearColor(0.0f, 0.5f, 0.5f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+    // [...]
+    glFlush();
+}
+
+int main()
+{
+    // [...]
+    glutDisplayFunc(display);  
+    // [...]
+
+    for(;;)
+    {
+        glutMainLoopEvent(); // handle the main loop once
+        glutPostRedisplay(); // cause `display` to be called in `glutMainLoopEvent`
+    }
+
+    // [...]
+}
+```
+
+It is even possible to set a dummy display function, which does nothing, and do the drawing in the loop:
+
+e.g.
+
+```c++
+void dummyDisplay( void )
+{
+    // does nothing
+}
+
+int main()
+{
+    // [...]
+    glutDisplayFunc(dummyDisplay);  
+    // [...]
+
+    for(;;)
+    {
+        glClearColor(0.0f, 0.5f, 0.5f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+        // Whatever I might have to do goes somewhere in here
+        glFlush();
+
+        glutMainLoopEvent(); // does the event handling once
+    }
+
+    // [...]
+}
+```
+
+### GLFW
+
+[GLFW](https://www.glfw.org/)  
+[glfw - pip](https://pypi.org/project/glfw/)  
+
+[`glfwInit`](http://www.glfw.org/docs/latest/group__init.html#ga317aac130a235ab08c6db0834907d85e) returns `GLFW_TRUE` if succeded:
+
+```c++
+if ( glfwInit() != GLFW_TRUE )
+    return;
+
+GLFWwindow *wnd = glfwCreateWindow( width, height, "OGL window", nullptr, nullptr );
+if ( wnd == nullptr )
+{
+    glfwTerminate();
+    return;
+}
+
+glfwMakeContextCurrent( wnd );
+```
+
+[Is there a way to remove 60 fps cap in GLFW?](https://stackoverflow.com/questions/50412575/is-there-a-way-to-remove-60-fps-cap-in-glfw/50427847#50427847):  
+
+The easiest way is to use single buffering instead of double buffering. Since at single buffering is always use the same buffer there is no buffer swap and no "vsync".
+
+Use the [`glfwWindowHint`](http://www.glfw.org/docs/latest/group__window.html#ga7d9c8c62384b1e2821c4dc48952d2033) to disable double buffering:
+
+```++
+glfwWindowHint(GLFW_DOUBLEBUFFER, GL_FALSE);
+GLFWwindow *wnd = glfwCreateWindow(w, h, "OGL window", nullptr, nullptr);
+```
+
+Note, when you use singel buffering, then you have to explicite force execution of the GL commands by ([`glFlush`](https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glFlush.xml)), instead of the buffer swap ([`glfwSwapBuffers`](http://www.glfw.org/docs/3.0/group__context.html#ga15a5a1ee5b3c2ca6b15ca209a12efd14)).
+
+Another possibility is to set the number of screen updates to wait from the time [`glfwSwapBuffers`](http://www.glfw.org/docs/3.0/group__context.html#ga15a5a1ee5b3c2ca6b15ca209a12efd14) was called before swapping the buffers to 0. This can be done by [`glfwSwapInterval`](http://www.glfw.org/docs/latest/group__context.html#ga6d4e0cdf151b5e579bd67f13202994ed), after making the OpenGL context current ([`glfwMakeContextCurrent`](http://www.glfw.org/docs/3.0/group__context.html#ga1c04dc242268f827290fe40aa1c91157)):
+
+```cpp
+glfwMakeContextCurrent(wnd);
+glfwSwapInterval(0);
+```
+
+But note, whether this solution works or not, may depend on the hardware and the driver.
+
+[glfwSetCursorPosCallback to function in another class](https://stackoverflow.com/questions/29356783/glfwsetcursorposcallback-to-function-in-another-class/59633789#59633789):  
+
+An alternative solution would be to associate a pointer to `controls` to the `GLFWindow`. See [`glfwSetWindowUserPointer`](http://www.glfw.org/docs/latest/group__window.html#ga3d2fc6026e690ab31a13f78bc9fd3651).
+
+The pointer can be retrieved at an time form the `GLFWWindow` object by [`glfwGetWindowUserPointer`](http://www.glfw.org/docs/latest/group__window.html#ga17807ce0f45ac3f8bb50d6dcc59a4e06). Of course the return type is `void*` and has to be casted to `Controls*`.  
+
+Instead of the global function or static method a [Lambda expressions](https://en.cppreference.com/w/cpp/language/lambda) can be used. e.g:
+
+```cpp
+glfwSetWindowUserPointer(window, this->controls);
+
+glfwSetCursorPosCallback( window, [](GLFWwindow *window, double x, double y)
+{
+    if (Controls *controls = static_cast<Controls*>(glfwGetWindowUserPointer(window)))
+        controls->handleMouse(window, x, y);
+} );
+```
+
+**[Switching Between windowed and full screen in OpenGL/GLFW 3.2](https://stackoverflow.com/questions/47402766/switching-between-windowed-and-full-screen-in-opengl-glfw-3-2/47462358#47462358)**  
+**[Is there a way to remove 60 fps cap in GLFW?](https://stackoverflow.com/questions/50412575/is-there-a-way-to-remove-60-fps-cap-in-glfw/50427847#50427847)**  
+[How to prevent GLFW window from showing up right in creating?](https://stackoverflow.com/questions/66299684/how-to-prevent-glfw-window-from-showing-up-right-in-creating/66300310#66300310)  
+[Retrieving data from callback function](https://stackoverflow.com/questions/34316362/retrieving-data-from-callback-function/34316692#343166920)  
+[How can i know which opengl version is supported by my system](https://stackoverflow.com/questions/46510889/how-can-i-know-which-opengl-version-is-supported-by-my-system/46511139#46511139)  
+[PyOpenGL OpenGL Version on MacOs](https://stackoverflow.com/questions/52915196/pyopengl-opengl-version-on-macos/52915323#52915323)  
+
+### SDL
+
+Init [*SDL*](https://wiki.libsdl.org/).
+
+```c++
+SDL_Window *window = SDL_CreateWindow(""OGL window", SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_OPENGL );
+SDL_GLContext glContext = SDL_GL_CreateContext( window );
+```
+
+Check for errors by [`SDL_GetError`](https://wiki.libsdl.org/SDL_GetError).
+
+Make context current by [`SDL_GL_MakeCurrent`](https://wiki.libsdl.org/SDL_GL_MakeCurrent):
+
+```c++
+SDL_GL_MakeCurrent( window, glContext );
+```
+
+[screen resolution in c++](https://stackoverflow.com/questions/35733165/screen-resolution-in-c/35733427#35733427)  
+
+```c++
+SDL_Init(SDL_INIT_VIDEO);
+const SDL_VideoInfo* videoInfo = SDL_GetVideoInfo(); 
+width = videoInfo->current_w;
+height = videoInfo->current_h;
+```
+
+[Using SDL2 and OpenGL to rotate camera and a triangle draw wont display anything?](https://stackoverflow.com/questions/53695394/using-sdl2-and-opengl-to-rotate-camera-and-a-triangle-draw-wont-display-anything/53695582#53695582)  
+
+If you want to use the deprecated way of drawing, then you have to use a compatibility profile context instead of a core profile context (see [OpenGL Context](https://www.khronos.org/opengl/wiki/OpenGL_Context)):
+
+```cpp
+SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
+```
+
+### Windows, wgl, win32
+
+[Render image using OpenGL in win32 window](https://stackoverflow.com/questions/47809267/render-image-using-opengl-in-win32-window/47821419#47821419)  
+
+> TOOD
+
+[Child window with OpenGL not responding to gluOrtho2D()](https://stackoverflow.com/questions/57056104/child-window-with-opengl-not-responding-to-gluortho2d/57056579#57056579)  
+
+> TODO
+
+### SFML
+
+Your window (default framebuffer) doesn't have a stencil buffer at all. You have to setup a OpenGL window with a stencil buffer by using the [`sf::ContextSettings`](https://www.sfml-dev.org/documentation/2.5.1/structsf_1_1ContextSettings.php) class.
+
+See [Using OpenGL in a SFML window](https://www.sfml-dev.org/tutorials/2.5/window-opengl.php):
+
+```c++
+sf::ContextSettings settings;
+settings.depthBits = 24;
+settings.stencilBits = 8;
+settings.antialiasingLevel = 4;
+settings.majorVersion = 4;
+settings.minorVersion = 6;
+
+sf::Window window(sf::VideoMode(1200, 720), "My window", sf::Style::Default, settings);
+```
+
+## Loader
+
+### GLEW
+
+[GLEW](http://glew.sourceforge.net/) is the OpenGL Extension Wrangler Library, it will be necessary if you want to use "modern" OpenGL.
+
+The [GLEW](http://glew.sourceforge.net/) library has to be initialized, by `glewInit`, after the OpenGL context has become current by [`glfwMakeContextCurrent`](https://www.glfw.org/docs/latest/group__context.html#ga1c04dc242268f827290fe40aa1c91157).  
+See [Initializing GLEW](http://glew.sourceforge.net/basic.html).
+
+To link the [GLEW](http://glew.sourceforge.net/) library correctly, proper preprocessor definitions have to be set. See [GLEW - Installation](http://glew.sourceforge.net/install.html):
+
+> [...] On Windows, you also need to define the `GLEW_STATIC` preprocessor token when building a static library or executable, and the `GLEW_BUILD` preprocessor token when building a dll [...]
+
+You have to [Initialize GLEW](http://glew.sourceforge.net/basic.html). Call `glewInit` immediately after creating the OpenGL context:
+
+```cpp
+if ( glewInit() != GLEW_OK )
+    return;
+```
+
+Note, that [`glewInit`](http://glew.sourceforge.net/basic.html) will return `GLEW_OK` f it was successful. [`glewInit`](http://glew.sourceforge.net/basic.html) initializes the function pointers for the OpenGL functions. If you try to call the function through an uninitialized function pointer, a segmentation fault occurs.
+
+[GLEW - why should I define GLEW_STATIC?](https://stackoverflow.com/questions/49741322/glew-why-should-i-define-glew-static/49741747#49741747)  
+
+The signature of a function which is exported by or imported from a static library is marked by the keyword [`extern`](http://en.cppreference.com/w/cpp/keyword/export). A function which is imported from a dynamic library has to be marked by [`extern __declspec(dllimport)`](https://msdn.microsoft.com/en-us/library/3y1sfaz2.aspx). `GLEW_STATIC` is a preprocessor definition which activates the first case.
+
+The relevant code part in the "glew.h" file (verison 2.1.0) is:
+
+```cpp
+/*
+  * GLEW_STATIC is defined for static library.
+  * GLEW_BUILD  is defined for building the DLL library.
+  */
+
+#ifdef GLEW_STATIC
+  define GLEWAPI extern
+#else
+  ifdef GLEW_BUILD
+    define GLEWAPI extern __declspec(dllexport)
+  else
+    define GLEWAPI extern __declspec(dllimport)
+  endif
+#endif
+```
+
+### GLAD
+
+[Glad](https://glad.dav1d.de/) Loader-Generator has to be initialized by either [`gladLoadGL`](https://github.com/Dav1dde/glad/blob/master/README.md) or [`gladLoadGLLoader`](https://github.com/Dav1dde/glad/blob/master/README.md), right after crating and making current the OpenGL context by [`SDL_GL_CreateContext`](https://wiki.libsdl.org/SDL_GL_CreateContext).  
+See also [OpenGL Loading Library - glad](https://www.khronos.org/opengl/wiki/OpenGL_Loading_Library#glad_.28Multi-Language_GL.2FGLES.2FEGL.2FGLX.2FWGL_Loader-Generator.29)
+
+e.g.:
+
+```cpp
+const SDL_GLContext context = SDL_GL_CreateContext(window);
+if (context == nullptr) {
+    std::cout << "SDL could not create context";
+    return 1;
+}
+
+if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+{
+    std::cout << "Failed to initialize OpenGL context" << std::endl;
+    return -1;
+}
+```
+
 ## OpenGL extensions
 
 [OpenGL Extension](https://www.khronos.org/opengl/wiki/OpenGL_Extension)
-
-Related Stack Overflow questions:
-
-- [Is there a way in Opengl es 2.0 fragment shader, to get a previews fragment color](https://stackoverflow.com/questions/65642257/is-there-a-way-in-opengl-es-2-0-fragment-shader-to-get-a-previews-fragment-colo/65642346#65642346)  
-- [How can I simulate “Glow Dodge” blending by using OpenGL Shader?](https://stackoverflow.com/questions/61236450/how-can-i-simulate-glow-dodge-blending-by-using-opengl-shader/61236742#61236742)  
-- [OpenGL handling float color saturation (“color overflow”)?](https://stackoverflow.com/questions/61236450/how-can-i-simulate-glow-dodge-blending-by-using-opengl-shader/61236742#61236742)  
 
 With [`glGetIntegerv(GL_NUM_EXTENSIONS, ...)`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGet.xhtml), the number of extension supported by the GL implementation can be get.  
 With [`glGetStringi(GL_EXTENSIONS, ...)`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGetString.xhtml) the name of an extension can be asked.

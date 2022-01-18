@@ -15,22 +15,25 @@
     - [Off screen](#off-screen)
     - [Context](#context)
         - [Shared context](#shared-context)
+    - [Debug context and Debug output](#debug-context-and-debug-output)
+    - [Direct State Access](#direct-state-access)
+    - [Errors](#errors)
+    - [Execution Model](#execution-model)
+    - [Extensions](#extensions)
+    - [History](#history)
+    - [Light](#light)
     - [Multiple GPUs](#multiple-gpus)
-    - [Windows](#windows)
-    - [iOS](#ios)
     - [Multiple monitors](#multiple-monitors)
+    - [iOS](#ios)
+    - [Performance](#performance)
+    - [Sampling](#sampling)
+- [Shader program](#shader-program)
     - [Transparent window background](#transparent-window-background)
+        - [three.js](#threejs)
+    - [Threading](#threading)
     - [WebGL](#webgl)
         - [WebGL - Geometry shader](#webgl---geometry-shader)
-    - [three.js](#threejs)
-    - [Extensions](#extensions)
-    - [Sampling](#sampling)
-    - [Light](#light)
-    - [History](#history)
-    - [Threading](#threading)
-    - [Performance](#performance)
-    - [Execution Model](#execution-model)
-    - [Extensions](#extensions-1)
+    - [Windows](#windows)
     - [Drawing](#drawing)
         - [Buffer](#buffer)
             - [Depth buffer](#depth-buffer)
@@ -38,6 +41,7 @@
             - [Vertex buffer](#vertex-buffer)
         - [Draw calls](#draw-calls)
         - [Error](#error)
+        - [Fragment shader](#fragment-shader)
         - [Frame Buffer](#frame-buffer)
         - [Geometry shader](#geometry-shader)
         - [Gooey](#gooey)
@@ -119,96 +123,51 @@ Stackoverflow answers
 [Windowless OpenGL](https://stackoverflow.com/questions/2896879/windowless-opengl)  
 [How to render offscreen on OpenGL?](https://stackoverflow.com/questions/12157646/how-to-render-offscreen-on-opengl)  
 [How to use GLUT/OpenGL to render to a file?](https://stackoverflow.com/questions/3191978/how-to-use-glut-opengl-to-render-to-a-file)  
+[PyOpenGL headless rendering](https://stackoverflow.com/questions/54483960/pyopengl-headless-rendering)  
+[OpenGL render view without a visible window in python](https://stackoverflow.com/questions/51627603/opengl-render-view-without-a-visible-window-in-python/51672538#51672538)  
+[Creating OpenGL context without window](https://stackoverflow.com/questions/12482166/creating-opengl-context-without-window)  
+
+It is not possible to create an [OpenGL Context](https://www.khronos.org/opengl/wiki/OpenGL_Context) with an version above 1.0 without any window.
+But it is possible to use a completely hidden window for "offscreen" rendering. 
+It is possible to create a initially hidden window with the [GLFW](http://www.glfw.org/) library by setting the [window hint](http://www.glfw.org/docs/latest/window_guide.html#window_hints) `VISIBLE` to `False`.
+
+Sadly it is not possible to create a initially hidden window with [Pygame](https://www.pygame.org/news).  
+It is only possible to hide a window after it was created by [`pygame.display.iconify()`](https://www.pygame.org/docs/ref/display.html#pygame.display.iconify).
+See also [Hiding pygame display](https://stackoverflow.com/questions/10466590/hiding-pygame-display).
 
 ## Context
+
+[OpenGL Context](https://www.khronos.org/opengl/wiki/OpenGL_Context)  
+[OpenGL and multithreading](https://www.khronos.org/opengl/wiki/OpenGL_and_multithreading)  
+[Legacy OpenGL](https://www.khronos.org/opengl/wiki/Legacy_OpenGL)  
+[Fixed Function Pipeline](https://www.khronos.org/opengl/wiki/Fixed_Function_Pipeline)  
+[Getting Started](https://www.khronos.org/opengl/wiki/Getting_Started)  
+[Creating an OpenGL Context (WGL)](https://www.khronos.org/opengl/wiki/Creating_an_OpenGL_Context_(WGL))  
 
 ### Shared context
 
 [What is shareable between OpenGL contexts and how to enable sharing](https://stackoverflow.com/questions/55885139/what-is-shareable-between-opengl-contexts-and-how-to-enable-sharing)  
 
-## Multiple GPUs
+## Debug context and Debug output
 
-[Can I use different multiGPU in OpenGL?](https://stackoverflow.com/questions/62372029/can-i-use-different-multigpu-in-opengl)  
+[Debug Output](https://www.khronos.org/opengl/wiki/Debug_Output)
 
----
+[GitHub - graphics-snippets - C++ code snippets - Debug context and Debug output](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/cpp_code_snippets.md#debug-context-and-debug-output)
 
-## Windows
+## Direct State Access
 
-[Copying pixel data directly from windows Device Context to an openGL rendering context](https://stackoverflow.com/questions/35004121/copying-pixel-data-directly-from-windows-device-context-to-an-opengl-rendering-c)  
-[Switching from OpenGL to GDI](https://stackoverflow.com/questions/50587293/switching-from-opengl-to-gdi)  
+[Direct State Access](https://www.khronos.org/opengl/wiki/Direct_State_Access)
 
----
+## Errors
 
-## iOS
-
-[OpenGL ES deprecated in iOS 12 and SKShader](https://stackoverflow.com/questions/53828497/opengl-es-deprecated-in-ios-12-and-skshader)  
-
----
-
-## Multiple monitors
-
-[OpenGL Context with Multiple Devices (Monitors)](https://stackoverflow.com/questions/45766394/opengl-context-with-multiple-devices-monitors)  
-[What happens when rendering on monitors connected to different GPUs](https://stackoverflow.com/questions/49381248/what-happens-when-rendering-on-monitors-connected-to-different-gpus)  
-
----
-
-## Transparent window background
-
-[How to make an OpenGL rendering context with transparent background?](https://stackoverflow.com/questions/4052940/how-to-make-an-opengl-rendering-context-with-transparent-background)  
-
----
-
-## WebGL
-
-[WebGL - is there an alternative to embedding shaders in HTML?](https://stackoverflow.com/questions/5878703/webgl-is-there-an-alternative-to-embedding-shaders-in-html)  
-
-### WebGL - Geometry shader
-
-[Geometry shader in web](https://stackoverflow.com/questions/46337470/geometry-shader-in-web)  
-[Does every variable have to be set for every vertex emitted in a geometry shader?](https://stackoverflow.com/questions/54590642/does-every-variable-have-to-be-set-for-every-vertex-emitted-in-a-geometry-shader)  
-
----
-
-## three.js
-
-[How to move shader scripts in external files?](https://stackoverflow.com/questions/45666947/how-to-move-shader-scripts-in-external-files)  
-
----
-
-## Extensions
-
-[OpenGL extension availability on newer contexts](https://stackoverflow.com/questions/50673534/opengl-extension-availability-on-newer-contexts)  
-
----
-
-## Sampling
-
-[Rendering Pipeline — Performance — Scaling with regard to amount of pixels](https://stackoverflow.com/questions/48254865/rendering-pipeline-performance-scaling-with-regard-to-amount-of-pixels)  
-
----
-
-## Light
-
-[Concentration of potentially active microfacets in a Normal Distribution Function](https://stackoverflow.com/questions/59236575/concentration-of-potentially-active-microfacets-in-a-normal-distribution-functio)  
-
----
-
-## History
-
-[Why OpenGL uses column-major matrix order?](https://stackoverflow.com/questions/49232185/why-opengl-uses-column-major-matrix-order)  
-
-## Threading
-
-[Multithreaded Rendering on OpenGL](https://stackoverflow.com/questions/11097170/multithreaded-rendering-on-opengl)  
-[Im trying to use OpenGL with the windows API on different threads](https://stackoverflow.com/questions/59694432/im-trying-to-use-opengl-with-the-windows-api-on-different-threads)  
-
----
-
-## Performance
-
-[Opengl reduce usage of uniforms](https://stackoverflow.com/questions/63645568/opengl-reduce-usage-of-uniforms)  
-
----
+| error                  | hex    | number |
+|------------------------|--------|--------|
+| `GL_INVALID_ENUM`      | 0x0500 | 1280   |
+| `GL_INVALID_VALUE`     | 0x0501 | 1281   |
+| `GL_INVALID_OPERATION` | 0x0502 | 1282   |
+| `GL_STACK_OVERFLOW`    | 0x0503 | 1283   |
+| `GL_STACK_UNDERFLOW`   | 0x0504 | 1284   |
+| `GL_OUT_OF_MEMORY`     | 0x0505 | 1285   |
 
 ## Execution Model
 
@@ -220,7 +179,76 @@ Stackoverflow answers
 [EXT_shader_framebuffer_fetch](https://www.khronos.org/registry/OpenGL/extensions/EXT/EXT_shader_framebuffer_fetch.txt)  
 [KHR_blend_equation_advanced](https://www.khronos.org/registry/OpenGL/extensions/KHR/KHR_blend_equation_advanced.txt)  
 
----
+[OpenGL extension availability on newer contexts](https://stackoverflow.com/questions/50673534/opengl-extension-availability-on-newer-contexts)  
+
+## History
+
+[Why OpenGL uses column-major matrix order?](https://stackoverflow.com/questions/49232185/why-opengl-uses-column-major-matrix-order)  
+
+## Light
+
+[Concentration of potentially active microfacets in a Normal Distribution Function](https://stackoverflow.com/questions/59236575/concentration-of-potentially-active-microfacets-in-a-normal-distribution-functio)  
+
+## Multiple GPUs
+
+[Can I use different multiGPU in OpenGL?](https://stackoverflow.com/questions/62372029/can-i-use-different-multigpu-in-opengl)  
+
+## Multiple monitors
+
+[OpenGL Context with Multiple Devices (Monitors)](https://stackoverflow.com/questions/45766394/opengl-context-with-multiple-devices-monitors)  
+[What happens when rendering on monitors connected to different GPUs](https://stackoverflow.com/questions/49381248/what-happens-when-rendering-on-monitors-connected-to-different-gpus)  
+
+## iOS
+
+[OpenGL ES deprecated in iOS 12 and SKShader](https://stackoverflow.com/questions/53828497/opengl-es-deprecated-in-ios-12-and-skshader)  
+
+## Performance
+
+[Opengl reduce usage of uniforms](https://stackoverflow.com/questions/63645568/opengl-reduce-usage-of-uniforms)  
+
+## Sampling
+
+[Rendering Pipeline — Performance — Scaling with regard to amount of pixels](https://stackoverflow.com/questions/48254865/rendering-pipeline-performance-scaling-with-regard-to-amount-of-pixels)  
+
+# Shader program
+
+[LearnOpenGL.com - Shaders](https://learnopengl.com/#!Getting-started/Shaders)  
+[The Book of Shaders](https://thebookofshaders.com/)
+
+[Khronos wiki, Rendering Pipeline Overview](https://www.khronos.org/opengl/wiki/Rendering_Pipeline_Overview)  
+[Khronos wiki, Shader Compilation](https://www.khronos.org/opengl/wiki/Shader_Compilation)  
+[Khronos wiki, GLSL Object](https://www.khronos.org/opengl/wiki/GLSL_Object#Program_pipeline_objects)  
+[Khronos wiki, Program Introspection](https://www.khronos.org/opengl/wiki/Program_Introspection)  
+[Khronos wiki, Example/GLSL Separate Program Multi Stage](https://www.khronos.org/opengl/wiki/Example/GLSL_Separate_Program_Multi_Stage)  
+[Khronos wiki, Example/GLSL Separate Program Basics](https://www.khronos.org/opengl/wiki/Example/GLSL_Separate_Program_Basics)  
+
+
+## Transparent window background
+
+[How to make an OpenGL rendering context with transparent background?](https://stackoverflow.com/questions/4052940/how-to-make-an-opengl-rendering-context-with-transparent-background)  
+
+### three.js
+
+[How to move shader scripts in external files?](https://stackoverflow.com/questions/45666947/how-to-move-shader-scripts-in-external-files)  
+
+## Threading
+
+[Multithreaded Rendering on OpenGL](https://stackoverflow.com/questions/11097170/multithreaded-rendering-on-opengl)  
+[Im trying to use OpenGL with the windows API on different threads](https://stackoverflow.com/questions/59694432/im-trying-to-use-opengl-with-the-windows-api-on-different-threads)  
+
+## WebGL
+
+[WebGL - is there an alternative to embedding shaders in HTML?](https://stackoverflow.com/questions/5878703/webgl-is-there-an-alternative-to-embedding-shaders-in-html)  
+
+### WebGL - Geometry shader
+
+[Geometry shader in web](https://stackoverflow.com/questions/46337470/geometry-shader-in-web)  
+[Does every variable have to be set for every vertex emitted in a geometry shader?](https://stackoverflow.com/questions/54590642/does-every-variable-have-to-be-set-for-every-vertex-emitted-in-a-geometry-shader)  
+
+## Windows
+
+[Copying pixel data directly from windows Device Context to an openGL rendering context](https://stackoverflow.com/questions/35004121/copying-pixel-data-directly-from-windows-device-context-to-an-opengl-rendering-c)  
+[Switching from OpenGL to GDI](https://stackoverflow.com/questions/50587293/switching-from-opengl-to-gdi)  
 
 ## Drawing
 
@@ -295,6 +323,15 @@ For instance:
 ### Error
 
 [Errors during creation of OpenGL objects](https://stackoverflow.com/questions/58053495/errors-during-creation-of-opengl-objects)  
+
+### Fragment shader
+
+[EXT_shader_framebuffer_fetch](https://www.khronos.org/registry/OpenGL/extensions/EXT/EXT_shader_framebuffer_fetch.txt) - `gl_LastFragData`  
+[Is there a way in Opengl es 2.0 fragment shader, to get a previews fragment color](https://stackoverflow.com/questions/65642257/is-there-a-way-in-opengl-es-2-0-fragment-shader-to-get-a-previews-fragment-colo/65642346#65642346)  
+
+```glsl
+#extension GL_EXT_shader_framebuffer_fetch : require
+```
 
 ### Frame Buffer
 

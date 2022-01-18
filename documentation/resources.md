@@ -83,3 +83,17 @@ OpenGL ES Shading Language
 ## WebGPU
 
 [WebGPU](https://gpuweb.github.io/gpuweb/)
+
+### Hardware
+
+[NVIDIA Optimus](https://docs.nvidia.com/gameworks/content/technologies/desktop/optimus.htm)  
+[AmdPowerXpressRequestHighPerformance  and Selecting the Best Graphics Device to Run a 3D Application](https://community.amd.com/thread/223376)  
+[Selecting the Best Graphics Device to Run a 3D Intensive Application](https://gpuopen.com/amdpowerxpressrequesthighperformance/)  
+
+```cpp
+// Enabling High Performance Graphics Rendering on Optimus Systems (NVIDIA version)
+extern "C" { _declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001; }
+
+// Enabling High Performance Graphics Rendering on Enduro Systems (AMD/ATI version)
+extern "C" { _declspec(dllexport) DWORD AmdPowerXpressRequestHighPerformance = 0x00000001; }
+```
