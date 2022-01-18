@@ -11,8 +11,6 @@
     - [GLUT](#glut)
     - [Assimp](#assimp)
 - [Related and miscellaneous](#related-and-miscellaneous)
-    - [Support](#support)
-    - [Off screen](#off-screen)
     - [Context](#context)
         - [Shared context](#shared-context)
     - [Debug context and Debug output](#debug-context-and-debug-output)
@@ -25,57 +23,59 @@
     - [Multiple GPUs](#multiple-gpus)
     - [Multiple monitors](#multiple-monitors)
     - [iOS](#ios)
+    - [Off screen](#off-screen)
     - [Performance](#performance)
     - [Sampling](#sampling)
-- [Shader program](#shader-program)
+    - [Shader program](#shader-program)
+    - [Support](#support)
     - [Transparent window background](#transparent-window-background)
         - [three.js](#threejs)
     - [Threading](#threading)
     - [WebGL](#webgl)
         - [WebGL - Geometry shader](#webgl---geometry-shader)
     - [Windows](#windows)
-    - [Drawing](#drawing)
-        - [Buffer](#buffer)
-            - [Depth buffer](#depth-buffer)
-            - [Uniform Buffer Object UBO and Shader storage buffer SSBO](#uniform-buffer-object-ubo-and-shader-storage-buffer-ssbo)
-            - [Vertex buffer](#vertex-buffer)
-        - [Draw calls](#draw-calls)
-        - [Error](#error)
-        - [Fragment shader](#fragment-shader)
+- [Drawing](#drawing)
+    - [Buffer](#buffer)
+        - [Depth buffer](#depth-buffer)
         - [Frame Buffer](#frame-buffer)
-        - [Geometry shader](#geometry-shader)
-        - [Gooey](#gooey)
-        - [Glow](#glow)
-        - [GLSL](#glsl)
-        - [Height map and height map normals](#height-map-and-height-map-normals)
-        - [Image format](#image-format)
-        - [Invocations](#invocations)
-        - [Lines](#lines)
-            - [Line stipple](#line-stipple)
-            - [Line thickness](#line-thickness)
-        - [Matrix and matrix transformation](#matrix-and-matrix-transformation)
-        - [Mip mapping](#mip-mapping)
-        - [Multi Sampling](#multi-sampling)
-        - [Morphing](#morphing)
-        - [Multi Indexing](#multi-indexing)
-        - [Noise](#noise)
-        - [Normal matrix - transpose inverse](#normal-matrix---transpose-inverse)
-        - [Outline](#outline)
-        - [Projection](#projection)
-        - [Quaternion](#quaternion)
-        - [Ray tracing](#ray-tracing)
-        - [Screen space ambient occlusion - SSAO](#screen-space-ambient-occlusion---ssao)
-        - [Screen Space Local Reflections SSLR](#screen-space-local-reflections-sslr)
-        - [Shader](#shader)
-        - [Silhouette detection](#silhouette-detection)
-        - [Stencil](#stencil)
-        - [Tangent space](#tangent-space)
-        - [Text rendering](#text-rendering)
-        - [Texture](#texture)
-        - [Transparency](#transparency)
-        - [Triangle strips](#triangle-strips)
-        - [Vertex specification](#vertex-specification)
-        - [Zoom](#zoom)
+        - [Uniform Buffer Object UBO and Shader storage buffer SSBO](#uniform-buffer-object-ubo-and-shader-storage-buffer-ssbo)
+        - [Vertex buffer](#vertex-buffer)
+    - [Draw calls](#draw-calls)
+        - [Error](#error)
+    - [Fragment shader](#fragment-shader)
+    - [Geometry shader](#geometry-shader)
+    - [Gooey](#gooey)
+    - [Glow](#glow)
+    - [GLSL](#glsl)
+    - [Height map and height map normals](#height-map-and-height-map-normals)
+    - [Image format](#image-format)
+    - [Invocations](#invocations)
+    - [Lines](#lines)
+        - [Line stipple](#line-stipple)
+        - [Line thickness](#line-thickness)
+    - [Matrix and matrix transformation](#matrix-and-matrix-transformation)
+    - [Mip mapping](#mip-mapping)
+    - [Multi Sampling](#multi-sampling)
+    - [Morphing](#morphing)
+    - [Multi Indexing](#multi-indexing)
+    - [Noise](#noise)
+    - [Normal matrix - transpose inverse](#normal-matrix---transpose-inverse)
+    - [Outline](#outline)
+    - [Projection](#projection)
+    - [Quaternion](#quaternion)
+    - [Ray tracing](#ray-tracing)
+    - [Screen space ambient occlusion - SSAO](#screen-space-ambient-occlusion---ssao)
+    - [Screen Space Local Reflections SSLR](#screen-space-local-reflections-sslr)
+    - [Shader](#shader)
+    - [Silhouette detection](#silhouette-detection)
+    - [Stencil](#stencil)
+    - [Tangent space](#tangent-space)
+    - [Text rendering](#text-rendering)
+    - [Texture](#texture)
+    - [Transparency](#transparency)
+    - [Triangle strips](#triangle-strips)
+    - [Vertex specification](#vertex-specification)
+    - [Zoom](#zoom)
 
 <!-- /TOC -->
 
@@ -110,30 +110,6 @@ Stackoverflow answers
 ---
 
 # Related and miscellaneous
-
-## Support
-
-[Can the OpenGL 'deprecated' functions possibly be unsupported?](https://stackoverflow.com/questions/30962359/can-the-opengl-deprecated-functions-possibly-be-unsupported)  
-[Will Vulkan effectively “replace” OpenGL or not?](https://community.khronos.org/t/will-vulkan-effectively-replace-opengl-or-not/4970)  
-[Introducing Zink, an OpenGL implementation on top of Vulkan](https://www.khronos.org/news/permalink/introducing-zink-an-opengl-implementation-on-top-of-vulkan)  
-
-## Off screen
-
-[Minimal Windowless OpenGL Context Initialization](https://stackoverflow.com/questions/7062804/minimal-windowless-opengl-context-initialization)  
-[Windowless OpenGL](https://stackoverflow.com/questions/2896879/windowless-opengl)  
-[How to render offscreen on OpenGL?](https://stackoverflow.com/questions/12157646/how-to-render-offscreen-on-opengl)  
-[How to use GLUT/OpenGL to render to a file?](https://stackoverflow.com/questions/3191978/how-to-use-glut-opengl-to-render-to-a-file)  
-[PyOpenGL headless rendering](https://stackoverflow.com/questions/54483960/pyopengl-headless-rendering)  
-[OpenGL render view without a visible window in python](https://stackoverflow.com/questions/51627603/opengl-render-view-without-a-visible-window-in-python/51672538#51672538)  
-[Creating OpenGL context without window](https://stackoverflow.com/questions/12482166/creating-opengl-context-without-window)  
-
-It is not possible to create an [OpenGL Context](https://www.khronos.org/opengl/wiki/OpenGL_Context) with an version above 1.0 without any window.
-But it is possible to use a completely hidden window for "offscreen" rendering. 
-It is possible to create a initially hidden window with the [GLFW](http://www.glfw.org/) library by setting the [window hint](http://www.glfw.org/docs/latest/window_guide.html#window_hints) `VISIBLE` to `False`.
-
-Sadly it is not possible to create a initially hidden window with [Pygame](https://www.pygame.org/news).  
-It is only possible to hide a window after it was created by [`pygame.display.iconify()`](https://www.pygame.org/docs/ref/display.html#pygame.display.iconify).
-See also [Hiding pygame display](https://stackoverflow.com/questions/10466590/hiding-pygame-display).
 
 ## Context
 
@@ -202,6 +178,24 @@ See also [Hiding pygame display](https://stackoverflow.com/questions/10466590/hi
 
 [OpenGL ES deprecated in iOS 12 and SKShader](https://stackoverflow.com/questions/53828497/opengl-es-deprecated-in-ios-12-and-skshader)  
 
+## Off screen
+
+[Minimal Windowless OpenGL Context Initialization](https://stackoverflow.com/questions/7062804/minimal-windowless-opengl-context-initialization)  
+[Windowless OpenGL](https://stackoverflow.com/questions/2896879/windowless-opengl)  
+[How to render offscreen on OpenGL?](https://stackoverflow.com/questions/12157646/how-to-render-offscreen-on-opengl)  
+[How to use GLUT/OpenGL to render to a file?](https://stackoverflow.com/questions/3191978/how-to-use-glut-opengl-to-render-to-a-file)  
+[PyOpenGL headless rendering](https://stackoverflow.com/questions/54483960/pyopengl-headless-rendering)  
+[OpenGL render view without a visible window in python](https://stackoverflow.com/questions/51627603/opengl-render-view-without-a-visible-window-in-python/51672538#51672538)  
+[Creating OpenGL context without window](https://stackoverflow.com/questions/12482166/creating-opengl-context-without-window)  
+
+It is not possible to create an [OpenGL Context](https://www.khronos.org/opengl/wiki/OpenGL_Context) with an version above 1.0 without any window.
+But it is possible to use a completely hidden window for "offscreen" rendering. 
+It is possible to create a initially hidden window with the [GLFW](http://www.glfw.org/) library by setting the [window hint](http://www.glfw.org/docs/latest/window_guide.html#window_hints) `VISIBLE` to `False`.
+
+Sadly it is not possible to create a initially hidden window with [Pygame](https://www.pygame.org/news).  
+It is only possible to hide a window after it was created by [`pygame.display.iconify()`](https://www.pygame.org/docs/ref/display.html#pygame.display.iconify).
+See also [Hiding pygame display](https://stackoverflow.com/questions/10466590/hiding-pygame-display).
+
 ## Performance
 
 [Opengl reduce usage of uniforms](https://stackoverflow.com/questions/63645568/opengl-reduce-usage-of-uniforms)  
@@ -210,7 +204,7 @@ See also [Hiding pygame display](https://stackoverflow.com/questions/10466590/hi
 
 [Rendering Pipeline — Performance — Scaling with regard to amount of pixels](https://stackoverflow.com/questions/48254865/rendering-pipeline-performance-scaling-with-regard-to-amount-of-pixels)  
 
-# Shader program
+## Shader program
 
 [LearnOpenGL.com - Shaders](https://learnopengl.com/#!Getting-started/Shaders)  
 [The Book of Shaders](https://thebookofshaders.com/)
@@ -222,6 +216,11 @@ See also [Hiding pygame display](https://stackoverflow.com/questions/10466590/hi
 [Khronos wiki, Example/GLSL Separate Program Multi Stage](https://www.khronos.org/opengl/wiki/Example/GLSL_Separate_Program_Multi_Stage)  
 [Khronos wiki, Example/GLSL Separate Program Basics](https://www.khronos.org/opengl/wiki/Example/GLSL_Separate_Program_Basics)  
 
+## Support
+
+[Can the OpenGL 'deprecated' functions possibly be unsupported?](https://stackoverflow.com/questions/30962359/can-the-opengl-deprecated-functions-possibly-be-unsupported)  
+[Will Vulkan effectively “replace” OpenGL or not?](https://community.khronos.org/t/will-vulkan-effectively-replace-opengl-or-not/4970)  
+[Introducing Zink, an OpenGL implementation on top of Vulkan](https://www.khronos.org/news/permalink/introducing-zink-an-opengl-implementation-on-top-of-vulkan)  
 
 ## Transparent window background
 
@@ -250,13 +249,13 @@ See also [Hiding pygame display](https://stackoverflow.com/questions/10466590/hi
 [Copying pixel data directly from windows Device Context to an openGL rendering context](https://stackoverflow.com/questions/35004121/copying-pixel-data-directly-from-windows-device-context-to-an-opengl-rendering-c)  
 [Switching from OpenGL to GDI](https://stackoverflow.com/questions/50587293/switching-from-opengl-to-gdi)  
 
-## Drawing
+# Drawing
 
-### Buffer
+## Buffer
 
 [Is it possible to in-place resize VBOs?](https://stackoverflow.com/questions/61972140/is-it-possible-to-resize-a-vbo/61972239#61972239)  
 
-#### Depth buffer
+### Depth buffer
 
 [How can I improve the performance of my custom OpenGL ES 2.0 depth texture generation?](https://stackoverflow.com/questions/6051237/how-can-i-improve-the-performance-of-my-custom-opengl-es-2-0-depth-texture-gener)  
 
@@ -304,35 +303,6 @@ For instance:
   glutInitWindowSize(800, 600);
   ```
 
-#### Uniform Buffer Object UBO and Shader storage buffer SSBO
-
-[Should I ever use a `vec3` inside of a uniform buffer or shader storage buffer object?](https://stackoverflow.com/questions/38172696/should-i-ever-use-a-vec3-inside-of-a-uniform-buffer-or-shader-storage-buffer-o)  
-[Passing a list of values to fragment shader](https://stackoverflow.com/questions/7954927/passing-a-list-of-values-to-fragment-shader)  
-[Can I put a R8G8B8A8 in a UBO, and use it as a vec4?](https://stackoverflow.com/questions/55947646/can-i-put-a-r8g8b8a8-in-a-ubo-and-use-it-as-a-vec4)  
-[Can I make a GLSL struct have std140 layout?](https://stackoverflow.com/questions/57775940/can-i-make-a-glsl-struct-have-std140-layout)  
-[GLSL: Are writes to Shader Storage Buffers discarded (or undone) by a later discard statement?](https://stackoverflow.com/questions/61294288/glsl-are-writes-to-shader-storage-buffers-discarded-or-undone-by-a-later-disc/61295231#61295231)  
-
-#### Vertex buffer
-
-[What is the proper way to modify OpenGL vertex buffer?](https://stackoverflow.com/questions/15821969/what-is-the-proper-way-to-modify-opengl-vertex-buffe)  
-
-### Draw calls
-
-[Overhead of glDrawArrays vs. glMultiDrawArrays](https://stackoverflow.com/questions/54724263/overhead-of-gldrawarrays-vs-glmultidrawarrays)  
-
-### Error
-
-[Errors during creation of OpenGL objects](https://stackoverflow.com/questions/58053495/errors-during-creation-of-opengl-objects)  
-
-### Fragment shader
-
-[EXT_shader_framebuffer_fetch](https://www.khronos.org/registry/OpenGL/extensions/EXT/EXT_shader_framebuffer_fetch.txt) - `gl_LastFragData`  
-[Is there a way in Opengl es 2.0 fragment shader, to get a previews fragment color](https://stackoverflow.com/questions/65642257/is-there-a-way-in-opengl-es-2-0-fragment-shader-to-get-a-previews-fragment-colo/65642346#65642346)  
-
-```glsl
-#extension GL_EXT_shader_framebuffer_fetch : require
-```
-
 ### Frame Buffer
 
 [Multiple output buffers with the default framebuffer](https://stackoverflow.com/questions/57097570/multiple-output-buffers-with-the-default-framebuffer)  
@@ -344,42 +314,71 @@ be 1 and color values are written into the left buffer for single-buffered conte
 If a framebuffer object is affected, then each of the constants must be one of the values listed in table 17.5.
 In both cases, the draw buffers being defined correspond in order to the respective fragment colors. The draw buffer for fragment colors beyond n is set to NONE.
 
-### Geometry shader
+### Uniform Buffer Object UBO and Shader storage buffer SSBO
+
+[Should I ever use a `vec3` inside of a uniform buffer or shader storage buffer object?](https://stackoverflow.com/questions/38172696/should-i-ever-use-a-vec3-inside-of-a-uniform-buffer-or-shader-storage-buffer-o)  
+[Passing a list of values to fragment shader](https://stackoverflow.com/questions/7954927/passing-a-list-of-values-to-fragment-shader)  
+[Can I put a R8G8B8A8 in a UBO, and use it as a vec4?](https://stackoverflow.com/questions/55947646/can-i-put-a-r8g8b8a8-in-a-ubo-and-use-it-as-a-vec4)  
+[Can I make a GLSL struct have std140 layout?](https://stackoverflow.com/questions/57775940/can-i-make-a-glsl-struct-have-std140-layout)  
+[GLSL: Are writes to Shader Storage Buffers discarded (or undone) by a later discard statement?](https://stackoverflow.com/questions/61294288/glsl-are-writes-to-shader-storage-buffers-discarded-or-undone-by-a-later-disc/61295231#61295231)  
+
+### Vertex buffer
+
+[What is the proper way to modify OpenGL vertex buffer?](https://stackoverflow.com/questions/15821969/what-is-the-proper-way-to-modify-opengl-vertex-buffe)  
+
+## Draw calls
+
+[Overhead of glDrawArrays vs. glMultiDrawArrays](https://stackoverflow.com/questions/54724263/overhead-of-gldrawarrays-vs-glmultidrawarrays)  
+
+### Error
+
+[Errors during creation of OpenGL objects](https://stackoverflow.com/questions/58053495/errors-during-creation-of-opengl-objects)  
+
+## Fragment shader
+
+[EXT_shader_framebuffer_fetch](https://www.khronos.org/registry/OpenGL/extensions/EXT/EXT_shader_framebuffer_fetch.txt) - `gl_LastFragData`  
+[Is there a way in Opengl es 2.0 fragment shader, to get a previews fragment color](https://stackoverflow.com/questions/65642257/is-there-a-way-in-opengl-es-2-0-fragment-shader-to-get-a-previews-fragment-colo/65642346#65642346)  
+
+```glsl
+#extension GL_EXT_shader_framebuffer_fetch : require
+```
+
+## Geometry shader
 
 [OpenGL Shadow Map Mobile Version Doesn't work](https://stackoverflow.com/questions/59090503/opengl-shadow-map-mobile-version-doesnt-work)  
 
-### Gooey
+## Gooey
 
 [Implementing a gooey effect with a shader (Processing 3)](https://stackoverflow.com/questions/49806658/implementing-a-gooey-effect-with-a-shader-processing-3)  
 
-### Glow
+## Glow
 
 [How to add glowing effect to a line for OpenGL?](https://stackoverflow.com/questions/8293839/how-to-add-glowing-effect-to-a-line-for-opengl)  
 [How to get a “Glow” shader effect in OpenGL ES 2.0?](https://stackoverflow.com/questions/8166384/how-to-get-a-glow-shader-effect-in-opengl-es-2-0/45043547#45043547)  
 
-### GLSL
+## GLSL
 
 [Do conditional statements slow down shaders?](https://stackoverflow.com/questions/37827216/do-conditional-statements-slow-down-shaders)  
 [Why won't my GLSL program link when one shader is optimized and the other is not?](https://stackoverflow.com/questions/52841269/why-wont-my-glsl-program-link-when-one-shader-is-optimized-and-the-other-is-not)  
 [Is it ok to declare an oversized output array in fragment shader and leave some indices unused?](https://stackoverflow.com/questions/52173024/is-it-ok-to-declare-an-oversized-output-array-in-fragment-shader-and-leave-some)  
 
-### Height map and height map normals
+## Height map and height map normals
 
 [OpenGL - How to calculate normals in a terrain height grid?](https://stackoverflow.com/questions/13983189/opengl-how-to-calculate-normals-in-a-terrain-height-grid)  
 
-### Image format
+## Image format
 
 [How can I use ARGB color in opengl/SDL?](https://stackoverflow.com/questions/18624895/how-can-i-use-argb-color-in-opengl-sdl)  
 
-### Invocations
+## Invocations
 
 [Frequency of shader invocations in rendering commands](https://stackoverflow.com/questions/35243518/frequency-of-shader-invocations-in-rendering-commands)  
 
-### Lines
+## Lines
 
 [Is it really so difficult to draw smooth lines in Unity?](https://stackoverflow.com/questions/43547886/is-it-really-so-difficult-to-draw-smooth-lines-in-unity)  
 
-#### Line stipple
+### Line stipple
 
 [glLineStipple deprecated in OpenGL 3.1](https://stackoverflow.com/questions/6017176/gllinestipple-deprecated-in-opengl-3-1/55088683#55088683)  
 [Three.js uniform dashed line relative to camera](https://stackoverflow.com/questions/54516794/three-js-uniform-dashed-line-relative-to-camera/54524171#54524171)  
@@ -388,100 +387,100 @@ In both cases, the draw buffers being defined correspond in order to the respect
 [Drawing rectangle with dashed boundary in openGL android](https://stackoverflow.com/questions/60188402/drawing-rectangle-with-dashed-boundary-in-opengl-android/60190604#60190604)  
 [Draw a simple dotted line or dashed line in OpenGL GLES20 android using fragment shader and GL_LINE_STRIP](https://stackoverflow.com/questions/60293538/draw-a-simple-dotted-line-or-dashed-line-in-opengl-gles20-android-using-fragment/60315849#60315849)  
 
-#### Line thickness
+### Line thickness
 
 [OpenGL Line Width](https://stackoverflow.com/questions/3484260/opengl-line-width/59688394#59688394)  
 [GLSL Geometry shader to replace glLineWidth](https://stackoverflow.com/questions/54686818/glsl-geometry-shader-to-replace-gllinewidth)  
 [OpenGL 3.2 Core Profile glLineWidth](https://stackoverflow.com/questions/8791531/opengl-3-2-core-profile-gllinewidth/59868362#59868362)  
 
-### Matrix and matrix transformation
+## Matrix and matrix transformation
 
 [Transformation order reversed in glMatrix?](https://stackoverflow.com/questions/38425426/transformation-order-reversed-in-glmatrix)  
 [Algorithm for finding Eigenvectors given Eigenvalues of a 3x3 matrix in C#](https://stackoverflow.com/questions/53469969/algorithm-for-finding-eigenvectors-given-eigenvalues-of-a-3x3-matrix-in-c-sharp)  
 
-### Mip mapping
+## Mip mapping
 
 [How to access automatic mipmap level in GLSL fragment shader texture?](https://stackoverflow.com/questions/24388346/how-to-access-automatic-mipmap-level-in-glsl-fragment-shader-texture)  
 [How to perform Mipmapping in WebGL?](https://stackoverflow.com/questions/21540520/how-to-perform-mipmapping-in-webgl)  
 [Does it make sense to use own mipmap creation algorithm for OpenGL textures?](https://stackoverflow.com/questions/831893/does-it-make-sense-to-use-own-mipmap-creation-algorithm-for-opengl-textures)  
 
-### Multi Sampling
+## Multi Sampling
 
 [How multi sampling works for Integer textures](https://stackoverflow.com/questions/64329477/how-multi-sampling-works-for-integer-textures)
 
-### Morphing
+## Morphing
 
 [how should i handle (morphing) 4D objects in opengl?](https://stackoverflow.com/questions/44939879/how-should-i-handle-morphing-4d-objects-in-opengl)  
 
-### Multi Indexing
+## Multi Indexing
 
 [Rendering meshes with multiple indices](https://stackoverflow.com/questions/11148567/rendering-meshes-with-multiple-indices)  
 [Why does OpenGL not support multiple index buffering?](https://stackoverflow.com/questions/44046585/why-does-opengl-not-support-multiple-index-buffering)  
 
-### Noise
+## Noise
 
 [Random / noise functions for GLSL](https://stackoverflow.com/questions/4200224/random-noise-functions-for-glsl)  
 
-### Normal matrix - transpose inverse
+## Normal matrix - transpose inverse
 
 [Why transforming normals with the transpose of the inverse of the modelview matrix?](https://stackoverflow.com/questions/13654401/why-transforming-normals-with-the-transpose-of-the-inverse-of-the-modelview-matr)  
 
-### Outline
+## Outline
 
 [Silhouette-Outlined shader](https://stackoverflow.com/questions/46603878/silhouette-outlined-shader)  
 [OpenGL - object outline](https://stackoverflow.com/questions/53897949/opengl-object-outline)  
 [Scalable outline for any shape with THREE.js](https://stackoverflow.com/questions/53098863/scalable-outline-for-any-shape-with-three-js)  
 
-### Projection
+## Projection
 
 [What exactly are eye space coordinates?](https://stackoverflow.com/questions/15588860/what-exactly-are-eye-space-coordinates/61537327#61537327)  
 [Get Projection and View Matrix from Camera Matrix](https://stackoverflow.com/questions/47200505/get-projection-and-view-matrix-from-camera-matrix)  
 [Projection matrices: What should depth map to?](https://stackoverflow.com/questions/52893875/projection-matrices-what-should-depth-map-to)  
 [Transformation of 3D objects related to vanishing points and horizon line](https://stackoverflow.com/questions/53289330/transformation-of-3d-objects-related-to-vanishing-points-and-horizon-line)  
 
-### Quaternion
+## Quaternion
 
 [Using Quaternions for OpenGL Rotations](https://stackoverflow.com/questions/9715776/using-quaternions-for-opengl-rotations)  
 
-### Ray tracing
+## Ray tracing
 
 [Reflection and refraction impossible without recursive ray tracing?](https://stackoverflow.com/questions/42876586/reflection-and-refraction-impossible-without-recursive-ray-tracing)  
 [How to handle incorrect index calculation for discretized ray tracing?](https://stackoverflow.com/questions/49214524/how-to-handle-incorrect-index-calculation-for-discretized-ray-tracing)  
 [Ray Tracer Shadow Problems](https://stackoverflow.com/questions/53841706/ray-tracer-shadow-problems)  
 
-### Screen space ambient occlusion - SSAO
+## Screen space ambient occlusion - SSAO
 
 [Antialiasing during depth post-processing for SSAO](https://stackoverflow.com/questions/48523905/antialiasing-during-depth-post-processing-for-ssao)  
 
-### Screen Space Local Reflections SSLR
+## Screen Space Local Reflections SSLR
 
 [Incorrect tracing with SSLR (Screen Space Local Reflections)](https://stackoverflow.com/questions/53145377/incorrect-tracing-with-sslr-screen-space-local-reflections)  
 [How to scale environment map perspective according to the position of the main camera](https://stackoverflow.com/questions/49738967/how-to-scale-environment-map-perspective-according-to-the-position-of-the-main-c)  
 
-### Shader
+## Shader
 
 [Passing a list of values to fragment shader](https://stackoverflow.com/questions/7954927/passing-a-list-of-values-to-fragment-shader)  
 
-### Silhouette detection
+## Silhouette detection
 
 [How to draw inside the black edges in iOS SDK with OpenGL ES?](https://stackoverflow.com/questions/50944736/how-to-draw-inside-the-black-edges-in-ios-sdk-with-opengl-es)  
 
-### Stencil
+## Stencil
 
 [Drawing Filled, Concave Polygons Using the Stencil Buffer](http://glprogramming.com/red/chapter14.html#name13)
 [Drawing Filled, Concave Polygons Using the Stencil Buffer (OpenGL Programming)](http://glprogramming.com/red/chapter14.html#name13) 
 
 [opengl create a depth_stencil texture for reading](https://stackoverflow.com/questions/27535727/opengl-create-a-depth-stencil-texture-for-reading)  
 
-### Tangent space
+## Tangent space
 
 [In a TBN Matrix are the normal, tangent, and bitangent vectors always perpendicular?](https://stackoverflow.com/questions/15433917/in-a-tbn-matrix-are-the-normal-tangent-and-bitangent-vectors-always-perpendicu)  
 
-### Text rendering
+## Text rendering
 
 [What is state-of-the-art for text rendering in OpenGL as of version 4.1?](https://stackoverflow.com/questions/5262951/what-is-state-of-the-art-for-text-rendering-in-opengl-as-of-version-4-1)  
 
-### Texture
+## Texture
 
 [Correspondance between texture units and sampler uniforms in opengl](https://stackoverflow.com/questions/54931941/correspondance-between-texture-units-and-sampler-uniforms-in-opengl)  
 [How do opengl texture coordinates work?](https://stackoverflow.com/questions/5532595/how-do-opengl-texture-coordinates-work)  
@@ -493,20 +492,20 @@ In both cases, the draw buffers being defined correspond in order to the respect
 [How to get texture data using textureID's in openGL](https://stackoverflow.com/questions/5117653/how-to-get-texture-data-using-textureids-in-opengl/62965713#62965713)  
 [Will any of the following texture lookups cause undefined behavior, non-uniform flow, or both?](https://stackoverflow.com/questions/53734640/will-any-of-the-following-texture-lookups-cause-undefined-behavior-non-uniform)
 
-### Transparency
+## Transparency
 
 [Weighted Blended Order-Independent Transparency rendering issues](https://stackoverflow.com/questions/50817040/weighted-blended-order-independent-transparency-rendering-issues)  
 
-### Triangle strips
+## Triangle strips
 
 [How are tripled sequence in IBO working?](https://stackoverflow.com/questions/46511972/how-are-tripled-sequence-in-ibo-working)  
 
-### Vertex specification
+## Vertex specification
 
 [glVertexAttribPointer and glVertexAttribFormat: What's the difference?](https://stackoverflow.com/questions/37972229/glvertexattribpointer-and-glvertexattribformat-whats-the-difference)  
 [OpenGL: Vertex attribute arrays per primitive?](https://stackoverflow.com/questions/11351537/opengl-vertex-attribute-arrays-per-primitive)  
 [Drawing multiple triangles in OpenGL](https://stackoverflow.com/questions/47760298/drawing-multiple-triangles-in-opengl)  
 
-### Zoom
+## Zoom
 
 [How to fix zoom towards mouse routine?](https://stackoverflow.com/questions/57638051/how-to-fix-zoom-towards-mouse-routine)  
