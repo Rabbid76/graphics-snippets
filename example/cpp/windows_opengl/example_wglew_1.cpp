@@ -1,3 +1,6 @@
+// TODO: fix CMake WinMain
+
+
 #include <stdafx.h>
 
 #include <GL/glew.h>

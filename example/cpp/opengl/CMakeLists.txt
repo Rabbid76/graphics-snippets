@@ -1,6 +1,7 @@
 # for mingw, the order of the libraries seems to matter: glew before opengl32
 set(GLUT_LINK_LIBRARIES ${GLEW_LIB} ${DEFAULT_LIB} ${GLUT_LIB} ${FREETYPE_LIB})
 set(GLFW_LINK_LIBRARIES ${GLEW_LIB} ${DEFAULT_LIB} ${GLFW_LIB} ${FREETYPE_LIB})
+set(SDL_LINK_LIBRARIES ${GLEW_LIB} ${DEFAULT_LIB} ${SDL_LIB} ${FREETYPE_LIB})
 
 if (MAKE_CONFIG STREQUAL "MSVC" OR MAKE_CONFIG STREQUAL "MINGW")
 	add_definitions(-DWIN32 -DGLEW_STATIC -D_WIN32 -DFREEGLUT_STATIC)
@@ -19,6 +20,11 @@ endfunction()
 function(glfw_exe target_name)
 	add_executable(${target_name} ${ARGN})
 	target_link_libraries(${target_name} ${GLFW_LINK_LIBRARIES})
+endfunction()
+
+function(sdl_exe target_name)
+	add_executable(${target_name} ${ARGN})
+	target_link_libraries(${target_name} ${SDL_LINK_LIBRARIES})
 endfunction()
 
 
@@ -66,3 +72,6 @@ glfw_exe(example_thread_2_shared_context example_thread_2_shared_context.cpp)
 # deprecated
 # glfw_exe(example_camera_and_matrix example_camera_and_matrix.cpp)
 # glfw_exe(example_texture_4_transform example_texture_4_transform.cpp)
+
+# SDL
+sdl_exe(example_sdl_1 example_sdl_1.cpp)

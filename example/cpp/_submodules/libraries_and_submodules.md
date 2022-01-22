@@ -38,3 +38,8 @@ Submodule [freetype/freetype](https://github.com/freetype/freetype)
 
 [GLFW](https://www.glfw.org/)
 [GLFW - GitHub](https://github.com/glfw/glfw)
+
+## SDL
+
+[SDL](https://www.libsdl.org/)  
+[libsdl-org/SDL](https://github.com/libsdl-org/SDL)  

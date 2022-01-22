@@ -13,3 +13,6 @@
 [submodule "example/cpp/_submodules/glfw"]
 	path = example/cpp/_submodules/glfw
 	url = https://github.com/glfw/glfw
+[submodule "example/cpp/_submodules/SDL"]
+	path = example/cpp/_submodules/SDL
+	url = https://github.com/libsdl-org/SDL

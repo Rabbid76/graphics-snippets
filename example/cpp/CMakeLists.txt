@@ -13,6 +13,7 @@ set(STB_PATH ${SUBMODULES_PATH}/stb)
 set(FREETYPE_PATH ${SUBMODULES_PATH}/freetype)
 set(GLUT_PATH ${SUBMODULES_PATH}/freeglut/freeglut/freeglut)
 set(GLFW_PATH ${SUBMODULES_PATH}/glfw)
+set(SDL_PATH ${SUBMODULES_PATH}/sdl)
 
 set(EXTERN_LIBRARY_PATH ../../../_cpp_extern)
 #set(GLM_PATH ${EXTERN_LIBRARY_PATH}/glm-0.9.9.8)
@@ -43,6 +44,7 @@ include_directories(
     ${GLEW_PATH}/include
     ${GLUT_PATH}/include
     ${GLFW_PATH}/include
+    ${SDL_PATH}/include
     ${WXWIDGET_PATH}/include
     ${WXWIDGET_PATH}/include/msvc
     ${FREETYPE_PATH}/include
@@ -94,6 +96,9 @@ set(GLUT_LIB freeglut_static)
 
 # GLFW
 set(GLFW_LIB glfw)
+
+# GLFW
+set(SDL_LIB SDL2-static)
 
 # wxWidget
 get_filename_component(FULL_WXWIDGET_LIBRARY_PATH "${WXWIDGET_LIBRARY_PATH}" REALPATH)

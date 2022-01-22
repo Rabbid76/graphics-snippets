@@ -200,6 +200,10 @@ See also [Hiding pygame display](https://stackoverflow.com/questions/10466590/hi
 
 [Opengl reduce usage of uniforms](https://stackoverflow.com/questions/63645568/opengl-reduce-usage-of-uniforms)  
 
+## Program pipelines
+
+[Program pipelines](https://www.khronos.org/opengl/wiki/Shader_Compilation#Program_pipelines)
+
 ## Sampling
 
 [Rendering Pipeline — Performance — Scaling with regard to amount of pixels](https://stackoverflow.com/questions/48254865/rendering-pipeline-performance-scaling-with-regard-to-amount-of-pixels)  
@@ -215,6 +219,10 @@ See also [Hiding pygame display](https://stackoverflow.com/questions/10466590/hi
 [Khronos wiki, Program Introspection](https://www.khronos.org/opengl/wiki/Program_Introspection)  
 [Khronos wiki, Example/GLSL Separate Program Multi Stage](https://www.khronos.org/opengl/wiki/Example/GLSL_Separate_Program_Multi_Stage)  
 [Khronos wiki, Example/GLSL Separate Program Basics](https://www.khronos.org/opengl/wiki/Example/GLSL_Separate_Program_Basics)  
+
+## SPIR-V compilation
+
+[SPIR-V compilation](https://www.khronos.org/opengl/wiki/Shader_Compilation#SPIR-V_compilation)
 
 ## Support
 

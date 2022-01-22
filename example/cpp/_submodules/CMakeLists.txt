@@ -34,3 +34,6 @@ endif()
 
 # glfw
 add_subdirectory(glfw)
+
+# sdl
+add_subdirectory(sdl)
