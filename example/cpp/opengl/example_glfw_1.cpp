@@ -96,7 +96,7 @@ int main(void)
 
     OpenGL::CContext::TDebugLevel debug_level = OpenGL::CContext::TDebugLevel::all;
     OpenGL::CContext context;
-    context.Init( debug_level );
+    context.Init(debug_level);
 
     //glfwSwapInterval( 2 );
 

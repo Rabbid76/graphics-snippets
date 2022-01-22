@@ -12,9 +12,7 @@ endif()
 
 function(glut_exe target_name)
     add_executable(${target_name} ${ARGN})
-	#add_dependencies(${target_name} freeglut)
 	target_link_libraries(${target_name} ${GLUT_LINK_LIBRARIES})
-	#target_link_options(${target_name} PUBLIC "LINKER:--subsystem,windows")
 endfunction()
 
 function(glfw_exe target_name)

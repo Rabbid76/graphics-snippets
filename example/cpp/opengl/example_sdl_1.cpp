@@ -1,5 +1,3 @@
-// TODO: fix CMake for SDL
-
 // STL
 #include <iostream>
 #include <string>
@@ -18,6 +16,8 @@
 
 
 // SDL [https://www.libsdl.org/]
+// https://stackoverflow.com/questions/34079288/im-using-the-sdl-functions-without-the-sdl-main-be-defined-is-that-fine
+# define SDL_MAIN_HANDLED 
 #include <SDL.h>
 
 

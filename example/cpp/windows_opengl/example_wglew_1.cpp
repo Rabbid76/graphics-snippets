@@ -1,4 +1,4 @@
-// TODO: fix CMake WinMain
+// TODO: fix drawing
 
 
 #include <stdafx.h>
@@ -10,6 +10,9 @@
 #include <string>
 
 #include <windows.h>
+
+// project includes
+#include <gl/gl_debug.h>
 
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -74,11 +77,12 @@ int InitOpengl(
     SetPixelFormat(temp_hdc, temp_nPixelFormat, &pfd);
 
     HGLRC temp_hrc = wglCreateContext(temp_hdc);
-
     wglMakeCurrent(temp_hdc, temp_hrc);
-
-    glewExperimental = true;
     glewInit();
+
+    OpenGL::CContext::TDebugLevel debug_level = OpenGL::CContext::TDebugLevel::all;
+    OpenGL::CContext context;
+    context.Init(debug_level);
 
     bool wg_support = wglewIsSupported("WGL_ARB_create_context") == 1;
 
@@ -132,13 +136,9 @@ int InitOpengl(
 
     int nPixelFormat = 0;
     UINT iNumFormats = 0;
-
     wglChoosePixelFormatARB(hdc, iPixelFormatAttribList, NULL, 1, &nPixelFormat, (UINT*)&iNumFormats);
-
     SetPixelFormat(hdc, nPixelFormat, &pfd);
-
     hrc = wglCreateContextAttribsARB(hdc, 0, attributes);
-
     wglMakeCurrent(NULL, NULL);
     wglMakeCurrent(hdc, hrc);
 
@@ -161,7 +161,7 @@ int CALLBACK WinMain(
 
     ShowWindow(hwnd, SW_SHOW);
 
-    glClearColor(0, 0, 0, 1);
+    glClearColor(0.2, 0.4, 0.3, 1);
 
     MSG msg;
 
@@ -175,7 +175,7 @@ int CALLBACK WinMain(
             DispatchMessage(&msg);
         }
 
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glViewport(0, 0, 500, 500);
         display();
         GLint errorCode = glGetError();
@@ -185,7 +185,6 @@ int CALLBACK WinMain(
         }
 
         SwapBuffers(hdc);
-
     }
 
     return 0;
