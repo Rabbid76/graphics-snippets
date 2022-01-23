@@ -2,9 +2,10 @@
 set(GLUT_LINK_LIBRARIES ${GLEW_LIB} ${DEFAULT_LIB} ${GLUT_LIB} ${FREETYPE_LIB})
 set(GLFW_LINK_LIBRARIES ${GLEW_LIB} ${DEFAULT_LIB} ${GLFW_LIB} ${FREETYPE_LIB})
 set(SDL_LINK_LIBRARIES ${GLEW_LIB} ${DEFAULT_LIB} ${SDL_LIB} ${FREETYPE_LIB})
+set(SFML_LINK_LIBRARIES ${GLEW_LIB} ${DEFAULT_LIB} ${SFML_LIB} ${FREETYPE_LIB})
 
 if (MAKE_CONFIG STREQUAL "MSVC" OR MAKE_CONFIG STREQUAL "MINGW")
-	add_definitions(-DWIN32 -DGLEW_STATIC -D_WIN32 -DFREEGLUT_STATIC)
+	add_definitions(-DWIN32 -DGLEW_STATIC -D_WIN32 -DFREEGLUT_STATIC -DSFML_STATIC)
 	# set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:\"LIBCMT.LIB\"")
 	#file(COPY ../${GLUT_PATH}/bin/x64/freeglut.dll DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 	#file(COPY ../${GLFW_LIBRARY_PATH}/glfw3.dll DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -23,6 +24,11 @@ endfunction()
 function(sdl_exe target_name)
 	add_executable(${target_name} ${ARGN})
 	target_link_libraries(${target_name} ${SDL_LINK_LIBRARIES})
+endfunction()
+
+function(sfml_exe target_name)
+	add_executable(${target_name} ${ARGN})
+	target_link_libraries(${target_name} ${SFML_LINK_LIBRARIES})
 endfunction()
 
 
@@ -73,3 +79,6 @@ glfw_exe(example_thread_2_shared_context example_thread_2_shared_context.cpp)
 
 # SDL
 sdl_exe(example_sdl_1 example_sdl_1.cpp)
+
+# SFML
+sfml_exe(example_sfml_1 example_sfml_1.cpp)

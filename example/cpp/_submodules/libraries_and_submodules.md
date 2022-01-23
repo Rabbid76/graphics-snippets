@@ -43,3 +43,8 @@ Submodule [freetype/freetype](https://github.com/freetype/freetype)
 
 [SDL](https://www.libsdl.org/)  
 [libsdl-org/SDL](https://github.com/libsdl-org/SDL)  
+
+## SFML
+
+[SFML](https://www.sfml-dev.org/)  
+[SFML/SFML](https://github.com/SFML/SFML)  

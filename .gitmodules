@@ -16,3 +16,6 @@
 [submodule "example/cpp/_submodules/SDL"]
 	path = example/cpp/_submodules/SDL
 	url = https://github.com/libsdl-org/SDL
+[submodule "example/cpp/_submodules/SFML"]
+	path = example/cpp/_submodules/SFML
+	url = https://github.com/SFML/SFML

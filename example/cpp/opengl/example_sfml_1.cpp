@@ -15,15 +15,15 @@
 #include <gl/gl_glew.h>
 
 
-// SDL [https://www.libsdl.org/]
-// https://stackoverflow.com/questions/34079288/im-using-the-sdl-functions-without-the-sdl-main-be-defined-is-that-fine
-# define SDL_MAIN_HANDLED 
-#include <SDL.h>
+// SFML [https://www.sfml-dev.org/]
+//#include <SFML\System.hpp>
+#include <SFML\Graphics.hpp>
+//#include <SFML\Window.hpp>
 
 
 // project includes
 #include <gl/gl_debug.h>
-#include <gl/gl_shader.h>
+//#include <gl/gl_shader.h>
 
 // preprocessor definitions
 
@@ -75,34 +75,21 @@ void main()
 
 int main(void)
 {
-    if (SDL_Init(SDL_INIT_VIDEO) < 0)
-        throw std::runtime_error("error initializing glfw");
+    sf::VideoMode videoMode(640, 480);
 
-    //SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    //SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
-    //SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-    //SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
-    //SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
-    //SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-    //SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-    //SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
-    //SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-    //SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-    //SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 8);
-    SDL_Window* wnd = SDL_CreateWindow(
-        "SDL OGL window", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 800, 600, SDL_WINDOW_OPENGL);
-    if (wnd == nullptr)
-    {
-        SDL_Quit();
+    sf::ContextSettings settings;
+    settings.depthBits = 24;
+    settings.stencilBits = 8;
+    settings.antialiasingLevel = 4;
+    settings.majorVersion = 4;
+    settings.minorVersion = 6;
+
+    sf::RenderWindow mainWindow;
+    mainWindow.create(videoMode, "Test", sf::Style::Default, settings);
+    //mainWindow.setPosition(sf::Vector2i(0, 0));
+
+    if (!mainWindow.isOpen())
         throw std::runtime_error("error initializing window");
-    }
-
-    if (!SDL_GL_CreateContext(wnd))
-    {
-        SDL_Quit();
-        throw std::runtime_error("error creating OpenGL context");
-    }
 
     if (glewInit() != GLEW_OK)
         throw std::runtime_error("error initializing glew");
@@ -111,10 +98,9 @@ int main(void)
     OpenGL::CContext context;
     context.Init(debug_level);
 
-    //glfwSwapInterval( 2 );
-
-    GLuint program_obj = OpenGL::CreateProgram(sh_vert, sh_frag);
-    glUseProgram(program_obj);
+    sf::Shader shader;
+    shader.loadFromMemory(sh_vert, sh_frag);
+    shader.bind(&shader);
 
     static const std::vector<float> varray
     {
@@ -152,15 +138,12 @@ int main(void)
     auto start_time = std::chrono::high_resolution_clock::now();
     auto prev_time = start_time;
     
+    sf::Clock clock;
+    sf::Time timeSinceLastUpdate = sf::Time::Zero;
+    sf::Time elapsedTime;
     bool running = true;
     while (running)
     {
-        SDL_Event event;
-        while (SDL_PollEvent(&event) != 0)
-        {
-            if (event.type == SDL_QUIT)
-                running = false;
-        }
         std::chrono::high_resolution_clock::time_point current_time = std::chrono::high_resolution_clock::now();
         auto frame_time = current_time - prev_time;
         prev_time = current_time;
@@ -168,14 +151,27 @@ int main(void)
         double delta_s = (double)std::chrono::duration_cast<std::chrono::milliseconds>(frame_time).count() / 1000.0;
         double time_s = (double)std::chrono::duration_cast<std::chrono::milliseconds>(all_time).count() / 1000.0;
         std::string title = "FPS: " + std::to_string(1 / delta_s);
-        SDL_SetWindowTitle(wnd, title.c_str());
+        sf::String sfmlString(title.c_str());
+        mainWindow.setTitle(sfmlString);
+
+        sf::Vector2i mousePosition = sf::Mouse::getPosition(mainWindow);
+        sf::Event sfmlEvent;
+        while (mainWindow.pollEvent(sfmlEvent))
+        {
+            if (sfmlEvent.type == sf::Event::Closed)
+                running = false;
+            if (sfmlEvent.type == sf::Event::KeyPressed)
+            {
+                if (sfmlEvent.key.code == sf::Keyboard::Escape)
+                    running = false;
+            }
+        }
 
         float angle = (float)(time_s * 90.0);
 
-        int vpSize[2];
-        SDL_GL_GetDrawableSize(wnd, &vpSize[0], &vpSize[1]);
+        sf::Vector2u vpSize = mainWindow.getSize();
 
-        float aspect = (float)vpSize[0] / (float)vpSize[1];
+        float aspect = (float)vpSize.x / (float)vpSize.y;
         float orthoX = aspect > 1.0f ? aspect : 1.0f;
         float orthoY = aspect > 1.0f ? 1.0f : aspect;
 
@@ -192,24 +188,21 @@ int main(void)
 
         glm::mat4 model(1.0f);
         model = glm::translate(model, glm::vec3(0.1f, 0.0f, 1.0f));
-        //model = glm::rotate(model, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
+        model = glm::rotate(model, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
 
         glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(project));
         glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(2, 1, GL_FALSE, glm::value_ptr(model));
 
-        glViewport(0, 0, vpSize[0], vpSize[1]);
+        glViewport(0, 0, vpSize.x, vpSize.y);
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
-        SDL_GL_SwapWindow(wnd);
+        mainWindow.display();
     }
 
-    wnd = nullptr;
-    SDL_Quit();
-
+    mainWindow.close();
     return 0;
 }
-

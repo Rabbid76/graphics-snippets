@@ -37,3 +37,6 @@ add_subdirectory(glfw)
 
 # sdl
 add_subdirectory(sdl)
+
+# sfml
+add_subdirectory(sfml)
