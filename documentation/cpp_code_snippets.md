@@ -6,7 +6,6 @@
 
 ## OpenGL Window
 
-
 ### GLUT
 
 [GLUT](https://www.opengl.org/resources/libraries/glut/)  

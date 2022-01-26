@@ -7,6 +7,8 @@ Robert C. Martin, Clean Architecture
 
 # Glsl
 
+[GLSL code snippets](../documentation/glsl_code_snippets.md)
+
 ## 2D
 
 [GLSL Rounded Rectangle with Variable Border](https://stackoverflow.com/questions/59197671/glsl-rounded-rectangle-with-variable-border/59199756#59199756)
