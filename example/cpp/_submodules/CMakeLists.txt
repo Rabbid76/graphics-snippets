@@ -40,3 +40,9 @@ add_subdirectory(sdl)
 
 # sfml
 add_subdirectory(sfml)
+if(MAKE_CONFIG STREQUAL "MSVC") 
+    #target_compile_options(SFML PRIVATE /wd9025)
+endif()
+
+# wxwindgets
+#add_subdirectory(wxwidgets)

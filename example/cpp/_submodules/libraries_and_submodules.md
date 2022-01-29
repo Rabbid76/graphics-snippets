@@ -48,3 +48,8 @@ Submodule [freetype/freetype](https://github.com/freetype/freetype)
 
 [SFML](https://www.sfml-dev.org/)  
 [SFML/SFML](https://github.com/SFML/SFML)  
+
+## wxWidgets
+
+[wxWidgets](https://www.wxwidgets.org/)  
+[wxWidgets/wxWidgets](https://github.com/wxWidgets/wxWidgets)

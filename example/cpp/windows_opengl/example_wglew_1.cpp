@@ -161,7 +161,7 @@ int CALLBACK WinMain(
 
     ShowWindow(hwnd, SW_SHOW);
 
-    glClearColor(0.2, 0.4, 0.3, 1);
+    glClearColor(0.2f, 0.4f, 0.3f, 1);
 
     MSG msg;
 
@@ -213,7 +213,7 @@ void display(void)
     glLineWidth(5.0);
     glColor4f(1, 1, 1, 1);
     glBegin(GL_LINES);
-    glVertex2f(-0.8, -0.8);
-    glVertex2f(0.8, 0.8);
+    glVertex2f(-0.8f, -0.8f);
+    glVertex2f(0.8f, 0.8f);
     glEnd();
 }

@@ -99,7 +99,8 @@ int main(void)
     context.Init(debug_level);
 
     sf::Shader shader;
-    shader.loadFromMemory(sh_vert, sh_frag);
+    if (!shader.loadFromMemory(sh_vert, sh_frag))
+        std::cout << "error loading shader";
     shader.bind(&shader);
 
     static const std::vector<float> varray
