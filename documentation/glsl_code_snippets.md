@@ -70,3 +70,68 @@ See [OpenGL Shading Language 4.60 Specification - 3.3. Preprocessor](https://www
 **[Fragment shader ignores texture coordinates](https://stackoverflow.com/questions/58746783/fragment-shader-ignores-texture-coordinates/58747040#58747040)**  
 
 The output of a shader stage is linked to the input of the next shader stage by its name (except when you use a layout qualifier). See [interface matching rules between shader stages.](https://www.khronos.org/opengl/wiki/Shader_Compilation#Interface_matching)
+
+## Color space
+
+[HSL and HSV](https://translate.google.at/?hl=de&tab=rT&sl=de&tl=en&text=farbraum&op=translate)
+
+```glsl
+const float Epsilon = 1e-10;
+```
+
+```glsl
+vec3 RGBtoHCV( in vec3 RGB )
+{
+   vec4 P = (RGB.g < RGB.b) ? vec4(RGB.bg, -1.0, 2.0/3.0) : vec4(RGB.gb, 0.0, -1.0/3.0);
+   vec4 Q = (RGB.r < P.x) ? vec4(P.xyw, RGB.r) : vec4(RGB.r, P.yzx);
+   float C = Q.x - min(Q.w, Q.y);
+   float H = abs((Q.w - Q.y) / (6.0 * C + Epsilon) + Q.z);
+   return vec3(H, C, Q.x);
+}
+```
+
+```glsl
+vec3 RGBtoHSV(in vec3 RGB)
+{
+    vec3 HCV = RGBtoHCV(RGB);
+    float S = HCV.y / (HCV.z + Epsilon);
+    return vec3(HCV.x, S, HCV.z);
+}
+```
+
+```glsl
+vec3 HUEtoRGB(in float H)
+{
+    float R = abs(H * 6.0 - 3.0) - 1.0;
+    float G = 2.0 - abs(H * 6.0 - 2.0);
+    float B = 2.0 - abs(H * 6.0 - 4.0);
+    return clamp( vec3(R,G,B), 0.0, 1.0 );
+}
+```
+
+```glsl
+vec3 HSVtoRGB(in vec3 HSV)
+{
+    vec3 RGB = HUEtoRGB(HSV.x);
+    return ((RGB - 1.0) * HSV.y + 1.0) * HSV.z;
+}
+```
+
+```glsl
+vec3 RGBtoHSL(in vec3 RGB)
+{
+    vec3 HCV = RGBtoHCV(RGB);
+    float L = HCV.z - HCV.y * 0.5;
+    float S = HCV.y / (1.0 - abs(L * 2.0 - 1.0) + Epsilon);
+    return vec3(HCV.x, S, L);
+}
+```
+
+```glsl
+vec3 HSLtoRGB( in vec3 HSL )
+{
+    vec3 RGB = HUEtoRGB(HSL.x);
+    float C = (1.0 - abs(2.0 * HSL.z - 1.0)) * HSL.y;
+    return (RGB - 0.5) * C + HSL.z;
+}
+```
