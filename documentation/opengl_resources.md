@@ -259,6 +259,20 @@ See also [Hiding pygame display](https://stackoverflow.com/questions/10466590/hi
 
 # Drawing
 
+## Alpha Compositing, Blending and Premultiplied Alpha
+
+[Alpha Compositing, OpenGL Blending and Premultiplied Alpha](http://apoorvaj.io/alpha-compositing-opengl-blending-and-premultiplied-alpha.html)
+[Alpha Blending: To Pre or Not To Pre](https://developer.nvidia.com/content/alpha-blending-pre-or-not-pre) 
+[Alpha compositing](https://en.wikipedia.org/wiki/Alpha_compositing)  
+[Blending](https://www.khronos.org/opengl/wiki/Blending)
+
+### Premultiplied Alpha - WebGL
+
+`premultipliedAlpha: false`, `UNPACK_PREMULTIPLIED_ALPHA_WEBGL`!
+
+[generating text texture in webgl: Alpha is opaque](https://stackoverflow.com/questions/46215101/generating-text-texture-in-webgl-alpha-is-opaque/46225744#46225744)  
+[WebGL: Beveled smooth anti-aliased circles using GL_POINT?](https://stackoverflow.com/questions/46519734/webgl-beveled-smooth-anti-aliased-circles-using-gl-point/46519965#46519965)  
+
 ## Buffer
 
 [Is it possible to in-place resize VBOs?](https://stackoverflow.com/questions/61972140/is-it-possible-to-resize-a-vbo/61972239#61972239)  
@@ -266,6 +280,8 @@ See also [Hiding pygame display](https://stackoverflow.com/questions/10466590/hi
 ### Depth buffer
 
 [How can I improve the performance of my custom OpenGL ES 2.0 depth texture generation?](https://stackoverflow.com/questions/6051237/how-can-i-improve-the-performance-of-my-custom-opengl-es-2-0-depth-texture-gener)  
+[How to render depth linearly in modern OpenGL with gl_FragCoord.z in fragment shader?](https://stackoverflow.com/questions/7777913/how-to-render-depth-linearly-in-modern-opengl-with-gl-fragcoord-z-in-fragment-sh/45710371#45710371)  
+[Pack depth information in a RGBA texture using mediump precison](https://stackoverflow.com/questions/48288154/pack-depth-information-in-a-rgba-texture-using-mediump-precison/48289986#48289986)  
 
 [Is it possible to depth test against a depth texture I am also sampling, in the same draw call?](https://stackoverflow.com/questions/63542591/is-it-possible-to-depth-test-against-a-depth-texture-i-am-also-sampling-in-the)  
 
@@ -456,6 +472,10 @@ In both cases, the draw buffers being defined correspond in order to the respect
 [How to handle incorrect index calculation for discretized ray tracing?](https://stackoverflow.com/questions/49214524/how-to-handle-incorrect-index-calculation-for-discretized-ray-tracing)  
 [Ray Tracer Shadow Problems](https://stackoverflow.com/questions/53841706/ray-tracer-shadow-problems)  
 
+## Scissor
+
+[Scissor Test](https://www.khronos.org/opengl/wiki/Scissor_Test)  
+
 ## Screen space ambient occlusion - SSAO
 
 [Antialiasing during depth post-processing for SSAO](https://stackoverflow.com/questions/48523905/antialiasing-during-depth-post-processing-for-ssao)  
@@ -476,9 +496,11 @@ In both cases, the draw buffers being defined correspond in order to the respect
 ## Stencil
 
 [Drawing Filled, Concave Polygons Using the Stencil Buffer](http://glprogramming.com/red/chapter14.html#name13)
-[Drawing Filled, Concave Polygons Using the Stencil Buffer (OpenGL Programming)](http://glprogramming.com/red/chapter14.html#name13) 
 
 [opengl create a depth_stencil texture for reading](https://stackoverflow.com/questions/27535727/opengl-create-a-depth-stencil-texture-for-reading)  
+[OpenGL 16 bit stencil buffers?](https://stackoverflow.com/questions/62741921/opengl-16-bit-stencil-buffers/62742277#62742277)  
+[Strange bugs occur while using stencil testing](https://stackoverflow.com/questions/49786763/strange-bugs-occur-while-using-stencil-testing/49832387#49832387)  
+[How to use stencil buffer to achieve hierarchical clipping](https://stackoverflow.com/questions/56636337/how-to-use-stencil-buffer-to-achieve-hierarchical-clipping/56637285#56637285)  
 
 ## Tangent space
 
@@ -503,6 +525,7 @@ In both cases, the draw buffers being defined correspond in order to the respect
 ## Transparency
 
 [Weighted Blended Order-Independent Transparency rendering issues](https://stackoverflow.com/questions/50817040/weighted-blended-order-independent-transparency-rendering-issues)  
+[OpenGL: Transparent texture issue](https://stackoverflow.com/questions/45954668/opengl-transparent-texture-issue/45955236#45955236)  
 
 ## Triangle strips
 
