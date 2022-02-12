@@ -14,3 +14,11 @@
 # Questions
 
 - [Can't get glVertexAttribPointer to render colour from shaders](https://stackoverflow.com/questions/50519828/applying-a-perspective-transformation-matrix-from-gimp-into-a-glsl-shader/50522311#50522311)
+
+# Iamges
+
+## Load SVG
+
+- [SVG++ documentation](http://svgpp.org/) (header only, boost)
+- [Librsvg](https://wiki.gnome.org/action/show/Projects/LibRsvg)
+- [Libsvgtiny](http://www.netsurf-browser.org/projects/libsvgtiny/)
