@@ -21,7 +21,7 @@ def shard_context(window, vbo):
     vertices = [-px, -py, px, -py, 0, r]
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo)
-    glBufferSubData(GL_ARRAY_BUFFER, 0, 12*4, (GLfloat * 12)(*vertices))
+    glBufferSubData(GL_ARRAY_BUFFER, 0, 4*len(vertices), (GLfloat * len(vertices))(*vertices))
     glFlush()
 
 
