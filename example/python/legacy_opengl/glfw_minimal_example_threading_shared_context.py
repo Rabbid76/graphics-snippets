@@ -11,12 +11,14 @@ import math
 if glfw.init() == glfw.FALSE:
     exit()
 
+event = threading.Event()
 end_trhead = False
 def shard_context(window, vbo):
     global end_trhead
 
     window2 = glfw.create_window(400, 400, "Window 2", None, window)
     glfw.make_context_current(window2)
+    event.set()
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo)
     glEnableClientState(GL_VERTEX_ARRAY)
@@ -44,8 +46,11 @@ vbo = glGenBuffers(1)
 glBindBuffer(GL_ARRAY_BUFFER, vbo)
 glBufferData(GL_ARRAY_BUFFER, (GLfloat * 12)(*vertices), GL_STATIC_DRAW)
 
+glfw.make_context_current(None)
 thread = threading.Thread(target=shard_context, args=[window, vbo])
 thread.start()
+event.wait()
+glfw.make_context_current(window)
 
 glEnableClientState(GL_VERTEX_ARRAY)
 glVertexPointer(2, GL_FLOAT, 0, None)
