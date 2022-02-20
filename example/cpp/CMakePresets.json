@@ -1,0 +1,25 @@
+{
+    "version": 2,
+    "configurePresets": [
+        {
+            "name": "mingw-64-debug",
+            "generator": "Visual Studio 17 2022",
+            "displayName": "GCC 11.2.0",
+            "description": "Using compilers: C = C:\\msys64\\mingw64\\bin\\x86_64-w64-mingw32-gcc.exe, CXX = C:\\msys64\\mingw64\\bin\\x86_64-w64-mingw32-g++.exe",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "cacheVariables": {
+                "MINGW64_ROOT": "C:/msys64/mingw64",
+                "BIN_ROOT": "${env.MINGW64_ROOT}/bin",
+                "FLAVOR": "x86_64-w64-mingw32",
+                "TOOLSET_VERSION": "9.1.0",
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+                "CMAKE_C_COMPILER": "C:\\msys64\\mingw64\\bin\\gcc.exe",
+                "CMAKE_CXX_COMPILER": "C:\\msys64\\mingw64\\bin\\g++.exe"
+            },
+            "environment": {
+                "MAKE_CONFIG": "MINGW"
+            }
+        }
+    ]
+}

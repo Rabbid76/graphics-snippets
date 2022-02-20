@@ -1,5 +1,9 @@
 cmake_minimum_required (VERSION 3.12)
 
+if (NOT DEFINED MAKE_CONFIG)
+    set(MAKE_CONFIG "MINGW")
+endif()
+
 project(cpp_examples)
 
 #set_property(TARGET tgt PROPERTY CXX_STANDARD 20)
@@ -29,11 +33,11 @@ set(WXWIDGET_PATH ${EXTERN_LIBRARY_PATH}/wxMSW-3.1.5_vc14x_x64)
 if(MAKE_CONFIG STREQUAL "MSVC")
     # [...]
 elseif(MAKE_CONFIG STREQUAL "MINGW")
-    add_compile_options(
-        -Wno-volatile
-        -Wno-narrowing
-        -Wno-return-type
-    )
+    #add_compile_options(
+    #    -Wno-volatile
+    #    -Wno-narrowing
+    #    -Wno-return-type
+    #)
 elseif(MAKE_CONFIG STREQUAL "Clang")
     # [...]
 endif()
