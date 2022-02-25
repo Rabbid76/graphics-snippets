@@ -28,12 +28,12 @@ Ball-Triangle Collision
 var sketch = function( p ) {
 
 p.setup = function() {
-    let sketchCanvas = p.createCanvas(300, 300);
+    let sketchCanvas = p.createCanvas(p.windowWidth, p.windowHeight);
     sketchCanvas.parent('p5js_canvas')
 }
 
 p.windowResized = function() {
-    p.resizeCanvas(300, 300);
+    p.resizeCanvas(p.windowWidth, p.windowHeight);
 }
 
 function intersect_ray_line_segment(r1, r2, l1, l2) {
