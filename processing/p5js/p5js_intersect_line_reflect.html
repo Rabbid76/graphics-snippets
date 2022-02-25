@@ -1,0 +1,134 @@
+<html>
+<head>
+<meta charset='UTF-8'>
+<title>processing p5.js example</title>
+<style>
+body { margin: 0; overflow: hidden; }
+#ref-div { position: absolute; top: 0; left: 0; }
+#ref-link { color: #4040d0; }
+</style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/p5@1.4.1/lib/p5.min.js"></script>
+<div id="ref-div" >
+<a id="ref-link" href="https://p5js.org/">
+Intersect line and reflect - p5.js
+</a><br/>
+<a id="ref-link" href="https://stackoverflow.com/questions/71269144/reflecting-vector-along-perpendicular">
+Reflecting Vector along Perpendicular
+</a><br/>
+<a id="ref-link" href="https://stackoverflow.com/questions/71186472/ball-triangle-collision">
+Ball-Triangle Collision
+</a>
+</div>
+
+<div id="p5js_canvas"></div>
+
+<script>
+var sketch = function( p ) {
+
+p.setup = function() {
+    let sketchCanvas = p.createCanvas(300, 300);
+    sketchCanvas.parent('p5js_canvas')
+}
+
+p.windowResized = function() {
+    p.resizeCanvas(300, 300);
+}
+
+function intersect_ray_line_segment(r1, r2, l1, l2) {
+    let R = p5.Vector.sub(r2, r1);
+    let L = p5.Vector.sub(l2, l1);
+    let N = p.createVector(-R.y, R.x);
+    if (L.dot(N) == 0) {
+        return undefined; // parallel
+    }
+    let t = p5.Vector.sub(r1, l1).dot(N) / L.dot(N);
+    if (t < 0 || t > 1) {
+        return undefined; // intersection is not on line segment
+    }
+    let X = L.mult(t).add(l1);
+    if (R.dot(p5.Vector.sub(X, r1)) < 0) {
+        return undefined; // wrong direction
+    }
+    return X;
+}
+
+function closest_hit_point(r1, r2, points, lines) {
+    let hit_p = undefined;
+    let dist = undefined;
+    let N = undefined;
+    for (let i = 0; i < lines.length; ++i) {
+        let l1 = points[lines[i][0]];
+        let l2 = points[lines[i][1]];
+        let new_hit_p = intersect_ray_line_segment(r1, r2, points[lines[i][0]], points[lines[i][1]]);
+        if (new_hit_p) {
+            let new_d = p5.Vector.dist(r1, new_hit_p);
+            if (new_d > 0.1 && (!dist || new_d < dist)) {
+                dist = new_d;
+                hit_p = new_hit_p;
+                N = p.createVector(l1.y - l2.y, l2.x - l1.x);
+            }
+        }
+    }
+    return hit_p ? [hit_p, N] : undefined;
+}
+
+p.draw = function() {
+        
+    let sx = p.width / 2;
+    let sy = p.height / 2;
+    let points = [
+        p.createVector(-sx*0.7, -sy*0.2), p.createVector(-sx*0.7, +sy*0.2), 
+        p.createVector(-sx*0.3, -sy*0.5), p.createVector(sx*0.4, -sy*0.5), 
+        p.createVector(sx*0.6, -sy*0.3), p.createVector(sx*0.6, sy*0.5),  p.createVector(-sx*0.3, sy*0.5)];
+    let lines = [[0, 1], [2, 3], [3, 4], [4, 5], [5, 6]]
+    let center = new p5.Vector(0, 0);
+
+    let mouse_p = p.createVector(p.mouseX - sx, p.mouseY - sy);
+    let direction = p.createVector(mouse_p.x - center.x, mouse_p.y - center.y);
+    let hit_points = [center]
+    if (center.x != mouse_p.x || center.y != mouse_p.y) {
+        let start = center;
+        result = closest_hit_point(center, mouse_p, points, lines);
+        let count = 0
+        while (result && count < 100) {
+            hit_points.push(result[0]);
+            direction = direction.reflect(result[1]);
+            result = closest_hit_point(result[0], p5.Vector.add(result[0], direction), points, lines);
+            count ++;
+        }
+    }
+    direction.normalize();
+    hit_points.push(direction.mult( new p5.Vector(p.width, p.height).mag()).add(hit_points[hit_points.length-1]));
+
+    p.translate(p.width/2, p.height/2);
+    p.background(192);
+    p.strokeWeight(3);
+    p.stroke(64, 64, 255);
+    p.fill(128, 128, 255);
+    for (let i = 0; i < lines.length; ++i) {
+        let p0 = points[lines[i][0]];
+        let p1 = points[lines[i][1]];
+        p.line(p0.x, p0.y, p1.x, p1.y);
+    }
+    for (let i = 0; i < points.length; ++i) {
+        p.ellipse(points[i].x, points[i].y, 10, 10);
+    }
+    p.stroke(0, 0, 0);
+    p.fill(128, 128, 128);
+    p.ellipse(center.x, center.y, 10, 10);
+    for (let i = 1; i < hit_points.length; ++i) {
+        p.line(hit_points[i-1].x, hit_points[i-1].y, hit_points[i].x, hit_points[i].y);
+    }
+    for (let i = 0; i < hit_points.length; ++i) {
+        p.ellipse(hit_points[i].x, hit_points[i].y, 10, 10);
+    }
+}
+
+};
+
+var circle_3_pts = new p5(sketch);
+</script>
+</body>
+</html>

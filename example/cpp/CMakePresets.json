@@ -20,6 +20,19 @@
             "environment": {
                 "MAKE_CONFIG": "MINGW"
             }
+        },
+        {
+            "name": "Mac-Clang",
+            "generator":  "Xcode",
+            "displayName": "Clang 13.0.0 x86_64-apple-darwin21.2.0",
+            "description": "Using compilers: C = /usr/bin/clang, CXX = /usr/bin/clang++",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+                "CMAKE_C_COMPILER": "/usr/bin/clang",
+                "CMAKE_CXX_COMPILER": "/usr/bin/clang++"
+            }
         }
     ]
 }
