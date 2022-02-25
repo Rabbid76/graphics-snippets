@@ -1,6 +1,3 @@
-[submodule "example/cpp/_submodules/freetype"]
-	path = example/cpp/_submodules/freetype
-	url = https://github.com/freetype/freetype
 [submodule "example/cpp/_submodules/stb"]
 	path = example/cpp/_submodules/stb
 	url = https://github.com/nothings/stb
