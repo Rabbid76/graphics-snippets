@@ -16,3 +16,6 @@
 [submodule "example/cpp/_submodules/SFML"]
 	path = example/cpp/_submodules/SFML
 	url = https://github.com/SFML/SFML
+[submodule "example/cpp/_submodules/freetype"]
+	path = example/cpp/_submodules/freetype
+	url = https://github.com/freetype/freetype
