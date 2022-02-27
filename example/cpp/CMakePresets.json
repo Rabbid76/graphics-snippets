@@ -3,27 +3,38 @@
     "configurePresets": [
         {
             "name": "mingw-64-debug",
-            "generator": "Visual Studio 17 2022",
-            "displayName": "GCC 11.2.0",
-            "description": "Using compilers: C = C:\\msys64\\mingw64\\bin\\x86_64-w64-mingw32-gcc.exe, CXX = C:\\msys64\\mingw64\\bin\\x86_64-w64-mingw32-g++.exe",
+            "generator": "Ninja",
+            "displayName": "MinGW GCC 11.2.0",
+            "description": "Using compilers: C = gcc.exe, CXX = g++.exe",
             "binaryDir": "${sourceDir}/out/build/${presetName}",
             "cacheVariables": {
-                "MINGW64_ROOT": "C:/msys64/mingw64",
-                "BIN_ROOT": "${env.MINGW64_ROOT}/bin",
-                "FLAVOR": "x86_64-w64-mingw32",
-                "TOOLSET_VERSION": "9.1.0",
-                "CMAKE_BUILD_TYPE": "Debug",
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
-                "CMAKE_C_COMPILER": "C:\\msys64\\mingw64\\bin\\gcc.exe",
-                "CMAKE_CXX_COMPILER": "C:\\msys64\\mingw64\\bin\\g++.exe"
+              "MINGW64_ROOT": "C:/msys64/mingw64",
+              "CMAKE_BUILD_TYPE": "Debug",
+              "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+              "CMAKE_C_COMPILER": "C:/msys64/mingw64/bin/gcc.exe",
+              "CMAKE_CXX_COMPILER": "C:/msys64/mingw64/bin/g++.exe"
             },
             "environment": {
-                "MAKE_CONFIG": "MINGW"
+              "MAKE_CONFIG": "MINGW"
+            }
+        },
+        {
+            "name": "msvc-64-debug",
+            "generator": "Visual Studio 17 2022",
+            "displayName": "MSVC",
+            "description": "Using compilers: MSVC",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "cacheVariables": {
+              "CMAKE_BUILD_TYPE": "Debug",
+              "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}"
+            },
+            "environment": {
+              "MAKE_CONFIG": "MSVC"
             }
         },
         {
             "name": "Mac-Clang",
-            "generator":  "Xcode",
+            "generator": "Xcode",
             "displayName": "Clang 13.0.0 x86_64-apple-darwin21.2.0",
             "description": "Using compilers: C = /usr/bin/clang, CXX = /usr/bin/clang++",
             "binaryDir": "${sourceDir}/out/build/${presetName}",
