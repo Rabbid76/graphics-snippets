@@ -275,6 +275,8 @@ See also [Hiding pygame display](https://stackoverflow.com/questions/10466590/hi
 
 ## Buffer
 
+[Buffer Object](https://www.khronos.org/opengl/wiki/Buffer_Object) (Immutable Storage / Mutable Storage)  
+
 [Is it possible to in-place resize VBOs?](https://stackoverflow.com/questions/61972140/is-it-possible-to-resize-a-vbo/61972239#61972239)  
 
 ### Depth buffer
@@ -329,6 +331,10 @@ For instance:
 
 ### Frame Buffer
 
+[Framebuffer Object](https://www.khronos.org/opengl/wiki/Framebuffer_Object)  
+[Framebuffer Object Extension Examples](https://www.khronos.org/opengl/wiki/Framebuffer_Object_Extension_Examples)  
+[Multisampling](https://www.khronos.org/opengl/wiki/Multisampling)  
+
 [Multiple output buffers with the default framebuffer](https://stackoverflow.com/questions/57097570/multiple-output-buffers-with-the-default-framebuffer)  
 
 [OpenGL 4.6 API Compatibility Profile Specification - 17.4.1 Selecting Buffers for Writing](https://www.khronos.org/registry/OpenGL/specs/gl/glspec46.compatibility.pdf), page 631:
@@ -337,6 +343,12 @@ If the default framebuffer is affected, then each of the constants must be one o
 be 1 and color values are written into the left buffer for single-buffered contexts, or into the back left buffer for double-buffered contexts.
 If a framebuffer object is affected, then each of the constants must be one of the values listed in table 17.5.
 In both cases, the draw buffers being defined correspond in order to the respective fragment colors. The draw buffer for fragment colors beyond n is set to NONE.
+
+[Khronos reference page - `glCheckFramebufferStatus`][https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glCheckFramebufferStatus.xhtml]:
+>`GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE` is returned if the value of `GL_RENDERBUFFER_SAMPLES` is not the same for all attached renderbuffers; if the value of `GL_TEXTURE_SAMPLES` is the not same for all attached textures; or, if the attached images are a mix of renderbuffers and textures, the value of `GL_RENDERBUFFER_SAMPLES` does not match the value of `GL_TEXTURE_SAMPLES`.
+
+[Concept: what is the use of glDrawBuffer and glDrawBuffers?](https://stackoverflow.com/questions/51030120/concept-what-is-the-use-of-gldrawbuffer-and-gldrawbuffers)  
+[opengl es 2.0 android c++ glGetTexImage alternative](https://stackoverflow.com/questions/53993820/opengl-es-2-0-android-c-glgetteximage-alternative/53993894#53993894)  
 
 ### Uniform Buffer Object UBO and Shader storage buffer SSBO
 
