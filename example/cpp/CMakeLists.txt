@@ -1,8 +1,22 @@
 cmake_minimum_required (VERSION 3.12)
 
+message("MSVC " ${MSVC})
+message("APPLE " ${APPLE})
+message("LINUX " ${LINUX})
+message("UNIX " ${UNIX})
+message("WIN32 " ${WIN32})
+message("MSYS " ${MSYS})
+message("MINGW " ${MINGW})
+
 if (NOT DEFINED MAKE_CONFIG)
-    set(MAKE_CONFIG "MINGW")
+    if (CMAKE_CXX_COMPILER MATCHES .*mingw.*)
+        set(MAKE_CONFIG "MINGW")
+    elseif(DEFINED WIN32)
+        set(MAKE_CONFIG "MSVC")
+    endif()
 endif()
+
+message(STATUS "configuration: " ${MAKE_CONFIG}, ${CMAKE_CXX_COMPILER})
 
 project(cpp_examples)
 

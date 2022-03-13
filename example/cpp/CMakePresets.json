@@ -12,10 +12,10 @@
               "CMAKE_BUILD_TYPE": "Debug",
               "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
               "CMAKE_C_COMPILER": "C:/msys64/mingw64/bin/gcc.exe",
-              "CMAKE_CXX_COMPILER": "C:/msys64/mingw64/bin/g++.exe"
+              "CMAKE_CXX_COMPILER": "C:/msys64/mingw64/bin/g++.exe",
+              "MAKE_CONFIG": "MINGW"
             },
             "environment": {
-              "MAKE_CONFIG": "MINGW"
             }
         },
         {
@@ -26,10 +26,10 @@
             "binaryDir": "${sourceDir}/out/build/${presetName}",
             "cacheVariables": {
               "CMAKE_BUILD_TYPE": "Debug",
-              "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}"
+              "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+              "MAKE_CONFIG": "MSVC"
             },
             "environment": {
-              "MAKE_CONFIG": "MSVC"
             }
         },
         {
@@ -42,10 +42,10 @@
                 "CMAKE_BUILD_TYPE": "Debug",
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
                 "CMAKE_C_COMPILER": "/usr/bin/clang",
-                "CMAKE_CXX_COMPILER": "/usr/bin/clang++"
+                "CMAKE_CXX_COMPILER": "/usr/bin/clang++",
+                "MAKE_CONFIG": "Mac-XCode"
             },
             "environment": {
-              "MAKE_CONFIG": "Mac-XCode"
             }
         }
     ]
