@@ -360,6 +360,13 @@ glDisableClientState( GL_TEXTURE_COORD_ARRAY );
 
 ## Index buffer object (Element array buffer)
 
+The [Index Buffer](https://www.khronos.org/opengl/wiki/Vertex_Specification#Index_buffers) (`ELEMENT_ARRAY_BUFFER`) binding is stored within the [Vertex Array Object](https://www.khronos.org/opengl/wiki/Vertex_Specification#Index_buffers). When `glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO)` is called the element buffer object ID is stored in the currently bound Vertex Array Object. Therefore the VAO must be bound before the element buffer with `glBindVertexArray(VAO)`.
+
+Compared to the [Index Buffer](https://www.khronos.org/opengl/wiki/Vertex_Specification#Index_buffers), the [Vertex Buffer](https://www.khronos.org/opengl/wiki/Vertex_Specification#Vertex_Buffer_Object) binding (`ARRAY_BUFFER`) is a global state.  
+Each attribute which is stated in the VAOs state vector may refer to a different `ARRAY_BUFFER`. When [`glVertexAttribPointer`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glVertexAttribPointer.xhtml) is called the buffer which is currently bound to the target `ARRAY_BUFFER`, is associated to the specified attribute index and the ID of the object is stored in the state vector of the currently bound VAO.  
+
+The [Vertex Buffer](https://www.khronos.org/opengl/wiki/Vertex_Specification#Vertex_Buffer_Object) binding (`ARRAY_BUFFER`) is a global state. This behaves different to the [index buffer](https://www.khronos.org/opengl/wiki/Vertex_Specification#Index_buffers) (`ELEMENT_ARRAY_BUFFER`). The index buffer binding is stored within the [Vertex Array Object](https://www.khronos.org/opengl/wiki/Vertex_Specification#Index_buffers). If a buffer is bound to the target `ELEMENT_ARRAY_BUFFER`, this buffer is assigned to the currently bound Vertex Array Object.
+
 e.g. Vertex, Normal vector and Texture coordinate
 
 ```txt
