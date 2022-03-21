@@ -34,6 +34,8 @@
 #define M_PI 3.14159265358979323846 
 #endif
 
+// https://replit.com/@Rabbid76/freeglut-opengl-1#main.cpp
+
 // function prototypes
 
 void display( void );
