@@ -1,3 +1,5 @@
+# https://replit.com/@Rabbid76/python-glfw-opengl-1#pyproject.toml
+
 from OpenGL.GL import *
 from OpenGL.GLU import *
 from glfw.GLFW import *
