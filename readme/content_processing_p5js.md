@@ -13,7 +13,7 @@ Robert C. Martin, The Robert C. Martin Clean Code Collection (Collection)
 [![](../example/p5.js/image/circle_3_points.png)](https://rabbid76.github.io/graphics-snippets/example/p5js/p5js_circle_3_points.html)
 
 [ Endless line through by 2 points - p5.js](../example/p5.js/p5js_endless_line.html)  
-[![](../example/p5.js/image/endless_line.png](https://rabbid76.github.io/graphics-snippets/example/p5js/p5js_endless_line.html)
+[![](../example/p5.js/image/endless_line.png)](https://rabbid76.github.io/graphics-snippets/example/p5js/p5js_endless_line.html)
 
 [ Intersect line and circle](../example/p5.js/p5js_circle_line_intersection.html)  
 [![](../example/p5.js/image/circle_line_intersection.png)](https://rabbid76.github.io/graphics-snippets/example/p5js/p5js_circle_line_intersection.html)
