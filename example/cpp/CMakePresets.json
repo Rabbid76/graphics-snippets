@@ -43,7 +43,7 @@
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
                 "CMAKE_C_COMPILER": "/usr/bin/clang",
                 "CMAKE_CXX_COMPILER": "/usr/bin/clang++",
-                "MAKE_CONFIG": "Mac-XCode"
+                "MAKE_CONFIG": "MacXCode"
             },
             "environment": {
             }

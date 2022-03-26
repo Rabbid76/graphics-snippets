@@ -1,6 +1,10 @@
 # for mingw, the order of the libraries seems to matter: glew before opengl32
 set(GLUT_LINK_LIBRARIES ${GLEW_LIB} ${DEFAULT_LIB} ${GLUT_LIB} ${FREETYPE_LIB})
+if(NOT MAKE_CONFIG STREQUAL "MacXCode")
 set(GLFW_LINK_LIBRARIES ${GLEW_LIB} ${DEFAULT_LIB} ${GLFW_LIB} ${FREETYPE_LIB})
+else()
+set(GLFW_LINK_LIBRARIES ${GLEW_LIB} ${DEFAULT_LIB} ${GLFW_LIB})
+endif()
 set(SDL_LINK_LIBRARIES ${GLEW_LIB} ${DEFAULT_LIB} ${SDL_LIB} ${FREETYPE_LIB})
 set(SFML_LINK_LIBRARIES ${GLEW_LIB} ${DEFAULT_LIB} ${SFML_LIB} ${FREETYPE_LIB})
 
@@ -9,6 +13,10 @@ if (MAKE_CONFIG STREQUAL "MSVC" OR MAKE_CONFIG STREQUAL "MINGW")
 	# set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:\"LIBCMT.LIB\"")
 	#file(COPY ../${GLUT_PATH}/bin/x64/freeglut.dll DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 	#file(COPY ../${GLFW_LIBRARY_PATH}/glfw3.dll DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+elseif (MAKE_CONFIG STREQUAL "MacXCode")  	
+	#add_definitions(-DOPENGL_gl_LIBRARY -DDOPENGL_glu_LIBRARY)
+	#add_definitions(-DGLEW_STATIC)
+	#add_link_options("-lz" "-liconv")
 endif()
 
 function(glut_exe target_name)
@@ -33,6 +41,7 @@ endfunction()
 
 
 # GLUT
+if(NOT MAKE_CONFIG STREQUAL "MacXCode")
 glut_exe(example_freeglut_1 example_freeglut_1.cpp)
 glut_exe(example_freeglut_text_freetype example_freeglut_text_freetype.cpp)
 glut_exe(example_concave_polygon_stencil example_concave_polygon_stencil.cpp)
@@ -43,9 +52,12 @@ glut_exe(example_texture_1_stb_freeglut example_texture_1_stb_freeglut.cpp)
 glut_exe(example_primitive_restart_1 example_primitive_restart_1.cpp)
 glut_exe(example_shader_integer_attribute_1 example_shader_integer_attribute_1.cpp)
 glut_exe(example_texture_5_test_texsubiamge example_texture_5_test_texsubiamge.cpp)
+endif()
 
 # GLFW
 glfw_exe(example_glfw_1 example_glfw_1.cpp)
+
+if(NOT MAKE_CONFIG STREQUAL "MacXCode")
 glfw_exe(example_glfw_text_freetype example_glfw_text_freetype.cpp)
 glfw_exe(example_glfw_2_perpspcetive example_glfw_2_perpspcetive.cpp)
 glfw_exe(example_glfw_fps example_glfw_fps.cpp)
@@ -72,13 +84,18 @@ glfw_exe(example_texture_2_stb_glfw example_texture_2_stb_glfw.cpp)
 glfw_exe(example_texture_3_lookup_table example_texture_3_lookup_table.cpp)
 glfw_exe(example_thread_1 example_thread_1.cpp)
 glfw_exe(example_thread_2_shared_context example_thread_2_shared_context.cpp)
+endif()
 
 # deprecated
 # glfw_exe(example_camera_and_matrix example_camera_and_matrix.cpp)
 # glfw_exe(example_texture_4_transform example_texture_4_transform.cpp)
 
 # SDL
+if(NOT MAKE_CONFIG STREQUAL "MacXCode")
 sdl_exe(example_sdl_1 example_sdl_1.cpp)
+endif()
 
 # SFML
+if(NOT MAKE_CONFIG STREQUAL "MacXCode")
 sfml_exe(example_sfml_1 example_sfml_1.cpp)
+endif()

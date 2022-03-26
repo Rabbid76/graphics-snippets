@@ -14,10 +14,18 @@ add_library(
 	glew_opengl_4_6/src/glew.c
 	glew_opengl_4_6/src/glewinfo.c
 )
+if(DEFINED WIN32)
 target_compile_definitions(
 	glew PUBLIC
 	-DWIN32 -D_LIB -DWIN32_LEAN_AND_MEAN -DGLEW_STATIC
 )
+elseif(DEFINED APPLE)
+target_compile_definitions(
+	glew PUBLIC
+	#-DGLEW_OSMESA -D_LIB -DGLEW_STATIC
+	-D_LIB -DGLEW_STATIC
+)
+endif()
 
 # freetype
 add_subdirectory(freetype)
@@ -26,22 +34,28 @@ if(MAKE_CONFIG STREQUAL "MSVC")
 endif()
 
 # freeglut
+if(NOT MAKE_CONFIG STREQUAL "MacXCode")
 add_subdirectory(freeglut/freeglut/freeglut)
 if(MAKE_CONFIG STREQUAL "MSVC") 
     target_compile_options(freeglut PUBLIC /wd4312)
 	target_compile_options(freeglut_static PUBLIC /wd4312)
+endif()
 endif()
 
 # glfw
 add_subdirectory(glfw)
 
 # sdl
+if(NOT MAKE_CONFIG STREQUAL "MacXCode")
 add_subdirectory(sdl)
+endif()
 
 # sfml
+if(NOT MAKE_CONFIG STREQUAL "MacXCode")
 add_subdirectory(sfml)
 if(MAKE_CONFIG STREQUAL "MSVC") 
     #target_compile_options(SFML PRIVATE /wd9025)
+endif()
 endif()
 
 # wxwindgets

@@ -13,6 +13,8 @@ if (NOT DEFINED MAKE_CONFIG)
         set(MAKE_CONFIG "MINGW")
     elseif(DEFINED WIN32)
         set(MAKE_CONFIG "MSVC")
+    elseif(DEFINED APPLE)
+        set(MAKE_CONFIG "MacXCode")    
     endif()
 endif()
 
@@ -54,6 +56,8 @@ elseif(MAKE_CONFIG STREQUAL "MINGW")
     #)
 elseif(MAKE_CONFIG STREQUAL "Clang")
     # [...]
+elseif(MAKE_CONFIG STREQUAL "MacXCode")
+    # [...]    
 endif()
 
 # include directories
@@ -73,8 +77,10 @@ include_directories(
 )
 
 # global prprocessor defintions
-if (MAKE_CONFIG STREQUAL "MSVC" OR MAKE_CONFIG STREQUAL "MINGW")
+if(MAKE_CONFIG STREQUAL "MSVC" OR MAKE_CONFIG STREQUAL "MINGW")
 	add_definitions(-DWIN32 -DGLEW_STATIC -DFREEGLUT_STATIC)
+elseif(MAKE_CONFIG STREQUAL "MacXCode")
+	add_definitions(-DGL_SILENCE_DEPRECATION)
 endif()
 
 # link directories
@@ -106,6 +112,9 @@ elseif (MAKE_CONFIG STREQUAL "MINGW")
     set(DEFAULT_LIB gdi32 opengl32 glu32)
 elseif (MAKE_CONFIG STREQUAL "Clang")
     # [...]
+elseif (MAKE_CONFIG STREQUAL "MacXCode")
+set(DEFAULT_LIB "-framework OpenGL")
+    # [...]    
 endif()
 
 # freetype
@@ -134,10 +143,13 @@ endif()
 
 # include sub-projects
 add_subdirectory(opengl)
-add_subdirectory(opengl_legacy)
-add_subdirectory(opengl_line_stipple)
-add_subdirectory(opengl_line_thickness)
-add_subdirectory(opengl_render_utility)
+
+if(NOT MAKE_CONFIG STREQUAL "MacXCode")
+    add_subdirectory(opengl_legacy)
+    add_subdirectory(opengl_line_stipple)
+    add_subdirectory(opengl_line_thickness)
+    add_subdirectory(opengl_render_utility)
+endif()
 
 if(EXISTS ${FULL_WXWIDGET_LIBRARY_PATH})
     add_subdirectory(wx_widget_opengl_meshs)
