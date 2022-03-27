@@ -73,6 +73,41 @@ std::vector<uint32_t> indices{ 0, 1, 2, 0xFFFFFFFF, 3, 4, 5, 6 };
 [How can I draw gluQuadric with color?](https://stackoverflow.com/questions/64632166/how-can-i-draw-gluquadric-with-color/64633229#64633229)  
 [OpenGL gluLookat not working with shaders on](https://stackoverflow.com/questions/56090164/opengl-glulookat-not-working-with-shaders-on/56090352#56090352)  
 [OpenGL: glColor3f() and glVertex3f() with shader](https://stackoverflow.com/questions/70408799/opengl-glcolor3f-and-glvertex3f-with-shader)  
+[Vertex/fragment shaders for a OpenGL firsrt-person shooter view?](https://stackoverflow.com/questions/59896103/vertex-fragment-shaders-for-a-opengl-firsrt-person-shooter-view)
+
+You cannot mix fixed function attributes and the fixed function matrix stack with a version 3.30 shader program.  
+You have to use the built in attributes such as `gl_Vertex` and `gl_MultiTexCoord0` (see [Vertex Attributes](https://www.opengl.org/sdk/docs/tutorials/ClockworkCoders/attributes.php)).  
+You have to use the the built in uniform variables like `gl_ModelViewProjectionMatrix`. In legacy OpenGL (GLSL 1.20) there are provided a bunch of Built-In Uniforms. See [OpenGL Shading Language 1.20 Specification; 7.5 Built-In Uniform State](https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.1.20.pdf#page=56&zoom=100,153,218).  
+One of them is `gl_ModelViewProjectionMatrix` of type `mat4`, which provides the transformation by the model view and projection matrix. Separated `gl_ModelViewMatrix` and `gl_ProjectionMatrix` exists as well.
+
+Vertex shader:
+
+```glsl
+#version 120
+
+varying vec2 texcoord;
+
+void main()
+{
+  gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
+  texcoord = gl_MultiTexCoord0.xy;
+} 
+```
+
+Fragment shader:
+
+```glsl
+#version 120
+
+varying vec2 texcoord;
+
+uniform sampler2D texture;
+
+void main()
+{
+    gl_FragColor = texture2D(texture, texcoord);
+}
+```
 
 ## Fixed-Function Attributes
 

@@ -50,8 +50,8 @@ void main()
     vec4 view_pos = view * model * vec4(inPos, 1.0);
 
     vertCol     = inColor;
-	  vertPos     = view_pos.xyz;
-	  gl_Position = project * vec4(view_pos.xyz, 1.0);
+	vertPos     = view_pos.xyz;
+	gl_Position = project * vec4(view_pos.xyz, 1.0);
 }
 )";
 
@@ -79,11 +79,11 @@ int main(void)
 
     //glfwWindowHint(GLFW_REFRESH_RATE, 10);
 
-    //glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, 4 );
-    //glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, 6 );
-    //glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE );
-    //glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE );
-    GLFWwindow *wnd = glfwCreateWindow( 800, 600, "GLFW OGL window", nullptr, nullptr );
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    GLFWwindow *wnd = glfwCreateWindow(800, 600, "GLFW OGL window", nullptr, nullptr);
     if ( wnd == nullptr )
     {
         glfwTerminate();
