@@ -76,7 +76,7 @@ std::vector<uint32_t> indices{ 0, 1, 2, 0xFFFFFFFF, 3, 4, 5, 6 };
 [Vertex/fragment shaders for a OpenGL firsrt-person shooter view?](https://stackoverflow.com/questions/59896103/vertex-fragment-shaders-for-a-opengl-firsrt-person-shooter-view)
 
 You cannot mix fixed function attributes and the fixed function matrix stack with a version 3.30 shader program.  
-You have to use the built in attributes such as `gl_Vertex` and `gl_MultiTexCoord0` (see [Vertex Attributes](https://www.opengl.org/sdk/docs/tutorials/ClockworkCoders/attributes.php)).  
+You have to use the built in attributes such as `gl_Vertex` and `gl_MultiTexCoord0` (see [Vertex Attributes](https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.1.20.pdf#page=55&zoom=100,153,309)).  
 You have to use the the built in uniform variables like `gl_ModelViewProjectionMatrix`. In legacy OpenGL (GLSL 1.20) there are provided a bunch of Built-In Uniforms. See [OpenGL Shading Language 1.20 Specification; 7.5 Built-In Uniform State](https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.1.20.pdf#page=56&zoom=100,153,218).  
 One of them is `gl_ModelViewProjectionMatrix` of type `mat4`, which provides the transformation by the model view and projection matrix. Separated `gl_ModelViewMatrix` and `gl_ProjectionMatrix` exists as well.
 
