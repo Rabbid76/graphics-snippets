@@ -22,7 +22,7 @@
 
 // project includes
 #include <gl/gl_debug.h>
-#include <gl/gl_shader.h>
+#include <gl/opengl_shader.h>
 
 // preprocessor definitions
 
@@ -33,7 +33,7 @@
 // shader
 
 std::string sh_vert = R"(
-#version 420
+#version 410 core
 
 layout (location = 0) in vec3 inPos;
 layout (location = 1) in vec4 inColor;
@@ -56,7 +56,7 @@ void main()
 )";
 
 std::string sh_frag = R"(
-#version 420
+#version 410 core
 
 in vec3 vertPos;
 in vec4 vertCol;
@@ -81,7 +81,7 @@ int main(void)
 
 #ifdef __APPLE__
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
     //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
@@ -97,6 +97,8 @@ int main(void)
         throw std::runtime_error( "error initializing glew" );
 
 #ifdef __APPLE__
+    OpenGL::CContext::information();
+#else
     OpenGL::CContext::TDebugLevel debug_level = OpenGL::CContext::TDebugLevel::all;
     OpenGL::CContext context;
     context.Init(debug_level);
@@ -104,7 +106,10 @@ int main(void)
 
     //glfwSwapInterval( 2 );
 
-    GLuint program_obj = OpenGL::CreateProgram(sh_vert, sh_frag);
+    std::cout << "shader" << std::endl;
+    GLint program_obj = OpenGL::LinkProgram({
+        OpenGL::CompileShader(GL_VERTEX_SHADER, sh_vert.c_str()), 
+        OpenGL::CompileShader(GL_FRAGMENT_SHADER, sh_frag.c_str())});
     GLint project_loc = glGetUniformLocation(program_obj, "project");
     GLint view_loc = glGetUniformLocation(program_obj, "view");
     GLint model_loc = glGetUniformLocation(program_obj, "model");
@@ -117,6 +122,7 @@ int main(void)
        0.0f,    1.0f,    0.0f, 0.0f, 1.0f, 1.0f
     };
 
+    std::cout << "buffer" << std::endl;
     GLuint vbo;
     glGenBuffers( 1, &vbo );
     glBindBuffer( GL_ARRAY_BUFFER, vbo );
@@ -124,6 +130,7 @@ int main(void)
     glBufferData( GL_ARRAY_BUFFER, varray.size()*sizeof(*varray.data()), nullptr, GL_STATIC_DRAW );
     glBufferSubData( GL_ARRAY_BUFFER, GL_ZERO, varray.size()*sizeof(*varray.data()), varray.data() );
 
+    std::cout << "vertex specification" << std::endl;
     GLuint vao;
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao );
@@ -133,15 +140,16 @@ int main(void)
     glEnableVertexAttribArray(1);
     glBindBuffer(GL_ARRAY_BUFFER, 0);   
 
-    GLenum error0 = glGetError();
-    GLuint b0 = 111, b1 = 222, b2 = 333;
-    glGetVertexAttribIuiv(0, GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING, &b0);
-    GLenum error1 = glGetError();
-    glGetVertexAttribIuiv(1, GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING, &b1);
-    GLenum error2 = glGetError();
-    glGetVertexAttribIuiv(2, GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING, &b2);
-    GLenum error3 = glGetError();
+    //GLenum error0 = glGetError();
+    //GLuint b0 = 111, b1 = 222, b2 = 333;
+    //glGetVertexAttribIuiv(0, GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING, &b0);
+    //GLenum error1 = glGetError();
+    //glGetVertexAttribIuiv(1, GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING, &b1);
+    //GLenum error2 = glGetError();
+    //glGetVertexAttribIuiv(2, GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING, &b2);
+    //GLenum error3 = glGetError();
       
+    std::cout << "application loop" << std::endl;  
     auto start_time = std::chrono::high_resolution_clock::now();
     auto prev_time = start_time;
     while (!glfwWindowShouldClose(wnd))

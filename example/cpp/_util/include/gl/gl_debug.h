@@ -28,7 +28,8 @@ public:
       error_only
     };
 
-    void Init( TDebugLevel debug_level );
+    static void information();
+    void Init(TDebugLevel debug_level);
 
     static void __stdcall DebugCallback( unsigned int source, unsigned int type, unsigned int id, unsigned int severity, int length, const char* message, const void* userParam );
     void DebugCallback( unsigned int source, unsigned int type, unsigned int id, unsigned int severity, int length, const char* message );
@@ -38,13 +39,8 @@ private:
     TDebugLevel _debug_level = TDebugLevel::all;
 };
 
-
-void CContext::Init( CContext::TDebugLevel debug_level )
+void CContext::information()
 {
-    _debug_level = debug_level;
-
-    bool enable_debug = _debug_level != TDebugLevel::off;
-
     std::cout << glGetString( GL_VENDOR ) << std::endl;
     std::cout << glGetString( GL_RENDERER ) << std::endl;
     std::cout << glGetString( GL_VERSION ) << std::endl;
@@ -66,11 +62,22 @@ void CContext::Init( CContext::TDebugLevel debug_level )
     if ( contex_mask & GL_CONTEXT_FLAG_DEBUG_BIT  )
       std::cout << ", debug";
     std::cout << std::endl;
-    
+}
+
+void CContext::Init( CContext::TDebugLevel debug_level )
+{
+    _debug_level = debug_level;
+    bool enable_debug = _debug_level != TDebugLevel::off;
+
+    information();
     // extensions
     //std::cout << glGetStringi( GL_EXTENSIONS, ... ) << std::endl;
-
     std::cout << std::endl;
+
+    // KHR_debug
+    // https://www.khronos.org/registry/OpenGL/extensions/KHR/KHR_debug.txt
+    // ARB_debug_output
+    // https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_debug_output.txt
 
     glDebugMessageCallback( &CContext::DebugCallback, this );
 

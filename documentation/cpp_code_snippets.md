@@ -406,7 +406,7 @@ If the compiling of a shader succeeded can be checked by [`glGetShaderiv`](https
 ```
 
 ```cpp
-bool CompileStatus( GLuint shader )
+bool CompileStatus(GLuint shader)
 {
     GLint status = GL_TRUE;
     glGetShaderiv( shader, GL_COMPILE_STATUS, &status );
@@ -426,7 +426,7 @@ bool CompileStatus( GLuint shader )
 If the linking of a program was successful can be checked by [`glGetProgramiv`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGetProgram.xhtml) and the parameter `GL_LINK_STATUS`. e.g.:
 
 ```cpp
-bool LinkStatus( GLuint program )
+bool LinkStatus(GLuint program)
 {
     GLint status = GL_TRUE;
     glGetProgramiv( program, GL_LINK_STATUS, &status );
