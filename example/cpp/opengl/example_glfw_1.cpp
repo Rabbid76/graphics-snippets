@@ -69,7 +69,6 @@ void main()
 }
 )";
 
-
 // main
 
 int main(void)
@@ -79,6 +78,7 @@ int main(void)
 
     //glfwWindowHint(GLFW_REFRESH_RATE, 10);
 
+    OpenGL::CContext::TDebugLevel debug_level = OpenGL::CContext::TDebugLevel::all;
 #ifdef __APPLE__
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
@@ -86,6 +86,7 @@ int main(void)
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
 #endif
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, debug_level != OpenGL::CContext::TDebugLevel::off ? GLFW_TRUE : GLFW_FALSE);
     GLFWwindow *wnd = glfwCreateWindow(800, 600, "GLFW OGL window", nullptr, nullptr);
     if ( wnd == nullptr )
     {
@@ -96,11 +97,10 @@ int main(void)
     if (glewInit() != GLEW_OK)
         throw std::runtime_error( "error initializing glew" );
 
-#ifdef __APPLE__
-    OpenGL::CContext::information();
-#else
-    OpenGL::CContext::TDebugLevel debug_level = OpenGL::CContext::TDebugLevel::all;
     OpenGL::CContext context;
+#ifdef __APPLE__
+    context.log_context_information();
+#else
     context.Init(debug_level);
 #endif
 
@@ -133,7 +133,7 @@ int main(void)
     std::cout << "vertex specification" << std::endl;
     GLuint vao;
     glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao );
+    glBindVertexArray(vao);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 6*sizeof(*varray.data()), 0);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 6*sizeof(*varray.data()), (void*)(2*sizeof(*varray.data())));
