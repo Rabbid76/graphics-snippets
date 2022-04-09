@@ -82,9 +82,9 @@ int main(void)
 #ifdef __APPLE__
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
-    //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
+    glewExperimental = true;
 #endif
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, debug_level != OpenGL::CContext::TDebugLevel::off ? GLFW_TRUE : GLFW_FALSE);
     GLFWwindow *wnd = glfwCreateWindow(800, 600, "GLFW OGL window", nullptr, nullptr);
@@ -98,11 +98,7 @@ int main(void)
         throw std::runtime_error( "error initializing glew" );
 
     OpenGL::CContext context;
-#ifdef __APPLE__
-    context.log_context_information();
-#else
-    context.Init(debug_level);
-#endif
+    context.init(debug_level);
 
     //glfwSwapInterval( 2 );
 

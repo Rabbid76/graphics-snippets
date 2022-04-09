@@ -45,8 +45,10 @@ private:
     GLint minor_version = 0;
     GLint contex_mask = 0;
     std::set<std::string> extensions;
-    bool arb_debug_output = false;
     bool khr_debug = false;
+    bool arb_debug_output = false;
+    bool amd_debug_output = false;
+    bool debug_output_supported = false;
 };
 
 void CContext::introspection()
@@ -60,13 +62,22 @@ void CContext::introspection()
     for (int i = 0; i < no_of_extensions; ++i)
         extensions.insert((const char*)glGetStringi(GL_EXTENSIONS, i));
 
+    // KHR_debug
+    // https://www.khronos.org/registry/OpenGL/extensions/KHR/KHR_debug.txt
+    khr_debug = extensions.find("GL_KHR_debug") != extensions.end();
+
     // ARB_debug_output
     // https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_debug_output.txt
     arb_debug_output = extensions.find("GL_ARB_debug_output") != extensions.end();
 
-    // KHR_debug
-    // https://www.khronos.org/registry/OpenGL/extensions/KHR/KHR_debug.txt
-    khr_debug = extensions.find("GL_KHR_debug") != extensions.end();
+    // AMD_debug_output
+    // https://www.khronos.org/registry/OpenGL/extensions/AMD/AMD_debug_output.txt
+    amd_debug_output = extensions.find("GL_AMD_debug_output") != extensions.end();
+
+    debug_output_supported =
+        major_version > 4 ||
+        (major_version == 4 && minor_version >= 3) ||
+        khr_debug || arb_debug_output || amd_debug_output;
 }
 
 void CContext::log_context_information()
@@ -87,7 +98,7 @@ void CContext::log_context_information()
       std::cout << ", robust access";
     if (contex_mask & GL_CONTEXT_FLAG_DEBUG_BIT)
       std::cout << ", debug";
-    if (arb_debug_output)
+    if (debug_output_supported)
         std::cout << ", debug output";
     std::cout << std::endl;
 
@@ -116,13 +127,11 @@ void CContext::DebugCallbackHandler(
 
 void CContext::init_debug_output() 
 {
-    bool debug_output_supported =
-        major_version > 4 ||
-        (major_version == 4 && major_version >= 3) ||
-        arb_debug_output;
     if (!debug_output_supported)
         return;
     if (_debug_level == TDebugLevel::off)
+        return;
+    if (!GLEW_KHR_debug)
         return;
 
     glDebugMessageCallback(&CContext::DebugCallbackHandler, this);
