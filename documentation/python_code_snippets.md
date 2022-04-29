@@ -16,6 +16,32 @@ glGetBufferSubData(GL_ARRAY_BUFFER, 0, no_of_floats * sizeof(GLfloat), float_arr
 print(list(float_array))
 ```
 
+## Buffer to byte array
+
+Use [`numpy.frombuffer`](https://numpy.org/doc/stable/reference/generated/numpy.frombuffer.html) to convert the string to a byte array:
+
+```py
+import numpy
+```
+
+```py
+data = glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE)
+byte_array = numpy.frombuffer(data, dtype='uint8')
+print(list(byte_array))
+```
+
+Or use [`ctypes.from_buffer_copy`](https://docs.python.org/3/library/ctypes.html#ctypes._CData.from_buffer_copy)
+
+```py
+import ctypes
+```
+
+```py
+data = glReadPixels(0,0, w, h, GL_RGB,GL_UNSIGNED_BYTE)
+byte_array = (ctypes.c_ubyte * (w * h * 3)).from_buffer_copy(data)
+print(list(byte_array))
+```
+
 ## Vector and matrix operations
 
 ### Arithmetic
