@@ -1,4 +1,4 @@
-# Inigo Quilez   ::   articles  ::   distance functions
+# Inigo Quilez::articles::distance functions
 # https://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm
 #
 # Raymarching - Primitives 

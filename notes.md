@@ -43,3 +43,8 @@ Image-based libraries:
 - [Cork](https://github.com/gilbo/cork), [Cork – A High Performance Library for Geometric Boolean/CSG Operations](https://stephanfr.blog/2016/03/21/cork-a-high-performance-library-for-geometric-booleancsg-operations/)
 - [MCUT](https://cutdigital.github.io/mcut.site/), [GitHub, MCUT](https://github.com/cutdigital/mcut#mcut-star-star-star-star-star)
 - [libigl](https://github.com/libigl/libigl/)
+
+Raymarching:
+
+- [Inigo Quilez::articles::distance functions](https://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm)
+- [Raymarching - Primitives](https://www.shadertoy.com/view/Xds3zN)
