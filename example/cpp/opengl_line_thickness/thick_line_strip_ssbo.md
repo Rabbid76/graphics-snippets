@@ -1,4 +1,5 @@
-[OpenGL Line Width](https://stackoverflow.com/questions/3484260/opengl-line-width)  
+[OpenGL Line Width](https://stackoverflow.com/questions/3484260/opengl-line-width/59688394#59688394)  
+[Drawing a line in modern OpenGL](https://stackoverflow.com/questions/60440682/drawing-a-line-in-modern-opengl/60440937#60440937) 
 
 
 I recommend to use a [Shader](https://www.khronos.org/opengl/wiki/Shader), which generates [triangle primitives](https://www.khronos.org/opengl/wiki/Primitive#Triangle_primitives) along a line strip (or even a line loop).  

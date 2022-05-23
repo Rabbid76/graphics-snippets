@@ -13,3 +13,4 @@ endfunction()
 # GLFW
 glfw_exe(opengl_thick_line_linewidth thick_line_linewidth.cpp)
 glfw_exe(opengl_thick_line_strip_ssbo thick_line_strip_ssbo.cpp)
+glfw_exe(opengl_thick_line_strip_ssbo_2 thick_line_strip_ssbo_2.cpp)

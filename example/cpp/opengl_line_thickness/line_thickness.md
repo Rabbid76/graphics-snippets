@@ -1,7 +1,6 @@
 
 # Line thickness questions
 
-[Drawing a line in modern OpenGL](https://stackoverflow.com/questions/60440682/drawing-a-line-in-modern-opengl/60440937#60440937)  
 [Drawing a variable width line in openGL (No glLineWidth)](https://stackoverflow.com/questions/101718/drawing-a-variable-width-line-in-opengl-no-gllinewidth)  
 [opengl glLineWidth() doesn't change size of lines](https://stackoverflow.com/questions/34866964/opengl-gllinewidth-doesnt-change-size-of-lines)  
 [Thickness of lines using THREE.LineBasicMaterial](https://stackoverflow.com/questions/11638883/thickness-of-lines-using-three-linebasicmaterial)  
@@ -12,7 +11,8 @@
 
 # Answered
 
-[OpenGL Line Width](https://stackoverflow.com/questions/3484260/opengl-line-width)  
+[OpenGL Line Width](https://stackoverflow.com/questions/3484260/opengl-line-width/59688394#59688394)  
+[Drawing a line in modern OpenGL](https://stackoverflow.com/questions/60440682/drawing-a-line-in-modern-opengl/60440937#60440937)  
 [GLSL Geometry shader to replace glLineWidth](https://stackoverflow.com/questions/54686818/glsl-geometry-shader-to-replace-gllinewidth)  
 
 [OpenGL 3.2 Core Profile glLineWidth](https://stackoverflow.com/questions/8791531/opengl-3-2-core-profile-gllinewidth) 
