@@ -167,8 +167,8 @@ class MyWindow:
             glMultiDrawElements(GL_TRIANGLES, counts, GL_UNSIGNED_INT, indexPtr, 2)
 
         elif index_case == 4:
-            indexArray1 = (GLsizei * 3)(0, 1, 2)
-            indexArray2 = (GLsizei * 3)(0, 2, 3)
+            indexArray1 = (GLuint * 3)(0, 1, 2)
+            indexArray2 = (GLuint * 3)(0, 2, 3)
             counts   = [3, 3]
             indexPtr = (GLvoidp * 2)(ctypes.addressof(indexArray1), ctypes.addressof(indexArray2))
             glMultiDrawElements(GL_TRIANGLES, counts, GL_UNSIGNED_INT, indexPtr, 2)
