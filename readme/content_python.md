@@ -35,6 +35,7 @@ Robert C. Martin, Clean Architecture
 [Geometry](../documentation/geometry.md)  
 [example/python/geometry_shader/geometry_001/geo.py](../example/python/geometry_shader/geometry_001/geo.py)  
 ![Geometry](../documentation/image/geometry_001.gif)
+
 ### Tessellation shader
 
 [Tessellation](../documentation/tessellation.md)  

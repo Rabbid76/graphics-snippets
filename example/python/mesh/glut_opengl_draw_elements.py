@@ -141,7 +141,7 @@ class MyWindow:
         glClearColor(0.2, 0.3, 0.3, 1.0)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
           
-        index_case = 11
+        index_case = 12
         if index_case == 0:  
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, self.indexArray)
 
@@ -167,6 +167,13 @@ class MyWindow:
             glMultiDrawElements(GL_TRIANGLES, counts, GL_UNSIGNED_INT, indexPtr, 2)
 
         elif index_case == 4:
+            indexArray1 = (GLsizei * 3)(0, 1, 2)
+            indexArray2 = (GLsizei * 3)(0, 2, 3)
+            counts   = [3, 3]
+            indexPtr = (GLvoidp * 2)(ctypes.addressof(indexArray1), ctypes.addressof(indexArray2))
+            glMultiDrawElements(GL_TRIANGLES, counts, GL_UNSIGNED_INT, indexPtr, 2)
+
+        elif index_case == 5:
             counts   = [3, 3]
             indexPtr = (ctypes.c_void_p * 2)(0, 3 * 4)
             #indexPtr = numpy.array([0, 3 * 4], dtype=numpy.intp)
@@ -174,32 +181,32 @@ class MyWindow:
             glMultiDrawElements(GL_TRIANGLES, counts, GL_UNSIGNED_INT, indexPtr, 2)
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0)
 
-        if index_case == 5:  
+        elif index_case == 6:  
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.__vbo[1])
             glDrawElementsBaseVertex(GL_TRIANGLES, 6, GL_UNSIGNED_INT, None, 0)
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0)
 
-        if index_case == 6:  
+        if index_case == 7:  
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.__vbo[1])
             glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, None, 1)
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0)
 
-        if index_case == 7:  
+        if index_case == 8:  
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.__vbo[1])
             glDrawElementsInstancedBaseVertex(GL_TRIANGLES, 6, GL_UNSIGNED_INT, None, 1, 0)
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0)
 
-        if index_case == 8:  
+        if index_case == 9:  
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.__vbo[1])
             glDrawElementsInstancedBaseInstance(GL_TRIANGLES, 6, GL_UNSIGNED_INT, None, 1, 0)
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0)
 
-        if index_case == 9:  
+        if index_case == 10:  
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.__vbo[1])
             glDrawElementsInstancedBaseVertexBaseInstance(GL_TRIANGLES, 6, GL_UNSIGNED_INT, None, 1, 0, 0)
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0)
 
-        elif index_case == 10:
+        elif index_case == 11:
             # GLAPI/glDrawElementsIndirect
             # https://www.khronos.org/opengl/wiki/GLAPI/glDrawElementsIndirect
             glBindBuffer(GL_DRAW_INDIRECT_BUFFER, self.__darw_indirect_bo[0])
@@ -208,7 +215,7 @@ class MyWindow:
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0)
             glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0)
         
-        elif index_case == 11:
+        elif index_case == 12:
             # GLAPI/glMultiDrawElementsIndirect
             # https://www.khronos.org/opengl/wiki/GLAPI/glMultiDrawElementsIndirect
             glBindBuffer(GL_DRAW_INDIRECT_BUFFER, self.__darw_indirect_bo[1])
@@ -216,6 +223,11 @@ class MyWindow:
             glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, None, 2, 4*5)
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0)
             glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0)
+
+        elif index_case == 13:
+            first = [0, 1]
+            counts = [3, 3]
+            glMultiDrawArrays(GL_TRIANGLES, first, counts, 2)
 
         glutSwapBuffers()
         glutPostRedisplay()
