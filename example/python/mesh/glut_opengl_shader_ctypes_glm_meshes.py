@@ -4,6 +4,8 @@ sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 import math 
 import ctypes 
 import glm 
+import time
+from PIL import Image
 from OpenGL.GLUT import *
 from OpenGL.GL import *
 from OpenGL.GL.shaders import *
@@ -89,7 +91,7 @@ class MyWindow:
         self.__caption = 'OpenGL Window'
         
         glutInit()
-        glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH)
+        glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH | GLUT_MULTISAMPLE)
         glutInitWindowSize(w, h)
         self.__glut_wnd = glutCreateWindow(self.__caption)
 
@@ -106,7 +108,8 @@ class MyWindow:
             triangulated_mesh.Torus(),
             triangulated_mesh.TrefoilKnot(),
             triangulated_mesh.TorusKnot(),
-            triangulated_mesh.Arrow()]
+            #triangulated_mesh.Arrow()
+        ]
 
         distance = 2.5
         self.__diameter = distance * len(mesh_defs) / math.pi
@@ -133,12 +136,19 @@ class MyWindow:
 
         self.__meshes = [SingleMesh(definition) for definition in mesh_defs] 
         self.__multimesh = MultiMesh(mesh_defs, *mesh_defs[0].format)
+        self.__auto_rotate = True
+        self.__angle1 = 0
+        self.__angle2 = 0
+        self.__sceen_shot = False
+        self.screenshot_prefix = "glut_opengl_shader_ctypes_glm_meshes_"
+        self.vp_size = [0, 0]
 
         glEnable(GL_DEPTH_TEST)
         glUseProgram(self.__program)
         #glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
 
         glutDisplayFunc(self.__mainloop)
+        glutKeyboardFunc(self.__key_pressed)
 
     def run(self):
         self.__starttime = 0
@@ -148,11 +158,17 @@ class MyWindow:
     def elapsed_ms(self):
       return glutGet(GLUT_ELAPSED_TIME) - self.__starttime
 
+    def __key_pressed(self, key, x, y):
+        if key == b'r':
+            self.__auto_rotate = not self.__auto_rotate
+        elif key == b's':
+            self.__sceen_shot = True    
+
     def __mainloop(self):
 
-        vp_valid, vp_size, view, projection = self.__glut_navigation.update()
+        vp_valid, self.vp_size, view, projection = self.__glut_navigation.update()
         if not vp_valid:
-            glViewport(0, 0, *vp_size)
+            glViewport(0, 0, *self.vp_size)
 
         glUniformMatrix4fv(self.___uniform['u_proj'], 1, GL_FALSE, glm.value_ptr(projection))
         glUniformMatrix4fv(self.___uniform['u_view'], 1, GL_FALSE, glm.value_ptr(view))
@@ -160,16 +176,17 @@ class MyWindow:
         glClearColor(0.2, 0.3, 0.3, 1.0)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
-        angle1 = self.elapsed_ms() * math.pi * 2 / 5000.0
-        angle2 = self.elapsed_ms() * math.pi * 2 / 7333.0
+        if self.__auto_rotate:
+            self.__angle1 = self.elapsed_ms() * math.pi * 2 / 5000.0
+            self.__angle2 = self.elapsed_ms() * math.pi * 2 / 7333.0
         model_matrices = []
         for i, mesh in enumerate(self.__meshes):
-            angleY = angle1 + math.pi*2 * i / len(self.__meshes)
+            angleY = self.__angle1 + math.pi*2 * i / len(self.__meshes)
             #angleY =  math.pi*2 * i / len(self.__meshes)
             model = glm.mat4(1)
             model = glm.rotate(model, angleY, glm.vec3(0, 0, 1))
             model = glm.translate(model, glm.vec3(self.__diameter/2, 0, 0))
-            model = glm.rotate(model, angle2, glm.vec3(0, 1, 0))
+            model = glm.rotate(model, self.__angle2, glm.vec3(0, 1, 0))
             model_matrices.append(model)
 
         multi_mesh = True
@@ -188,6 +205,12 @@ class MyWindow:
         glutSwapBuffers()
         glutPostRedisplay()
 
+        if self.__sceen_shot:
+            self.__sceen_shot = False
+            image_data = glReadPixels(0, 0, *self.vp_size, GL_RGBA, GL_UNSIGNED_BYTE)
+            image = Image.frombytes('RGBA', self.vp_size, image_data).transpose(method=Image.FLIP_TOP_BOTTOM)
+            image.save(self.screenshot_prefix + time.strftime("_%Y%m%d_%H%M%S") + '.png', 'PNG')
 
-window = MyWindow(800, 600)
+
+window = MyWindow(1280, 640)
 window.run()

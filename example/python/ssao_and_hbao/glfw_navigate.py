@@ -4,6 +4,7 @@ import glm
 import math
 from PIL import Image
 import time
+
 class Navigation:
     def __init__(self, glfw_window, camera_translate, screenshot_prefix):
         self.glfw_window = glfw_window

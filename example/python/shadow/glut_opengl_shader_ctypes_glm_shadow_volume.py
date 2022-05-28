@@ -199,6 +199,7 @@ class MyWindow:
         self.__caption = 'OpenGL Window'
         
         glutInit()
+        #glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH | GLUT_MULTISAMPLE)
         glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH)
         glutInitWindowSize(w, h)
         self.__glut_wnd = glutCreateWindow(self.__caption)
