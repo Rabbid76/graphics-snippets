@@ -11,8 +11,11 @@ from OpenGL.GLUT import *
 def text(x, y, color, text):
     glColor3fv(color)
     glWindowPos2f(x, y)
-    for c in text:
-        glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, ord(c))
+
+    #for c in text:
+    #    glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, ord(c))
+
+    glutBitmapString(GLUT_BITMAP_TIMES_ROMAN_24, text.encode('ascii'))
 
 def display():
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
