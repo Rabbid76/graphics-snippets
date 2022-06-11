@@ -268,10 +268,10 @@ See **[OpenGL Lighting on texture plane is not working](https://stackoverflow.co
 [Inter dependency between gl_color and material](https://stackoverflow.com/questions/48389412/inter-dependency-between-gl-color-and-material/48391162#48391162)  
 [Adding a Light Source to 3D objects in OpenGL](https://stackoverflow.com/questions/53585826/adding-a-light-source-to-3d-objects-in-opengl/53588245#53588245)  
 
-When lighting ([`GL_LIGHTING`](https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glEnable.xml)) is enabled, then the color which is associated, is taken from the material parameters  ([`glMaterial`](https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glMaterial.xml)).
+When lighting ([`GL_LIGHTING`](https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glEnable.xml)) is enabled, the render color is taken from the material parameters ([`glMaterial`](https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glMaterial.xml)).
 
-If you still want to use the current color attribute (which is set by [`glColor`](https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glColor.xml)), then you have to enable [`GL_COLOR_MATERIAL`](https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glEnable.xml)
-and to set the color material paramters ([`glColorMaterial`](https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glColorMaterial.xml)):
+If you still want to use the current color attribute (set by [`glColor`](https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glColor.xml)), you need to enable [`GL_COLOR_MATERIAL`](https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glEnable.xml)
+and to set the color material parameters ([`glColorMaterial`](https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glColorMaterial.xml)):
 
 ```cpp
 glEnable(GL_COLOR_MATERIAL);
