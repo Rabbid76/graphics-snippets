@@ -504,12 +504,11 @@ gl2.glTexImage3D(GL2.GL_TEXTURE_3D, 0, GL2.GL_R16F, nCols, nRows, nSlices, 0, GL
 
 # GLSL
 
-[GLSL 4.60 Specification - 4.1.7. Opaque Types
- (page 34)](https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.4.60.pdf#page=27&zoom=100,0,397)
+See [GLSL 4.60 Specification - 4.1.7. Opaque Types](https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.4.60.html#basic-types)
 
-> Texture-combined sampler types are opaque types, declared and behaving as described above for opaque types. When aggregated into arrays within a shader, they can only be indexed with a dynamically uniform integral expression, otherwise results are undefined. [...]
+> [...] Texture-combined sampler types are opaque types, [...]. When aggregated into arrays within a shader, they can only be indexed with a dynamically uniform integral expression, otherwise results are undefined.
 
-In later version, the index to an array of samplers has to be "dynamically uniform". This means the index has to be the "same" for all fragments (e.g. a constant or a uniform variable).
+This means the index has to be the "same" for all fragments (e.g. a constant or a uniform variable).
 
 [GLSL ES 3.20 Specification - 4.1.11. Opaque Types (page 32)](https://www.khronos.org/registry/OpenGL/specs/es/3.2/GLSL_ES_Specification_3.20.pdf)  
 
@@ -543,8 +542,7 @@ In later version, the index to an array of samplers has to be "dynamically unifo
 
 [GLSL ES 3.20 Specification - 4.1.11. Opaque Types (page 32)](https://www.khronos.org/registry/OpenGL/specs/es/3.2/GLSL_ES_Specification_3.20.pdf)  
 
-> When aggregated into arrays within a shader, opaque types can only be indexed with a dynamically uniform integral expression. [...]
-
+> When aggregated into arrays within a shader, opaque types can only be indexed with a dynamically uniform integral expression. [...]  
 > [...] Sampler types (e.g. **sampler2D**) are opaque types [...]
 
 [GLSL 4.60 Specification - 3.8.2. Dynamically Uniform Expressions (page 20)](https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.4.60.pdf)  
