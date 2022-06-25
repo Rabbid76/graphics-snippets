@@ -552,6 +552,42 @@ In later version, the index to an array of samplers has to be "dynamically unifo
 
 ---
 
+[OpenGL sampler2D array](https://stackoverflow.com/questions/72648980/opengl-sampler2d-array/72649578#72649578)
+
+You cannot use a fragment shader input variable to index an array of texture samplers. You have to use a `sampler2DArray` (`GL_TEXTURE_2D_ARRAY`) instead of an array of `sampler2D` (`GL_TEXTURE_2D`).
+
+>```glsl
+>int index = int(v_texIndex);
+>vec4 texColor = texture(u_Textures[index], v_TexCoord);
+>```
+
+is undefined behavior because `v_texIndex` is a fragment shader input variable and therefore not a [dynamically uniform expression](https://www.khronos.org/opengl/wiki/Core_Language_(GLSL)#Dynamically_uniform_expression). See [GLSL 4.60 Specification - 4.1.7. Opaque Types](https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.4.60.html#basic-types)
+
+> [...] Texture-combined sampler types are opaque types, [...]. When aggregated into arrays within a shader, they can only be indexed with a dynamically uniform integral expression, **otherwise results are undefined**.
+
+---
+
+Example using `sampler2DArray`:
+
+```glsl
+#version 450 core
+layout(location = 0) out vec4 color;
+
+in vec2 v_TexCoord;
+in float v_texIndex;
+
+uniform sampler2DArray u_Textures;
+
+void main() 
+{
+    color = texture(u_Textures, vec3(v_TexCoord.xy, v_texIndex));
+}
+```
+
+[`texture`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/texture.xhtml) is overloaded for all sampler types. The texture coordinates and texture layer need not to dynamically uniform, but the index into a sampler array has to be dynamically uniform.
+
+---
+
 [Reflection texture from FBO getting to correct image](https://stackoverflow.com/questions/50289505/reflection-texture-from-fbo-getting-to-correct-image/50291377#50291377), [C++]  
 
 I assume the you have set the texture wrap parameters for `GL_TEXTURE_WRAP_S` and `GL_TEXTURE_WRAP_T` to `GL_CLAMP_TO_EDGE`. See [`glTexParameter`](https://www.khronos.org/registry/OpenGL-Refpages/es3.0/html/glTexParameter.xhtml).
