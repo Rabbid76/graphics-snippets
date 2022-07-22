@@ -34,6 +34,7 @@
 #endif
 
 const char* fontfilename = "../../../../../../resource/font/FreeSans.ttf";
+//const char* fontfilename = "C:/source/graphics-snippets/resource/font/FreeSans.ttf";
 
 // shader
 
@@ -219,7 +220,7 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT);
 
         RenderText1(shader, "This is sample text", 25.0f, 50.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
-        RenderText2(shader, "(C) LearnOpenGL.com", 100.0f, 200.0f, 0.5f, glm::vec3(0.3, 0.7f, 0.9f), glm::vec2(1.0f, -0.25f));
+        RenderText2(shader, "(C) LearnOpenGL.com", 35.0f, 200.0f, 0.8f, glm::vec3(0.3, 0.7f, 0.9f), glm::vec2(1.0f, -0.25f));
 
         // Swap the buffers
         glfwSwapBuffers(window);

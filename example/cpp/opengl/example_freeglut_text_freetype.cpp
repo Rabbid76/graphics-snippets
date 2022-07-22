@@ -35,6 +35,7 @@
 #define MAIN_LOOP_EVENT 1
 
 const char* fontfilename = "../../../../../../resource/font/FreeSans.ttf";
+//const char* fontfilename = "C:/source/graphics-snippets/resource/font/FreeSans.ttf";
 
 // prototypes
 

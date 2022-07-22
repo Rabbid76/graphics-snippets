@@ -89,8 +89,20 @@ Robert C. Martin, Clean Architecture
 
 ---
 
+[example_noise_1](../example/cpp/opengl/example_noise_1.cpp)  
 [![example_noise_1](../screenshot/example/cpp/opengl/example_noise_1.png)](../example/cpp/opengl/example_noise_1.cpp)  
-[example_noise_1](../example/cpp/opengl/example_noise_1.cpp)
+
+---
+
+[example_freeglut_text_freetype](../example/cpp/opengl/example_freeglut_text_freetype.cpp)  
+[![example_freeglut_text_freetype](../screenshot/example/cpp/opengl/example_freeglut_text_freetype.png)](../example/cpp/opengl/example_freeglut_text_freetype.cpp)  
+
+---
+
+[example_glfw_text_freetype](../example/cpp/opengl/example_glfw_text_freetype.cpp)  
+[![example_glfw_text_freetype](../screenshot/example/cpp/opengl/example_glfw_text_freetype.png)](../example/cpp/opengl/example_glfw_text_freetype.cpp)  
+
+---
 
 ## Immediate mode (Legacy) OpenGL examples
 
