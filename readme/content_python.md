@@ -9,6 +9,19 @@ Robert C. Martin, Clean Architecture
 
 [Python code snippets](../documentation/python_code_snippets.md)
 
+## Hello Triangle
+
+[Hello Triangle - GLUT](../example/python/opengl_hello_triangle/hello_triangle_glut.py)  
+[Hello Triangle - GLUT - OpenGL 4.1 core (macOS)](../example/python/opengl_hello_triangle/hello_triangle_glut_opengl_4_1_core.py)  
+[Hello Triangle - GLUT - immediate mode (legacy)](../example/python/opengl_hello_triangle/hello_triangle_glut_begin_end.py)  
+[Hello Triangle - GLFW](../example/python/opengl_hello_triangle/hello_triangle_glfw.py)  
+[Hello Triangle - GLFW - OpenGL 4.1 core (macOS)](../example/python/opengl_hello_triangle/hello_triangle_glfw_opengl_4_1_core.py)  
+[Hello Triangle - GLFW - immediate mode (legacy)](../example/python/opengl_hello_triangle/hello_triangle_glfw_begin_end.py)  
+[Hello Triangle - Pygame](../example/python/opengl_hello_triangle/hello_triangle_pygame.py)  
+[Hello Triangle - Pygame - OpenGL 4.1 core (macOS)](../example/python/opengl_hello_triangle/hello_triangle_pygame_opengl_4_1_core.py)  
+[Hello Triangle - Pygame - immediate mode (legacy)](../example/python/opengl_hello_triangle/hello_triangle_pygame_begin_end.py)  
+[Hello Triangle - tkinter](../example/python/opengl_hello_triangle/hello_triangle_tkinter.py)  
+[Hello Triangle - tkinter - immediate mode (legacy)](../example/python/opengl_hello_triangle/hello_triangle_tkinter_begin_end.py)  
 ## Examples
 
 ### Mesh
