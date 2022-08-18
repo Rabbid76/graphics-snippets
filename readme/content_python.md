@@ -16,7 +16,8 @@ Robert C. Martin, Clean Architecture
 [OpenGL 4.6, Direct State Access (DSA), Spir-V Shader Program](https://github.com/Rabbid76/graphics-snippets/blob/master/example/python/dsa_spirv_cube/example_python_dsa_spirv.md)  
 [![OpenGL 4.6, Direct State Access (DSA), Spir-V Shader Program](../example/python/dsa_spirv_cube/image/cube_glut_glm_spirv.gif)](https://github.com/Rabbid76/graphics-snippets/blob/master/example/python/dsa_spirv_cube/example_python_dsa_spirv.md)
 
-[Mesh](../example/python/mesh/glut_opengl_shader_ctypes_glm_meshes.py)  
+[Mesh - glut](../example/python/mesh/glut_opengl_shader_ctypes_glm_meshes.py)  
+[Mesh - glfw](../example/python/mesh/glfw_opengl_shader_ctypes_glm_meshes.py)  
 [![Mesh](../screenshot/example/python/mesh/glut_opengl_shader_ctypes_glm_meshes.png)](../example/python/mesh/glut_opengl_shader_ctypes_glm_meshes.py)
 
 [Mesh in Tkinter frame](../example/python/mesh/tkinter_opengl_shader_ctypes_glm_meshes.py)  
