@@ -360,7 +360,7 @@ In both cases, the draw buffers being defined correspond in order to the respect
 
 ### Vertex buffer
 
-[What is the proper way to modify OpenGL vertex buffer?](https://stackoverflow.com/questions/15821969/what-is-the-proper-way-to-modify-opengl-vertex-buffe)  
+[What is the proper way to modify OpenGL vertex buffer?](https://stackoverflow.com/questions/15821969/what-is-the-proper-way-to-modify-opengl-vertex-buffer)  
 
 ## Draw calls
 

@@ -259,10 +259,11 @@ A [Windows Bitmap](https://de.wikipedia.org/wiki/Windows_Bitmap) file has a file
 
 [Calculating texture coordinates from a heightmap](https://stackoverflow.com/questions/55739024/calculating-texture-coordinates-from-a-heightmap/55739265#55739265), [C++]  
 
-**By default OpenGL assumes that the start of each row of an image is aligned to 4 bytes**.
+**By default, OpenGL assumes that the beginning of each line of an image is aligned to 4 bytes**.
 
-**This is because the [`GL_UNPACK_ALIGNMENT`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml) parameter by default is 4. Since the image has 3 color channels (`GL_RGB`), and is tightly packed the size of a row of the image may not be aligned to 4 bytes**.  
-**When a RGB image with 3 color channels is loaded to a texture object and 3*width is not divisible by 4, [`GL_UNPACK_ALIGNMENT`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml) has to be set to 1, before specifying the texture image with  `glTexImage2D`**:
+**This is because the [`GL_UNPACK_ALIGNMENT`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml) parameter is 4 by default. Since the image has 3 color channels (GL_RGB) and is tightly packed, the size of one line of the image may not be aligned to 4 bytes.**.  
+**If an RGB image with 3 color channels is loaded into a texture object and 3*width is not divisible by 4, [`GL_UNPACK_ALIGNMENT`](https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glPixelStore.xhtml) must be set to 1 before specifying the texture image with `glTexImage2D`**.  
+Otherwise, the image memory data is accessed outside the allowed range, resulting in an exception, or the lines of the image are misaligned, resulting in a shift effect after each line.
 
 ```cpp
 glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
