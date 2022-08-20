@@ -9,6 +9,10 @@ Robert C. Martin, Clean Architecture
 
 [C++ code snippets](../documentation/cpp_code_snippets.md)
 
+## Hello Triangle
+
+[Hello Triangle - GLFW](../example/cpp/hello_triangle/hello_triangle_glfw/hello_triangle_glfw.cpp)  
+
 ## Thick lines
 
 [Thick lines with OpenGL core profile](../documentation/thick_line_shader.md)
