@@ -26,11 +26,13 @@ Robert C. Martin, Clean Architecture
 ## Hello Cube
 
 [Hello Cube - GLUT](../example/python/opengl_hello_cube/hello_cube_glut.py)  
+[Hello Cube - GLUT - OpenGL 4.1 core (macOS)](../example/python/opengl_hello_cube/hello_cube_glut_opengl_4_1_core.py)  
 [Hello Cube - GLUT - immediate mode (legacy)](../example/python/opengl_hello_cube/hello_cube_glut_begin_end.py)  
 [Hello Cube - GLFW](../example/python/opengl_hello_cube/hello_cube_glfw.py)  
 [Hello Cube - GLFW - OpenGL 4.1 core (macOS)](../example/python/opengl_hello_cube/hello_cube_glfw_opengl_4_1_core.py)  
 [Hello Cube - GLFW - immediate mode (legacy)](../example/python/opengl_hello_cube/hello_cube_glfw_begin_end.py)  
 [Hello Cube - Pygame](../example/python/opengl_hello_cube/hello_cube_pygame.py)  
+[Hello Cube - Pygame - OpenGL 4.1 core (macOS)](../example/python/opengl_hello_cube/hello_cube_pygame_opengl_4_1_core.py)  
 [Hello Cube - Pygame - immediate mode (legacy)](../example/python/opengl_hello_cube/hello_cube_pygame_begin_end.py)  
 [Hello Cube - tkinter](../example/python/opengl_hello_cube/hello_cube_tkinter.py)  
 [Hello Cube - tkinter - immediate mode (legacy)](../example/python/opengl_hello_cube/hello_cube_tkinter_begin_end.py)  
