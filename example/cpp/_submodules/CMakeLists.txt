@@ -35,7 +35,7 @@ endif()
 
 # freeglut
 if(NOT MAKE_CONFIG STREQUAL "MacXCode")
-add_subdirectory(freeglut/freeglut/freeglut)
+add_subdirectory(freeglut)
 if(MAKE_CONFIG STREQUAL "MSVC") 
     target_compile_options(freeglut PUBLIC /wd4312)
 	target_compile_options(freeglut_static PUBLIC /wd4312)
