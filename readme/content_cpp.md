@@ -20,6 +20,9 @@ Robert C. Martin, Clean Architecture
 [thick line strip ssbo](../example/cpp/opengl_line_thickness/thick_line_strip_ssbo.cpp)  
 [![thick_line_strip_ssbo](../documentation/image/thick_line_2.png)](../example/cpp/opengl_line_thickness/dashed_line_strip.cpp)  
 
+[thick line, geometry shader](../example/cpp/opengl/example_shader_geometry_1_line.cpp)  
+[![thick line, geometry shader](https://i.stack.imgur.com/awwMM.png)](../example/cpp/opengl/example_shader_geometry_1_line.cpp)  
+
 ## Dashed lines
 
 [Dashed line shader](../documentation/dashed_line_shader.md)  
