@@ -75,7 +75,7 @@ void main()
 
 int main(void)
 {
-    sf::VideoMode videoMode(640, 480);
+    sf::VideoMode videoMode(sf::Vector2u(640, 480));
 
     sf::ContextSettings settings;
     settings.depthBits = 24;

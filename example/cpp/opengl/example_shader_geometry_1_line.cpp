@@ -240,11 +240,8 @@ int main(void)
     GLint loc_col = glGetUniformLocation( prog.Prog(), "u_color" );
     GLint loc_thi = glGetUniformLocation( prog.Prog(), "u_thickness" );
 
-
     while (!glfwWindowShouldClose(wnd))
     {
-        static float angle = 1.0f;
-
         int vpSize[2];
         glfwGetFramebufferSize( wnd, &vpSize[0], &vpSize[1] );
         
@@ -266,20 +263,28 @@ int main(void)
         glm::vec3(0.0f, 1.0f, 0.0f));
 
         glm::mat4 model( 1.0f );
+        //float angle = 30.0f;
+        float angle = glfwGetTime() * 20.0f;
         model = glm::translate( model, glm::vec3(0.1f, 0.0f, 0.2f) );
         model = glm::rotate( model, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f) );
-        angle += 1.0f;
         
         glUniformMatrix4fv( loc_mvp, 1, GL_FALSE, glm::value_ptr(project * view * model) );
         glUniform2f( loc_vps, (float)vpSize[0], (float)vpSize[1] );
-        glUniform4f( loc_col, 1.0f, 1.0f, 1.0f, 1.0f );
-        glUniform1f( loc_thi, 10.0f );
+        glUniform1f( loc_thi, 50.0f );
 
         glViewport( 0, 0, vpSize[0], vpSize[1] );
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-      
+
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glUniform4f(loc_col, 0.5f, 0.5f, 0.5f, 1.0f);
+        glDrawElements(GL_LINE_LOOP, (GLsizei)iarray.size(), GL_UNSIGNED_INT, nullptr);
+
+        glPolygonOffset(-1.0f, -1.0f);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glUniform4f(loc_col, 1.0f, 0.0f, 0.0f, 1.0f);
         glDrawElements( GL_LINE_LOOP, (GLsizei)iarray.size(), GL_UNSIGNED_INT, nullptr );
+        glPolygonOffset(0.0f, 0.0f);
 
         glfwSwapBuffers(wnd);
         glfwPollEvents();
