@@ -1,11 +1,11 @@
 const canvas = document.getElementById("webgl_canvas") as HTMLCanvasElement
-const gl = canvas.getContext("webgl") as WebGLRenderingContext
+const gl = canvas.getContext("webgl2") as WebGL2RenderingContext
 
 const vertexShader : string = 
-`#version 100
-attribute vec3 inPos;
-attribute vec4 inColor;
-varying vec4 vColor;
+`#version 300 es
+in vec3 inPos;
+in vec4 inColor;
+out vec4 vColor;
 uniform mat4 projection;
 void main()
 {
@@ -15,12 +15,13 @@ void main()
 `
 
 const fragmentShader : string = 
-`#version 100
+`#version 300 es
 precision mediump float;
-varying vec4 vColor;
+in vec4 vColor;
+out vec4 fragColor;
 void main()
 {
-    gl_FragColor = vColor;
+    fragColor = vColor;
 }
 `
 
@@ -41,6 +42,8 @@ const inColorAttribLoc : number = gl.getAttribLocation(progDraw, "inColor")
 const projectionLocation = gl.getUniformLocation(progDraw, "projection") as WebGLUniformLocation;
 gl.useProgram(progDraw)
 
+const vao = gl.createVertexArray() as WebGLVertexArrayObject;
+gl.bindVertexArray(vao);
 var attributes = [
 //   x       y     z    R  G  B  A
     -0.866, -0.75, 0,   1, 0, 0, 1, 

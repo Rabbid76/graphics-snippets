@@ -10,6 +10,7 @@ Robert C. Martin, Clean Code: A Handbook of Agile Software Craftsmanship
 ## Hello Triangle
 
 [Hello Triangle - Node.js, WebGL 1.0](../example/nodejs/hallo_triangle/hello_triangle_webgl_1_0/src/client/webgl_client.ts)  
+[Hello Triangle - Node.js, WebGL 2.0](../example/nodejs/hallo_triangle/hello_triangle_webgl_2_0/src/client/webgl_client.ts)  
 
 ## Geometry
 
