@@ -68,7 +68,7 @@ class MeshSpecification:
     def set_attributes(self, vertices, normals, texcoords):
         self.box_min = [*vertices[0]]
         self.box_max = [*vertices[0]]
-        uvs = texcoords[0] if texcoords else None
+        uvs = texcoords if texcoords else None
         for i in range(len(vertices)):
             v = vertices[i]
             for j in range(3):
