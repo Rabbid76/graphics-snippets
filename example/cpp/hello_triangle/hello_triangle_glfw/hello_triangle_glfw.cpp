@@ -21,6 +21,7 @@
 #include "../gl_debug.h"
 
 #include <chrono>
+#include <fstream>
 #include <iostream>
 #include <stdexcept>
 #include <string>
@@ -67,10 +68,13 @@ void main()
 }
 )";
 
+void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+void saveScreenshotToFile(const char* filename, int width, int height);
 GLuint CompileShader(GLenum ahader_type, const char* shader_code);
 GLuint LinkProgram(std::initializer_list<GLuint> shader_objets);
 
 bool debug_context = true;
+bool screenshot = false;
 
 int main()
 {
@@ -93,6 +97,7 @@ int main()
         glfwTerminate();
         throw std::runtime_error( "error initializing window" );
     }
+    glfwSetKeyCallback(wnd, keyCallback);
     glfwMakeContextCurrent(wnd);
     if (glewInit() != GLEW_OK)
         throw std::runtime_error( "error initializing glew" );
@@ -187,12 +192,35 @@ int main()
 
         glfwSwapBuffers(wnd);
         glfwPollEvents();
+
+        if (screenshot) {
+            screenshot = false;
+            saveScreenshotToFile("screenshot.tga", vpSize[0], vpSize[1]);
+        }
     }
 
     glfwDestroyWindow( wnd );
     glfwTerminate();
 
     return 0;
+}
+
+void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    if (key == GLFW_KEY_S && action == GLFW_PRESS)
+        screenshot = true;
+}
+
+void saveScreenshotToFile(const char* filename, int width, int height) {
+    short tgaHead[] = { 0, 2, 0, 0, 0, 0, (short)width, (short)height, 24 };
+    std::vector<char> buffer(width*height*3);
+    glReadPixels(0, 0, width, height, GL_BGR, GL_UNSIGNED_BYTE, buffer.data());
+    FILE* out = fopen(filename, "w");
+    std::fstream outFile;
+    outFile.open(filename, std::ios::app | std::ios::binary);
+    outFile.write(reinterpret_cast<char*>(&tgaHead), sizeof(tgaHead));
+    outFile.write(buffer.data(), buffer.size());
+    outFile.close();
 }
 
 bool CompileStatus(GLuint shader)
