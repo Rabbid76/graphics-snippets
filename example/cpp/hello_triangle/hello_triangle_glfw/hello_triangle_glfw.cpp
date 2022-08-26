@@ -215,7 +215,7 @@ void saveScreenshotToFile(const char* filename, int width, int height) {
     short tgaHead[] = { 0, 2, 0, 0, 0, 0, (short)width, (short)height, 24 };
     std::vector<char> buffer(width*height*3);
     glReadPixels(0, 0, width, height, GL_BGR, GL_UNSIGNED_BYTE, buffer.data());
-    FILE* out = fopen(filename, "w");
+    
     std::fstream outFile;
     outFile.open(filename, std::ios::app | std::ios::binary);
     outFile.write(reinterpret_cast<char*>(&tgaHead), sizeof(tgaHead));
