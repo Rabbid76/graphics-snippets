@@ -266,6 +266,16 @@ See also [Hiding pygame display](https://stackoverflow.com/questions/10466590/hi
 [Alpha compositing](https://en.wikipedia.org/wiki/Alpha_compositing)  
 [Blending](https://www.khronos.org/opengl/wiki/Blending)
 
+[ModernGL depth-test ignoring vertices in the back (sometimes?)](https://stackoverflow.com/questions/73014118/moderngl-depth-test-ignoring-vertices-in-the-back-sometimes/73014170#73014170)  
+[Fragments with different depth are blended](https://stackoverflow.com/questions/73281022/fragments-with-different-depth-are-blended/73281318#73281318)  
+[Text2DEntity renders opaque and hides other entities behind it](https://stackoverflow.com/questions/57627805/text2dentity-renders-opaque-and-hides-other-entities-behind-it/57627950#57627950)  
+[OpenGL: Transparent texture issue](https://stackoverflow.com/questions/45954668/opengl-transparent-texture-issue/45955236#45955236)  
+
+[Blending](https://www.khronos.org/opengl/wiki/Blending) doesn't work properly when [Depth Test](https://www.khronos.org/opengl/wiki/Depth_Test) is enabled, because the fragments behind already drawn objects are discarded by depth test before they can be blended. You must draw the primitives in the correct order from back to front to make it work properly. See also [OpenGL depth sorting](https://stackoverflow.com/questions/4305911/opengl-depth-sorting) and [OpenGL: Transparent texture issue](https://stackoverflow.com/questions/45954668/opengl-transparent-texture-issue/45955236#45955236).
+
+[Blending](https://www.khronos.org/opengl/wiki/Blending) may not work as you expect when the [Depth Test](https://www.khronos.org/opengl/wiki/Depth_Test) is enabled. The depth test discards the fragments before they can be blended. If depth test and blending are enabled, a fragment that is not discarded during the depth test will be blended. So it depends on the order in which the objects are drawn.  
+To achieve correct blending of objects with different depths, draw all objects in order from back to front (depth sorting). Since the objects are drawn from back to front, the depth test is not needed at all.  
+
 ### Premultiplied Alpha - WebGL
 
 `premultipliedAlpha: false`, `UNPACK_PREMULTIPLIED_ALPHA_WEBGL`!
