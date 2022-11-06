@@ -68,13 +68,13 @@ export const contactShadow = (canvas: any) => {
     shadowFolder.add(ground.group.position, 'y', -3, 3, 0.1).onChange(() => ground.needsUpdate = true)
     shadowFolder.add(ground.group.position, 'z', -3, 3, 0.1).onChange(() => ground.needsUpdate = true)
 
-    window.addEventListener('resize', onWindowResize, false)
-    function onWindowResize() {
+    const onWindowResize = () => {
         camera.aspect = window.innerWidth / window.innerHeight
         camera.updateProjectionMatrix()
         renderer.setSize(window.innerWidth, window.innerHeight)
         render()
     }
+    window.addEventListener('resize', onWindowResize, false)
 
     let start: number, previousTimeStamp: number;
     const animate = (timestamp: number) => {
@@ -99,7 +99,7 @@ export const contactShadow = (canvas: any) => {
         stats.update()
     }
 
-    function render() {
+    const render = () => {
         renderer.render(scene, camera)
     }
     animate(0)
