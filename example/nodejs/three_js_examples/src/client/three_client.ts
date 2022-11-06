@@ -1,5 +1,6 @@
-import { helloCube } from "./examples/hello_cube"
-import { contactShadow } from "./examples/contact_shadow"
+import { helloCube } from './examples/helloCube'
+import { contactShadow } from './examples/contactShadow'
+import { progressiveShadow } from './examples/progressiveShadow'
 
 // @ts-ignore
 const canvas: any = three_canvas
@@ -16,4 +17,5 @@ switch(example) {
     default: helloCube(canvas); break
     case 'hello_cube': helloCube(canvas); break
     case 'contact_shadow': contactShadow(canvas); break
+    case 'progressive_shadow': progressiveShadow(canvas); break
 }
