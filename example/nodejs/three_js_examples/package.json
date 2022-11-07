@@ -10,7 +10,8 @@
     "build:server": "tsc -p ./src/server",
     "build": "npm run build:client && npm run build:server",
     "dev": "webpack serve --config ./src/client/webpack.dev.js",
-    "start": "node ./dist/server/three_server.js"
+    "start": "node ./dist/server/three_server.js",
+    "copy:deploy": "copyfiles --flat ./dist/client/*.js ./deployment"
   },
   "author": "Rabbid76",
   "license": "ISC",
@@ -19,6 +20,7 @@
     "@types/express": "^4.17.14",
     "@types/node": "^18.11.9",
     "@types/three": "^0.144.0",
+    "copyfiles": "^2.4.1",
     "dat.gui": "^0.7.9",
     "install-peers": "^1.0.4",
     "three": "^0.146.0",
