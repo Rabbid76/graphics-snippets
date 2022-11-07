@@ -1,3 +1,6 @@
+# pyopengl glGenVertexArrays() causes segfault in threads
+# https://stackoverflow.com/questions/74339949/pyopengl-glgenvertexarrays-causes-segfault-in-threads/74340039#74340039
+
 from OpenGL.GL import *
 from OpenGL.GLU import *
 import OpenGL.GL.shaders
