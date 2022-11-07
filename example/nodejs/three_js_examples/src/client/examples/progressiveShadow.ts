@@ -1,13 +1,12 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
-import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
+import { Controls } from '../three/controls'
 import { ProgressiveLightMap } from 'three/examples/jsm/misc/ProgressiveLightMap.js';
 import Stats from 'three/examples/jsm/libs/stats.module' 
 import { GUI } from 'dat.gui'
 
 export const progressiveShadow = (canvas: any) => {
     const shadowMapRes = 512, lightMapRes = 1024, lightCount = 8;
-    const dirLights: any = [], lightmapObjects: any = [];
+    const dirLights: any = [], lightMapObjects: any = [];
     const params = { 
         'Enable': true, 
         'Blur Edges': true, 
@@ -17,51 +16,51 @@ export const progressiveShadow = (canvas: any) => {
         'Debug Lightmap': false 
     };
 
-    const renderer = new THREE.WebGLRenderer( { antialias: true } );
-    renderer.setPixelRatio( window.devicePixelRatio );
-    renderer.setSize( window.innerWidth, window.innerHeight );
+    const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true })
+    renderer.setPixelRatio(window.devicePixelRatio)
+    renderer.setSize(window.innerWidth, window.innerHeight)
     renderer.shadowMap.enabled = true;
-    document.body.appendChild( renderer.domElement );
+    document.body.appendChild( renderer.domElement )
     // @ts-ignore
-    const stats = new Stats();
-    document.body.appendChild(stats.dom);
+    const stats = new Stats()
+    document.body.appendChild(stats.dom)
 
-    const camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
-    camera.position.set(0, 100, 1000);
-    camera.name = 'Camera';
+    const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000)
+    camera.position.set(0, 500, 1000)
 
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color( 0x949494 );
-    //scene.fog = new THREE.Fog( 0x949494, 1000, 3000 );
+    const scene = new THREE.Scene()
+    scene.background = new THREE.Color(0x949494)
+    //scene.fog = new THREE.Fog(0x949494, 1000, 3000)
 
-    const progressiveLightMap = new ProgressiveLightMap( renderer, lightMapRes );
+    const controls = new Controls(renderer, camera)
+    controls.orbitControls.enableDamping = true // an animation loop is required when either damping or auto-rotation are enabled
+    controls.orbitControls.dampingFactor = 0.05
+    controls.orbitControls.screenSpacePanning = true
+    controls.orbitControls.minDistance = 100
+    controls.orbitControls.maxDistance = 500
+    controls.orbitControls.maxPolarAngle = Math.PI / 1.5
+    controls.orbitControls.target.set(0, 100, 0)
 
-    const lightOrigin = new THREE.Group();
-    lightOrigin.position.set(60, 250, 100);
+    const lightOrigin = new THREE.Group()
+    lightOrigin.position.set(0, 300, -200)
     scene.add(lightOrigin);
-
-    const control = new TransformControls( camera, renderer.domElement );
-    control.addEventListener( 'dragging-changed', ( event: any ) => {
-        controls.enabled = ! event.value;
-    } );
-    control.attach(lightOrigin);
-    scene.add( control );
+    controls.addTransformControl(lightOrigin, scene)
 
     for ( let l = 0; l < lightCount; l ++ ) {
-        const dirLight = new THREE.DirectionalLight( 0xffffff, 1.0 / lightCount );
-        dirLight.name = 'Dir. Light ' + l;
-        dirLight.position.set( 200, 200, 200 );
-        dirLight.castShadow = true;
-        dirLight.shadow.camera.near = 100;
-        dirLight.shadow.camera.far = 5000;
-        dirLight.shadow.camera.right = 150;
-        dirLight.shadow.camera.left = - 150;
-        dirLight.shadow.camera.top = 150;
-        dirLight.shadow.camera.bottom = - 150;
-        dirLight.shadow.mapSize.width = shadowMapRes;
-        dirLight.shadow.mapSize.height = shadowMapRes;
-        lightmapObjects.push( dirLight );
-        dirLights.push( dirLight );
+        const dirLight = new THREE.DirectionalLight( 0xffffff, 1.0 / lightCount )
+        dirLight.name = 'Dir. Light ' + l
+        dirLight.position.set(0, 0, 0)
+        dirLight.castShadow = true
+        dirLight.shadow.camera.near = 100
+        dirLight.shadow.camera.far = 5000
+        dirLight.shadow.camera.right = 300
+        dirLight.shadow.camera.left = -300
+        dirLight.shadow.camera.top = 300
+        dirLight.shadow.camera.bottom = -300
+        dirLight.shadow.mapSize.width = shadowMapRes
+        dirLight.shadow.mapSize.height = shadowMapRes
+        lightMapObjects.push(dirLight)
+        dirLights.push(dirLight)
     }
 
     // ground
@@ -72,33 +71,32 @@ export const progressiveShadow = (canvas: any) => {
     groundMesh.position.y = - 0.1;
     groundMesh.rotation.x = - Math.PI / 2;
     groundMesh.name = 'Ground Mesh';
-    lightmapObjects.push( groundMesh );
+    lightMapObjects.push( groundMesh );
     scene.add( groundMesh );
 
-    const torusKnot = new THREE.Mesh(new THREE.TorusKnotGeometry(50, 10, 100, 32), new THREE.MeshLambertMaterial({color: 0xff80ff}))
-    const object = torusKnot
-    torusKnot.position.set(0, 100, 0)
+    const torusKnot = new THREE.Mesh(new THREE.TorusKnotGeometry(50,15, 100, 32), new THREE.MeshLambertMaterial({color: 0xff80ff}))
+    torusKnot.position.set(100, 150, 0)
     scene.add(torusKnot)
-    loadModel(torusKnot, lightmapObjects)
+    loadModel(torusKnot, lightMapObjects)
+    controls.addTransformControl(torusKnot, scene)
 
-    const control2 = new TransformControls(camera, renderer.domElement);
-    control2.addEventListener( 'dragging-changed', ( event: any ) => {
-        controls.enabled = ! event.value;
-    } );
-    control2.attach(torusKnot);
-    scene.add(control2);
+    const torusGroup = new THREE.Group() 
+    const torus1 = new THREE.Mesh(new THREE.TorusGeometry(50, 15, 32, 100), new THREE.MeshLambertMaterial({color: 0xffff80}))
+    torus1.rotation.x = Math.PI / 4
+    torus1.position.set(-25, 0, 0)
+    torusGroup.add(torus1)
+    const torus2 = new THREE.Mesh(new THREE.TorusGeometry(50, 15, 32, 100), new THREE.MeshLambertMaterial({color: 0xff8080}))
+    torus2.rotation.x = -Math.PI / 4
+    torus2.position.set(25, 0, 0)
+    torusGroup.add(torus2)
+    torusGroup.position.set(-100, 150, 0)
+    scene.add(torusGroup)
+    loadModel(torusGroup, lightMapObjects)
+    controls.addTransformControl(torusGroup, scene)
 
-    progressiveLightMap.addObjectsToLightMap(lightmapObjects);
-
-    // controls
-    const controls = new OrbitControls( camera, renderer.domElement );
-    controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
-    controls.dampingFactor = 0.05;
-    controls.screenSpacePanning = true;
-    controls.minDistance = 100;
-    controls.maxDistance = 500;
-    controls.maxPolarAngle = Math.PI / 1.5;
-    controls.target.set( 0, 100, 0 );
+    const progressiveLightMap = new ProgressiveLightMap(renderer, lightMapRes)
+    progressiveLightMap.addObjectsToLightMap(lightMapObjects);
+    const object = torusKnot
     
     const gui = new GUI( { name: 'Accumulation Settings' } );
     gui.add( params, 'Enable' );
@@ -124,8 +122,8 @@ export const progressiveShadow = (canvas: any) => {
         if (previousTimeStamp === undefined) {
             previousTimeStamp = timestamp;
         }
-        const allTimeMs = timestamp - start;
-        const elapsedMs = timestamp - previousTimeStamp;
+        const allTimeMs = timestamp - start
+        const elapsedMs = timestamp - previousTimeStamp
         previousTimeStamp = timestamp
         requestAnimationFrame(animate)
 
@@ -133,9 +131,9 @@ export const progressiveShadow = (canvas: any) => {
 
         // Accumulate Surface Maps
         if ( params[ 'Enable' ] ) {
-            progressiveLightMap.update( camera, params[ 'Blend Window' ], params[ 'Blur Edges' ] );
-            if ( ! progressiveLightMap.firstUpdate ) {        
-                progressiveLightMap.showDebugLightmap( params[ 'Debug Lightmap' ] );
+            progressiveLightMap.update(camera, params['Blend Window'], params['Blur Edges'])
+            if (!progressiveLightMap.firstUpdate) {        
+                progressiveLightMap.showDebugLightmap(params['Debug Lightmap'])
             }
         }
         
@@ -144,14 +142,14 @@ export const progressiveShadow = (canvas: any) => {
             // Sometimes they will be uniformly sampled from the upper hemisphere
             if ( Math.random() > params[ 'Ambient Weight' ] ) {
                 dirLights[ l ].position.set(
-                    lightOrigin.position.x + ( Math.random() * params[ 'Light Radius' ] ),
-                    lightOrigin.position.y + ( Math.random() * params[ 'Light Radius' ] ),
-                    lightOrigin.position.z + ( Math.random() * params[ 'Light Radius' ] ) );
+                    lightOrigin.position.x + ( (Math.random() * 2 - 1) * params['Light Radius']),
+                    lightOrigin.position.y + ( (Math.random() * 2 - 1) * params['Light Radius']),
+                    lightOrigin.position.z + ( (Math.random() * 2 - 1) * params['Light Radius']))
             } else {
                 // Uniform Hemispherical Surface Distribution for Ambient Occlusion
-                const lambda = Math.acos( 2 * Math.random() - 1 ) - ( 3.14159 / 2.0 );
-                const phi = 2 * 3.14159 * Math.random();
-                dirLights[ l ].position.set(
+                const lambda = Math.acos(2 * Math.random() - 1) - (3.14159 / 2.0)
+                const phi = 2 * 3.14159 * Math.random()
+                dirLights[l].position.set(
                             ( ( Math.cos( lambda ) * Math.cos( phi ) ) * 300 ) + object.position.x,
                     Math.abs( ( Math.cos( lambda ) * Math.sin( phi ) ) * 300 ) + object.position.y + 20,
                                 ( Math.sin( lambda ) * 300 ) + object.position.z
@@ -169,8 +167,7 @@ export const progressiveShadow = (canvas: any) => {
     animate(0)    
 }
 
-
-const loadModel = (object: THREE.Object3D, lightmapObjects: any[]) => {
+const loadModel = (object: THREE.Object3D, lightMapObjects: any[]) => {
 
     object.traverse(child => {
         // @ts-ignore
@@ -178,26 +175,11 @@ const loadModel = (object: THREE.Object3D, lightmapObjects: any[]) => {
             child.name = 'Loaded Mesh';
             child.castShadow = true;
             child.receiveShadow = true;
-            // @ts-ignore
-            //child.material = new THREE.MeshPhongMaterial();
-            //child.material = new THREE.MeshPhysicalMaterial();
-            // @ts-ignore
-            //child.material.color = new THREE.Color(1, 0.5, 0.7)
-            // This adds the model to the lightmap
-            lightmapObjects.push( child );
+            lightMapObjects.push( child );
         } else {
             child.layers.disableAll(); // Disable Rendering for this
         }
     });
-    
-    /*
-    const lightTarget = new THREE.Group();
-    lightTarget.position.set( 0, 20, 0 );
-    for ( let l = 0; l < dirLights.length; l ++ ) {
-        dirLights[ l ].target = lightTarget;
-    }
-    object.add( lightTarget );
-    */
 
     // @ts-ignore
     /*
