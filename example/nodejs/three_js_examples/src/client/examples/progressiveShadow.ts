@@ -1,8 +1,8 @@
-import * as THREE from 'three';
+import { ElapsedTime } from '../three/timeUtility'
 import { Controls } from '../three/controls'
+import { DataGUI, Statistic } from '../three/uiUtility' 
+import * as THREE from 'three';
 import { ProgressiveLightMap } from 'three/examples/jsm/misc/ProgressiveLightMap.js';
-import Stats from 'three/examples/jsm/libs/stats.module' 
-import { GUI } from 'dat.gui'
 
 export const progressiveShadow = (canvas: any) => {
     const shadowMapRes = 512, lightMapRes = 1024, lightCount = 8;
@@ -21,9 +21,7 @@ export const progressiveShadow = (canvas: any) => {
     renderer.setSize(window.innerWidth, window.innerHeight)
     renderer.shadowMap.enabled = true;
     document.body.appendChild( renderer.domElement )
-    // @ts-ignore
-    const stats = new Stats()
-    document.body.appendChild(stats.dom)
+    const statistic = new Statistic();
 
     const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000)
     camera.position.set(0, 500, 1000)
@@ -74,7 +72,7 @@ export const progressiveShadow = (canvas: any) => {
     lightMapObjects.push( groundMesh );
     scene.add( groundMesh );
 
-    const torusKnot = new THREE.Mesh(new THREE.TorusKnotGeometry(50,15, 100, 32), new THREE.MeshLambertMaterial({color: 0xff80ff}))
+    const torusKnot = new THREE.Mesh(new THREE.TorusKnotGeometry(50, 15, 100, 32), new THREE.MeshLambertMaterial({color: 0xff80ff}))
     torusKnot.position.set(100, 150, 0)
     scene.add(torusKnot)
     loadModel(torusKnot, lightMapObjects)
@@ -98,13 +96,13 @@ export const progressiveShadow = (canvas: any) => {
     progressiveLightMap.addObjectsToLightMap(lightMapObjects);
     const object = torusKnot
     
-    const gui = new GUI( { name: 'Accumulation Settings' } );
-    gui.add( params, 'Enable' );
-    gui.add( params, 'Blur Edges' );
-    gui.add( params, 'Blend Window', 1, 500 ).step( 1 );
-    gui.add( params, 'Light Radius', 0, 200 ).step( 10 );
-    gui.add( params, 'Ambient Weight', 0, 1 ).step( 0.1 );
-    gui.add( params, 'Debug Lightmap' );
+    const dataGui = new DataGUI({ name: 'Accumulation Settings' });
+    dataGui.gui.add( params, 'Enable' );
+    dataGui.gui.add( params, 'Blur Edges' );
+    dataGui.gui.add( params, 'Blend Window', 1, 500 ).step( 1 );
+    dataGui.gui.add( params, 'Light Radius', 0, 200 ).step( 10 );
+    dataGui.gui.add( params, 'Ambient Weight', 0, 1 ).step( 0.1 );
+    dataGui.gui.add( params, 'Debug Lightmap' );
 
     const onWindowResize = () => {
         camera.aspect = window.innerWidth / window.innerHeight
@@ -114,17 +112,9 @@ export const progressiveShadow = (canvas: any) => {
     window.addEventListener( 'resize', onWindowResize );
     
     
-    let start: number, previousTimeStamp: number;
+    const elapsedTime = new ElapsedTime();
     const animate = (timestamp: number) => {
-        if (start === undefined) {
-            start = timestamp;
-        }
-        if (previousTimeStamp === undefined) {
-            previousTimeStamp = timestamp;
-        }
-        const allTimeMs = timestamp - start
-        const elapsedMs = timestamp - previousTimeStamp
-        previousTimeStamp = timestamp
+        elapsedTime.update(timestamp);
         requestAnimationFrame(animate)
 
         controls.update();
@@ -158,7 +148,7 @@ export const progressiveShadow = (canvas: any) => {
         }
 
         render()
-        stats.update()
+        statistic.update();
     }
 
     const render = () => {

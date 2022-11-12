@@ -1,19 +1,16 @@
-import { GroundAndGroundShadow } from '../three/groundAndGroundShadow'
+import { ElapsedTime } from '../three/timeUtility'
 import { Controls } from '../three/controls'
+import { GroundAndGroundShadow } from '../three/groundAndGroundShadow'
+import { DataGUI, Statistic } from '../three/uiUtility'
 import * as THREE from 'three'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
-import Stats from 'three/examples/jsm/libs/stats.module' 
-import { GUI } from 'dat.gui'
 
 export const contactShadow = (canvas: any) => {
     const renderer = new THREE.WebGLRenderer({canvas: canvas, antialias: true, alpha: true})
     renderer.setSize(window.innerWidth, window.innerHeight)
     renderer.setPixelRatio(window.devicePixelRatio);
     document.body.appendChild(renderer.domElement)
-    // @ts-ignore
-    const stats = new Stats();
-    document.body.appendChild(stats.dom);
+    const statistic = new Statistic();
 
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
     camera.position.y = 5;
@@ -56,8 +53,8 @@ export const contactShadow = (canvas: any) => {
     ground.addToScene(scene)
     ground.group.rotateX(-Math.PI/2)
 
-    const gui = new GUI();
-    const shadowFolder = gui.addFolder('shadow');
+    const dataGui = new DataGUI();
+    const shadowFolder = dataGui.gui.addFolder('shadow');
     shadowFolder.open();
 
     shadowFolder.add(ground.parameters, 'cameraHelper').onChange(() => ground.updateParameters())
@@ -79,27 +76,19 @@ export const contactShadow = (canvas: any) => {
     }
     window.addEventListener('resize', onWindowResize, false)
 
-    let start: number, previousTimeStamp: number;
+    const elapsedTime = new ElapsedTime();
     const animate = (timestamp: number) => {
-        if (start === undefined) {
-            start = timestamp;
-        }
-        if (previousTimeStamp === undefined) {
-            previousTimeStamp = timestamp;
-        }
-        const allTimeMs = timestamp - start;
-        const elapsedMs = timestamp - previousTimeStamp;
-        previousTimeStamp = timestamp
+        elapsedTime.update(timestamp);
         requestAnimationFrame(animate)
         for (let i = 0; i < meshes.length; ++i) {
-            meshes[i].position.y = 1.5 + Math.sin(allTimeMs / 1000 * Math.PI * 2 * 0.2 + i / 5 * Math.PI * 2) * 1
-            meshes[i].rotation.x += elapsedMs / 1000 *  (1 + i / 5)
-            meshes[i].rotation.y += elapsedMs / 1000  * (1 + i / (i-5))
+            meshes[i].position.y = 1.5 + Math.sin(elapsedTime.allTimeMs / 1000 * Math.PI * 2 * 0.2 + i / 5 * Math.PI * 2) * 1
+            meshes[i].rotation.x += elapsedTime.deltaTimeMs / 1000 *  (1 + i / 5)
+            meshes[i].rotation.y += elapsedTime.deltaTimeMs / 1000  * (1 + i / (i-5))
         }
         controls.update()
         ground.render(scene, camera)
         render()
-        stats.update()
+        statistic.update();
     }
 
     const render = () => {
