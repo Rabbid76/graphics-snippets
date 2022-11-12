@@ -44,23 +44,26 @@ export const helloCube = (canvas: any) => {
         { id: 'Torus', geometry:  new THREE.TorusGeometry(0.5, 0.2, 32, 100) },
         { id: 'TorusKnot', geometry:  new THREE.TorusKnotGeometry(0.3, 0.1, 100, 32) }
     ]
+    const geometryIdMap = {};
+    // @ts-ignore
+    geometries.forEach(item => geometryIdMap[item.id] = item.id)
     const geometryMap = {};
-    for (let i=0; i < geometries.length; ++i) {
-        // @ts-ignore
-        geometryMap[geometries[i].id] = i
-    }
+    // @ts-ignore
+    geometries.forEach(item => geometryMap[item.id] = item.geometry)  
     const geometryObject = {
-        geometry: 1
+        geometry: 'Cube'
     };
 
     const material = new THREE.MeshPhysicalMaterial({color: 0xc0c0c0});
     material.metalness = 1;
     material.roughness = 0;
-    const mesh = new THREE.Mesh(geometries[geometryObject.geometry].geometry, material);
+    // @ts-ignore
+    const mesh = new THREE.Mesh(geometryMap[geometryObject.geometry], material);
     scene.add(mesh);
 
-    dataGui.gui.add(geometryObject, 'geometry', geometryMap).onChange(() => { 
-        mesh.geometry = geometries[geometryObject.geometry].geometry; 
+    dataGui.gui.add(geometryObject, 'geometry', geometryIdMap).onChange(() => { 
+        // @ts-ignore
+        mesh.geometry = geometryMap[geometryObject.geometry]; 
     });
     const materialGUI = dataGui.gui.addFolder('material properties');
     DataGUI.addPhysicalMaterialPropertiesUI(materialGUI, material);

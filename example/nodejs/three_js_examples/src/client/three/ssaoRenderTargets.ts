@@ -11,22 +11,13 @@ export interface SSAOParameters {
     enabled: boolean;
     alwaysUpdate: boolean;
     kernelRadius: number;
-    kernelSize: number;
     minDistance: number;
     maxDistance: number;
     intensity: number;
 }
 
 export class SSAORenderTargets {
-    public ssaoParameters: SSAOParameters = {
-        enabled: true,
-        alwaysUpdate: false,
-        kernelRadius: 0.03,
-        kernelSize: ssaoKernelSize,
-        minDistance: 0.005,
-        maxDistance: 0.3,
-        intensity: 1
-    };
+    public ssaoParameters: SSAOParameters;
     private width: number;
     private height: number;
     private samples: number;
@@ -40,7 +31,15 @@ export class SSAORenderTargets {
     public ssaoRenderTarget?: THREE.WebGLRenderTarget;
     public blurRenderTarget?: THREE.WebGLRenderTarget;
 
-    constructor(width: number, height: number, samples: number) {
+    constructor(width: number, height: number, samples: number, parameters?: any) {
+        this.ssaoParameters = {
+            enabled: parameters?.enabled ?? true,
+            alwaysUpdate: parameters?.alwaysUpdate ?? true,
+            kernelRadius: parameters?.kernelRadius ?? 0.03,
+            minDistance: parameters?.minDistance ?? 0.005,
+            maxDistance: parameters?.maxDistance ?? 0.3,
+            intensity: parameters?.intensity ?? 1
+        };
         this.width = width;
         this.height = height;
         this.samples = samples;
@@ -185,7 +184,7 @@ export class SSAORenderTargets {
     }
 
     private generateSampleKernel(): THREE.Vector3[] {
-        const kernelSize = this.ssaoParameters.kernelSize;
+        const kernelSize = ssaoKernelSize;
         const kernel: THREE.Vector3[] = [];
         for (let i = 0; i < kernelSize; i ++) {
             const sample = new THREE.Vector3();

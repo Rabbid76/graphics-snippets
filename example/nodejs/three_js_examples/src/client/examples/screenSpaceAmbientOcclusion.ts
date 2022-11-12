@@ -1,6 +1,6 @@
 import { ElapsedTime } from '../three/timeUtility'
 import { Controls } from '../three/controls'
-import { SmoothSSAOPass } from '../three/smoothSsaoPass';
+import { SmoothSSAODebugPass, SmoothSSAODebugOutput } from '../three/smoothSsaoDebugPass';
 import { getMaxSamples } from '../three/threeUtility'
 import { DataGUI, Statistic } from '../three/uiUtility' 
 import * as THREE from 'three';
@@ -16,6 +16,7 @@ export const screenSpaceAmbientOcclusion = (canvas: any) => {
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
     const statistic = new Statistic();
+    const dataGui = new DataGUI();
 
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.z = 4;
@@ -27,7 +28,8 @@ export const screenSpaceAmbientOcclusion = (canvas: any) => {
     const maxSamples = getMaxSamples(renderer);
     const ssaoRenderTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, { samples: maxSamples })
     const effectComposer = new EffectComposer(renderer, ssaoRenderTarget);
-    const ssaoPass = new SmoothSSAOPass(renderer, scene, camera, window.innerWidth, window.innerHeight, maxSamples)
+    //const ssaoPass = new SmoothSSAOPass(renderer, scene, camera, window.innerWidth, window.innerHeight, maxSamples)
+    const ssaoPass = new SmoothSSAODebugPass(renderer, scene, camera, window.innerWidth, window.innerHeight, maxSamples)
     effectComposer.addPass(ssaoPass)
 
     const ambientLight = new THREE.AmbientLight(0x404040);
@@ -50,6 +52,33 @@ export const screenSpaceAmbientOcclusion = (canvas: any) => {
     const cube = new THREE.Mesh(geometry, material);
     objectGroup.add(cube);
 
+    const generalProperties = {
+        'debug pass': 'none'
+    };
+    dataGui.gui.add(generalProperties, 'debug pass', {
+        'off': 'none', 
+        'color': 'color', 
+        'depth': 'depth', 
+        'normal': 'normal', 
+        'SSAO': 'ssao', 
+        'blur SSAO': 'ssaoblur', 
+    }).onChange((value) => { 
+        switch(value.toLocaleLowerCase()) {
+            default: ssaoPass.debugEffect = SmoothSSAODebugOutput.None; break
+            case 'color': ssaoPass.debugEffect = SmoothSSAODebugOutput.Color; break
+            case 'depth': ssaoPass.debugEffect = SmoothSSAODebugOutput.Depth; break
+            case 'normal': ssaoPass.debugEffect = SmoothSSAODebugOutput.Normal; break
+            case 'ssao': ssaoPass.debugEffect = SmoothSSAODebugOutput.SSAO; break
+            case 'ssaoblur': ssaoPass.debugEffect = SmoothSSAODebugOutput.SSAOBlur; break
+        }
+    });
+    const aoFolder = dataGui.gui.addFolder('SSAO')
+    aoFolder.add(ssaoPass.ssaoParameters, 'enabled')
+    aoFolder.add(ssaoPass.ssaoParameters, 'intensity', 0.01, 1)
+    aoFolder.add(ssaoPass.ssaoParameters, 'kernelRadius', 0.001, 0.2)
+    aoFolder.add(ssaoPass.ssaoParameters, 'minDistance', 0.0001, 0.1)
+    aoFolder.add(ssaoPass.ssaoParameters, 'maxDistance', 0.01, 1)
+
     const onWindowResize = () => {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
@@ -70,8 +99,8 @@ export const screenSpaceAmbientOcclusion = (canvas: any) => {
     }
 
     const render = () => {
-        effectComposer.render();
         renderer.render(scene, camera);
+        effectComposer.render();
     }
     animate(0);
 }

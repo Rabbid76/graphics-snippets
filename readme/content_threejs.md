@@ -14,6 +14,11 @@ Richard P. Feynman
 
 [Contact shadow (ground shadow)](https://rabbid76.github.io/graphics-snippets/example/nodejs/three_js_examples/deployment/contact_shadow)  
 [Progressive shadow](https://rabbid76.github.io/graphics-snippets/example/nodejs/three_js_examples/deployment/progressive_shadow)
+
+## Ambient Occlusion
+
+[Screen Space Ambient Occlusion](https://rabbid76.github.io/graphics-snippets/example/nodejs/three_js_examples/deployment/screen_space_ambient_occlusion)
+
 ## Frustum
 
 [![](../documentation/image/perspective_view_frustum.gif) Perspective Viewing Frustum](https://rabbid76.github.io/graphics-snippets/example/threejs/three_perspective.html)

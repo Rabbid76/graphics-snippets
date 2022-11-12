@@ -30,14 +30,14 @@ export class SmoothSSAOPass extends Pass {
     private lastCameraProjection: THREE.Matrix4 | undefined;
     private lastCameraWorld: THREE.Matrix4 | undefined;
 
-    constructor(sceneRenderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera, width: number, height: number, samples: number) {
+    constructor(sceneRenderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera, width: number, height: number, samples: number, parameters?: any) {
         super();
         this.scene = scene;
         this.camera = camera;
         this.width = width;
         this.height = height;
         this.sceneRenderer = sceneRenderer;
-        this.ssaoRenderTargets = new SSAORenderTargets(width, height, samples);
+        this.ssaoRenderTargets = new SSAORenderTargets(width, height, samples, parameters);
         this.ssaoParameters = this.ssaoRenderTargets.ssaoParameters;
     }
 

@@ -1,7 +1,6 @@
 # Ideas and TODO
 
 - blend uniform color background and environment map
-- SSAO
 - RectAreaLight shadow
 - Environment map light sources
 

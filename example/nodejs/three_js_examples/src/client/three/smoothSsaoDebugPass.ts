@@ -12,11 +12,12 @@ export const enum SmoothSSAODebugOutput {
 }
 
 export class SmoothSSAODebugPass extends SmoothSSAOPass {
-    public debugEffect: SmoothSSAODebugOutput = SmoothSSAODebugOutput.None;
+    public debugEffect: SmoothSSAODebugOutput;
     private depthRenderMaterial?: THREE.ShaderMaterial;
 
-    constructor(sceneRenderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera, width: number, height: number, samples: number) {
-        super(sceneRenderer, scene, camera, width, height, samples);
+    constructor(sceneRenderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera, width: number, height: number, samples: number, parameters?: any) {
+        super(sceneRenderer, scene, camera, width, height, samples, parameters);
+        this.debugEffect = parameters?.debugEffect ?? SmoothSSAODebugOutput.None;
     }
 
     public dispose(): void {
