@@ -13,13 +13,14 @@ export class Controls {
         this.orbitControls = new OrbitControls(camera, renderer.domElement)
     }
 
-    public addTransformControl(object: THREE.Object3D, target: THREE.Object3D) {
+    public addTransformControl(object: THREE.Object3D, target: THREE.Object3D): TransformControls {
         const control = new TransformControls(this.camera, this.renderer.domElement);
         control.addEventListener( 'dragging-changed', (event: any) => {
             this.orbitControls.enabled = !event.value;
         } );
         control.attach(object);
         target.add(control);
+        return control;
     }
 
     public update() {

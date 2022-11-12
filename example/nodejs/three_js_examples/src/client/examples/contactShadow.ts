@@ -1,4 +1,5 @@
 import { GroundAndGroundShadow } from '../three/groundAndGroundShadow'
+import { Controls } from '../three/controls'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
@@ -14,10 +15,10 @@ export const contactShadow = (canvas: any) => {
     const stats = new Stats();
     document.body.appendChild(stats.dom);
 
-    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000)
-    camera.position.y = 5
-    camera.position.z = 10
-    const controls = new OrbitControls(camera, renderer.domElement)
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.y = 5;
+    camera.position.z = 10;
+    const controls = new Controls(renderer, camera);
 
     const scene = new THREE.Scene()
     scene.background = new THREE.Color(0xc0c0c0)
@@ -50,14 +51,16 @@ export const contactShadow = (canvas: any) => {
 
     const groundGeometry = new THREE.PlaneGeometry(10, 10, 10, 10)
     const groundMaterial = new THREE.MeshLambertMaterial({color: 0x808080})
-    const ground = new GroundAndGroundShadow(renderer, scene, camera, groundGeometry, groundMaterial)
+    const ground = new GroundAndGroundShadow(renderer, { planeSize: 6, alwaysUpdate: true, cameraHelper: true } )
+    ground.updateGround(groundGeometry, groundMaterial)
+    ground.addToScene(scene)
     ground.group.rotateX(-Math.PI/2)
 
     const gui = new GUI();
     const shadowFolder = gui.addFolder('shadow');
     shadowFolder.open();
 
-    shadowFolder.add(ground.parameters, 'cameraHelper')
+    shadowFolder.add(ground.parameters, 'cameraHelper').onChange(() => ground.updateParameters())
     shadowFolder.add(ground.parameters, 'alwaysUpdate')
     shadowFolder.add(ground.parameters, 'blur', 0, 15, 0.1).onChange(() => ground.needsUpdate = true)
     shadowFolder.add(ground.parameters, 'darkness', 1, 5, 0.1).onChange(() => ground.updateParameters())
@@ -94,7 +97,7 @@ export const contactShadow = (canvas: any) => {
             meshes[i].rotation.y += elapsedMs / 1000  * (1 + i / (i-5))
         }
         controls.update()
-        ground.render()
+        ground.render(scene, camera)
         render()
         stats.update()
     }

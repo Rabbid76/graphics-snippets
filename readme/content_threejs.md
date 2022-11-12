@@ -7,13 +7,13 @@ Richard P. Feynman
 
 # three.js
 
-[Hello Cube](../example/nodejs/three_js_examples/deployment/hello_cube)  
-[Examples](../example/nodejs/three_js_examples/deployment/)  
+[Hello Cube](https://rabbid76.github.io/graphics-snippets/example/nodejs/three_js_examples/deployment/hello_cube)  
+[Examples](https://rabbid76.github.io/graphics-snippets/example/nodejs/three_js_examples/deployment/)  
 
 ## Shadow
 
-[Contact shadow (ground shadow)](../example/nodejs/three_js_examples/deployment/contact_shadow)  
-[Progressive shadow](../example/nodejs/three_js_examples/deployment/progressive_shadow)
+[Contact shadow (ground shadow)](https://rabbid76.github.io/graphics-snippets/example/nodejs/three_js_examples/deployment/contact_shadow)  
+[Progressive shadow](https://rabbid76.github.io/graphics-snippets/example/nodejs/three_js_examples/deployment/progressive_shadow)
 ## Frustum
 
 [![](../documentation/image/perspective_view_frustum.gif) Perspective Viewing Frustum](https://rabbid76.github.io/graphics-snippets/example/threejs/three_perspective.html)
