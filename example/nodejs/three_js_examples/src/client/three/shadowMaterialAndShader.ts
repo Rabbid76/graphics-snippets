@@ -61,7 +61,11 @@ vec3 getViewPosition( const in vec2 screenPosition, const in float depth, const 
 }
 
 float getShadowDepth(vec3 cameraUVDepth) {
-    return 1.0 - texture2D(tShadow, cameraUVDepth.xy).x * step(max(cameraUVDepth.x, cameraUVDepth.y), 1.0) * step(0.0, min(cameraUVDepth.x, cameraUVDepth.y));
+    #if INVERSE_SHADOW_MAP == 1
+        return 1.0 - texture2D(tShadow, cameraUVDepth.xy).x * step(max(cameraUVDepth.x, cameraUVDepth.y), 1.0) * step(0.0, min(cameraUVDepth.x, cameraUVDepth.y));
+    #else
+        return mix(1.0, texture2D(tShadow, cameraUVDepth.xy).x, step(max(cameraUVDepth.x, cameraUVDepth.y), 1.0) * step(0.0, min(cameraUVDepth.x, cameraUVDepth.y)));
+    #endif
 }
 
 float getInverseShadow(vec3 cameraUVDepth) {
@@ -124,6 +128,7 @@ export class ShadowMaterial extends THREE.ShaderMaterial {
         },
         defines: {
             PERSPECTIVE_CAMERA: 1,
+            INVERSE_SHADOW_MAP: 0,
             BLUR: 1,
         },
         vertexShader: glslShadowVertexShader,

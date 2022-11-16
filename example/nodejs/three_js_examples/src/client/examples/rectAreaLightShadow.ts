@@ -237,7 +237,14 @@ class RectAreaLightAndShadow {
         }
         this.renderPass = new RenderPass();
 
-        this.shadowDepthRenderTarget = new THREE.WebGLRenderTarget(this.shadowMapSize, this.shadowMapSize);
+        const shadowDepthTexture = new THREE.DepthTexture(this.shadowMapSize, this.shadowMapSize);
+        shadowDepthTexture.format = THREE.DepthStencilFormat;
+        shadowDepthTexture.type = THREE.UnsignedInt248Type;
+        this.shadowDepthRenderTarget = new THREE.WebGLRenderTarget(this.shadowMapSize, this.shadowMapSize, {
+            minFilter: THREE.NearestFilter,
+            magFilter: THREE.NearestFilter,
+            depthTexture: shadowDepthTexture
+        });
         this.depthMaterial = new THREE.MeshDepthMaterial();
 
         const depthTexture = new THREE.DepthTexture(width, height);
@@ -290,7 +297,7 @@ class RectAreaLightAndShadow {
         this.renderPass.renderWithOverrideMaterial(renderer, scene, camera, this.normalRenderMaterial, this.depthNormalRenderTarget, 0x7777ff, 1.0);
         this.shadowRenderMaterial.update({
             depthTexture: this.depthNormalRenderTarget.depthTexture,
-            shadowTexture: this.shadowMapTexture,
+            shadowTexture: this.shadowDepthRenderTarget.depthTexture ?? this.shadowDepthRenderTarget.texture,
             width: this.width,
             height: this.height, 
             camera, 
