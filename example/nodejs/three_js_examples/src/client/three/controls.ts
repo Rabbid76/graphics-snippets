@@ -17,7 +17,7 @@ export class Controls {
         const control = new TransformControls(this.camera, this.renderer.domElement);
         control.addEventListener( 'dragging-changed', (event: any) => {
             this.orbitControls.enabled = !event.value;
-        } );
+        });
         control.attach(object);
         target.add(control);
         return control;

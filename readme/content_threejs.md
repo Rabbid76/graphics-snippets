@@ -13,6 +13,7 @@ Richard P. Feynman
 ## Shadow
 
 [Contact shadow (ground shadow)](https://rabbid76.github.io/graphics-snippets/example/nodejs/three_js_examples/deployment/contact_shadow)  
+[RetAreaLight shadow](https://rabbid76.github.io/graphics-snippets/example/nodejs/three_js_examples/deployment/rect_area_light_shadow)  
 [Progressive shadow](https://rabbid76.github.io/graphics-snippets/example/nodejs/three_js_examples/deployment/progressive_shadow)
 
 ## Ambient Occlusion

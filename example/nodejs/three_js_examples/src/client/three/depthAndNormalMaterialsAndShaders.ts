@@ -1,11 +1,13 @@
-const glslSSAODepthVertexShader =
+import * as THREE from 'three';
+
+const glslLinearDepthVertexShader =
 `varying vec2 vUv;
 void main() {
     vUv = uv;
     gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 }`;
 
-const glslSSAODepthFragmentShader =
+const glslLinearDepthFragmentShader =
 `uniform sampler2D tDepth;
 uniform float cameraNear;
 uniform float cameraFar;
@@ -19,7 +21,7 @@ float getLinearDepth(const in vec2 screenPosition) {
         float viewZ = perspectiveDepthToViewZ(fragCoordZ, cameraNear, cameraFar);
         return viewZToOrthographicDepth(viewZ, cameraNear, cameraFar);
     #else
-        return texture2D(tDepth, screenPosition).x;
+        return texture2D(tDepth, screenPosition).x;c
     #endif
 }
 
@@ -28,21 +30,46 @@ void main() {
     gl_FragColor = vec4(vec3(1.0 - depth), 1.0);
 }`;
 
-export const SSAODepthShader = {
-    uniforms: {
-        // @ts-ignore
-        tDepth: { value: null },
-        cameraNear: { value: 0.1 },
-        cameraFar: { value: 1 },
-    },
-    defines: {
-        PERSPECTIVE_CAMERA: 1
-    },
-    vertexShader: glslSSAODepthVertexShader,
-    fragmentShader: glslSSAODepthFragmentShader
-};
+export class LinearDepthRenderMaterial extends THREE.ShaderMaterial{
+    private static linearDepthShader: any = {
+        uniforms: {
+            // @ts-ignore
+            tDepth: { value: null },
+            cameraNear: { value: 0.1 },
+            cameraFar: { value: 1 },
+        },
+        defines: {
+            PERSPECTIVE_CAMERA: 1
+        },
+        vertexShader: glslLinearDepthVertexShader,
+        fragmentShader: glslLinearDepthFragmentShader
+    };
 
-const glslSSAODepthNormalShader =
+    constructor(parameters?: any) {
+        super({
+            defines: Object.assign({}, LinearDepthRenderMaterial.linearDepthShader.defines),
+            uniforms: THREE.UniformsUtils.clone(LinearDepthRenderMaterial.linearDepthShader.uniforms),
+            vertexShader: LinearDepthRenderMaterial.linearDepthShader.vertexShader,
+            fragmentShader: LinearDepthRenderMaterial.linearDepthShader.fragmentShader,
+            blending: THREE.NoBlending
+        });
+        this.update(parameters);
+    }
+
+    public update(parameters?: any): LinearDepthRenderMaterial {
+        if (parameters?.depthTexture !== undefined) {
+            this.uniforms.tDepth.value = parameters?.depthTexture;
+        }
+        if (parameters?.camera !== undefined) {
+            const camera = parameters?.camera as THREE.OrthographicCamera || parameters?.camera as THREE.PerspectiveCamera;
+            this.uniforms.cameraNear.value = camera.near;
+            this.uniforms.cameraFar.value = camera.far;
+        }   
+        return this;
+    }
+}
+
+const glslLinearDepthNormalVertexShader =
 `varying vec3 vNormal;
 varying vec2 vUv;
 void main() {
@@ -51,7 +78,7 @@ void main() {
     gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 }`;
 
-const glslSSAODepthNormalFragmentShader =
+const glslLinearDepthNormalFragmentShader =
 `uniform sampler2D tDepth;
 uniform float cameraNear;
 uniform float cameraFar;
@@ -75,7 +102,7 @@ void main() {
     gl_FragColor = vec4(vNormal, 1.0 - depth);
 }`;
 
-export const SSAODepthNormalShader = {
+export const linearDepthNormalShader = {
     uniforms: {
         // @ts-ignore
         tDepth: { value: null },
@@ -85,7 +112,7 @@ export const SSAODepthNormalShader = {
     defines: {
         PERSPECTIVE_CAMERA: 1
     },
-    vertexShader: glslSSAODepthNormalShader,
-    fragmentShader: glslSSAODepthNormalFragmentShader
+    vertexShader: glslLinearDepthNormalVertexShader,
+    fragmentShader: glslLinearDepthNormalFragmentShader
 };
 

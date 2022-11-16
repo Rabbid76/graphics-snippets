@@ -1,17 +1,14 @@
 import {
-    renderOverride,
-    RenderOverrideVisibility
-} from './threeUtility';
-import {
     SSAOParameters,
     SSAORenderTargets
 } from './ssaoRenderTargets';
-import * as THREE from 'three';
+import { CopyMaterial } from '../three/shaderUtility'
 import {
-    Pass,
-    FullScreenQuad
-} from 'three/examples/jsm/postprocessing/Pass';
-import { CopyShader } from 'three/examples/jsm/shaders/CopyShader.js';
+    RenderOverrideVisibility,
+    RenderPass,
+} from './threeUtility';
+import * as THREE from 'three';
+import { Pass } from 'three/examples/jsm/postprocessing/Pass';
 
 export class SmoothSSAOPass extends Pass {
     public ssaoParameters: SSAOParameters;
@@ -21,14 +18,29 @@ export class SmoothSSAOPass extends Pass {
     private sceneRenderer: THREE.WebGLRenderer;
     private scene: THREE.Scene;
     private camera: THREE.Camera;
+    protected renderPass: RenderPass = new RenderPass();
     protected ssaoRenderTargets: SSAORenderTargets;
-    protected colorTexture?: THREE.FramebufferTexture;
-    private screenSpaceQuad?: FullScreenQuad;
-    private copyMaterial?: THREE.ShaderMaterial;
-    private _renderOverrideVisibility: RenderOverrideVisibility = new RenderOverrideVisibility();
-    private _originalClearColor = new THREE.Color();
+    protected _colorTexture?: THREE.FramebufferTexture;
+    private _copyMaterial?: CopyMaterial;
+    private _renderOverrideVisibility: RenderOverrideVisibility = new RenderOverrideVisibility(true);
     private lastCameraProjection: THREE.Matrix4 | undefined;
     private lastCameraWorld: THREE.Matrix4 | undefined;
+
+    protected get isSSAOEnabled(): boolean {
+        return this.ssaoParameters.enabled;
+    }
+
+    private get colorTexture(): THREE.FramebufferTexture {
+        if (!this._colorTexture) {
+            this._colorTexture = new THREE.FramebufferTexture(this.width, this.height, THREE.RGBAFormat);
+        }
+        return this._colorTexture;
+    }
+
+    protected getCopyMaterial(parameters?: any): THREE.ShaderMaterial {
+        this._copyMaterial ??= new CopyMaterial();
+        return this._copyMaterial.update(parameters);
+    }
 
     constructor(sceneRenderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera, width: number, height: number, samples: number, parameters?: any) {
         super();
@@ -43,9 +55,8 @@ export class SmoothSSAOPass extends Pass {
 
     dispose() {
         this.ssaoRenderTargets.dispose();
-        this.copyMaterial?.dispose();
-        this.screenSpaceQuad?.dispose();
-        this.colorTexture?.dispose();
+        this._copyMaterial?.dispose();
+        this._colorTexture?.dispose();
     }
 
     public setSize(width: number, height: number) {
@@ -53,9 +64,9 @@ export class SmoothSSAOPass extends Pass {
         this.height = height;
         this.ssaoRenderTargets.setSize(width, height);
         this._renderOverrideVisibility = new RenderOverrideVisibility();
-        if (this.colorTexture) {
-            this.colorTexture.dispose();
-            this.colorTexture = undefined;
+        if (this._colorTexture) {
+            this._colorTexture.dispose();
+            this._colorTexture = undefined;
         }
         this.needsUpdate = true;
     }
@@ -94,106 +105,38 @@ export class SmoothSSAOPass extends Pass {
         if (this.renderToScreen) {
             return;
         }
-        const colorTexture = this.getColorTexture();
-        this.sceneRenderer.copyFramebufferToTexture(new THREE.Vector2(), colorTexture);
+        this.sceneRenderer.copyFramebufferToTexture(new THREE.Vector2(), this.colorTexture);
         this.sceneRenderer.clear();
     }
 
-    protected ssaoIsEnabled(): boolean {
-        return this.ssaoParameters.enabled;
-    }
-
     private renderSSAO(renderer: THREE.WebGLRenderer, camera: THREE.Camera): void {
-        const depthNormalTarget = this.ssaoRenderTargets.getDepthNormalRenderTarget();
-        const normalMaterial = this.ssaoRenderTargets.getNormalRenderMaterial();
+        const depthNormalTarget = this.ssaoRenderTargets.depthNormalRenderTarget;
+        const normalMaterial = this.ssaoRenderTargets.normalRenderMaterial;
         this.renderOverrideVisibility(renderer, normalMaterial, depthNormalTarget, 0x7777ff, 1.0);
 
-        if (this.ssaoIsEnabled()) {
+        if (this.isSSAOEnabled) {
             const ssaoMaterial = this.ssaoRenderTargets.updateSSAOMaterial(camera);
-            const ssaoRenderTarget = this.ssaoRenderTargets.getSSSAORenderTarget();
-            this.renderScreenSpacePass(renderer, ssaoMaterial, ssaoRenderTarget);
+            const ssaoRenderTarget = this.ssaoRenderTargets.ssaoRenderTarget;
+            this.renderPass.renderScreenSpace(renderer, ssaoMaterial, ssaoRenderTarget);
         }
 
-        if (this.ssaoIsEnabled()) {
-            const blurMaterial = this.ssaoRenderTargets.getBlurRenderMaterial();
-            const blurRenderTarget = this.ssaoRenderTargets.getBlurRenderTarget();
-            this.renderScreenSpacePass(renderer, blurMaterial, blurRenderTarget);
+        if (this.isSSAOEnabled) {
+            const blurMaterial = this.ssaoRenderTargets.blurRenderMaterial;
+            const blurRenderTarget = this.ssaoRenderTargets.blurRenderTarget;
+            this.renderPass.renderScreenSpace(renderer, blurMaterial, blurRenderTarget);
         }
     }
 
     protected renderToTarget(renderer: THREE.WebGLRenderer, writeBuffer: THREE.WebGLRenderTarget): void {
-        const copyMaterial = this.getCopyMaterial();
         if (!this.renderToScreen) {
-            copyMaterial.uniforms.tDiffuse.value = this.colorTexture;
-            copyMaterial.blending = THREE.NoBlending;
-            this.renderScreenSpacePass(renderer, copyMaterial, this.renderToScreen ? null : writeBuffer);
+            this.renderPass.renderScreenSpace(renderer, this.getCopyMaterial({texture: this.colorTexture, blending: THREE.NoBlending}), this.renderToScreen ? null : writeBuffer);
         }
-        copyMaterial.uniforms.tDiffuse.value = this.ssaoRenderTargets.blurRenderTarget?.texture;
-        copyMaterial.blending = THREE.CustomBlending;
-        this.renderScreenSpacePass(renderer, copyMaterial, this.renderToScreen ? null : writeBuffer);
-    }
-
-    protected renderScreenSpacePass(renderer: THREE.WebGLRenderer, passMaterial: THREE.Material, renderTarget: THREE.WebGLRenderTarget | null, clearColor?: any, clearAlpha?: any): void {
-        renderer.getClearColor(this._originalClearColor);
-        const originalClearAlpha = renderer.getClearAlpha();
-        const originalAutoClear = renderer.autoClear;
-
-        renderer.setRenderTarget(renderTarget);
-
-        // setup pass state
-        renderer.autoClear = false;
-        if ((clearColor !== undefined) && (clearColor !== null)) {
-            renderer.setClearColor(clearColor);
-            renderer.setClearAlpha(clearAlpha || 0.0);
-            renderer.clear();
-        }
-
-        const screenSpaceQuad = this.getScreenSpaceQuad();
-        screenSpaceQuad.material = passMaterial;
-        screenSpaceQuad.render(renderer);
-
-        renderer.autoClear = originalAutoClear;
-        renderer.setClearColor(this._originalClearColor);
-        renderer.setClearAlpha(originalClearAlpha);
+        this.renderPass.renderScreenSpace(renderer, this.getCopyMaterial({texture: this.ssaoRenderTargets.blurRenderTarget.texture, blending: THREE.CustomBlending}), this.renderToScreen ? null : writeBuffer);
     }
 
     private renderOverrideVisibility(renderer: THREE.WebGLRenderer, overrideMaterial: THREE.Material, renderTarget: THREE.WebGLRenderTarget | null, clearColor: any, clearAlpha: any): void {
         this._renderOverrideVisibility.render(this.scene, () => {
-            renderOverride(renderer, this.scene, this.camera, overrideMaterial, renderTarget, clearColor, clearAlpha);
+            this.renderPass.renderWithOverrideMaterial(renderer, this.scene, this.camera, overrideMaterial, renderTarget, clearColor, clearAlpha);
         });
-    }
-
-    private getScreenSpaceQuad(): FullScreenQuad {
-        if (!this.screenSpaceQuad) {
-            this.screenSpaceQuad = new FullScreenQuad(undefined);
-        }
-        return this.screenSpaceQuad;
-    }
-
-    private getColorTexture(): THREE.FramebufferTexture {
-        if (!this.colorTexture) {
-            this.colorTexture = new THREE.FramebufferTexture(this.width, this.height, THREE.RGBAFormat);
-        }
-        return this.colorTexture;
-    }
-
-    protected getCopyMaterial(): THREE.ShaderMaterial {
-        if (!this.copyMaterial) {
-            this.copyMaterial = new THREE.ShaderMaterial( {
-                uniforms: THREE.UniformsUtils.clone(CopyShader.uniforms),
-                vertexShader: CopyShader.vertexShader,
-                fragmentShader: CopyShader.fragmentShader,
-                transparent: true,
-                depthTest: false,
-                depthWrite: false,
-                blendSrc: THREE.DstColorFactor,
-                blendDst: THREE.ZeroFactor,
-                blendEquation: THREE.AddEquation,
-                blendSrcAlpha: THREE.DstAlphaFactor,
-                blendDstAlpha: THREE.ZeroFactor,
-                blendEquationAlpha: THREE.AddEquation
-            } );
-        }
-        return this.copyMaterial;
     }
 }

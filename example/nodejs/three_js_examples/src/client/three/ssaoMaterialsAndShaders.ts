@@ -12,20 +12,18 @@ const glslSSAOFragmentShader =
 uniform sampler2D tNormal;
 uniform sampler2D tDepth;
 uniform sampler2D tNoise;
-
 uniform vec3 kernel[ KERNEL_SIZE ];
-
 uniform vec2 resolution;
-
 uniform float cameraNear;
 uniform float cameraFar;
 uniform mat4 cameraProjectionMatrix;
 uniform mat4 cameraInverseProjectionMatrix;
-
 uniform float kernelRadius;
-uniform float minDistance; // avoid artifacts caused by neighbour fragments with minimal depth difference
+uniform float depthBias; // avoid artifacts caused by neighbour fragments with minimal depth difference
 uniform float maxDistance; // avoid the influence of fragments which are too far away
+uniform float maxDepth;
 uniform float intensity;
+uniform float fadeout;
 
 varying vec2 vUv;
 
@@ -100,54 +98,109 @@ void main() {
         float realDepth = getLinearDepth(samplePointUv); // get linear depth from depth texture
         float sampleDepth = viewZToOrthographicDepth(samplePoint.z, cameraNear, cameraFar); // compute linear depth of the sample view Z value
 
-        #if SMOOTH_SSAO == 1
-            float delta = (sampleDepth - realDepth) * (cameraFar - cameraNear);
-            float w = step(minDistance, delta) * clamp((maxDistance - delta) / (maxDistance - minDistance), 0.0, 1.0);
-            occlusion += w*w * clamp(1.0 - length(sampleVector.xy), 0.0, 1.0);
-        #else
-            float delta = sampleDepth - realDepth;
-            if (delta > minDistance && delta < maxDistance) { // if fragment is before sample point, increase occlusion
-                occlusion += 1.0;
-            }
-        #endif
+        float depthDelta = sampleDepth - realDepth;
+        float deltaDistance = depthDelta * (cameraFar - cameraNear);
+        float w_long = clamp((maxDistance - deltaDistance) / maxDistance, 0.0, 1.0);
+        //float w_long = 1.0 - smoothstep(maxDistance * 0.25, maxDistance, deltaDistance);
+        float w_lat = clamp(1.0 - length(sampleVector.xy), 0.0, 1.0);
+        occlusion += step(sampleDepth, maxDepth) * step(realDepth, maxDepth) * step(depthBias, depthDelta) * step(deltaDistance, maxDistance) * mix(1.0, w_long * w_lat, fadeout);
     }
 
-    occlusion = clamp(occlusion / float( KERNEL_SIZE ), 0.0, 1.0) * intensity;
+    occlusion = clamp(occlusion / float(KERNEL_SIZE)  * intensity * (1.0 + fadeout), 0.0, 1.0);
     gl_FragColor = vec4( vec3( 1.0 - occlusion ), 1.0 );
 }`;
 
-export const ssaoKernelSize: number = 32;
+export class SSAORenderMaterial extends THREE.ShaderMaterial {
+    public static kernelSize: number = 32;
+    private static shader: any = {
+        uniforms: {
+            // @ts-ignore
+            tDiffuse: { value: null },
+            // @ts-ignore
+            tNormal: { value: null },
+            // @ts-ignore
+            tDepth: { value: null },
+            // @ts-ignore
+            tNoise: { value: null },
+            // @ts-ignore
+            kernel: { value: null },
+            cameraNear: { value: 0.1 },
+            cameraFar: { value: 1 },
+            resolution: { value: new THREE.Vector2() },
+            cameraProjectionMatrix: { value: new THREE.Matrix4() },
+            cameraInverseProjectionMatrix: { value: new THREE.Matrix4() },
+            kernelRadius: { value: 8 },
+            depthBias: { value: 0.005 },
+            maxDistance: { value: 0.05 },
+            maxDepth: { value: 0.99 },
+            intensity: { value: 1 },
+            fadeout: { value: 0 },
+        },
+        defines: {
+            PERSPECTIVE_CAMERA: 1,
+            KERNEL_SIZE: this.kernelSize
+        },
+        vertexShader: glslSSAOVertexShader,
+        fragmentShader: glslSSAOFragmentShader
+    };
 
-export const SSAOShader = {
-    uniforms: {
-        // @ts-ignore
-        tDiffuse: { value: null },
-        // @ts-ignore
-        tNormal: { value: null },
-        // @ts-ignore
-        tDepth: { value: null },
-        // @ts-ignore
-        tNoise: { value: null },
-        // @ts-ignore
-        kernel: { value: null },
-        cameraNear: { value: 0.1 },
-        cameraFar: { value: 1 },
-        resolution: { value: new THREE.Vector2() },
-        cameraProjectionMatrix: { value: new THREE.Matrix4() },
-        cameraInverseProjectionMatrix: { value: new THREE.Matrix4() },
-        kernelRadius: { value: 8 },
-        minDistance: { value: 0.005 },
-        maxDistance: { value: 0.05 },
-        intensity: { value: 1 },
-    },
-    defines: {
-        PERSPECTIVE_CAMERA: 1,
-        SMOOTH_SSAO: 1,
-        KERNEL_SIZE: ssaoKernelSize
-    },
-    vertexShader: glslSSAOVertexShader,
-    fragmentShader: glslSSAOFragmentShader
-};
+    constructor(parameters?: any) {
+        super({
+            defines: Object.assign({}, SSAORenderMaterial.shader.defines),
+            uniforms: THREE.UniformsUtils.clone(SSAORenderMaterial.shader.uniforms),
+            vertexShader: SSAORenderMaterial.shader.vertexShader,
+            fragmentShader: SSAORenderMaterial.shader.fragmentShader,
+            blending: THREE.NoBlending
+        });
+        this.update(parameters)
+    }
+
+    update(parameters?: any) : SSAORenderMaterial {
+        if (parameters?.normalTexture !== undefined) {
+            this.uniforms.tNormal.value = parameters?.normalTexture
+        }
+        if (parameters?.depthTexture !== undefined) {
+            this.uniforms.tDepth.value = parameters?.depthTexture
+        }
+        if (parameters?.noiseTexture !== undefined) {
+            this.uniforms.tNoise.value = parameters?.noiseTexture
+        }
+        if (parameters?.kernel !== undefined) {
+            this.uniforms.kernel.value = parameters?.kernel
+        }
+        if (parameters?.width || parameters?.height) {
+            const width = parameters?.width ?? this.uniforms.resolution.value.x;
+            const height = parameters?.width ?? this.uniforms.resolution.value.y;
+            this.uniforms.resolution.value.set(width, height);
+        }
+        if (parameters?.camera !== undefined) {
+            const camera = parameters?.camera as THREE.OrthographicCamera || parameters?.camera as THREE.PerspectiveCamera;
+            this.uniforms.cameraNear.value = camera.near;
+            this.uniforms.cameraFar.value = camera.far;
+            this.uniforms.cameraProjectionMatrix.value.copy(camera.projectionMatrix);
+            this.uniforms.cameraInverseProjectionMatrix.value.copy(camera.projectionMatrixInverse);
+        }  
+        if (parameters?.kernelRadius !== undefined) {
+            this.uniforms.kernelRadius.value = parameters?.kernelRadius
+        }
+        if (parameters?.depthBias !== undefined) {
+            this.uniforms.depthBias.value = parameters?.depthBias
+        }
+        if (parameters?.maxDistance !== undefined) {
+            this.uniforms.maxDistance.value = parameters?.maxDistance
+        }
+        if (parameters?.maxDepth !== undefined) {
+            this.uniforms.maxDepth.value = parameters?.maxDepth
+        }
+        if (parameters?.intensity !== undefined) {
+            this.uniforms.intensity.value = parameters?.intensity
+        }
+        if (parameters?.fadeout !== undefined) {
+            this.uniforms.fadeout.value = parameters?.fadeout
+        }
+        return this;
+    }
+}
 
 const glslSSAOBlurVertexShader =
 `varying vec2 vUv;
@@ -181,18 +234,41 @@ void main() {
 #endif
 }`;
 
-export const ssaoBlurShaderOptimized: boolean = true;
+export class SSAOBlurMaterial extends THREE.ShaderMaterial {
+    public static optimized: boolean = true;
+    private static shader: any = {
+        uniforms: {
+            // @ts-ignore
+            tDiffuse: { value: null },
+            resolution: { value: new THREE.Vector2() }
+        },
+        defines: {
+            OPTIMIZED_BLUR: SSAOBlurMaterial.optimized ? 1 : 0
+        },
+        vertexShader: glslSSAOBlurVertexShader,
+        fragmentShader: glslSSAOBlurFragmentShader
+    };
+    
+    constructor(parameters?: any) {
+        super({
+            defines: Object.assign({}, SSAOBlurMaterial.shader.defines),
+            uniforms: THREE.UniformsUtils.clone(SSAOBlurMaterial.shader.uniforms),
+            vertexShader: SSAOBlurMaterial.shader.vertexShader,
+            fragmentShader: SSAOBlurMaterial.shader.fragmentShader,
+            blending: THREE.NoBlending
+        });
+        this.update(parameters)
+    }
 
-export const SSAOBlurShader = {
-    uniforms: {
-        // @ts-ignore
-        tDiffuse: { value: null },
-        resolution: { value: new THREE.Vector2() }
-    },
-    defines: {
-        OPTIMIZED_BLUR: ssaoBlurShaderOptimized ? 1 : 0
-    },
-    vertexShader: glslSSAOBlurVertexShader,
-    fragmentShader: glslSSAOBlurFragmentShader
-};
-
+    update(parameters?: any) : SSAORenderMaterial {
+        if (parameters?.texture !== undefined) {
+            this.uniforms.tDiffuse.value = parameters?.texture
+        }
+        if (parameters?.width || parameters?.height) {
+            const width = parameters?.width ?? this.uniforms.resolution.value.x;
+            const height = parameters?.height ?? this.uniforms.resolution.value.y;
+            this.uniforms.resolution.value.set(width, height);
+        }        
+        return this;
+    }
+}

@@ -1,8 +1,6 @@
 import {
-    SSAOShader,
-    SSAOBlurShader,
-    ssaoKernelSize,
-    ssaoBlurShaderOptimized
+    SSAORenderMaterial,
+    SSAOBlurMaterial
 } from './ssaoMaterialsAndShaders';
 import * as THREE from 'three';
 import { SimplexNoise } from 'three/examples/jsm/math/SimplexNoise.js';
@@ -11,9 +9,11 @@ export interface SSAOParameters {
     enabled: boolean;
     alwaysUpdate: boolean;
     kernelRadius: number;
-    minDistance: number;
+    depthBias: number;
     maxDistance: number;
+    maxDepth: number;
     intensity: number;
+    fadeout: number
 }
 
 export class SSAORenderTargets {
@@ -21,24 +21,83 @@ export class SSAORenderTargets {
     private width: number;
     private height: number;
     private samples: number;
-    private depthNormalScale = 2;
-    private noiseTexture?: THREE.DataTexture;
-    private kernel: THREE.Vector3[] = [];
-    private normalRenderMaterial?: THREE.MeshNormalMaterial;
-    private ssaoRenderMaterial?: THREE.ShaderMaterial;
-    private blurRenderMaterial?: THREE.ShaderMaterial;
-    public depthNormalRenderTarget?: THREE.WebGLRenderTarget;
-    public ssaoRenderTarget?: THREE.WebGLRenderTarget;
-    public blurRenderTarget?: THREE.WebGLRenderTarget;
+    private ssaoTargetSamples: number = 0;
+    private depthNormalScale = 1;
+    private _noiseTexture?: THREE.DataTexture;
+    private _kernel: THREE.Vector3[] = [];
+    private _normalRenderMaterial?: THREE.MeshNormalMaterial;
+    private _ssaoRenderMaterial?: SSAORenderMaterial;
+    private _blurRenderMaterial?: SSAOBlurMaterial;
+    private _depthNormalRenderTarget?: THREE.WebGLRenderTarget;
+    private _ssaoRenderTarget?: THREE.WebGLRenderTarget;
+    private _blurRenderTarget?: THREE.WebGLRenderTarget;
+
+    public get depthNormalRenderTarget(): THREE.WebGLRenderTarget {
+        if (!this._depthNormalRenderTarget) {
+            const depthTexture = new THREE.DepthTexture(this.width * this.depthNormalScale, this.height * this.depthNormalScale);
+            depthTexture.format = THREE.DepthStencilFormat;
+            depthTexture.type = THREE.UnsignedInt248Type;
+            this._depthNormalRenderTarget = new THREE.WebGLRenderTarget(this.width * this.depthNormalScale, this.height * this.depthNormalScale, {
+                minFilter: SSAOBlurMaterial.optimized || this.depthNormalScale !== 1.0 ? THREE.LinearFilter : THREE.NearestFilter,
+                magFilter: SSAOBlurMaterial.optimized || this.depthNormalScale !== 1.0 ? THREE.LinearFilter : THREE.NearestFilter,
+                depthTexture
+            });
+        }
+        return this._depthNormalRenderTarget;
+    }
+
+    public get ssaoRenderTarget(): THREE.WebGLRenderTarget {
+        this._ssaoRenderTarget ??= new THREE.WebGLRenderTarget(this.width, this.height, { samples: this.ssaoTargetSamples });
+        return this._ssaoRenderTarget;
+    }
+
+    public get blurRenderTarget(): THREE.WebGLRenderTarget {
+        this._blurRenderTarget ??= new THREE.WebGLRenderTarget(this.width, this.height, { samples: this.ssaoTargetSamples });
+        return this._blurRenderTarget;
+    }
+
+    public get normalRenderMaterial(): THREE.MeshNormalMaterial {
+        this._normalRenderMaterial ??= new THREE.MeshNormalMaterial({blending: THREE.NoBlending})
+        return this._normalRenderMaterial;
+    }
+
+    public get ssaoRenderMaterial(): SSAORenderMaterial {
+        this._ssaoRenderMaterial ??= new SSAORenderMaterial({
+            normalTexture: this.depthNormalRenderTarget.texture,
+            depthTexture: this.depthNormalRenderTarget.depthTexture,
+            noiseTexture: this.noiseTexture,
+            kernel: this.kernel,
+        });
+        return this._ssaoRenderMaterial.update({ width: this.width, height: this.height });
+    }
+
+    public get blurRenderMaterial(): SSAOBlurMaterial {
+        this._blurRenderMaterial ??= new SSAOBlurMaterial();
+        return this._blurRenderMaterial?.update({width: this.width, height: this.height, texture: this.ssaoRenderTarget.texture});
+    }
+
+    private get noiseTexture(): THREE.DataTexture {
+        this._noiseTexture ??= this.generateRandomKernelRotations();
+        return this._noiseTexture;
+    }
+
+    private get kernel(): THREE.Vector3[] {
+        if (!this._kernel.length) {
+            this._kernel = this.generateSampleKernel();
+        }
+        return this._kernel;
+    }
 
     constructor(width: number, height: number, samples: number, parameters?: any) {
         this.ssaoParameters = {
             enabled: parameters?.enabled ?? true,
             alwaysUpdate: parameters?.alwaysUpdate ?? true,
             kernelRadius: parameters?.kernelRadius ?? 0.03,
-            minDistance: parameters?.minDistance ?? 0.005,
-            maxDistance: parameters?.maxDistance ?? 0.3,
-            intensity: parameters?.intensity ?? 1
+            depthBias: parameters?.depthBias ?? 0.005,
+            maxDistance: parameters?.maxDistance ?? 0.5,
+            maxDepth: parameters?.maxDepth ?? 0.99,
+            intensity: parameters?.intensity ?? 1,
+            fadeout: parameters?.fadeout ?? 1,
         };
         this.width = width;
         this.height = height;
@@ -46,145 +105,44 @@ export class SSAORenderTargets {
     }
 
     public dispose() {
-        this.noiseTexture?.dispose();
-        this.normalRenderMaterial?.dispose();
-        this.normalRenderMaterial?.dispose();
-        this.ssaoRenderMaterial?.dispose();
-        this.blurRenderMaterial?.dispose();
-        this.depthNormalRenderTarget?.dispose();
-        this.ssaoRenderTarget?.dispose();
-        this.blurRenderTarget?.dispose();
+        this._noiseTexture?.dispose();
+        this._normalRenderMaterial?.dispose();
+        this._ssaoRenderMaterial?.dispose();
+        this._blurRenderMaterial?.dispose();
+        this._depthNormalRenderTarget?.dispose();
+        this._ssaoRenderTarget?.dispose();
+        this._blurRenderTarget?.dispose();
     }
 
     public setSize(width: number, height: number) {
         this.width = width;
         this.height = height;
-        this.ssaoRenderMaterial?.uniforms['resolution'].value.set(this.width, this.height);
-        this.blurRenderMaterial?.uniforms['resolution'].value.set(this.width, this.height);
-        this.depthNormalRenderTarget?.setSize(this.width * this.depthNormalScale, this.height * this.depthNormalScale);
-        this.ssaoRenderTarget?.setSize(this.width, this.height);
-        this.blurRenderTarget?.setSize(this.width, this.height);
+        this._ssaoRenderMaterial?.update({width: this.width, height: this.height});
+        this._blurRenderMaterial?.update({width: this.width, height: this.height});
+        this._depthNormalRenderTarget?.setSize(this.width * this.depthNormalScale, this.height * this.depthNormalScale);
+        this._ssaoRenderTarget?.setSize(this.width, this.height);
+        this._blurRenderTarget?.setSize(this.width, this.height);
     }
 
     public updateSSAOMaterial(camera: THREE.Camera): THREE.ShaderMaterial {
-        const ssaoMaterial = this.getSSAORenderMaterial(camera);
-        ssaoMaterial.uniforms.kernelRadius.value = this.ssaoParameters.kernelRadius;
-        ssaoMaterial.uniforms.minDistance.value = this.ssaoParameters.minDistance;
-        ssaoMaterial.uniforms.maxDistance.value = this.ssaoParameters.maxDistance;
-        ssaoMaterial.uniforms.intensity.value = this.ssaoParameters.intensity;
-        return ssaoMaterial;
+        return this.ssaoRenderMaterial.update({camera}).update(this.ssaoParameters);
     }
 
     public updateSSAOKernel() {
-        if (this.noiseTexture) {
-            this.noiseTexture = this.generateRandomKernelRotations();
+        if (this._noiseTexture) {
+            this._noiseTexture = this.generateRandomKernelRotations();
         }
-        if (this.kernel) {
-            this.kernel = this.generateSampleKernel();
+        if (this._kernel) {
+            this._kernel = this.generateSampleKernel();
         }
-        if (this.ssaoRenderMaterial) {
-            this.ssaoRenderMaterial.uniforms.tNoise.value = this.noiseTexture;
-            this.ssaoRenderMaterial.uniforms.kernel.value = this.kernel;
+        if (this._ssaoRenderMaterial) {
+            this._ssaoRenderMaterial.uniforms.tNoise.value = this._noiseTexture;
+            this._ssaoRenderMaterial.uniforms.kernel.value = this._kernel;
         }
-    }
-
-    public getDepthNormalRenderTarget(): THREE.WebGLRenderTarget {
-        if (!this.depthNormalRenderTarget) {
-            const depthTexture = new THREE.DepthTexture(this.width * this.depthNormalScale, this.height * this.depthNormalScale);
-            depthTexture.format = THREE.DepthStencilFormat;
-            depthTexture.type = THREE.UnsignedInt248Type;
-            //depthTexture.minFilter = this.depthScale != 1.0 ? THREE.LinearFilter : THREE.NearestFilter,
-            //depthTexture.magFilter = this.depthScale != 1.0 ? THREE.LinearFilter : THREE.NearestFilter,
-            this.depthNormalRenderTarget = new THREE.WebGLRenderTarget(this.width * this.depthNormalScale, this.height * this.depthNormalScale, {
-                minFilter: ssaoBlurShaderOptimized || this.depthNormalScale !== 1.0 ? THREE.LinearFilter : THREE.NearestFilter,
-                magFilter: ssaoBlurShaderOptimized || this.depthNormalScale !== 1.0 ? THREE.LinearFilter : THREE.NearestFilter,
-                depthTexture
-            });
-        }
-        return this.depthNormalRenderTarget;
-    }
-
-    public getSSSAORenderTarget(): THREE.WebGLRenderTarget {
-        if (!this.ssaoRenderTarget) {
-            this.ssaoRenderTarget = new THREE.WebGLRenderTarget(this.width, this.height, { samples: this.samples });
-        }
-        return this.ssaoRenderTarget;
-    }
-
-    public getBlurRenderTarget(): THREE.WebGLRenderTarget {
-        if (!this.blurRenderTarget) {
-            this.blurRenderTarget = new THREE.WebGLRenderTarget(this.width, this.height, { samples: this.samples });
-        }
-        return this.blurRenderTarget;
-    }
-
-    public getNormalRenderMaterial(): THREE.MeshNormalMaterial {
-        if (!this.normalRenderMaterial) {
-            this.normalRenderMaterial = new THREE.MeshNormalMaterial();
-            this.normalRenderMaterial.blending = THREE.NoBlending;
-        }
-        return this.normalRenderMaterial;
-    }
-
-    public getSSAORenderMaterial(camera: THREE.Camera): THREE.ShaderMaterial {
-        if (!this.ssaoRenderMaterial) {
-            this.ssaoRenderMaterial = new THREE.ShaderMaterial( {
-                defines: Object.assign({}, SSAOShader.defines),
-                uniforms: THREE.UniformsUtils.clone(SSAOShader.uniforms),
-                vertexShader: SSAOShader.vertexShader,
-                fragmentShader: SSAOShader.fragmentShader,
-                blending: THREE.NoBlending
-            } );
-            const depthNormalTarget = this.getDepthNormalRenderTarget();
-            const noiseTexture = this.getNoiseTexture();
-            const kernel = this.getKernel();
-            //this.ssaoRenderMaterial.uniforms['tDiffuse'].value = this.previousRenderTarget.texture;
-            this.ssaoRenderMaterial.uniforms.tNormal.value = depthNormalTarget.texture;
-            this.ssaoRenderMaterial.uniforms.tDepth.value = depthNormalTarget.depthTexture;
-            this.ssaoRenderMaterial.uniforms.tNoise.value = noiseTexture;
-            this.ssaoRenderMaterial.uniforms.kernel.value = kernel;
-        }
-        // @ts-ignore
-        this.ssaoRenderMaterial.uniforms.cameraNear.value = camera.near;
-        // @ts-ignore
-        this.ssaoRenderMaterial.uniforms.cameraFar.value = camera.far;
-        this.ssaoRenderMaterial.uniforms.resolution.value.set(this.width, this.height);
-        this.ssaoRenderMaterial.uniforms.cameraProjectionMatrix.value.copy(camera.projectionMatrix);
-        this.ssaoRenderMaterial.uniforms.cameraInverseProjectionMatrix.value.copy(camera.projectionMatrixInverse);
-        return this.ssaoRenderMaterial;
-    }
-
-    public getBlurRenderMaterial(): THREE.ShaderMaterial {
-        if (!this.blurRenderMaterial) {
-            this.blurRenderMaterial = new THREE.ShaderMaterial( {
-                defines: Object.assign({}, SSAOBlurShader.defines),
-                uniforms: THREE.UniformsUtils.clone(SSAOBlurShader.uniforms),
-                vertexShader: SSAOBlurShader.vertexShader,
-                fragmentShader: SSAOBlurShader.fragmentShader
-            });
-            const ssaoRenderTarget = this.getSSSAORenderTarget();
-            this.blurRenderMaterial.uniforms.tDiffuse.value = ssaoRenderTarget.texture;
-        }
-        this.blurRenderMaterial.uniforms.resolution.value.set(this.width, this.height);
-        return this.blurRenderMaterial;
-    }
-
-    private getNoiseTexture(): THREE.DataTexture {
-        if (!this.noiseTexture) {
-            this.noiseTexture = this.generateRandomKernelRotations();
-        }
-        return this.noiseTexture;
-    }
-
-    private getKernel(): THREE.Vector3[] {
-        if (!this.kernel.length) {
-            this.kernel = this.generateSampleKernel();
-        }
-        return this.kernel;
     }
 
     private generateSampleKernel(): THREE.Vector3[] {
-        const kernelSize = ssaoKernelSize;
+        const kernelSize = SSAORenderMaterial.kernelSize;
         const kernel: THREE.Vector3[] = [];
         for (let i = 0; i < kernelSize; i ++) {
             const sample = new THREE.Vector3();

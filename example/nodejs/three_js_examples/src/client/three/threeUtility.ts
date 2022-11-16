@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass';
 
 const textureLoader: THREE.TextureLoader = new THREE.TextureLoader();
 
@@ -75,11 +76,34 @@ export const getMaxSamples = (renderTarget: THREE.WebGLRenderer): number => {
 
 export class RenderOverrideVisibility {
     private _visibilityCache = new Map();
+    private background: any;
+    private hideLinesAndPoints: boolean;
+    private invisibleObjects?: any[]
 
-    public render(scene: THREE.Scene, renderMethod: () => void ) {
-        this.overrideVisibility(scene);
+    constructor(hideLinesAndPoints?: boolean, invisibleObjects?: any[], background?: any) {
+        this.background = background;
+        this.hideLinesAndPoints = hideLinesAndPoints ?? false;
+        this.invisibleObjects = invisibleObjects;
+    }
+
+    public render(scene: THREE.Scene, renderMethod: () => void) {
+        const sceneBackground = scene.background;
+        if (this.background !== undefined) {
+            scene.background = this.background;
+        }
+        const backup = this.invisibleObjects?.map(item => { return { object: item, visible: item.visible }; }) ?? null;
+        this.invisibleObjects?.forEach(item => item.visible = false);
+        if (this.hideLinesAndPoints) {
+            this.overrideVisibility(scene);
+        }
         renderMethod();
-        this.restoreVisibility(scene);
+        if (this.hideLinesAndPoints) {
+            this.restoreVisibility(scene);
+        }
+        backup?.forEach(item => item.object.visible = item.visible);
+        if (this.background !== undefined) {
+            scene.background = sceneBackground;
+        }
     }
 
     private overrideVisibility(scene: THREE.Scene) {
@@ -103,32 +127,146 @@ export class RenderOverrideVisibility {
 	}
 }
 
-const originalClearColor = new THREE.Color()
+export class RenderPass {
+    private originalClearColor = new THREE.Color();
+    private originalClearAlpha: number = 0;
+    private originalAutoClear: boolean = false;
+    private originalRenderTarget: THREE.WebGLRenderTarget | null = null;
+    private screenSpaceQuad = new FullScreenQuad(undefined);
 
-export const renderOverride = (renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera, overrideMaterial: THREE.Material, renderTarget: THREE.WebGLRenderTarget | null, clearColor: any, clearAlpha: any): void => {
-    renderer.getClearColor(originalClearColor);
-    const originalClearAlpha = renderer.getClearAlpha();
-    const originalAutoClear = renderer.autoClear;
-
-    renderer.setRenderTarget(renderTarget);
-    renderer.autoClear = false;
-
-    // @ts-ignore    
-    clearColor = overrideMaterial.clearColor || clearColor;
-    // @ts-ignore  
-    clearAlpha = overrideMaterial.clearAlpha || clearAlpha;
-
-    if ((clearColor !== undefined ) && (clearColor !== null)) {
-        renderer.setClearColor(clearColor);
-        renderer.setClearAlpha(clearAlpha || 0.0);
-        renderer.clear();
+    public renderWithOverrideMaterial(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera, overrideMaterial: THREE.Material, renderTarget: THREE.WebGLRenderTarget | null, clearColor?: any, clearAlpha?: any): void {
+        this.backup(renderer);
+        // @ts-ignore    
+        clearColor = overrideMaterial.clearColor || clearColor;
+        // @ts-ignore  
+        clearAlpha = overrideMaterial.clearAlpha || clearAlpha;
+        this.prepareRenderer(renderer, renderTarget, clearColor, clearAlpha);
+        const originalOverrideMaterial = scene.overrideMaterial
+        scene.overrideMaterial = overrideMaterial;
+        renderer.render(scene, camera);
+        scene.overrideMaterial = originalOverrideMaterial;
+        this.restore(renderer);
     }
 
-    scene.overrideMaterial = overrideMaterial;
-    renderer.render(scene, camera);
-    scene.overrideMaterial = null;
+    public renderScreenSpace(renderer: THREE.WebGLRenderer, passMaterial: THREE.Material, renderTarget: THREE.WebGLRenderTarget | null, clearColor?: any, clearAlpha?: any): void {
+        this.backup(renderer);
+        this.prepareRenderer(renderer, renderTarget, clearColor, clearAlpha);
+        this.screenSpaceQuad.material = passMaterial;
+        this.screenSpaceQuad.render(renderer);
+        this.restore(renderer);
+    }
 
-    renderer.autoClear = originalAutoClear;
-    renderer.setClearColor(originalClearColor);
-    renderer.setClearAlpha(originalClearAlpha );
+    private prepareRenderer(renderer: THREE.WebGLRenderer, renderTarget: THREE.WebGLRenderTarget | null, clearColor?: any, clearAlpha?: any): void {
+        renderer.setRenderTarget(renderTarget);
+        renderer.autoClear = false;
+        if ((clearColor !== undefined) && (clearColor !== null)) {
+            renderer.setClearColor(clearColor);
+            renderer.setClearAlpha(clearAlpha || 0.0);
+            renderer.clear();
+        }
+    }
+
+    private backup(renderer: THREE.WebGLRenderer): void {
+        renderer.getClearColor(this.originalClearColor);
+        this.originalClearAlpha = renderer.getClearAlpha();
+        this.originalAutoClear = renderer.autoClear;
+        this.originalRenderTarget = renderer.getRenderTarget();
+        
+    }
+
+    private restore(renderer: THREE.WebGLRenderer): void {
+        renderer.setClearColor(this.originalClearColor);
+        renderer.setClearAlpha(this.originalClearAlpha);
+        renderer.setRenderTarget(this.originalRenderTarget);
+        renderer.autoClear = this.originalAutoClear;
+    }
+}
+
+export class BoxHelper {
+    public box: THREE.Box3;
+    public color: THREE.Color;
+    public opacity: number;
+    private group: THREE.Group;
+    private boxMesh: THREE.Mesh;
+    private boxWire: THREE.BoxHelper;
+
+    public get visible(): boolean { return this.group.visible; }
+    public set visible(isVisible: boolean) { this.group.visible = isVisible; }
+    public get object(): THREE.Object3D { return this.group; }
+
+    constructor(box: THREE.Box3, parameters?: any) {
+        this.group = new THREE.Group();
+        this.box = box;
+        this.color = parameters?.color ?? 0x808080;
+        this.opacity = parameters?.opacity ?? 0.5;
+        const boxSize = this.box.getSize(new THREE.Vector3);
+        const boxCenter = this.box.getCenter(new THREE.Vector3);
+        const sceneBoxGeometry = new THREE.BoxGeometry(boxSize.x, boxSize.y, boxSize.z);
+        sceneBoxGeometry.translate(boxCenter.x, boxCenter.y, boxCenter.z);
+        this.boxMesh = new THREE.Mesh(sceneBoxGeometry, new THREE.MeshBasicMaterial({
+            color: this.color,
+            transparent: true,
+            opacity: this.opacity
+        }));
+        this.boxWire = new THREE.BoxHelper(this.boxMesh, this.color);
+        this.boxWire.material = new THREE.LineBasicMaterial({color: this.color});
+        this.group.add(this.boxMesh);
+        this.group.add(this.boxWire);
+    }
+
+    public update(): void {
+        const boxMaterial = this.boxMesh.material as THREE.MeshBasicMaterial;
+        boxMaterial.opacity = this.opacity;
+        boxMaterial.color = new THREE.Color(this.color);
+        boxMaterial.needsUpdate = true;
+        const boxSize = this.box.getSize(new THREE.Vector3);
+        const boxCenter = this.box.getCenter(new THREE.Vector3);
+        const sceneBoxGeometry = new THREE.BoxGeometry(boxSize.x, boxSize.y, boxSize.z);
+        sceneBoxGeometry.translate(boxCenter.x, boxCenter.y, boxCenter.z);
+        this.boxMesh.geometry = sceneBoxGeometry;
+        this.group.remove(this.boxWire);
+        this.boxWire = new THREE.BoxHelper(new THREE.Mesh(sceneBoxGeometry), this.color);
+        this.boxWire.material = new THREE.LineBasicMaterial({color: this.color});
+        this.group.add(this.boxWire);
+    }
+
+    public addTo(scene: THREE.Object3D): void {
+        scene.add(this.group);
+    }
+
+    public removeFrom(scene: THREE.Object3D): void {
+        scene.remove(this.group);
+    }
+}
+
+export const boxFromOrthographicViewVolume = (camera: THREE.OrthographicCamera): THREE.Box3 => {
+    const min = new THREE.Vector3(Math.min(camera.left, camera.right), Math.min(camera.bottom, camera.top), Math.min(camera.near, camera.far));
+    const max = new THREE.Vector3(Math.max(camera.left, camera.right), Math.max(camera.bottom, camera.top), Math.max(camera.near, camera.far));
+    const box = new THREE.Box3(min, max);
+    return box;
+}
+
+export const setOrthographicViewVolumeFromBox = (camera: THREE.OrthographicCamera, viewBox: THREE.Box3): void => {
+    camera.left = viewBox.min.x;
+    camera.right = viewBox.max.x;
+    camera.bottom = viewBox.min.y;
+    camera.top = viewBox.max.y;
+    camera.near = Math.min(-viewBox.min.z, -viewBox.max.z);
+    camera.far = Math.max(-viewBox.min.z, -viewBox.max.z);
+    camera.updateProjectionMatrix();
+}
+
+export const boundingBoxInViewSpace = (worldBox: THREE.Box3, camera: THREE.Camera): THREE.Box3 => {
+    camera.updateMatrixWorld();
+    const viewMatrix = camera.matrixWorldInverse;
+    const viewBox = new THREE.Box3();
+    viewBox.expandByPoint(new THREE.Vector3(worldBox.min.x, worldBox.min.y, worldBox.min.z).applyMatrix4(viewMatrix));
+    viewBox.expandByPoint(new THREE.Vector3(worldBox.min.x, worldBox.min.y, worldBox.max.z).applyMatrix4(viewMatrix));
+    viewBox.expandByPoint(new THREE.Vector3(worldBox.min.x, worldBox.max.y, worldBox.min.z).applyMatrix4(viewMatrix));
+    viewBox.expandByPoint(new THREE.Vector3(worldBox.min.x, worldBox.max.y, worldBox.max.z).applyMatrix4(viewMatrix));
+    viewBox.expandByPoint(new THREE.Vector3(worldBox.max.x, worldBox.min.y, worldBox.min.z).applyMatrix4(viewMatrix));
+    viewBox.expandByPoint(new THREE.Vector3(worldBox.max.x, worldBox.min.y, worldBox.max.z).applyMatrix4(viewMatrix));
+    viewBox.expandByPoint(new THREE.Vector3(worldBox.max.x, worldBox.max.y, worldBox.min.z).applyMatrix4(viewMatrix));
+    viewBox.expandByPoint(new THREE.Vector3(worldBox.max.x, worldBox.max.y, worldBox.max.z).applyMatrix4(viewMatrix));
+    return viewBox;
 }
