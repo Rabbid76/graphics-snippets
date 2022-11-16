@@ -168,7 +168,7 @@ export const rectAreaLightShadow = (canvas: any) => {
         statistic.update();
     }
 
-    const renderOverrideVisibility = new RenderOverrideVisibility(false, [sceneBoxHelper, shadowBoxHelper, transformControl], null);
+    const renderOverrideVisibility = new RenderOverrideVisibility(false, [sceneBoxHelper, shadowBoxHelper, transformControl, shadowDebugPlan, rectAreaLightAndShadow.light], null);
     const renderShadow = () => {
         renderOverrideVisibility.render(scene, () => {
             rectAreaLightAndShadow.renderShadowMap(renderer, scene);
@@ -294,6 +294,7 @@ class RectAreaLightAndShadow {
             width: this.width,
             height: this.height, 
             camera, 
+            shadowMapResolution: new THREE.Vector2(this.shadowMapSize, this.shadowMapSize),
             shadowCamera: this.shadowCamera,
             intensity: this.intensity
         });

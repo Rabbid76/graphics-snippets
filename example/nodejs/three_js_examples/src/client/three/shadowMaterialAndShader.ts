@@ -16,6 +16,7 @@ uniform float cameraFar;
 uniform mat4 cameraProjectionMatrix;
 uniform mat4 cameraInverseProjectionMatrix;
 uniform mat4 cameraWorldMatrix;
+uniform vec2 shadowMapResolution;
 uniform mat4 shadowProjectionMatrix;
 uniform mat4 shadowViewMatrix;
 uniform float intensity;
@@ -59,6 +60,15 @@ vec3 getViewPosition( const in vec2 screenPosition, const in float depth, const 
     return ( cameraInverseProjectionMatrix * clipPosition ).xyz;
 }
 
+float getShadowDepth(vec3 cameraUVDepth) {
+    return 1.0 - texture2D(tShadow, cameraUVDepth.xy).x * step(max(cameraUVDepth.x, cameraUVDepth.y), 1.0) * step(0.0, min(cameraUVDepth.x, cameraUVDepth.y));
+}
+
+float getInverseShadow(vec3 cameraUVDepth) {
+    float shadowDepth = getShadowDepth(cameraUVDepth);
+    return step(shadowDepth + 0.005, cameraUVDepth.z) * step(shadowDepth+0.0001, 1.0);
+}
+
 void main() {
 
     float depth = getDepth(vUv);
@@ -67,8 +77,25 @@ void main() {
     vec4 cameraMapNDC = shadowProjectionMatrix * shadowViewMatrix * cameraWorldMatrix * vec4(viewPosition, 1.0);
     cameraMapNDC.xyz /= cameraMapNDC.w;
     vec3 cameraUVDepth = cameraMapNDC.xyz * 0.5 + 0.5;
-    float shadowDepth =  1.0 - texture2D(tShadow, cameraUVDepth.xy).x;
-    float shadow = 1.0 - intensity * step(shadowDepth + 0.005, cameraUVDepth.z) * step(shadowDepth+0.0001, 1.0);
+    #if BLUR == 1
+        float inverseShadow = 0.0;
+        vec2 offset = 1.0 / shadowMapResolution;
+        inverseShadow += getInverseShadow(cameraUVDepth + vec3(-offset.x, -offset.y, 0.0));
+        inverseShadow += getInverseShadow(cameraUVDepth + vec3(-offset.x, 0.0, 0.0));
+        inverseShadow += getInverseShadow(cameraUVDepth + vec3(-offset.x, offset.y, 0.0));
+        inverseShadow += getInverseShadow(cameraUVDepth + vec3(0.0, -offset.y, 0.0));
+        inverseShadow += getInverseShadow(cameraUVDepth);
+        inverseShadow += getInverseShadow(cameraUVDepth + vec3(0.0, offset.y, 0.0));
+        inverseShadow += getInverseShadow(cameraUVDepth + vec3(offset.x, -offset.y, 0.0));
+        inverseShadow += getInverseShadow(cameraUVDepth + vec3(offset.x, 0.0, 0.0));
+        inverseShadow += getInverseShadow(cameraUVDepth + vec3(offset.x, offset.y, 0.0));
+        inverseShadow /= 9.0;
+    #else
+        float inverseShadow = getInverseShadow(cameraUVDepth);
+    #endif
+    
+    //float shadow = 1.0 - intensity * inverseShadow;
+    float shadow = 1.0 - intensity * inverseShadow * (1.0 - step(1.0, depth));
 
     float linearDepth = getLinearDepth(vUv);
     gl_FragColor = vec4(vec3(shadow), 1.0);
@@ -90,12 +117,14 @@ export class ShadowMaterial extends THREE.ShaderMaterial {
             cameraProjectionMatrix: { value: new THREE.Matrix4() },
             cameraInverseProjectionMatrix: { value: new THREE.Matrix4() },
             cameraWorldMatrix: { value: new THREE.Matrix4() },
+            shadowMapResolution: { value: new THREE.Vector2() },
             shadowProjectionMatrix: { value: new THREE.Matrix4() },
             shadowViewMatrix: { value: new THREE.Matrix4() },
             intensity: { value: 1 },
         },
         defines: {
             PERSPECTIVE_CAMERA: 1,
+            BLUR: 1,
         },
         vertexShader: glslShadowVertexShader,
         fragmentShader: glslShadowFragmentShader
@@ -131,6 +160,9 @@ export class ShadowMaterial extends THREE.ShaderMaterial {
             this.uniforms.cameraProjectionMatrix.value.copy(camera.projectionMatrix);
             this.uniforms.cameraInverseProjectionMatrix.value.copy(camera.projectionMatrixInverse);
             this.uniforms.cameraWorldMatrix.value.copy(camera.matrixWorld);
+        }
+        if (parameters?.shadowMapResolution) {
+            this.uniforms.shadowMapResolution.value.set(parameters.shadowMapResolution.x, parameters.shadowMapResolution.y);
         }
         if (parameters?.shadowCamera) {
             const shadowCamera = parameters?.shadowCamera as THREE.OrthographicCamera || parameters?.shadowCamera as THREE.PerspectiveCamera;
