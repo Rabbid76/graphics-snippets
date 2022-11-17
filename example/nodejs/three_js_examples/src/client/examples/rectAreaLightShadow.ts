@@ -2,7 +2,6 @@ import { ElapsedTime } from '../three/timeUtility'
 import { Controls } from '../three/controls'
 import { DataGUI, Statistic } from '../three/uiUtility'
 import { LinearDepthRenderMaterial } from '../three/depthAndNormalMaterialsAndShaders';
-import { ShadowMaterial } from '../three/shadowMaterialAndShader'
 import { CopyMaterial } from '../three/shaderUtility'
 import { 
     BoxHelper, 
@@ -12,9 +11,12 @@ import {
     RenderPass,
     setOrthographicViewVolumeFromBox
 } from '../three/threeUtility'
+import {
+    RectAreaLightAndShadow,
+    RectAreaLightAndShadowWithShadowMap
+} from '../three/rectAreaLightAndShadow'
 import * as THREE from 'three'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
-import { RectAreaLightHelper } from 'three/examples/jsm/helpers/RectAreaLightHelper.js';
 
 export const rectAreaLightShadow = (canvas: any) => {
     const width = window.innerWidth;
@@ -55,7 +57,8 @@ export const rectAreaLightShadow = (canvas: any) => {
     
     const rectAreaLight = new THREE.RectAreaLight(0xffffff, 100, 1, 1);
     scene.add(rectAreaLight);  
-    const rectAreaLightAndShadow = new RectAreaLightAndShadow(rectAreaLight, directionalLight.shadow.camera, width, height, false);
+    const rectAreaLightAndShadow: RectAreaLightAndShadow = new RectAreaLightAndShadowWithShadowMap(rectAreaLight, new THREE.Vector2(width, height), undefined, false);
+    scene.add(rectAreaLightAndShadow.shadowCamera);   
 
     const shadowBoxHelper = new BoxHelper(boxFromOrthographicViewVolume(directionalLightCamera), { color: 0x80ff80, opacity: 0.25 });
     shadowBoxHelper.visible = false;
@@ -70,11 +73,12 @@ export const rectAreaLightShadow = (canvas: any) => {
     const updateShadowBox = () => {
         const pos = directionalLight.position.clone();
         directionalLight.lookAt(0, 0, 0);
-        rectAreaLightAndShadow.setPosition(pos.x, pos.y, pos.z);
-        rectAreaLightAndShadow.lookAt(0, 0, 0);
         shadowBoxHelper.object.position.set(pos.x, pos.y, pos.z);
         shadowBoxHelper.object.lookAt(0, 0, 0);
-        setOrthographicViewVolumeFromBox(directionalLightCamera, boundingBoxInViewSpace(sceneBox, directionalLightCamera));
+        rectAreaLightAndShadow.setLineOfSight(pos.clone(), new THREE.Vector3(0, 0, 0));
+        const shadowVolumeBox = boundingBoxInViewSpace(sceneBox, rectAreaLightAndShadow.shadowCamera);
+        rectAreaLightAndShadow.setShadowVolume(shadowVolumeBox);
+        setOrthographicViewVolumeFromBox(directionalLightCamera, shadowVolumeBox);
         shadowBoxHelper.box = boxFromOrthographicViewVolume(directionalLightCamera)
         shadowBoxHelper.update();
     };
@@ -136,13 +140,15 @@ export const rectAreaLightShadow = (canvas: any) => {
     dataGui.gui.add(generalUiProperties, 'scene volume').onChange((enabled: boolean) => sceneBoxHelper.visible = enabled);
     dataGui.gui.add(generalUiProperties, 'shadow volume').onChange((enabled: boolean) => shadowBoxHelper.visible = enabled);
     dataGui.gui.add(generalUiProperties, 'debug shadow map');
-    dataGui.gui.add(generalUiProperties, 'debug output', {
-        'off': 'off',
-        'depth': 'depth',
-        'shadow': 'shadow'
-    });
+    let debugOptions: any = {};
+    debugOptions['off'] = 'off';
+    if (rectAreaLightAndShadow.depthTexture) {
+        debugOptions['depth'] = 'depth';
+    }
+    debugOptions['shadow'] = 'off';
+    dataGui.gui.add(generalUiProperties, 'debug output', debugOptions);
     const shadowFolder = dataGui.gui.addFolder('rectAreaLight shadow');
-    shadowFolder.add(rectAreaLightAndShadow, 'intensity', 0.0, 1.0);
+    shadowFolder.add(rectAreaLightAndShadow, 'shadowIntensity', 0.0, 1.0);
 
     const onWindowResize = () => {
         const width = window.innerWidth;
@@ -168,24 +174,25 @@ export const rectAreaLightShadow = (canvas: any) => {
         statistic.update();
     }
 
-    const renderOverrideVisibility = new RenderOverrideVisibility(false, [sceneBoxHelper, shadowBoxHelper, transformControl, shadowDebugPlan, rectAreaLightAndShadow.light], null);
+    const renderOverrideVisibility = new RenderOverrideVisibility(false, [sceneBoxHelper, shadowBoxHelper, transformControl, shadowDebugPlan, rectAreaLightAndShadow.rectAreaLight], null);
     const renderShadow = () => {
         renderOverrideVisibility.render(scene, () => {
-            rectAreaLightAndShadow.renderShadowMap(renderer, scene);
-            if (generalUiProperties['debug output'] === 'off' && generalUiProperties['light source'] !== 'rectAreaLight') {
+            if (generalUiProperties['debug output'] === 'off' && generalUiProperties['light source'] !== 'rectAreaLight' && !generalUiProperties['debug output']) {
                 return;
             }
             rectAreaLightAndShadow.renderShadow(renderer, scene, camera);
         });
     }
 
-    const depthRenderMaterial = new LinearDepthRenderMaterial({ depthTexture: rectAreaLightAndShadow.depthTexture });
+    const depthRenderMaterial = rectAreaLightAndShadow.depthTexture ? new LinearDepthRenderMaterial({ depthTexture: rectAreaLightAndShadow.depthTexture }) : null;
     const copyMaterial = new CopyMaterial();
     const render = () => {
         renderShadow();
         switch(generalUiProperties['debug output']) {
             case 'depth':
-                renderPass.renderScreenSpace(renderer, depthRenderMaterial.update({camera: camera}), null);
+                if (depthRenderMaterial) {
+                    renderPass.renderScreenSpace(renderer, depthRenderMaterial.update({camera: camera}), null);
+                }
                 break;
             case 'shadow':
                 renderPass.renderScreenSpace(renderer, copyMaterial.update({texture: rectAreaLightAndShadow.shadowTexture, blending: THREE.NoBlending}), null);
@@ -202,109 +209,4 @@ export const rectAreaLightShadow = (canvas: any) => {
     }
     animate(0);
     updateShadowBox();
-}
-
-class RectAreaLightAndShadow {
-    public intensity: number = 0.5;
-    public light: THREE.RectAreaLight;
-    public shadowCamera: THREE.OrthographicCamera;
-    public rectLightHelper?: RectAreaLightHelper;
-    private width;
-    private height;
-    private shadowMapSize = 1024;
-    private renderPass: RenderPass;
-    private shadowDepthRenderTarget: THREE.WebGLRenderTarget;
-    private depthMaterial: THREE.MeshDepthMaterial;
-    private normalRenderMaterial: THREE.MeshNormalMaterial;
-    private depthNormalRenderTarget: THREE.WebGLRenderTarget;
-    private shadowRenderMaterial: ShadowMaterial;
-    private shadowRenderTarget: THREE.WebGLRenderTarget;
-    
-    public get shadowMapTexture(): THREE.Texture { return this.shadowDepthRenderTarget.texture; } 
-    public get depthTexture(): THREE.Texture { return this.depthNormalRenderTarget.depthTexture; } 
-    public get shadowTexture(): THREE.Texture { return this.shadowRenderTarget.texture; } 
-    
-    constructor(light: THREE.RectAreaLight, shadowCamera: THREE.OrthographicCamera, width: number, height: number, addHelper?: boolean) {
-        this.width = width;
-        this.height = height;
-        this.light = light;
-        this.shadowCamera = shadowCamera;
-        if (addHelper) {
-            this.rectLightHelper = new RectAreaLightHelper(this.light);
-            // @ts-ignore
-            this.rectLightHelper.material.depthWrite = false;
-            this.light.add(this.rectLightHelper);
-        }
-        this.renderPass = new RenderPass();
-
-        const shadowDepthTexture = new THREE.DepthTexture(this.shadowMapSize, this.shadowMapSize);
-        shadowDepthTexture.format = THREE.DepthStencilFormat;
-        shadowDepthTexture.type = THREE.UnsignedInt248Type;
-        this.shadowDepthRenderTarget = new THREE.WebGLRenderTarget(this.shadowMapSize, this.shadowMapSize, {
-            minFilter: THREE.NearestFilter,
-            magFilter: THREE.NearestFilter,
-            depthTexture: shadowDepthTexture
-        });
-        this.depthMaterial = new THREE.MeshDepthMaterial();
-
-        const depthTexture = new THREE.DepthTexture(width, height);
-        depthTexture.format = THREE.DepthStencilFormat;
-        depthTexture.type = THREE.UnsignedInt248Type;
-        this.depthNormalRenderTarget = new THREE.WebGLRenderTarget(this.width, this.height, {
-            minFilter: THREE.NearestFilter,
-            magFilter: THREE.NearestFilter,
-            depthTexture
-        });
-        this.normalRenderMaterial = new THREE.MeshNormalMaterial();
-        this.normalRenderMaterial.blending = THREE.NoBlending;
-
-        this.shadowRenderMaterial = new ShadowMaterial();
-        this.shadowRenderTarget = new THREE.WebGLRenderTarget(this.width, this.height);
-    }
-
-    public dispose(): void {
-        this.shadowDepthRenderTarget.dispose();
-        this.depthMaterial.dispose();
-        this.normalRenderMaterial.dispose();
-        this.depthNormalRenderTarget.dispose();
-        this.shadowRenderMaterial.dispose();
-    }
-
-    public setPosition(x: number, y: number, z: number): void {
-        this.light.position.set(x, y, z);
-        this.shadowCamera.position.set(x, y, z);
-    }
-
-    public lookAt(x: number, y: number, z: number): void {
-        this.light.lookAt(x, y, z);
-        this.shadowCamera.lookAt(x, y, z);
-    }
-
-    public setSize(width: number, height: number): void {
-        this.width = width;
-        this.height = height;
-        this.depthNormalRenderTarget.setSize(this.width, this.height)
-        this.shadowRenderTarget.setSize(this.width, this.height);
-    }
-
-    public renderShadowMap(renderer: THREE.WebGLRenderer, scene: THREE.Scene): void {
-        this.shadowCamera.updateMatrixWorld();
-        this.shadowCamera.updateProjectionMatrix();
-        this.renderPass.renderWithOverrideMaterial(renderer, scene, this.shadowCamera, this.depthMaterial, this.shadowDepthRenderTarget, 0x000000, undefined);
-    }
-
-    public renderShadow(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera): void {
-        this.renderPass.renderWithOverrideMaterial(renderer, scene, camera, this.normalRenderMaterial, this.depthNormalRenderTarget, 0x7777ff, 1.0);
-        this.shadowRenderMaterial.update({
-            depthTexture: this.depthNormalRenderTarget.depthTexture,
-            shadowTexture: this.shadowDepthRenderTarget.depthTexture ?? this.shadowDepthRenderTarget.texture,
-            width: this.width,
-            height: this.height, 
-            camera, 
-            shadowMapResolution: new THREE.Vector2(this.shadowMapSize, this.shadowMapSize),
-            shadowCamera: this.shadowCamera,
-            intensity: this.intensity
-        });
-        this.renderPass.renderScreenSpace(renderer, this.shadowRenderMaterial, this.shadowRenderTarget);
-    }
 }

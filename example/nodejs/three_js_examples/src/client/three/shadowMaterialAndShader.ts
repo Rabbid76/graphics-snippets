@@ -54,17 +54,39 @@ float getViewZ( const in float depth ) {
 }
 
 vec3 getViewPosition( const in vec2 screenPosition, const in float depth, const in float viewZ ) {
-    float clipW = cameraProjectionMatrix[2][3] * viewZ + cameraProjectionMatrix[3][3];
+    //float clipW = cameraProjectionMatrix[2][3] * viewZ + cameraProjectionMatrix[3][3];
     vec4 clipPosition = vec4( ( vec3( screenPosition, depth ) - 0.5 ) * 2.0, 1.0 );
-    clipPosition *= clipW; // unprojection.
-    return ( cameraInverseProjectionMatrix * clipPosition ).xyz;
+    //clipPosition *= clipW; // unprojection.
+    //return ( cameraInverseProjectionMatrix * clipPosition ).xyz;
+    vec4 p = cameraInverseProjectionMatrix * clipPosition;
+    return p.xyz / p.w;
+}
+
+float textureShadowDepth(vec2 uv) {
+    #if BLUR == 1
+        float depth = 0.0;
+        vec2 offset = 1.0 / shadowMapResolution;
+        depth += texture2D(tShadow, uv + vec2(-offset.x, -offset.y)).x;
+        depth += texture2D(tShadow, uv + vec2(-offset.x, 0.0)).x;
+        depth += texture2D(tShadow, uv + vec2(-offset.x, offset.y)).x;
+        depth += texture2D(tShadow, uv + vec2(0.0, -offset.y)).x;
+        depth += texture2D(tShadow, uv).x;
+        depth += texture2D(tShadow, uv + vec2(0.0, offset.y)).x;
+        depth += texture2D(tShadow, uv + vec2(offset.x, -offset.y)).x;
+        depth += texture2D(tShadow, uv + vec2(offset.x, 0.0)).x;
+        depth += texture2D(tShadow, uv + vec2(offset.x, offset.y)).x;
+        depth /= 9.0;
+        return depth;
+    #else
+        return texture2D(tShadow, uv).x;
+    #endif
 }
 
 float getShadowDepth(vec3 cameraUVDepth) {
     #if INVERSE_SHADOW_MAP == 1
-        return 1.0 - texture2D(tShadow, cameraUVDepth.xy).x * step(max(cameraUVDepth.x, cameraUVDepth.y), 1.0) * step(0.0, min(cameraUVDepth.x, cameraUVDepth.y));
+        return 1.0 - textureShadowDepth(cameraUVDepth.xy) * step(max(cameraUVDepth.x, cameraUVDepth.y), 1.0) * step(0.0, min(cameraUVDepth.x, cameraUVDepth.y));
     #else
-        return mix(1.0, texture2D(tShadow, cameraUVDepth.xy).x, step(max(cameraUVDepth.x, cameraUVDepth.y), 1.0) * step(0.0, min(cameraUVDepth.x, cameraUVDepth.y)));
+        return mix(1.0, textureShadowDepth(cameraUVDepth.xy), step(max(cameraUVDepth.x, cameraUVDepth.y), 1.0) * step(0.0, min(cameraUVDepth.x, cameraUVDepth.y)));
     #endif
 }
 
@@ -81,23 +103,7 @@ void main() {
     vec4 cameraMapNDC = shadowProjectionMatrix * shadowViewMatrix * cameraWorldMatrix * vec4(viewPosition, 1.0);
     cameraMapNDC.xyz /= cameraMapNDC.w;
     vec3 cameraUVDepth = cameraMapNDC.xyz * 0.5 + 0.5;
-    #if BLUR == 1
-        float inverseShadow = 0.0;
-        vec2 offset = 1.0 / shadowMapResolution;
-        inverseShadow += getInverseShadow(cameraUVDepth + vec3(-offset.x, -offset.y, 0.0));
-        inverseShadow += getInverseShadow(cameraUVDepth + vec3(-offset.x, 0.0, 0.0));
-        inverseShadow += getInverseShadow(cameraUVDepth + vec3(-offset.x, offset.y, 0.0));
-        inverseShadow += getInverseShadow(cameraUVDepth + vec3(0.0, -offset.y, 0.0));
-        inverseShadow += getInverseShadow(cameraUVDepth);
-        inverseShadow += getInverseShadow(cameraUVDepth + vec3(0.0, offset.y, 0.0));
-        inverseShadow += getInverseShadow(cameraUVDepth + vec3(offset.x, -offset.y, 0.0));
-        inverseShadow += getInverseShadow(cameraUVDepth + vec3(offset.x, 0.0, 0.0));
-        inverseShadow += getInverseShadow(cameraUVDepth + vec3(offset.x, offset.y, 0.0));
-        inverseShadow /= 9.0;
-    #else
-        float inverseShadow = getInverseShadow(cameraUVDepth);
-    #endif
-    
+    float inverseShadow = getInverseShadow(cameraUVDepth);
     //float shadow = 1.0 - intensity * inverseShadow;
     float shadow = 1.0 - intensity * inverseShadow * (1.0 - step(1.0, depth));
 

@@ -1,3 +1,5 @@
+import { SSAOBlurMaterial } from './ssaoMaterialsAndShaders';
+import { DepthNormalRenderTarget } from '../three/depthNormalRenderTarget'
 import {
     SSAOParameters,
     SSAORenderTargets
@@ -19,6 +21,7 @@ export class SmoothSSAOPass extends Pass {
     private scene: THREE.Scene;
     private camera: THREE.Camera;
     protected renderPass: RenderPass = new RenderPass();
+    protected depthNormalRenderTarget: DepthNormalRenderTarget;
     protected ssaoRenderTargets: SSAORenderTargets;
     protected _colorTexture?: THREE.FramebufferTexture;
     private _copyMaterial?: CopyMaterial;
@@ -49,11 +52,18 @@ export class SmoothSSAOPass extends Pass {
         this.width = width;
         this.height = height;
         this.sceneRenderer = sceneRenderer;
-        this.ssaoRenderTargets = new SSAORenderTargets(width, height, samples, parameters);
+        this.depthNormalRenderTarget = new DepthNormalRenderTarget({
+            width, height, samples, 
+            renderPass: this.renderPass,
+            renderOverrideVisibility: this._renderOverrideVisibility,
+            textureFilter: SSAOBlurMaterial.optimized ? THREE.LinearFilter : THREE.NearestFilter
+        });
+        this.ssaoRenderTargets = new SSAORenderTargets(this.depthNormalRenderTarget, { ...parameters, width, height, samples, renderPass: this.renderPass });
         this.ssaoParameters = this.ssaoRenderTargets.ssaoParameters;
     }
 
     dispose() {
+        this.depthNormalRenderTarget.dispose();
         this.ssaoRenderTargets.dispose();
         this._copyMaterial?.dispose();
         this._colorTexture?.dispose();
@@ -62,6 +72,7 @@ export class SmoothSSAOPass extends Pass {
     public setSize(width: number, height: number) {
         this.width = width;
         this.height = height;
+        this.depthNormalRenderTarget.setSize(width, height);
         this.ssaoRenderTargets.setSize(width, height);
         this._renderOverrideVisibility = new RenderOverrideVisibility();
         if (this._colorTexture) {
@@ -110,20 +121,9 @@ export class SmoothSSAOPass extends Pass {
     }
 
     private renderSSAO(renderer: THREE.WebGLRenderer, camera: THREE.Camera): void {
-        const depthNormalTarget = this.ssaoRenderTargets.depthNormalRenderTarget;
-        const normalMaterial = this.ssaoRenderTargets.normalRenderMaterial;
-        this.renderOverrideVisibility(renderer, normalMaterial, depthNormalTarget, 0x7777ff, 1.0);
-
+        this.depthNormalRenderTarget.render(renderer, this.scene, camera);
         if (this.isSSAOEnabled) {
-            const ssaoMaterial = this.ssaoRenderTargets.updateSSAOMaterial(camera);
-            const ssaoRenderTarget = this.ssaoRenderTargets.ssaoRenderTarget;
-            this.renderPass.renderScreenSpace(renderer, ssaoMaterial, ssaoRenderTarget);
-        }
-
-        if (this.isSSAOEnabled) {
-            const blurMaterial = this.ssaoRenderTargets.blurRenderMaterial;
-            const blurRenderTarget = this.ssaoRenderTargets.blurRenderTarget;
-            this.renderPass.renderScreenSpace(renderer, blurMaterial, blurRenderTarget);
+            this.ssaoRenderTargets.render(renderer, this.scene, camera);
         }
     }
 
@@ -132,11 +132,5 @@ export class SmoothSSAOPass extends Pass {
             this.renderPass.renderScreenSpace(renderer, this.getCopyMaterial({texture: this.colorTexture, blending: THREE.NoBlending}), this.renderToScreen ? null : writeBuffer);
         }
         this.renderPass.renderScreenSpace(renderer, this.getCopyMaterial({texture: this.ssaoRenderTargets.blurRenderTarget.texture, blending: THREE.CustomBlending}), this.renderToScreen ? null : writeBuffer);
-    }
-
-    private renderOverrideVisibility(renderer: THREE.WebGLRenderer, overrideMaterial: THREE.Material, renderTarget: THREE.WebGLRenderTarget | null, clearColor: any, clearAlpha: any): void {
-        this._renderOverrideVisibility.render(this.scene, () => {
-            this.renderPass.renderWithOverrideMaterial(renderer, this.scene, this.camera, overrideMaterial, renderTarget, clearColor, clearAlpha);
-        });
     }
 }

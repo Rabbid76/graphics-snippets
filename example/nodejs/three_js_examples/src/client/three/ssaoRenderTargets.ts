@@ -2,6 +2,8 @@ import {
     SSAORenderMaterial,
     SSAOBlurMaterial
 } from './ssaoMaterialsAndShaders';
+import { DepthAndNormalTextures } from '../three/depthNormalRenderTarget'
+import { RenderPass } from './threeUtility';
 import * as THREE from 'three';
 import { SimplexNoise } from 'three/examples/jsm/math/SimplexNoise.js';
 
@@ -22,29 +24,14 @@ export class SSAORenderTargets {
     private height: number;
     private samples: number;
     private ssaoTargetSamples: number = 0;
-    private depthNormalScale = 1;
+    private depthAndNormalTextures: DepthAndNormalTextures;
     private _noiseTexture?: THREE.DataTexture;
     private _kernel: THREE.Vector3[] = [];
-    private _normalRenderMaterial?: THREE.MeshNormalMaterial;
     private _ssaoRenderMaterial?: SSAORenderMaterial;
     private _blurRenderMaterial?: SSAOBlurMaterial;
-    private _depthNormalRenderTarget?: THREE.WebGLRenderTarget;
     private _ssaoRenderTarget?: THREE.WebGLRenderTarget;
     private _blurRenderTarget?: THREE.WebGLRenderTarget;
-
-    public get depthNormalRenderTarget(): THREE.WebGLRenderTarget {
-        if (!this._depthNormalRenderTarget) {
-            const depthTexture = new THREE.DepthTexture(this.width * this.depthNormalScale, this.height * this.depthNormalScale);
-            depthTexture.format = THREE.DepthStencilFormat;
-            depthTexture.type = THREE.UnsignedInt248Type;
-            this._depthNormalRenderTarget = new THREE.WebGLRenderTarget(this.width * this.depthNormalScale, this.height * this.depthNormalScale, {
-                minFilter: SSAOBlurMaterial.optimized || this.depthNormalScale !== 1.0 ? THREE.LinearFilter : THREE.NearestFilter,
-                magFilter: SSAOBlurMaterial.optimized || this.depthNormalScale !== 1.0 ? THREE.LinearFilter : THREE.NearestFilter,
-                depthTexture
-            });
-        }
-        return this._depthNormalRenderTarget;
-    }
+    private renderPass: RenderPass;
 
     public get ssaoRenderTarget(): THREE.WebGLRenderTarget {
         this._ssaoRenderTarget ??= new THREE.WebGLRenderTarget(this.width, this.height, { samples: this.ssaoTargetSamples });
@@ -56,15 +43,10 @@ export class SSAORenderTargets {
         return this._blurRenderTarget;
     }
 
-    public get normalRenderMaterial(): THREE.MeshNormalMaterial {
-        this._normalRenderMaterial ??= new THREE.MeshNormalMaterial({blending: THREE.NoBlending})
-        return this._normalRenderMaterial;
-    }
-
     public get ssaoRenderMaterial(): SSAORenderMaterial {
         this._ssaoRenderMaterial ??= new SSAORenderMaterial({
-            normalTexture: this.depthNormalRenderTarget.texture,
-            depthTexture: this.depthNormalRenderTarget.depthTexture,
+            normalTexture: this.depthAndNormalTextures.normalTexture,
+            depthTexture: this.depthAndNormalTextures.depthTexture,
             noiseTexture: this.noiseTexture,
             kernel: this.kernel,
         });
@@ -88,7 +70,7 @@ export class SSAORenderTargets {
         return this._kernel;
     }
 
-    constructor(width: number, height: number, samples: number, parameters?: any) {
+    constructor(depthAndNormalTextures: DepthAndNormalTextures, parameters?: any) {
         this.ssaoParameters = {
             enabled: parameters?.enabled ?? true,
             alwaysUpdate: parameters?.alwaysUpdate ?? true,
@@ -99,17 +81,17 @@ export class SSAORenderTargets {
             intensity: parameters?.intensity ?? 1,
             fadeout: parameters?.fadeout ?? 1,
         };
-        this.width = width;
-        this.height = height;
-        this.samples = samples;
+        this.width = parameters?.width ?? 1024;
+        this.height = parameters?.height ?? 1024;
+        this.samples = parameters?.samples ?? 0;
+        this.depthAndNormalTextures = depthAndNormalTextures;
+        this.renderPass = parameters?.renderPass ?? new RenderPass();
     }
 
     public dispose() {
         this._noiseTexture?.dispose();
-        this._normalRenderMaterial?.dispose();
         this._ssaoRenderMaterial?.dispose();
         this._blurRenderMaterial?.dispose();
-        this._depthNormalRenderTarget?.dispose();
         this._ssaoRenderTarget?.dispose();
         this._blurRenderTarget?.dispose();
     }
@@ -119,9 +101,13 @@ export class SSAORenderTargets {
         this.height = height;
         this._ssaoRenderMaterial?.update({width: this.width, height: this.height});
         this._blurRenderMaterial?.update({width: this.width, height: this.height});
-        this._depthNormalRenderTarget?.setSize(this.width * this.depthNormalScale, this.height * this.depthNormalScale);
         this._ssaoRenderTarget?.setSize(this.width, this.height);
         this._blurRenderTarget?.setSize(this.width, this.height);
+    }
+
+    public render(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera): void {
+        this.renderPass.renderScreenSpace(renderer, this.updateSSAOMaterial(camera), this.ssaoRenderTarget);
+        this.renderPass.renderScreenSpace(renderer, this.blurRenderMaterial, this.blurRenderTarget);
     }
 
     public updateSSAOMaterial(camera: THREE.Camera): THREE.ShaderMaterial {
