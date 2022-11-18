@@ -134,12 +134,12 @@ export class RenderPass {
     private originalRenderTarget: THREE.WebGLRenderTarget | null = null;
     private screenSpaceQuad = new FullScreenQuad(undefined);
 
-    public renderWithOverrideMaterial(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera, overrideMaterial: THREE.Material, renderTarget: THREE.WebGLRenderTarget | null, clearColor?: any, clearAlpha?: any): void {
+    public renderWithOverrideMaterial(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera, overrideMaterial: THREE.Material | null, renderTarget: THREE.WebGLRenderTarget | null, clearColor?: any, clearAlpha?: any): void {
         this.backup(renderer);
         // @ts-ignore    
-        clearColor = overrideMaterial.clearColor || clearColor;
+        clearColor = overrideMaterial?.clearColor || clearColor;
         // @ts-ignore  
-        clearAlpha = overrideMaterial.clearAlpha || clearAlpha;
+        clearAlpha = overrideMaterial?.clearAlpha || clearAlpha;
         this.prepareRenderer(renderer, renderTarget, clearColor, clearAlpha);
         const originalOverrideMaterial = scene.overrideMaterial
         scene.overrideMaterial = overrideMaterial;
@@ -270,3 +270,15 @@ export const boundingBoxInViewSpace = (worldBox: THREE.Box3, camera: THREE.Camer
     viewBox.expandByPoint(new THREE.Vector3(worldBox.max.x, worldBox.max.y, worldBox.max.z).applyMatrix4(viewMatrix));
     return viewBox;
 }
+
+export class CameraUpdate {
+    private lastCameraProjection: THREE.Matrix4 | undefined;
+    private lastCameraWorld: THREE.Matrix4 | undefined;
+
+    public changed(camera: THREE.Camera): boolean {
+        const hasChanged = !this.lastCameraProjection?.equals(camera.projectionMatrix) || !this.lastCameraWorld?.equals(camera.matrixWorld);
+        this.lastCameraProjection = camera.projectionMatrix.clone();
+        this.lastCameraWorld = camera.matrixWorld.clone();
+        return hasChanged;
+    }
+} 

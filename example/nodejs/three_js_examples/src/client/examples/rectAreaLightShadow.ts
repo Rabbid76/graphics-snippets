@@ -2,18 +2,19 @@ import { ElapsedTime } from '../three/timeUtility'
 import { Controls } from '../three/controls'
 import { DataGUI, Statistic } from '../three/uiUtility'
 import { LinearDepthRenderMaterial } from '../three/depthAndNormalMaterialsAndShaders';
-import { CopyMaterial } from '../three/shaderUtility'
 import { 
     BoxHelper, 
     boundingBoxInViewSpace,
     boxFromOrthographicViewVolume,
+    getMaxSamples,
     RenderOverrideVisibility,
     RenderPass,
     setOrthographicViewVolumeFromBox
 } from '../three/threeUtility'
 import {
     RectAreaLightAndShadow,
-    RectAreaLightAndShadowWithShadowMap
+    RectAreaLightAndShadowWithShadowMap,
+    RectAreaLightAndShadowWithDirectionalLight
 } from '../three/rectAreaLightAndShadow'
 import * as THREE from 'three'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
@@ -25,10 +26,11 @@ export const rectAreaLightShadow = (canvas: any) => {
     renderer.setSize(width, height)
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFShadowMap;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     document.body.appendChild(renderer.domElement);
     const statistic = new Statistic();
     const renderPass = new RenderPass();
+    const maxSamples = getMaxSamples(renderer);
 
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
     camera.position.y = 10;
@@ -40,7 +42,7 @@ export const rectAreaLightShadow = (canvas: any) => {
     const pmremGenerator = new THREE.PMREMGenerator(renderer);
     scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
 
-    const sceneBox = new THREE.Box3(new THREE.Vector3(-3, 0, -2.5), new THREE.Vector3(3, 3, 2.5));
+    const sceneBox = new THREE.Box3(new THREE.Vector3(-3.5, 0, -3), new THREE.Vector3(3, 3, 2.5));
     const sceneBoxHelper = new BoxHelper(sceneBox, { color: 0xff8080, opacity: 0.25 });
     sceneBoxHelper.addTo(scene);
     sceneBoxHelper.visible = false;
@@ -48,7 +50,6 @@ export const rectAreaLightShadow = (canvas: any) => {
     const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
     directionalLight.position.set(2, 5, 2);
     directionalLight.lookAt(0, 0, 0);
-    directionalLight.visible;
     directionalLight.castShadow = true;
     directionalLight.shadow.mapSize = new THREE.Vector2(1024, 1024);
     const directionalLightCamera = directionalLight.shadow.camera as THREE.OrthographicCamera;
@@ -56,9 +57,10 @@ export const rectAreaLightShadow = (canvas: any) => {
     scene.add(directionalLight);  
     
     const rectAreaLight = new THREE.RectAreaLight(0xffffff, 100, 1, 1);
-    scene.add(rectAreaLight);  
-    const rectAreaLightAndShadow: RectAreaLightAndShadow = new RectAreaLightAndShadowWithShadowMap(rectAreaLight, new THREE.Vector2(width, height), undefined, false);
-    scene.add(rectAreaLightAndShadow.shadowCamera);   
+    const viewportSize = new THREE.Vector2(width, height);
+    //const rectAreaLightAndShadow: RectAreaLightAndShadow = new RectAreaLightAndShadowWithShadowMap(rectAreaLight, viewportSize, undefined, false);
+    const rectAreaLightAndShadow: RectAreaLightAndShadow = new RectAreaLightAndShadowWithDirectionalLight(rectAreaLight, viewportSize, { samples: maxSamples, shadowIntensity: 0.5, alwaysUpdate: true });
+    rectAreaLightAndShadow.addToScene(scene);  
 
     const shadowBoxHelper = new BoxHelper(boxFromOrthographicViewVolume(directionalLightCamera), { color: 0x80ff80, opacity: 0.25 });
     shadowBoxHelper.visible = false;
@@ -66,7 +68,7 @@ export const rectAreaLightShadow = (canvas: any) => {
 
     const setLightSource = (source: string) => {
         const enableRectAreaLight = source === 'rectAreaLight';
-        rectAreaLight.visible = enableRectAreaLight;
+        rectAreaLightAndShadow.visible = enableRectAreaLight;
         directionalLight.visible = !enableRectAreaLight;
     }
 
@@ -115,14 +117,17 @@ export const rectAreaLightShadow = (canvas: any) => {
     groundMesh.receiveShadow = true;
     groundGroup.add(groundMesh);
 
-    const shadowDebugPlan = new THREE.Mesh(
-        new THREE.PlaneGeometry(5, 5),
-        new THREE.MeshBasicMaterial({ map: rectAreaLightAndShadow.shadowMapTexture })
-    );
-    shadowDebugPlan.position.x = -8;
-    shadowDebugPlan.position.y = 3;
-    shadowDebugPlan.visible = false;
-    scene.add(shadowDebugPlan);
+    let shadowDebugPlane: THREE.Mesh | undefined;
+    if (rectAreaLightAndShadow.shadowMapTexture) {
+        shadowDebugPlane = new THREE.Mesh(
+            new THREE.PlaneGeometry(5, 5),
+            new THREE.MeshBasicMaterial({ map: rectAreaLightAndShadow.shadowMapTexture })
+        );
+        shadowDebugPlane.position.x = -8;
+        shadowDebugPlane.position.y = 3;
+        shadowDebugPlane.visible = false;
+        scene.add(shadowDebugPlane);
+    }
 
     const generalUiProperties = {
         'light source': 'rectAreaLight',
@@ -145,7 +150,7 @@ export const rectAreaLightShadow = (canvas: any) => {
     if (rectAreaLightAndShadow.depthTexture) {
         debugOptions['depth'] = 'depth';
     }
-    debugOptions['shadow'] = 'off';
+    debugOptions['shadow'] = 'shadow';
     dataGui.gui.add(generalUiProperties, 'debug output', debugOptions);
     const shadowFolder = dataGui.gui.addFolder('rectAreaLight shadow');
     shadowFolder.add(rectAreaLightAndShadow, 'shadowIntensity', 0.0, 1.0);
@@ -174,7 +179,11 @@ export const rectAreaLightShadow = (canvas: any) => {
         statistic.update();
     }
 
-    const renderOverrideVisibility = new RenderOverrideVisibility(false, [sceneBoxHelper, shadowBoxHelper, transformControl, shadowDebugPlan, rectAreaLightAndShadow.rectAreaLight], null);
+    let invisibleObjects: any[]= [sceneBoxHelper, shadowBoxHelper, transformControl, rectAreaLightAndShadow.rectAreaLight];
+    if (shadowDebugPlane) {
+        invisibleObjects.push(shadowDebugPlane);
+    }
+    const renderOverrideVisibility = new RenderOverrideVisibility(false, invisibleObjects, null);
     const renderShadow = () => {
         renderOverrideVisibility.render(scene, () => {
             if (generalUiProperties['debug output'] === 'off' && generalUiProperties['light source'] !== 'rectAreaLight' && !generalUiProperties['debug output']) {
@@ -185,7 +194,6 @@ export const rectAreaLightShadow = (canvas: any) => {
     }
 
     const depthRenderMaterial = rectAreaLightAndShadow.depthTexture ? new LinearDepthRenderMaterial({ depthTexture: rectAreaLightAndShadow.depthTexture }) : null;
-    const copyMaterial = new CopyMaterial();
     const render = () => {
         renderShadow();
         switch(generalUiProperties['debug output']) {
@@ -195,14 +203,18 @@ export const rectAreaLightShadow = (canvas: any) => {
                 }
                 break;
             case 'shadow':
-                renderPass.renderScreenSpace(renderer, copyMaterial.update({texture: rectAreaLightAndShadow.shadowTexture, blending: THREE.NoBlending}), null);
+                rectAreaLightAndShadow.blendShadow(renderer, true);
                 break;
             default:
-                shadowDebugPlan.visible = generalUiProperties['debug shadow map'];
+                if (shadowDebugPlane) {
+                    shadowDebugPlane.visible = generalUiProperties['debug shadow map'];
+                }
                 renderer.render(scene, camera);
-                shadowDebugPlan.visible = false;
+                if (shadowDebugPlane) {
+                    shadowDebugPlane.visible = false;
+                }
                 if (generalUiProperties['light source'] === 'rectAreaLight') {
-                    renderPass.renderScreenSpace(renderer, copyMaterial.update({texture: rectAreaLightAndShadow.shadowTexture, blending: THREE.CustomBlending}), null);
+                    rectAreaLightAndShadow.blendShadow(renderer, false);
                 }
                 break;
         }

@@ -1,3 +1,4 @@
+import { CameraUpdate } from './threeUtility';
 import * as THREE from 'three';
 import { HorizontalBlurShader } from 'three/examples/jsm/shaders/HorizontalBlurShader.js';
 import { VerticalBlurShader } from 'three/examples/jsm/shaders/VerticalBlurShader.js';
@@ -28,8 +29,7 @@ export class GroundAndGroundShadow {
     private horizontalBlurMaterial: THREE.ShaderMaterial;
     private verticalBlurMaterial: THREE.ShaderMaterial;
     private shadowCamera: THREE.OrthographicCamera;
-    private lastCameraProjection: THREE.Matrix4 | undefined;
-    private lastCameraWorld: THREE.Matrix4 | undefined;
+    private cameraUpdate: CameraUpdate = new CameraUpdate();
 
     constructor(renderer: THREE.WebGLRenderer, parameters: any) {
         this.shadowMapSize = parameters.shadowMapSize ?? 1024
@@ -160,14 +160,11 @@ export class GroundAndGroundShadow {
     }
 
     public render(scene: THREE.Scene, camera: THREE.Camera): void {
-        const needsUpdate = this.parameters.alwaysUpdate || this.needsUpdate ||
-            !this.lastCameraProjection?.equals(camera.projectionMatrix) || !this.lastCameraWorld?.equals(camera.matrixWorld);
+        const needsUpdate = this.parameters.alwaysUpdate || this.needsUpdate || this.cameraUpdate.changed(camera);
         if (!needsUpdate) {
             return;
         }
         this.needsUpdate = false;
-        this.lastCameraProjection = camera.projectionMatrix.clone();
-        this.lastCameraWorld = camera.matrixWorld.clone();
 
         const initialBackground = scene.background;
         scene.background = null;

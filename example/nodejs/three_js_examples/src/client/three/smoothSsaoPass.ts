@@ -6,6 +6,7 @@ import {
 } from './ssaoRenderTargets';
 import { CopyMaterial } from '../three/shaderUtility'
 import {
+    CameraUpdate,
     RenderOverrideVisibility,
     RenderPass,
 } from './threeUtility';
@@ -26,8 +27,7 @@ export class SmoothSSAOPass extends Pass {
     protected _colorTexture?: THREE.FramebufferTexture;
     private _copyMaterial?: CopyMaterial;
     private _renderOverrideVisibility: RenderOverrideVisibility = new RenderOverrideVisibility(true);
-    private lastCameraProjection: THREE.Matrix4 | undefined;
-    private lastCameraWorld: THREE.Matrix4 | undefined;
+    private cameraUpdate: CameraUpdate = new CameraUpdate();
 
     protected get isSSAOEnabled(): boolean {
         return this.ssaoParameters.enabled;
@@ -104,11 +104,8 @@ export class SmoothSSAOPass extends Pass {
     }
 
     private evaluateIfSSAOUpdateIsNeeded(): boolean {
-        const needsUpdate = this.ssaoParameters.alwaysUpdate || this.needsUpdate ||
-            !this.lastCameraProjection?.equals(this.camera.projectionMatrix) || !this.lastCameraWorld?.equals(this.camera.matrixWorld);
+        const needsUpdate = this.ssaoParameters.alwaysUpdate || this.needsUpdate || this.cameraUpdate.changed(this.camera);
         this.needsUpdate = false;
-        this.lastCameraProjection = this.camera.projectionMatrix.clone();
-        this.lastCameraWorld = this.camera.matrixWorld.clone();
         return needsUpdate;
     }
 
