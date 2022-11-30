@@ -69,9 +69,11 @@ export const helloCube = (canvas: any) => {
     DataGUI.addPhysicalMaterialPropertiesUI(materialGUI, material);
 
     const onWindowResize = () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        camera.aspect = width / height;
         camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setSize(width, height);
     };
     window.addEventListener('resize', onWindowResize, false);
 

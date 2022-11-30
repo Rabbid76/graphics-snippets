@@ -3,6 +3,8 @@ import { contactShadow } from './examples/contactShadow'
 import { rectAreaLightShadow } from './examples/rectAreaLightShadow'
 import { progressiveShadow } from './examples/progressiveShadow'
 import { screenSpaceAmbientOcclusion } from './examples/screenSpaceAmbientOcclusion'
+import { boolean3dOperations } from './examples/boolean3dOperations'
+import { triangleIntersectionTest } from './examples/triangleIntersectionTest'
 
 // @ts-ignore
 const canvas: any = three_canvas
@@ -22,4 +24,6 @@ switch(example) {
     case 'rect_area_light_shadow': rectAreaLightShadow(canvas); break;
     case 'progressive_shadow': progressiveShadow(canvas); break
     case 'screen_space_ambient_occlusion': screenSpaceAmbientOcclusion(canvas); break;
+    case 'boolean_3d_operations': boolean3dOperations(canvas); break;
+    case 'triangle_intersection_test': triangleIntersectionTest(canvas); break;
 }
