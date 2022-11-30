@@ -235,18 +235,26 @@ export const intersectTrianglePlane = (t: THREE.Vector3[], plane: Plane): Triang
     const intersect0inBounds = intersect0 && intersect0.distance >= 0 && intersect0.distance <= 1;
     const intersect1 = intersectRayPlane({origin: t[1], direction: t[2].clone().sub(t[1])}, plane);
     const intersect1inBounds = intersect1 && intersect1.distance >= 0 && intersect1.distance <= 1;
-    if (intersect0inBounds && intersect1inBounds) {
-        return { index: 1, intersectToPeak: intersect0, intersectFromPeak: intersect1 };
-    } else if (intersect0inBounds) {
-        const intersect2 = intersectRayPlane({origin: t[2], direction: t[0].clone().sub(t[2])}, plane);
-        if (intersect2 && intersect2.distance >= 0 && intersect2.distance <= 1) {
-            return { index: 0, intersectToPeak: intersect2, intersectFromPeak: intersect0 };
-        }
-    } else if (intersect1inBounds) {
-        const intersect2 = intersectRayPlane({origin: t[2], direction: t[0].clone().sub(t[2])}, plane);
-        if (intersect2 && intersect2.distance >= 0 && intersect2.distance <= 1) {
+    const intersect2 = intersectRayPlane({origin: t[2], direction: t[0].clone().sub(t[2])}, plane);
+    const intersect2inBounds = intersect2 && intersect2.distance >= 0 && intersect2.distance <= 1;
+    if (intersect0inBounds && intersect1inBounds && intersect2inBounds) {
+        if (intersect0.distance > intersect1.distance) {
+            if (intersect1.distance > intersect2.distance) {
+                return { index: 1, intersectToPeak: intersect0, intersectFromPeak: intersect1 };
+            } else {
+                return { index: 0, intersectToPeak: intersect2, intersectFromPeak: intersect0 };
+            }
+        } else if (intersect1.distance > intersect2.distance) {
+            return { index: 1, intersectToPeak: intersect0, intersectFromPeak: intersect1 };
+        } else {
             return { index: 2, intersectToPeak: intersect1, intersectFromPeak: intersect2 };
         }
+    } if (intersect0inBounds && intersect1inBounds) {
+        return { index: 1, intersectToPeak: intersect0, intersectFromPeak: intersect1 };
+    } else if (intersect0inBounds && intersect2inBounds) {
+        return { index: 0, intersectToPeak: intersect2, intersectFromPeak: intersect0 };
+    } else if (intersect1inBounds && intersect2inBounds) {
+        return { index: 2, intersectToPeak: intersect1, intersectFromPeak: intersect2 };
     }
     return null;
 }
