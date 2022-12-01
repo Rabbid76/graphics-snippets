@@ -376,7 +376,7 @@ export class UniqueIndices {
     }
 }
 
-export const intersectMesh = (mesh1: THREE.Mesh, mesh2: THREE.Mesh, epsilon = 0.001): MeshSpecification | null => {
+export const intersectMesh = (mesh1: THREE.Mesh, mesh2: THREE.Mesh, epsilon = 0.0001): MeshSpecification | null => {
     const vertices1 = mesh1.geometry.attributes.position.array;
     const indices1Buffer = mesh1.geometry.index?.array;
     const vertices2 = mesh2.geometry.attributes.position.array;
@@ -466,7 +466,7 @@ export const intersectMesh = (mesh1: THREE.Mesh, mesh2: THREE.Mesh, epsilon = 0.
             if (!triangle1.box.intersectsBox(triangle2.box)) {
                 continue;
             }
-            const intersectionDirection = triangle2.faceNormal.clone().cross(triangle1.faceNormal);
+            const intersectionDirection = triangle2.faceNormal.clone().cross(triangle1.faceNormal).normalize();
 
             const shardPoints2: number[] = [];
             const sharedPoints = [0, 1, 2].filter(i => {
@@ -544,7 +544,7 @@ export const intersectMesh = (mesh1: THREE.Mesh, mesh2: THREE.Mesh, epsilon = 0.
             const orderedIndices = [0, 1, 2].map(i => triangle1.indices[(intersect.intersectionTriangle1.index+i) % 3]);
             const uniqueT = orderedIndices.map(i => mesh1UniqueIndices.get(i));  
             if (uniqueT.includes(uniqueI1) && uniqueT.includes(uniqueI2)) { 
-                if (winding == 0) {
+                if (winding == 0 && uniqueI1 != uniqueI2) {
                     const d = intersectionDirection.dot(triangle1.vertices[(intersect.intersectionTriangle1.index+2) % 3].clone().sub(triangle1.vertices[(intersect.intersectionTriangle1.index+1) % 3]));
                     winding = d < 0 ? -1 : 1;
                 }

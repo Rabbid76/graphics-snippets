@@ -94,7 +94,8 @@ export const triangleIntersectionTest = (canvas: any) => {
     intersectT(new THREE.Vector3(-4.1, 0, 2.1), [[0.5, 0, 1], [0.5, 0, 0], [-0.5, 0, 0], [0.5, 0, -1]], [[-1, 0, 0], [1, -1, 0], [1, 1, 0]]);
     intersectT(new THREE.Vector3(0.1, 0, 4.1), [[-1, 0, -1], [-1, 0, 1], [1, 0, 0]], [[-1, 0, 0], [1, -1, 0], [1, 1, 0],]);
     intersectT(new THREE.Vector3(-2.1, 0, 4.1), [[-1, 0, 0], [1, 0, 1], [1, 0, -1]], [[-1, 0, 0.25], [0.5, 1, 0.25], [0.5, -1, 0.25], [0.5, 0, 1.25]]);
-    
+    intersectT(new THREE.Vector3(-4.1, 0, 4.1), [[-1, 0, 0], [1, 0, 1], [1, 0, -1]], [[0.5, 0, 1.25], [0.5, -1, 0.25], [0.5, 1, 0.25], [-1, 0, 0.25]]);
+
     const createTestArc = (): MeshSpecification => {
         const v: number[] = [0, 0, 0];
         const n: number[] = [0, 0, -1];
@@ -111,13 +112,31 @@ export const triangleIntersectionTest = (canvas: any) => {
     }
     const geometry1 = createBufferGeometry(createTestArc());
     geometry1.rotateX(-Math.PI / 2);
-    const object1 = addGeometry(scene, geometry1, new THREE.MeshPhysicalMaterial({color: 0xc0c0c0, polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 2}));
-    const object2 = addGeometry(scene, new THREE.PlaneGeometry(1, 1), new THREE.MeshPhysicalMaterial({color: 0xc0f0c0, transparent: true, opacity: 0.5}));
+    const object1 = addGeometry(scene, geometry1, tMaterial1);
+    const object2 = addGeometry(scene, new THREE.PlaneGeometry(1, 1), tMaterial2);
     object1.group.position.set(0, 0, 0);
     object2.group.position.set(-0.18329594489171122, 0.2554615574565818, 0.11484286654124837-0.5);
     object1.group.updateMatrixWorld();
     object2.group.updateMatrixWorld();
     split(object1, object2);
+
+    const geometry3 = createBufferGeometry({
+        vertices: new Float32Array([0.47744316900122036, -0.7145441980725, 0.1, 0.6076698900821891, -0.6076698900821894, 0.1, 0.4166776747647014, -0.6236022092269091, 0.2, 0.5303300858899105, -0.5303300858899107, 0.2]),
+        normals: new Float32Array([0.5555702330196018, -0.8314696123025455, 0, 0.7071067811865474, -0.7071067811865477, 0, 0.5555702330196018, -0.8314696123025455, 0, 0.7071067811865474, -0.7071067811865477, 0]),
+        indices: new Uint32Array([0, 1, 3, 0, 3, 2]),
+    });
+    geometry3.rotateX(-Math.PI / 2);
+    const geometry4 = createBufferGeometry({
+        vertices: new Float32Array([-0.5, -0.5, -0.5, 0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5, 0.5, -0.5, -0.5, 0.5, 0.5, -0.5]),
+        normals: new Float32Array([0, -1, 0, 0, -1, 0, 0, -1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0]),
+        indices: new Uint32Array([0, 1, 2, 3, 4, 5]),
+    });
+    const object3 = addGeometry(scene, geometry3, tMaterial1);
+    const object4 = addGeometry(scene, geometry4, tMaterial2);
+    object4.group.position.set(-0.0048903324633537346, 0.6085501449797492, 0.369337411298443);
+    object3.group.updateMatrixWorld();
+    object4.group.updateMatrixWorld();
+    split(object3, object4);
 
     const onWindowResize = () => {
         const width = window.innerWidth;

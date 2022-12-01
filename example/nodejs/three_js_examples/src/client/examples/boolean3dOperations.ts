@@ -64,7 +64,9 @@ export const boolean3dOperations = (canvas: any) => {
     const geometry2 = new THREE.BoxGeometry(1, 1, 1);
     const material2 = new THREE.MeshPhysicalMaterial({color: 0xc0f0c0, transparent: true, opacity: 0.5});
     const object2 = addGeometry(scene, geometry2, material2);
-    object2.group.position.set(0.75, 1, 0);
+    //object2.group.position.set(0.75, 1, 0);
+    object2.group.position.set(-0.0048903324633537346, 0.6085501449797492, 0.369337411298443);
+    object2.group.position.set(-0.0300905570996814, 0.6153913812282826, 0.3281334023730805);
     
     const statistic = new Statistic();
     const dataGui = new DataGUI();
@@ -133,6 +135,7 @@ export const boolean3dOperations = (canvas: any) => {
     let highlightIntersectionObject: GeometryObject | undefined;
     let intersectionObject: GeometryObject | undefined;
     const updateIntersection = () => {
+        console.log(object2.group.position);
         object1.group.updateMatrixWorld();
         object2.group.updateMatrixWorld();
         if (boxHelper) {
