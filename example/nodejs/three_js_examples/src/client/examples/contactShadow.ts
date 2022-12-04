@@ -59,7 +59,8 @@ export const contactShadow = (canvas: any) => {
 
     shadowFolder.add(ground.parameters, 'cameraHelper').onChange(() => ground.updateParameters());
     shadowFolder.add(ground.parameters, 'alwaysUpdate');
-    shadowFolder.add(ground.parameters, 'blur', 0, 15, 0.1).onChange(() => ground.needsUpdate = true);
+    shadowFolder.add(ground.parameters, 'blurMin', 0, 15, 0.1).onChange(() => ground.needsUpdate = true);
+    shadowFolder.add(ground.parameters, 'blurMax', 0, 15, 0.1).onChange(() => ground.needsUpdate = true);
     shadowFolder.add(ground.parameters, 'darkness', 1, 5, 0.1).onChange(() => ground.updateParameters());
     shadowFolder.add(ground.parameters, 'opacity', 0, 1, 0.01).onChange(() => ground.updateParameters());
     shadowFolder.add(ground.parameters, 'planeSize', 3, 10, 0.1).onChange(() => ground.updatePlaneAndShadowCamera());
@@ -85,7 +86,7 @@ export const contactShadow = (canvas: any) => {
             meshes[i].rotation.y += elapsedTime.getDegreePerSecond((1 + i / (i-5)) * 60, true);
         }
         controls.update();
-        ground.render(scene, camera);
+        ground.render(scene);
         render();
         statistic.update();
     }

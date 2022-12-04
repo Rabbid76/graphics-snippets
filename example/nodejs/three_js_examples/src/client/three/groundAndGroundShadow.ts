@@ -1,12 +1,15 @@
-import { CameraUpdate } from './threeUtility';
+import {
+    HorizontalBlurShadowShader,
+    VerticalBlurShadowShader
+} from './shaderUtility';
 import * as THREE from 'three';
-import { HorizontalBlurShader } from 'three/examples/jsm/shaders/HorizontalBlurShader.js';
-import { VerticalBlurShader } from 'three/examples/jsm/shaders/VerticalBlurShader.js';
 
 export interface GroundContactShadowParameters {
+    enabled: boolean;
     cameraHelper: boolean;
     alwaysUpdate: boolean;
-    blur: number;
+    blurMin: number;
+    blurMax: number;
     darkness: number;
     opacity: number;
     planeSize: number;
@@ -20,6 +23,7 @@ export class GroundAndGroundShadow {
     public group: THREE.Group;
     public cameraHelper: THREE.CameraHelper;
     public needsUpdate: boolean = true;
+    public noNeedOfUpdateCount = 0;
     private groundMesh?: THREE.Mesh;
     private shadowGround: THREE.Mesh;
     private blurPlane: THREE.Mesh;
@@ -29,18 +33,19 @@ export class GroundAndGroundShadow {
     private horizontalBlurMaterial: THREE.ShaderMaterial;
     private verticalBlurMaterial: THREE.ShaderMaterial;
     private shadowCamera: THREE.OrthographicCamera;
-    private cameraUpdate: CameraUpdate = new CameraUpdate();
 
     constructor(renderer: THREE.WebGLRenderer, parameters: any) {
-        this.shadowMapSize = parameters.shadowMapSize ?? 1024
+        this.shadowMapSize = parameters.shadowMapSize ?? 1024;
         this.parameters = {
+            enabled: parameters.enabled ?? true,
             cameraHelper: parameters.cameraHelper ?? false,
             alwaysUpdate: parameters.alwaysUpdate ?? false,
-            blur: parameters.blur ?? 1.5,
+            blurMin: parameters.blurMin ?? 0.2,
+            blurMax: parameters.blurMax ?? 6,
             darkness: parameters.darkness ?? 1,
             opacity: parameters.opacity ?? 0.5,
             planeSize: parameters.planeSize ?? 10,
-            cameraFar: parameters.cameraFar ?? 5
+            cameraFar: parameters.cameraFar ?? 3
         };
 
         this.renderer = renderer;
@@ -65,7 +70,7 @@ export class GroundAndGroundShadow {
         shadowGroundMaterial.polygonOffsetUnits = 2;
         this.shadowGround = new THREE.Mesh(shadowGroundGeometry, shadowGroundMaterial);
         this.shadowGround.renderOrder = 1;
-        this.shadowGround.receiveShadow = true;
+        this.shadowGround.receiveShadow = false;
         this.group.add(this.shadowGround);
 
         this.blurPlane = new THREE.Mesh(shadowGroundGeometry);
@@ -85,14 +90,14 @@ export class GroundAndGroundShadow {
             shader.uniforms.darkness = this.depthMaterial.userData.darkness;
             shader.fragmentShader = `
                 uniform float darkness;
-                ${shader.fragmentShader.replace('gl_FragColor = vec4( vec3( 1.0 - fragCoordZ ), opacity );', 'gl_FragColor = vec4( vec3( 0.0 ), ( 1.0 - fragCoordZ ) * darkness );')}
+                ${shader.fragmentShader.replace('gl_FragColor = vec4( vec3( 1.0 - fragCoordZ ), opacity );', 'gl_FragColor = vec4(vec3(0.0), pow(1.0 - fragCoordZ, 2.0) * darkness);')}
             `;
         };
-        this.depthMaterial.depthTest = false;
-        this.depthMaterial.depthWrite = false;
-        this.horizontalBlurMaterial = new THREE.ShaderMaterial(HorizontalBlurShader);
+        this.depthMaterial.depthTest = true;
+        this.depthMaterial.depthWrite = true;
+        this.horizontalBlurMaterial = new THREE.ShaderMaterial(HorizontalBlurShadowShader);
         this.horizontalBlurMaterial.depthTest = false;
-        this.verticalBlurMaterial = new THREE.ShaderMaterial(VerticalBlurShader);
+        this.verticalBlurMaterial = new THREE.ShaderMaterial(VerticalBlurShadowShader);
         this.verticalBlurMaterial.depthTest = false;
 
         this.updatePlaneAndShadowCamera();
@@ -118,9 +123,11 @@ export class GroundAndGroundShadow {
 
     public updateBounds(bounds: THREE.Box3) {
         const boundsCenter = bounds.getCenter(new THREE.Vector3());
-        this.group.position.set(boundsCenter.x, bounds.min.y, boundsCenter.z);
+        // y is always 0
+        this.group.position.set(boundsCenter.x, 0, boundsCenter.z);
+        this.group.updateMatrixWorld();
         const boundsSize = bounds.getSize(new THREE.Vector3());
-        const maxPlanSideLength = Math.max(boundsSize.x, boundsSize.y);
+        const maxPlanSideLength = Math.max(boundsSize.x, boundsSize.z);
         this.parameters.planeSize = maxPlanSideLength + 2;
         this.updatePlaneAndShadowCamera();
     }
@@ -159,12 +166,20 @@ export class GroundAndGroundShadow {
         }
     }
 
-    public render(scene: THREE.Scene, camera: THREE.Camera): void {
-        const needsUpdate = this.parameters.alwaysUpdate || this.needsUpdate || this.cameraUpdate.changed(camera);
+    public render(scene: THREE.Scene): void {
+        const needsUpdate = this.parameters.alwaysUpdate || this.needsUpdate;
         if (!needsUpdate) {
-            return;
+            this.noNeedOfUpdateCount ++;
+            if (this.noNeedOfUpdateCount >= 10) {
+                return;
+            }
+        } else {
+            this.noNeedOfUpdateCount = 0;
         }
         this.needsUpdate = false;
+
+        //const shadowGroundMaterial = this.shadowGround.material as THREE.MeshBasicMaterial;
+        //shadowGroundMaterial.opacity = this.parameters.opacity * (this.noNeedOfUpdateCount + 2) / 12;
 
         const initialBackground = scene.background;
         scene.background = null;
@@ -177,11 +192,19 @@ export class GroundAndGroundShadow {
         this.shadowGround.visible = false;
         this.cameraHelper.visible = false;
 
-        this.renderer.setRenderTarget(this.renderTarget);
-        this.renderer.render(scene, this.shadowCamera);
+        if (this.noNeedOfUpdateCount === 0) {
+            this.renderer.setRenderTarget(this.renderTarget);
+            this.renderer.clear();
+            this.renderer.render(scene, this.shadowCamera);
+            scene.overrideMaterial = null;
+            this.blurShadow(this.parameters.blurMin / this.parameters.planeSize, this.parameters.blurMin / this.parameters.planeSize);
+        } else if (this.noNeedOfUpdateCount === 1) {
+            scene.overrideMaterial = null;
+            this.blurShadow(this.parameters.blurMin / this.parameters.planeSize, this.parameters.blurMax / this.parameters.planeSize);
+        }
         scene.overrideMaterial = null;
-        this.blurShadow(this.parameters.blur / this.parameters.planeSize);
-        this.blurShadow(this.parameters.blur * 0.4 / this.parameters.planeSize);
+        const finalBlurAmount = 0.4 / this.parameters.planeSize;
+        this.blurShadow(finalBlurAmount, finalBlurAmount);
 
         this.renderer.setRenderTarget(null);
         this.renderer.setClearAlpha(initialClearAlpha);
@@ -193,12 +216,14 @@ export class GroundAndGroundShadow {
         this.cameraHelper.visible = this.parameters.cameraHelper;
     }
 
-    public blurShadow(amount: number): void {
+    public blurShadow(amountMin: number, amountMax: number): void {
         this.blurPlane.visible = true;
         this.blurPlane.material = this.horizontalBlurMaterial;
         // @ts-ignore
         this.blurPlane.material.uniforms.tDiffuse.value = this.renderTarget.texture;
-        this.horizontalBlurMaterial.uniforms.h.value = amount * 1 / 256;
+        this.horizontalBlurMaterial.uniforms.hRange.value.x = amountMin * 1 / 256;
+        this.horizontalBlurMaterial.uniforms.hRange.value.y = amountMax * 1 / 256;
+        this.horizontalBlurMaterial.uniforms.shadowScale.value = 1 / this.parameters.darkness;
 
         this.renderer.setRenderTarget(this.renderTargetBlur);
         this.renderer.render(this.blurPlane, this.shadowCamera);
@@ -206,7 +231,9 @@ export class GroundAndGroundShadow {
         this.blurPlane.material = this.verticalBlurMaterial;
         // @ts-ignore
         this.blurPlane.material.uniforms.tDiffuse.value = this.renderTargetBlur.texture;
-        this.verticalBlurMaterial.uniforms.v.value = amount * 1 / 256;
+        this.verticalBlurMaterial.uniforms.vRange.value.x = amountMin * 1 / 256;
+        this.verticalBlurMaterial.uniforms.vRange.value.y = amountMax * 1 / 256;
+        this.verticalBlurMaterial.uniforms.shadowScale.value = 1 / this.parameters.darkness;
 
         this.renderer.setRenderTarget(this.renderTarget);
         this.renderer.render(this.blurPlane, this.shadowCamera);
