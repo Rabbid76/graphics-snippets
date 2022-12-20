@@ -13,20 +13,28 @@ import {
     calculateIntersectionBox,
     trianglesInBox,
     intersectMesh,
+    intersectMeshWASM,
+    MESH_INTERSECT,
+    MESH_MINUS_AB,
+    MESH_OR_AB,
+    MESH_AND_AB
 } from '../three/mathUtility'
+import { intiMeshUtility } from '../three/meshIntersection';
 import { DataGUI, Statistic } from '../three/uiUtility' 
 import * as THREE from 'three';
 
 // fade background
 
-export const boolean3dOperations = (canvas: any) => {
+export const boolean3dOperations = async (canvas: any) => {
+    await intiMeshUtility();
+
     const renderer = new THREE.WebGLRenderer({canvas: canvas, antialias: true, alpha: true});
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
     
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.y = 2;
-    camera.position.z = 4;
+    camera.position.y = 1.5;
+    camera.position.z = 3;
     const controls = new Controls(renderer, camera);
 
     const scene = new THREE.Scene();
@@ -57,6 +65,7 @@ export const boolean3dOperations = (canvas: any) => {
     const segments = 32;
     const specification1 = mergeBuffers(mergeBuffers(createTube(radii, heights, segments), createCircle(1, 1, segments)), createCircle(1, 0, segments, true));
     const geometry1 = createBufferGeometry(specification1);
+    //const geometry1 = new THREE.BoxGeometry(1, 1, 1);
     geometry1.rotateX(-Math.PI / 2);
     const material1 = new THREE.MeshPhysicalMaterial({color: 0xc0c0c0, polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 2});
     const object1 = addGeometry(scene, geometry1, material1);
@@ -64,9 +73,11 @@ export const boolean3dOperations = (canvas: any) => {
     const geometry2 = new THREE.BoxGeometry(1, 1, 1);
     const material2 = new THREE.MeshPhysicalMaterial({color: 0xc0f0c0, transparent: true, opacity: 0.5});
     const object2 = addGeometry(scene, geometry2, material2);
-    //object2.group.position.set(0.75, 1, 0);
-    object2.group.position.set(-0.0048903324633537346, 0.6085501449797492, 0.369337411298443);
-    object2.group.position.set(-0.0300905570996814, 0.6153913812282826, 0.3281334023730805);
+    object2.group.position.set(0, 0.6, 0.09);
+    //object2.group.position.set(-0.0048903324633537346, 0.6085501449797492, 0.369337411298443);
+    //object2.group.position.set(-0.0300905570996814, 0.6153913812282826, 0.3281334023730805);
+    //object2.group.position.set(0.11631596622380544, 0.43878604226367923, 0.2633838793666407);
+    //object2.group.position.set(-0.028130438905423515, 0.3530915478172213, 0.38414688935046615);
     
     const statistic = new Statistic();
     const dataGui = new DataGUI();
@@ -120,7 +131,8 @@ export const boolean3dOperations = (canvas: any) => {
     }
 
     const intersectMeshes = () => {
-        const intersectionGeometry = intersectMesh(object1.mesh, object2.mesh);
+        const intersectionGeometry = intersectMeshWASM(object1.mesh, object2.mesh, MESH_MINUS_AB);
+        //const intersectionGeometry = intersectMesh(object1.mesh, object2.mesh);
         if (intersectionGeometry) {
             intersectionObject = updateObjectFromMeshSpecification(intersectionObject, intersectionGeometry, intersectionGeometry.error ? errorMaterial : material1);
             intersectionObject.group.visible = true;
@@ -135,7 +147,7 @@ export const boolean3dOperations = (canvas: any) => {
     let highlightIntersectionObject: GeometryObject | undefined;
     let intersectionObject: GeometryObject | undefined;
     const updateIntersection = () => {
-        console.log(object2.group.position);
+        //console.log(object2.group.position);
         object1.group.updateMatrixWorld();
         object2.group.updateMatrixWorld();
         if (boxHelper) {
@@ -286,7 +298,7 @@ const addGeometry = (target: THREE.Object3D, geometry: THREE.BufferGeometry, mat
     const lineSegments = new THREE.LineSegments(new THREE.WireframeGeometry(geometry), lineMaterial);
     const group = new THREE.Group();
     group.add(mesh);
-    group.add(lineSegments);
+    //group.add(lineSegments);
     target.add(group);
     return { mesh, group };
 }

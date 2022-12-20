@@ -4,7 +4,7 @@ import { rectAreaLightShadow } from './examples/rectAreaLightShadow'
 import { progressiveShadow } from './examples/progressiveShadow'
 import { screenSpaceAmbientOcclusion } from './examples/screenSpaceAmbientOcclusion'
 import { boolean3dOperations } from './examples/boolean3dOperations'
-import { triangleIntersectionTest } from './examples/triangleIntersectionTest'
+import { triangleIntersectionTest } from './examples/test/triangleIntersectionTest'
 
 // @ts-ignore
 const canvas: any = three_canvas

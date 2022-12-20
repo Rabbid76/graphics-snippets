@@ -1,3 +1,5 @@
 /buildTest
 /buildWASM
 /node_modules
+cmake-build-*
+.idea

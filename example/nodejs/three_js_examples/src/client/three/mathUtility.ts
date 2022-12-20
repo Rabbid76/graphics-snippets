@@ -1,6 +1,17 @@
-import { MeshSpecification } from './../geometry/geometryBuffer'
+import { MeshSpecification } from './../geometry/geometryBuffer';
 import * as THREE from 'three';
-import { Box3 } from 'three';
+import { 
+    calculateMeshIntersection, 
+    calculateMeshMinusAB,
+    calculateMeshOrAB,
+    calculateMeshAndAB, 
+} from './meshIntersection'
+import { Vector3 } from 'three';
+
+export const MESH_INTERSECT = 0;
+export const MESH_MINUS_AB = 1;
+export const MESH_OR_AB = 2;
+export const MESH_AND_AB = 3;
 
 export interface Ray {
     origin: THREE.Vector3;
@@ -17,15 +28,15 @@ export interface Intersection {
     point: THREE.Vector3;
 }
 
-interface TrianglePlanIntersection {
+interface TrianglePlaneIntersection {
     index: number,
     intersectToPeak: Intersection,
     intersectFromPeak: Intersection
 }
 
 interface TriangleTriangleIntersection {
-    intersectionTriangle1: TrianglePlanIntersection,
-    intersectionTriangle2: TrianglePlanIntersection,
+    intersectionTriangle1: TrianglePlaneIntersection,
+    intersectionTriangle2: TrianglePlaneIntersection,
 }
 
 export const fMod = (a:number, b: number): number => {
@@ -230,24 +241,24 @@ export const trianglesInBox = (mesh: THREE.Mesh, searchBox: THREE.Box3): number[
     return triangleIndices;
 }
 
-export const intersectTrianglePlane = (t: THREE.Vector3[], plane: Plane): TrianglePlanIntersection | null => {
+export const intersectTrianglePlane = (t: THREE.Vector3[], plane: Plane): TrianglePlaneIntersection | null => {
     const intersect0 = intersectRayPlane({origin: t[0], direction: t[1].clone().sub(t[0])}, plane);
-    const intersect0inBounds = intersect0 && intersect0.distance >= 0 && intersect0.distance <= 1;
+    const intersect0inBounds = intersect0 && intersect0.distance >= -1.0e-10 && intersect0.distance <= 1 + 1.0e-10;
     const intersect1 = intersectRayPlane({origin: t[1], direction: t[2].clone().sub(t[1])}, plane);
-    const intersect1inBounds = intersect1 && intersect1.distance >= 0 && intersect1.distance <= 1;
+    const intersect1inBounds = intersect1 && intersect1.distance >= -1.0e-10 && intersect1.distance <= 1 + 1.0e-10;
     const intersect2 = intersectRayPlane({origin: t[2], direction: t[0].clone().sub(t[2])}, plane);
-    const intersect2inBounds = intersect2 && intersect2.distance >= 0 && intersect2.distance <= 1;
+    const intersect2inBounds = intersect2 && intersect2.distance >= -1.0e-10 && intersect2.distance <= 1 + 1.0e-10;
     if (intersect0inBounds && intersect1inBounds && intersect2inBounds) {
-        if (intersect0.distance > intersect1.distance) {
-            if (intersect1.distance > intersect2.distance) {
-                return { index: 1, intersectToPeak: intersect0, intersectFromPeak: intersect1 };
-            } else {
+        if (intersect0.distance - intersect2.distance > intersect1.distance - intersect0.distance) {
+            if (intersect0.distance - intersect2.distance > intersect2.distance - intersect1.distance) {
                 return { index: 0, intersectToPeak: intersect2, intersectFromPeak: intersect0 };
+            } else {
+                return { index: 2, intersectToPeak: intersect1, intersectFromPeak: intersect2 };
             }
-        } else if (intersect1.distance > intersect2.distance) {
-            return { index: 1, intersectToPeak: intersect0, intersectFromPeak: intersect1 };
-        } else {
+        } else if (intersect2.distance - intersect1.distance > intersect1.distance - intersect0.distance) {
             return { index: 2, intersectToPeak: intersect1, intersectFromPeak: intersect2 };
+        } else {
+            return { index: 1, intersectToPeak: intersect0, intersectFromPeak: intersect1 };
         }
     } if (intersect0inBounds && intersect1inBounds) {
         return { index: 1, intersectToPeak: intersect0, intersectFromPeak: intersect1 };
@@ -377,9 +388,14 @@ export class UniqueIndices {
 }
 
 export const intersectMesh = (mesh1: THREE.Mesh, mesh2: THREE.Mesh, epsilon = 0.0001): MeshSpecification | null => {
+    //const wasmResult = intersectMeshWASM(mesh1, mesh2, MESH_INTERSECT, epsilon);
+    //if (wasmResult !== null) {
+    //    return wasmResult;
+    //}
+
     const vertices1 = mesh1.geometry.attributes.position.array;
     const indices1Buffer = mesh1.geometry.index?.array;
-    const vertices2 = mesh2.geometry.attributes.position.array;
+    const vertex2Buffer = mesh2.geometry.attributes.position.array;
     const indices2 = mesh2.geometry.index?.array;
     if (!indices1Buffer || !indices2) {
         return null;
@@ -389,6 +405,18 @@ export const intersectMesh = (mesh1: THREE.Mesh, mesh2: THREE.Mesh, epsilon = 0.
     const indices1 = Array.from(indices1Buffer);
 
     const relativeTransform = mesh1.matrixWorld.clone().invert().multiply(mesh2.matrixWorld);
+    const vertices2: number[] = [];
+    for (let i = 0; i < vertex2Buffer.length; i += 3) {
+        let v = new THREE.Vector3(vertex2Buffer[i], vertex2Buffer[i+1], vertex2Buffer[i+2]);
+        v = v.applyMatrix4(relativeTransform);
+        vertices2.push(v.x, v.y, v.z);
+    }
+
+    //console.log(vertices1)
+    //console.log(indices1)
+    //console.log(vertices2)
+    //console.log(indices2)
+
     const intersectionBox = calculateIntersectionBox(mesh1, mesh2, true);
     if (intersectionBox.isEmpty()) {
         return null;
@@ -396,7 +424,6 @@ export const intersectMesh = (mesh1: THREE.Mesh, mesh2: THREE.Mesh, epsilon = 0.
     const trianglesMesh2: Triangle[] = []
     for (let ti2 = 0; ti2 < indices2.length; ti2 += 3) {
         const triangle2 = new Triangle(vertices2, indices2[ti2], indices2[ti2+1], indices2[ti2+2]);
-        triangle2.applyMatrix(relativeTransform);
         if (intersectionBox.intersect(triangle2.box)) {
             trianglesMesh2.push(triangle2);
         }
@@ -448,17 +475,21 @@ export const intersectMesh = (mesh1: THREE.Mesh, mesh2: THREE.Mesh, epsilon = 0.
     let error: boolean = false;
     for (let ti1 = 0; ti1 < indices1.length; ti1 += 3) {
         let winding = windings[ti1 / 3];
-        if (indices1.length > indices1Buffer.length * 10) {
+        if (indices1.length > (indices1Buffer.length + indices2.length) * 10) {
             error = true;
             break;
         }
         const triangle1 = new Triangle(newVertices, indices1[ti1], indices1[ti1+1], indices1[ti1+2]);
+        const uniqueIndicesT1 = triangle1.indices.map(i => mesh1UniqueIndices.get(i));
+        if (uniqueIndicesT1[0] == uniqueIndicesT1[1] || uniqueIndicesT1[1] == uniqueIndicesT1[2] || uniqueIndicesT1[0] == uniqueIndicesT1[2]) {
+            continue;
+        }
         if (!intersectionBox.intersect(triangle1.box)) {
             newIndices.push(...triangle1.indices);
             newWindings.push(winding);
             continue;
         }
-
+        
         let splitted: boolean = false;
         for (let ti2 = 0; ti2 < trianglesMesh2.length; ++ti2) {
             const triangle2 = trianglesMesh2[ti2];
@@ -491,7 +522,7 @@ export const intersectMesh = (mesh1: THREE.Mesh, mesh2: THREE.Mesh, epsilon = 0.
             if (sharedPoints.length === 1) {
                 let ray = triangle1.createRay((sharedPoints[0]+1) % 3, (sharedPoints[0]+2) % 3);
                 let triangleIntersect = intersectTriangle(ray, triangle2.vertices);
-                if (triangleIntersect && triangleIntersect.distance > 0 && triangleIntersect.distance < 1) {
+                if (triangleIntersect && triangleIntersect.distance > -1.0e-10 && triangleIntersect.distance < 1 + 1.0e-10) {
                     const uniqueI = uniqueIndices.getVertexIndex(triangleIntersect.point);
                     if (!triangle1.indices.map(i => mesh1UniqueIndices.get(i)).includes(uniqueI)) {  
                         const newI = newVertices.length / 3;
@@ -501,6 +532,12 @@ export const intersectMesh = (mesh1: THREE.Mesh, mesh2: THREE.Mesh, epsilon = 0.
                         splitted = true;
                         break;
                     }
+                    const spi = indices1[ti1 + sharedPoints[0]];
+                    const sp = new Vector3(newVertices[spi*3], newVertices[spi*3+1], newVertices[spi*3+2]);
+                    const d = triangleIntersect.distance > 0.5
+                        ? intersectionDirection.dot(sp.sub(triangleIntersect.point))
+                        : intersectionDirection.dot(triangleIntersect.point.sub(sp));
+                    winding = d < 0 ? -1 : 1;
                 }
                 ray = triangle2.createRay((shardPoints2[0]+1) % 3, (shardPoints2[0]+2) % 3);
                 triangleIntersect = intersectTriangle(ray, triangle1.vertices);
@@ -544,7 +581,7 @@ export const intersectMesh = (mesh1: THREE.Mesh, mesh2: THREE.Mesh, epsilon = 0.
             const orderedIndices = [0, 1, 2].map(i => triangle1.indices[(intersect.intersectionTriangle1.index+i) % 3]);
             const uniqueT = orderedIndices.map(i => mesh1UniqueIndices.get(i));  
             if (uniqueT.includes(uniqueI1) && uniqueT.includes(uniqueI2)) { 
-                if (winding == 0 && uniqueI1 != uniqueI2) {
+                if (uniqueI1 != uniqueI2) {
                     const d = intersectionDirection.dot(triangle1.vertices[(intersect.intersectionTriangle1.index+2) % 3].clone().sub(triangle1.vertices[(intersect.intersectionTriangle1.index+1) % 3]));
                     winding = d < 0 ? -1 : 1;
                 }
@@ -570,6 +607,8 @@ export const intersectMesh = (mesh1: THREE.Mesh, mesh2: THREE.Mesh, epsilon = 0.
             newWindings.push(winding);
         }
     }
+    
+    //console.log(newWindings)
     let orderChanged = true;
     while (orderChanged) {
         orderChanged = false;
@@ -614,10 +653,23 @@ export const intersectMesh = (mesh1: THREE.Mesh, mesh2: THREE.Mesh, epsilon = 0.
     if (anyChanged) {
         for (let i = 0; i < newWindings.length; ++i) {
             if (newWindings[i] <= 0) {
-                [newIndices[i*3], newIndices[i*3+1]] = [newIndices[i*3+1], newIndices[i*3]];
+                [newIndices[i*3+2], newIndices[i*3+1]] = [newIndices[i*3+1], newIndices[i*3+2]];
             }
         }
     }
+
+    const indexOut = [];
+    const indexIn = [];
+    for (let i = 0; i < newWindings.length; ++i) {
+        if (newWindings[i] < 0) {
+            indexIn.push(newIndices[i*3], newIndices[i*3+1], newIndices[i*3+2]);
+        } else {
+            indexOut.push(newIndices[i*3], newIndices[i*3+1], newIndices[i*3+2]);
+        }
+    }
+    //console.log(newVertices);
+    //console.log(indexOut);
+    //console.log(indexIn);
 
     const newMesh = { 
         vertices: new Float32Array(newVertices), 
@@ -626,5 +678,93 @@ export const intersectMesh = (mesh1: THREE.Mesh, mesh2: THREE.Mesh, epsilon = 0.
         error,
         anyChanged: anyChanged || newVertices.length > vertices1.length
     };
+    return newMesh;
+}
+
+export const intersectMeshWASM = (mesh0: THREE.Mesh, mesh1: THREE.Mesh, operator: number, epsilon = 0.0001): MeshSpecification | null => {
+
+    const meshData0 = {
+        vertices: mesh0.geometry.attributes.position.array,
+        normals: mesh0.geometry.attributes.normal?.array,
+        uvs: mesh0.geometry.attributes.uv?.array,
+        indices: new Uint32Array(mesh0.geometry.index?.array ?? [])
+    };
+    const meshData1 = {
+        vertices: mesh1.geometry.attributes.position.array,
+        normals: mesh1.geometry.attributes.normal?.array,
+        uvs: mesh1.geometry.attributes.uv?.array,
+        indices: new Uint32Array(mesh1.geometry.index?.array ?? [])
+    };
+
+    const relativeTransform = mesh0.matrixWorld.clone().invert().multiply(mesh1.matrixWorld);
+    if (relativeTransform) {
+        const transformedVertices: number[] = [];
+        for (let i = 0; i < meshData1.vertices.length; i += 3) {
+            let v = new THREE.Vector3(meshData1.vertices[i], meshData1.vertices[i+1], meshData1.vertices[i+2]);
+            v = v.applyMatrix4(relativeTransform);
+            transformedVertices.push(v.x, v.y, v.z);
+        }
+        const normalMatrix = new THREE.Matrix3().getNormalMatrix(relativeTransform);
+        const transformedNormals: number[] = [];
+        for (let i = 0; i < meshData1.normals.length; i += 3) {
+            let n = new THREE.Vector3(meshData1.normals[i], meshData1.normals[i+1], meshData1.normals[i+2]);
+            n = n.applyNormalMatrix(normalMatrix);
+            transformedNormals.push(n.x, n.y, n.z);
+        }
+        meshData1.vertices = new Float32Array(transformedVertices);
+        meshData1.normals = new Float32Array(transformedNormals);
+    }
+    
+    let resultMesh: any;
+    switch (operator) {
+        default: resultMesh = calculateMeshIntersection(meshData0, meshData1); break;
+        case MESH_MINUS_AB: resultMesh = calculateMeshMinusAB(meshData0, meshData1); break;
+        case MESH_OR_AB: resultMesh = calculateMeshOrAB(meshData0, meshData1); break;
+        case MESH_AND_AB: resultMesh = calculateMeshAndAB(meshData0, meshData1); break;
+    }
+    
+    if (!resultMesh || resultMesh.error) {
+        return null;
+    }
+
+    const vertices: number[] = [];
+    for (let i = 0; i < resultMesh.vertices.size(); ++i) {
+        vertices.push(resultMesh.vertices.get(i));
+    }
+    const normals: number[] = [];
+    for (let i = 0; i < resultMesh.normals.size(); ++i) {
+        normals.push(resultMesh.normals.get(i));
+    }
+    const indices: number[] = [];
+    for (let i = 0; i < resultMesh.indicesOut.size(); ++i) {
+        indices.push(resultMesh.indicesOut.get(i));
+    }
+    for (let i = 0; i < resultMesh.indicesIn.size(); ++i) {
+        indices.push(resultMesh.indicesIn.get(i));
+    }
+    const newMesh = { 
+        vertices: new Float32Array(vertices), 
+        normals: normals && normals.length > 0 ? new Float32Array(normals) : undefined,
+        indices: new Uint32Array(indices),
+        error: resultMesh.error,
+        anyChanged: resultMesh.indicesIn.size() > 0 || vertices.length > meshData0.vertices.length
+    };
+
+    const indexOut = [];
+    const indexIn = [];
+    for (let i = 0; i < resultMesh.indicesOut.size(); ++i) {
+        indexOut.push(resultMesh.indicesOut.get(i));
+    }
+    for (let i = 0; i < resultMesh.indicesIn.size(); ++i) {
+        indexIn.push(resultMesh.indicesIn.get(i));
+    }
+    //console.log(Array.from(meshData0.vertices));
+    //console.log(Array.from(meshData0.indices));
+    //console.log(Array.from(meshData1.vertices));
+    //console.log(Array.from(meshData1.indices));
+    //console.log(vertices);
+    //console.log(indexOut);
+    //console.log(indexIn);
+
     return newMesh;
 }

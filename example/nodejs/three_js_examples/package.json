@@ -6,6 +6,8 @@
     "install:ncu": "npm install -g npm-check-updates",
     "install:webpack": "npm install --save-dev webpack",
     "update:modules": "ncu -u && npm update && npm i",
+    "copy:wasm": "copyfiles --flat ./buildWasm/*.wasm ./dist/client/triangle_intersection_test/ && copyfiles --flat ./buildWasm/*.wasm ./dist/client/boolean_3d_operations/",
+    "build:wasm": "./buildCpp.sh wasm && npm run copy:wasm",
     "build:client": "webpack --config ./src/client/webpack.prod.js",
     "build:server": "tsc -p ./src/server",
     "build": "npm run build:client && npm run build:server",
