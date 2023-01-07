@@ -1,8 +1,8 @@
 # Ideas and TODO
 
 - blend uniform color background and environment map
-- RectAreaLight shadow
 - Environment map light sources
+- AI material (refraction, diamond); input ndc position, normal, uv?; output: RGB color and N environment vectors with weight
 
 ## Environment map light sources
 
