@@ -1,4 +1,5 @@
 #include "mesh_utility/meshIntersection.h"
+#include "meshIntersectionTestHelper.h"
 #include "catch2/catch.hpp"
 #include <algorithm>
 #include <cmath>
@@ -6,15 +7,6 @@
 #include <vector>
 
 using namespace mesh;
-
-namespace mesh {
-    bool operator ==(const Coordinates3 &a, const Coordinates3 &b) {
-        return
-                std::fabs(a[0] - b[0]) < 0.001f &&
-                std::fabs(a[1] - b[1]) < 0.001f &&
-                std::fabs(a[2] - b[2]) < 0.001f;
-    }
-}
 
 namespace {
     Point3 getMin(const std::vector<float> &vertices) {
@@ -74,228 +66,6 @@ namespace {
     }
 }
 
-TEST_CASE("mesh intersection - add vectors", "[mesh intersection]") {
-    SECTION("0") {
-        REQUIRE(add3(Coordinates3{0, 0, 0}, Coordinates3{0, 0, 0}) == Coordinates3{0, 0, 0});
-    }
-    SECTION("1") {
-        REQUIRE(add3(Coordinates3{1, 0, 0}, Coordinates3{0, 0, 0}) == Coordinates3{1, 0, 0});
-        REQUIRE(add3(Coordinates3{0, 1, 0}, Coordinates3{0, 0, 0}) == Coordinates3{0, 1, 0});
-        REQUIRE(add3(Coordinates3{0, 0, 1}, Coordinates3{0, 0, 0}) == Coordinates3{0, 0, 1});
-        REQUIRE(add3(Coordinates3{0, 0, 0}, Coordinates3{1, 0, 0}) == Coordinates3{1, 0, 0});
-        REQUIRE(add3(Coordinates3{0, 0, 0}, Coordinates3{0, 1, 0}) == Coordinates3{0, 1, 0});
-        REQUIRE(add3(Coordinates3{0, 0, 0}, Coordinates3{0, 0, 1}) == Coordinates3{0, 0, 1});
-    }
-    SECTION("sum") {
-        REQUIRE(add3(Coordinates3{1, 2, 3}, Coordinates3{1, 2, 3}) == Coordinates3{2, 4, 6});
-    }
-}
-
-TEST_CASE("mesh intersection - subtract vectors", "[mesh intersection]") {
-    SECTION("0") {
-        REQUIRE(sub3(Coordinates3{0, 0, 0}, Coordinates3{0, 0, 0}) == Coordinates3{0, 0, 0});
-        REQUIRE(sub3(Coordinates3{1, 2, 3}, Coordinates3{1, 2, 3}) == Coordinates3{0, 0, 0});
-    }
-    SECTION("1") {
-        REQUIRE(sub3(Coordinates3{1, 0, 0}, Coordinates3{0, 0, 0}) == Coordinates3{1, 0, 0});
-        REQUIRE(sub3(Coordinates3{0, 1, 0}, Coordinates3{0, 0, 0}) == Coordinates3{0, 1, 0});
-        REQUIRE(sub3(Coordinates3{0, 0, 1}, Coordinates3{0, 0, 0}) == Coordinates3{0, 0, 1});
-        REQUIRE(sub3(Coordinates3{0, 0, 0}, Coordinates3{1, 0, 0}) == Coordinates3{-1, 0, 0});
-        REQUIRE(sub3(Coordinates3{0, 0, 0}, Coordinates3{0, 1, 0}) == Coordinates3{0, -1, 0});
-        REQUIRE(sub3(Coordinates3{0, 0, 0}, Coordinates3{0, 0, 1}) == Coordinates3{0, 0, -1});
-    }
-    SECTION("sum") {
-        REQUIRE(sub3(Coordinates3{2, 4, 6}, Coordinates3{1, 2, 3}) == Coordinates3{1, 2, 3});
-    }
-}
-
-TEST_CASE("mesh intersection - multiply vector with scalar", "[mesh intersection]") {
-    SECTION("0") {
-        REQUIRE(multiply3scalar(Coordinates3{0, 0, 0}, 0) == Coordinates3{0, 0, 0});
-        REQUIRE(multiply3scalar(Coordinates3{1, 2, 3}, 0) == Coordinates3{0, 0, 0});
-        REQUIRE(multiply3scalar(Coordinates3{0, 0, 0}, 1) == Coordinates3{0, 0, 0});
-    }SECTION("1") {
-        REQUIRE(multiply3scalar(Coordinates3{1, 0, 0}, 1) == Coordinates3{1, 0, 0});
-        REQUIRE(multiply3scalar(Coordinates3{0, 1, 0}, 1) == Coordinates3{0, 1, 0});
-        REQUIRE(multiply3scalar(Coordinates3{0, 0, 1}, 1) == Coordinates3{0, 0, 1});
-        REQUIRE(multiply3scalar(Coordinates3{1, 1, 1}, 1) == Coordinates3{1, 1, 1});
-    }SECTION("multiply") {
-        REQUIRE(multiply3scalar(Coordinates3{1, 2, 3}, 1) == Coordinates3{1, 2, 3});
-        REQUIRE(multiply3scalar(Coordinates3{1, 2, 3}, 2) == Coordinates3{2, 4, 6});
-    }
-}
-
-TEST_CASE("mesh intersection - dot product", "[mesh intersection]") {
-    SECTION("0") {
-        REQUIRE(dot3(Coordinates3{0, 0, 0}, Coordinates3{0, 0, 0}) == 0);
-        REQUIRE(dot3(Coordinates3{1, 0, 0}, Coordinates3{0, 1, 0}) == 0);
-        REQUIRE(dot3(Coordinates3{1, 0, 0}, Coordinates3{0, 0, 1}) == 0);
-        REQUIRE(dot3(Coordinates3{0, 1, 0}, Coordinates3{1, 0, 0}) == 0);
-        REQUIRE(dot3(Coordinates3{0, 1, 0}, Coordinates3{0, 0, 1}) == 0);
-        REQUIRE(dot3(Coordinates3{0, 0, 1}, Coordinates3{1, 0, 0}) == 0);
-        REQUIRE(dot3(Coordinates3{0, 0, 1}, Coordinates3{0, 1, 0}) == 0);
-    }
-    SECTION("1") {
-        REQUIRE(dot3(Coordinates3{1, 0, 0}, Coordinates3{1, 0, 0}) == 1);
-        REQUIRE(dot3(Coordinates3{0, 1, 0}, Coordinates3{0, 1, 0}) == 1);
-        REQUIRE(dot3(Coordinates3{0, 0, 1}, Coordinates3{0, 0, 1}) == 1);
-    }
-    SECTION("sum") {
-        REQUIRE(dot3(Coordinates3{1, 1, 1}, Coordinates3{1, 1, 1}) == 3);
-        REQUIRE(dot3(Coordinates3{1, 2, 3}, Coordinates3{1, 2, 3}) == 14);
-        REQUIRE(dot3(Coordinates3{3, 2, 1}, Coordinates3{1, 2, 3}) == 10);
-    }
-}
-
-TEST_CASE("mesh intersection - cross product", "[mesh intersection]") {
-    SECTION("0") {
-        REQUIRE(cross3(Coordinates3{0, 0, 0}, Coordinates3{0, 0, 0}) == Coordinates3{0, 0, 0});
-        REQUIRE(cross3(Coordinates3{1, 0, 0}, Coordinates3{1, 0, 0}) == Coordinates3{0, 0, 0});
-        REQUIRE(cross3(Coordinates3{0, 1, 0}, Coordinates3{0, 1, 0}) == Coordinates3{0, 0, 0});
-        REQUIRE(cross3(Coordinates3{0, 0, 1}, Coordinates3{0, 0, 1}) == Coordinates3{0, 0, 0});
-        REQUIRE(cross3(Coordinates3{-1, 0, 0}, Coordinates3{1, 0, 0}) == Coordinates3{0, 0, 0});
-        REQUIRE(cross3(Coordinates3{0, -1, 0}, Coordinates3{0, 1, 0}) == Coordinates3{0, 0, 0});
-        REQUIRE(cross3(Coordinates3{0, 0, -1}, Coordinates3{0, 0, 1}) == Coordinates3{0, 0, 0});
-        REQUIRE(cross3(Coordinates3{1, 0, 0}, Coordinates3{-1, 0, 0}) == Coordinates3{0, 0, 0});
-        REQUIRE(cross3(Coordinates3{0, 1, 0}, Coordinates3{0, -1, 0}) == Coordinates3{0, 0, 0});
-        REQUIRE(cross3(Coordinates3{0, 0, 1}, Coordinates3{0, 0, -1}) == Coordinates3{0, 0, 0});
-    }
-    SECTION("1") {
-        REQUIRE(cross3(Coordinates3{1, 0, 0}, Coordinates3{0, 1, 0}) == Coordinates3{0, 0, 1});
-        REQUIRE(cross3(Coordinates3{0, 1, 0}, Coordinates3{0, 0, 1}) == Coordinates3{1, 0, 0});
-        REQUIRE(cross3(Coordinates3{0, 0, 1}, Coordinates3{1, 0, 0}) == Coordinates3{0, 1, 0});
-        REQUIRE(cross3(Coordinates3{0, 1, 0}, Coordinates3{1, 0, 0}) == Coordinates3{0, 0, -1});
-        REQUIRE(cross3(Coordinates3{0, 0, 1}, Coordinates3{0, 1, 0}) == Coordinates3{-1, 0, 0});
-        REQUIRE(cross3(Coordinates3{1, 0, 0}, Coordinates3{0, 0, 1}) == Coordinates3{0, -1, 0});
-    }
-    SECTION("sum") {
-        REQUIRE(cross3(Coordinates3{1, 2, 3}, Coordinates3{3, 2, 1}) == Coordinates3{-4, 8, -4});
-    }
-}
-
-TEST_CASE("mesh intersection - square length", "[mesh intersection]") {
-    SECTION("0") {
-        REQUIRE(squareLength(Coordinates3{0, 0, 0}) == 0);
-    }
-    SECTION("1") {
-        REQUIRE(squareLength(Coordinates3{1, 0, 0}) == 1);
-        REQUIRE(squareLength(Coordinates3{0, 1, 0}) == 1);
-        REQUIRE(squareLength(Coordinates3{0, 0, 1}) == 1);
-        REQUIRE(squareLength(Coordinates3{-1, 0, 0}) == 1);
-        REQUIRE(squareLength(Coordinates3{0, -1, 0}) == 1);
-        REQUIRE(squareLength(Coordinates3{0, 0, -1}) == 1);
-    }
-    SECTION("square") {
-        REQUIRE(squareLength(Coordinates3{2, 0, 0}) == 4);
-        REQUIRE(squareLength(Coordinates3{0, 2, 0}) == 4);
-        REQUIRE(squareLength(Coordinates3{0, 0, 2}) == 4);
-        REQUIRE(squareLength(Coordinates3{1, 2, 3}) == 14);
-    }
-}
-
-TEST_CASE("mesh intersection - length", "[mesh intersection]") {
-    SECTION("0") {
-        REQUIRE(squareLength(Coordinates3{0, 0, 0}) == 0);
-    }
-    SECTION("1") {
-        REQUIRE(squareLength(Coordinates3{1, 0, 0}) == 1);
-        REQUIRE(squareLength(Coordinates3{0, 1, 0}) == 1);
-        REQUIRE(squareLength(Coordinates3{0, 0, 1}) == 1);
-        REQUIRE(squareLength(Coordinates3{-1, 0, 0}) == 1);
-        REQUIRE(squareLength(Coordinates3{0, -1, 0}) == 1);
-        REQUIRE(squareLength(Coordinates3{0, 0, -1}) == 1);
-    }
-    SECTION("square") {
-        REQUIRE(length(Coordinates3{2, 0, 0}) == 2);
-        REQUIRE(length(Coordinates3{0, 2, 0}) == 2);
-        REQUIRE(length(Coordinates3{0, 0, 2}) == 2);
-        REQUIRE(length(Coordinates3{1, 1, 0}) == Approx(std::sqrt(2)).epsilon(0.001f));
-        REQUIRE(length(Coordinates3{1, 0, 1}) == Approx(std::sqrt(2)).epsilon(0.001f));
-        REQUIRE(length(Coordinates3{0, 1, 1}) == Approx(std::sqrt(2)).epsilon(0.001f));
-        REQUIRE(length(Coordinates3{1, 2, 3}) == Approx(std::sqrt(14)).epsilon(0.001f));
-    }
-}
-
-TEST_CASE("mesh intersection - normalize", "[mesh intersection]") {
-    SECTION("0") {
-        auto v = normalize(Coordinates3{0, 0, 0});
-        REQUIRE(std::isnan(v[0]));
-        REQUIRE(std::isnan(v[1]));
-        REQUIRE(std::isnan(v[2]));
-    }
-    SECTION("1") {
-        REQUIRE(normalize(Coordinates3{1, 0, 0}) == Coordinates3{1, 0, 0});
-        REQUIRE(normalize(Coordinates3{0, 1, 0}) == Coordinates3{0, 1, 0});
-        REQUIRE(normalize(Coordinates3{0, 0, 1}) == Coordinates3{0, 0, 1});
-        REQUIRE(normalize(Coordinates3{-1, 0, 0}) == Coordinates3{-1, 0, 0});
-        REQUIRE(normalize(Coordinates3{0, -1, 0}) == Coordinates3{0, -1, 0});
-        REQUIRE(normalize(Coordinates3{0, 0, -1}) == Coordinates3{0, 0, -1});
-        REQUIRE(normalize(Coordinates3{2, 0, 0}) == Coordinates3{1, 0, 0});
-        REQUIRE(normalize(Coordinates3{0, 2, 0}) == Coordinates3{0, 1, 0});
-        REQUIRE(normalize(Coordinates3{0, 0, 2}) == Coordinates3{0, 0, 1});
-        REQUIRE(normalize(Coordinates3{-2, 0, 0}) == Coordinates3{-1, 0, 0});
-        REQUIRE(normalize(Coordinates3{0, -2, 0}) == Coordinates3{0, -1, 0});
-        REQUIRE(normalize(Coordinates3{0, 0, -2}) == Coordinates3{0, 0, -1});
-    }
-    SECTION("normalize") {
-        REQUIRE(normalize(Coordinates3{1, 1, 0}) == Coordinates3{1.0f/std::sqrt(2.0f), 1.0f/std::sqrt(2.0f), 0});
-        REQUIRE(normalize(Coordinates3{1, 0, 1}) == Coordinates3{1.0f/std::sqrt(2.0f), 0, 1.0f/std::sqrt(2.0f)});
-        REQUIRE(normalize(Coordinates3{0, 1, 1}) == Coordinates3{0, 1.0f/std::sqrt(2.0f), 1.0f/std::sqrt(2.0f)});
-        REQUIRE(normalize(Coordinates3{-1, -1, 0}) == Coordinates3{-1.0f/std::sqrt(2.0f),-1.0f/std::sqrt(2.0f), 0});
-        REQUIRE(normalize(Coordinates3{-1, 0, -1}) == Coordinates3{-1.0f/std::sqrt(2.0f), 0, -1.0f/std::sqrt(2.0f)});
-        REQUIRE(normalize(Coordinates3{0, -1, -1}) == Coordinates3{0, -1.0f/std::sqrt(2.0f), -1.0f/std::sqrt(2.0f)});
-        REQUIRE(normalize(Coordinates3{1, 1, 1}) == Coordinates3{1.0f/std::sqrt(3.0f), 1.0f/std::sqrt(3.0f), 1.0f/std::sqrt(3.0f)});
-        REQUIRE(normalize(Coordinates3{-1, -1, -1}) == Coordinates3{-1.0f/std::sqrt(3.0f), -1.0f/std::sqrt(3.0f), -1.0f/std::sqrt(3.0f)});
-    }
-}
-
-TEST_CASE("mesh intersection - ray object", "[mesh intersection]") {
-    SECTION("from points") {
-        SECTION ("X") {
-            auto r = Ray::fromPoints(Coordinates3{1, 1, 1}, Coordinates3{2, 1, 1});
-            REQUIRE(r.origin == Coordinates3{1, 1, 1});
-            REQUIRE(r.direction == Coordinates3{1, 0, 0});
-        }
-        SECTION ("Y") {
-            auto r = Ray::fromPoints(Coordinates3{1, 1, 1}, Coordinates3{1, 2, 1});
-            REQUIRE(r.origin == Coordinates3{1, 1, 1});
-            REQUIRE(r.direction == Coordinates3{0, 1, 0});
-        }
-        SECTION ("Z") {
-            auto r = Ray::fromPoints(Coordinates3{1, 1, 1}, Coordinates3{1, 1, 2});
-            REQUIRE(r.origin == Coordinates3{1, 1, 1});
-            REQUIRE(r.direction == Coordinates3{0, 0, 1});
-        }
-    }
-}
-
-TEST_CASE("mesh intersection - plan object", "[mesh intersection]") {
-    SECTION("from triangle") {
-        SECTION ("XY") {
-            auto p = Plane::fromTriangle(Coordinates3{0, 0, 0}, Coordinates3{1, 0, 0}, Coordinates3{0, 1, 0});
-            REQUIRE(p.pointOnPlane == Coordinates3{0, 0, 0});
-            REQUIRE(p.normal == Coordinates3{0, 0, 1});
-        }
-        SECTION ("XZ") {
-            auto p = Plane::fromTriangle(Coordinates3{0, 0, 0}, Coordinates3{1, 0, 0}, Coordinates3{0, 0, 1});
-            REQUIRE(p.pointOnPlane == Coordinates3{0, 0, 0});
-            REQUIRE(p.normal == Coordinates3{0, -1, 0});
-        }
-        SECTION ("YZ") {
-            auto p = Plane::fromTriangle(Coordinates3{0, 0, 0}, Coordinates3{0, 1, 0}, Coordinates3{0, 0, 1});
-            REQUIRE(p.pointOnPlane == Coordinates3{0, 0, 0});
-            REQUIRE(p.normal == Coordinates3{1, 0, 0});
-        }
-    }
-}
-
-TEST_CASE("mesh intersection - intersection object", "[mesh intersection]") {
-    SECTION("invalid") {
-        auto invalidIntersection = Intersection::Invalid();
-        REQUIRE_FALSE(invalidIntersection.valid);
-    }
-}
-
 TEST_CASE("mesh intersection - triangle plane intersection object", "[mesh intersection]") {
     SECTION("invalid") {
         auto invalidIntersection = TrianglePlaneIntersection::Invalid();
@@ -312,283 +82,9 @@ TEST_CASE("mesh intersection - triangle triangle intersection object", "[mesh in
     }
 }
 
-TEST_CASE("mesh intersection - calculate barycentric coordinate", "[mesh intersection]") {
-    SECTION("1") {
-        REQUIRE(barycentricCoordinateFromVectors(Coordinates3{0, 0, 0}, Coordinates3{1, 0, 0}, Coordinates3{0, 1, 0}) == Coordinates3{1, 0, 0});
-        REQUIRE(barycentricCoordinateFromVectors(Coordinates3{1, 0, 0}, Coordinates3{1, 0, 0}, Coordinates3{0, 0, 1}) == Coordinates3{0, 1, 0});
-        REQUIRE(barycentricCoordinateFromVectors(Coordinates3{0, 0, 1}, Coordinates3{0, 1, 0}, Coordinates3{0, 0, 1}) == Coordinates3{0, 0, 1});
-    }
-    SECTION("equilateral") {
-        auto p0 = Coordinates3{-0.866, -0.5, 0};
-        auto p1 = Coordinates3{0.866, -0.5, 0};
-        auto p2 = Coordinates3{0, 1, 0};
-        auto bc = barycentricCoordinateFromVectors(sub3(Coordinates3{0, 0, 0}, p0), sub3(p1, p0), sub3(p2, p0));
-        REQUIRE(bc == Coordinates3{1.0f/3.0f, 1.0f/3.0f, 1.0f/3.0f});
-    }
-}
-
-TEST_CASE("mesh intersection - interpolate barycentric 2D coordinate", "[mesh intersection]") {
-    SECTION("1") {
-        REQUIRE(interpolateBarycentric2(Coordinates3{1, 0, 0}, Coordinates2{0, 0}, Coordinates2{2, 0}, Coordinates2{0, 2}) == Coordinates2{0, 0});
-        REQUIRE(interpolateBarycentric2(Coordinates3{0, 1, 0}, Coordinates2{0, 0}, Coordinates2{2, 0}, Coordinates2{0, 2}) == Coordinates2{2, 0});
-        REQUIRE(interpolateBarycentric2(Coordinates3{0, 0, 1}, Coordinates2{0, 0}, Coordinates2{2, 0}, Coordinates2{0, 2}) == Coordinates2{0, 2});
-    }
-    SECTION("equilateral") {
-        auto p0 = Coordinates2{-0.866, -0.5};
-        auto p1 = Coordinates2{0.866, -0.5};
-        auto p2 = Coordinates2{0, 1};
-        auto bc = interpolateBarycentric2(Coordinates3{1.0f/3.0f, 1.0f/3.0f, 1.0f/3.0f}, p0, p1, p2);
-        REQUIRE(bc == Coordinates2{0, 0});
-    }
-}
-
-TEST_CASE("mesh intersection - interpolate barycentric 3D coordinate", "[mesh intersection]") {
-    SECTION("1") {
-        REQUIRE(interpolateBarycentric3(Coordinates3{1, 0, 0}, Coordinates3{2, 0, 0}, Coordinates3{0, 2, 0}, Coordinates3{0, 0, 2}) == Coordinates3{2, 0, 0});
-        REQUIRE(interpolateBarycentric3(Coordinates3{0, 1, 0}, Coordinates3{2, 0, 0}, Coordinates3{0, 2, 0}, Coordinates3{0, 0, 2}) == Coordinates3{0, 2, 0});
-        REQUIRE(interpolateBarycentric3(Coordinates3{0, 0, 1}, Coordinates3{2, 0, 0}, Coordinates3{0, 2, 0}, Coordinates3{0, 0, 2}) == Coordinates3{0, 0, 2});
-    }
-    SECTION("equilateral") {
-        SECTION("XY") {
-            auto p0 = Coordinates3{-0.866, -0.5, 0};
-            auto p1 = Coordinates3{0.866, -0.5, 0};
-            auto p2 = Coordinates3{0, 1, 0};
-            auto bc = interpolateBarycentric3(Coordinates3{1.0f / 3.0f, 1.0f / 3.0f, 1.0f / 3.0f}, p0, p1, p2);
-            REQUIRE(bc == Coordinates3{0, 0, 0});
-        }
-        SECTION("XZ") {
-            auto p0 = Coordinates3{-0.866, 0, -0.5};
-            auto p1 = Coordinates3{0.866, 0, -0.5};
-            auto p2 = Coordinates3{0, 0, 1};
-            auto bc = interpolateBarycentric3(Coordinates3{1.0f / 3.0f, 1.0f / 3.0f, 1.0f / 3.0f}, p0, p1, p2);
-            REQUIRE(bc == Coordinates3{0, 0, 0});
-        }
-        SECTION("YZ") {
-            auto p0 = Coordinates3{0, -0.866, -0.5};
-            auto p1 = Coordinates3{0, 0.866, -0.5};
-            auto p2 = Coordinates3{0, 0, 1};
-            auto bc = interpolateBarycentric3(Coordinates3{1.0f / 3.0f, 1.0f / 3.0f, 1.0f / 3.0f}, p0, p1, p2);
-            REQUIRE(bc == Coordinates3{0, 0, 0});
-        }
-    }
-}
-
-TEST_CASE("mesh intersection - intersect ray and plane", "[mesh intersection]") {
-    SECTION("XY") {
-        auto r = Ray{Coordinates3{0, 0, 2}, Coordinates3{0, 0, -1}};
-        auto p = Plane{Coordinates3{-4, 0, 0},  Coordinates3{0, 0, 5}};
-        auto i = intersectRayAndPlane(r, p);
-        REQUIRE(i.valid);
-        REQUIRE(i.distance == Approx(2).epsilon(0.001f));
-        REQUIRE(i.point == Coordinates3{0, 0, 0});
-    }
-    SECTION("YZ") {
-        auto r = Ray{Coordinates3{1, -4, 1}, Coordinates3{0, 1, 0}};
-        auto p = Plane{Coordinates3{0, 0, 5},  Coordinates3{0, -3, 0}};
-        auto i = intersectRayAndPlane(r, p);
-        REQUIRE(i.valid);
-        REQUIRE(i.distance == Approx(4).epsilon(0.001f));
-        REQUIRE(i.point == Coordinates3{1, 0, 1});
-    }
-    SECTION("XZ") {
-        auto r = Ray{Coordinates3{7, 1, 0}, Coordinates3{-1, 0, 0}};
-        auto p = Plane{Coordinates3{0, 0, 3},  Coordinates3{1, 0, 0}};
-        auto i = intersectRayAndPlane(r, p);
-        REQUIRE(i.valid);
-        REQUIRE(i.distance == Approx(7).epsilon(0.001f));
-        REQUIRE(i.point == Coordinates3{0, 1, 0});
-    }
-    SECTION("diagonal") {
-        auto r = Ray{Coordinates3{1, 1, 1}, Coordinates3{1, 1, -1}};
-        auto p = Plane{Coordinates3{0, 0, 0},  Coordinates3{0, 0, 1}};
-        auto i = intersectRayAndPlane(r, p);
-        REQUIRE(i.valid);
-        REQUIRE(i.distance == Approx(1).epsilon(0.001f));
-        REQUIRE(i.point == Coordinates3{2, 2, 0});
-    }
-    SECTION("invalid") {
-        auto r = Ray{Coordinates3{1, 1, 1}, Coordinates3{1, 1, 0}};
-        auto p = Plane{Coordinates3{0, 0, 0},  Coordinates3{0, 0, 1}};
-        auto i = intersectRayAndPlane(r, p);
-        REQUIRE_FALSE(i.valid);
-    }
-}
-
-TEST_CASE("mesh intersection - are endless ray and box intersecting", "[mesh intersection]") {
-    SECTION("X intersecting") {
-        auto r = Ray{ Coordinates3{-2, 0, 0}, Coordinates3{1, 0, 0} };
-        REQUIRE(areEndlessRayAndBoxIntersecting(r, Coordinates3{-1, -1, -1}, Coordinates3{1, 1, 1}));
-    }
-    SECTION("X not intersecting") {
-        auto r = Ray{ Coordinates3{-2, 2, 0}, Coordinates3{1, 0, 0} };
-        REQUIRE_FALSE(areEndlessRayAndBoxIntersecting(r, Coordinates3{-1, -1, -1}, Coordinates3{1, 1, 1}));
-    }
-    SECTION("Y intersecting") {
-        auto r = Ray{ Coordinates3{0, -2, 0}, Coordinates3{0, 1, 0} };
-        REQUIRE(areEndlessRayAndBoxIntersecting(r, Coordinates3{-1, -1, -1}, Coordinates3{1, 1, 1}));
-    }
-    SECTION("Y not intersecting") {
-        auto r = Ray{ Coordinates3{0, -2, 2}, Coordinates3{0, 1, 0} };
-        REQUIRE_FALSE(areEndlessRayAndBoxIntersecting(r, Coordinates3{-1, -1, -1}, Coordinates3{1, 1, 1}));
-    }
-    SECTION("Z intersecting") {
-        auto r = Ray{ Coordinates3{0, 0, -2}, Coordinates3{0, 0, 1} };
-        REQUIRE(areEndlessRayAndBoxIntersecting(r, Coordinates3{-1, -1, -1}, Coordinates3{1, 1, 1}));
-    }
-    SECTION("Z not intersecting") {
-        auto r = Ray{ Coordinates3{2, 0, -2}, Coordinates3{0, 0, 1} };
-        REQUIRE_FALSE(areEndlessRayAndBoxIntersecting(r, Coordinates3{-1, -1, -1}, Coordinates3{1, 1, 1}));
-    }
-    SECTION("diagonal intersecting") {
-        auto r = Ray{ Coordinates3{-2, -2, -2}, Coordinates3{1, 1, 1} };
-        REQUIRE(areEndlessRayAndBoxIntersecting(r, Coordinates3{-1, -1, -1}, Coordinates3{1, 1, 1}));
-    }
-    SECTION("diagonal not intersecting") {
-        auto r = Ray{ Coordinates3{-2, -2, -2}, Coordinates3{1, 1, -1} };
-        REQUIRE_FALSE(areEndlessRayAndBoxIntersecting(r, Coordinates3{-1, -1, -1}, Coordinates3{1, 1, 1}));
-    }
-}
-
-TEST_CASE("mesh intersection - is point on same side", "[mesh intersection]") {
-    SECTION("XY on same side") {
-        REQUIRE(isPointOnSameSide(Coordinates3{0, 2, 0}, Coordinates3{0, 1, 0}, Coordinates3{0, 0, 0}, Coordinates3{1, 0, 0}));
-        REQUIRE(isPointOnSameSide(Coordinates3{0, 2, 0}, Coordinates3{0, 1, 0}, Coordinates3{1, 0, 0}, Coordinates3{0, 0, 0}));
-    }
-    SECTION("XY not on same side") {
-        REQUIRE_FALSE(isPointOnSameSide(Coordinates3{0, -2, 0}, Coordinates3{0, 1, 0}, Coordinates3{0, 0, 0}, Coordinates3{1, 0, 0}));
-    }
-    SECTION("XZ on same side") {
-        REQUIRE(isPointOnSameSide(Coordinates3{0, 0, 1}, Coordinates3{0, 0, 1}, Coordinates3{0, 0, 0}, Coordinates3{0, 1, 0}));
-        REQUIRE(isPointOnSameSide(Coordinates3{0, 0, 1}, Coordinates3{0, 0, 1}, Coordinates3{0, 1, 0}, Coordinates3{0, 0, 0}));
-    }
-    SECTION("XZ not on same side") {
-        REQUIRE_FALSE(isPointOnSameSide(Coordinates3{0, 0, -1}, Coordinates3{0, 0, 1}, Coordinates3{0, 0, 0}, Coordinates3{0, 1, 0}));
-    }
-    SECTION("YZ on same side") {
-        REQUIRE(isPointOnSameSide(Coordinates3{3, 0, 0}, Coordinates3{1, 0, 0}, Coordinates3{0, 0, 0}, Coordinates3{0, 0, 1}));
-        REQUIRE(isPointOnSameSide(Coordinates3{3, 0, 0}, Coordinates3{1, 0, 0}, Coordinates3{1, 0, 0}, Coordinates3{0, 0, 0}));
-    }
-    SECTION("YZ not on same side") {
-        REQUIRE_FALSE(isPointOnSameSide(Coordinates3{-1, 0, 0}, Coordinates3{1, 0, 0}, Coordinates3{0, 0, 0}, Coordinates3{0, 0, 1}));
-    }
-    SECTION("diagonal on same side") {
-        REQUIRE(isPointOnSameSide(Coordinates3{0, 2, 0}, Coordinates3{0, 1, 0}, Coordinates3{0, 0, 0}, Coordinates3{1, 1, 0}));
-        REQUIRE(isPointOnSameSide(Coordinates3{0, 2, 0}, Coordinates3{0, 1, 0}, Coordinates3{1, 1, 0}, Coordinates3{0, 0, 0}));
-    }
-    SECTION("diagonal not on same side") {
-        REQUIRE_FALSE(isPointOnSameSide(Coordinates3{0, -2, 0}, Coordinates3{0, 1, 0}, Coordinates3{0, 0, 0}, Coordinates3{1, 1, 0}));
-    }
-}
-
-TEST_CASE("mesh intersection - is point in triangle", "[mesh intersection]") {
-    SECTION("XY in triangle") {
-        REQUIRE(isPointInOrOnTriangle(Coordinates3{1, 1, 0}, Coordinates3{0, 0, 0}, Coordinates3{0, 3, 0}, Coordinates3{3, 0, 0}));
-    }
-    SECTION("XY not in triangle") {
-        REQUIRE_FALSE(isPointInOrOnTriangle(Coordinates3{-1, -1, 0}, Coordinates3{0, 0, 0}, Coordinates3{0, 3, 0}, Coordinates3{3, 0, 0}));
-        REQUIRE_FALSE(isPointInOrOnTriangle(Coordinates3{1, -1, 0}, Coordinates3{0, 0, 0}, Coordinates3{0, 3, 0}, Coordinates3{3, 0, 0}));
-        REQUIRE_FALSE(isPointInOrOnTriangle(Coordinates3{-1, 1, 0}, Coordinates3{0, 0, 0}, Coordinates3{0, 3, 0}, Coordinates3{3, 0, 0}));
-    }
-    SECTION("XZ in triangle") {
-        REQUIRE(isPointInOrOnTriangle(Coordinates3{1, 0, 1}, Coordinates3{0, 0, 0}, Coordinates3{0, 0, 3}, Coordinates3{3, 0, 0}));
-    }
-    SECTION("XZ not in triangle") {
-        REQUIRE_FALSE(isPointInOrOnTriangle(Coordinates3{-1, 0, -1}, Coordinates3{0, 0, 0}, Coordinates3{0, 0, 3}, Coordinates3{3, 0, 0}));
-        REQUIRE_FALSE(isPointInOrOnTriangle(Coordinates3{1, 0, -1}, Coordinates3{0, 0, 0}, Coordinates3{0, 0, 3}, Coordinates3{3, 0, 0}));
-        REQUIRE_FALSE(isPointInOrOnTriangle(Coordinates3{-1, 0, 1}, Coordinates3{0, 0, 0}, Coordinates3{0, 0, 3}, Coordinates3{3, 0, 0}));
-    }
-    SECTION("YZ in triangle") {
-        REQUIRE(isPointInOrOnTriangle(Coordinates3{0, 1, 1}, Coordinates3{0, 0, 0}, Coordinates3{0, 0, 3}, Coordinates3{0, 3, 0}));
-    }
-    SECTION("YZ not in triangle") {
-        REQUIRE_FALSE(isPointInOrOnTriangle(Coordinates3{0, -1, -1}, Coordinates3{0, 0, 0}, Coordinates3{0, 0, 3}, Coordinates3{0, 3, 0}));
-        REQUIRE_FALSE(isPointInOrOnTriangle(Coordinates3{0, 1, -1}, Coordinates3{0, 0, 0}, Coordinates3{0, 0, 3}, Coordinates3{0, 3, 0}));
-        REQUIRE_FALSE(isPointInOrOnTriangle(Coordinates3{0, -1, 1}, Coordinates3{0, 0, 0}, Coordinates3{0, 0, 3}, Coordinates3{0, 3, 0}));
-    }
-    SECTION("XYZ in triangle") {
-        REQUIRE(isPointInOrOnTriangle(Coordinates3{0, 0, 0}, Coordinates3{-1, -1, -1}, Coordinates3{-1, -1, 1}, Coordinates3{1, 1, 0}));
-    }
-    SECTION("XYZ not in triangle") {
-        REQUIRE_FALSE(isPointInOrOnTriangle(Coordinates3{0, 0, 2}, Coordinates3{-1, -1, -1}, Coordinates3{-1, -1, 1}, Coordinates3{1, 1, 0}));
-        REQUIRE_FALSE(isPointInOrOnTriangle(Coordinates3{2, 2, 0}, Coordinates3{-1, -1, -1}, Coordinates3{-1, -1, 1}, Coordinates3{1, 1, 0}));
-        REQUIRE_FALSE(isPointInOrOnTriangle(Coordinates3{-2, -2, 0}, Coordinates3{-1, -1, -1}, Coordinates3{-1, -1, 1}, Coordinates3{1, 1, 0}));
-    }
-}
-
-TEST_CASE("mesh intersection - intersect ray and triangle", "[mesh intersection]") {
-    SECTION("XY intersecting") {
-        auto r = Ray{ Coordinates3{0, 0, 1}, Coordinates3{1, 1, -1} };
-        auto i = intersectRayAndTriangle(r, Coordinates3{0, 0, 0}, Coordinates3{0, 3, 0}, Coordinates3{3, 0, 0}, 2);
-        REQUIRE(i.valid);
-        REQUIRE(i.distance == 1);
-        REQUIRE(i.point == Coordinates3{1, 1, 0});
-    }
-    SECTION("XY not intersecting because of distance") {
-        auto r = Ray{ Coordinates3{0, 0, 1}, Coordinates3{1, 1, -1} };
-        auto i = intersectRayAndTriangle(r, Coordinates3{0, 0, 0}, Coordinates3{0, 3, 0}, Coordinates3{3, 0, 0}, 0.5);
-        REQUIRE_FALSE(i.valid);
-    }
-    SECTION("XY not intersecting because of direction") {
-        auto r = Ray{ Coordinates3{0, 0, 1}, Coordinates3{1, 1, 1} };
-        auto i = intersectRayAndTriangle(r, Coordinates3{0, 0, 0}, Coordinates3{0, 3, 0}, Coordinates3{3, 0, 0}, 2);
-        REQUIRE_FALSE(i.valid);
-    }
-    SECTION("XZ intersecting") {
-        auto r = Ray{ Coordinates3{0, -1, 0}, Coordinates3{1, 1, 1} };
-        auto i = intersectRayAndTriangle(r, Coordinates3{0, 0, 0}, Coordinates3{3, 0, 0}, Coordinates3{0, 0, 3}, 2);
-        REQUIRE(i.valid);
-        REQUIRE(i.distance == 1);
-        REQUIRE(i.point == Coordinates3{1, 0, 1});
-    }
-    SECTION("XZ not intersecting because of distance") {
-        auto r = Ray{ Coordinates3{0, -1, 0}, Coordinates3{1, 1, 1} };
-        auto i = intersectRayAndTriangle(r, Coordinates3{0, 0, 0}, Coordinates3{3, 0, 0}, Coordinates3{0, 0, 3}, 0.5);
-        REQUIRE_FALSE(i.valid);
-    }
-    SECTION("XZ not intersecting because of direction") {
-        auto r = Ray{ Coordinates3{0, -1, 0}, Coordinates3{1, -1, 1} };
-        auto i = intersectRayAndTriangle(r, Coordinates3{0, 0, 0}, Coordinates3{3, 0, 0}, Coordinates3{0, 0, 3}, 2);
-        REQUIRE_FALSE(i.valid);
-    }
-    SECTION("YZ intersecting") {
-        auto r = Ray{ Coordinates3{1, 0, 0}, Coordinates3{-1, 1, 1} };
-        auto i = intersectRayAndTriangle(r, Coordinates3{0, 0, 0}, Coordinates3{0, 3, 0}, Coordinates3{0, 0, 3}, 2);
-        REQUIRE(i.valid);
-        REQUIRE(i.distance == 1);
-        REQUIRE(i.point == Coordinates3{0, 1, 1});
-    }
-    SECTION("YZ not intersecting because of distance") {
-        auto r = Ray{ Coordinates3{1, 0, 0}, Coordinates3{-1, 1, 1} };
-        auto i = intersectRayAndTriangle(r, Coordinates3{0, 0, 0}, Coordinates3{0, 3, 0}, Coordinates3{0, 0, 3}, 0.5);
-        REQUIRE_FALSE(i.valid);
-    }
-    SECTION("YZ not intersecting because of direction") {
-        auto r = Ray{ Coordinates3{1, 0, 0}, Coordinates3{-1, -1, -1} };
-        auto i = intersectRayAndTriangle(r, Coordinates3{0, 0, 0}, Coordinates3{0, 3, 0}, Coordinates3{0, 0, 3}, 2);
-        REQUIRE_FALSE(i.valid);
-    }
-    SECTION("XYZ intersecting") {
-        auto r = Ray{ Coordinates3{1, 1, 1}, Coordinates3{-1, -1, -1} };
-        auto i = intersectRayAndTriangle(r, Coordinates3{-1, -1, 1}, Coordinates3{-1, 1, -1}, Coordinates3{1, -1, -1}, 2);
-        REQUIRE(i.valid);
-        REQUIRE(i.distance == Approx(1.33334f).epsilon(0.001f));
-        REQUIRE(i.point == Coordinates3{-0.33334f, -0.33334f, -0.33334f});
-    }
-    SECTION("XYZ not intersecting because of distance") {
-        auto r = Ray{ Coordinates3{1, 1, 1}, Coordinates3{-1, -1, -1} };
-        auto i = intersectRayAndTriangle(r, Coordinates3{-1, -1, 1}, Coordinates3{-1, 1, -1}, Coordinates3{1, -1, -1}, 1);
-        REQUIRE_FALSE(i.valid);
-    }
-    SECTION("XYZ not intersecting because of direction") {
-        auto r = Ray{ Coordinates3{1, 1, 1}, Coordinates3{1, 1, 1} };
-        auto i = intersectRayAndTriangle(r, Coordinates3{-1, -1, 1}, Coordinates3{-1, 1, -1}, Coordinates3{1, -1, -1}, 2);
-        REQUIRE_FALSE(i.valid);
-    }
-}
-
 TEST_CASE("mesh intersection - intersect triangle and plane", "[mesh intersection]") {
     SECTION("index 0") {
-        auto p = Plane{Coordinates3{0, 0, 0}, Coordinates3{0, 0, 1}};
+        auto p = PlanePtNv{Coordinates3{0, 0, 0}, Coordinates3{0, 0, 1}};
         auto i = intersectTriangleAndPlane(Coordinates3{0, 0, 1}, Coordinates3{-1, 0, -1}, Coordinates3{1, 0, -1}, p);
         REQUIRE(i.peakIndex == 0);
         REQUIRE(i.intersectFromPeak.valid);
@@ -599,7 +95,7 @@ TEST_CASE("mesh intersection - intersect triangle and plane", "[mesh intersectio
         REQUIRE(i.intersectToPeak.point == Coordinates3{0.5, 0, 0});
     }
     SECTION("index 1") {
-        auto p = Plane{Coordinates3{0, 0, 0}, Coordinates3{0, 1, 0}};
+        auto p = PlanePtNv{Coordinates3{0, 0, 0}, Coordinates3{0, 1, 0}};
         auto i = intersectTriangleAndPlane(Coordinates3{0, -1, -1}, Coordinates3{0, 1, 0}, Coordinates3{0, -1, 1}, p);
         REQUIRE(i.peakIndex == 1);
         REQUIRE(i.intersectFromPeak.valid);
@@ -610,7 +106,7 @@ TEST_CASE("mesh intersection - intersect triangle and plane", "[mesh intersectio
         REQUIRE(i.intersectToPeak.point == Coordinates3{0, 0, -0.5f});
     }
     SECTION("index 2") {
-        auto p = Plane{Coordinates3{0, 0, 0}, Coordinates3{-1, -1, 0}};
+        auto p = PlanePtNv{Coordinates3{0, 0, 0}, Coordinates3{-1, -1, 0}};
         auto i = intersectTriangleAndPlane(Coordinates3{-1, -1, 1}, Coordinates3{-1, -1, -1}, Coordinates3{1, 1, 0}, p);
         REQUIRE(i.peakIndex == 2);
         REQUIRE(i.intersectFromPeak.valid);
@@ -621,14 +117,14 @@ TEST_CASE("mesh intersection - intersect triangle and plane", "[mesh intersectio
         REQUIRE(i.intersectToPeak.point == Coordinates3{0, 0, -0.5f});
     }
     SECTION("no intersection because of distance") {
-        auto p = Plane{Coordinates3{0, 0, -2}, Coordinates3{0, 0, 1}};
+        auto p = PlanePtNv{Coordinates3{0, 0, -2}, Coordinates3{0, 0, 1}};
         auto i = intersectTriangleAndPlane(Coordinates3{0, 0, 1}, Coordinates3{-1, 0, -1}, Coordinates3{1, 0, -1}, p);
         REQUIRE(i.peakIndex == 0xffffffff);
         REQUIRE_FALSE(i.intersectFromPeak.valid);
         REQUIRE_FALSE(i.intersectToPeak.valid);
     }
     SECTION("no intersection because of orientation") {
-        auto p = Plane{Coordinates3{0, 0, 0}, Coordinates3{0, 0, 1}};
+        auto p = PlanePtNv{Coordinates3{0, 0, 0}, Coordinates3{0, 0, 1}};
         auto i = intersectTriangleAndPlane(Coordinates3{0, 0, 1}, Coordinates3{1, 0, 1}, Coordinates3{0, 1, 1}, p);
         REQUIRE(i.peakIndex == 0xffffffff);
         REQUIRE_FALSE(i.intersectFromPeak.valid);
@@ -977,7 +473,7 @@ TEST_CASE("mesh intersection - operator", "[mesh intersection]") {
     std::vector<float> verticesMesh1;
     std::vector<uint32_t> indicesMesh1;
     ResultMeshData expectedResult;
-    MeshIntersection::Operator op = MeshIntersection::Operator::MINUS;
+    Operator op = Operator::MINUS;
 
     SECTION("cube and low resolution sphere") {
         verticesMesh0 = std::vector<float>{0, 0, 0.5, 0.5, 0, 0.5, 0.5, -0.5, 0.5, 0, -0.5, 0.5, 0, 0, 0.5, 0, -0.5, 0.5, 0, -0.5, 0, 0, 0, 0, 0, 0, 0, 0.5, 0, 0, 0.5, 0, 0.5, 0, 0, 0.5, 0.5, -0.5, 0, 0, -0.5, 0, 0, 0, 0, 0.5, 0, 0, 0.5, -0.5, 0, 0.5, 0, 0, 0.5, 0, 0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0, 0, -0.5, 0, 0, -0.5, 0.5, 0.5, -0.5, 0.5, };
@@ -985,17 +481,17 @@ TEST_CASE("mesh intersection - operator", "[mesh intersection]") {
         verticesMesh1 = std::vector<float>{0.5, -0.5, 0, 0.5, -0.146447, 0.146447, 0.5, 0, 0.5, 0.5, -0.146447, 0.853553, 0.5, -0.5, 1, 0.5, -0.5, 0, 0.25, -0.25, 0.146447, 0.146447, -0.146447, 0.5, 0.25, -0.25, 0.853553, 0.5, -0.5, 1, 0.5, -0.5, 0, 0.146447, -0.5, 0.146447, 0, -0.5, 0.5, 0.146447, -0.5, 0.853553, 0.5, -0.5, 1, 0.5, -0.5, 0, 0.25, -0.75, 0.146447, 0.146447, -0.853553, 0.5, 0.25, -0.75, 0.853553, 0.5, -0.5, 1, 0.5, -0.5, 0, 0.5, -0.853553, 0.146447, 0.5, -1, 0.5, 0.5, -0.853553, 0.853553, 0.5, -0.5, 1, 0.5, -0.5, 0, 0.75, -0.75, 0.146447, 0.853553, -0.853553, 0.5, 0.75, -0.75, 0.853553, 0.5, -0.5, 1, 0.5, -0.5, 0, 0.853553, -0.5, 0.146447, 1, -0.5, 0.5, 0.853553, -0.5, 0.853553, 0.5, -0.5, 1, 0.5, -0.5, 0, 0.75, -0.25, 0.146447, 0.853553, -0.146447, 0.5, 0.75, -0.25, 0.853553, 0.5, -0.5, 1, 0.5, -0.5, 0, 0.5, -0.146447, 0.146447, 0.5, 0, 0.5, 0.5, -0.146447, 0.853553, 0.5, -0.5, 1, };
         indicesMesh1 = std::vector<uint32_t>{0, 5, 1, 5, 6, 1, 1, 6, 2, 6, 7, 2, 2, 7, 3, 7, 8, 3, 3, 8, 4, 8, 9, 4, 5, 10, 6, 10, 11, 6, 6, 11, 7, 11, 12, 7, 7, 12, 8, 12, 13, 8, 8, 13, 9, 13, 14, 9, 10, 15, 11, 15, 16, 11, 11, 16, 12, 16, 17, 12, 12, 17, 13, 17, 18, 13, 13, 18, 14, 18, 19, 14, 15, 20, 16, 20, 21, 16, 16, 21, 17, 21, 22, 17, 17, 22, 18, 22, 23, 18, 18, 23, 19, 23, 24, 19, 20, 25, 21, 25, 26, 21, 21, 26, 22, 26, 27, 22, 22, 27, 23, 27, 28, 23, 23, 28, 24, 28, 29, 24, 25, 30, 26, 30, 31, 26, 26, 31, 27, 31, 32, 27, 27, 32, 28, 32, 33, 28, 28, 33, 29, 33, 34, 29, 30, 35, 31, 35, 36, 31, 31, 36, 32, 36, 37, 32, 32, 37, 33, 37, 38, 33, 33, 38, 34, 38, 39, 34, 35, 40, 36, 40, 41, 36, 36, 41, 37, 41, 42, 37, 37, 42, 38, 42, 43, 38, 38, 43, 39, 43, 44, 39, };
         SECTION("or") {
-            op = MeshIntersection::Operator::OR;
+            op = Operator::OR;
             expectedResult.vertices = std::vector<float>{0, 0, 0.5, 0, -0.5, 0.5, 0.146447, -0.146447, 0.5, 0.146447, -0.146447, 0.5, 0.5, 0, 0.5, 0.5, 0, 0, 0.5, 0, 0.5, 0.5, -0.146447, 0.146447, 0.5, -0.5, 0, 0, -0.5, 0, 0.5, -0.5, 0, 0.146447, -0.5, 0.146447, 0, -0.5, 0.5, 0.146447, -0.5, 0.146447, 0, 0, 0.5, 0, -0.5, 0, 0, -0.5, 0.5, 0, 0, 0, 0.5, 0, 0.5, 0.5, 0, 0, 0, 0, 0.5, 0.5, -0.5, 0, 0, -0.5, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0, 0.5, 0, 0.5, 0.146447, -0.146447, 0.5, 0.5, -0.146447, 0.853553, 0, -0.5, 0.5, 0.25, -0.25, 0.853553, 0.5, -0.5, 0, 0.25, -0.75, 0.146447, 0.146447, -0.5, 0.146447, 0.5, -0.5, 0, 0.5, -0.146447, 0.146447, 0.75, -0.25, 0.146447, 0.5, 0, 0.5, 0.853553, -0.146447, 0.5, 0.146447, -0.5, 0.853553, 0.146447, -0.853553, 0.5, 0.5, -0.5, 0, 0.5, -0.853553, 0.146447, 0.5, -0.5, 0, 0.853553, -0.5, 0.146447, 0.75, -0.25, 0.853553, 0.5, -0.146447, 0.853553, 0.5, -0.5, 1, 0.5, -0.5, 0, 0.75, -0.75, 0.146447, 0.5, -0.5, 0, 0.5, -0.5, 1, 1, -0.5, 0.5, 0.853553, -0.5, 0.853553, 0.5, -0.5, 1, 0.5, -1, 0.5, 0.853553, -0.853553, 0.5, 0.25, -0.75, 0.853553, 0.5, -0.5, 1, 0.5, -0.5, 1, 0.75, -0.75, 0.853553, 0.5, -0.5, 1, 0.5, -0.853553, 0.853553, 0.5, -0.5, 1, 0.5, -0.5, 1, };
             expectedResult.indicesOut = std::vector<uint32_t>{0, 1, 2, 0, 3, 4, 5, 6, 7, 8, 5, 7, 9, 10, 11, 12, 9, 13, 14, 15, 16, 17, 18, 19, 17, 20, 18, 21, 22, 23, 21, 23, 24, 14, 25, 15, 26, 27, 28, 27, 29, 30, 31, 32, 33, 33, 32, 29, 34, 35, 36, 35, 37, 38, 27, 30, 28, 29, 39, 30, 32, 40, 29, 41, 42, 32, 43, 36, 44, 36, 35, 38, 38, 37, 45, 37, 46, 45, 28, 30, 47, 32, 42, 40, 48, 49, 42, 50, 44, 49, 30, 39, 51, 44, 36, 52, 36, 38, 52, 38, 45, 53, 29, 40, 39, 45, 46, 54, 42, 55, 40, 49, 44, 56, 44, 52, 56, 52, 38, 53, 39, 57, 58, 53, 45, 59, 42, 49, 55, 40, 57, 39, 60, 53, 61, 40, 55, 57, 57, 62, 63, 56, 52, 60, 52, 53, 60, 49, 56, 55, 62, 60, 64, 55, 62, 57, 55, 56, 62, 56, 60, 62, };
         }
         SECTION("and") {
-            op = MeshIntersection::Operator::AND;
+            op = Operator::AND;
             expectedResult.vertices = std::vector<float>{0.5, -0.5, 0, 0.5, -0.5, 0.5, 0.5, 0, 0.5, 0.5, -0.5, 0, 0, -0.5, 0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5, 0, -0.5, 0.5, 0.146447, -0.146447, 0.5, 0.146447, -0.146447, 0.5, 0.5, 0, 0.5, 0.5, -0.146447, 0.146447, 0.146447, -0.5, 0.146447, 0.25, -0.25, 0.146447, 0.146447, -0.146447, 0.5, 0.146447, -0.5, 0.146447, 0.5, -0.5, 0, 0.5, -0.146447, 0.146447, 0.5, 0, 0.5, 0.5, -0.5, 0, 0, -0.5, 0.5, };
             expectedResult.indicesOut = std::vector<uint32_t>{0, 2, 1, 3, 5, 4, 6, 8, 7, 6, 10, 9, 2, 0, 11, 3, 4, 12, 13, 15, 14, 16, 13, 17, 17, 13, 18, 13, 14, 18, 19, 15, 13, 15, 20, 14, };
         }
         SECTION("minus") {
-            op = MeshIntersection::Operator::MINUS;
+            op = Operator::MINUS;
             expectedResult.vertices = std::vector<float>{0, 0, 0.5, 0, -0.5, 0.5, 0.146447, -0.146447, 0.5, 0.146447, -0.146447, 0.5, 0.5, 0, 0.5, 0.5, 0, 0, 0.5, 0, 0.5, 0.5, -0.146447, 0.146447, 0.5, -0.5, 0, 0, -0.5, 0, 0.5, -0.5, 0, 0.146447, -0.5, 0.146447, 0, -0.5, 0.5, 0.146447, -0.5, 0.146447, 0, 0, 0.5, 0, -0.5, 0, 0, -0.5, 0.5, 0, 0, 0, 0.5, 0, 0.5, 0.5, 0, 0, 0, 0, 0.5, 0.5, -0.5, 0, 0, -0.5, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0, 0.25, -0.25, 0.146447, 0.146447, -0.146447, 0.5, 0.146447, -0.5, 0.146447, 0.5, -0.5, 0, 0.5, -0.146447, 0.146447, 0.5, 0, 0.5, 0.5, -0.5, 0, 0, -0.5, 0.5, };
             expectedResult.indicesOut = std::vector<uint32_t>{0, 1, 2, 0, 3, 4, 5, 6, 7, 8, 5, 7, 9, 10, 11, 12, 9, 13, 14, 15, 16, 17, 18, 19, 17, 20, 18, 21, 22, 23, 21, 23, 24, 14, 25, 15, 26, 27, 28, 29, 30, 26, 30, 31, 26, 26, 31, 27, 32, 26, 28, 28, 27, 33, };
         }

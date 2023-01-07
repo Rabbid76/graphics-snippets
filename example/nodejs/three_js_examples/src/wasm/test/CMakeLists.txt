@@ -15,6 +15,8 @@ file(GLOB MeshUtilityTestFiles
 
 set(
     UtilitySourceFiles
+    ../mesh_utility/constructiveSolidGeometry.cpp
+    ../mesh_utility/meshMath.cpp
     ../mesh_utility/meshIntersection.cpp
     )
 

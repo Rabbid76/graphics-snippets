@@ -5,6 +5,9 @@ import {
     calculateMeshMinusAB,
     calculateMeshOrAB,
     calculateMeshAndAB, 
+    calculateMeshCSGMinusAB,
+    calculateMeshCSGOrAB,
+    calculateMeshCSGAndAB
 } from './meshIntersection'
 import { Vector3 } from 'three';
 
@@ -718,9 +721,12 @@ export const intersectMeshWASM = (mesh0: THREE.Mesh, mesh1: THREE.Mesh, operator
     let resultMesh: any;
     switch (operator) {
         default: resultMesh = calculateMeshIntersection(meshData0, meshData1); break;
-        case MESH_MINUS_AB: resultMesh = calculateMeshMinusAB(meshData0, meshData1); break;
-        case MESH_OR_AB: resultMesh = calculateMeshOrAB(meshData0, meshData1); break;
-        case MESH_AND_AB: resultMesh = calculateMeshAndAB(meshData0, meshData1); break;
+        case MESH_MINUS_AB: resultMesh = calculateMeshCSGMinusAB(meshData0, meshData1); break;
+        case MESH_OR_AB: resultMesh = calculateMeshCSGOrAB(meshData0, meshData1); break;
+        case MESH_AND_AB: resultMesh = calculateMeshCSGAndAB(meshData0, meshData1); break;
+        //case MESH_MINUS_AB: resultMesh = calculateMeshMinusAB(meshData0, meshData1); break;
+        //case MESH_OR_AB: resultMesh = calculateMeshOrAB(meshData0, meshData1); break;
+        //case MESH_AND_AB: resultMesh = calculateMeshAndAB(meshData0, meshData1); break;
     }
     
     if (!resultMesh || resultMesh.error) {

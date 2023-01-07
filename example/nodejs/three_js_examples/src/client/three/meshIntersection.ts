@@ -60,3 +60,40 @@ export const calculateMeshAndAB = (mesh0: any, mesh1: any): any => {
     }
     return null;
 }
+
+export const calculateMeshCSGMinusAB = (mesh0: any, mesh1: any): any => {
+    if (meshUtility === undefined) {
+        return null;
+    }
+    try {
+        return meshUtility.meshCSGMinusAB(mesh0, mesh1);
+    } catch (error) {
+        console.error(error);
+    }
+    return null;
+}
+
+export const calculateMeshCSGOrAB = (mesh0: any, mesh1: any): any => {
+    if (meshUtility === undefined) {
+        return null;
+    }
+    try {
+        return meshUtility.meshCSGOrAB(mesh0, mesh1);
+    } catch (error) {
+        console.error(error);
+    }
+    return null;
+}
+
+export const calculateMeshCSGAndAB = (mesh0: any, mesh1: any): any => {
+    if (meshUtility === undefined) {
+        return null;
+    }
+    try {
+        return meshUtility.meshCSGAndAB(mesh0, mesh1);
+    } catch (error) {
+        console.error(error);
+    }
+    return null;
+}
+

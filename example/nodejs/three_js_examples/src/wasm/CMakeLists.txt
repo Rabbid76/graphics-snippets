@@ -48,6 +48,8 @@ include_directories (
 
 set(
     WASM_SOURCE
+    mesh_utility/constructiveSolidGeometry.cpp
+    mesh_utility/meshMath.cpp
     mesh_utility/meshIntersection.cpp
     meshUtilityEmbind.cpp
     )

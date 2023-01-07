@@ -86,7 +86,8 @@
         "memory_resource": "cpp",
         "utility": "cpp",
         "stop_token": "cpp",
-        "cinttypes": "cpp"
+        "cinttypes": "cpp",
+        "unordered_set": "cpp"
     },
     "cmake.sourceDirectory": "${workspaceFolder}/src/wasm"
 }

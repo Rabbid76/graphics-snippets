@@ -225,7 +225,7 @@ const createBufferGeometry = (meshSpecification: MeshSpecification): THREE.Buffe
         geometry.setAttribute('normal', new THREE.BufferAttribute(meshSpecification.normals, 3));
     }
     if (meshSpecification.uvs) {
-        geometry.setAttribute('uv', new THREE.BufferAttribute(meshSpecification.uvs, 3));
+        geometry.setAttribute('uv', new THREE.BufferAttribute(meshSpecification.uvs, 2));
     }
     if (meshSpecification.colors) {
         geometry.setAttribute('color', new THREE.BufferAttribute(meshSpecification.colors, 3));
