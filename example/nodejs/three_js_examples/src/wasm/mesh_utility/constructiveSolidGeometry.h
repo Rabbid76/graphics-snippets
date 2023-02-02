@@ -10,62 +10,64 @@
 
 namespace csg {
 
-    class Vector2 : public std::array<float, 2> {
+    using Scalar = double;
+
+    class Vector2 : public std::array<Scalar, 2> {
     public:
-        operator const float *() const {
+        operator const Scalar *() const {
             return data();
         }
     };
 
-    class Vector3 : public std::array<float, 3> {
+    class Vector3 : public std::array<Scalar, 3> {
     public:
-        operator const float *() const {
+        operator const Scalar *() const {
             return data();
         }
     };
 
-    inline Vector3 add3(const float a[], const float b[]) {
+    inline Vector3 add3(const Scalar a[], const Scalar b[]) {
         return {a[0] + b[0], a[1] + b[1], a[2] + b[2]};
     }
 
-    inline Vector3 sub3(const float a[], const float b[]) {
+    inline Vector3 sub3(const Scalar a[], const Scalar b[]) {
         return {a[0] - b[0], a[1] - b[1], a[2] - b[2]};
     }
 
-    inline float dot3(const float a[], const float b[]) {
+    inline Scalar dot3(const Scalar a[], const Scalar b[]) {
         return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
     }
 
-    inline Vector3 cross3(const float a[], const float b[]) {
+    inline Vector3 cross3(const Scalar a[], const Scalar b[]) {
         return {a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]};
     }
 
-    inline float squareLength(const float v[]) {
+    inline Scalar squareLength(const Scalar v[]) {
         return v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
     }
 
-    inline float length(const float v[]) {
+    inline Scalar length(const Scalar v[]) {
         return std::sqrt(squareLength(v));
     }
 
-    inline Vector3 normalize(const float v[]) {
+    inline Vector3 normalize(const Scalar v[]) {
         auto euclideanLength = length(v);
         return {v[0] / euclideanLength, v[1] / euclideanLength, v[2] / euclideanLength};
     }
 
-    inline Vector2 lerp2(const float a[], const float b[], float t) {
+    inline Vector2 lerp2(const Scalar a[], const Scalar b[], Scalar t) {
         return {a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t};
     }
 
-    inline Vector3 lerp3(const float a[], const float b[], float t) {
+    inline Vector3 lerp3(const Scalar a[], const Scalar b[], Scalar t) {
         return {a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t};
     }
 
-    constexpr float PLANE_EPSILON = 1.0e-5f;
+    constexpr Scalar PLANE_EPSILON = 1.0e-5;
 
     class Epsilon {
     public:
-        explicit Epsilon(float scale);
+        explicit Epsilon(Scalar scale);
         ~Epsilon();
     };
 
@@ -93,18 +95,18 @@ namespace csg {
             return *this;
         }
 
-        static Vertex interpolate(const Vertex &a, const Vertex &b, float t) {
+        static Vertex interpolate(const Vertex &a, const Vertex &b, Scalar t) {
             return Vertex{lerp3(a.vertex, b.vertex, t), lerp3(a.normal, b.normal, t), lerp2(a.uv, b.uv, t)};
         }
     };
 
     class Plane {
     public:
-        static float epsilon;
+        static Scalar epsilon;
         Vector3 normal{0, 0, 0};
-        float w{0};
+        Scalar w{0};
 
-        static Plane fromPoints(const float *p0, const float *p1, const float *p2) {
+        static Plane fromPoints(const Scalar *p0, const Scalar *p1, const Scalar *p2) {
             auto nv = normalize(cross3(sub3(p1, p0), sub3(p2, p0)));
             return Plane{nv, dot3(nv, p0)};
         }
@@ -178,7 +180,7 @@ namespace csg {
         std::vector<Vertex> vertices;
         std::vector<Polygon> polygons;
 
-        const float* getVertex(uint32_t i) const {
+        const Scalar* getVertex(uint32_t i) const {
             return (vertices.data() + i)->vertex.data();
         }
 

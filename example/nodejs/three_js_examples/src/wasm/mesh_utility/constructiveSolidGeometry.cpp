@@ -2,9 +2,9 @@
 
 using namespace csg;
 
-float Plane::epsilon = PLANE_EPSILON;
+Scalar Plane::epsilon = PLANE_EPSILON;
 
-Epsilon::Epsilon(float scale) {
+Epsilon::Epsilon(Scalar scale) {
     Plane::epsilon = PLANE_EPSILON * scale;
 }
 
@@ -101,7 +101,7 @@ void csg::polygonsToMesh(const CSG &csg, const PolygonIndices *polygonIndices, m
             auto &vertex = csg.vertices[vertexIndex.index];
             mesh.vertices.insert(mesh.vertices.end(), vertex.vertex.begin(), vertex.vertex.end());
             if (vertexIndex.inverted) {
-                mesh.normals.insert(mesh.normals.end(), {-vertex.normal[0], -vertex.normal[1], -vertex.normal[2]});
+                mesh.normals.insert(mesh.normals.end(), {(float)-vertex.normal[0], (float)-vertex.normal[1], (float)-vertex.normal[2]});
             } else {
                 mesh.normals.insert(mesh.normals.end(), vertex.normal.begin(), vertex.normal.end());
             }
