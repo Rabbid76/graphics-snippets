@@ -175,15 +175,15 @@ const scgGeometry = (s: THREE.Scene, csgMaterial: THREE.Material, csgP: THREE.Ve
 export const csgMeshWASM = (mesh0: THREE.Mesh, mesh1: THREE.Mesh, operator: number, epsilon = 0.0001): MeshSpecification | null => {
 
     const meshData0 = {
-        vertices: mesh0.geometry.attributes.position.array,
-        normals: mesh0.geometry.attributes.normal?.array,
-        uvs: mesh0.geometry.attributes.uv?.array,
+        vertices: (mesh0.geometry.attributes.position as THREE.BufferAttribute).array,
+        normals: (mesh0.geometry.attributes.normal as THREE.BufferAttribute)?.array,
+        uvs: (mesh0.geometry.attributes.uv as THREE.BufferAttribute)?.array,
         indices: new Uint32Array(mesh0.geometry.index?.array ?? [])
     };
     const meshData1 = {
-        vertices: mesh1.geometry.attributes.position.array,
-        normals: mesh1.geometry.attributes.normal?.array,
-        uvs: mesh1.geometry.attributes.uv?.array,
+        vertices: (mesh1.geometry.attributes.position as THREE.BufferAttribute).array,
+        normals: (mesh1.geometry.attributes.normal as THREE.BufferAttribute)?.array,
+        uvs: (mesh1.geometry.attributes.uv as THREE.BufferAttribute)?.array,
         indices: new Uint32Array(mesh1.geometry.index?.array ?? [])
     };
 

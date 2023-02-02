@@ -174,7 +174,7 @@ export const findTriangleInMesh = (mesh: THREE.Mesh, camera: THREE.Camera, ndc2d
     if (!rayIntersectsBox) {
         return null;
     }
-    const vertices = mesh.geometry.attributes.position.array;
+    const vertices = (mesh.geometry.attributes.position as THREE.BufferAttribute).array;
     const indices = mesh.geometry.index?.array;
     
     const vertex = (i: number) => new THREE.Vector3(vertices[i*3], vertices[i*3+1], vertices[i*3+2]);
@@ -225,7 +225,7 @@ export const trianglesInBox = (mesh: THREE.Mesh, searchBox: THREE.Box3): number[
     if (box.isEmpty()) {
         return [];
     }
-    const vertices = mesh.geometry.attributes.position.array;
+    const vertices = (mesh.geometry.attributes.position as THREE.BufferAttribute).array;
     const indices = mesh.geometry.index?.array;
     const vertex = (i: number) => new THREE.Vector3(vertices[i*3], vertices[i*3+1], vertices[i*3+2]);
     if (!indices) {
@@ -396,14 +396,14 @@ export const intersectMesh = (mesh1: THREE.Mesh, mesh2: THREE.Mesh, epsilon = 0.
     //    return wasmResult;
     //}
 
-    const vertices1 = mesh1.geometry.attributes.position.array;
-    const indices1Buffer = mesh1.geometry.index?.array;
-    const vertex2Buffer = mesh2.geometry.attributes.position.array;
+    const vertices1 = (mesh1.geometry.attributes.position as THREE.BufferAttribute).array;
+    const indices1Buffer = (mesh1.geometry.index as THREE.BufferAttribute)?.array;
+    const vertex2Buffer = (mesh2.geometry.attributes.position as THREE.BufferAttribute).array;
     const indices2 = mesh2.geometry.index?.array;
     if (!indices1Buffer || !indices2) {
         return null;
     }
-    const normals1 = mesh1.geometry.attributes.normal?.array;
+    const normals1 = (mesh1.geometry.attributes.normal as THREE.BufferAttribute)?.array;
     //const normals2 = mesh1.geometry.attributes.normal?.array;
     const indices1 = Array.from(indices1Buffer);
 
@@ -687,15 +687,15 @@ export const intersectMesh = (mesh1: THREE.Mesh, mesh2: THREE.Mesh, epsilon = 0.
 export const intersectMeshWASM = (mesh0: THREE.Mesh, mesh1: THREE.Mesh, operator: number, epsilon = 0.0001): MeshSpecification | null => {
 
     const meshData0 = {
-        vertices: mesh0.geometry.attributes.position.array,
-        normals: mesh0.geometry.attributes.normal?.array,
-        uvs: mesh0.geometry.attributes.uv?.array,
+        vertices: (mesh0.geometry.attributes.position as THREE.BufferAttribute).array,
+        normals: (mesh0.geometry.attributes.normal as THREE.BufferAttribute)?.array,
+        uvs: (mesh0.geometry.attributes.uv as THREE.BufferAttribute)?.array,
         indices: new Uint32Array(mesh0.geometry.index?.array ?? [])
     };
     const meshData1 = {
-        vertices: mesh1.geometry.attributes.position.array,
-        normals: mesh1.geometry.attributes.normal?.array,
-        uvs: mesh1.geometry.attributes.uv?.array,
+        vertices: (mesh1.geometry.attributes.position as THREE.BufferAttribute).array,
+        normals: (mesh1.geometry.attributes.normal as THREE.BufferAttribute)?.array,
+        uvs: (mesh1.geometry.attributes.uv as THREE.BufferAttribute)?.array,
         indices: new Uint32Array(mesh1.geometry.index?.array ?? [])
     };
 
