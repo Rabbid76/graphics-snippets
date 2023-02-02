@@ -1,37 +1,90 @@
 #ifndef __CONSTRUCTIVE_SOLID_GEOMETRY__H__
 #define __CONSTRUCTIVE_SOLID_GEOMETRY__H__
 
-#include "meshMath.h"
 #include "meshSpecification.h"
 #include <algorithm>
+#include <cmath>
 #include <memory>
+#include <deque>
 #include <vector>
 
 namespace csg {
 
-    using namespace mesh;
+    class Vector2 : public std::array<float, 2> {
+    public:
+        operator const float *() const {
+            return data();
+        }
+    };
 
-    class Polygon;
-    using PolygonPtr = std::shared_ptr<Polygon>;
-    using Polygons = std::vector<PolygonPtr>;
-    class Plane;
-    using PlanePtr = std::shared_ptr<Plane>;
-    class Node;
-    using NodePtr = std::shared_ptr<Node>;
+    class Vector3 : public std::array<float, 3> {
+    public:
+        operator const float *() const {
+            return data();
+        }
+    };
+
+    inline Vector3 add3(const float a[], const float b[]) {
+        return {a[0] + b[0], a[1] + b[1], a[2] + b[2]};
+    }
+
+    inline Vector3 sub3(const float a[], const float b[]) {
+        return {a[0] - b[0], a[1] - b[1], a[2] - b[2]};
+    }
+
+    inline float dot3(const float a[], const float b[]) {
+        return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+    }
+
+    inline Vector3 cross3(const float a[], const float b[]) {
+        return {a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]};
+    }
+
+    inline float squareLength(const float v[]) {
+        return v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
+    }
+
+    inline float length(const float v[]) {
+        return std::sqrt(squareLength(v));
+    }
+
+    inline Vector3 normalize(const float v[]) {
+        auto euclideanLength = length(v);
+        return {v[0] / euclideanLength, v[1] / euclideanLength, v[2] / euclideanLength};
+    }
+
+    inline Vector2 lerp2(const float a[], const float b[], float t) {
+        return {a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t};
+    }
+
+    inline Vector3 lerp3(const float a[], const float b[], float t) {
+        return {a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t};
+    }
 
     constexpr float PLANE_EPSILON = 1.0e-5f;
 
     class Epsilon {
     public:
-        Epsilon(float scale);
+        explicit Epsilon(float scale);
         ~Epsilon();
     };
 
+    class CSG;
+    class Polygon;
+    using PolygonIndex = uint32_t;
+    using PolygonIndices = std::vector<PolygonIndex>;
+
+    struct VertexIndex {
+        uint32_t index;
+        bool inverted;
+    };
+    using VertexIndices = std::vector<VertexIndex>;
+
     class Vertex {
     public:
-        mesh::Vector3 vertex{0, 0, 0};
-        mesh::Vector3 normal{0, 0, 0};
-        mesh::Vector2 uv{0, 0};
+        Vector3 vertex{0, 0, 0};
+        Vector3 normal{0, 0, 0};
+        Vector2 uv{0, 0};
 
         Vertex & flip() {
             normal[0] = -normal[0];
@@ -45,22 +98,15 @@ namespace csg {
         }
     };
 
-    using Vertices = std::vector<Vertex>;
-
     class Plane {
     public:
         static float epsilon;
-        mesh::Vector3 normal{0, 0, 0};
+        Vector3 normal{0, 0, 0};
         float w{0};
 
         static Plane fromPoints(const float *p0, const float *p1, const float *p2) {
-            auto nv = normalize(cross3(sub3(p1, p0), mesh::sub3(p2, p0)));
+            auto nv = normalize(cross3(sub3(p1, p0), sub3(p2, p0)));
             return Plane{nv, dot3(nv, p0)};
-        }
-
-        static Plane * newPlaneFromPoints(const float *p0, const float *p1, const float *p2) {
-            auto nv = normalize(cross3(sub3(p1, p0), mesh::sub3(p2, p0)));
-            return new Plane{nv, dot3(nv, p0)};
         }
 
         Plane & flip() {
@@ -71,281 +117,368 @@ namespace csg {
             return *this;
         }
 
-        inline void splitPolygon(const PolygonPtr &polygon, Polygons &coplanarFront, Polygons &coplanarBack, Polygons &front, Polygons &back) const;
+        inline void splitPolygon(CSG &csg, PolygonIndex polygonIndex, PolygonIndices &coplanarFront, PolygonIndices &coplanarBack, PolygonIndices &front, PolygonIndices &back) const;
     };
 
     class Polygon {
-        public:
-        Vertices vertices;
+    public:
+        VertexIndices vertices;
         Plane plane;
-        static Polygon* newPolygon(const Vertices &vertices) {
-            return new Polygon{vertices, Plane::fromPoints(vertices[0].vertex, vertices[1].vertex, vertices[2].vertex)};
-        }
+
         Polygon & flip() {
             std::reverse(vertices.begin(), vertices.end());
-            for (auto &v: vertices) v.flip();
+            for (auto &v: vertices) v.inverted = !v.inverted;
             plane.flip();
             return *this;
         }
     };
 
-    void Plane::splitPolygon(const PolygonPtr &polygon, Polygons &coplanarFront, Polygons &coplanarBack, Polygons &front, Polygons &back) const {
-        const uint8_t COPLANAR = 0;
-        const uint8_t FRONT = 1;
-        const uint8_t BACK = 2;
-        const uint8_t SPANNING = 3;
+    class Node {
+    public:
+        CSG &csg;
+        bool planeSet = false;
+        Plane plane;
+        Node *front = nullptr;
+        Node *back = nullptr;
+        PolygonIndices polygons;
 
+        static Node constructNode(CSG &csg, const PolygonIndices &nodePolygons) {
+            Node node(csg);
+            if (!nodePolygons.empty())
+                node.build(nodePolygons);
+            return node;
+        }
+
+        explicit Node(CSG &csg) : csg(csg) {}
+        Node(const Node&) = delete;
+        Node(Node&&) = default;
+        Node& operator = (const Node&) = delete;
+        Node& operator = (Node&&) = delete;
+        ~Node() {
+            delete front;
+            delete back;
+        }
+
+        [[nodiscard]] PolygonIndices allPolygons() {
+            PolygonIndices polygonsCollection;
+            allPolygons(polygonsCollection);
+            return polygonsCollection;
+        }
+
+        inline Node & invert();
+        [[nodiscard]] inline PolygonIndices clipPolygons(const PolygonIndices &polygonsToSplit) const;
+        inline Node & clipTo(const Node &bsp);
+        inline void allPolygons(PolygonIndices &polygonsCollection) const;
+        inline void build(const PolygonIndices &newPolygons);
+        static inline void build(CSG &csg, Node *startNode, const PolygonIndices &newPolygons);
+    };
+
+    class CSG {
+    public:
+        std::vector<Vertex> vertices;
+        std::vector<Polygon> polygons;
+
+        const float* getVertex(uint32_t i) const {
+            return (vertices.data() + i)->vertex.data();
+        }
+
+        inline uint32_t newVertex(const Vertex &vertex);
+        inline PolygonIndex newPolygon(const VertexIndices &vertices);
+        PolygonIndices operatorUnion(PolygonIndices &polygonsA, PolygonIndices &polygonsB);
+        PolygonIndices operatorSubtract(PolygonIndices &polygonsA, PolygonIndices &polygonsB);
+        PolygonIndices operatorIntersect(PolygonIndices &polygonsA, PolygonIndices &polygonsB);
+    };
+
+    void Plane::splitPolygon(CSG &csg, PolygonIndex polygonIndex, PolygonIndices &coplanarFront, PolygonIndices &coplanarBack, PolygonIndices &front, PolygonIndices &back) const {
+        constexpr uint8_t COPLANAR = 0;
+        constexpr uint8_t FRONT = 1;
+        constexpr uint8_t BACK = 2;
+        constexpr uint8_t SPANNING = 3;
+
+        auto &polygon = csg.polygons[polygonIndex];
         uint8_t polygonType = 0;
-        std::vector<uint8_t> types;
-        for (uint32_t i = 0; i < polygon->vertices.size(); ++i) {
-            auto t = dot3(normal, polygon->vertices[i].vertex) - w;
-            uint8_t type = (t < -epsilon) ? BACK : (t > epsilon) ? FRONT : COPLANAR;
-            polygonType |= type;
-            types.push_back(type);
+        uint32_t noOfVertices = polygon.vertices.size();
+        uint8_t *types = new uint8_t[noOfVertices];
+        for (uint32_t i = 0; i < noOfVertices; ++i) {
+            auto t = dot3(normal, csg.getVertex(polygon.vertices[i].index)) - w;
+            types[i] = (t < -epsilon) ? BACK : (t > epsilon) ? FRONT : COPLANAR;
+            polygonType |= types[i];
         }
 
         switch (polygonType) {
-            case COPLANAR:
-                dot3(normal, polygon->plane.normal) > 0 ? coplanarFront.push_back(polygon) : coplanarBack.push_back(polygon);
-                break;
-            case FRONT:
-                front.push_back(polygon);
-                break;
-            case BACK:
-                back.push_back(polygon);
-                break;
+            default:
+            case COPLANAR: dot3(normal, polygon.plane.normal) > 0 ? coplanarFront.push_back(polygonIndex) : coplanarBack.push_back(polygonIndex); break;
+            case FRONT: front.push_back(polygonIndex); break;
+            case BACK: back.push_back(polygonIndex); break;
             case SPANNING:
-                Vertices f, b;
-                for (uint32_t i = 0; i < polygon->vertices.size(); i++) {
-                    uint32_t j = (i + 1) % polygon->vertices.size();
+                VertexIndices f, b;
+                for (uint32_t i = 0; i <noOfVertices; i++) {
+                    uint32_t j = (i + 1) % polygon.vertices.size();
                     auto ti = types[i], tj = types[j];
-                    auto &vi = polygon->vertices[i], &vj = polygon->vertices[j];
+                    auto vi = polygon.vertices[i], vj = polygon.vertices[j];
                     if (ti != BACK)
                         f.push_back(vi);
                     if (ti != FRONT)
                         b.push_back(vi);
                     if ((ti | tj) == SPANNING) {
-                        auto t = (w - dot3(normal, vi.vertex)) / dot3(normal, sub3(vj.vertex, vi.vertex));
-                        auto v = Vertex::interpolate(vi, vj, t);
-                        f.push_back(v);
-                        b.push_back(v);
+                        auto t = (w - dot3(normal, csg.getVertex(vi.index))) / dot3(normal, sub3(csg.getVertex(vj.index), csg.getVertex(vi.index)));
+                        auto newVi = vi.inverted == vj.inverted
+                                     ? csg.newVertex(Vertex::interpolate(csg.vertices[vi.index], csg.vertices[vj.index], t))
+                                     : csg.newVertex(Vertex::interpolate(csg.vertices[vi.index], Vertex(csg.vertices[vj.index]).flip(), t));
+                        f.push_back({newVi, vi.inverted});
+                        b.push_back({newVi, vi.inverted});
                     }
                 }
+                /*
+                if (f.size() >= 3 && b.size() == 3) {
+                    auto lengthSq = squareLength(cross3(
+                            sub3(csg.vertices[b[1].index].vertex, csg.vertices[b[0].index].vertex),
+                            sub3(csg.vertices[b[2].index].vertex, csg.vertices[b[0].index].vertex)));
+                    if (lengthSq < PLANE_EPSILON) {
+                        front.push_back(polygonIndex);
+                        break;
+                    }
+                }
+                if (f.size() == 3 && b.size() >= 3) {
+                    auto lengthSq = squareLength(cross3(
+                            sub3(csg.vertices[f[1].index].vertex, csg.vertices[f[0].index].vertex),
+                            sub3(csg.vertices[f[2].index].vertex, csg.vertices[f[0].index].vertex)));
+                    if (lengthSq < PLANE_EPSILON) {
+                        back.push_back(polygonIndex);
+                        break;
+                    }
+                }
+                */
                 if (f.size() >= 3)
-                    front.emplace_back(Polygon::newPolygon(f));
+                    front.push_back(csg.newPolygon(f));
                 if (b.size() >= 3)
-                    back.emplace_back(Polygon::newPolygon(b));
+                    back.push_back(csg.newPolygon(b));
                 break;
         }
+        delete[] types;
     }
 
-    class Node {
-    public:
-        std::shared_ptr<Plane> plane;
-        std::shared_ptr<Node> front;
-        std::shared_ptr<Node> back;
-        Polygons polygons;
-
-        static Node constructNode(const Polygons &polygons) {
-            Node node;
-            if (!polygons.empty())
-                node.build(polygons);
-            return node;
+    Node & Node::invert() {
+        std::deque<Node*> invertNodes{this};
+        while (!invertNodes.empty()) {
+            auto invertNode = invertNodes.front();
+            invertNodes.pop_front();
+            for (auto &polygonIndex: invertNode->polygons)
+                csg.polygons[polygonIndex].flip();
+            if (invertNode->planeSet)
+                invertNode->plane.flip();
+            std::swap(invertNode->front, invertNode->back);
+            if (invertNode->back)
+                invertNodes.push_back(invertNode->back);
+            if (invertNode->front)
+                invertNodes.push_back(invertNode->front);
         }
+        return *this;
+    }
 
-        static Node* newNode(const Polygons &polygons) {
-            auto node = new Node{};
-            if (!polygons.empty())
-                node->build(polygons);
-            return node;
-        }
+    PolygonIndices Node::clipPolygons(const PolygonIndices &polygonsToSplit) const {
+        if (!planeSet)
+            return polygonsToSplit;
 
-        Node & invert() {
-            for (auto &polygon: polygons)
-                polygon->flip();
-            if (plane)
-                plane->flip();
-            if (front)
-                front->invert();
-            if (back)
-                back->invert();
-            std::swap(front, back);
-            return *this;
-        }
-
-        Polygons clipPolygons(const Polygons &polygonsToSplit) const {
-            if (!plane)
-                return polygonsToSplit;
-            Polygons splitFront, splitBack;
-            for (auto &polygon: polygonsToSplit)
-                plane->splitPolygon(polygon, splitFront, splitBack, splitFront, splitBack);
-            if (front)
-                splitFront = front->clipPolygons(splitFront);
-            if (back)
-                splitBack = back->clipPolygons(splitBack);
-            else
-                splitBack.clear();
-            splitFront.insert(splitFront.end(), splitBack.begin(), splitBack.end());
-            return splitFront;
-        }
-
-        Node & clipTo(const Node &bsp) {
-            polygons = bsp.clipPolygons(polygons);
-            if (front)
-                front->clipTo(bsp);
-            if (back)
-                back->clipTo(bsp);
-            return *this;
-        }
-
-        Polygons allPolygons() const {
-            auto polygonsCollection = polygons;
-            if (front) {
-                auto allFrontPolygons = front->allPolygons();
-                polygonsCollection.insert(polygonsCollection.end(), allFrontPolygons.begin(), allFrontPolygons.end());
-            }
-            if (back) {
-                auto allBackPolygons = back->allPolygons();
-                polygonsCollection.insert(polygonsCollection.end(), allBackPolygons.begin(), allBackPolygons.end());
-            }
-            return polygonsCollection;
-        }
-
-        void build(const Polygons &newPolygons) {
-            if (newPolygons.empty())
-                return;
-            if (!plane)
-                plane = std::make_shared<Plane>(newPolygons[0]->plane);
-            Polygons newFront, newBack;
-            for (auto &polygon: newPolygons) {
-                plane->splitPolygon(polygon, polygons, polygons, newFront, newBack);
-            }
-            if (!newFront.empty()) {
-                if (!front)
-                    front = NodePtr(new Node());
-                front->build(newFront);
-            }
-            if (!newBack.empty()) {
-                if (!back)
-                    back = NodePtr(new Node());
-                back->build(newBack);
-            }
-        }
-    };
-
-    class CSG {
-    public:
-        static Polygons operatorUnion(Polygons &polygonsA, Polygons &polygonsB) {
-            auto a = Node::constructNode(polygonsA);
-            auto b = Node::constructNode(polygonsB);
-            a.clipTo(b);
-            b.clipTo(a);
-            b.invert();
-            b.clipTo(a);
-            b.invert();
-            a.build(b.allPolygons());
-            return a.allPolygons();
-        }
-
-        static Polygons operatorSubtract(Polygons &polygonsA, Polygons &polygonsB) {
-            auto a = Node::constructNode(polygonsA);
-            auto b = Node::constructNode(polygonsB);
-            a.invert();
-            a.clipTo(b);
-            b.clipTo(a);
-            b.invert();
-            b.clipTo(a);
-            b.invert();
-            a.build(b.allPolygons());
-            a.invert();
-            return a.allPolygons();
-        }
-
-        static Polygons operatorIntersect(Polygons &polygonsA, Polygons &polygonsB) {
-            auto a = Node::constructNode(polygonsA);
-            auto b = Node::constructNode(polygonsB);
-            a.invert();
-            b.clipTo(a);
-            b.invert();
-            a.clipTo(b);
-            b.clipTo(a);
-            a.build(b.allPolygons());
-            a.invert();
-            return a.allPolygons();
-        }
-
-        static void inverse(Polygons &polygons) {
-            for (auto &polygon: polygons)
-                polygon->flip();
-        }
-    };
-
-    inline Polygons *polygonsFromMeshSpecification(const MeshData &mesh) {
-        Polygons *polygons = new Polygons();
-        for (uint32_t triangleIndex = 0; triangleIndex < mesh.noOfIndices; triangleIndex += 3) {
-            if (mesh.indices[triangleIndex] == mesh.indices[triangleIndex + 1] ||
-                mesh.indices[triangleIndex] == mesh.indices[triangleIndex + 2] ||
-                mesh.indices[triangleIndex + 1] == mesh.indices[triangleIndex + 2]) {
+        struct ClipPolygons {
+            const Node *node;
+            uint32_t parent;
+            PolygonIndices split;
+        };
+        std::vector<ClipPolygons> clipList{{this, 0, polygonsToSplit}};
+        uint32_t current = 0;
+        while (current < clipList.size()) {
+            auto &clipNode = clipList[current];
+            if (!clipNode.node->planeSet) {
+                current++;
                 continue;
             }
-            Vertices vertices;
-            for (uint32_t i = triangleIndex; i < triangleIndex + 3; ++i) {
-                auto index = mesh.indices[i];
-                Point3 v{mesh.vertices[index*3], mesh.vertices[index*3 + 1], mesh.vertices[index*3 + 2]};
-                Vector3 nv{0, 0, 0};
-                if (mesh.normals)
-                    nv = {mesh.normals[index*3], mesh.normals[index*3 + 1], mesh.normals[index*3 + 2]};
-                Vector2 uv{0, 0};
-                if (mesh.uvs)
-                    uv = {mesh.uvs[index*2], mesh.uvs[index*2 + 1]};
-                vertices.push_back({v, nv, uv});
-            }
-            auto lengltSq = squareLength(cross3(sub3(vertices[1].vertex, vertices[0].vertex), mesh::sub3(vertices[2].vertex, vertices[0].vertex)));
-            if (lengltSq > PLANE_EPSILON)
-                polygons->push_back(PolygonPtr(Polygon::newPolygon(vertices)));
+            PolygonIndices splitFront, splitBack;
+            for (auto &polygon: clipNode.split)
+                clipNode.node->plane.splitPolygon(csg, polygon, splitFront, splitBack, splitFront, splitBack);
+            clipNode.split.clear();
+            if (clipList[current].node->back)
+                clipList.push_back({clipList[current].node->back, current, std::move(splitBack)});
+            if (clipList[current].node->front)
+                clipList.push_back({clipList[current].node->front, current, std::move(splitFront)});
+            else
+                clipList[current].split = std::move(splitFront);
+            current++;
         }
-        return polygons;
+        for (uint32_t i = clipList.size() - 1; i > 0; --i) {
+            auto &clipNode = clipList[i];
+            auto &parentNode = clipList[clipNode.parent];
+            parentNode.split.insert(parentNode.split.end(), clipNode.split.begin(), clipNode.split.end());
+        }
+        return clipList[0].split;
     }
 
-    inline void polygonsToMesh(const Polygons *polygons, ResultMeshData &mesh) {
-        if (!polygons)
+    Node & Node::clipTo(const Node &bsp) {
+        std::deque<Node*> clipNodes{this};
+        while (!clipNodes.empty()) {
+            auto clipNode = clipNodes.front();
+            clipNodes.pop_front();
+            clipNode->polygons = bsp.clipPolygons(clipNode->polygons);
+            if (clipNode->front)
+                clipNodes.push_back(clipNode->front);
+            if (clipNode->back)
+                clipNodes.push_back(clipNode->back);
+        }
+        return *this;
+    }
+
+    void Node::allPolygons(PolygonIndices &polygonsCollection) const {
+        std::deque<const Node*> polygonNodes{this};
+        while (!polygonNodes.empty()) {
+            auto polygonNode = polygonNodes.front();
+            polygonNodes.pop_front();
+            if (!polygonNode->polygons.empty())
+                polygonsCollection.insert(polygonsCollection.end(), polygonNode->polygons.begin(), polygonNode->polygons.end());
+            if (polygonNode->front)
+                polygonNodes.push_back(polygonNode->front);
+            if (polygonNode->back)
+                polygonNodes.push_back(polygonNode->back);
+        }
+    }
+
+    void Node::build(const PolygonIndices &newPolygons) {
+        build(csg, this, newPolygons);
+    }
+
+    void Node::build(CSG &csg, Node *startNode, const PolygonIndices &newPolygons) {
+        constexpr uint8_t COPLANAR = 0;
+        constexpr uint8_t FRONT = 1;
+        constexpr uint8_t BACK = 2;
+        constexpr uint8_t SPANNING = 3;
+
+        if (!startNode || newPolygons.empty())
             return;
-        for (auto &polygon: *polygons) {
-            uint32_t faceStartIndex = mesh.vertices.size() / 3;
-            for (auto & vertex: polygon->vertices) {
-                mesh.vertices.insert(mesh.vertices.end(), vertex.vertex.begin(), vertex.vertex.end());
-                mesh.normals.insert(mesh.normals.end(), vertex.normal.begin(), vertex.normal.end());
-                mesh.uvs.insert(mesh.uvs.end(), vertex.uv.begin(), vertex.uv.end());
+
+        uint32_t maxNoOfType = 16;
+        uint8_t *types = new uint8_t[maxNoOfType];
+        struct BuildNode {
+            Node *node = nullptr;
+            PolygonIndices newPolygons;
+        };
+        std::deque<BuildNode> buildNodes;
+        buildNodes.push_back({startNode, newPolygons});
+        while (!buildNodes.empty()) {
+            auto &node = buildNodes.front();
+
+            if (!node.node->planeSet) {
+                node.node->plane = csg.polygons[node.newPolygons[0]].plane;
+                node.node->planeSet = true;
             }
-            uint32_t faceEndIndex = mesh.vertices.size() / 3;
-            if (faceEndIndex > faceStartIndex + 2) {
-                for (uint32_t i = 0; i < faceEndIndex - faceStartIndex - 2; ++i) {
-                    mesh.indicesOut.push_back(faceStartIndex);
-                    mesh.indicesOut.push_back(faceStartIndex + i + 1);
-                    mesh.indicesOut.push_back(faceStartIndex + i + 2);
+            PolygonIndices newFront, newBack;
+            for (auto &polygonIndex: node.newPolygons) {
+                auto &polygon = csg.polygons[polygonIndex];
+                auto &plane = node.node->plane;
+                uint8_t polygonType = 0;
+                uint32_t noOfVertices = polygon.vertices.size();
+                if (maxNoOfType < noOfVertices) {
+                    delete[] types;
+                    maxNoOfType = noOfVertices;
+                    types = new uint8_t[maxNoOfType];
+                }
+                for (uint32_t i = 0; i < noOfVertices; ++i) {
+                    auto t = dot3(plane.normal, csg.getVertex(polygon.vertices[i].index)) - plane.w;
+                    types[i] = (t < -Plane::epsilon) ? BACK : (t > Plane::epsilon) ? FRONT : COPLANAR;
+                    polygonType |= types[i];
+                }
+
+                switch (polygonType) {
+                    default:
+                    case COPLANAR: node.node->polygons.push_back(polygonIndex); break;
+                    case FRONT: newFront.push_back(polygonIndex); break;
+                    case BACK: newBack.push_back(polygonIndex); break;
+                    case SPANNING:
+                        VertexIndices f, b;
+                        for (uint32_t i = 0; i <noOfVertices; i++) {
+                            uint32_t j = (i + 1) % polygon.vertices.size();
+                            auto ti = types[i], tj = types[j];
+                            auto vi = polygon.vertices[i], vj = polygon.vertices[j];
+                            if (ti != BACK)
+                                f.push_back(vi);
+                            if (ti != FRONT)
+                                b.push_back(vi);
+                            if ((ti | tj) == SPANNING) {
+                                auto t = (plane.w - dot3(plane.normal, csg.getVertex(vi.index))) / dot3(plane.normal, sub3(csg.getVertex(vj.index), csg.getVertex(vi.index)));
+                                auto newVi = vi.inverted == vj.inverted
+                                             ? csg.newVertex(Vertex::interpolate(csg.vertices[vi.index], csg.vertices[vj.index], t))
+                                             : csg.newVertex(Vertex::interpolate(csg.vertices[vi.index], Vertex(csg.vertices[vj.index]).flip(), t));
+                                f.push_back({newVi, vi.inverted});
+                                b.push_back({newVi, vi.inverted});
+                            }
+                        }
+                        /*
+                        if (f.size() >= 3 && b.size() == 3) {
+                            auto lengthSq = squareLength(cross3(
+                                    sub3(csg.vertices[b[1].index].vertex, csg.vertices[b[0].index].vertex),
+                                    sub3(csg.vertices[b[2].index].vertex, csg.vertices[b[0].index].vertex)));
+                            if (lengthSq < PLANE_EPSILON) {
+                                newFront.push_back(polygonIndex);
+                                break;
+                            }
+                        }
+                        if (f.size() == 3 && b.size() >= 3) {
+                            auto lengthSq = squareLength(cross3(
+                                    sub3(csg.vertices[f[1].index].vertex, csg.vertices[f[0].index].vertex),
+                                    sub3(csg.vertices[f[2].index].vertex, csg.vertices[f[0].index].vertex)));
+                            if (lengthSq < PLANE_EPSILON) {
+                                newBack.push_back(polygonIndex);
+                                break;
+                            }
+                        }
+                        */
+                        if (f.size() >= 3)
+                            newFront.push_back(csg.newPolygon(f));
+                        if (b.size() >= 3)
+                            newBack.push_back(csg.newPolygon(b));
+                        break;
                 }
             }
+            if (!newFront.empty()) {
+                if (node.node->polygons.empty() && newBack.empty()) {
+                    node.node->polygons = newFront;
+                } else {
+                    if (!node.node->front)
+                        node.node->front = new Node(csg);
+                    buildNodes.push_back({node.node->front, std::move(newFront)});
+                }
+            }
+            if (!newBack.empty()) {
+                if (node.node->polygons.empty() && newFront.empty()) {
+                    node.node->polygons = newBack;
+                } else {
+                    if (!node.node->back)
+                        node.node->back = new Node(csg);
+                    buildNodes.push_back({node.node->back, std::move(newBack)});
+                }
+            }
+            buildNodes.pop_front();
         }
+        delete[] types;
     }
 
-    inline Polygons meshOperation(Operator op, const MeshData &meshA, const MeshData &meshB) {
-        auto polygonsA = polygonsFromMeshSpecification(meshA);
-        auto polygonsB = polygonsFromMeshSpecification(meshB);
-        Polygons resultPolygons;
-        switch(op) {
-            case Operator::AND: resultPolygons = CSG::operatorUnion(*polygonsA, *polygonsB); break;
-            case Operator::OR: resultPolygons = CSG::operatorIntersect(*polygonsA, *polygonsB); break;
-            case Operator::MINUS: resultPolygons = CSG::operatorSubtract(*polygonsA, *polygonsB); break;
-        }
-        delete polygonsA;
-        delete polygonsB;
-        return resultPolygons;
+    uint32_t CSG::newVertex(const Vertex &vertex) {
+        uint32_t newVertexIndex = vertices.size();
+        vertices.push_back(vertex);
+        return newVertexIndex;
     }
 
-    inline void meshOperation(Operator op, const MeshData &meshA, const MeshData &meshB, ResultMeshData &resultMesh) {
-        Polygons resultPolygons = meshOperation(op, meshA, meshB);
-        polygonsToMesh(&resultPolygons, resultMesh);
+    PolygonIndex CSG::newPolygon(const VertexIndices &vertexIndices) {
+        PolygonIndex newPolygonIndex = polygons.size();
+        polygons.push_back({
+               vertexIndices,
+               Plane::fromPoints(vertices[vertexIndices[0].index].vertex, vertices[vertexIndices[1].index].vertex, vertices[vertexIndices[2].index].vertex)
+        });
+        return newPolygonIndex;
     }
+
+    PolygonIndices polygonsFromMeshSpecification(CSG &csg, const mesh::MeshData &mesh);
+    void polygonsToMesh(const CSG &csg, const PolygonIndices *polygonIndices, mesh::ResultMeshData &mesh);
+    PolygonIndices meshOperation(CSG &csg, mesh::Operator op, const mesh::MeshData &meshA, const mesh::MeshData &meshB);
+    void meshOperation(mesh::Operator op, const mesh::MeshData &meshA, const mesh::MeshData &meshB, mesh::ResultMeshData &resultMesh);
 }
 
 #endif

@@ -159,17 +159,11 @@ const scgGeometry = (s: THREE.Scene, csgMaterial: THREE.Material, csgP: THREE.Ve
     meshA.updateMatrixWorld();
     meshB.updateMatrixWorld();
 
-    //const bspA = CSG.fromMesh(meshA);                        
-    //const bspB = CSG.fromMesh(meshB);
-    //const cspResult = bspA.subtract(bspB)
-    //const resultGeometry = CSG.toGeometry(cspResult);
-
     //const resultGeometry = csgOperation(meshA, meshB, MESH_AND_AB);
     //const resultGeometry = csgOperation(meshA, meshB, MESH_OR_AB);
-    const resultGeometry = csgOperation(meshA, meshB, MESH_MINUS_AB);
+    const resultGeometry = csgWasmOperation(meshA, meshB, MESH_MINUS_AB);
+    //const resultGeometry = csgLibOperation(meshA, meshB, MESH_MINUS_AB);
 
-    //let inv = new THREE.Matrix4().copy(meshA.matrix).invert();
-    //resultGeometry.applyMatrix4(inv);
     resultGeometry.computeBoundingSphere();
     resultGeometry.computeBoundingBox();
     const object = addGeometry(s, resultGeometry, csgMaterial);
@@ -289,9 +283,34 @@ const createBufferGeometry = (meshSpecification: MeshSpecification): THREE.Buffe
     return geometry;
 }
 
-const csgOperation = (m1: THREE.Mesh, m2: THREE.Mesh, op: number = 0): THREE.BufferGeometry  => {
+const csgWasmOperation = (m1: THREE.Mesh, m2: THREE.Mesh, op: number = 0): THREE.BufferGeometry  => {
     const splittedMeshBuffer = csgMeshWASM(m1, m2, op);
     return splittedMeshBuffer
         ? createBufferGeometry(splittedMeshBuffer)
         : m1.geometry;
+}
+
+const csgLibOperation = (m1: THREE.Mesh, m2: THREE.Mesh, op: number = 0): THREE.BufferGeometry  => {
+    const bspA = CSG.fromMesh(m1);                        
+    const bspB = CSG.fromMesh(m2);
+
+    let cspResult: any;
+    switch (op) {
+        case MESH_OR_AB: 
+            cspResult = bspA.union(bspB);
+            break;
+        case MESH_AND_AB: 
+            cspResult = bspA.intersect(bspB);
+            break;
+        default:
+        case MESH_MINUS_AB: 
+            cspResult = bspA.subtract(bspB);
+            break;
+    } 
+    
+    const resultGeometry = CSG.toGeometry(cspResult);
+    let inv = new THREE.Matrix4().copy(m1.matrix).invert();
+    resultGeometry.applyMatrix4(inv);
+
+    return resultGeometry;
 }
