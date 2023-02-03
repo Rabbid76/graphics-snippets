@@ -80,13 +80,11 @@ PolygonIndices csg::polygonsFromMeshSpecification(CSG &csg, const mesh::MeshData
             auto index = baseIndex + mesh.indices[i];
             vertexIndices.push_back({index, false});
         }
-        /*
         auto lengthSq = squareLength(cross3(
                 sub3(csg.vertices[vertexIndices[1].index].vertex, csg.vertices[vertexIndices[0].index].vertex),
                 sub3(csg.vertices[vertexIndices[2].index].vertex, csg.vertices[vertexIndices[0].index].vertex)));
-        if (lengthSq > PLANE_EPSILON)
-        */
-        polygonIndices.push_back(csg.newPolygon(vertexIndices));
+        if (lengthSq > 0)
+            polygonIndices.push_back(csg.newPolygon(vertexIndices));
     }
     return polygonIndices;
 }

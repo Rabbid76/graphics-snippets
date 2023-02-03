@@ -159,8 +159,8 @@ const scgGeometry = (s: THREE.Scene, csgMaterial: THREE.Material, csgP: THREE.Ve
     meshA.updateMatrixWorld();
     meshB.updateMatrixWorld();
 
-    //const resultGeometry = csgOperation(meshA, meshB, MESH_AND_AB);
-    //const resultGeometry = csgOperation(meshA, meshB, MESH_OR_AB);
+    //const resultGeometry = csgWasmOperation(meshA, meshB, MESH_OR_AB);
+    //const resultGeometry = csgWasmOperation(meshA, meshB, MESH_AND_AB);
     const resultGeometry = csgWasmOperation(meshA, meshB, MESH_MINUS_AB);
     //const resultGeometry = csgLibOperation(meshA, meshB, MESH_MINUS_AB);
 

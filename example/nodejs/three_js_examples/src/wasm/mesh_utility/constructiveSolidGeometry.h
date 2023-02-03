@@ -231,26 +231,6 @@ namespace csg {
                         b.push_back({newVi, vi.inverted});
                     }
                 }
-                /*
-                if (f.size() >= 3 && b.size() == 3) {
-                    auto lengthSq = squareLength(cross3(
-                            sub3(csg.vertices[b[1].index].vertex, csg.vertices[b[0].index].vertex),
-                            sub3(csg.vertices[b[2].index].vertex, csg.vertices[b[0].index].vertex)));
-                    if (lengthSq < PLANE_EPSILON) {
-                        front.push_back(polygonIndex);
-                        break;
-                    }
-                }
-                if (f.size() == 3 && b.size() >= 3) {
-                    auto lengthSq = squareLength(cross3(
-                            sub3(csg.vertices[f[1].index].vertex, csg.vertices[f[0].index].vertex),
-                            sub3(csg.vertices[f[2].index].vertex, csg.vertices[f[0].index].vertex)));
-                    if (lengthSq < PLANE_EPSILON) {
-                        back.push_back(polygonIndex);
-                        break;
-                    }
-                }
-                */
                 if (f.size() >= 3)
                     front.push_back(csg.newPolygon(f));
                 if (b.size() >= 3)
@@ -412,26 +392,6 @@ namespace csg {
                                 b.push_back({newVi, vi.inverted});
                             }
                         }
-                        /*
-                        if (f.size() >= 3 && b.size() == 3) {
-                            auto lengthSq = squareLength(cross3(
-                                    sub3(csg.vertices[b[1].index].vertex, csg.vertices[b[0].index].vertex),
-                                    sub3(csg.vertices[b[2].index].vertex, csg.vertices[b[0].index].vertex)));
-                            if (lengthSq < PLANE_EPSILON) {
-                                newFront.push_back(polygonIndex);
-                                break;
-                            }
-                        }
-                        if (f.size() == 3 && b.size() >= 3) {
-                            auto lengthSq = squareLength(cross3(
-                                    sub3(csg.vertices[f[1].index].vertex, csg.vertices[f[0].index].vertex),
-                                    sub3(csg.vertices[f[2].index].vertex, csg.vertices[f[0].index].vertex)));
-                            if (lengthSq < PLANE_EPSILON) {
-                                newBack.push_back(polygonIndex);
-                                break;
-                            }
-                        }
-                        */
                         if (f.size() >= 3)
                             newFront.push_back(csg.newPolygon(f));
                         if (b.size() >= 3)
@@ -440,22 +400,14 @@ namespace csg {
                 }
             }
             if (!newFront.empty()) {
-                if (node.node->polygons.empty() && newBack.empty()) {
-                    node.node->polygons = newFront;
-                } else {
-                    if (!node.node->front)
-                        node.node->front = new Node(csg);
-                    buildNodes.push_back({node.node->front, std::move(newFront)});
-                }
+                if (!node.node->front)
+                    node.node->front = new Node(csg);
+                buildNodes.push_back({node.node->front, std::move(newFront)});
             }
             if (!newBack.empty()) {
-                if (node.node->polygons.empty() && newFront.empty()) {
-                    node.node->polygons = newBack;
-                } else {
-                    if (!node.node->back)
-                        node.node->back = new Node(csg);
-                    buildNodes.push_back({node.node->back, std::move(newBack)});
-                }
+                if (!node.node->back)
+                    node.node->back = new Node(csg);
+                buildNodes.push_back({node.node->back, std::move(newBack)});
             }
             buildNodes.pop_front();
         }
@@ -471,9 +423,9 @@ namespace csg {
     PolygonIndex CSG::newPolygon(const VertexIndices &vertexIndices) {
         PolygonIndex newPolygonIndex = polygons.size();
         polygons.push_back({
-               vertexIndices,
-               Plane::fromPoints(vertices[vertexIndices[0].index].vertex, vertices[vertexIndices[1].index].vertex, vertices[vertexIndices[2].index].vertex)
-        });
+                                   vertexIndices,
+                                   Plane::fromPoints(vertices[vertexIndices[0].index].vertex, vertices[vertexIndices[1].index].vertex, vertices[vertexIndices[2].index].vertex)
+                           });
         return newPolygonIndex;
     }
 
