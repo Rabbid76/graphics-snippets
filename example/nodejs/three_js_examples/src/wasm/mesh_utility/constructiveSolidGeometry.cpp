@@ -15,40 +15,40 @@ Epsilon::~Epsilon() {
 PolygonIndices CSG::operatorUnion(PolygonIndices &polygonsA, PolygonIndices &polygonsB) {
     auto a = Node::constructNode(*this, polygonsA);
     auto b = Node::constructNode(*this, polygonsB);
-    a.clipTo(b);
-    b.clipTo(a);
-    b.invert();
-    b.clipTo(a);
-    b.invert();
-    a.build(b.allPolygons());
-    return a.allPolygons();
+    clipTo(a, b);
+    clipTo(b, a);
+    invert(b);
+    clipTo(b, a);
+    invert(b);
+    build(a, allPolygons(b));
+    return allPolygons(a);
 }
 
 PolygonIndices CSG::operatorSubtract(PolygonIndices &polygonsA, PolygonIndices &polygonsB) {
     auto a = Node::constructNode(*this, polygonsA);
     auto b = Node::constructNode(*this, polygonsB);
-    a.invert();
-    a.clipTo(b);
-    b.clipTo(a);
-    b.invert();
-    b.clipTo(a);
-    b.invert();
-    a.build(b.allPolygons());
-    a.invert();
-    return a.allPolygons();
+    invert(a);
+    clipTo(a, b);
+    clipTo(b, a);
+    invert(b);
+    clipTo(b, a);
+    invert(b);
+    build(a, allPolygons(b));
+    invert(a);
+    return allPolygons(a);
 }
 
 PolygonIndices CSG::operatorIntersect(PolygonIndices &polygonsA, PolygonIndices &polygonsB) {
     auto a = Node::constructNode(*this, polygonsA);
     auto b = Node::constructNode(*this, polygonsB);
-    a.invert();
-    b.clipTo(a);
-    b.invert();
-    a.clipTo(b);
-    b.clipTo(a);
-    a.build(b.allPolygons());
-    a.invert();
-    return a.allPolygons();
+    invert(a);
+    clipTo(b, a);
+    invert(b);
+    clipTo(a, b);
+    clipTo(b, a);
+    build(a, allPolygons(b));
+    invert(a);
+    return allPolygons(a);
 }
 
 PolygonIndices csg::polygonsFromMeshSpecification(CSG &csg, const mesh::MeshData &mesh) {
