@@ -15,9 +15,9 @@ namespace
     static void copyBufferData(
             std::vector<DATA_TYPE> &data, 
             const emscripten::val heapMemory, 
-            const emscripten::val &meshData, 
+            const emscripten::val &MeshDataReference, 
             const char *propertyName) {
-        emscripten::val buffer = meshData[propertyName];
+        emscripten::val buffer = MeshDataReference[propertyName];
         if (buffer.isUndefined()) 
             return;
         unsigned int bufferLength = buffer["length"].as<unsigned int>();
@@ -47,40 +47,40 @@ namespace
     }
 
     /*
-    void coutMeshData(const mesh::MeshData &meshData) {
-        std::cout << "vertices (" << meshData.noOfVertices * 3 << "): {";
-        for (uint32_t i = 0; i < meshData.noOfVertices * 3; ++i)
-            std::cout << meshData.vertices[i] << ", ";
+    void coutMeshData(const mesh::MeshDataReference &MeshDataReference) {
+        std::cout << "vertices (" << MeshDataReference.noOfVertices * 3 << "): {";
+        for (uint32_t i = 0; i < MeshDataReference.noOfVertices * 3; ++i)
+            std::cout << MeshDataReference.vertices[i] << ", ";
         std::cout << "};" << std::endl;
-        std::cout << "normals (" << meshData.noOfVertices * 3 << "): {";
-        for (uint32_t i = 0; i < meshData.noOfVertices * 3; ++i)
-            std::cout << meshData.normals[i] << ", ";
+        std::cout << "normals (" << MeshDataReference.noOfVertices * 3 << "): {";
+        for (uint32_t i = 0; i < MeshDataReference.noOfVertices * 3; ++i)
+            std::cout << MeshDataReference.normals[i] << ", ";
         std::cout << "};" << std::endl;
-        std::cout << "uvs (" << meshData.noOfVertices * 2 << "): {";
-        for (uint32_t i = 0; i < meshData.noOfVertices * 2; ++i)
-            std::cout << meshData.uvs[i] << ", ";
+        std::cout << "uvs (" << MeshDataReference.noOfVertices * 2 << "): {";
+        for (uint32_t i = 0; i < MeshDataReference.noOfVertices * 2; ++i)
+            std::cout << MeshDataReference.uvs[i] << ", ";
         std::cout << "};" << std::endl;
-        std::cout << "indices out (" << meshData.noOfIndices << "): {";
-        for (uint32_t i = 0; i < meshData.noOfIndices; ++i)
-            std::cout << meshData.indices[i] << ", ";
+        std::cout << "indices out (" << MeshDataReference.noOfIndices << "): {";
+        for (uint32_t i = 0; i < MeshDataReference.noOfIndices; ++i)
+            std::cout << MeshDataReference.indices[i] << ", ";
         std::cout << "};" << std::endl;
     }
 
-    void coutResultMeshData(const mesh::ResultMeshData &meshData) {
-        std::cout << "vertices (" << meshData.vertices.size() << "): {";
-        for (auto &vertex: meshData.vertices)
+    void coutResultMeshData(const mesh::MeshDataInstance &MeshDataReference) {
+        std::cout << "vertices (" << MeshDataReference.vertices.size() << "): {";
+        for (auto &vertex: MeshDataReference.vertices)
             std::cout << vertex << ", ";
         std::cout << "};" << std::endl;
-        std::cout << "normals (" << meshData.normals.size() << "): {";
-        for (auto &vertex: meshData.normals)
+        std::cout << "normals (" << MeshDataReference.normals.size() << "): {";
+        for (auto &vertex: MeshDataReference.normals)
             std::cout << vertex << ", ";
         std::cout << "};" << std::endl;
-        std::cout << "uvs (" << meshData.uvs.size() << "): {";
-        for (auto &vertex: meshData.uvs)
+        std::cout << "uvs (" << MeshDataReference.uvs.size() << "): {";
+        for (auto &vertex: MeshDataReference.uvs)
             std::cout << vertex << ", ";
         std::cout << "};" << std::endl;
-        std::cout << "indices out (" << meshData.indicesOut.size() << "): {";
-        for (auto &index: meshData.indicesOut)
+        std::cout << "indices out (" << MeshDataReference.indicesOut.size() << "): {";
+        for (auto &index: MeshDataReference.indicesOut)
             std::cout << index << ", ";
         std::cout << "};" << std::endl;
     }
@@ -109,11 +109,11 @@ namespace
         globalIOContext = ioContext;
     }
 
-    mesh::ResultMeshData calculateMeshIntersection(emscripten::val mesh0, emscripten::val mesh1)
+    mesh::MeshDataInstance calculateMeshIntersection(emscripten::val mesh0, emscripten::val mesh1)
     {
         emscripten::val heapMemory = emscripten::val::module_property("HEAPU8")["buffer"];
         if (heapMemory.isUndefined()) {
-            mesh::ResultMeshData result;
+            mesh::MeshDataInstance result;
             result.error = true;
             return result;
         }
@@ -136,8 +136,8 @@ namespace
         std::vector<uint32_t> indicesMesh1;
         copyBufferData(indicesMesh1, heapMemory, mesh1, "indices");
 
-        auto meshData0 = mesh::MeshData::creatFromVectors(indicesMesh0, verticesMesh0, normalsMesh0, uvsMesh0, getMin(verticesMesh0), getMax(verticesMesh0));
-        auto meshData1 = mesh::MeshData::creatFromVectors(indicesMesh1, verticesMesh1, normalsMesh1, uvsMesh1, getMin(verticesMesh1), getMax(verticesMesh1));
+        auto meshData0 = mesh::MeshDataReference::creatFromVectors(indicesMesh0, verticesMesh0, normalsMesh0, uvsMesh0, getMin(verticesMesh0), getMax(verticesMesh0));
+        auto meshData1 = mesh::MeshDataReference::creatFromVectors(indicesMesh1, verticesMesh1, normalsMesh1, uvsMesh1, getMin(verticesMesh1), getMax(verticesMesh1));
         mesh::MeshIntersection intersection(meshData0, meshData1);
         intersection.intersect();
         auto actualResult = intersection.getResult0();
@@ -145,11 +145,11 @@ namespace
         return actualResult;
     }
 
-    mesh::ResultMeshData meshOperator(emscripten::val mesh0, emscripten::val mesh1, mesh::Operator meshOperator)
+    mesh::MeshDataInstance meshOperator(emscripten::val mesh0, emscripten::val mesh1, mesh::Operator meshOperator)
     {
         emscripten::val heapMemory = emscripten::val::module_property("HEAPU8")["buffer"];
         if (heapMemory.isUndefined()) {
-            mesh::ResultMeshData result;
+            mesh::MeshDataInstance result;
             result.error = true;
             return result;
         }
@@ -172,19 +172,19 @@ namespace
         std::vector<uint32_t> indicesMesh1;
         copyBufferData(indicesMesh1, heapMemory, mesh1, "indices");
 
-        auto meshData0 = mesh::MeshData::creatFromVectors(indicesMesh0, verticesMesh0, normalsMesh0, uvsMesh0, getMin(verticesMesh0), getMax(verticesMesh0));
-        auto meshData1 = mesh::MeshData::creatFromVectors(indicesMesh1, verticesMesh1, normalsMesh1, uvsMesh1, getMin(verticesMesh1), getMax(verticesMesh1));
+        auto meshData0 = mesh::MeshDataReference::creatFromVectors(indicesMesh0, verticesMesh0, normalsMesh0, uvsMesh0, getMin(verticesMesh0), getMax(verticesMesh0));
+        auto meshData1 = mesh::MeshDataReference::creatFromVectors(indicesMesh1, verticesMesh1, normalsMesh1, uvsMesh1, getMin(verticesMesh1), getMax(verticesMesh1));
         mesh::MeshIntersection intersection(meshData0, meshData1);
         intersection.operate(meshOperator);
         auto resultData = intersection.getResult0();
         return resultData;
     }
 
-    mesh::ResultMeshData meshCSG(emscripten::val mesh0, emscripten::val mesh1, mesh::Operator meshOperator)
+    mesh::MeshDataInstance meshCSG(emscripten::val mesh0, emscripten::val mesh1, mesh::Operator meshOperator)
     {
         emscripten::val heapMemory = emscripten::val::module_property("HEAPU8")["buffer"];
         if (heapMemory.isUndefined()) {
-            mesh::ResultMeshData result;
+            mesh::MeshDataInstance result;
             result.error = true;
             return result;
         }
@@ -207,42 +207,49 @@ namespace
         std::vector<uint32_t> indicesMesh1;
         copyBufferData(indicesMesh1, heapMemory, mesh1, "indices");
 
-        auto meshData0 = mesh::MeshData::creatFromVectors(indicesMesh0, verticesMesh0, normalsMesh0, uvsMesh0, getMin(verticesMesh0), getMax(verticesMesh0));
-        auto meshData1 = mesh::MeshData::creatFromVectors(indicesMesh1, verticesMesh1, normalsMesh1, uvsMesh1, getMin(verticesMesh1), getMax(verticesMesh1));
+        auto meshData0 = mesh::MeshDataReference::creatFromVectors(indicesMesh0, verticesMesh0, normalsMesh0, uvsMesh0, getMin(verticesMesh0), getMax(verticesMesh0));
+        auto meshData1 = mesh::MeshDataReference::creatFromVectors(indicesMesh1, verticesMesh1, normalsMesh1, uvsMesh1, getMin(verticesMesh1), getMax(verticesMesh1));
+
         //std::cout << "mesh A" << std::endl;
         //coutMeshData(meshData0);
         //std::cout << "mesh B" << std::endl;
         //coutMeshData(meshData1);
-        
-        mesh::ResultMeshData resultData;
-        csg::meshOperation(meshOperator, meshData0, meshData1, resultData);
+
+        //mesh::MeshDataInstance resultData;
+        //csg::meshOperation(meshOperator, meshData0, meshData1, resultData);
+
+        std::vector<uint32_t> triangles0, triangles1;
+        mesh::MeshDataReference::findIntersecting(meshData0, meshData1, triangles0, triangles1);
+        mesh::MeshDataInstance resultData;
+        csg::meshOperation(meshOperator, meshData0, meshData1, triangles0, triangles1, resultData);
+
         //std::cout << "result" << std::endl;
         //coutResultMeshData(resultData);
 
         return resultData;
     }
 
-    mesh::ResultMeshData meshOperatorMinusAB(emscripten::val mesh0, emscripten::val mesh1) {
+    mesh::MeshDataInstance meshOperatorMinusAB(emscripten::val mesh0, emscripten::val mesh1) {
         return meshOperator(mesh0, mesh1, mesh::Operator::MINUS);
     }
 
-    mesh::ResultMeshData meshOperatorOrAB(emscripten::val mesh0, emscripten::val mesh1) {
+    mesh::MeshDataInstance meshOperatorOrAB(emscripten::val mesh0, emscripten::val mesh1) {
         return meshOperator(mesh0, mesh1, mesh::Operator::OR);
     }
 
-    mesh::ResultMeshData meshOperatorAndAB(emscripten::val mesh0, emscripten::val mesh1) {
+    mesh::MeshDataInstance meshOperatorAndAB(emscripten::val mesh0, emscripten::val mesh1) {
         return meshOperator(mesh0, mesh1, mesh::Operator::AND);
     }
 
-    mesh::ResultMeshData meshCSGMinusAB(emscripten::val mesh0, emscripten::val mesh1) {
+    mesh::MeshDataInstance meshCSGMinusAB(emscripten::val mesh0, emscripten::val mesh1) {
         return meshCSG(mesh0, mesh1, mesh::Operator::MINUS);
     }
 
-    mesh::ResultMeshData meshCSGOrAB(emscripten::val mesh0, emscripten::val mesh1) {
+    mesh::MeshDataInstance meshCSGOrAB(emscripten::val mesh0, emscripten::val mesh1) {
         return meshCSG(mesh0, mesh1, mesh::Operator::OR);
     }
 
-    mesh::ResultMeshData meshCSGAndAB(emscripten::val mesh0, emscripten::val mesh1) {
+    mesh::MeshDataInstance meshCSGAndAB(emscripten::val mesh0, emscripten::val mesh1) {
         return meshCSG(mesh0, mesh1, mesh::Operator::AND);
     }
 }
@@ -252,21 +259,21 @@ EMSCRIPTEN_BINDINGS(my_module)
     emscripten::register_vector<uint32_t>("Uint32Array");
     emscripten::register_vector<float>("Float32Array");
 
-    emscripten::value_object<mesh::ResultMeshData>("ResultMeshData")
-        .field<mesh::ResultMeshData, std::vector<float>>("vertices", &mesh::ResultMeshData::vertices)
-        .field<mesh::ResultMeshData, std::vector<float>>("normals", &mesh::ResultMeshData::normals)
-        .field<mesh::ResultMeshData, std::vector<float>>("uvs", &mesh::ResultMeshData::uvs)
-        .field<mesh::ResultMeshData, std::vector<uint32_t>>("indicesOut", &mesh::ResultMeshData::indicesOut)
-        .field<mesh::ResultMeshData, std::vector<uint32_t>>("indicesIn", &mesh::ResultMeshData::indicesIn)
-        .field<mesh::ResultMeshData, bool>("error", &mesh::ResultMeshData::error);
+    emscripten::value_object<mesh::MeshDataInstance>("MeshDataInstance")
+        .field<mesh::MeshDataInstance, std::vector<float>>("vertices", &mesh::MeshDataInstance::vertices)
+        .field<mesh::MeshDataInstance, std::vector<float>>("normals", &mesh::MeshDataInstance::normals)
+        .field<mesh::MeshDataInstance, std::vector<float>>("uvs", &mesh::MeshDataInstance::uvs)
+        .field<mesh::MeshDataInstance, std::vector<uint32_t>>("indicesOut", &mesh::MeshDataInstance::indicesOut)
+        .field<mesh::MeshDataInstance, std::vector<uint32_t>>("indicesIn", &mesh::MeshDataInstance::indicesIn)
+        .field<mesh::MeshDataInstance, bool>("error", &mesh::MeshDataInstance::error);
 
     emscripten::function<std::string>("getVersion", &getVersion);
     emscripten::function<void, emscripten::val>("setIOContext", &setIOContext);
-    emscripten::function<mesh::ResultMeshData, emscripten::val, emscripten::val>("calculateMeshIntersection", &calculateMeshIntersection);
-    emscripten::function<mesh::ResultMeshData, emscripten::val, emscripten::val>("meshOperatorMinusAB", &meshOperatorMinusAB);
-    emscripten::function<mesh::ResultMeshData, emscripten::val, emscripten::val>("meshOperatorOrAB", &meshOperatorOrAB);
-    emscripten::function<mesh::ResultMeshData, emscripten::val, emscripten::val>("meshOperatorAndAB", &meshOperatorAndAB);
-    emscripten::function<mesh::ResultMeshData, emscripten::val, emscripten::val>("meshCSGMinusAB", &meshCSGMinusAB);
-    emscripten::function<mesh::ResultMeshData, emscripten::val, emscripten::val>("meshCSGOrAB", &meshCSGOrAB);
-    emscripten::function<mesh::ResultMeshData, emscripten::val, emscripten::val>("meshCSGAndAB", &meshCSGAndAB);
+    emscripten::function<mesh::MeshDataInstance, emscripten::val, emscripten::val>("calculateMeshIntersection", &calculateMeshIntersection);
+    emscripten::function<mesh::MeshDataInstance, emscripten::val, emscripten::val>("meshOperatorMinusAB", &meshOperatorMinusAB);
+    emscripten::function<mesh::MeshDataInstance, emscripten::val, emscripten::val>("meshOperatorOrAB", &meshOperatorOrAB);
+    emscripten::function<mesh::MeshDataInstance, emscripten::val, emscripten::val>("meshOperatorAndAB", &meshOperatorAndAB);
+    emscripten::function<mesh::MeshDataInstance, emscripten::val, emscripten::val>("meshCSGMinusAB", &meshCSGMinusAB);
+    emscripten::function<mesh::MeshDataInstance, emscripten::val, emscripten::val>("meshCSGOrAB", &meshCSGOrAB);
+    emscripten::function<mesh::MeshDataInstance, emscripten::val, emscripten::val>("meshCSGAndAB", &meshCSGAndAB);
 }

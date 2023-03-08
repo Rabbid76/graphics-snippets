@@ -56,47 +56,14 @@ TriangleTriangleIntersection mesh::intersectTriangles(
     return { true, intersectionT0, intersectionT1 };
 }
 
-uint32_t UniqueIndices::getIndex(float x, float y, float z) {
-    auto volumeMapIt = vertexToIndexMap.find(x);
-    if (volumeMapIt == vertexToIndexMap.end()) {
-        auto [newVolumeItemIt, _added] = vertexToIndexMap.emplace(x, PlaneMap());
-        volumeMapIt = newVolumeItemIt;
-    }
-    auto planeMapIt = volumeMapIt->second.find(y);
-    if (planeMapIt == volumeMapIt->second.end()) {
-        auto [newPlaneMapIt, _added] = volumeMapIt->second.emplace(y, DistanceMap());
-        planeMapIt = newPlaneMapIt;
-    }
-    auto indexMapIt = planeMapIt->second.find(z);
-    if (indexMapIt == planeMapIt->second.end()) {
-        auto [newIndexMapIt, _added] = planeMapIt->second.emplace(z, nextIndex++);
-        indexMapIt = newIndexMapIt;
-    }
-    return indexMapIt->second;
-}
-
-uint32_t UniqueIndices::getVertexIndex(const float v[], float epsilon) {
-    return getIndex(std::round(v[0] / epsilon) * epsilon, std::round(v[1] / epsilon) * epsilon, std::round(v[2] / epsilon) * epsilon);
-}
-
-UniqueIndices::IndexMap UniqueIndices::createUniqueIndices(
-        const float vertices[],
-        uint32_t noOfVertices,
-        float epsilon) {
-    IndexMap indexMap;
-    for (uint32_t index = 0; index < noOfVertices; ++index)
-        indexMap.push_back(getVertexIndex(vertices + index*3, epsilon));
-    return indexMap;
-}
-
-MeshIntersection::MeshIntersection(const MeshData &mesh0, const MeshData &mesh1)
+MeshIntersection::MeshIntersection(const MeshDataReference &mesh0, const MeshDataReference &mesh1)
         : mesh0(mesh0)
         , mesh1(mesh1) {
 }
 
 void MeshIntersection::appendMesh(
-        ResultMeshData &target,
-        const ResultMeshData &source,
+        MeshDataInstance &target,
+        const MeshDataInstance &source,
         bool outSide,
         bool invertNormals) {
 
@@ -138,7 +105,7 @@ bool MeshIntersection::operate(
         return false;
 
     intersectTrianglesOfMeshes(epsilon);
-    ResultMeshData resultIntersectAB;
+    MeshDataInstance resultIntersectAB;
     std::swap(result0, resultIntersectAB);
 
     std::swap(mesh0, mesh1);
@@ -148,7 +115,7 @@ bool MeshIntersection::operate(
     std::swap(intersectingTrianglesOfMesh0, intersectingTrianglesOfMesh1);
 
     intersectTrianglesOfMeshes(epsilon);
-    ResultMeshData resultIntersectBA;
+    MeshDataInstance resultIntersectBA;
     std::swap(result0, resultIntersectBA);
 
     appendMesh(result0, resultIntersectAB, meshOperator == Operator::MINUS || meshOperator == Operator::OR, false);
@@ -388,7 +355,7 @@ bool MeshIntersection::calculateIntersectionBox() {
 }
 
 void MeshIntersection::createTriangles(
-        const MeshData &mesh,
+        const MeshDataReference &mesh,
         UniqueIndices::IndexMap &indexMap,
         TriangleContainer &trianglesOfMesh) {
     for (uint32_t i = 0; i < mesh.noOfIndices; i += 3) {
@@ -429,7 +396,7 @@ std::tuple<std::vector<uint32_t>, std::vector<uint32_t>> MeshIntersection::getSh
 std::tuple<Vector3, Vector2> MeshIntersection::calculateNormalAndUVForPointInTriangle(
         const float p[],
         const uint32_t triangleIndices[],
-        const ResultMeshData &mesh) {
+        const MeshDataInstance &mesh) {
     const auto v0 = mesh.vertices.data() + triangleIndices[0] * 3;
     const auto v1 = mesh.vertices.data() + triangleIndices[1] * 3;
     const auto v2 = mesh.vertices.data() + triangleIndices[2] * 3;

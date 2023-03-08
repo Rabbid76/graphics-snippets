@@ -18,6 +18,7 @@ set(
     ../mesh_utility/constructiveSolidGeometry.cpp
     ../mesh_utility/meshMath.cpp
     ../mesh_utility/meshIntersection.cpp
+    ../mesh_utility/meshSpecification.cpp
     )
 
 add_executable(

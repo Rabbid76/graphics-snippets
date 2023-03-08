@@ -50,21 +50,6 @@ namespace mesh {
     TrianglePlaneIntersection intersectTriangleAndPlane( const float p0[], const float p1[], const float p2[], const PlanePtNv &plane);
     TriangleTriangleIntersection intersectTriangles(const float t0p0[], const float t0p1[], const float t0p2[], const float t1p0[], const float t1p1[], const float t1p2[]);
 
-    class UniqueIndices {
-    public:
-        using DistanceMap = std::unordered_map<float, uint32_t>;
-        using PlaneMap = std::unordered_map<float, DistanceMap>;
-        using VolumeMap = std::unordered_map<float, PlaneMap>;
-        using IndexMap = std::vector<uint32_t>;
-
-        uint32_t nextIndex = 0;
-        VolumeMap vertexToIndexMap;
-
-        uint32_t getIndex(float x, float y, float z);
-        uint32_t getVertexIndex(const float v[], float epsilon = DEFAULT_EPSILON);
-        IndexMap createUniqueIndices(const float *vertices, uint32_t noOfVertices, float epsilon = DEFAULT_EPSILON);
-    };
-
     class Triangle {
     public:
         enum class State {
@@ -161,8 +146,8 @@ namespace mesh {
         using TriangleContainer = std::vector<Triangle>;
 
     private:
-        MeshData mesh0;
-        MeshData mesh1;
+        MeshDataReference mesh0;
+        MeshDataReference mesh1;
         UniqueIndices::IndexMap uniqueIndexMapOfMesh0;
         UniqueIndices::IndexMap uniqueIndexMapOfMesh1;
         TriangleContainer trianglesOfMesh0;
@@ -171,27 +156,27 @@ namespace mesh {
         uint32_t noOfOriginalTrianglesMesh1 = 0;
         std::vector<uint32_t> intersectingTrianglesOfMesh0;
         std::vector<uint32_t> intersectingTrianglesOfMesh1;
-        ResultMeshData result0;
+        MeshDataInstance result0;
         UniqueIndices uniqueIndices;
         bool intersectionBoxValid = false;
         Point3 intersectionAABBMin{0, 0, 0};
         Point3 intersectionAABBMax{0, 0, 0};
 
     public:
-        MeshIntersection(const MeshData &mesh0, const MeshData &mesh1);
-        [[nodiscard]] const ResultMeshData &getResult0() const { return result0; }
+        MeshIntersection(const MeshDataReference &mesh0, const MeshDataReference &mesh1);
+        [[nodiscard]] const MeshDataInstance &getResult0() const { return result0; }
         bool intersect(float epsilon = DEFAULT_EPSILON);
         bool operate(Operator meshOperator, float epsilon = DEFAULT_EPSILON);
     private:
         bool prepareIntersectionOfTriangles(float epsilon = DEFAULT_EPSILON);
         void intersectTrianglesOfMeshes(float epsilon = DEFAULT_EPSILON);
         void updateWindingOrderOfResultingTriangles();
-        static void appendMesh(ResultMeshData &target, const ResultMeshData &source, bool outSide, bool invertNormals);
+        static void appendMesh(MeshDataInstance &target, const MeshDataInstance &source, bool outSide, bool invertNormals);
         bool calculateIntersectionBox();
-        void createTriangles(const MeshData &mesh, UniqueIndices::IndexMap &indexMap, TriangleContainer &trianglesOfMesh);
+        void createTriangles(const MeshDataReference &mesh, UniqueIndices::IndexMap &indexMap, TriangleContainer &trianglesOfMesh);
         static void setTriangleStates(TriangleContainer &trianglesOfMesh, std::vector<uint32_t> &intersectingTrianglesOfMesh);
         static std::tuple<std::vector<uint32_t>, std::vector<uint32_t>> getSharedCorners(const std::array<uint32_t, 3> &uniqueIndicesTriangle0, const std::array<uint32_t, 3> &uniqueIndicesTriangle1);
-        static std::tuple<Vector3, Vector2> calculateNormalAndUVForPointInTriangle(const float p[], const uint32_t triangleIndices[], const ResultMeshData &mesh);
+        static std::tuple<Vector3, Vector2> calculateNormalAndUVForPointInTriangle(const float p[], const uint32_t triangleIndices[], const MeshDataInstance &mesh);
         uint32_t addVertexToResult(const float p[], uint32_t uniqueIndex, const uint32_t triangleIndices[]);
         void addTriangleToResultTestArea(const Vector3 &intersectionDirection, std::array<uint32_t, 3> indices);
         void addTriangleToResultWithWindingTestArea(int winding, std::array<uint32_t, 3> indices);

@@ -13,7 +13,7 @@
     "build": "npm run build:client && npm run build:server",
     "dev": "webpack serve --config ./src/client/webpack.dev.js",
     "start": "node ./dist/server/three_server.js",
-    "copy:deploy": "copyfiles --flat ./dist/client/*.js ./deployment"
+    "copy:deploy": "copyfiles --flat ./dist/client/*.js ./deployment  && copyfiles --flat ./buildWasm/*.wasm ./deployment/boolean_3d_operations/ && copyfiles --flat ./buildWasm/*.wasm ./deployment/test_constructive_solid_geometry/"
   },
   "author": "Rabbid76",
   "license": "ISC",

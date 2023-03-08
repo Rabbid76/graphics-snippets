@@ -26,36 +26,36 @@ namespace csg {
         }
     };
 
-    inline Vector3 sub3(const Scalar a[], const Scalar b[]) {
+    inline Vector3 sub3(const Scalar *a, const Scalar *b) {
         return {a[0] - b[0], a[1] - b[1], a[2] - b[2]};
     }
 
-    inline Scalar dot3(const Scalar a[], const Scalar b[]) {
+    inline Scalar dot3(const Scalar *a, const Scalar *b) {
         return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
     }
 
-    inline Vector3 cross3(const Scalar a[], const Scalar b[]) {
+    inline Vector3 cross3(const Scalar *a, const Scalar *b) {
         return {a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]};
     }
 
-    inline Scalar squareLength(const Scalar v[]) {
+    inline Scalar squareLength(const Scalar *v) {
         return v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
     }
 
-    inline Scalar length(const Scalar v[]) {
+    inline Scalar length(const Scalar *v) {
         return std::sqrt(squareLength(v));
     }
 
-    inline Vector3 normalize(const Scalar v[]) {
+    inline Vector3 normalize(const Scalar *v) {
         auto euclideanLength = length(v);
         return {v[0] / euclideanLength, v[1] / euclideanLength, v[2] / euclideanLength};
     }
 
-    inline Vector2 lerp2(const Scalar a[], const Scalar b[], Scalar t) {
+    inline Vector2 lerp2(const Scalar *a, const Scalar *b, Scalar t) {
         return {a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t};
     }
 
-    inline Vector3 lerp3(const Scalar a[], const Scalar b[], Scalar t) {
+    inline Vector3 lerp3(const Scalar *a, const Scalar *b, Scalar t) {
         return {a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t};
     }
 
@@ -433,10 +433,13 @@ namespace csg {
         delete[] types;
     }
 
-    PolygonIndices polygonsFromMeshSpecification(CSG &csg, const mesh::MeshData &mesh);
-    void polygonsToMesh(const CSG &csg, const PolygonIndices *polygonIndices, mesh::ResultMeshData &mesh);
-    PolygonIndices meshOperation(CSG &csg, mesh::Operator op, const mesh::MeshData &meshA, const mesh::MeshData &meshB);
-    void meshOperation(mesh::Operator op, const mesh::MeshData &meshA, const mesh::MeshData &meshB, mesh::ResultMeshData &resultMesh);
+    PolygonIndices polygonsFromMeshSpecification(CSG &csg, const mesh::MeshDataReference &mesh);
+    PolygonIndices polygonsFromMeshSpecification(CSG &csg, const mesh::MeshDataReference &mesh, std::vector<uint32_t> setOfTriangles);
+    void polygonsToMesh(const CSG &csg, const PolygonIndices *polygonIndices, mesh::MeshDataInstance &mesh);
+    PolygonIndices meshOperation(CSG &csg, mesh::Operator op, const mesh::MeshDataReference &meshA, const mesh::MeshDataReference &meshB);
+    void meshOperation(mesh::Operator op, const mesh::MeshDataReference &meshA, const mesh::MeshDataReference &meshB, mesh::MeshDataInstance &resultMesh);
+    PolygonIndices meshOperation(CSG &csg, mesh::Operator op, const mesh::MeshDataReference &meshA, const mesh::MeshDataReference &meshB, const std::vector<uint32_t> &trianglesA, const std::vector<uint32_t> &trianglesB);
+    void meshOperation(mesh::Operator op, const mesh::MeshDataReference &meshA, const mesh::MeshDataReference &meshB, const std::vector<uint32_t> &trianglesA, const std::vector<uint32_t> &trianglesB, mesh::MeshDataInstance &resultMesh);
 }
 
 #endif

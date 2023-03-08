@@ -30,8 +30,8 @@ namespace {
     }
 
     std::tuple<bool, bool, bool> compareMeshData(
-            const ResultMeshData &expectedMeshData,
-            const ResultMeshData &actualMeshData) {
+            const MeshDataInstance &expectedMeshData,
+            const MeshDataInstance &actualMeshData) {
 
         bool verticesEqual = expectedMeshData.vertices.size() == actualMeshData.vertices.size();
         bool indicesOutEqual = expectedMeshData.indicesOut.size() == actualMeshData.indicesOut.size();
@@ -155,47 +155,6 @@ TEST_CASE("mesh intersection - intersect triangle and triangle", "[mesh intersec
     }
 }
 
-TEST_CASE("mesh intersection - unique indices object", "[mesh intersection]") {
-    UniqueIndices uniqueIndices;
-    SECTION("get index") {
-        REQUIRE(uniqueIndices.getIndex(0, 0, 0) == 0);
-        REQUIRE(uniqueIndices.getIndex(1, 0, 0) == 1);
-        REQUIRE(uniqueIndices.getIndex(0, 1, 0) == 2);
-        REQUIRE(uniqueIndices.getIndex(1, 1, 0) == 3);
-        REQUIRE(uniqueIndices.getIndex(0, 0, 1) == 4);
-        REQUIRE(uniqueIndices.getIndex(1, 0, 1) == 5);
-        REQUIRE(uniqueIndices.getIndex(0, 1, 1) == 6);
-        REQUIRE(uniqueIndices.getIndex(1, 1, 1) == 7);
-    }
-    SECTION("get vertex index") {
-        REQUIRE(uniqueIndices.getVertexIndex(Coordinates3{0, 0, 0}) == 0);
-        REQUIRE(uniqueIndices.getVertexIndex(Coordinates3{1, 0, 0}) == 1);
-        REQUIRE(uniqueIndices.getVertexIndex(Coordinates3{0, 1, 0}) == 2);
-        REQUIRE(uniqueIndices.getVertexIndex(Coordinates3{1, 1, 0}) == 3);
-        REQUIRE(uniqueIndices.getVertexIndex(Coordinates3{0, 0, 1}) == 4);
-        REQUIRE(uniqueIndices.getVertexIndex(Coordinates3{1, 0, 1}) == 5);
-        REQUIRE(uniqueIndices.getVertexIndex(Coordinates3{0, 1, 1}) == 6);
-        REQUIRE(uniqueIndices.getVertexIndex(Coordinates3{1, 1, 1}) == 7);
-        REQUIRE(uniqueIndices.getVertexIndex(Coordinates3{0, 0, 0}) == 0);
-        REQUIRE(uniqueIndices.getVertexIndex(Coordinates3{1, 0, 0}) == 1);
-        REQUIRE(uniqueIndices.getVertexIndex(Coordinates3{0, 1, 0}) == 2);
-        REQUIRE(uniqueIndices.getVertexIndex(Coordinates3{1, 1, 0}) == 3);
-        REQUIRE(uniqueIndices.getVertexIndex(Coordinates3{0, 0, 1}) == 4);
-        REQUIRE(uniqueIndices.getVertexIndex(Coordinates3{1, 0, 1}) == 5);
-        REQUIRE(uniqueIndices.getVertexIndex(Coordinates3{0, 1, 1}) == 6);
-        REQUIRE(uniqueIndices.getVertexIndex(Coordinates3{1, 1, 1}) == 7);
-    }
-    SECTION("create unique index") {
-        const float vertices[] = { 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1,  1, 1, 1, 0, 1, 1, 0, 0, 2, 1, 0, 2 };
-        auto actualUniqueIndices = uniqueIndices.createUniqueIndices(vertices, 8);
-        UniqueIndices::IndexMap expectedUniqueIndices{0, 1, 2, 3, 2, 3, 4, 5};
-        REQUIRE(actualUniqueIndices.size() == expectedUniqueIndices.size());
-        for(uint32_t i = 0; i < actualUniqueIndices.size(); ++i) {
-            REQUIRE(actualUniqueIndices[i] == expectedUniqueIndices[i]);
-        }
-    }
-}
-
 TEST_CASE("mesh intersection - triangle object", "[mesh intersection]") {
     SECTION("face normal vector") {
         std::vector<float> vertices{0, 0, 0, 1, 0, 0, 0, 1, 0};
@@ -219,7 +178,7 @@ TEST_CASE("mesh intersection - simple meshes", "[mesh intersection]") {
     std::vector<uint32_t> indicesMesh0;
     std::vector<float> verticesMesh1;
     std::vector<uint32_t> indicesMesh1;
-    ResultMeshData expectedResult;
+    MeshDataInstance expectedResult;
 
     SECTION("triangle 2 penetrates triangle 1") {
         verticesMesh0 = std::vector<float>{0, 0, -1, -1, 0, 1, 1, 0, 1};
@@ -442,13 +401,13 @@ TEST_CASE("mesh intersection - simple meshes", "[mesh intersection]") {
         expectedResult.indicesIn = std::vector<uint32_t>{6, 17, 7, 5, 15, 6, 4, 13, 5, 4, 11, 10, 5, 13, 12, 6, 15, 14, 7, 17, 16, 7, 18, 19, 7, 21, 18, };
     }
 
-    MeshData mesh0{
+    MeshDataReference mesh0{
             (uint32_t)verticesMesh0.size() / 3, (uint32_t)indicesMesh0.size(),
             verticesMesh0.data(), nullptr, nullptr,
             indicesMesh0.data(),
             getMin(verticesMesh0), getMax(verticesMesh0)
     };
-    MeshData mesh1{
+    MeshDataReference mesh1{
             (uint32_t)verticesMesh1.size() / 3, (uint32_t)indicesMesh1.size(),
             verticesMesh1.data(), nullptr, nullptr,
             indicesMesh1.data(),
@@ -472,7 +431,7 @@ TEST_CASE("mesh intersection - operator", "[mesh intersection]") {
     std::vector<uint32_t> indicesMesh0;
     std::vector<float> verticesMesh1;
     std::vector<uint32_t> indicesMesh1;
-    ResultMeshData expectedResult;
+    MeshDataInstance expectedResult;
     Operator op = Operator::MINUS;
 
     SECTION("cube and low resolution sphere") {
@@ -497,13 +456,13 @@ TEST_CASE("mesh intersection - operator", "[mesh intersection]") {
         }
     }
 
-    MeshData mesh0{
+    MeshDataReference mesh0{
             (uint32_t)verticesMesh0.size() / 3, (uint32_t)indicesMesh0.size(),
             verticesMesh0.data(), nullptr, nullptr,
             indicesMesh0.data(),
             getMin(verticesMesh0), getMax(verticesMesh0)
     };
-    MeshData mesh1{
+    MeshDataReference mesh1{
             (uint32_t)verticesMesh1.size() / 3, (uint32_t)indicesMesh1.size(),
             verticesMesh1.data(), nullptr, nullptr,
             indicesMesh1.data(),
