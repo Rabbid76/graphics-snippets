@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>PoC - Rubens Three.js renderer</title>
+        <style>
+            body {
+                overflow: hidden;
+                margin: 0px;
+            }
+            
+            #holder { 
+                border: 10px dashed #ccc;
+                width: 150px; height: 150px; 
+                margin: 20px auto;
+                position: absolute;
+                top: 20px;
+                left: 20px;
+                text-align: center;
+                font-family: Verdana;
+            }
+            #save-button {
+                position: absolute;
+                bottom: 20px;
+                left: 20px;
+            } 
+            #holder.hover { border: 10px dashed #333;}
+            #status-line {
+                position: absolute;
+                bottom: 20px;
+                left: 100px;
+            }
+        </style>
+    </head>
+
+    <body>
+        
+        <div id="status-line"></div>
+        <div id="container">
+            <div id="holder">.exr<br>.hdr<br>.envmap<br><br>.glb<br>.gltf</div>
+            <button id="save-button" type="button">save</button>
+            <canvas id="three_canvas"> </canvas>
+        </div>
+        <script type="module" src="bundle.js"></script>
+    </body>
+</html>

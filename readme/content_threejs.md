@@ -20,6 +20,10 @@ Richard P. Feynman
 
 [Screen Space Ambient Occlusion](https://rabbid76.github.io/graphics-snippets/example/nodejs/three_js_examples/deployment/screen_space_ambient_occlusion)
 
+## GLTF Viewer
+
+[Screen Space Ambient Occlusion](https://rabbid76.github.io/graphics-snippets/example/nodejs/gltf_viewer/deployment)
+
 ## Frustum
 
 [![](../documentation/image/perspective_view_frustum.gif) Perspective Viewing Frustum](https://rabbid76.github.io/graphics-snippets/example/threejs/three_perspective.html)
