@@ -22,7 +22,7 @@ Richard P. Feynman
 
 ## GLTF Viewer
 
-[Screen Space Ambient Occlusion](https://rabbid76.github.io/graphics-snippets/example/nodejs/gltf_viewer/deployment)
+[GLTF/GLB viewer](https://rabbid76.github.io/graphics-snippets/example/nodejs/gltf_viewer/deploy)
 
 ## Frustum
 
