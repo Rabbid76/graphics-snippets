@@ -6,7 +6,7 @@ import {
   CameraUpdate,
   RenderOverrideVisibility,
   RenderPass,
-} from '../renderer/render-util';
+} from '../renderer/render-utility';
 import {
   Camera,
   CustomBlending,

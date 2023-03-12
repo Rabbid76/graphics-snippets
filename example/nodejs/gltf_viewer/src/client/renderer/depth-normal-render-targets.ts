@@ -1,4 +1,4 @@
-import { RenderOverrideVisibility, RenderPass } from './render-util';
+import { RenderOverrideVisibility, RenderPass } from './render-utility';
 import {
   Camera,
   DepthStencilFormat,

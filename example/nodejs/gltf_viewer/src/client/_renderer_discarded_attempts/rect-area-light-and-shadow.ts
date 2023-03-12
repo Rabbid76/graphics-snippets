@@ -10,7 +10,7 @@ import {
   RenderOverrideVisibility,
   RenderPass,
   setOrthographicViewVolumeFromBox,
-} from '../renderer/render-util';
+} from '../renderer/render-utility';
 import {
   IntegralShadowRenderMaterial,
   IntegralShadowBlurMaterial,

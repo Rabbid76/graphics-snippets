@@ -1,4 +1,4 @@
-import { SceneRenderer } from './scene-renderer';
+import { QualityLevel, SceneRenderer } from './scene-renderer';
 import {
   ACESFilmicToneMapping,
   CineonToneMapping,
@@ -12,6 +12,7 @@ import { GUI } from 'dat.gui';
 
 export class SceneRendererGUI {
   private sceneRenderer: SceneRenderer;
+  private qualityLevel = '';
 
   constructor(sceneRenderer: SceneRenderer) {
     this.sceneRenderer = sceneRenderer;
@@ -20,11 +21,13 @@ export class SceneRendererGUI {
   public addGUI(gui: GUI, updateCallback: () => void): void {
     this.addRepresentationalGUI(gui, updateCallback);
     this.addDebugGUI(gui, updateCallback);
-    const contactShadowFolder = gui.addFolder('Ground Contact Shadow');
-    this.addContactShadowGUI(contactShadowFolder, updateCallback);
     this.addShadowTypeGUI(gui, updateCallback);
     const shadowAndAoFolder = gui.addFolder('Shadow and Ambient Occlusion');
     this.addShadowAndAoGUI(shadowAndAoFolder, updateCallback);
+    const groundContactShadowFolder = gui.addFolder('Ground Contact Shadow');
+    this.addGroundContactShadowGUI(groundContactShadowFolder, updateCallback);
+    const groundReflectionFolder = gui.addFolder('Ground Reflection');
+    this.addGroundReflectionGUI(groundReflectionFolder, updateCallback);
     const outlineFolder = gui.addFolder('Outline');
     this.addOutlineGUI(outlineFolder, updateCallback);
   }
@@ -76,6 +79,22 @@ export class SceneRendererGUI {
   }
 
   private addDebugGUI(gui: GUI, updateCallback: () => void): void {
+    const qualityLevels = new Map([
+      ['HIGH', QualityLevel.HIGH],
+      ['MEDIUM', QualityLevel.MEDIUM],
+      ['LOW', QualityLevel.LOW],
+    ]);
+    const outputQualityNames: string[] = [];
+    qualityLevels.forEach((value, key) => outputQualityNames.push(key));
+    gui
+      .add(this, 'qualityLevel', outputQualityNames)
+      .onChange((qualityLevel: string) => {
+        if (qualityLevels.has(qualityLevel)) {
+          this.sceneRenderer.setQualityLevel(
+            qualityLevels.get(qualityLevel) ?? QualityLevel.HIGH
+          );
+        }
+      });
     gui
       .add(this.sceneRenderer, 'debugOutput', {
         off: 'off',
@@ -87,34 +106,9 @@ export class SceneRendererGUI {
         'blur SSAO': 'ssaoblur',
         shadow: 'shadow',
         'blur shadow': 'shadowblur',
+        'ground reflection': 'groundreflection',
       })
       .onChange(() => updateCallback());
-  }
-
-  private addContactShadowGUI(gui: GUI, updateCallback: () => void): void {
-    const updateParameter = (): void => {
-      this.sceneRenderer.groundContactShadow.updateParameters();
-      updateCallback();
-    };
-    const parameters = this.sceneRenderer.groundContactShadow.parameters;
-    gui.add(parameters, 'enabled');
-    gui.add(parameters, 'cameraHelper');
-    gui.add(parameters, 'alwaysUpdate');
-    gui
-      .add(parameters, 'blurMin', 0, 30, 0.1)
-      .onChange(() => updateParameter());
-    gui
-      .add(parameters, 'blurMax', 0, 30, 0.1)
-      .onChange(() => updateParameter());
-    gui
-      .add(parameters, 'darkness', 1, 5, 0.1)
-      .onChange(() => updateParameter());
-    gui
-      .add(parameters, 'opacity', 0, 1, 0.01)
-      .onChange(() => updateParameter());
-    gui
-      .add(parameters, 'cameraFar', 0.1, 10, 0.1)
-      .onChange(() => updateParameter());
   }
 
   public addShadowTypeGUI(gui: GUI, updateCallback: () => void): void {
@@ -140,7 +134,7 @@ export class SceneRendererGUI {
   }
 
   private addShadowAndAoGUI(gui: GUI, updateCallback: () => void): void {
-    const parameters = this.sceneRenderer.shadowAndAoParameters;
+    const parameters = this.sceneRenderer.shadowAndAoPass.parameters;
     gui
       .add(parameters, 'aoAndSoftShadowEnabled')
       .onChange(() => updateCallback());
@@ -167,12 +161,52 @@ export class SceneRendererGUI {
       .onChange(() => updateCallback());
   }
 
-  private addOutlineGUI(gui: GUI, updateCallback: () => void): void {
-    const updateOutlineParameters = (): void => {
-      this.sceneRenderer.outlineRenderer.updateOutlineParameters();
+  private addGroundContactShadowGUI(
+    gui: GUI,
+    updateCallback: () => void
+  ): void {
+    const updateParameter = (): void => {
+      this.sceneRenderer.groundContactShadow.applyParameters();
       updateCallback();
     };
-    const parameters = this.sceneRenderer.outlineParameters;
+    const parameters =
+      this.sceneRenderer.parameters.groundContactShadowParameters;
+    gui.add(parameters, 'enabled');
+    gui.add(parameters, 'cameraHelper');
+    gui.add(parameters, 'alwaysUpdate');
+    gui
+      .add(parameters, 'blurMin', 0, 30, 0.1)
+      .onChange(() => updateParameter());
+    gui
+      .add(parameters, 'blurMax', 0, 30, 0.1)
+      .onChange(() => updateParameter());
+    gui
+      .add(parameters, 'darkness', 1, 5, 0.1)
+      .onChange(() => updateParameter());
+    gui
+      .add(parameters, 'opacity', 0, 1, 0.01)
+      .onChange(() => updateParameter());
+    gui
+      .add(parameters, 'cameraFar', 0.1, 10, 0.1)
+      .onChange(() => updateParameter());
+  }
+
+  private addGroundReflectionGUI(gui: GUI, updateCallback: () => void): void {
+    const parameters = this.sceneRenderer.parameters.groundReflectionParameters;
+    gui.add(parameters, 'enabled');
+    gui.add(parameters, 'intensity', 0.0, 1.0).onChange(() => updateCallback());
+    gui
+      .add(parameters, 'brightness', 0.0, 2.0)
+      .onChange(() => updateCallback());
+    gui.add(parameters, 'blur', 0.0, 10.0).onChange(() => updateCallback());
+  }
+
+  private addOutlineGUI(gui: GUI, updateCallback: () => void): void {
+    const updateOutlineParameters = (): void => {
+      this.sceneRenderer.outlineRenderer.applyParameters();
+      updateCallback();
+    };
+    const parameters = this.sceneRenderer.outlineRenderer.parameters;
     gui.add(parameters, 'enabled');
     gui
       .add(parameters, 'edgeStrength', 0.5, 20)

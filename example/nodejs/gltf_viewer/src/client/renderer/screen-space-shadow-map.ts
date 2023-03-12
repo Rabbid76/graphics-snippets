@@ -3,7 +3,7 @@ import {
   CameraUpdate,
   RenderPass,
   setOrthographicViewVolumeFromBox,
-} from './render-util';
+} from './render-utility';
 import {
   BasicShadowMap,
   Box3,

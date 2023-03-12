@@ -1,4 +1,4 @@
-import { getMaxSamples } from '../renderer/render-util'
+import { getMaxSamples } from '../renderer/render-utility'
 import * as THREE from 'three'
 import { Pass } from 'three/examples/jsm/postprocessing/Pass';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'

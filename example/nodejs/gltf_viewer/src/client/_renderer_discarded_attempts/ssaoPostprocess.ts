@@ -1,4 +1,4 @@
-import { getMaxSamples } from '../renderer/render-util'
+import { getMaxSamples } from '../renderer/render-utility'
 //import { SSAOMSAAPass} from './ssaoMsaaPass'
 // @ts-ignore
 import { SSSO_MSAA_Pass } from './ssaoMsaaPassJs'

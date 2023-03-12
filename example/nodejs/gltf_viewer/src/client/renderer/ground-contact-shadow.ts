@@ -150,7 +150,37 @@ export class GroundContactShadow {
     scene.remove(this.cameraHelper);
   }
 
-  public updateParameters() {
+  public updateParameters(parameters: any) {
+    if (parameters.enabled !== undefined) {
+      this.parameters.enabled = parameters.enabled;
+    }
+    if (parameters.cameraHelper !== undefined) {
+      this.parameters.cameraHelper = parameters.cameraHelper;
+    }
+    if (parameters.alwaysUpdate !== undefined) {
+      this.parameters.alwaysUpdate = parameters.alwaysUpdate;
+    }
+    if (parameters.blurMin !== undefined) {
+      this.parameters.blurMin = parameters.blurMin;
+    }
+    if (parameters.blurMax !== undefined) {
+      this.parameters.blurMax = parameters.blurMax;
+    }
+    if (parameters.darkness !== undefined) {
+      this.parameters.darkness = parameters.darkness;
+    }
+    if (parameters.opacity !== undefined) {
+      this.parameters.opacity = parameters.opacity;
+    }
+    if (parameters.planeSize !== undefined) {
+      this.parameters.planeSize = parameters.planeSize;
+    }
+    if (parameters.cameraFar !== undefined) {
+      this.parameters.cameraFar = parameters.cameraFar;
+    }
+  }
+
+  public applyParameters() {
     if (
       this.depthMaterial.userData.darkness.value !== this.parameters.darkness
     ) {

@@ -3,7 +3,7 @@ import {
   SSAOBlurMaterial,
 } from './ssao-materials-and-shaders';
 import { DepthAndNormalTextures } from '../renderer/depth-normal-render-targets';
-import { RenderPass } from '../renderer/render-util';
+import { RenderPass } from '../renderer/render-utility';
 import {
   Camera,
   DataTexture,

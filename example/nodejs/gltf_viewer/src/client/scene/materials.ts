@@ -1,4 +1,4 @@
-import { loadAndSetTexture } from '../renderer/render-util'
+import { loadAndSetTexture } from '../renderer/render-utility'
 import * as THREE from 'three'
 
 export const createPreviewMaterial = (): THREE.Material => {

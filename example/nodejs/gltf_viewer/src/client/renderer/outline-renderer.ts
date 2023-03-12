@@ -19,7 +19,7 @@ export class OutLineRenderer {
   private height: number = 0;
   private effectComposer: EffectComposer | null = null;
   public outlinePass: OutlinePass | null = null;
-  public outlineParameters: OutlineParameters;
+  public parameters: OutlineParameters;
   public outlinePassActivated = false;
 
   get isOutlinePassActivated(): boolean {
@@ -35,7 +35,7 @@ export class OutLineRenderer {
     this.effectComposer = effectComposer;
     this.width = width;
     this.height = height;
-    this.outlineParameters = {
+    this.parameters = {
       enabled: parameters.enable ?? true,
       edgeStrength: parameters.edgeStrength ?? 2.0,
       edgeGlow: parameters.edgeGlow ?? 1.0,
@@ -57,26 +57,51 @@ export class OutLineRenderer {
     this.outlinePass?.setSize(width, height);
   }
 
-  public updateOutlineParameters(): void {
+  public updateParameters(parameters: any): void {
+    if (parameters.enabled !== undefined) {
+      this.parameters.enabled = parameters.enabled;
+    }
+    if (parameters.edgeStrength !== undefined) {
+      this.parameters.edgeStrength = parameters.edgeStrength;
+    }
+    if (parameters.edgeStrength !== undefined) {
+      this.parameters.edgeStrength = parameters.edgeStrength;
+    }
+    if (parameters.edgeGlow !== undefined) {
+      this.parameters.edgeGlow = parameters.edgeGlow;
+    }
+    if (parameters.edgeThickness !== undefined) {
+      this.parameters.edgeThickness = parameters.edgeThickness;
+    }
+    if (parameters.pulsePeriod !== undefined) {
+      this.parameters.pulsePeriod = parameters.pulsePeriod;
+    }
+    if (parameters.usePatternTexture !== undefined) {
+      this.parameters.usePatternTexture = parameters.usePatternTexture;
+    }
+    if (parameters.visibleEdgeColor !== undefined) {
+      this.parameters.visibleEdgeColor = parameters.visibleEdgeColor;
+    }
+    if (parameters.hiddenEdgeColor !== undefined) {
+      this.parameters.hiddenEdgeColor = parameters.hiddenEdgeColor;
+    }
+  }
+
+  public applyParameters(): void {
     if (!this.outlinePass) {
       return;
     }
-    this.outlinePass.edgeStrength = this.outlineParameters.edgeStrength;
-    this.outlinePass.edgeGlow = this.outlineParameters.edgeGlow;
-    this.outlinePass.edgeThickness = this.outlineParameters.edgeThickness;
-    this.outlinePass.pulsePeriod = this.outlineParameters.pulsePeriod;
-    this.outlinePass.usePatternTexture =
-      this.outlineParameters.usePatternTexture;
-    this.outlinePass.visibleEdgeColor.set(
-      this.outlineParameters.visibleEdgeColor
-    );
-    this.outlinePass.hiddenEdgeColor.set(
-      this.outlineParameters.hiddenEdgeColor
-    );
+    this.outlinePass.edgeStrength = this.parameters.edgeStrength;
+    this.outlinePass.edgeGlow = this.parameters.edgeGlow;
+    this.outlinePass.edgeThickness = this.parameters.edgeThickness;
+    this.outlinePass.pulsePeriod = this.parameters.pulsePeriod;
+    this.outlinePass.usePatternTexture = this.parameters.usePatternTexture;
+    this.outlinePass.visibleEdgeColor.set(this.parameters.visibleEdgeColor);
+    this.outlinePass.hiddenEdgeColor.set(this.parameters.hiddenEdgeColor);
   }
 
   public activateOutline(scene: Scene, camera: Camera): void {
-    if (!this.outlineParameters.enabled) {
+    if (!this.parameters.enabled) {
       this.deactivateOutline();
       return;
     }
@@ -98,7 +123,7 @@ export class OutLineRenderer {
       this.outlinePass.renderScene = scene;
       this.outlinePass.renderCamera = camera;
     }
-    this.updateOutlineParameters();
+    this.applyParameters();
     if (this.effectComposer) {
       this.effectComposer.addPass(this.outlinePass);
     }

@@ -1,4 +1,5 @@
 import { SceneProperties, RenderScene } from './scene/sceneManager';
+import { QualityLevel} from './renderer/scene-renderer'
 import { SceneRendererGUI } from './renderer/scene-renderer-gui'
 import { MaterialGUI } from './scene/material-gui'
 import { LightSourcesGUI } from './scene/lightSources'
@@ -83,7 +84,7 @@ const stats = new Stats();
 document.body.appendChild(stats.dom);
 
 const renderScene = new RenderScene(renderer)
-renderScene.shadowAndAoParameters.aoAndSoftShadowEnabled = !isMobile
+renderScene.sceneRenderer.setQualityLevel(isMobile ? QualityLevel.LOW : QualityLevel.HIGH);
 renderScene.createCntrols()
 renderScene.setEnvironment()
 renderScene.updateLightAndShadow()
@@ -109,13 +110,6 @@ let generalProperties: GeneralProperties = {
     sceneName: 'default',
 }
 
-renderScene.sceneRenderer.outlineParameters.enabled = false;
-renderScene.sceneRenderer.outlineParameters.edgeStrength = 5.0;
-renderScene.sceneRenderer.outlineParameters.edgeGlow = 1.0;
-renderScene.sceneRenderer.outlineParameters.edgeThickness = 1.0;
-//renderScene.sceneRenderer.outlineParameters.visibleEdgeColor = 0xff0000;
-//renderScene.sceneRenderer.outlineParameters.hiddenEdgeColor = 0xff0000;
-
 const setGroundMaterial = () => {
     let groundMaterial: GroundMaterialType = GroundMaterialType.Transparent
     switch(generalProperties.groundMaterial.toLocaleLowerCase()) {
@@ -134,8 +128,10 @@ gui.add(generalProperties, 'groundMaterial', {
     'parquet': 'parquet', 
     'pavement': 'pavement'
 }).onChange(() => setGroundMaterial())
-gui.add(generalProperties, 'bloom').onChange((enabled: boolean) => renderScene.getPostProcessingEffects().setBloom(enabled))
-gui.add(generalProperties, 'ssr').onChange((enabled: boolean) => renderScene.getPostProcessingEffects().setSSR(enabled))
+const experimentalFolder = gui.addFolder('experimatal options');
+experimentalFolder.add(renderScene.sceneRenderer, 'groundReflection');
+experimentalFolder.add(generalProperties, 'bloom').onChange((enabled: boolean) => renderScene.getPostProcessingEffects().setBloom(enabled));
+experimentalFolder.add(generalProperties, 'ssr').onChange((enabled: boolean) => renderScene.getPostProcessingEffects().setSSR(enabled));
 const sceneRendererGUI = new SceneRendererGUI(renderScene.sceneRenderer);
 sceneRendererGUI.addGUI(gui, () => {});
 const materialGUI = new MaterialGUI();

@@ -16,12 +16,11 @@ import {
     createNoiseTexture,
     getMaxSamples,
     SceneVolume
-} from '../renderer/render-util'
+} from '../renderer/render-utility'
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
 import { GLTFLoader, GLTF } from "three/examples/jsm/loaders/GLTFLoader";
-import { ShadowAndAoParameters } from '../renderer/shadow-and-ao-pass'
 import { Controls } from './controls'
-import { SceneRenderer } from '../renderer/scene-renderer'
+import { QualityLevel, SceneRenderer, SceneRendererParameters, SceneGroupType } from '../renderer/scene-renderer'
 import * as THREE from 'three'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 
@@ -50,8 +49,8 @@ export class RenderScene {
     private environmentLoader: EnvironmentLoader;
     private transformControls?: TransformControls
 
-    public get shadowAndAoParameters() : ShadowAndAoParameters {
-        return this.sceneRenderer.shadowAndAoParameters;
+    public get sceneRenderParameters() : SceneRendererParameters {
+        return this.sceneRenderer.parameters;
     }
 
     public constructor(renderer: THREE.WebGLRenderer) {
@@ -77,12 +76,23 @@ export class RenderScene {
         this.sceneRenderer.groundContactShadow.addToScene(this.scene);
         this.turnTableGroup =  new THREE.Group()
         this.scene.add(this.turnTableGroup)
+        this.sceneRenderer.sceneGroups.addToGroup(SceneGroupType.OBJECTS, this.turnTableGroup);
         this.noiseTexture = createNoiseTexture(512, 0.9, 1)
         this.noiseTexture.anisotropy = 16;
         this.noiseTexture.wrapS = THREE.RepeatWrapping;
         this.noiseTexture.wrapT = THREE.RepeatWrapping;
         this.update(undefined, this.constructLoadingGeometry(1))
-        this.sceneRenderer.optimizeForInteraction();
+        this.sceneRenderer.updateParameters({
+          outlineParameters: {
+            enabled: false,
+            edgeStrength: 5.0,
+            edgeGlow: 1.0,
+            edgeThickness: 1.0,
+            //visibleEdgeColor: 0xff0000,
+            //hiddenEdgeColor: 0xff0000,
+          },
+        });
+        this.sceneRenderer.setQualityLevel(QualityLevel.HIGH);
     }
 
     public getCamera(): THREE.PerspectiveCamera {
@@ -239,7 +249,7 @@ export class RenderScene {
             this.scene.background = new THREE.Color(0x404040);
         }
 
-        if (this.sceneRenderer.outlineParameters.enabled) {
+        if (this.sceneRenderer.outlineRenderer.parameters.enabled) {
             this.raycaster.setFromCamera(mousePosition, this.camera);
             const intersects = this.raycaster.intersectObject(this.turnTableGroup, true);
             let selectedObject = intersects.length > 0 ? intersects[0].object : undefined
@@ -316,7 +326,7 @@ export class RenderScene {
         const offset_y = -size.y / 2
         this.turnTableGroup.position.y = offset_y
         this.turnTableGroup.add(meshGroup)
-        this.sceneRenderer.groundContactShadow.group.position.y = offset_y
+        this.sceneRenderer.setGroundLevel(offset_y);
         this.sceneVolume.update(meshGroup)
     }
 

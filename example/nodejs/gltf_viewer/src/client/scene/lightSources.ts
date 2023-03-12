@@ -1,5 +1,5 @@
 import { SceneRenderer } from '../renderer/scene-renderer'
-import { SceneVolume } from '../renderer/render-util'
+import { SceneVolume } from '../renderer/render-utility'
 import * as THREE from 'three'
 import { GUI } from 'dat.gui'
 

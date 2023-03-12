@@ -2,7 +2,11 @@ import {
   AddEquation,
   DstAlphaFactor,
   DstColorFactor,
+  Matrix3,
   Matrix4,
+  NoBlending,
+  OrthographicCamera,
+  PerspectiveCamera,
   ShaderMaterial,
   Texture,
   UniformsUtils,
@@ -15,13 +19,15 @@ const CopyShader = {
     tDiffuse: { value: null as Texture | null },
     colorTransform: { value: new Matrix4() },
     multiplyChannels: { value: 0 },
+    uvTransform: { value: new Matrix3() },
   },
   vertexShader: `
         varying vec2 vUv;
+        uniform mat3 uvTransform;
   
         void main() {
-            vUv = uv;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+            vUv = (uvTransform * vec3(uv, 1.0)).xy;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
         }`,
   fragmentShader: `
         uniform sampler2D tDiffuse;
@@ -56,7 +62,28 @@ export class CopyTransformMaterial extends ShaderMaterial {
     0,
     1
   );
-  constructor(parameters?: any) {
+  public static flipYuvTransform: Matrix3 = new Matrix3().set(
+    1,
+    0,
+    0,
+    0,
+    -1,
+    1,
+    0,
+    0,
+    1
+  );
+  constructor(parameters?: any, additiveBlending: boolean = true) {
+    const blendingParameters = additiveBlending
+      ? {
+          blendSrc: DstColorFactor,
+          blendDst: ZeroFactor,
+          blendEquation: AddEquation,
+          blendSrcAlpha: DstAlphaFactor,
+          blendDstAlpha: ZeroFactor,
+          blendEquationAlpha: AddEquation,
+        }
+      : {};
     super({
       uniforms: UniformsUtils.clone(CopyShader.uniforms),
       vertexShader: CopyShader.vertexShader,
@@ -64,12 +91,7 @@ export class CopyTransformMaterial extends ShaderMaterial {
       transparent: true,
       depthTest: false,
       depthWrite: false,
-      blendSrc: DstColorFactor,
-      blendDst: ZeroFactor,
-      blendEquation: AddEquation,
-      blendSrcAlpha: DstAlphaFactor,
-      blendDstAlpha: ZeroFactor,
-      blendEquationAlpha: AddEquation,
+      ...blendingParameters,
     });
     this.update(parameters);
   }
@@ -83,6 +105,9 @@ export class CopyTransformMaterial extends ShaderMaterial {
     }
     if (parameters?.multiplyChannels !== undefined) {
       this.uniforms.multiplyChannels.value = parameters?.multiplyChannels;
+    }
+    if (parameters?.uvTransform !== undefined) {
+      this.uniforms.uvTransform.value = parameters?.uvTransform;
     }
     if (parameters?.blending !== undefined) {
       this.blending = parameters?.blending;
@@ -288,4 +313,122 @@ export const VerticalBlurShadowShader = {
         gl_FragColor = min(sum, baseColor);
   #endif
     }`,
+};
+
+const glslLinearDepthVertexShader = `varying vec2 vUv;
+  void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+  }`;
+
+const glslLinearDepthFragmentShader = `uniform sampler2D tDepth;
+  uniform float cameraNear;
+  uniform float cameraFar;
+  varying vec2 vUv;
+  
+  #include <packing>
+  
+  float getLinearDepth(const in vec2 screenPosition) {
+      #if PERSPECTIVE_CAMERA == 1
+          float fragCoordZ = texture2D(tDepth, screenPosition).x;
+          float viewZ = perspectiveDepthToViewZ(fragCoordZ, cameraNear, cameraFar);
+          return viewZToOrthographicDepth(viewZ, cameraNear, cameraFar);
+      #else
+          return texture2D(tDepth, screenPosition).x;c
+      #endif
+  }
+  
+  void main() {
+      float depth = getLinearDepth(vUv);
+      gl_FragColor = vec4(vec3(1.0 - depth), 1.0);
+  }`;
+
+export class LinearDepthRenderMaterial extends ShaderMaterial {
+  private static linearDepthShader: any = {
+    uniforms: {
+      tDepth: { value: null as Texture | null },
+      cameraNear: { value: 0.1 },
+      cameraFar: { value: 1 },
+    },
+    defines: {
+      PERSPECTIVE_CAMERA: 1,
+    },
+    vertexShader: glslLinearDepthVertexShader,
+    fragmentShader: glslLinearDepthFragmentShader,
+  };
+
+  constructor(parameters?: any) {
+    super({
+      defines: Object.assign(
+        {},
+        LinearDepthRenderMaterial.linearDepthShader.defines
+      ),
+      uniforms: UniformsUtils.clone(
+        LinearDepthRenderMaterial.linearDepthShader.uniforms
+      ),
+      vertexShader: LinearDepthRenderMaterial.linearDepthShader.vertexShader,
+      fragmentShader:
+        LinearDepthRenderMaterial.linearDepthShader.fragmentShader,
+      blending: NoBlending,
+    });
+    this.update(parameters);
+  }
+
+  public update(parameters?: any): LinearDepthRenderMaterial {
+    if (parameters?.depthTexture !== undefined) {
+      this.uniforms.tDepth.value = parameters?.depthTexture;
+    }
+    if (parameters?.camera !== undefined) {
+      const camera =
+        (parameters?.camera as OrthographicCamera) ||
+        (parameters?.camera as PerspectiveCamera);
+      this.uniforms.cameraNear.value = camera.near;
+      this.uniforms.cameraFar.value = camera.far;
+    }
+    return this;
+  }
+}
+
+const glslLinearDepthNormalVertexShader = `varying vec3 vNormal;
+  varying vec2 vUv;
+  void main() {
+      vNormal = normalMatrix * normal;
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+  }`;
+
+const glslLinearDepthNormalFragmentShader = `uniform sampler2D tDepth;
+  uniform float cameraNear;
+  uniform float cameraFar;
+  varying vec3 vNormal;
+  varying vec2 vUv;
+  
+  #include <packing>
+  
+  float getLinearDepth(const in vec2 screenPosition) {
+  #if PERSPECTIVE_CAMERA == 1
+      float fragCoordZ = texture2D(tDepth, screenPosition).x;
+      float viewZ = perspectiveDepthToViewZ(fragCoordZ, cameraNear, cameraFar);
+      return viewZToOrthographicDepth(viewZ, cameraNear, cameraFar);
+  #else
+      return texture2D(tDepth, screenPosition).x;
+  #endif
+  }
+  
+  void main() {
+      float depth = getLinearDepth(vUv);
+      gl_FragColor = vec4(vNormal, 1.0 - depth);
+  }`;
+
+export const linearDepthNormalShader = {
+  uniforms: {
+    tDepth: { value: null as Texture | null },
+    cameraNear: { value: 0.1 },
+    cameraFar: { value: 1 },
+  },
+  defines: {
+    PERSPECTIVE_CAMERA: 1,
+  },
+  vertexShader: glslLinearDepthNormalVertexShader,
+  fragmentShader: glslLinearDepthNormalFragmentShader,
 };
