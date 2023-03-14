@@ -235,6 +235,7 @@ export class GroundContactShadow {
       this.groundMesh.geometry = geometry;
     }
     if (material) {
+      material.depthWrite = false;
       material.polygonOffset = true;
       material.polygonOffsetFactor = 4;
       material.polygonOffsetUnits = 4;

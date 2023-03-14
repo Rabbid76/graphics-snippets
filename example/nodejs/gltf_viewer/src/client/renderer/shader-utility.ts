@@ -27,7 +27,7 @@ const CopyShader = {
   
         void main() {
             vUv = (uvTransform * vec3(uv, 1.0)).xy;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            gl_Position = (projectionMatrix * modelViewMatrix * vec4(position, 1.0)).xyww;
         }`,
   fragmentShader: `
         uniform sampler2D tDiffuse;

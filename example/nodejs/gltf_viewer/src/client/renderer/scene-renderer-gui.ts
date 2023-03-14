@@ -198,7 +198,8 @@ export class SceneRendererGUI {
     gui
       .add(parameters, 'brightness', 0.0, 2.0)
       .onChange(() => updateCallback());
-    gui.add(parameters, 'blur', 0.0, 10.0).onChange(() => updateCallback());
+    gui.add(parameters, 'blurHorizontal', 0.0, 10.0).onChange(() => updateCallback());
+    gui.add(parameters, 'blurVertical', 0.0, 10.0).onChange(() => updateCallback());
   }
 
   private addOutlineGUI(gui: GUI, updateCallback: () => void): void {

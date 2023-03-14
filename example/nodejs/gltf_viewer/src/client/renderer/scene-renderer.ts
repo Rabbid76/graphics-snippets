@@ -352,22 +352,16 @@ export class SceneRenderer {
           1
         );
       });
-    } else if (this.groundReflectionPass.parameters.enabled) {
-      const background = scene.background;
-      this.sceneGroups.setVisibilityOfGroup(SceneGroupType.OBJECTS, false);
-      renderer.render(scene, camera);
-      this.sceneGroups.setVisibilityOfGroup(SceneGroupType.OBJECTS, true);
-      this.sceneGroups.setVisibilityOfGroup(SceneGroupType.GROUND, false);
-      scene.background = null; // TDOD here or below?
-      this.groundReflectionPass.render(renderer, scene, camera);
-      //scene.background = null; TODO here or above?
-      renderer.autoClear = false;
-      renderer.render(scene, camera);
-      renderer.autoClear = true;
-      scene.background = background;
-      this.sceneGroups.setVisibilityOfGroup(SceneGroupType.GROUND, true);
     } else {
       renderer.render(scene, camera);
+    }
+    if (this.groundReflectionPass.parameters.enabled) {
+      //const background = scene.background;
+      //scene.background = null;
+      this.sceneGroups.setVisibilityOfGroup(SceneGroupType.GROUND, false);
+      this.groundReflectionPass.render(renderer, scene, camera);
+      this.sceneGroups.setVisibilityOfGroup(SceneGroupType.GROUND, true);
+      //scene.background = background;
     }
     this.renderShadowAndAo(renderer, scene, camera);
   }
@@ -501,6 +495,7 @@ export class SceneRenderer {
             texture: this.groundReflectionPass.reflectionRenderTarget.texture,
             blending: NoBlending,
             colorTransform: CopyTransformMaterial.defaultTransform,
+            uvTransform: CopyTransformMaterial.flipYuvTransform,
           }),
           null
         );

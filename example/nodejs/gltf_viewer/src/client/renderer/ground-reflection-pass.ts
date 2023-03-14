@@ -17,7 +17,8 @@ export interface GroundReflectionParameters {
   enabled: boolean;
   intensity: number;
   brightness: number;
-  blur: number;
+  blurHorizontal: number;
+  blurVertical: number;
   groundLevel: number;
   renderTargetDownScale: number;
 }
@@ -68,7 +69,8 @@ export class GroundReflectionPass {
       enabled: parameters.enabled ?? false,
       intensity: parameters.intensity ?? 0.25,
       brightness: parameters.brightness ?? 1.0,
-      blur: parameters.blur ?? 5.0,
+      blurHorizontal: parameters.blurHorizontal ?? 3.0,
+      blurVertical: parameters.blurHorizontal ?? 6.0,
       groundLevel: parameters.groundLevel ?? 0,
       renderTargetDownScale: parameters.renderTargetDownScale ?? 4,
     };
@@ -110,8 +112,11 @@ export class GroundReflectionPass {
     if (parameters.brightness !== undefined) {
       this.parameters.brightness = parameters.brightness;
     }
-    if (parameters.blur !== undefined) {
-      this.parameters.blur = parameters.blur;
+    if (parameters.blurHorizontal !== undefined) {
+      this.parameters.blurHorizontal = parameters.blurHorizontal;
+    }
+    if (parameters.blurVertical !== undefined) {
+      this.parameters.blurVertical = parameters.blurVertical;
     }
     if (parameters.groundLevel !== undefined) {
       this.parameters.groundLevel = parameters.groundLevel;
@@ -146,6 +151,8 @@ export class GroundReflectionPass {
       multiplyChannels: 0,
       uvTransform: CopyTransformMaterial.flipYuvTransform,
     });
+    this._copyMaterial.depthTest = true;
+    this._copyMaterial.depthWrite = false;
   }
 
   public render(renderer: WebGLRenderer, scene: Scene, camera: Camera): void {
@@ -158,7 +165,7 @@ export class GroundReflectionPass {
       camera,
       this.reflectionRenderTarget
     );
-    if (this.parameters.blur > 0) {
+    if (this.parameters.blurHorizontal > 0 || this.parameters.blurVertical > 0) {
       this.blurReflection(renderer);
     }
     this.updateCopyMaterial();
@@ -208,7 +215,7 @@ export class GroundReflectionPass {
   public blurReflection(renderer: WebGLRenderer): void {
     const renderTargetBackup = renderer.getRenderTarget();
     this.horizontalBlurMaterial.uniforms.h.value =
-      (this.parameters.blur * 1) / this.width;
+      this.parameters.blurHorizontal / this.width;
     this.horizontalBlurMaterial.uniforms.tDiffuse.value =
       this.reflectionRenderTarget.texture;
     renderer.setRenderTarget(this.blurRenderTarget);
@@ -218,7 +225,7 @@ export class GroundReflectionPass {
       renderer.getRenderTarget()
     );
     this.verticalBlurMaterial.uniforms.v.value =
-      (this.parameters.blur * 1) / this.height;
+      this.parameters.blurVertical / this.height;
     this.verticalBlurMaterial.uniforms.tDiffuse.value =
       this.blurRenderTarget.texture;
     renderer.setRenderTarget(this.reflectionRenderTarget);
