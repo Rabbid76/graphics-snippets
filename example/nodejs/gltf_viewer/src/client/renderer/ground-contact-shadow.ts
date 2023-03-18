@@ -1,14 +1,9 @@
-import {
-  HorizontalBlurContactShadowShader,
-  VerticalBlurContactShadowShader,
-} from './shader-utility';
+import { BlurContactShadowShader } from './shader-utility';
 import {
   Box3,
-  BufferGeometry,
   CameraHelper,
   DoubleSide,
   Group,
-  Material,
   Mesh,
   MeshBasicMaterial,
   MeshDepthMaterial,
@@ -37,21 +32,20 @@ export class GroundContactShadow {
   public shadowMapSize: number;
   public parameters: GroundContactShadowParameters;
   public renderer: WebGLRenderer;
-  public group: Group;
   public cameraHelper: CameraHelper;
   public needsUpdate: boolean = true;
   public noNeedOfUpdateCount = 0;
-  private groundMesh?: Mesh;
   private shadowGround: Mesh;
   private blurPlane: Mesh;
   private renderTarget: WebGLRenderTarget;
   private renderTargetBlur: WebGLRenderTarget;
   private depthMaterial: MeshDepthMaterial;
-  private horizontalBlurMaterial: ShaderMaterial;
-  private verticalBlurMaterial: ShaderMaterial;
+  private blurMaterial: ShaderMaterial;
   private shadowCamera: OrthographicCamera;
+  private groundGroup: Group;
 
-  constructor(renderer: WebGLRenderer, parameters: any) {
+  constructor(renderer: WebGLRenderer, groundGroup: Group, parameters: any) {
+    this.groundGroup = groundGroup;
     this.shadowMapSize = parameters.shadowMapSize ?? 1024;
     this.parameters = {
       enabled: parameters.enabled ?? true,
@@ -66,9 +60,6 @@ export class GroundContactShadow {
     };
 
     this.renderer = renderer;
-    this.group = new Group();
-    //this.group.rotateX(-Math.PI/2);
-
     this.renderTarget = new WebGLRenderTarget(
       this.shadowMapSize,
       this.shadowMapSize
@@ -98,15 +89,15 @@ export class GroundContactShadow {
     this.shadowGround = new Mesh(shadowGroundGeometry, shadowGroundMaterial);
     this.shadowGround.renderOrder = 1;
     this.shadowGround.receiveShadow = false;
-    this.group.add(this.shadowGround);
+    this.groundGroup.add(this.shadowGround);
 
     this.blurPlane = new Mesh(shadowGroundGeometry);
     this.blurPlane.visible = false;
-    this.group.add(this.blurPlane);
+    this.groundGroup.add(this.blurPlane);
 
     this.shadowCamera = new OrthographicCamera(-1, 1, -1, 1, -1, 1);
     this.shadowCamera.rotation.x = Math.PI; // make camera look upwards
-    this.group.add(this.shadowCamera);
+    this.groundGroup.add(this.shadowCamera);
 
     this.cameraHelper = new CameraHelper(this.shadowCamera);
     this.cameraHelper.visible = this.parameters.cameraHelper;
@@ -126,27 +117,20 @@ export class GroundContactShadow {
     this.depthMaterial.side = DoubleSide;
     this.depthMaterial.depthTest = true;
     this.depthMaterial.depthWrite = true;
-    this.horizontalBlurMaterial = new ShaderMaterial(
-      HorizontalBlurContactShadowShader
+    this.blurMaterial = new ShaderMaterial(
+      BlurContactShadowShader
     );
-    this.horizontalBlurMaterial.depthTest = false;
-    this.verticalBlurMaterial = new ShaderMaterial(
-      VerticalBlurContactShadowShader
-    );
-    this.verticalBlurMaterial.depthTest = false;
-
+    this.blurMaterial.depthTest = false;
     this.updatePlaneAndShadowCamera();
   }
 
   public addToScene(scene: Scene) {
-    if (this.group.parent !== scene) {
-      scene.add(this.group);
+    if (this.cameraHelper.parent !== scene) {
       scene.add(this.cameraHelper);
     }
   }
 
   public removeFromScene(scene: Scene) {
-    scene.remove(this.group);
     scene.remove(this.cameraHelper);
   }
 
@@ -201,8 +185,9 @@ export class GroundContactShadow {
   public updateBounds(bounds: Box3) {
     const boundsCenter = bounds.getCenter(new Vector3());
     // y is always 0
-    this.group.position.set(boundsCenter.x, 0, boundsCenter.z);
-    this.group.updateMatrixWorld();
+    // TODO - this.shadowGround.position?
+    this.groundGroup.position.set(boundsCenter.x, 0, boundsCenter.z);
+    this.groundGroup.updateMatrixWorld();
     const boundsSize = bounds.getSize(new Vector3());
     const maxPlanSideLength = Math.max(boundsSize.x, boundsSize.z);
     this.parameters.planeSize = maxPlanSideLength + 2;
@@ -226,25 +211,8 @@ export class GroundContactShadow {
     this.needsUpdate = true;
   }
 
-  public updateGround(geometry?: BufferGeometry, material?: Material) {
-    if (!this.groundMesh) {
-      this.groundMesh = new Mesh();
-      this.group.add(this.groundMesh);
-    }
-    if (geometry) {
-      this.groundMesh.geometry = geometry;
-    }
-    if (material) {
-      material.depthWrite = false;
-      material.polygonOffset = true;
-      material.polygonOffsetFactor = 4;
-      material.polygonOffsetUnits = 4;
-      material.needsUpdate = true;
-      this.groundMesh.material = material;
-    }
-  }
-
-  public render(scene: Scene): void {
+  public render(scene: Scene, groundObjectGroup: Mesh | undefined): void {
+    this.shadowGround.visible = this.parameters.enabled;
     const needsUpdate = this.parameters.alwaysUpdate || this.needsUpdate;
     if (!needsUpdate) {
       this.noNeedOfUpdateCount++;
@@ -266,8 +234,8 @@ export class GroundContactShadow {
     scene.overrideMaterial = this.depthMaterial;
     const initialClearAlpha = this.renderer.getClearAlpha();
     this.renderer.setClearAlpha(0);
-    if (this.groundMesh) {
-      this.groundMesh.visible = false;
+    if (groundObjectGroup) {
+      groundObjectGroup.visible = false;
     }
     this.shadowGround.visible = false;
     this.cameraHelper.visible = false;
@@ -295,32 +263,36 @@ export class GroundContactShadow {
     this.renderer.setRenderTarget(null);
     this.renderer.setClearAlpha(initialClearAlpha);
     scene.background = initialBackground;
-    if (this.groundMesh) {
-      this.groundMesh.visible = true;
+    if (groundObjectGroup) {
+      groundObjectGroup.visible = true;
     }
-    this.shadowGround.visible = true;
+    this.shadowGround.visible = this.parameters.enabled;
     this.cameraHelper.visible = this.parameters.cameraHelper;
   }
 
   public blurShadow(amountMin: number, amountMax: number): void {
     this.blurPlane.visible = true;
-    this.blurPlane.material = this.horizontalBlurMaterial;
+    this.blurPlane.material = this.blurMaterial;
     (this.blurPlane.material as ShaderMaterial).uniforms.tDiffuse.value =
       this.renderTarget.texture;
-    this.horizontalBlurMaterial.uniforms.hRange.value.x = (amountMin * 1) / 256;
-    this.horizontalBlurMaterial.uniforms.hRange.value.y = (amountMax * 1) / 256;
-    this.horizontalBlurMaterial.uniforms.shadowScale.value =
+    this.blurMaterial.uniforms.rangeMin.value.x = (amountMin * 1) / 256;
+    this.blurMaterial.uniforms.rangeMin.value.y = 0;
+    this.blurMaterial.uniforms.rangeMax.value.x = (amountMax * 1) / 256;
+    this.blurMaterial.uniforms.rangeMax.value.y = 0;
+    this.blurMaterial.uniforms.shadowScale.value =
       1 / this.parameters.darkness;
 
     this.renderer.setRenderTarget(this.renderTargetBlur);
     this.renderer.render(this.blurPlane, this.shadowCamera);
 
-    this.blurPlane.material = this.verticalBlurMaterial;
+    this.blurPlane.material = this.blurMaterial;
     (this.blurPlane.material as ShaderMaterial).uniforms.tDiffuse.value =
       this.renderTargetBlur.texture;
-    this.verticalBlurMaterial.uniforms.vRange.value.x = (amountMin * 1) / 256;
-    this.verticalBlurMaterial.uniforms.vRange.value.y = (amountMax * 1) / 256;
-    this.verticalBlurMaterial.uniforms.shadowScale.value =
+    this.blurMaterial.uniforms.rangeMin.value.x = 0;
+    this.blurMaterial.uniforms.rangeMin.value.y = (amountMin * 1) / 256;
+    this.blurMaterial.uniforms.rangeMax.value.x = 0;
+    this.blurMaterial.uniforms.rangeMax.value.y = (amountMax * 1) / 256;
+    this.blurMaterial.uniforms.shadowScale.value =
       1 / this.parameters.darkness;
 
     this.renderer.setRenderTarget(this.renderTarget);

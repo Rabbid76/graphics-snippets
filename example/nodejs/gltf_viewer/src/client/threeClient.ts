@@ -85,7 +85,7 @@ document.body.appendChild(stats.dom);
 
 const renderScene = new RenderScene(renderer)
 renderScene.sceneRenderer.setQualityLevel(isMobile ? QualityLevel.LOW : QualityLevel.HIGH);
-renderScene.createCntrols()
+renderScene.createControls()
 renderScene.setEnvironment()
 renderScene.updateLightAndShadow()
 

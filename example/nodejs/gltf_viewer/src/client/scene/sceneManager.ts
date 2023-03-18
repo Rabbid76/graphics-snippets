@@ -72,8 +72,8 @@ export class RenderScene {
         //const groundGeometry = new THREE.PlaneGeometry(100000, 100000, 100, 100)
         const groundGeometry = new THREE.RingGeometry(0, 50000, 36, 100)
         const groundMaterial = createGroundMaterial(this.groundMaterialType) 
-        this.sceneRenderer.groundContactShadow.updateGround(groundGeometry, groundMaterial)
-        this.sceneRenderer.groundContactShadow.addToScene(this.scene);
+        this.sceneRenderer.updateGround(groundGeometry, groundMaterial)
+        this.sceneRenderer.addToScene(this.scene);
         this.turnTableGroup =  new THREE.Group()
         this.scene.add(this.turnTableGroup)
         this.sceneRenderer.sceneGroups.addToGroup(SceneGroupType.OBJECTS, this.turnTableGroup);
@@ -93,23 +93,6 @@ export class RenderScene {
           },
         });
         this.sceneRenderer.setQualityLevel(QualityLevel.HIGH);
-    }
-
-    public getCamera(): THREE.PerspectiveCamera {
-        return this.camera
-    }
-
-    public getScene(): THREE.Scene {
-        return this.scene
-    }
-
-    public getVolume(): SceneVolume {
-        return this.sceneVolume
-    }
-
-    public getGround(): GroundContactShadow {
-        this.sceneRenderer.groundContactShadow.addToScene(this.scene);
-        return this.sceneRenderer.groundContactShadow
     }
 
     public getLightSources(): LightSources {
@@ -139,7 +122,7 @@ export class RenderScene {
         } 
     }
 
-    public createCntrols(): void {
+    public createControls(): void {
         this.controls ??= new Controls(this.renderer, this.camera);
     }
 
@@ -170,7 +153,7 @@ export class RenderScene {
     public setGroundMaterial(groundMaterialType: GroundMaterialType) {
         if (this.groundMaterialType !== groundMaterialType) {
             this.groundMaterialType = groundMaterialType
-            this.getGround().updateGround(undefined, createGroundMaterial(this.groundMaterialType))
+            this.sceneRenderer.updateGround(undefined, createGroundMaterial(this.groundMaterialType))
         }
     }
 
@@ -309,7 +292,7 @@ export class RenderScene {
         this.turnTableGroup.clear();
         this.setInitialObjectPosition(newGroup);
         this.setInitialCameraPositionAndRotation();
-        this.sceneRenderer.groundContactShadow.needsUpdate = true;
+        this.sceneRenderer.bakedGroundContactShadow.needsUpdate = true;
         this.updateLightAndShadow();
     }
 
