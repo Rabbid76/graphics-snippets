@@ -1,63 +1,66 @@
+import { RenderOverrideVisibility } from './render-utility';
 import { BlurContactShadowShader } from './shader-utility';
 import {
   Box3,
   CameraHelper,
   DoubleSide,
   Group,
+  Layers,
   Mesh,
   MeshBasicMaterial,
   MeshDepthMaterial,
+  MeshPhysicalMaterial,
   OrthographicCamera,
   PlaneGeometry,
   Scene,
+  SphereGeometry,
   ShaderMaterial,
   Vector3,
   WebGLRenderer,
   WebGLRenderTarget,
 } from 'three';
 
-export interface GroundContactShadowParameters {
+export interface BakedGroundContactShadowParameters {
   enabled: boolean;
   cameraHelper: boolean;
   alwaysUpdate: boolean;
   blurMin: number;
   blurMax: number;
-  darkness: number;
+  fadeoutFalloff: number;
+  fadeoutBias: number;
   opacity: number;
   planeSize: number;
   cameraFar: number;
+  hardLayers: Layers | null;
+  softLayers: Layers | null;
+  polygonOffset: number;
+  excludeGroundObjects: boolean;
 }
 
-export class GroundContactShadow {
+export class BakedGroundContactShadow {
+  public static addTestMesh: boolean = false;
   public shadowMapSize: number;
-  public parameters: GroundContactShadowParameters;
+  public parameters: BakedGroundContactShadowParameters;
   public renderer: WebGLRenderer;
   public cameraHelper: CameraHelper;
   public needsUpdate: boolean = true;
   public noNeedOfUpdateCount = 0;
   private shadowGround: Mesh;
   private blurPlane: Mesh;
-  private renderTarget: WebGLRenderTarget;
+  public renderTarget: WebGLRenderTarget;
   private renderTargetBlur: WebGLRenderTarget;
   private depthMaterial: MeshDepthMaterial;
   private blurMaterial: ShaderMaterial;
   private shadowCamera: OrthographicCamera;
   private groundGroup: Group;
+  private testMesh: Mesh;
+  private renderOverrideVisibility: RenderOverrideVisibility =
+    new RenderOverrideVisibility(true, [], ['Ground', 'Floor']);
 
   constructor(renderer: WebGLRenderer, groundGroup: Group, parameters: any) {
     this.groundGroup = groundGroup;
     this.shadowMapSize = parameters.shadowMapSize ?? 1024;
-    this.parameters = {
-      enabled: parameters.enabled ?? true,
-      cameraHelper: parameters.cameraHelper ?? false,
-      alwaysUpdate: parameters.alwaysUpdate ?? false,
-      blurMin: parameters.blurMin ?? 0.5,
-      blurMax: parameters.blurMax ?? 6,
-      darkness: parameters.darkness ?? 1,
-      opacity: parameters.opacity ?? 0.5,
-      planeSize: parameters.planeSize ?? 10,
-      cameraFar: parameters.cameraFar ?? 3,
-    };
+    this.parameters = this.getDefaultParameters(parameters);
 
     this.renderer = renderer;
     this.renderTarget = new WebGLRenderTarget(
@@ -84,8 +87,8 @@ export class GroundContactShadow {
       //side: DoubleSide
     });
     shadowGroundMaterial.polygonOffset = true;
-    shadowGroundMaterial.polygonOffsetFactor = 2;
-    shadowGroundMaterial.polygonOffsetUnits = 2;
+    shadowGroundMaterial.polygonOffsetFactor = this.parameters.polygonOffset;
+    shadowGroundMaterial.polygonOffsetUnits = this.parameters.polygonOffset;
     this.shadowGround = new Mesh(shadowGroundGeometry, shadowGroundMaterial);
     this.shadowGround.renderOrder = 1;
     this.shadowGround.receiveShadow = false;
@@ -103,25 +106,59 @@ export class GroundContactShadow {
     this.cameraHelper.visible = this.parameters.cameraHelper;
 
     this.depthMaterial = new MeshDepthMaterial();
-    this.depthMaterial.userData.darkness = { value: this.parameters.darkness };
+    this.depthMaterial.userData.fadeoutBias = {
+      value: this.parameters.fadeoutBias,
+    };
+    this.depthMaterial.userData.fadeoutFalloff = {
+      value: this.parameters.fadeoutFalloff,
+    };
     this.depthMaterial.onBeforeCompile = (shader) => {
-      shader.uniforms.darkness = this.depthMaterial.userData.darkness;
+      shader.uniforms.fadeoutBias = this.depthMaterial.userData.fadeoutBias;
+      shader.uniforms.fadeoutFalloff =
+        this.depthMaterial.userData.fadeoutFalloff;
       shader.fragmentShader = `
-              uniform float darkness;
+              uniform float fadeoutBias;
+              uniform float fadeoutFalloff;
               ${shader.fragmentShader.replace(
                 'gl_FragColor = vec4( vec3( 1.0 - fragCoordZ ), opacity );',
-                'gl_FragColor = vec4(vec3(0.0), pow(1.0 - fragCoordZ, 8.0) * darkness);'
+                'gl_FragColor = vec4(vec3(0.0), clamp(pow(1.0 + fadeoutBias - fragCoordZ, 1.0/(1.0-fadeoutFalloff)), 0.0, 1.0));'
               )}
           `;
     };
     this.depthMaterial.side = DoubleSide;
     this.depthMaterial.depthTest = true;
     this.depthMaterial.depthWrite = true;
-    this.blurMaterial = new ShaderMaterial(
-      BlurContactShadowShader
-    );
+    this.blurMaterial = new ShaderMaterial(BlurContactShadowShader);
     this.blurMaterial.depthTest = false;
     this.updatePlaneAndShadowCamera();
+    this.testMesh = new Mesh(
+      new SphereGeometry(1, 32, 16),
+      new MeshPhysicalMaterial({
+        color: 0xff0000,
+        side: DoubleSide,
+        transparent: true,
+      })
+    );
+  }
+
+  // eslint-disable-next-line complexity
+  private getDefaultParameters(parameters: any) {
+    return {
+      enabled: parameters.enabled ?? true,
+      cameraHelper: parameters.cameraHelper ?? false,
+      alwaysUpdate: parameters.alwaysUpdate ?? false,
+      blurMin: parameters.blurMin ?? 0.001,
+      blurMax: parameters.blurMax ?? 0.1,
+      fadeoutFalloff: parameters.fadeoutFalloff ?? 0.9,
+      fadeoutBias: parameters.fadeoutBias ?? 0.03,
+      opacity: parameters.opacity ?? 0.5,
+      planeSize: parameters.planeSize ?? 10,
+      cameraFar: parameters.cameraFar ?? 3,
+      hardLayers: parameters.hardLayers ?? null,
+      softLayers: parameters.softLayers ?? null,
+      polygonOffset: parameters.polygonOffset ?? 2,
+      excludeGroundObjects: parameters.excludeGroundObjects ?? true,
+    };
   }
 
   public addToScene(scene: Scene) {
@@ -134,6 +171,7 @@ export class GroundContactShadow {
     scene.remove(this.cameraHelper);
   }
 
+  // eslint-disable-next-line complexity
   public updateParameters(parameters: any) {
     if (parameters.enabled !== undefined) {
       this.parameters.enabled = parameters.enabled;
@@ -150,8 +188,11 @@ export class GroundContactShadow {
     if (parameters.blurMax !== undefined) {
       this.parameters.blurMax = parameters.blurMax;
     }
-    if (parameters.darkness !== undefined) {
-      this.parameters.darkness = parameters.darkness;
+    if (parameters.fadeoutFalloff !== undefined) {
+      this.parameters.fadeoutFalloff = parameters.fadeoutFalloff;
+    }
+    if (parameters.fadeoutBias !== undefined) {
+      this.parameters.fadeoutBias = parameters.fadeoutBias;
     }
     if (parameters.opacity !== undefined) {
       this.parameters.opacity = parameters.opacity;
@@ -162,24 +203,49 @@ export class GroundContactShadow {
     if (parameters.cameraFar !== undefined) {
       this.parameters.cameraFar = parameters.cameraFar;
     }
+    if (parameters.hardLayers !== undefined) {
+      this.parameters.hardLayers = parameters.hardLayers;
+    }
+    if (parameters.softLayers !== undefined) {
+      this.parameters.softLayers = parameters.softLayers;
+    }
+    if (parameters.polygonOffset !== undefined) {
+      this.parameters.polygonOffset = parameters.polygonOffset;
+    }
+    if (parameters.excludeGroundObjects !== undefined) {
+      this.parameters.excludeGroundObjects = parameters.excludeGroundObjects;
+    }
   }
 
   public applyParameters() {
-    if (
-      this.depthMaterial.userData.darkness.value !== this.parameters.darkness
-    ) {
-      this.depthMaterial.userData.darkness.value = this.parameters.darkness;
-      this.needsUpdate = true;
-    }
     const shadowGroundMaterial = this.shadowGround
       .material as MeshBasicMaterial;
     if (shadowGroundMaterial.opacity !== this.parameters.opacity) {
       shadowGroundMaterial.opacity = this.parameters.opacity;
     }
+    if (
+      shadowGroundMaterial.polygonOffsetFactor !== this.parameters.polygonOffset
+    ) {
+      shadowGroundMaterial.polygonOffset = true;
+      shadowGroundMaterial.polygonOffsetFactor = this.parameters.polygonOffset;
+      shadowGroundMaterial.polygonOffsetUnits = this.parameters.polygonOffset;
+    }
     if (this.cameraHelper.visible !== this.parameters.cameraHelper) {
       this.cameraHelper.visible = this.parameters.cameraHelper;
-      this.needsUpdate = true;
     }
+    if (this.shadowCamera.far !== this.parameters.cameraFar) {
+      this.updatePlaneAndShadowCamera();
+    }
+    const fadeoutFalloff = this.parameters.fadeoutFalloff;
+    if (this.depthMaterial.userData.fadeoutFalloff.value !== fadeoutFalloff) {
+      this.depthMaterial.userData.fadeoutFalloff.value =
+        this.parameters.fadeoutFalloff;
+    }
+    const fadeoutBias = this.parameters.fadeoutBias / this.shadowCamera.far;
+    if (this.depthMaterial.userData.fadeoutBias.value !== fadeoutBias) {
+      this.depthMaterial.userData.fadeoutBias.value = fadeoutBias;
+    }
+    this.needsUpdate = true;
   }
 
   public updateBounds(bounds: Box3) {
@@ -212,11 +278,12 @@ export class GroundContactShadow {
   }
 
   public render(scene: Scene, groundObjectGroup: Mesh | undefined): void {
+    const maxIterations = 10;
     this.shadowGround.visible = this.parameters.enabled;
     const needsUpdate = this.parameters.alwaysUpdate || this.needsUpdate;
     if (!needsUpdate) {
       this.noNeedOfUpdateCount++;
-      if (this.noNeedOfUpdateCount >= 10) {
+      if (this.noNeedOfUpdateCount >= maxIterations) {
         return;
       }
     } else {
@@ -226,8 +293,10 @@ export class GroundContactShadow {
 
     const shadowGroundMaterial = this.shadowGround
       .material as MeshBasicMaterial;
-    shadowGroundMaterial.opacity =
-      (this.parameters.opacity * (this.noNeedOfUpdateCount + 2)) / 12;
+    shadowGroundMaterial.opacity = this.parameters.alwaysUpdate
+      ? this.parameters.opacity
+      : (this.parameters.opacity * (this.noNeedOfUpdateCount + 2)) /
+        (maxIterations + 2);
 
     const initialBackground = scene.background;
     scene.background = null;
@@ -241,24 +310,12 @@ export class GroundContactShadow {
     this.cameraHelper.visible = false;
 
     if (this.noNeedOfUpdateCount === 0) {
-      this.renderer.setRenderTarget(this.renderTarget);
-      this.renderer.clear();
-      this.renderer.render(scene, this.shadowCamera);
-      scene.overrideMaterial = null;
-      this.blurShadow(
-        this.parameters.blurMin / this.parameters.planeSize,
-        this.parameters.blurMin / this.parameters.planeSize
-      );
+      this.renderGroundContact(scene);
+      this.renderBlur(scene);
     } else if (this.noNeedOfUpdateCount === 1) {
-      scene.overrideMaterial = null;
-      this.blurShadow(
-        this.parameters.blurMin / this.parameters.planeSize,
-        this.parameters.blurMax / this.parameters.planeSize
-      );
+      this.renderBlur(scene);
     }
-    scene.overrideMaterial = null;
-    const finalBlurAmount = 0.4 / this.parameters.planeSize;
-    this.blurShadow(finalBlurAmount, finalBlurAmount);
+    this.renderReduceBandingBlur(scene);
 
     this.renderer.setRenderTarget(null);
     this.renderer.setClearAlpha(initialClearAlpha);
@@ -270,17 +327,65 @@ export class GroundContactShadow {
     this.cameraHelper.visible = this.parameters.cameraHelper;
   }
 
-  public blurShadow(amountMin: number, amountMax: number): void {
+  private renderGroundContact(scene: Scene) {
+    this.renderer.setRenderTarget(this.renderTarget);
+    this.renderer.clear();
+    const autoClearBackup = this.renderer.autoClear;
+    this.renderer.autoClear = false;
+    if (this.parameters.hardLayers) {
+      this.shadowCamera.layers.mask = this.parameters.hardLayers.mask;
+      this.shadowCamera.far = 10;
+      this.shadowCamera.updateProjectionMatrix();
+      this.depthMaterial.userData.fadeoutBias.value = 0.99;
+      this.renderer.render(scene, this.shadowCamera);
+      this.shadowCamera.far = this.parameters.cameraFar;
+      this.shadowCamera.updateProjectionMatrix();
+      this.depthMaterial.userData.fadeoutBias.value =
+        this.parameters.fadeoutBias / this.parameters.cameraFar;
+    }
+    this.shadowCamera.layers.enableAll();
+    if (this.parameters.softLayers) {
+      this.shadowCamera.layers.mask = this.parameters.softLayers.mask;
+    }
+    if (BakedGroundContactShadow.addTestMesh) {
+      this.testMesh.position.set(0, 1, 0);
+      this.testMesh.updateMatrixWorld();
+      scene.add(this.testMesh);
+      this.renderer.render(scene, this.shadowCamera);
+      scene.remove(this.testMesh);
+    } else if (this.parameters.excludeGroundObjects) {
+      this.renderOverrideVisibility.render(scene, () => {
+        this.renderer.render(scene, this.shadowCamera);
+      });
+    } else {
+      this.renderer.render(scene, this.shadowCamera);
+    }
+    this.renderer.autoClear = autoClearBackup;
+  }
+
+  private renderBlur(scene: Scene) {
+    scene.overrideMaterial = null;
+    this.blurShadow(
+      this.parameters.blurMin / this.parameters.planeSize,
+      this.parameters.blurMax / this.parameters.planeSize
+    );
+  }
+
+  private renderReduceBandingBlur(scene: Scene) {
+    scene.overrideMaterial = null;
+    const finalBlurAmount = 0.01 / this.parameters.planeSize;
+    this.blurShadow(finalBlurAmount, finalBlurAmount);
+  }
+
+  public blurShadow(uvMin: number, uvMax: number): void {
     this.blurPlane.visible = true;
     this.blurPlane.material = this.blurMaterial;
     (this.blurPlane.material as ShaderMaterial).uniforms.tDiffuse.value =
       this.renderTarget.texture;
-    this.blurMaterial.uniforms.rangeMin.value.x = (amountMin * 1) / 256;
+    this.blurMaterial.uniforms.rangeMin.value.x = uvMin;
     this.blurMaterial.uniforms.rangeMin.value.y = 0;
-    this.blurMaterial.uniforms.rangeMax.value.x = (amountMax * 1) / 256;
+    this.blurMaterial.uniforms.rangeMax.value.x = uvMax;
     this.blurMaterial.uniforms.rangeMax.value.y = 0;
-    this.blurMaterial.uniforms.shadowScale.value =
-      1 / this.parameters.darkness;
 
     this.renderer.setRenderTarget(this.renderTargetBlur);
     this.renderer.render(this.blurPlane, this.shadowCamera);
@@ -289,11 +394,9 @@ export class GroundContactShadow {
     (this.blurPlane.material as ShaderMaterial).uniforms.tDiffuse.value =
       this.renderTargetBlur.texture;
     this.blurMaterial.uniforms.rangeMin.value.x = 0;
-    this.blurMaterial.uniforms.rangeMin.value.y = (amountMin * 1) / 256;
+    this.blurMaterial.uniforms.rangeMin.value.y = uvMin;
     this.blurMaterial.uniforms.rangeMax.value.x = 0;
-    this.blurMaterial.uniforms.rangeMax.value.y = (amountMax * 1) / 256;
-    this.blurMaterial.uniforms.shadowScale.value =
-      1 / this.parameters.darkness;
+    this.blurMaterial.uniforms.rangeMax.value.y = uvMax;
 
     this.renderer.setRenderTarget(this.renderTarget);
     this.renderer.render(this.blurPlane, this.shadowCamera);

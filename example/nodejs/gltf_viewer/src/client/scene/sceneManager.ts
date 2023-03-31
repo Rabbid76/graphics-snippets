@@ -5,7 +5,6 @@ import {
 } from './meshConstructor'
 import { LightSources } from './lightSources'
 import { PostProcessingEffects } from './postProcessingEffects'
-import { GroundContactShadow } from '../renderer/ground-contact-shadow' 
 import {
     createGroundMaterial,
     createPreviewMaterial,

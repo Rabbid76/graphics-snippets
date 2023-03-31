@@ -72,7 +72,7 @@ export class PCFShadow extends ShadowMap {
 
 
     public addUiElements(parent: GUI): void {
-        parent.add(this, 'radius', 0, 20).onChange((value) => {
+        parent.add<any>(this, 'radius', 0, 20).onChange((value) => {
             const shadowLightSource = this.getMainShadowLight()
             shadowLightSource.shadow.radius = parseInt(value)
             shadowLightSource.shadow.needsUpdate = true
@@ -124,12 +124,12 @@ export class VSMShadow extends ShadowMap {
     }
 
     public addUiElements(parent: GUI): void {
-        parent.add(this, 'radius').min(2).max(50).onChange((value) => {
+        parent.add<any>(this, 'radius').min(2).max(50).onChange((value) => {
             const shadowLightSource = this.getMainShadowLight()
             shadowLightSource.shadow.radius = parseInt(value)
             shadowLightSource.shadow.needsUpdate = true
         })
-        parent.add(this, 'blurSamples').min(2).max(64).onChange((value) => {
+        parent.add<any>(this, 'blurSamples').min(2).max(64).onChange((value) => {
             const shadowLightSource = this.getMainShadowLight()
             shadowLightSource.shadow.blurSamples = parseInt(value)
             shadowLightSource.shadow.needsUpdate = true

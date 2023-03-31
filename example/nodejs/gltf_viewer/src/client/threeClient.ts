@@ -5,6 +5,7 @@ import { MaterialGUI } from './scene/material-gui'
 import { LightSourcesGUI } from './scene/lightSources'
 import { GroundMaterialType } from './scene/materials'
 import * as THREE from 'three'
+// @ts-ignore
 import Stats from 'three/examples/jsm/libs/stats.module' 
 import { GUI } from 'dat.gui'
 // @ts-ignore
@@ -122,16 +123,16 @@ const setGroundMaterial = () => {
 setGroundMaterial()
 
 const gui = new GUI()
-gui.add(generalProperties.sceneProperties, 'rotate', 0, 0.25).onChange(() => renderScene.update(generalProperties.sceneProperties))
-gui.add(generalProperties, 'groundMaterial', {
+gui.add<any>(generalProperties.sceneProperties, 'rotate', 0, 0.25).onChange(() => renderScene.update(generalProperties.sceneProperties))
+gui.add<any>(generalProperties, 'groundMaterial', {
     'only shadow': 'onlyshadow',
     'parquet': 'parquet', 
     'pavement': 'pavement'
 }).onChange(() => setGroundMaterial())
 const experimentalFolder = gui.addFolder('experimatal options');
-experimentalFolder.add(renderScene.sceneRenderer, 'groundReflection');
-experimentalFolder.add(generalProperties, 'bloom').onChange((enabled: boolean) => renderScene.getPostProcessingEffects().setBloom(enabled));
-experimentalFolder.add(generalProperties, 'ssr').onChange((enabled: boolean) => renderScene.getPostProcessingEffects().setSSR(enabled));
+experimentalFolder.add<any>(renderScene.sceneRenderer, 'groundReflection');
+experimentalFolder.add<any>(generalProperties, 'bloom').onChange((enabled: boolean) => renderScene.getPostProcessingEffects().setBloom(enabled));
+experimentalFolder.add<any>(generalProperties, 'ssr').onChange((enabled: boolean) => renderScene.getPostProcessingEffects().setSSR(enabled));
 const sceneRendererGUI = new SceneRendererGUI(renderScene.sceneRenderer);
 sceneRendererGUI.addGUI(gui, () => {});
 const materialGUI = new MaterialGUI();

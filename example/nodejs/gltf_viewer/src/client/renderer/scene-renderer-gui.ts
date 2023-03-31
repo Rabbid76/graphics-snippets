@@ -24,10 +24,17 @@ export class SceneRendererGUI {
     this.addShadowTypeGUI(gui, updateCallback);
     const shadowAndAoFolder = gui.addFolder('Shadow and Ambient Occlusion');
     this.addShadowAndAoGUI(shadowAndAoFolder, updateCallback);
-    const groundReflectionFolder = gui.addFolder('Ground Reflection and Shadow');
+    const groundReflectionFolder = gui.addFolder(
+      'Ground Reflection and Shadow'
+    );
     this.addGroundReflectionGUI(groundReflectionFolder, updateCallback);
-    const bakedGroundContactShadowFolder = gui.addFolder('Baked Ground Contact Shadow');
-    this.addBakedGroundContactShadowGUI(bakedGroundContactShadowFolder, updateCallback);
+    const bakedGroundContactShadowFolder = gui.addFolder(
+      'Baked Ground Contact Shadow'
+    );
+    this.addBakedGroundContactShadowGUI(
+      bakedGroundContactShadowFolder,
+      updateCallback
+    );
     const outlineFolder = gui.addFolder('Outline');
     this.addOutlineGUI(outlineFolder, updateCallback);
   }
@@ -45,7 +52,7 @@ export class SceneRendererGUI {
       }
     });
     gui
-      .add(this.sceneRenderer, 'outputEncoding', outputEncodingNames)
+      .add<any>(this.sceneRenderer, 'outputEncoding', outputEncodingNames)
       .onChange((encoding: string) => {
         if (outputEncodings.has(encoding)) {
           this.sceneRenderer.renderer.outputEncoding =
@@ -68,7 +75,7 @@ export class SceneRendererGUI {
       }
     });
     gui
-      .add(this.sceneRenderer, 'toneMapping', toneMappingNames)
+      .add<any>(this.sceneRenderer, 'toneMapping', toneMappingNames)
       .onChange((toneMapping: string) => {
         if (toneMappings.has(toneMapping)) {
           this.sceneRenderer.renderer.toneMapping =
@@ -87,7 +94,7 @@ export class SceneRendererGUI {
     const outputQualityNames: string[] = [];
     qualityLevels.forEach((value, key) => outputQualityNames.push(key));
     gui
-      .add(this, 'qualityLevel', outputQualityNames)
+      .add<any>(this, 'qualityLevel', outputQualityNames)
       .onChange((qualityLevel: string) => {
         if (qualityLevels.has(qualityLevel)) {
           this.sceneRenderer.setQualityLevel(
@@ -96,7 +103,7 @@ export class SceneRendererGUI {
         }
       });
     gui
-      .add(this.sceneRenderer, 'debugOutput', {
+      .add<any>(this.sceneRenderer, 'debugOutput', {
         off: 'off',
         grayscale: 'grayscale',
         color: 'color',
@@ -108,6 +115,7 @@ export class SceneRendererGUI {
         'blur shadow': 'shadowblur',
         'ground shadow': 'groundshadow',
         'ground reflection': 'groundreflection',
+        'baked ground shadow': 'bakedgroundshadow',
       })
       .onChange(() => updateCallback());
   }
@@ -120,7 +128,7 @@ export class SceneRendererGUI {
       shadowMapNames.push(key);
     });
     gui
-      .add(shadowConfiguration, 'shadowType', shadowMapNames)
+      .add<any>(shadowConfiguration, 'shadowType', shadowMapNames)
       .onChange((type: string) => {
         if (shadowConfiguration.types.has(type)) {
           const currentType = shadowConfiguration.types.get(type);
@@ -137,42 +145,48 @@ export class SceneRendererGUI {
   private addShadowAndAoGUI(gui: GUI, updateCallback: () => void): void {
     const parameters = this.sceneRenderer.shadowAndAoPass.parameters;
     gui
-      .add(parameters, 'aoAndSoftShadowEnabled')
+      .add<any>(parameters, 'aoAndSoftShadowEnabled')
       .onChange(() => updateCallback());
-    gui.add(parameters, 'aoAlwaysUpdate').onChange(() => updateCallback());
+    gui.add<any>(parameters, 'aoAlwaysUpdate').onChange(() => updateCallback());
     gui
-      .add(parameters, 'aoIntensity', 0.01, 1)
+      .add<any>(parameters, 'aoIntensity', 0.01, 1)
       .onChange(() => updateCallback());
-    gui.add(parameters, 'aoFadeout', 0, 1).onChange(() => updateCallback());
+    gui.add<any>(parameters, 'aoFadeout', 0, 1).onChange(() => updateCallback());
     gui
-      .add(parameters, 'aoKernelRadius', 0.001, 0.2)
-      .onChange(() => updateCallback());
-    gui
-      .add(parameters, 'aoDepthBias', 0.0001, 0.01)
+      .add<any>(parameters, 'aoKernelRadius', 0.001, 0.2)
       .onChange(() => updateCallback());
     gui
-      .add(parameters, 'aoMaxDistance', 0.01, 1)
-      .onChange(() => updateCallback());
-    gui.add(parameters, 'aoMaxDepth', 0.9, 1).onChange(() => updateCallback());
-    gui
-      .add(parameters, 'shadowIntensity', 0, 1)
+      .add<any>(parameters, 'aoDepthBias', 0.0001, 0.01)
       .onChange(() => updateCallback());
     gui
-      .add(parameters, 'shadowRadius', 0.001, 0.5)
+      .add<any>(parameters, 'aoMaxDistance', 0.01, 1)
+      .onChange(() => updateCallback());
+    gui.add<any>(parameters, 'aoMaxDepth', 0.9, 1).onChange(() => updateCallback());
+    gui
+      .add<any>(parameters, 'shadowIntensity', 0, 1)
+      .onChange(() => updateCallback());
+    gui
+      .add<any>(parameters, 'shadowRadius', 0.001, 0.5)
       .onChange(() => updateCallback());
   }
 
   private addGroundReflectionGUI(gui: GUI, updateCallback: () => void): void {
     const parameters = this.sceneRenderer.parameters.groundReflectionParameters;
-    gui.add(parameters, 'enabled');
-    gui.add(parameters, 'intensity', 0.0, 1.0).onChange(() => updateCallback());
-    gui.add(parameters, 'fadeOut', 0.0, 2.0).onChange(() => updateCallback());
+    gui.add<any>(parameters, 'enabled');
+    gui.add<any>(parameters, 'intensity', 0.0, 1.0).onChange(() => updateCallback());
+    gui.add<any>(parameters, 'fadeOut', 0.0, 2.0).onChange(() => updateCallback());
     gui
-      .add(parameters, 'brightness', 0.0, 2.0)
+      .add<any>(parameters, 'brightness', 0.0, 2.0)
       .onChange(() => updateCallback());
-    gui.add(parameters, 'blurHorizontal', 0.0, 10.0).onChange(() => updateCallback());
-    gui.add(parameters, 'blurVertical', 0.0, 10.0).onChange(() => updateCallback());
-    gui.add(parameters, 'blurAscent', 0.0, 3.0).onChange(() => updateCallback());
+    gui
+      .add<any>(parameters, 'blurHorizontal', 0.0, 10.0)
+      .onChange(() => updateCallback());
+    gui
+      .add<any>(parameters, 'blurVertical', 0.0, 10.0)
+      .onChange(() => updateCallback());
+    gui
+      .add<any>(parameters, 'blurAscent', 0.0, 3.0)
+      .onChange(() => updateCallback());
   }
 
   private addBakedGroundContactShadowGUI(
@@ -185,23 +199,26 @@ export class SceneRendererGUI {
     };
     const parameters =
       this.sceneRenderer.parameters.bakedGroundContactShadowParameters;
-    gui.add(parameters, 'enabled');
-    gui.add(parameters, 'cameraHelper');
-    gui.add(parameters, 'alwaysUpdate');
+    gui.add<any>(parameters, 'enabled');
+    gui.add<any>(parameters, 'cameraHelper');
+    gui.add<any>(parameters, 'alwaysUpdate');
     gui
-      .add(parameters, 'blurMin', 0, 30, 0.1)
+      .add<any>(parameters, 'blurMin', 0, 0.2, 0.001)
       .onChange(() => updateParameter());
     gui
-      .add(parameters, 'blurMax', 0, 30, 0.1)
+      .add<any>(parameters, 'blurMax', 0, 0.5, 0.01)
       .onChange(() => updateParameter());
     gui
-      .add(parameters, 'darkness', 1, 5, 0.1)
+      .add<any>(parameters, 'fadeoutFalloff', 0.0, 1.0, 0.01)
       .onChange(() => updateParameter());
     gui
-      .add(parameters, 'opacity', 0, 1, 0.01)
+      .add<any>(parameters, 'fadeoutBias', 0.0, 0.5)
       .onChange(() => updateParameter());
     gui
-      .add(parameters, 'cameraFar', 0.1, 10, 0.1)
+      .add<any>(parameters, 'opacity', 0, 1, 0.01)
+      .onChange(() => updateParameter());
+    gui
+      .add<any>(parameters, 'cameraFar', 0.1, 10, 0.1)
       .onChange(() => updateParameter());
   }
 
@@ -211,18 +228,18 @@ export class SceneRendererGUI {
       updateCallback();
     };
     const parameters = this.sceneRenderer.outlineRenderer.parameters;
-    gui.add(parameters, 'enabled');
+    gui.add<any>(parameters, 'enabled');
     gui
-      .add(parameters, 'edgeStrength', 0.5, 20)
+      .add<any>(parameters, 'edgeStrength', 0.5, 20)
       .onChange(() => updateOutlineParameters());
     gui
-      .add(parameters, 'edgeGlow', 0, 20)
+      .add<any>(parameters, 'edgeGlow', 0, 20)
       .onChange(() => updateOutlineParameters());
     gui
-      .add(parameters, 'edgeThickness', 0.5, 20)
+      .add<any>(parameters, 'edgeThickness', 0.5, 20)
       .onChange(() => updateOutlineParameters());
     gui
-      .add(parameters, 'pulsePeriod', 0, 5)
+      .add<any>(parameters, 'pulsePeriod', 0, 5)
       .onChange(() => updateOutlineParameters());
     gui
       .addColor(parameters, 'visibleEdgeColor')

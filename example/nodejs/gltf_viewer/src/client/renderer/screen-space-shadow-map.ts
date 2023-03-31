@@ -10,6 +10,7 @@ import {
   Camera,
   DirectionalLight,
   DoubleSide,
+  Layers,
   Light,
   LineBasicMaterial,
   Material,
@@ -29,6 +30,12 @@ import {
   WebGLRenderer,
   WebGLRenderTarget,
 } from 'three';
+
+export interface ScreenSpaceShadowMapParameters {
+  alwaysUpdate: boolean;
+  enableShadowMap: boolean;
+  layers: Layers | null;
+}
 
 export interface ShadowLightSource {
   getShadowLight(): DirectionalLight;
@@ -208,6 +215,7 @@ void RE_IndirectDiffuse_Lambert( const in vec3 irradiance, const in GeometricCon
 
 export class ScreenSpaceShadowMap {
   static useModifiedMaterial: boolean = true;
+  public parameters: ScreenSpaceShadowMapParameters;
   public needsUpdate: boolean = false;
   public shadowTypeNeedsUpdate: boolean = true;
   public shadowConfiguration = new ShadowTypeConfiguration();
@@ -215,7 +223,6 @@ export class ScreenSpaceShadowMap {
   private viewportSize: Vector2;
   private samples: number;
   private shadowMapSize: number;
-  public alwaysUpdate: boolean;
   public castShadow: boolean;
   private renderPass: RenderPass;
   private shadowMaterial: Material;
@@ -230,8 +237,8 @@ export class ScreenSpaceShadowMap {
     this.viewportSize = new Vector2(viewportSize.x, viewportSize.y);
     this.samples = parameters?.samples ?? 0;
     this.shadowMapSize = parameters?.shadowMapSize ?? 1024;
-    this.alwaysUpdate = parameters?.alwaysUpdate ?? false;
-    this.castShadow = parameters?.castShadow ?? true;
+    this.parameters = this.getScreenSpaceShadowMapParameters(parameters);
+    this.castShadow = this.parameters.enableShadowMap;
     this.renderPass = new RenderPass();
     if (ScreenSpaceShadowMap.useModifiedMaterial) {
       this.shadowMaterial = new MeshLambertMaterial({
@@ -260,10 +267,32 @@ export class ScreenSpaceShadowMap {
     );
   }
 
+  private getScreenSpaceShadowMapParameters(
+    parameters?: any
+  ): ScreenSpaceShadowMapParameters {
+    return {
+      alwaysUpdate: parameters?.alwaysUpdate ?? false,
+      enableShadowMap: parameters?.enableShadowMap ?? true,
+      layers: parameters.layers ?? null,
+    };
+  }
+
   public dispose(): void {
     this.shadowLightSources.forEach((item) => item.dispose());
     this.shadowMaterial.dispose();
     this.shadowRenderTarget.dispose();
+  }
+
+  public updateParameters(parameters: any) {
+    if (parameters.alwaysUpdate !== undefined) {
+      this.parameters.alwaysUpdate = parameters.alwaysUpdate;
+    }
+    if (parameters.enableShadowMap !== undefined) {
+      this.parameters.enableShadowMap = parameters.enableShadowMap;
+    }
+    if (parameters.layers !== undefined) {
+      this.parameters.layers = parameters.layers;
+    }
   }
 
   public getShadowLightSources(): Light[] {
@@ -344,7 +373,7 @@ export class ScreenSpaceShadowMap {
   ): void {
     const needsUpdate =
       this.needsUpdate ||
-      this.alwaysUpdate ||
+      this.parameters.alwaysUpdate ||
       this.cameraUpdate.changed(camera);
     if (!needsUpdate) {
       return;
@@ -362,12 +391,17 @@ export class ScreenSpaceShadowMap {
     this.shadowLightSources.forEach((item) =>
       item.prepareRenderShadow(this.castShadow, sumOfShadowLightIntensity)
     );
+    const layersMaskBackup = camera.layers.mask;
+    if (this.parameters.layers) {
+      camera.layers.mask = this.parameters.layers.mask;
+    }
     this.renderShadowMapToTarget(
       renderer,
       scene,
       camera,
       this.shadowRenderTarget
     );
+    camera.layers.mask = layersMaskBackup;
     this.shadowLightSources.forEach((item) => item.finishRenderShadow());
   }
 
@@ -397,10 +431,13 @@ export class ScreenSpaceShadowMap {
 
   private updateShadowType(renderer: WebGLRenderer): void {
     renderer.shadowMap.type = this.shadowConfiguration.currentType.type;
-    renderer.shadowMap.enabled =
+    const castShadow =
+      this.parameters.enableShadowMap &&
       this.shadowConfiguration.currentType.castShadow;
+    renderer.shadowMap.enabled = castShadow;
     renderer.shadowMap.needsUpdate = true;
-    this.castShadow = this.shadowConfiguration.currentType.castShadow;
+    this.castShadow =
+      castShadow && this.shadowConfiguration.currentType.castShadow;
     this.shadowLightSources.forEach((item) =>
       item.updateShadowType(this.shadowConfiguration.currentType)
     );

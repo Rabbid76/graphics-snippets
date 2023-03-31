@@ -39,7 +39,7 @@ export class SSAOPassPostprocess extends AoPostprocess {
 
     public addUiElements(parent: GUI): void {
         const SSAOPassOUTPUT = {Default: 0, SSAO: 1, Blur: 2, Beauty: 3, Depth: 4, Normal: 5 };
-        parent.add(this.ssaoPass, 'output', {
+        parent.add<any>(this.ssaoPass, 'output', {
             'Default': SSAOPassOUTPUT.Default,
             'SSAO Only': SSAOPassOUTPUT.SSAO,
             'SSAO Only + Blur': SSAOPassOUTPUT.Blur,
@@ -47,10 +47,10 @@ export class SSAOPassPostprocess extends AoPostprocess {
             'Depth': SSAOPassOUTPUT.Depth,
             'Normal': SSAOPassOUTPUT.Normal
         } ).onChange((value) => { this.ssaoPass.output = parseInt(value); } )
-        parent.add(this.ssaoPass, 'kernelSize').min(8).max(64);
-        parent.add(this.ssaoPass, 'kernelRadius').min(0.001).max(0.2);
-        parent.add(this.ssaoPass, 'minDistance').min(0.0001).max(0.1);
-        parent.add(this.ssaoPass, 'maxDistance').min(0.01).max(1);
+        parent.add<any>(this.ssaoPass, 'kernelSize').min(8).max(64);
+        parent.add<any>(this.ssaoPass, 'kernelRadius').min(0.001).max(0.2);
+        parent.add<any>(this.ssaoPass, 'minDistance').min(0.0001).max(0.1);
+        parent.add<any>(this.ssaoPass, 'maxDistance').min(0.01).max(1);
     }
 
     public setSize(width: number, height: number): void {
@@ -84,7 +84,7 @@ export class SSAOMSAAPostprocess extends AoPostprocess {
 
     public addUiElements(parent: GUI): void {
         const SSAOPassOUTPUT = {Default: 0, SSAO: 1, Blur: 2, Beauty: 3, Depth: 4, Normal: 5 };
-        parent.add(this.ssaoPass, 'output', {
+        parent.add<any>(this.ssaoPass, 'output', {
             'Default': SSAOPassOUTPUT.Default,
             'SSAO Only': SSAOPassOUTPUT.SSAO,
             'SSAO Only + Blur': SSAOPassOUTPUT.Blur,
@@ -92,10 +92,10 @@ export class SSAOMSAAPostprocess extends AoPostprocess {
             'Depth': SSAOPassOUTPUT.Depth,
             'Normal': SSAOPassOUTPUT.Normal
         } ).onChange((value) => { this.ssaoPass.output = parseInt(value); } )
-        parent.add(this.ssaoPass, 'kernelSize').min(8).max(64);
-        parent.add(this.ssaoPass, 'kernelRadius').min(0.001).max(0.2);
-        parent.add(this.ssaoPass, 'minDistance').min(0.0001).max(0.1);
-        parent.add(this.ssaoPass, 'maxDistance').min(0.01).max(1);
+        parent.add<any>(this.ssaoPass, 'kernelSize').min(8).max(64);
+        parent.add<any>(this.ssaoPass, 'kernelRadius').min(0.001).max(0.2);
+        parent.add<any>(this.ssaoPass, 'minDistance').min(0.0001).max(0.1);
+        parent.add<any>(this.ssaoPass, 'maxDistance').min(0.01).max(1);
     }
 
     public setSize(width: number, height: number): void {
@@ -137,7 +137,7 @@ export class SAOPassPostprocess extends AoPostprocess {
     }
 
     public addUiElements(parent: GUI): void {
-        parent.add(this.saoPass.params, 'output', {
+        parent.add<any>(this.saoPass.params, 'output', {
             'Beauty': SAOPass.OUTPUT.Beauty,
             'Beauty+SAO': SAOPass.OUTPUT.Default,
             'SAO': SAOPass.OUTPUT.SAO,
@@ -146,15 +146,15 @@ export class SAOPassPostprocess extends AoPostprocess {
         } ).onChange((value) => {
             this.saoPass.params.output = parseInt(value);
         } );
-        parent.add(this.saoPass.params, 'saoBias', - 1, 1);
-        parent.add(this.saoPass.params, 'saoIntensity', 0, 1);
-        parent.add(this.saoPass.params, 'saoScale', 0, 10);
-        parent.add(this.saoPass.params, 'saoKernelRadius', 1, 100);
-        parent.add(this.saoPass.params, 'saoMinResolution', 0, 1);
-        parent.add(this.saoPass.params, 'saoBlur');
-        parent.add(this.saoPass.params, 'saoBlurRadius', 0, 200);
-        parent.add(this.saoPass.params, 'saoBlurStdDev', 0.5, 150);
-        parent.add(this.saoPass.params, 'saoBlurDepthCutoff', 0.0, 0.1);
+        parent.add<any>(this.saoPass.params, 'saoBias', - 1, 1);
+        parent.add<any>(this.saoPass.params, 'saoIntensity', 0, 1);
+        parent.add<any>(this.saoPass.params, 'saoScale', 0, 10);
+        parent.add<any>(this.saoPass.params, 'saoKernelRadius', 1, 100);
+        parent.add<any>(this.saoPass.params, 'saoMinResolution', 0, 1);
+        parent.add<any>(this.saoPass.params, 'saoBlur');
+        parent.add<any>(this.saoPass.params, 'saoBlurRadius', 0, 200);
+        parent.add<any>(this.saoPass.params, 'saoBlurStdDev', 0.5, 150);
+        parent.add<any>(this.saoPass.params, 'saoBlurDepthCutoff', 0.0, 0.1);
     }
 
     public setSize(width: number, height: number): void {

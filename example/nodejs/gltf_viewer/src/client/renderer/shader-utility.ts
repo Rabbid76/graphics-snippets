@@ -140,7 +140,6 @@ export const BlurContactShadowShader = {
     tDiffuse: { value: null as Texture | null },
     rangeMin: { value: new Vector2(1.0 / 512.0, 1.0 / 512.0) },
     rangeMax: { value: new Vector2(1.0 / 512.0, 1.0 / 512.0) },
-    shadowScale: { value: 1 },
   },
   vertexShader: `
     varying vec2 vUv;
@@ -152,22 +151,21 @@ export const BlurContactShadowShader = {
     uniform sampler2D tDiffuse;
     uniform vec2 rangeMin;
     uniform vec2 rangeMax;
-    uniform float shadowScale;
     varying vec2 vUv;
   
     void main() {
         vec4 baseColor = texture2D(tDiffuse, vUv);
-        vec2 blur = mix(rangeMax, rangeMin, baseColor.a * shadowScale + 0.05);
+        vec2 blur = mix(rangeMax, rangeMin, baseColor.a);
         vec4 sum = vec4( 0.0 );
-        sum += texture2D(tDiffuse, vUv - 4.0 * blur) * 0.051;
-        sum += texture2D(tDiffuse, vUv - 3.0 * blur) * 0.0918;
-        sum += texture2D(tDiffuse, vUv - 2.0 * blur) * 0.12245;
-        sum += texture2D(tDiffuse, vUv - 1.0 * blur) * 0.1531;
+        sum += texture2D(tDiffuse, vUv - 1.0 * blur) * 0.051;
+        sum += texture2D(tDiffuse, vUv - 0.75 * blur) * 0.0918;
+        sum += texture2D(tDiffuse, vUv - 0.5 * blur) * 0.12245;
+        sum += texture2D(tDiffuse, vUv - 0.25 * blur) * 0.1531;
         sum += baseColor * 0.1633;
-        sum += texture2D(tDiffuse, vUv + 1.0 * blur) * 0.1531;
-        sum += texture2D(tDiffuse, vUv + 2.0 * blur) * 0.12245;
-        sum += texture2D(tDiffuse, vUv + 3.0 * blur) * 0.0918;
-        sum += texture2D(tDiffuse, vUv + 4.0 * blur) * 0.051;
+        sum += texture2D(tDiffuse, vUv + 0.25 * blur) * 0.1531;
+        sum += texture2D(tDiffuse, vUv + 0.5 * blur) * 0.12245;
+        sum += texture2D(tDiffuse, vUv + 0.75 * blur) * 0.0918;
+        sum += texture2D(tDiffuse, vUv + 1.0 * blur) * 0.051;
         gl_FragColor = sum;
     }`,
 };

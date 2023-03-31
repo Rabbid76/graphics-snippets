@@ -20,7 +20,7 @@ export class MaterialGUI {
             return { 'materialId': item.materialId, 'name': name };
         })
         let parameterMenuItems = Object.assign({}, ...materialNames.map((item) => ({[item.name]: item.materialId})));
-        this.materialFolder.add(this, 'materialId', parameterMenuItems).onChange((value) => this.updateMaterialPropertiesUI(value));
+        this.materialFolder.add<any>(this, 'materialId', parameterMenuItems).onChange((value) => this.updateMaterialPropertiesUI(value));
         this.updateMaterialPropertiesUI(this.materialId);
     }
 
@@ -62,30 +62,30 @@ export class MaterialGUI {
         }
         this.materialProperties = this.materialFolder.addFolder(folderName);
         this.materialProperties.addColor(uiMaterialData, 'color').onChange(MaterialGUI.handleColorChange(material.color, true));
-        this.materialProperties.add(material, 'opacity', 0, 1).onChange((value: number) => { 
+        this.materialProperties.add<any>(material, 'opacity', 0, 1).onChange((value: number) => { 
             const transparent = value < 1;
             if (transparent !== material.transparent) {
                 material.transparent = transparent;
                 material.needsUpdate = true;
             }
         });
-        this.materialProperties.add(material, 'metalness', 0, 1);
-        this.materialProperties.add(material, 'roughness', 0, 1);
-        this.materialProperties.add(material, 'transmission', 0, 1);
-        this.materialProperties.add(material, 'ior', 1, 2.333);
-        this.materialProperties.add(material, 'specularIntensity', 0, 1);
+        this.materialProperties.add<any>(material, 'metalness', 0, 1);
+        this.materialProperties.add<any>(material, 'roughness', 0, 1);
+        this.materialProperties.add<any>(material, 'transmission', 0, 1);
+        this.materialProperties.add<any>(material, 'ior', 1, 2.333);
+        this.materialProperties.add<any>(material, 'specularIntensity', 0, 1);
         this.materialProperties.addColor(uiMaterialData, 'specularColor').onChange(MaterialGUI.handleColorChange(material.specularColor, true));
-        this.materialProperties.add(material, 'reflectivity', 0, 1);
-        this.materialProperties.add(material, 'clearcoat', 0, 1);
-        this.materialProperties.add(material, 'clearcoatRoughness', 0, 1.0);
-        this.materialProperties.add(material, 'sheen', 0, 1.0);
-        this.materialProperties.add(material, 'sheenRoughness', 0, 1);
+        this.materialProperties.add<any>(material, 'reflectivity', 0, 1);
+        this.materialProperties.add<any>(material, 'clearcoat', 0, 1);
+        this.materialProperties.add<any>(material, 'clearcoatRoughness', 0, 1.0);
+        this.materialProperties.add<any>(material, 'sheen', 0, 1.0);
+        this.materialProperties.add<any>(material, 'sheenRoughness', 0, 1);
         this.materialProperties.addColor(uiMaterialData, 'sheenColor').onChange(MaterialGUI.handleColorChange(material.sheenColor, true));
-        this.materialProperties.add(material, 'emissiveIntensity', 0, 1);
+        this.materialProperties.add<any>(material, 'emissiveIntensity', 0, 1);
         this.materialProperties.addColor(uiMaterialData, 'emissive').onChange(MaterialGUI.handleColorChange(material.emissive, true));
-        this.materialProperties.add(material, 'attenuationDistance', 0, 50);
+        this.materialProperties.add<any>(material, 'attenuationDistance', 0, 50);
         this.materialProperties.addColor(uiMaterialData, 'attenuationColor').onChange(MaterialGUI.handleColorChange(material.attenuationColor, true));
-        this.materialProperties.add(material, 'thickness', 0, 50);
+        this.materialProperties.add<any>(material, 'thickness', 0, 50);
     }
 
     private static handleColorChange(color: THREE.Color, converSRGBToLinear: boolean = false) {

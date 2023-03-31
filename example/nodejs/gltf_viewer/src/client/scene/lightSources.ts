@@ -4,6 +4,7 @@ import * as THREE from 'three'
 import { GUI } from 'dat.gui'
 
 export class LightSources {
+    /*
     private static defaultLightSources = [
         {
             type: 'ambient',
@@ -23,6 +24,48 @@ export class LightSources {
             intensity: 60,
             castShadow: false,
         }
+    ];
+    */
+    private static defaultLightSources = [
+        {
+            type: 'ambient',
+            color: '#ffffff'
+        },
+        {
+            type: 'rectArea',
+            position: { x: 0, y: 5, z: 0 },
+            color: '#ffffff',
+            intensity: 40,
+            castShadow: true,
+        },
+        {
+            type: 'rectArea',
+            position: { x: 5, y: 5, z: 5 },
+            color: '#ffffff',
+            intensity: 60,
+            castShadow: true,
+        },
+        {
+            type: 'rectArea',
+            position: { x: -5, y: 5, z: 5 },
+            color: '#ffffff',
+            intensity: 60,
+            castShadow: true,
+        },
+        {
+            type: 'rectArea',
+            position: { x: 5, y: 5, z: -5 },
+            color: '#ffffff',
+            intensity: 60,
+            castShadow: true,
+        },
+        {
+            type: 'rectArea',
+            position: { x: -5, y: 5, z: -5 },
+            color: '#ffffff',
+            intensity: 60,
+            castShadow: true,
+        },
     ];
 
     public lightControls: boolean = false;
@@ -59,7 +102,7 @@ export class LightSources {
                         const rectAreaLight = new THREE.RectAreaLight(new THREE.Color(definition.color), intensity,  rectAreaLightWidth, rectAreaLightHeight);
                         rectAreaLight.position.set(definition.position.x, definition.position.y, definition.position.z);
                         rectAreaLight.matrixAutoUpdate = true;
-                        rectAreaLight.visible = count === 0;
+                        rectAreaLight.visible = definition.castShadow; //count === 0;
                         rectAreaLight.lookAt(new THREE.Vector3(0, 0, 0));
                         this._lightSources.push(rectAreaLight);
                         this.sceneRenderer?.addRectAreaLight(rectAreaLight, scene);
@@ -144,16 +187,16 @@ export class LightSourcesGUI {
     }
 
     public addGUI(gui: GUI, lightControlsUpdate: () => void): void {
-        gui.add(this.lightSources, 'lightControls').onChange(lightControlsUpdate);
+        gui.add<any>(this.lightSources, 'lightControls').onChange(lightControlsUpdate);
         this.lightSources.getLightSources().forEach(light => {
             if (light instanceof THREE.AmbientLight) {
                 this.lightColors.push({
                     color: light.color.getHex()
                 });
                 let ambiLight = gui.addFolder('Ambient Light');
-                ambiLight.add(light, 'visible');
-                ambiLight.add(light, 'intensity').min(0).max(5).step(0.1);
-                ambiLight.addColor(this.lightColors[this.lightColors.length-1], 'color').onChange((color: string) => light.color = new THREE.Color(color));
+                ambiLight.add<any>(light, 'visible');
+                ambiLight.add<any>(light, 'intensity').min(0).max(5).step(0.1);
+                ambiLight.addColor(this.lightColors[this.lightColors.length-1], 'color').onChange((color: string) => light.color = new THREE.Color(color as THREE.ColorRepresentation));
             }
         });
         this.lightSources.getLightSources().forEach(light => {
@@ -162,22 +205,22 @@ export class LightSourcesGUI {
                     color: light.color.getHex()
                 });
                 let lightFolder = gui.addFolder(`Directional Light ${this.lightColors.length-1}`);
-                lightFolder.add(light, 'visible');
-                lightFolder.add(light, 'intensity').min(0).max(10).step(0.1);
-                lightFolder.add(light, 'castShadow');
-                lightFolder.addColor(this.lightColors[this.lightColors.length-1], 'color').onChange((color: string) => light.color = new THREE.Color(color));
+                lightFolder.add<any>(light, 'visible');
+                lightFolder.add<any>(light, 'intensity').min(0).max(10).step(0.1);
+                lightFolder.add<any>(light, 'castShadow');
+                lightFolder.addColor(this.lightColors[this.lightColors.length-1], 'color').onChange((color: string) => light.color = new THREE.Color(color as THREE.ColorRepresentation));
             } else if (light instanceof THREE.RectAreaLight) {
                 this.lightColors.push({
                     color: light.color.getHex()
                 });
                 let lightFolder = gui.addFolder(`Rect area Light ${this.lightColors.length-1}`);
                 const shadowLight = this.lightSources.sceneRenderer?.screenSpaceShadow.findShadowLightSource(light);
-                lightFolder.add(light, 'visible');
-                lightFolder.add(light, 'intensity').min(0).max(200).step(1);
+                lightFolder.add<any>(light, 'visible');
+                lightFolder.add<any>(light, 'intensity').min(0).max(200).step(1);
                 if (shadowLight) {
-                    lightFolder.add(shadowLight, 'castShadow');
+                    lightFolder.add<any>(shadowLight, 'castShadow');
                 }
-                lightFolder.addColor(this.lightColors[this.lightColors.length-1], 'color').onChange((color: string) => light.color = new THREE.Color(color));
+                lightFolder.addColor(this.lightColors[this.lightColors.length-1], 'color').onChange((color: string) => light.color = new THREE.Color(color as THREE.ColorRepresentation));
             }
         });
     }

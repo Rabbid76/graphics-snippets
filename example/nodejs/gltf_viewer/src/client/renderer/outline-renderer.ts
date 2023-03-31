@@ -105,14 +105,15 @@ export class OutLineRenderer {
       this.deactivateOutline();
       return;
     }
-    if (this.outlinePassActivated) {
+    const needsUpdate =
+      this.outlinePass?.renderCamera &&
+      (camera as PerspectiveCamera).isPerspectiveCamera !==
+        (this.outlinePass.renderCamera as PerspectiveCamera)
+          .isPerspectiveCamera;
+    if (!needsUpdate && this.outlinePassActivated) {
       return;
     }
-    if (
-      !this.outlinePass ||
-      (camera as PerspectiveCamera).isPerspectiveCamera !==
-        (this.outlinePass.renderCamera as PerspectiveCamera).isPerspectiveCamera
-    ) {
+    if (needsUpdate || !this.outlinePass) {
       this.outlinePass = new OutlinePass(
         new Vector2(this.width, this.height),
         scene,

@@ -355,10 +355,10 @@ export class ShadowAndAoRenderTargets {
       aoDepthBias: parameters?.aoDepthBias ?? 0.0005,
       aoMaxDistance: parameters?.aoMaxDistance ?? 0.1,
       aoMaxDepth: parameters?.aoMaxDepth ?? 0.99,
-      aoIntensity: parameters?.aoIntensity ?? 1,
+      aoIntensity: parameters?.aoIntensity ?? 0.5,
       aoFadeout: parameters?.aoFadeout ?? 1,
-      shadowRadius: parameters?.shadowRadius ?? 0.15,
-      shadowIntensity: parameters?.shadowIntensity ?? 0.25,
+      shadowRadius: parameters?.shadowRadius ?? 0.1,
+      shadowIntensity: parameters?.shadowIntensity ?? 0.3,
     };
   }
 

@@ -10,11 +10,14 @@ import {
 } from './shader-utility';
 import { DepthNormalRenderTarget } from './depth-normal-render-targets';
 import {
-  GroundContactShadow,
-  GroundContactShadowParameters,
-} from './ground-contact-shadow';
+  BakedGroundContactShadow,
+  BakedGroundContactShadowParameters,
+} from './baked-ground-contact-shadow';
 import { OutLineRenderer, OutlineParameters } from './outline-renderer';
-import { ScreenSpaceShadowMap } from './screen-space-shadow-map';
+import {
+  ScreenSpaceShadowMap,
+  ScreenSpaceShadowMapParameters,
+} from './screen-space-shadow-map';
 import { ShadowAndAoPass, ShadowAndAoParameters } from './shadow-and-ao-pass';
 import {
   GroundReflectionPass,
@@ -41,7 +44,7 @@ import {
   WebGLRenderTarget,
 } from 'three';
 
-export { GroundContactShadowParameters } from './ground-contact-shadow';
+export { BakedGroundContactShadowParameters } from './baked-ground-contact-shadow';
 export { OutlineParameters } from './outline-renderer';
 export { ShadowAndAoParameters } from './shadow-and-ao-pass';
 
@@ -60,8 +63,9 @@ export enum QualityLevel {
 
 export interface SceneRendererParameters {
   shadowAndAoParameters: ShadowAndAoParameters;
+  screenSpaceShadowMapParameters: ScreenSpaceShadowMapParameters;
   groundReflectionParameters: GroundReflectionParameters;
-  bakedGroundContactShadowParameters: GroundContactShadowParameters;
+  bakedGroundContactShadowParameters: BakedGroundContactShadowParameters;
   outlineParameters: OutlineParameters;
   deferredShadowAndAoFrame: number;
   shadowAndAoFadeInFrames: number;
@@ -87,7 +91,7 @@ export class SceneRenderer {
   public screenSpaceShadow: ScreenSpaceShadowMap;
   public groundReflectionPass: GroundReflectionPass;
   public depthNormalRenderTarget: DepthNormalRenderTarget;
-  public bakedGroundContactShadow: GroundContactShadow;
+  public bakedGroundContactShadow: BakedGroundContactShadow;
   public effectComposer: EffectComposer;
   public scenePass: ScenePass;
   public outlineRenderer: OutLineRenderer;
@@ -136,7 +140,11 @@ export class SceneRenderer {
       this.height,
       {}
     );
-    this.bakedGroundContactShadow = new GroundContactShadow(this.renderer, this.groundGroup, {});
+    this.bakedGroundContactShadow = new BakedGroundContactShadow(
+      this.renderer,
+      this.groundGroup,
+      {}
+    );
     this.groundGroup.rotateX(-Math.PI / 2);
     const renderTarget = new WebGLRenderTarget(this.width, this.height, {
       samples: this.maxSamples,
@@ -153,12 +161,11 @@ export class SceneRenderer {
     this.shadowRenderOverrideVisibility = new RenderOverrideVisibility(false, [
       this.groundGroup,
     ]);
-    this.sceneGroups.addToGroup(
-      SceneGroupType.GROUND,
-      this.groundGroup
-    );
+    this.sceneGroups.addToGroup(SceneGroupType.GROUND, this.groundGroup);
     this.parameters = {
-      bakedGroundContactShadowParameters: this.bakedGroundContactShadow.parameters,
+      bakedGroundContactShadowParameters:
+        this.bakedGroundContactShadow.parameters,
+      screenSpaceShadowMapParameters: this.screenSpaceShadow.parameters,
       shadowAndAoParameters: this.shadowAndAoPass.parameters,
       groundReflectionParameters: this.groundReflectionPass.parameters,
       outlineParameters: this.outlineRenderer.parameters,
@@ -217,10 +224,10 @@ export class SceneRenderer {
             aoAndSoftShadowEnabled: true,
           },
           groundReflectionParameters: {
-            enabled: true,
+            enabled: false,
           },
           bakedGroundContactShadowParameters: {
-            enabled: false,
+            enabled: true,
           },
         });
         break;
@@ -255,6 +262,12 @@ export class SceneRenderer {
     }
   }
 
+  public forceShadowUpdates(): void {
+    this.shadowAndAoPass.needsUpdate = true;
+    this.screenSpaceShadow.needsUpdate = true;
+    this.bakedGroundContactShadow.needsUpdate = true;
+  }
+
   public updateParameters(parameters: any) {
     if (parameters.shadowAndAoParameters !== undefined) {
       this.shadowAndAoPass.updateParameters(parameters.shadowAndAoParameters);
@@ -262,6 +275,11 @@ export class SceneRenderer {
     if (parameters.bakedGroundContactShadowParameters !== undefined) {
       this.bakedGroundContactShadow.updateParameters(
         parameters.bakedGroundContactShadowParameters
+      );
+    }
+    if (parameters.screenSpaceShadowMapParameters !== undefined) {
+      this.screenSpaceShadow.updateParameters(
+        parameters.screenSpaceShadowMapParameters
       );
     }
     if (parameters.groundReflectionParameters !== undefined) {
@@ -305,7 +323,6 @@ export class SceneRenderer {
     }
   }
 
-
   protected getCopyMaterial(parameters?: any): ShaderMaterial {
     this.copyMaterial = this.copyMaterial ?? new CopyTransformMaterial();
     return this.copyMaterial.update(parameters);
@@ -336,7 +353,7 @@ export class SceneRenderer {
   ): void {
     //this.renderer.info.autoReset = false;
     //this.renderer.info.reset();
-    this.screenSpaceShadow.alwaysUpdate =
+    this.screenSpaceShadow.parameters.alwaysUpdate =
       this.shadowAndAoPass.parameters.aoAlwaysUpdate;
     this.outlineRenderer.updateOutline(scene, camera, this.selectedObjects);
     this.renderer.setRenderTarget(null);
@@ -423,8 +440,9 @@ export class SceneRenderer {
   private evaluateIfShadowAndAoUpdateIsNeeded(camera: Camera) {
     const alwaysUpdate = this.shadowAndAoPass.parameters.aoAlwaysUpdate;
     let needsUpdate =
-      this.parameters.deferredShadowAndAoFrame === 0 ||
-      this.cameraUpdate.changed(camera);
+      this.shadowAndAoPass.parameters.aoAndSoftShadowEnabled &&
+      (this.parameters.deferredShadowAndAoFrame === 0 ||
+        this.cameraUpdate.changed(camera));
     if (needsUpdate) {
       this.noUpdateNeededCount = 0;
     }
@@ -545,6 +563,18 @@ export class SceneRenderer {
             blending: NoBlending,
             colorTransform: CopyTransformMaterial.defaultTransform,
             uvTransform: CopyTransformMaterial.flipYuvTransform,
+          }),
+          null
+        );
+        break;
+      case 'bakedgroundshadow':
+        this.renderPass.renderScreenSpace(
+          this.renderer,
+          this.getCopyMaterial({
+            texture: this.bakedGroundContactShadow.renderTarget.texture,
+            blending: NoBlending,
+            colorTransform: CopyTransformMaterial.defaultTransform,
+            uvTransform: CopyTransformMaterial.defaultUvTransform,
           }),
           null
         );

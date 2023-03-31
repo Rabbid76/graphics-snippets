@@ -6,6 +6,8 @@ import {
     LinearFilter,
     LinearMipMapLinearFilter,
     RGBAFormat,
+    TextureDataType,
+    TextureEncoding,
     UnsignedByteType,
     Vector3
 } from 'three';
@@ -66,8 +68,8 @@ export class EnvMapReader {
             let cubeTexture = new CubeTexture();
             this._cubeTextures.push(cubeTexture);
             cubeTexture.format = RGBAFormat;
-            cubeTexture.encoding = this._encoding;
-            cubeTexture.type = this._type;
+            cubeTexture.encoding = this._encoding as TextureEncoding;
+            cubeTexture.type = this._type as TextureDataType;
             cubeTexture.minFilter = LinearMipMapLinearFilter;
             cubeTexture.magFilter = LinearFilter;
             cubeTexture.generateMipmaps = false;

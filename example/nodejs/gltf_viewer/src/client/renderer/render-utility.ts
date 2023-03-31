@@ -132,15 +132,18 @@ export class RenderOverrideVisibility {
   private background: any;
   private hideLinesAndPoints: boolean;
   private invisibleObjects?: any[];
+  private invisibleObjectNames?: string[];
 
   constructor(
     hideLinesAndPoints?: boolean,
     invisibleObjects?: any[],
+    invisibleObjectNames?: any[],
     background?: any
   ) {
     this.background = background;
     this.hideLinesAndPoints = hideLinesAndPoints ?? false;
     this.invisibleObjects = invisibleObjects;
+    this.invisibleObjectNames = invisibleObjectNames;
   }
 
   public updateVisibilityCache(scene?: Scene) {
@@ -151,6 +154,16 @@ export class RenderOverrideVisibility {
     if (scene && this.hideLinesAndPoints) {
       scene.traverse((object: any) => {
         if (object.isPoints || object.isLine) {
+          this._visibilityCache.set(object, object.visible);
+        }
+      });
+    }
+    if (scene && this.invisibleObjectNames) {
+      scene.traverse((object: any) => {
+        if (
+          object.name !== undefined &&
+          this.invisibleObjectNames?.includes(object.name)
+        ) {
           this._visibilityCache.set(object, object.visible);
         }
       });
