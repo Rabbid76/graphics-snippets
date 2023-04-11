@@ -1,22 +1,28 @@
-import * as THREE from 'three'
+import {
+    BufferGeometry,
+    Group,
+    Material,
+    Matrix4,
+    Mesh,
+} from 'three';
 
 export interface MaterialData {
     materialId: string
-    material: THREE.Material
+    material: Material
 }
 
 export interface GeometryAndMaterial {
-    geometry: THREE.BufferGeometry,
-    material: THREE.Material,
-    transform?: THREE.Matrix4,
+    geometry: BufferGeometry,
+    material: Material,
+    transform?: Matrix4,
     materialId: string,
     environment: boolean
 }
 
-export const createSceneGroup = (geometryAndMaterial: GeometryAndMaterial[]) : THREE.Group => {
-    const sceneGroup = new THREE.Group();
+export const createSceneGroup = (geometryAndMaterial: GeometryAndMaterial[]) : Group => {
+    const sceneGroup = new Group();
     geometryAndMaterial.forEach(item => {
-        const mesh = new THREE.Mesh(item.geometry, item.material);
+        const mesh = new Mesh(item.geometry, item.material);
         if (item.transform) {
             mesh.applyMatrix4(item.transform);
         }

@@ -3,6 +3,7 @@ import {
   Camera,
   DepthStencilFormat,
   DepthTexture,
+  MagnificationTextureFilter,
   MeshNormalMaterial,
   NearestFilter,
   NoBlending,
@@ -21,7 +22,8 @@ export interface DepthAndNormalTextures {
 
 export class DepthNormalRenderTarget {
   private depthNormalScale = 1;
-  private targetTextureFilter: TextureFilter;
+  private targetMinificationTextureFilter: TextureFilter;
+  private targetMagnificationTextureFilter: MagnificationTextureFilter;
   private width: number;
   private height: number;
   private samples: number;
@@ -65,8 +67,8 @@ export class DepthNormalRenderTarget {
         this.width * this.depthNormalScale,
         this.height * this.depthNormalScale,
         {
-          minFilter: this.targetTextureFilter,
-          magFilter: this.targetTextureFilter,
+          minFilter: this.targetMinificationTextureFilter,
+          magFilter: this.targetMagnificationTextureFilter,
           depthTexture,
         }
       );
@@ -76,7 +78,8 @@ export class DepthNormalRenderTarget {
 
   constructor(parameters?: any) {
     this.depthNormalScale = parameters?.depthNormalScale ?? 1;
-    this.targetTextureFilter = parameters?.textureFilter ?? NearestFilter;
+    this.targetMinificationTextureFilter = parameters?.textureMinificationFilter ?? NearestFilter;
+    this.targetMagnificationTextureFilter = parameters?.textureMagnificationFilter ?? NearestFilter;
     this.width = parameters?.width ?? 1024;
     this.height = parameters?.height ?? 1024;
     this.samples = parameters?.samples ?? 0;

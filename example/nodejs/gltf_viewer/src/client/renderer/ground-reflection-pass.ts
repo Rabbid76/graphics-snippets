@@ -26,6 +26,7 @@ import {
 } from 'three';
 
 export interface GroundReflectionParameters {
+  [key: string]: any;
   enabled: boolean;
   intensity: number;
   fadeOut: number;
@@ -80,15 +81,16 @@ export class GroundReflectionPass {
     this.width = width;
     this.height = height;
     this.parameters = {
-      enabled: parameters.enabled ?? false,
-      intensity: parameters.intensity ?? 0.25,
-      fadeOut: parameters.fadeOut ?? 1,
-      brightness: parameters.brightness ?? 1.0,
-      blurHorizontal: parameters.blurHorizontal ?? 3.0,
-      blurVertical: parameters.blurHorizontal ?? 6.0,
-      blurAscent: parameters.blurAscent ?? 0,
-      groundLevel: parameters.groundLevel ?? 0,
-      renderTargetDownScale: parameters.renderTargetDownScale ?? 4,
+      enabled: false,
+      intensity: 0.25,
+      fadeOut: 1,
+      brightness: 1.0,
+      blurHorizontal: 3.0,
+      blurVertical: 6.0,
+      blurAscent: 0,
+      groundLevel: 0,
+      renderTargetDownScale: 4,
+      ...parameters,
     };
     this._copyMaterial = new CopyTransformMaterial({}, false);
     this.updateCopyMaterial(null);
@@ -147,34 +149,13 @@ export class GroundReflectionPass {
   }
 
   public updateParameters(parameters: any) {
-    if (parameters.enabled !== undefined) {
-      this.parameters.enabled = parameters.enabled;
-    }
-    if (parameters.intensity !== undefined) {
-      this.parameters.intensity = parameters.intensity;
-    }
-    if (parameters.fadeOut !== undefined) {
-      this.parameters.fadeOut = parameters.fadeOut;
-    }
-    if (parameters.brightness !== undefined) {
-      this.parameters.brightness = parameters.brightness;
-    }
-    if (parameters.blurHorizontal !== undefined) {
-      this.parameters.blurHorizontal = parameters.blurHorizontal;
-    }
-    if (parameters.blurVertical !== undefined) {
-      this.parameters.blurVertical = parameters.blurVertical;
-    }
-    if (parameters.blurAscent !== undefined) {
-      this.parameters.blurAscent = parameters.blurAscent;
-    }
-    if (parameters.groundLevel !== undefined) {
-      this.parameters.groundLevel = parameters.groundLevel;
-    }
-    if (parameters.renderTargetDownScale !== undefined) {
-      this.parameters.renderTargetDownScale = parameters.renderTargetDownScale;
+    for (let propertyName in parameters) {
+      if (this.parameters.hasOwnProperty(propertyName)) {
+        this.parameters[propertyName] = parameters[propertyName];
+      }
     }
   }
+
   private updateCopyMaterial(renderTarget: WebGLRenderTarget | null) {
     const intensity = this.parameters.intensity;
     const brightness = this.parameters.brightness;

@@ -87,6 +87,7 @@ export class SceneRendererGUI {
 
   private addDebugGUI(gui: GUI, updateCallback: () => void): void {
     const qualityLevels = new Map([
+      ['HIGHEST', QualityLevel.HIGHEST],
       ['HIGH', QualityLevel.HIGH],
       ['MEDIUM', QualityLevel.MEDIUM],
       ['LOW', QualityLevel.LOW],
@@ -98,7 +99,7 @@ export class SceneRendererGUI {
       .onChange((qualityLevel: string) => {
         if (qualityLevels.has(qualityLevel)) {
           this.sceneRenderer.setQualityLevel(
-            qualityLevels.get(qualityLevel) ?? QualityLevel.HIGH
+            qualityLevels.get(qualityLevel) ?? QualityLevel.HIGHEST
           );
         }
       });
@@ -111,6 +112,7 @@ export class SceneRendererGUI {
         'normal vector': 'normal',
         SSAO: 'ssao',
         'blur SSAO': 'ssaoblur',
+        'shadow map': 'shadowmap',
         shadow: 'shadow',
         'blur shadow': 'shadowblur',
         'ground shadow': 'groundshadow',
@@ -151,7 +153,9 @@ export class SceneRendererGUI {
     gui
       .add<any>(parameters, 'aoIntensity', 0.01, 1)
       .onChange(() => updateCallback());
-    gui.add<any>(parameters, 'aoFadeout', 0, 1).onChange(() => updateCallback());
+    gui
+      .add<any>(parameters, 'aoFadeout', 0, 1)
+      .onChange(() => updateCallback());
     gui
       .add<any>(parameters, 'aoKernelRadius', 0.001, 0.2)
       .onChange(() => updateCallback());
@@ -161,7 +165,9 @@ export class SceneRendererGUI {
     gui
       .add<any>(parameters, 'aoMaxDistance', 0.01, 1)
       .onChange(() => updateCallback());
-    gui.add<any>(parameters, 'aoMaxDepth', 0.9, 1).onChange(() => updateCallback());
+    gui
+      .add<any>(parameters, 'aoMaxDepth', 0.9, 1)
+      .onChange(() => updateCallback());
     gui
       .add<any>(parameters, 'shadowIntensity', 0, 1)
       .onChange(() => updateCallback());
@@ -173,8 +179,12 @@ export class SceneRendererGUI {
   private addGroundReflectionGUI(gui: GUI, updateCallback: () => void): void {
     const parameters = this.sceneRenderer.parameters.groundReflectionParameters;
     gui.add<any>(parameters, 'enabled');
-    gui.add<any>(parameters, 'intensity', 0.0, 1.0).onChange(() => updateCallback());
-    gui.add<any>(parameters, 'fadeOut', 0.0, 2.0).onChange(() => updateCallback());
+    gui
+      .add<any>(parameters, 'intensity', 0.0, 1.0)
+      .onChange(() => updateCallback());
+    gui
+      .add<any>(parameters, 'fadeOut', 0.0, 2.0)
+      .onChange(() => updateCallback());
     gui
       .add<any>(parameters, 'brightness', 0.0, 2.0)
       .onChange(() => updateCallback());
@@ -200,7 +210,7 @@ export class SceneRendererGUI {
     const parameters =
       this.sceneRenderer.parameters.bakedGroundContactShadowParameters;
     gui.add<any>(parameters, 'enabled');
-    gui.add<any>(parameters, 'cameraHelper');
+    gui.add<any>(parameters, 'cameraHelper').onChange(() => updateParameter());
     gui.add<any>(parameters, 'alwaysUpdate');
     gui
       .add<any>(parameters, 'blurMin', 0, 0.2, 0.001)

@@ -31,6 +31,7 @@ import {
 } from 'three';
 
 export interface ShadowAndAoParameters {
+  [key: string]: any;
   aoAndSoftShadowEnabled: boolean;
   aoAlwaysUpdate: boolean;
   aoKernelRadius: number;
@@ -131,36 +132,10 @@ export class ShadowAndAoPass {
   }
 
   public updateParameters(parameters: any) {
-    if (parameters.aoAndSoftShadowEnabled !== undefined) {
-      this.parameters.aoAndSoftShadowEnabled =
-        parameters.aoAndSoftShadowEnabled;
-    }
-    if (parameters.aoAlwaysUpdate !== undefined) {
-      this.parameters.aoAlwaysUpdate = parameters.aoAlwaysUpdate;
-    }
-    if (parameters.aoKernelRadius !== undefined) {
-      this.parameters.aoKernelRadius = parameters.aoKernelRadius;
-    }
-    if (parameters.aoDepthBias !== undefined) {
-      this.parameters.aoDepthBias = parameters.aoDepthBias;
-    }
-    if (parameters.aoMaxDistance !== undefined) {
-      this.parameters.aoMaxDistance = parameters.aoMaxDistance;
-    }
-    if (parameters.aoMaxDepth !== undefined) {
-      this.parameters.aoMaxDepth = parameters.aoMaxDepth;
-    }
-    if (parameters.aoIntensity !== undefined) {
-      this.parameters.aoIntensity = parameters.aoIntensity;
-    }
-    if (parameters.aoFadeout !== undefined) {
-      this.parameters.aoFadeout = parameters.aoFadeout;
-    }
-    if (parameters.shadowRadius !== undefined) {
-      this.parameters.shadowRadius = parameters.shadowRadius;
-    }
-    if (parameters.shadowIntensity !== undefined) {
-      this.parameters.shadowIntensity = parameters.shadowIntensity;
+    for (let propertyName in parameters) {
+      if (this.parameters.hasOwnProperty(propertyName)) {
+        this.parameters[propertyName] = parameters[propertyName];
+      }
     }
   }
 

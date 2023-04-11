@@ -9,6 +9,7 @@ import {
   Group,
   LineBasicMaterial,
   Material,
+  MathUtils,
   Matrix4,
   Mesh,
   MeshBasicMaterial,
@@ -431,3 +432,27 @@ export class CameraUpdate {
     return hasChanged;
   }
 }
+
+export const viewSpacePositionFromAltitudeAndAzimuth = (
+  distance: number,
+  altitudeDeg: number,
+  azimuthDeg: number
+): Vector3 => {
+  return new Vector3().setFromSphericalCoords(
+    distance,
+    MathUtils.degToRad(90 - altitudeDeg),
+    MathUtils.degToRad(180 - azimuthDeg)
+  );
+};
+
+export const viewSpacePositionFromUV = (
+  distance: number,
+  u: number,
+  v: number
+): Vector3 => {
+  return new Vector3().setFromSphericalCoords(
+    distance,
+    Math.PI * (1 - v),
+    Math.PI * 2 * (1 - u)
+  );
+};

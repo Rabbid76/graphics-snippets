@@ -1,5 +1,12 @@
 import { getMaxSamples } from '../renderer/render-utility'
-import * as THREE from 'three'
+import {
+    Camera,
+    FramebufferTexture,
+    RGBAFormat,
+    Scene,
+    Vector2,
+    WebGLRenderer,
+} from 'three'
 import { Pass } from 'three/examples/jsm/postprocessing/Pass';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
 import { SSRPass } from 'three/examples/jsm/postprocessing/SSRPass.js'
@@ -42,8 +49,8 @@ class EffectPass {
 }
 
 export class PostProcessingEffects {
-    private renderer: THREE.WebGLRenderer
-    private colorTexture: THREE.FramebufferTexture;
+    private renderer: WebGLRenderer
+    private colorTexture: FramebufferTexture;
     private width: number
     private height: number
     public composer: EffectComposer
@@ -58,15 +65,15 @@ export class PostProcessingEffects {
         threshold: 0.85
     }
 
-    constructor(renderer: THREE.WebGLRenderer, composer: EffectComposer, scene: THREE.Scene, camera: THREE.Camera, width: number, height: number, parameters?: any) {
+    constructor(renderer: WebGLRenderer, composer: EffectComposer, scene: Scene, camera: Camera, width: number, height: number, parameters?: any) {
         this.renderer = renderer
         this.width = width
         this.height = height
         this.maxSamples = getMaxSamples(renderer)
-        this.colorTexture = new THREE.FramebufferTexture(this.width, this.height, THREE.RGBAFormat);
+        this.colorTexture = new FramebufferTexture(this.width, this.height, RGBAFormat);
         this.composer = composer;
 
-        const bloomPass = new UnrealBloomPass(new THREE.Vector2(width, height), this.bloomParameter.strength, this.bloomParameter.radius, this.bloomParameter.threshold);
+        const bloomPass = new UnrealBloomPass(new Vector2(width, height), this.bloomParameter.strength, this.bloomParameter.radius, this.bloomParameter.threshold);
         this.bloomPass = new EffectPass(this.composer, bloomPass)
 
         this.ssrPass = new EffectPass(this.composer, new SSRPass({
@@ -91,7 +98,7 @@ export class PostProcessingEffects {
         this.ssrPass.resize(width, height)
         this.bloomPass.resize(width, height)
         this.colorTexture.dispose;
-        this.colorTexture = new THREE.FramebufferTexture(this.width, this.height, THREE.RGBAFormat);
+        this.colorTexture = new FramebufferTexture(this.width, this.height, RGBAFormat);
     }
 
     public setFxaa(enabled: boolean) {

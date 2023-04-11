@@ -1,9 +1,18 @@
 import { loadAndSetTexture } from '../renderer/render-utility'
-import * as THREE from 'three'
+import {
+    Color,
+    DoubleSide,
+    Material,
+    MeshPhysicalMaterial,
+    MeshStandardMaterial,
+    RepeatWrapping,
+    ShadowMaterial,
+    Texture,
+} from 'three'
 
-export const createPreviewMaterial = (): THREE.Material => {
-    const material = new THREE.MeshStandardMaterial({side: THREE.DoubleSide})
-    loadAndSetTexture(texture => material.map = texture, 'roomle_square.jpeg', new THREE.Color(0.859, 0, 0))
+export const createPreviewMaterial = (): Material => {
+    const material = new MeshStandardMaterial({side: DoubleSide})
+    loadAndSetTexture(texture => material.map = texture, 'roomle_square.jpeg', new Color(0.859, 0, 0))
     return material
 }
 
@@ -16,32 +25,32 @@ export const enum GroundMaterialType {
 }
 
 const groundMaterialCache: any = {}
-export const createGroundMaterial = (materialType: GroundMaterialType): THREE.Material => {
-    let material: THREE.Material = groundMaterialCache[materialType]
+export const createGroundMaterial = (materialType: GroundMaterialType): Material => {
+    let material: Material = groundMaterialCache[materialType]
     if (!material) {
         switch(materialType) {
             default: {
-                material = new THREE.MeshStandardMaterial()
+                material = new MeshStandardMaterial()
                 break
             }
             case GroundMaterialType.OnlyShadow: { 
-                material = new THREE.ShadowMaterial()
+                material = new ShadowMaterial()
                 material.opacity = 0.5
                 break
             }
             case GroundMaterialType.Transparent: {
-                material = new THREE.MeshStandardMaterial()
+                material = new MeshStandardMaterial()
                 material.transparent = true;
                 material.opacity = 0
                 break
             }
             case GroundMaterialType.White: {
-                material = new THREE.MeshStandardMaterial()
+                material = new MeshStandardMaterial()
                 break
             }
             case GroundMaterialType.Parquet: {
-                const groundMaterial = new THREE.MeshPhysicalMaterial()
-                loadAndSetTexture(texture => { setTextureProperties(texture); groundMaterial.map = texture }, 'TexturesCom_Wood_ParquetChevron7_1K_albedo.jpg', new THREE.Color(1.0, 0.6, 0.2))
+                const groundMaterial = new MeshPhysicalMaterial()
+                loadAndSetTexture(texture => { setTextureProperties(texture); groundMaterial.map = texture }, 'TexturesCom_Wood_ParquetChevron7_1K_albedo.jpg', new Color(1.0, 0.6, 0.2))
                 loadAndSetTexture(texture => { setTextureProperties(texture); groundMaterial.normalMap = texture }, 'TexturesCom_Wood_ParquetChevron7_1K_normal.jpg')
                 loadAndSetTexture(texture => { setTextureProperties(texture); groundMaterial.roughnessMap = texture }, 'TexturesCom_Wood_ParquetChevron7_1K_roughness.jpg')
                 groundMaterial.aoMapIntensity = 0
@@ -52,8 +61,8 @@ export const createGroundMaterial = (materialType: GroundMaterialType): THREE.Ma
                 break;
             }
             case GroundMaterialType.Pavement: {
-                const groundMaterial = new THREE.MeshPhysicalMaterial()
-                loadAndSetTexture(texture => { setTextureProperties(texture); groundMaterial.map = texture }, 'TexturesCom_Pavement_HerringboneNew_1K_albedo.jpg', new THREE.Color(0.6, 0.3, 0))
+                const groundMaterial = new MeshPhysicalMaterial()
+                loadAndSetTexture(texture => { setTextureProperties(texture); groundMaterial.map = texture }, 'TexturesCom_Pavement_HerringboneNew_1K_albedo.jpg', new Color(0.6, 0.3, 0))
                 loadAndSetTexture(texture => { setTextureProperties(texture); groundMaterial.normalMap = texture }, 'TexturesCom_Pavement_HerringboneNew_1K_normal.jpg')
                 loadAndSetTexture(texture => { setTextureProperties(texture); groundMaterial.roughnessMap = texture }, 'TexturesCom_Pavement_HerringboneNew_1K_roughness.jpg')
                 loadAndSetTexture(texture => { setTextureProperties(texture); groundMaterial.aoMap = texture }, 'TexturesCom_Pavement_HerringboneNew_1K_ao.jpg')
@@ -72,9 +81,9 @@ export const createGroundMaterial = (materialType: GroundMaterialType): THREE.Ma
     return material
 }
 
-const setTextureProperties = (texture: THREE.Texture): void => {
+const setTextureProperties = (texture: Texture): void => {
     texture.anisotropy = 16;
-    texture.wrapS = THREE.RepeatWrapping;
-    texture.wrapT = THREE.RepeatWrapping;
+    texture.wrapS = RepeatWrapping;
+    texture.wrapT = RepeatWrapping;
     texture.repeat.set(100000, 100000);
 }

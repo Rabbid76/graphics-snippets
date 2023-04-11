@@ -1,3 +1,4 @@
+import { Color, MeshPhysicalMaterial } from 'three';
 import { MaterialData } from './meshConstructor';
 import { GUI } from 'dat.gui';
 
@@ -37,7 +38,7 @@ export class MaterialGUI {
         if (!materialData) {
             return;
         }
-        const material = materialData.material as THREE.MeshPhysicalMaterial;
+        const material = materialData.material as MeshPhysicalMaterial;
         if (!material) {
             return;
         }
@@ -69,26 +70,30 @@ export class MaterialGUI {
                 material.needsUpdate = true;
             }
         });
-        this.materialProperties.add<any>(material, 'metalness', 0, 1);
-        this.materialProperties.add<any>(material, 'roughness', 0, 1);
-        this.materialProperties.add<any>(material, 'transmission', 0, 1);
-        this.materialProperties.add<any>(material, 'ior', 1, 2.333);
-        this.materialProperties.add<any>(material, 'specularIntensity', 0, 1);
-        this.materialProperties.addColor(uiMaterialData, 'specularColor').onChange(MaterialGUI.handleColorChange(material.specularColor, true));
-        this.materialProperties.add<any>(material, 'reflectivity', 0, 1);
-        this.materialProperties.add<any>(material, 'clearcoat', 0, 1);
-        this.materialProperties.add<any>(material, 'clearcoatRoughness', 0, 1.0);
-        this.materialProperties.add<any>(material, 'sheen', 0, 1.0);
-        this.materialProperties.add<any>(material, 'sheenRoughness', 0, 1);
-        this.materialProperties.addColor(uiMaterialData, 'sheenColor').onChange(MaterialGUI.handleColorChange(material.sheenColor, true));
-        this.materialProperties.add<any>(material, 'emissiveIntensity', 0, 1);
-        this.materialProperties.addColor(uiMaterialData, 'emissive').onChange(MaterialGUI.handleColorChange(material.emissive, true));
-        this.materialProperties.add<any>(material, 'attenuationDistance', 0, 50);
-        this.materialProperties.addColor(uiMaterialData, 'attenuationColor').onChange(MaterialGUI.handleColorChange(material.attenuationColor, true));
-        this.materialProperties.add<any>(material, 'thickness', 0, 50);
+        try {
+            this.materialProperties.add<any>(material, 'metalness', 0, 1);
+            this.materialProperties.add<any>(material, 'roughness', 0, 1);
+            this.materialProperties.add<any>(material, 'transmission', 0, 1);
+            this.materialProperties.add<any>(material, 'ior', 1, 2.333);
+            this.materialProperties.add<any>(material, 'specularIntensity', 0, 1);
+            this.materialProperties.addColor(uiMaterialData, 'specularColor').onChange(MaterialGUI.handleColorChange(material.specularColor, true));
+            this.materialProperties.add<any>(material, 'reflectivity', 0, 1);
+            this.materialProperties.add<any>(material, 'clearcoat', 0, 1);
+            this.materialProperties.add<any>(material, 'clearcoatRoughness', 0, 1.0);
+            this.materialProperties.add<any>(material, 'sheen', 0, 1.0);
+            this.materialProperties.add<any>(material, 'sheenRoughness', 0, 1);
+            this.materialProperties.addColor(uiMaterialData, 'sheenColor').onChange(MaterialGUI.handleColorChange(material.sheenColor, true));
+            this.materialProperties.add<any>(material, 'emissiveIntensity', 0, 1);
+            this.materialProperties.addColor(uiMaterialData, 'emissive').onChange(MaterialGUI.handleColorChange(material.emissive, true));
+            this.materialProperties.add<any>(material, 'attenuationDistance', 0, 50);
+            this.materialProperties.addColor(uiMaterialData, 'attenuationColor').onChange(MaterialGUI.handleColorChange(material.attenuationColor, true));
+            this.materialProperties.add<any>(material, 'thickness', 0, 50);
+        } catch (e) {
+            console.log(e);
+        }
     }
 
-    private static handleColorChange(color: THREE.Color, converSRGBToLinear: boolean = false) {
+    private static handleColorChange(color: Color, converSRGBToLinear: boolean = false) {
         return (value: any) => {
             if (typeof value === 'string') {
                 value = value.replace('#', '0x');

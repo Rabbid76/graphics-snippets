@@ -21,6 +21,7 @@ import {
 } from 'three';
 
 export interface BakedGroundContactShadowParameters {
+  [key: string]: any;
   enabled: boolean;
   cameraHelper: boolean;
   alwaysUpdate: boolean;
@@ -38,6 +39,7 @@ export interface BakedGroundContactShadowParameters {
 }
 
 export class BakedGroundContactShadow {
+  public static alphaMap: boolean = false; 
   public static addTestMesh: boolean = false;
   public shadowMapSize: number;
   public parameters: BakedGroundContactShadowParameters;
@@ -86,6 +88,10 @@ export class BakedGroundContactShadow {
       depthWrite: false,
       //side: DoubleSide
     });
+    if (BakedGroundContactShadow.alphaMap) {
+      shadowGroundMaterial.color.set(0x000000);
+      shadowGroundMaterial.alphaMap = this.renderTarget.texture;
+    }
     shadowGroundMaterial.polygonOffset = true;
     shadowGroundMaterial.polygonOffsetFactor = this.parameters.polygonOffset;
     shadowGroundMaterial.polygonOffsetUnits = this.parameters.polygonOffset;
@@ -121,7 +127,9 @@ export class BakedGroundContactShadow {
               uniform float fadeoutFalloff;
               ${shader.fragmentShader.replace(
                 'gl_FragColor = vec4( vec3( 1.0 - fragCoordZ ), opacity );',
-                'gl_FragColor = vec4(vec3(0.0), clamp(pow(1.0 + fadeoutBias - fragCoordZ, 1.0/(1.0-fadeoutFalloff)), 0.0, 1.0));'
+                BakedGroundContactShadow.alphaMap
+                  ? 'gl_FragColor = vec4(clamp(pow(1.0 + fadeoutBias - fragCoordZ, 1.0/(1.0-fadeoutFalloff)), 0.0, 1.0));'
+                  : 'gl_FragColor = vec4(vec3(0.0), clamp(pow(1.0 + fadeoutBias - fragCoordZ, 1.0/(1.0-fadeoutFalloff)), 0.0, 1.0));'
               )}
           `;
     };
@@ -144,76 +152,29 @@ export class BakedGroundContactShadow {
   // eslint-disable-next-line complexity
   private getDefaultParameters(parameters: any) {
     return {
-      enabled: parameters.enabled ?? true,
-      cameraHelper: parameters.cameraHelper ?? false,
-      alwaysUpdate: parameters.alwaysUpdate ?? false,
-      blurMin: parameters.blurMin ?? 0.001,
-      blurMax: parameters.blurMax ?? 0.1,
-      fadeoutFalloff: parameters.fadeoutFalloff ?? 0.9,
-      fadeoutBias: parameters.fadeoutBias ?? 0.03,
-      opacity: parameters.opacity ?? 0.5,
-      planeSize: parameters.planeSize ?? 10,
-      cameraFar: parameters.cameraFar ?? 3,
-      hardLayers: parameters.hardLayers ?? null,
-      softLayers: parameters.softLayers ?? null,
-      polygonOffset: parameters.polygonOffset ?? 2,
-      excludeGroundObjects: parameters.excludeGroundObjects ?? true,
+      enabled: true,
+      cameraHelper: false,
+      alwaysUpdate: false,
+      blurMin: 0.001,
+      blurMax: 0.1,
+      fadeoutFalloff: 0.9,
+      fadeoutBias: 0.03,
+      opacity: 0.5,
+      planeSize: 10,
+      cameraFar: 3,
+      hardLayers: null,
+      softLayers: null,
+      polygonOffset: 2,
+      excludeGroundObjects: true,
+      ...parameters,
     };
   }
 
-  public addToScene(scene: Scene) {
-    if (this.cameraHelper.parent !== scene) {
-      scene.add(this.cameraHelper);
-    }
-  }
-
-  public removeFromScene(scene: Scene) {
-    scene.remove(this.cameraHelper);
-  }
-
-  // eslint-disable-next-line complexity
   public updateParameters(parameters: any) {
-    if (parameters.enabled !== undefined) {
-      this.parameters.enabled = parameters.enabled;
-    }
-    if (parameters.cameraHelper !== undefined) {
-      this.parameters.cameraHelper = parameters.cameraHelper;
-    }
-    if (parameters.alwaysUpdate !== undefined) {
-      this.parameters.alwaysUpdate = parameters.alwaysUpdate;
-    }
-    if (parameters.blurMin !== undefined) {
-      this.parameters.blurMin = parameters.blurMin;
-    }
-    if (parameters.blurMax !== undefined) {
-      this.parameters.blurMax = parameters.blurMax;
-    }
-    if (parameters.fadeoutFalloff !== undefined) {
-      this.parameters.fadeoutFalloff = parameters.fadeoutFalloff;
-    }
-    if (parameters.fadeoutBias !== undefined) {
-      this.parameters.fadeoutBias = parameters.fadeoutBias;
-    }
-    if (parameters.opacity !== undefined) {
-      this.parameters.opacity = parameters.opacity;
-    }
-    if (parameters.planeSize !== undefined) {
-      this.parameters.planeSize = parameters.planeSize;
-    }
-    if (parameters.cameraFar !== undefined) {
-      this.parameters.cameraFar = parameters.cameraFar;
-    }
-    if (parameters.hardLayers !== undefined) {
-      this.parameters.hardLayers = parameters.hardLayers;
-    }
-    if (parameters.softLayers !== undefined) {
-      this.parameters.softLayers = parameters.softLayers;
-    }
-    if (parameters.polygonOffset !== undefined) {
-      this.parameters.polygonOffset = parameters.polygonOffset;
-    }
-    if (parameters.excludeGroundObjects !== undefined) {
-      this.parameters.excludeGroundObjects = parameters.excludeGroundObjects;
+    for (let propertyName in parameters) {
+      if (this.parameters.hasOwnProperty(propertyName)) {
+        this.parameters[propertyName] = parameters[propertyName];
+      }
     }
   }
 
@@ -232,6 +193,9 @@ export class BakedGroundContactShadow {
     }
     if (this.cameraHelper.visible !== this.parameters.cameraHelper) {
       this.cameraHelper.visible = this.parameters.cameraHelper;
+      if (!this.cameraHelper.visible && this.cameraHelper.parent) {
+        this.cameraHelper.parent.remove(this.cameraHelper);
+      }
     }
     if (this.shadowCamera.far !== this.parameters.cameraFar) {
       this.updatePlaneAndShadowCamera();
@@ -278,6 +242,9 @@ export class BakedGroundContactShadow {
   }
 
   public render(scene: Scene, groundObjectGroup: Mesh | undefined): void {
+    if (this.cameraHelper.visible && !this.cameraHelper.parent) {
+      scene.add(this.cameraHelper);
+    }
     const maxIterations = 10;
     this.shadowGround.visible = this.parameters.enabled;
     const needsUpdate = this.parameters.alwaysUpdate || this.needsUpdate;

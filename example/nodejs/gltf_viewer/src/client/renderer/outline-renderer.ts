@@ -4,6 +4,7 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { Camera, Object3D, PerspectiveCamera, Scene, Vector2 } from 'three';
 
 export interface OutlineParameters {
+  [key: string]: any;
   enabled: boolean;
   edgeStrength: number;
   edgeGlow: number;
@@ -36,14 +37,15 @@ export class OutLineRenderer {
     this.width = width;
     this.height = height;
     this.parameters = {
-      enabled: parameters.enable ?? true,
-      edgeStrength: parameters.edgeStrength ?? 2.0,
-      edgeGlow: parameters.edgeGlow ?? 1.0,
-      edgeThickness: parameters.edgeThickness ?? 2.0,
-      pulsePeriod: parameters.pulsePeriod ?? 0,
-      usePatternTexture: parameters.usePatternTexture ?? false,
-      visibleEdgeColor: parameters.visibleEdgeColor ?? 0xffffff, // 0xdb0000,
-      hiddenEdgeColor: parameters.hiddenEdgeColor ?? 0xffffff, // 0xdb0000,
+      enabled: true,
+      edgeStrength: 2.0,
+      edgeGlow: 1.0,
+      edgeThickness: 2.0,
+      pulsePeriod: 0,
+      usePatternTexture: false,
+      visibleEdgeColor: 0xffffff, // 0xdb0000,
+      hiddenEdgeColor: 0xffffff, // 0xdb0000,
+      ...parameters,
     };
   }
 
@@ -58,32 +60,10 @@ export class OutLineRenderer {
   }
 
   public updateParameters(parameters: any): void {
-    if (parameters.enabled !== undefined) {
-      this.parameters.enabled = parameters.enabled;
-    }
-    if (parameters.edgeStrength !== undefined) {
-      this.parameters.edgeStrength = parameters.edgeStrength;
-    }
-    if (parameters.edgeStrength !== undefined) {
-      this.parameters.edgeStrength = parameters.edgeStrength;
-    }
-    if (parameters.edgeGlow !== undefined) {
-      this.parameters.edgeGlow = parameters.edgeGlow;
-    }
-    if (parameters.edgeThickness !== undefined) {
-      this.parameters.edgeThickness = parameters.edgeThickness;
-    }
-    if (parameters.pulsePeriod !== undefined) {
-      this.parameters.pulsePeriod = parameters.pulsePeriod;
-    }
-    if (parameters.usePatternTexture !== undefined) {
-      this.parameters.usePatternTexture = parameters.usePatternTexture;
-    }
-    if (parameters.visibleEdgeColor !== undefined) {
-      this.parameters.visibleEdgeColor = parameters.visibleEdgeColor;
-    }
-    if (parameters.hiddenEdgeColor !== undefined) {
-      this.parameters.hiddenEdgeColor = parameters.hiddenEdgeColor;
+    for (let propertyName in parameters) {
+      if (this.parameters.hasOwnProperty(propertyName)) {
+        this.parameters[propertyName] = parameters[propertyName];
+      }
     }
   }
 

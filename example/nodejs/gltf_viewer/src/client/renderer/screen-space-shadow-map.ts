@@ -32,6 +32,7 @@ import {
 } from 'three';
 
 export interface ScreenSpaceShadowMapParameters {
+  [key: string]: any;
   alwaysUpdate: boolean;
   enableShadowMap: boolean;
   layers: Layers | null;
@@ -195,18 +196,14 @@ struct LambertMaterial {
 
 void RE_Direct_Lambert( const in IncidentLight directLight, const in GeometricContext geometry, const in LambertMaterial material, inout ReflectedLight reflectedLight ) {
 
-	float dotNL = saturate( dot( geometry.normal, directLight.direction ) );
-  float nonLinearDotNL = min(dotNL * 1000.0, 1.0);
+	float dotNL = dot(geometry.normal, directLight.direction);
+  float nonLinearDotNL = saturate(min(dotNL * 1000.0 + 1.0, 1.0));
 	vec3 irradiance = nonLinearDotNL * directLight.color;
-
 	reflectedLight.directDiffuse += irradiance * BRDF_Lambert( material.diffuseColor );
-
 }
 
 void RE_IndirectDiffuse_Lambert( const in vec3 irradiance, const in GeometricContext geometry, const in LambertMaterial material, inout ReflectedLight reflectedLight ) {
-
 	reflectedLight.indirectDiffuse += irradiance * BRDF_Lambert( material.diffuseColor );
-
 }
 
 #define RE_Direct				RE_Direct_Lambert
@@ -271,9 +268,10 @@ export class ScreenSpaceShadowMap {
     parameters?: any
   ): ScreenSpaceShadowMapParameters {
     return {
-      alwaysUpdate: parameters?.alwaysUpdate ?? false,
-      enableShadowMap: parameters?.enableShadowMap ?? true,
-      layers: parameters.layers ?? null,
+      alwaysUpdate: false,
+      enableShadowMap: true,
+      layers: null,
+      ...parameters,
     };
   }
 
@@ -284,14 +282,10 @@ export class ScreenSpaceShadowMap {
   }
 
   public updateParameters(parameters: any) {
-    if (parameters.alwaysUpdate !== undefined) {
-      this.parameters.alwaysUpdate = parameters.alwaysUpdate;
-    }
-    if (parameters.enableShadowMap !== undefined) {
-      this.parameters.enableShadowMap = parameters.enableShadowMap;
-    }
-    if (parameters.layers !== undefined) {
-      this.parameters.layers = parameters.layers;
+    for (let propertyName in parameters) {
+      if (this.parameters.hasOwnProperty(propertyName)) {
+        this.parameters[propertyName] = parameters[propertyName];
+      }
     }
   }
 
@@ -318,6 +312,7 @@ export class ScreenSpaceShadowMap {
     this.shadowLightSources.push(rectAreaLightShadow);
     rectAreaLightShadow.updatePositionAndTarget();
     rectAreaLightShadow.addTo(parent);
+    this.needsUpdate = true;
   }
 
   public updateRectAreaLights(
@@ -349,6 +344,8 @@ export class ScreenSpaceShadowMap {
         this.addRectAreaLight(light, parent);
       }
     });
+    this.needsUpdate = true;
+    this.shadowTypeNeedsUpdate = true;
   }
 
   public setSize(width: number, height: number): void {
@@ -456,7 +453,7 @@ export class ShadowTypeConfiguration {
   private static defaultType: ShadowTypeParameters = {
     castShadow: true,
     type: PCFShadowMap,
-    bias: -0.00005,
+    bias: -0.0005,
     normalBias: 0.01,
     radius: 0,
   };
@@ -487,7 +484,7 @@ export class ShadowTypeConfiguration {
       {
         castShadow: true,
         type: PCFSoftShadowMap,
-        bias: -0.0005,
+        bias: -0.005,
         normalBias: 0.01,
         radius: 1,
       },
