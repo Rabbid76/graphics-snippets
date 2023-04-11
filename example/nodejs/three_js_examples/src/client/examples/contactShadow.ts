@@ -57,17 +57,17 @@ export const contactShadow = (canvas: any) => {
     const shadowFolder = dataGui.gui.addFolder('shadow');
     shadowFolder.open();
 
-    shadowFolder.add(ground.parameters, 'cameraHelper').onChange(() => ground.updateParameters());
-    shadowFolder.add(ground.parameters, 'alwaysUpdate');
-    shadowFolder.add(ground.parameters, 'blurMin', 0, 15, 0.1).onChange(() => ground.needsUpdate = true);
-    shadowFolder.add(ground.parameters, 'blurMax', 0, 15, 0.1).onChange(() => ground.needsUpdate = true);
-    shadowFolder.add(ground.parameters, 'darkness', 1, 5, 0.1).onChange(() => ground.updateParameters());
-    shadowFolder.add(ground.parameters, 'opacity', 0, 1, 0.01).onChange(() => ground.updateParameters());
-    shadowFolder.add(ground.parameters, 'planeSize', 3, 10, 0.1).onChange(() => ground.updatePlaneAndShadowCamera());
-    shadowFolder.add(ground.parameters, 'cameraFar', 0.1, 10, 0.1).onChange(() => ground.updatePlaneAndShadowCamera());
-    shadowFolder.add(ground.group.position, 'x', -3, 3, 0.1).onChange(() => ground.needsUpdate = true);
-    shadowFolder.add(ground.group.position, 'y', -3, 3, 0.1).onChange(() => ground.needsUpdate = true);
-    shadowFolder.add(ground.group.position, 'z', -3, 3, 0.1).onChange(() => ground.needsUpdate = true);
+    shadowFolder.add<any>(ground.parameters, 'cameraHelper').onChange(() => ground.updateParameters());
+    shadowFolder.add<any>(ground.parameters, 'alwaysUpdate');
+    shadowFolder.add<any>(ground.parameters, 'blurMin', 0, 15, 0.1).onChange(() => ground.needsUpdate = true);
+    shadowFolder.add<any>(ground.parameters, 'blurMax', 0, 15, 0.1).onChange(() => ground.needsUpdate = true);
+    shadowFolder.add<any>(ground.parameters, 'darkness', 1, 5, 0.1).onChange(() => ground.updateParameters());
+    shadowFolder.add<any>(ground.parameters, 'opacity', 0, 1, 0.01).onChange(() => ground.updateParameters());
+    shadowFolder.add<any>(ground.parameters, 'planeSize', 3, 10, 0.1).onChange(() => ground.updatePlaneAndShadowCamera());
+    shadowFolder.add<any>(ground.parameters, 'cameraFar', 0.1, 10, 0.1).onChange(() => ground.updatePlaneAndShadowCamera());
+    shadowFolder.add<any>(ground.group.position, 'x', -3, 3, 0.1).onChange(() => ground.needsUpdate = true);
+    shadowFolder.add<any>(ground.group.position, 'y', -3, 3, 0.1).onChange(() => ground.needsUpdate = true);
+    shadowFolder.add<any>(ground.group.position, 'z', -3, 3, 0.1).onChange(() => ground.needsUpdate = true);
 
     const onWindowResize = () => {
         camera.aspect = window.innerWidth / window.innerHeight;

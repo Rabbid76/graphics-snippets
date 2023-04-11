@@ -153,7 +153,7 @@ export const rectAreaLightShadow = (canvas: any) => {
     debugOptions['shadow'] = 'shadow';
     dataGui.gui.add(generalUiProperties, 'debug output', debugOptions);
     const shadowFolder = dataGui.gui.addFolder('rectAreaLight shadow');
-    shadowFolder.add(rectAreaLightAndShadow, 'shadowIntensity', 0.0, 1.0);
+    shadowFolder.add<any>(rectAreaLightAndShadow, 'shadowIntensity', 0.0, 1.0);
 
     const onWindowResize = () => {
         const width = window.innerWidth;

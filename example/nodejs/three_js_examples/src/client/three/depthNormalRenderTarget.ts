@@ -11,7 +11,8 @@ export interface DepthAndNormalTextures {
 
 export class DepthNormalRenderTarget implements DepthAndNormalTextures {
     private depthNormalScale = 1;
-    private targetTextureFilter: THREE.TextureFilter;
+    private targetMinificationTextureFilter: THREE.TextureFilter;
+    private targetMagnificationTextureFilter: THREE.MagnificationTextureFilter;
     private width: number;
     private height: number;
     private samples: number;
@@ -34,8 +35,8 @@ export class DepthNormalRenderTarget implements DepthAndNormalTextures {
             depthTexture.format = THREE.DepthStencilFormat;
             depthTexture.type = THREE.UnsignedInt248Type;
             this._depthNormalRenderTarget = new THREE.WebGLRenderTarget(this.width * this.depthNormalScale, this.height * this.depthNormalScale, {
-                minFilter: this.targetTextureFilter,
-                magFilter: this.targetTextureFilter,
+                minFilter: this.targetMinificationTextureFilter,
+                magFilter: this.targetMagnificationTextureFilter,
                 depthTexture
             });
         }
@@ -44,7 +45,8 @@ export class DepthNormalRenderTarget implements DepthAndNormalTextures {
 
     constructor(parameters?: any) {
         this.depthNormalScale = parameters?.depthNormalScale ?? 1;
-        this.targetTextureFilter = parameters?.textureFilter ?? THREE.NearestFilter;
+        this.targetMinificationTextureFilter = parameters?.textureFilter ?? THREE.NearestFilter;
+        this.targetMagnificationTextureFilter = parameters?.textureFilter ?? THREE.NearestFilter;
         this.width = parameters?.width ?? 1024;
         this.height = parameters?.height ?? 1024;
         this.samples = parameters?.samples ?? 0;

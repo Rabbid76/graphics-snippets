@@ -79,13 +79,13 @@ export const screenSpaceAmbientOcclusion = (canvas: any) => {
         }
     });
     const aoFolder = dataGui.gui.addFolder('SSAO');
-    aoFolder.add(ssaoPass.ssaoParameters, 'enabled');
-    aoFolder.add(ssaoPass.ssaoParameters, 'intensity', 0.01, 1);
-    aoFolder.add(ssaoPass.ssaoParameters, 'fadeout', 0.0, 1.0);
-    aoFolder.add(ssaoPass.ssaoParameters, 'kernelRadius', 0.001, 1);
-    aoFolder.add(ssaoPass.ssaoParameters, 'depthBias', 0.00001, 0.1);
-    aoFolder.add(ssaoPass.ssaoParameters, 'maxDistance', 0.01, 1);
-    aoFolder.add(ssaoPass.ssaoParameters, 'maxDepth', 0.0, 1);
+    aoFolder.add<any>(ssaoPass.ssaoParameters, 'enabled');
+    aoFolder.add<any>(ssaoPass.ssaoParameters, 'intensity', 0.01, 1);
+    aoFolder.add<any>(ssaoPass.ssaoParameters, 'fadeout', 0.0, 1.0);
+    aoFolder.add<any>(ssaoPass.ssaoParameters, 'kernelRadius', 0.001, 1);
+    aoFolder.add<any>(ssaoPass.ssaoParameters, 'depthBias', 0.00001, 0.1);
+    aoFolder.add<any>(ssaoPass.ssaoParameters, 'maxDistance', 0.01, 1);
+    aoFolder.add<any>(ssaoPass.ssaoParameters, 'maxDepth', 0.0, 1);
 
     const onWindowResize = () => {
         camera.aspect = window.innerWidth / window.innerHeight;

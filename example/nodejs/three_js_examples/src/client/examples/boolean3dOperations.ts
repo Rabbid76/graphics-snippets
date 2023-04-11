@@ -89,7 +89,7 @@ export const boolean3dOperations = async (canvas: any) => {
     dataGui.gui.add(uiProperties, 'intersectionBox').onChange(() => updateIntersection());
     dataGui.gui.add(uiProperties, 'intersectionTriangles').onChange(() => updateIntersection());
     dataGui.gui.add(uiProperties, 'intersect').onChange(() => updateIntersection());
-    dataGui.gui.add(material2, 'opacity', 0, 1).onChange(() => material2.needsUpdate = true);
+    dataGui.gui.add<any>(material2, 'opacity', 0, 1).onChange(() => material2.needsUpdate = true);
 
     const updateObjectFromMeshSpecification = (geometryObject: GeometryObject | undefined, specification: MeshSpecification, material: THREE.Material): GeometryObject => {
         const geometry = createBufferGeometry(specification);
