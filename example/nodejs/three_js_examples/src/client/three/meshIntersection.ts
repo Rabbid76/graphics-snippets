@@ -1,5 +1,5 @@
 // @ts-ignore
-import * as MeshUtility from '../../../buildWASM/MeshUtility.js';
+import * as MeshUtility from '../../../wasm/MeshUtility.js';
 
 let meshUtility: any | null;
 export const intiMeshUtility = async () => {

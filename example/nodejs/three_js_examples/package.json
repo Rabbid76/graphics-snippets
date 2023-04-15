@@ -6,14 +6,15 @@
     "install:ncu": "npm install -g npm-check-updates",
     "install:webpack": "npm install --save-dev webpack",
     "update:modules": "ncu -u && npm update && npm i",
-    "copy:wasm": "copyfiles --flat ./buildWasm/*.wasm ./dist/client/test_constructive_solid_geometry/ && copyfiles --flat ./buildWasm/*.wasm ./dist/client/test_triangle_intersection/ && copyfiles --flat ./buildWasm/*.wasm ./dist/client/boolean_3d_operations/",
-    "build:wasm": "./buildCpp.sh wasm && npm run copy:wasm",
+    "copy:wasm": "copyfiles --flat ./wasm/*.wasm ./dist/client/test_constructive_solid_geometry/ && copyfiles --flat ./wasm/*.wasm ./dist/client/test_triangle_intersection/ && copyfiles --flat ./wasm/*.wasm ./dist/client/boolean_3d_operations/",
+    "build:wasm": "./buildCpp.sh wasm && copyfiles --flat ./buildWasm/MeshUtility*.* ./wasm && npm run copy:wasm",
     "build:client": "webpack --config ./src/client/webpack.prod.js",
     "build:server": "tsc -p ./src/server",
+    "build:all": "npm run build:wasm && npm run build:client && npm run build:server",
     "build": "npm run build:client && npm run build:server",
     "dev": "webpack serve --config ./src/client/webpack.dev.js",
     "start": "node ./dist/server/three_server.js",
-    "copy:deploy": "copyfiles --flat ./dist/client/*.js ./deployment  && copyfiles --flat ./buildWasm/*.wasm ./deployment/boolean_3d_operations/ && copyfiles --flat ./buildWasm/*.wasm ./deployment/test_constructive_solid_geometry/"
+    "copy:deploy": "copyfiles --flat ./dist/client/*.js ./deployment  && copyfiles --flat ./wasm/*.wasm ./deployment/boolean_3d_operations/ && copyfiles --flat ./wasm/*.wasm ./deployment/test_constructive_solid_geometry/"
   },
   "author": "Rabbid76",
   "license": "ISC",
