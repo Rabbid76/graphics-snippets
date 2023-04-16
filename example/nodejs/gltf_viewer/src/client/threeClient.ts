@@ -1,4 +1,5 @@
-import { SceneProperties, RenderScene } from './scene/sceneManager';
+import { setupDragDrop } from './util/drag_target'
+import { RenderScene } from './scene/sceneManager';
 import { QualityLevel} from './renderer/scene-renderer'
 import { SceneRendererGUI } from './renderer/scene-renderer-gui'
 import { MaterialGUI } from './scene/material-gui'
@@ -6,11 +7,12 @@ import { LightSourcesGUI } from './scene/lightSources'
 import { SkyEnvironmentGUI } from './scene/skyEnvironment';
 import { GroundMaterialType } from './scene/materials'
 import { Group, Vector2, WebGLRenderer } from 'three'
+import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 // @ts-ignore
 import Stats from 'three/examples/jsm/libs/stats.module' 
 import { GUI } from 'dat.gui'
 // @ts-ignore
-import { download_file } from './download_file.js'
+import { download_file } from './util/download_file.js'
 
 const getDeviceType = () => {
     const ua = navigator.userAgent;
@@ -46,21 +48,28 @@ const finishScene = (sceneName: string) => {
     setSatus(`${sceneName}`);
     generalProperties.sceneName = sceneName.replace(/:/g, '_');
 }
-interface LoadedConfiguration {
-    scene: Group;
+const loadConfiguratorMesh = async (configurationId: string) => {
+    const statusLine = document.getElementById("status-line");
+    let loadedScene = sceneCache[configurationId];
+    if (!loadedScene) {
+        return;
+    }
+    setSatus(`render ${configurationId}`, '#ff0000')
+    renderScene.update(undefined, loadedScene.scene, loadedScene.glb);
+    finishScene(configurationId);
 }
 const loadResource = (resourceName: string, resource: string) => {
     const loadedScene = sceneCache[resourceName];
     if (loadedScene) {
         setSatus(`render ${resourceName}`, '#ff0000')
-        renderScene.update(undefined, loadedScene.scene);
+        renderScene.update(undefined, loadedScene.scene, loadedScene.glb);
         finishScene(resourceName);
     } else {
         renderScene.loadResource(resourceName, resource,
             (_:string) => {},
             (modelName: string, sceneGroup: Group | null) => {
                 if (sceneGroup) {
-                    sceneCache[resourceName] = { scene: sceneGroup };
+                    sceneCache[resourceName] = { scene: sceneGroup, glb: true };
                     finishScene(modelName);
                     addNewGlbToMenu(resourceName);
                 } else {
@@ -69,6 +78,16 @@ const loadResource = (resourceName: string, resource: string) => {
             }
         );  
     }
+}
+
+const setGroundMaterial = () => {
+    let groundMaterial: GroundMaterialType = GroundMaterialType.Transparent
+    switch(generalProperties.groundMaterial.toLocaleLowerCase()) {
+        default: groundMaterial = GroundMaterialType.Transparent; break
+        case 'parquet': groundMaterial = GroundMaterialType.Parquet; break
+        case 'pavement': groundMaterial = GroundMaterialType.Pavement; break
+    }
+    renderScene.setGroundMaterial(groundMaterial)
 }
 
 const renderer = new WebGLRenderer({
@@ -82,64 +101,43 @@ renderer.setPixelRatio(window.devicePixelRatio);
 //renderer.physicallyCorrectLights = true
 renderer.setSize(window.innerWidth, window.innerHeight)
 document.body.appendChild(renderer.domElement)
+const labelRenderer = new CSS2DRenderer();
+labelRenderer.setSize(window.innerWidth, window.innerHeight);
+labelRenderer.domElement.style.position = 'absolute';
+labelRenderer.domElement.style.top = '0px';
+labelRenderer.domElement.style.pointerEvents = 'none';
+document.body.appendChild(labelRenderer.domElement);
 
 // @ts-ignore
 const stats = new Stats();
 document.body.appendChild(stats.dom);
 
-const renderScene = new RenderScene(renderer)
-renderScene.sceneRenderer.setQualityLevel(isMobile ? QualityLevel.LOW : QualityLevel.HIGHEST);
-renderScene.createControls()
-renderScene.setEnvironment()
-renderScene.updateLightAndShadow()
-
-interface GeneralProperties {
-    sceneProperties: SceneProperties,
-    glb: string,
-    groundMaterial: string,
-    bloom: boolean,
-    ssr: boolean,
-    sceneName: string,
-}
-
-let generalProperties: GeneralProperties = {
-    sceneProperties: {
-        rotate: renderScene.properties.rotate,
-        materialNoise: renderScene.properties.materialNoise,
-    },
+let generalProperties = {
+    rotate: 0,
+    randomOrientation: false,
+    dimensions: false,
+    materialNoise: false,       
     glb: '',
+    autoLoad: false,
+    autoLoadSaveScene: false,
     groundMaterial: 'onlyshadow',
     bloom: false, 
     ssr: false, 
     sceneName: 'default',
 }
 
-const loadCachedMesh = async (configurationId: string) => {
-    const statusLine = document.getElementById("status-line");
-    let loadedScene = sceneCache[configurationId];
-    if (!loadedScene) {
-        return;
-    }
-    setSatus(`render ${configurationId}`, '#ff0000')
-    renderScene.update(undefined, loadedScene.scene);
-    finishScene(configurationId);
-}
-const setGroundMaterial = () => {
-    let groundMaterial: GroundMaterialType = GroundMaterialType.Transparent
-    switch(generalProperties.groundMaterial.toLocaleLowerCase()) {
-        default: groundMaterial = GroundMaterialType.Transparent; break
-        case 'parquet': groundMaterial = GroundMaterialType.Parquet; break
-        case 'pavement': groundMaterial = GroundMaterialType.Pavement; break
-    }
-    renderScene.setGroundMaterial(groundMaterial)
-}
+const renderScene = new RenderScene(renderer, labelRenderer);
+renderScene.sceneRenderer.setQualityLevel(isMobile ? QualityLevel.LOW : QualityLevel.HIGHEST);
+renderScene.createControls();
+renderScene.setEnvironment();
+renderScene.updateSceneDependencies();
 setGroundMaterial()
 
 const gui = new GUI()
 const glbMenuItems: any[] = [];
 const glbMenu = gui.add<any>(generalProperties, 'glb', glbMenuItems).onChange((value) => { 
     if (value !== '') {
-        loadCachedMesh(value);
+        loadConfiguratorMesh(value);
     }
 });
 const addNewGlbToMenu = (resourceName: string) => {
@@ -152,7 +150,9 @@ const addNewGlbToMenu = (resourceName: string) => {
     glbMenu.setValue(resourceName);
     glbMenu.updateDisplay();
 }
-gui.add<any>(generalProperties.sceneProperties, 'rotate', 0, 0.25).onChange(() => renderScene.update(generalProperties.sceneProperties))
+gui.add<any>(generalProperties, 'randomOrientation').onChange(() => renderScene.update(generalProperties));
+//gui.add<any>(generalProperties, 'rotate', 0, 0.25).onChange(() => renderScene.update(generalProperties))
+gui.add<any>(generalProperties, 'dimensions').onChange(() => renderScene.update(generalProperties));
 gui.add<any>(generalProperties, 'groundMaterial', {
     'only shadow': 'onlyshadow',
     'parquet': 'parquet', 
@@ -175,12 +175,13 @@ const lightFolder = gui.addFolder('Light')
 const lightSourceGUI = new LightSourcesGUI(renderScene.getLightSources());
 lightSourceGUI.addGUI(lightFolder, 
     () => (on: boolean) => renderScene.changeLightControls(on),
-    () => renderScene.updateLightAndShadow());
+    () => renderScene.updateSceneDependencies());
 
 const onWindowResize = () => {
     const width = window.innerWidth
     const height = window.innerHeight
     renderScene.resize(width, height)
+    renderScene.resize(1024, 1024)
 }
 window.addEventListener('resize', onWindowResize, false)
 const mousePosition = new Vector2()
@@ -193,53 +194,23 @@ const onPointerMove = (event: any) => {
 }
 renderer.domElement.addEventListener('pointermove', onPointerMove);
 
-const setupDragDrop = () => {
-    const holder = document.getElementById('holder');
-    if (!holder) {
-        return;
+setupDragDrop('holder', 'hover', (file: File, event: ProgressEvent<FileReader>) => {
+    // @ts-ignore
+    loadResource(file.name, event.target.result);
+});
+
+const saveScene = () => {
+    try {
+        const imgData = renderer.domElement.toDataURL();      
+        download_file(imgData, generalProperties.sceneName + '.png', undefined)
     } 
- 
-    holder.ondragover = function() {
-        // @ts-ignore
-        this.className = 'hover';
-        return false;
-    };
-
-    holder.ondragend = function() {
-        // @ts-ignore
-        this.className = '';
-        return false;
-    };
-
-    holder.ondrop = function(e) {
-        // @ts-ignore
-        this.className = '';
-        e.preventDefault();
-
-        // @ts-ignore
-        const file = e.dataTransfer.files[0];
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            // @ts-ignore
-            loadResource(file.name, event.target.result);
-        };
-        reader.readAsDataURL(file);
+    catch(e) {
+        console.log(e);
     }
-};
-setupDragDrop();
-
+}
 const saveButton = document.getElementById('save-button');
 if (saveButton) {
-    saveButton.onclick = () => {
-        try {
-            const imgData = renderer.domElement.toDataURL();      
-            download_file(imgData, generalProperties.sceneName + '.png', undefined)
-        } 
-        catch(e) {
-            console.log(e);
-        }
-    };
-    console
+    saveButton.onclick = () => saveScene();
 };
 
 let start: number, previousTimeStamp: number;

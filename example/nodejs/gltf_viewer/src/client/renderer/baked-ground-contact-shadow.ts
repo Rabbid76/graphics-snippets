@@ -39,7 +39,7 @@ export interface BakedGroundContactShadowParameters {
 }
 
 export class BakedGroundContactShadow {
-  public static alphaMap: boolean = false; 
+  public static alphaMap: boolean = false;
   public static addTestMesh: boolean = false;
   public shadowMapSize: number;
   public parameters: BakedGroundContactShadowParameters;
@@ -47,6 +47,14 @@ export class BakedGroundContactShadow {
   public cameraHelper: CameraHelper;
   public needsUpdate: boolean = true;
   public noNeedOfUpdateCount = 0;
+  private sceneBounds: Box3 = new Box3(
+    new Vector3(-1, -1, -1),
+    new Vector3(1, 1, 1)
+  );
+  private boundsSize: Vector3 = new Vector3(2, 2);
+  private boundsCenter: Vector3 = new Vector3(0, 0);
+  private blurScale: number = 1;
+  private groundShadowFar: number;
   private shadowGround: Mesh;
   private blurPlane: Mesh;
   public renderTarget: WebGLRenderTarget;
@@ -57,12 +65,13 @@ export class BakedGroundContactShadow {
   private groundGroup: Group;
   private testMesh: Mesh;
   private renderOverrideVisibility: RenderOverrideVisibility =
-    new RenderOverrideVisibility(true, [], ['Ground', 'Floor']);
+    new RenderOverrideVisibility(true, []);
 
   constructor(renderer: WebGLRenderer, groundGroup: Group, parameters: any) {
     this.groundGroup = groundGroup;
     this.shadowMapSize = parameters.shadowMapSize ?? 1024;
     this.parameters = this.getDefaultParameters(parameters);
+    this.groundShadowFar = this.parameters.cameraFar;
 
     this.renderer = renderer;
     this.renderTarget = new WebGLRenderTarget(
@@ -147,6 +156,12 @@ export class BakedGroundContactShadow {
         transparent: true,
       })
     );
+    this.renderOverrideVisibility.onIsObjectInvisible = (object: any) => {
+      return (
+        (object.isMesh && !object.castShadow) ||
+        (object.name !== undefined && ['Ground', 'Floor'].includes(object.name))
+      );
+    };
   }
 
   // eslint-disable-next-line complexity
@@ -175,6 +190,9 @@ export class BakedGroundContactShadow {
       if (this.parameters.hasOwnProperty(propertyName)) {
         this.parameters[propertyName] = parameters[propertyName];
       }
+    }
+    if (parameters.cameraFar !== undefined) {
+      this.groundShadowFar = this.parameters.cameraFar;
     }
   }
 
@@ -212,15 +230,36 @@ export class BakedGroundContactShadow {
     this.needsUpdate = true;
   }
 
-  public updateBounds(bounds: Box3) {
-    const boundsCenter = bounds.getCenter(new Vector3());
+  public updateBounds(bounds: Box3, keepGroundLevel: boolean) {
+    this.sceneBounds.copy(bounds);
+    bounds.getSize(this.boundsSize);
+    const minBoundsSize = Math.min(
+      this.boundsSize.x,
+      this.boundsSize.y,
+      this.boundsSize.z
+    );
+    this.blurScale =
+      minBoundsSize < 0.5
+        ? minBoundsSize / 0.5
+        : this.boundsSize.z > 5
+        ? this.boundsSize.z / 5
+        : 1;
+    bounds.getCenter(this.boundsCenter);
+    this.groundShadowFar = this.parameters.cameraFar;
+    if (this.groundShadowFar < this.boundsSize.z) {
+      this.groundShadowFar = this.boundsSize.z * 1.01;
+    }
     // y is always 0
     // TODO - this.shadowGround.position?
-    this.groundGroup.position.set(boundsCenter.x, 0, boundsCenter.z);
+    const groundLevel = keepGroundLevel ? this.groundGroup.position.y : 0;
+    this.groundGroup.position.set(
+      this.boundsCenter.x,
+      groundLevel,
+      this.boundsCenter.z
+    );
     this.groundGroup.updateMatrixWorld();
-    const boundsSize = bounds.getSize(new Vector3());
-    const maxPlanSideLength = Math.max(boundsSize.x, boundsSize.z);
-    this.parameters.planeSize = maxPlanSideLength + 2;
+    const maxPlanSideLength = Math.max(this.boundsSize.x, this.boundsSize.z);
+    this.parameters.planeSize = maxPlanSideLength + 2 * this.blurScale;
     this.updatePlaneAndShadowCamera();
   }
 
@@ -235,7 +274,7 @@ export class BakedGroundContactShadow {
     this.shadowCamera.top = -size / 2;
     this.shadowCamera.bottom = size / 2;
     this.shadowCamera.near = 0;
-    this.shadowCamera.far = this.parameters.cameraFar;
+    this.shadowCamera.far = this.groundShadowFar;
     this.shadowCamera.updateProjectionMatrix();
     this.cameraHelper.update();
     this.needsUpdate = true;
@@ -305,10 +344,10 @@ export class BakedGroundContactShadow {
       this.shadowCamera.updateProjectionMatrix();
       this.depthMaterial.userData.fadeoutBias.value = 0.99;
       this.renderer.render(scene, this.shadowCamera);
-      this.shadowCamera.far = this.parameters.cameraFar;
+      this.shadowCamera.far = this.groundShadowFar;
       this.shadowCamera.updateProjectionMatrix();
       this.depthMaterial.userData.fadeoutBias.value =
-        this.parameters.fadeoutBias / this.parameters.cameraFar;
+        this.parameters.fadeoutBias / this.groundShadowFar;
     }
     this.shadowCamera.layers.enableAll();
     if (this.parameters.softLayers) {
@@ -333,14 +372,14 @@ export class BakedGroundContactShadow {
   private renderBlur(scene: Scene) {
     scene.overrideMaterial = null;
     this.blurShadow(
-      this.parameters.blurMin / this.parameters.planeSize,
-      this.parameters.blurMax / this.parameters.planeSize
+      (this.blurScale * this.parameters.blurMin) / this.parameters.planeSize,
+      (this.blurScale * this.parameters.blurMax) / this.parameters.planeSize
     );
   }
 
   private renderReduceBandingBlur(scene: Scene) {
     scene.overrideMaterial = null;
-    const finalBlurAmount = 0.01 / this.parameters.planeSize;
+    const finalBlurAmount = (this.blurScale * 0.01) / this.parameters.planeSize;
     this.blurShadow(finalBlurAmount, finalBlurAmount);
   }
 

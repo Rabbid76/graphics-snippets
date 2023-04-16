@@ -21,7 +21,8 @@ export class SceneRendererGUI {
   public addGUI(gui: GUI, updateCallback: () => void): void {
     this.addRepresentationalGUI(gui, updateCallback);
     this.addDebugGUI(gui, updateCallback);
-    this.addShadowTypeGUI(gui, updateCallback);
+    const shadowMapFolder = gui.addFolder('Shadow map');
+    this.addShadowTypeGUI(shadowMapFolder, updateCallback);
     const shadowAndAoFolder = gui.addFolder('Shadow and Ambient Occlusion');
     this.addShadowAndAoGUI(shadowAndAoFolder, updateCallback);
     const groundReflectionFolder = gui.addFolder(
@@ -129,51 +130,83 @@ export class SceneRendererGUI {
     shadowConfiguration.types.forEach((_, key) => {
       shadowMapNames.push(key);
     });
+    const updateShadow = () => {
+      this.sceneRenderer.screenSpaceShadow.needsUpdate = true;
+      this.sceneRenderer.screenSpaceShadow.shadowTypeNeedsUpdate = true;
+      this.sceneRenderer.shadowAndAoPass.needsUpdate = true;
+      updateCallback();
+    };
     gui
       .add<any>(shadowConfiguration, 'shadowType', shadowMapNames)
       .onChange((type: string) => {
-        if (shadowConfiguration.types.has(type)) {
-          const currentType = shadowConfiguration.types.get(type);
-          if (currentType) {
-            shadowConfiguration.currentType = currentType;
-          }
-          this.sceneRenderer.screenSpaceShadow.needsUpdate = true;
-          this.sceneRenderer.screenSpaceShadow.shadowTypeNeedsUpdate = true;
-          updateCallback();
+        if (this.sceneRenderer.screenSpaceShadow.switchType(type)) {
+          shadowBiasController.object =
+            shadowConfiguration.currentConfiguration;
+          shadowNormalBiasController.object =
+            shadowConfiguration.currentConfiguration;
+          shadowBiasController.updateDisplay();
+          shadowNormalBiasController.updateDisplay();
+          updateShadow();
         }
       });
+    const shadowBiasController = gui
+      .add<any>(
+        shadowConfiguration.currentConfiguration,
+        'bias',
+        -0.001,
+        0.001,
+        0.00001
+      )
+      .onChange(() => updateShadow());
+    const shadowNormalBiasController = gui
+      .add<any>(
+        shadowConfiguration.currentConfiguration,
+        'normalBias',
+        -0.05,
+        0.05
+      )
+      .onChange(() => updateShadow());
   }
 
   private addShadowAndAoGUI(gui: GUI, updateCallback: () => void): void {
+    const updateParameters = (): void => {
+      this.sceneRenderer.shadowAndAoPass.needsUpdate = true;
+      updateCallback();
+    };
     const parameters = this.sceneRenderer.shadowAndAoPass.parameters;
     gui
       .add<any>(parameters, 'aoAndSoftShadowEnabled')
-      .onChange(() => updateCallback());
-    gui.add<any>(parameters, 'aoAlwaysUpdate').onChange(() => updateCallback());
+      .onChange(() => updateParameters());
     gui
-      .add<any>(parameters, 'aoIntensity', 0.01, 1)
-      .onChange(() => updateCallback());
+      .add<any>(parameters, 'aoAndSoftShadowFxaa')
+      .onChange(() => updateParameters());
+    gui
+      .add<any>(parameters, 'aoAlwaysUpdate')
+      .onChange(() => updateParameters());
+    gui
+      .add<any>(parameters, 'aoIntensity', 0, 1)
+      .onChange(() => updateParameters());
     gui
       .add<any>(parameters, 'aoFadeout', 0, 1)
-      .onChange(() => updateCallback());
+      .onChange(() => updateParameters());
     gui
       .add<any>(parameters, 'aoKernelRadius', 0.001, 0.2)
-      .onChange(() => updateCallback());
+      .onChange(() => updateParameters());
     gui
       .add<any>(parameters, 'aoDepthBias', 0.0001, 0.01)
-      .onChange(() => updateCallback());
+      .onChange(() => updateParameters());
     gui
       .add<any>(parameters, 'aoMaxDistance', 0.01, 1)
-      .onChange(() => updateCallback());
+      .onChange(() => updateParameters());
     gui
       .add<any>(parameters, 'aoMaxDepth', 0.9, 1)
-      .onChange(() => updateCallback());
+      .onChange(() => updateParameters());
     gui
       .add<any>(parameters, 'shadowIntensity', 0, 1)
-      .onChange(() => updateCallback());
+      .onChange(() => updateParameters());
     gui
-      .add<any>(parameters, 'shadowRadius', 0.001, 0.5)
-      .onChange(() => updateCallback());
+      .add<any>(parameters, 'shadowRadius', 0.001, 20.0)
+      .onChange(() => updateParameters());
   }
 
   private addGroundReflectionGUI(gui: GUI, updateCallback: () => void): void {
@@ -203,33 +236,33 @@ export class SceneRendererGUI {
     gui: GUI,
     updateCallback: () => void
   ): void {
-    const updateParameter = (): void => {
+    const updateParameters = (): void => {
       this.sceneRenderer.bakedGroundContactShadow.applyParameters();
       updateCallback();
     };
     const parameters =
       this.sceneRenderer.parameters.bakedGroundContactShadowParameters;
     gui.add<any>(parameters, 'enabled');
-    gui.add<any>(parameters, 'cameraHelper').onChange(() => updateParameter());
+    gui.add<any>(parameters, 'cameraHelper').onChange(() => updateParameters());
     gui.add<any>(parameters, 'alwaysUpdate');
     gui
       .add<any>(parameters, 'blurMin', 0, 0.2, 0.001)
-      .onChange(() => updateParameter());
+      .onChange(() => updateParameters());
     gui
       .add<any>(parameters, 'blurMax', 0, 0.5, 0.01)
-      .onChange(() => updateParameter());
+      .onChange(() => updateParameters());
     gui
       .add<any>(parameters, 'fadeoutFalloff', 0.0, 1.0, 0.01)
-      .onChange(() => updateParameter());
+      .onChange(() => updateParameters());
     gui
       .add<any>(parameters, 'fadeoutBias', 0.0, 0.5)
-      .onChange(() => updateParameter());
+      .onChange(() => updateParameters());
     gui
       .add<any>(parameters, 'opacity', 0, 1, 0.01)
-      .onChange(() => updateParameter());
+      .onChange(() => updateParameters());
     gui
       .add<any>(parameters, 'cameraFar', 0.1, 10, 0.1)
-      .onChange(() => updateParameter());
+      .onChange(() => updateParameters());
   }
 
   private addOutlineGUI(gui: GUI, updateCallback: () => void): void {

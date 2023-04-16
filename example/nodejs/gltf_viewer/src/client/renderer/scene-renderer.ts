@@ -26,6 +26,7 @@ import {
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
 import { Pass } from 'three/examples/jsm/postprocessing/Pass';
 import {
+  Box3,
   Camera,
   BufferGeometry,
   CustomBlending,
@@ -42,6 +43,7 @@ import {
   Scene,
   ShaderMaterial,
   Vector2,
+  Vector3,
   WebGLRenderer,
   WebGLRenderTarget,
 } from 'three';
@@ -226,13 +228,14 @@ export class SceneRenderer {
   public setQualityLevel(qualityLevel: QualityLevel): void {
     switch (qualityLevel) {
       default:
-        case QualityLevel.HIGHEST:
+      case QualityLevel.HIGHEST:
         this.updateParameters({
           deferredShadowAndAoFrame: 0,
           shadowAndAoFadeInFrames: 0,
           hardShadowOnCameraChange: false,
           shadowAndAoParameters: {
             aoAndSoftShadowEnabled: true,
+            aoAndSoftShadowFxaa: true,
           },
           groundReflectionParameters: {
             enabled: false,
@@ -245,10 +248,11 @@ export class SceneRenderer {
       case QualityLevel.HIGH:
         this.updateParameters({
           deferredShadowAndAoFrame: 3,
-          shadowAndAoFadeInFrames: 3,
+          shadowAndAoFadeInFrames: 6,
           hardShadowOnCameraChange: true,
           shadowAndAoParameters: {
             aoAndSoftShadowEnabled: true,
+            aoAndSoftShadowFxaa: true,
           },
           groundReflectionParameters: {
             enabled: false,
@@ -265,6 +269,7 @@ export class SceneRenderer {
           hardShadowOnCameraChange: false,
           shadowAndAoParameters: {
             aoAndSoftShadowEnabled: true,
+            aoAndSoftShadowFxaa: false,
           },
           groundReflectionParameters: {
             enabled: false,
@@ -278,6 +283,7 @@ export class SceneRenderer {
         this.updateParameters({
           shadowAndAoParameters: {
             aoAndSoftShadowEnabled: false,
+            aoAndSoftShadowFxaa: false,
           },
           groundReflectionParameters: {
             enabled: false,
@@ -290,10 +296,12 @@ export class SceneRenderer {
     }
   }
 
-  public forceShadowUpdates(): void {
+  public forceShadowUpdates(updateBakedGroundShadow: boolean): void {
     this.shadowAndAoPass.needsUpdate = true;
     this.screenSpaceShadow.needsUpdate = true;
-    this.bakedGroundContactShadow.needsUpdate = true;
+    if (updateBakedGroundShadow) {
+      this.bakedGroundContactShadow.needsUpdate = true;
+    }
   }
 
   public updateParameters(parameters: any) {
@@ -380,6 +388,15 @@ export class SceneRenderer {
     this.selectedObjects = selectedObjects;
   }
 
+  public updateBounds(bounds: Box3, scaleShadowAndAo: boolean) {
+    const size = bounds.getSize(new Vector3());
+    const shadowAndAoScale = (size.x + size.y + size.z) / 3;
+    this.bakedGroundContactShadow.needsUpdate = true;
+    this.bakedGroundContactShadow.updateBounds(bounds, true);
+    this.screenSpaceShadow.updateBounds(bounds, shadowAndAoScale);
+    this.shadowAndAoPass.updateBounds(bounds, scaleShadowAndAo ? shadowAndAoScale : 1);
+  }
+
   public render(
     scene: Scene,
     camera: Camera,
@@ -461,6 +478,9 @@ export class SceneRenderer {
         this.shadowAndAoPass.updateShadowTexture(
           this.screenSpaceShadow.shadowTexture
         );
+        if (update.hardShadow && update.intensityScale < 0.99) {
+          this.renderHardShadow(1.0 - update.intensityScale);
+        }
         this.shadowAndAoPass.render(
           renderer,
           scene,
@@ -471,41 +491,49 @@ export class SceneRenderer {
     } else if (update.hardShadow) {
       this.shadowRenderOverrideVisibility.render(scene, () => {
         this.screenSpaceShadow.renderShadowMap(this.renderer, scene, camera);
-        const shIntensity = this.shadowAndAoPass.parameters.shadowIntensity;
-        this.renderPass.renderScreenSpace(
-          this.renderer,
-          this.getCopyMaterial({
-            texture: this.screenSpaceShadow.shadowTexture,
-            blending: CustomBlending,
-            colorTransform: new Matrix4().set(
-              shIntensity,
-              0,
-              0,
-              1 - shIntensity,
-              0,
-              shIntensity,
-              0,
-              1,
-              0,
-              0,
-              0,
-              1,
-              0,
-              0,
-              0,
-              1
-            ),
-            multiplyChannels: 1,
-            uvTransform: CopyTransformMaterial.defaultUvTransform,
-          }),
-          null
-        );
+        this.renderHardShadow(1.0);
       });
     }
   }
 
+  private renderHardShadow(shadowScale: number) {
+    const shIntensity =
+      this.shadowAndAoPass.parameters.shadowIntensity * shadowScale;
+    this.renderPass.renderScreenSpace(
+      this.renderer,
+      this.getCopyMaterial({
+        texture: this.screenSpaceShadow.shadowTexture,
+        blending: CustomBlending,
+        colorTransform: new Matrix4().set(
+          shIntensity,
+          0,
+          0,
+          1 - shIntensity,
+          0,
+          shIntensity,
+          0,
+          1,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          1
+        ),
+        multiplyChannels: 1,
+        uvTransform: CopyTransformMaterial.defaultUvTransform,
+      }),
+      null
+    );
+  }
+
   private evaluateIfShadowAndAoUpdateIsNeeded(camera: Camera) {
-    const alwaysUpdate = this.shadowAndAoPass.parameters.aoAlwaysUpdate;
+    const updateNow =
+      this.shadowAndAoPass.parameters.aoAlwaysUpdate ||
+      this.screenSpaceShadow.needsUpdate ||
+      this.screenSpaceShadow.shadowTypeNeedsUpdate;
     let needsUpdate =
       this.shadowAndAoPass.parameters.aoAndSoftShadowEnabled &&
       (this.parameters.deferredShadowAndAoFrame === 0 ||
@@ -514,7 +542,7 @@ export class SceneRenderer {
       this.noUpdateNeededCount = 0;
     }
     let intensityScale = 1;
-    if (!alwaysUpdate && this.parameters.deferredShadowAndAoFrame > 0) {
+    if (!updateNow && this.parameters.deferredShadowAndAoFrame > 0) {
       this.noUpdateNeededCount++;
       needsUpdate =
         this.noUpdateNeededCount >= this.parameters.deferredShadowAndAoFrame;
@@ -528,8 +556,10 @@ export class SceneRenderer {
         )
       );
     }
-    needsUpdate = alwaysUpdate || needsUpdate;
-    const hardShadow = !needsUpdate && this.parameters.hardShadowOnCameraChange;
+    needsUpdate = updateNow || needsUpdate;
+    const hardShadow =
+      this.parameters.hardShadowOnCameraChange &&
+      (!needsUpdate || intensityScale < 0.99);
     return { needsUpdate, hardShadow, intensityScale };
   }
 
@@ -576,9 +606,7 @@ export class SceneRenderer {
         this.renderPass.renderScreenSpace(
           this.renderer,
           this.getCopyMaterial({
-            texture:
-              this.shadowAndAoPass.shadowAndAoRenderTargets.blurRenderTarget
-                .texture,
+            texture: this.shadowAndAoPass.finalRenderTarget.texture,
             blending: NoBlending,
             colorTransform: CopyTransformMaterial.grayscaleTransform,
             multiplyChannels: 0,
@@ -588,18 +616,18 @@ export class SceneRenderer {
         );
         break;
       case 'shadowmap':
-          this.renderPass.renderScreenSpace(
-            this.renderer,
-            this.getCopyMaterial({
-              texture: this.screenSpaceShadow.shadowTexture,
-              blending: NoBlending,
-              colorTransform: CopyTransformMaterial.grayscaleTransform,
-              multiplyChannels: 0,
-              uvTransform: CopyTransformMaterial.defaultUvTransform,
-            }),
-            null
-          );
-          break;
+        this.renderPass.renderScreenSpace(
+          this.renderer,
+          this.getCopyMaterial({
+            texture: this.screenSpaceShadow.shadowTexture,
+            blending: NoBlending,
+            colorTransform: CopyTransformMaterial.grayscaleTransform,
+            multiplyChannels: 0,
+            uvTransform: CopyTransformMaterial.defaultUvTransform,
+          }),
+          null
+        );
+        break;
       case 'shadow':
         this.renderPass.renderScreenSpace(
           this.renderer,
@@ -619,9 +647,7 @@ export class SceneRenderer {
         this.renderPass.renderScreenSpace(
           this.renderer,
           this.getCopyMaterial({
-            texture:
-              this.shadowAndAoPass.shadowAndAoRenderTargets.blurRenderTarget
-                .texture,
+            texture: this.shadowAndAoPass.finalRenderTarget.texture,
             blending: NoBlending,
             colorTransform: ShadowAndAoPass.shadowTransform,
             multiplyChannels: 0,

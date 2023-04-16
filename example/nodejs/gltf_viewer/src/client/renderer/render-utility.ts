@@ -15,6 +15,7 @@ import {
   MeshBasicMaterial,
   Object3D,
   OrthographicCamera,
+  RepeatWrapping,
   RGBAFormat,
   Scene,
   Texture,
@@ -90,6 +91,7 @@ export class SceneVolume {
   public maxSceneDistanceFrom0: number = 10;
 
   public update(sceneObject: Object3D): void {
+    sceneObject.updateMatrixWorld();
     this.sceneBounds.setFromObject(sceneObject);
     this.maxSceneDistanceFrom0 = new Vector3(
       Math.max(
@@ -133,18 +135,16 @@ export class RenderOverrideVisibility {
   private background: any;
   private hideLinesAndPoints: boolean;
   private invisibleObjects?: any[];
-  private invisibleObjectNames?: string[];
+  public onIsObjectInvisible?: (object: Object3D) => boolean;
 
   constructor(
     hideLinesAndPoints?: boolean,
     invisibleObjects?: any[],
-    invisibleObjectNames?: any[],
     background?: any
   ) {
     this.background = background;
     this.hideLinesAndPoints = hideLinesAndPoints ?? false;
     this.invisibleObjects = invisibleObjects;
-    this.invisibleObjectNames = invisibleObjectNames;
   }
 
   public updateVisibilityCache(scene?: Scene) {
@@ -152,20 +152,15 @@ export class RenderOverrideVisibility {
     this.invisibleObjects?.forEach((item: any) =>
       this._visibilityCache.set(item, item.visible)
     );
-    if (scene && this.hideLinesAndPoints) {
+    if (scene && (this.hideLinesAndPoints || this.onIsObjectInvisible)) {
       scene.traverse((object: any) => {
-        if (object.isPoints || object.isLine) {
+        if (this.hideLinesAndPoints && (object.isPoints || object.isLine)) {
           this._visibilityCache.set(object, object.visible);
-        }
-      });
-    }
-    if (scene && this.invisibleObjectNames) {
-      scene.traverse((object: any) => {
-        if (
-          object.name !== undefined &&
-          this.invisibleObjectNames?.includes(object.name)
-        ) {
-          this._visibilityCache.set(object, object.visible);
+        } else if (this.onIsObjectInvisible) {
+          const invisible = this.onIsObjectInvisible(object);
+          if (invisible) {
+            this._visibilityCache.set(object, object.visible);
+          }
         }
       });
     }
@@ -456,3 +451,42 @@ export const viewSpacePositionFromUV = (
     Math.PI * 2 * (1 - u)
   );
 };
+
+export const spiralQuadraticSampleKernel = (kernelSize: number): Vector3[] => {
+  const kernel: Vector3[] = [];
+  for (let kernelIndex = 0; kernelIndex < kernelSize; kernelIndex++) {
+    const spiralAngle = kernelIndex * Math.PI * (3 - Math.sqrt(5));
+    const z = 0.99 - (kernelIndex / (kernelSize - 1)) * 0.8;
+    const radius = Math.sqrt(1 - z * z);
+    const x = Math.cos(spiralAngle) * radius;
+    const y = Math.sin(spiralAngle) * radius;
+    const scaleStep = 8;
+    const scaleRange = Math.floor(kernelSize / scaleStep)
+    const scaleIndex = Math.floor(kernelIndex / scaleStep) + (kernelIndex % scaleStep) * scaleRange;
+    let scale = 1 - scaleIndex / kernelSize;
+    scale = MathUtils.lerp(0.1, 1, scale * scale);
+    kernel.push(new Vector3(x * scale, y * scale, z * scale));
+  }
+  return kernel;
+}
+
+export const generateUniformKernelRotations = (): DataTexture => {
+  const width = 4;
+  const height = 4;
+  const noiseSize = width * height;
+  const data = new Uint8Array(noiseSize * 4);
+  for (let inx = 0; inx < noiseSize; ++inx) {
+    const iAng = Math.floor(inx / 2) + (inx % 2) * 8;
+    const angle = 2 * Math.PI * iAng / noiseSize;
+    const randomVec = new Vector3(Math.cos(angle), Math.sin(angle), 0).normalize();
+    data[inx * 4] = (randomVec.x * 0.5 + 0.5) * 255;
+    data[inx * 4 + 1] = (randomVec.y * 0.5 + 0.5) * 255;
+    data[inx * 4 + 2] = 127;
+    data[inx * 4 + 3] = 0;
+  }
+  const noiseTexture = new DataTexture(data, width, height);
+  noiseTexture.wrapS = RepeatWrapping;
+  noiseTexture.wrapT = RepeatWrapping;
+  noiseTexture.needsUpdate = true;
+  return noiseTexture;
+}

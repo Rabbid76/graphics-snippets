@@ -14,11 +14,15 @@ import {
   Light,
   LineBasicMaterial,
   Material,
+  Mesh,
+  MeshBasicMaterial,
   MeshLambertMaterial,
   MeshPhongMaterial,
+  MeshStandardMaterial,
   Object3D,
   PCFShadowMap,
   PCFSoftShadowMap,
+  PointLight,
   RectAreaLight,
   RedFormat,
   Scene,
@@ -39,7 +43,7 @@ export interface ScreenSpaceShadowMapParameters {
 }
 
 export interface ShadowLightSource {
-  getShadowLight(): DirectionalLight;
+  getShadowLight(): Light;
   getOriginalLight(): Light | null;
   dispose(): void;
   addTo(object: Object3D): void;
@@ -52,12 +56,12 @@ export interface ShadowLightSource {
     sumOfShadowLightIntensity: number
   ): void;
   finishRenderShadow(): void;
-  updateShadowType(typeParameters: ShadowTypeParameters): void;
+  updateShadowType(typeParameters: ShadowTypeParameters, shadowScale: number): void;
 }
 
 export class RectAreaShadowLightSource implements ShadowLightSource {
   private _rectAreaLight: RectAreaLight;
-  private _directionalLight: DirectionalLight;
+  private _shadowLightSource: DirectionalLight;
   private _rectLightHelper?: RectAreaLightHelper;
   private shadowMapSize: number;
   private isVisibleBackup: boolean = true;
@@ -71,16 +75,12 @@ export class RectAreaShadowLightSource implements ShadowLightSource {
       (this._rectLightHelper.material as LineBasicMaterial).depthWrite = false;
       this._rectAreaLight.add(this._rectLightHelper);
     }
-    this._directionalLight = new DirectionalLight(0xffffff, 1);
-    this._directionalLight.position.set(
-      this._rectAreaLight.position.x,
-      this._rectAreaLight.position.y,
-      this._rectAreaLight.position.z
-    );
-    this._directionalLight.lookAt(0, 0, 0);
-    this._directionalLight.visible = false;
-    this._directionalLight.castShadow = true;
-    this._directionalLight.shadow.mapSize = new Vector2(
+    this._shadowLightSource = new DirectionalLight(0xffffff, 1);
+    this._shadowLightSource.position.copy(this._rectAreaLight.position);
+    this._shadowLightSource.lookAt(0, 0, 0);
+    this._shadowLightSource.visible = false;
+    this._shadowLightSource.castShadow = true;
+    this._shadowLightSource.shadow.mapSize = new Vector2(
       this.shadowMapSize,
       this.shadowMapSize
     );
@@ -90,8 +90,8 @@ export class RectAreaShadowLightSource implements ShadowLightSource {
     return this._rectAreaLight;
   }
 
-  public getShadowLight(): DirectionalLight {
-    return this._directionalLight;
+  public getShadowLight(): Light {
+    return this._shadowLightSource;
   }
 
   public getOriginalLight(): Light | null {
@@ -99,15 +99,15 @@ export class RectAreaShadowLightSource implements ShadowLightSource {
   }
 
   public dispose(): void {
-    this._directionalLight.dispose();
+    this._shadowLightSource.dispose();
   }
 
   addTo(parent: Object3D): void {
-    parent.add(this._directionalLight);
+    parent.add(this._shadowLightSource);
   }
 
   removeFrom(parent: Object3D): void {
-    parent.remove(this._directionalLight);
+    parent.remove(this._shadowLightSource);
   }
 
   public updatePositionAndTarget() {
@@ -118,8 +118,9 @@ export class RectAreaShadowLightSource implements ShadowLightSource {
   }
 
   public setShadowVolume(shadowVolumeBox: Box3): void {
+    // TODO setViewVolumeFromBox perspective and orthographic
     setOrthographicViewVolumeFromBox(
-      this._directionalLight.shadow.camera,
+      this._shadowLightSource.shadow.camera,
       shadowVolumeBox
     );
   }
@@ -128,28 +129,12 @@ export class RectAreaShadowLightSource implements ShadowLightSource {
     cameraPosition: Vector3,
     targetPosition: Vector3
   ): void {
-    this._directionalLight.position.set(
-      cameraPosition.x,
-      cameraPosition.y,
-      cameraPosition.z
-    );
-    this._directionalLight.lookAt(
-      targetPosition.x,
-      targetPosition.y,
-      targetPosition.z
-    );
-    this._directionalLight.shadow.camera.position.set(
-      cameraPosition.x,
-      cameraPosition.y,
-      cameraPosition.z
-    );
-    this._directionalLight.shadow.camera.lookAt(
-      targetPosition.x,
-      targetPosition.y,
-      targetPosition.z
-    );
-    this._directionalLight.updateMatrixWorld();
-    this._directionalLight.shadow.camera.updateMatrixWorld();
+    this._shadowLightSource.position.copy(cameraPosition);
+    this._shadowLightSource.lookAt(targetPosition);
+    this._shadowLightSource.shadow.camera.position.copy(targetPosition);
+    this._shadowLightSource.shadow.camera.lookAt(targetPosition);
+    this._shadowLightSource.updateMatrixWorld();
+    this._shadowLightSource.shadow.camera.updateMatrixWorld();
   }
 
   public getShadowLightIntensity(): number {
@@ -160,25 +145,25 @@ export class RectAreaShadowLightSource implements ShadowLightSource {
     castShadow: boolean,
     sumOfShadowLightIntensity: number
   ): void {
-    this.castShadowBackup = this._directionalLight.castShadow;
+    this.castShadowBackup = this._shadowLightSource.castShadow;
     this.isVisibleBackup = this._rectAreaLight.visible;
-    this._directionalLight.visible = this._rectAreaLight.visible;
-    this._directionalLight.castShadow &&= castShadow;
+    this._shadowLightSource.visible = this._rectAreaLight.visible;
+    this._shadowLightSource.castShadow &&= castShadow;
     this._rectAreaLight.visible = false;
-    this._directionalLight.intensity =
+    this._shadowLightSource.intensity =
       this._rectAreaLight.intensity / sumOfShadowLightIntensity;
   }
 
   public finishRenderShadow(): void {
-    this._directionalLight.visible = false;
-    this._directionalLight.castShadow = this.castShadowBackup;
+    this._shadowLightSource.visible = false;
+    this._shadowLightSource.castShadow = this.castShadowBackup;
     this._rectAreaLight.visible = this.isVisibleBackup;
   }
 
-  public updateShadowType(typeParameters: ShadowTypeParameters): void {
-    const shadow = this._directionalLight.shadow;
+  public updateShadowType(typeParameters: ShadowTypeParameters, shadowScale: number): void {
+    const shadow = this._shadowLightSource.shadow;
     shadow.bias = typeParameters.bias;
-    shadow.normalBias = typeParameters.normalBias;
+    shadow.normalBias = typeParameters.normalBias * shadowScale;
     shadow.radius = typeParameters.radius;
     shadow.needsUpdate = true;
   }
@@ -197,7 +182,7 @@ struct LambertMaterial {
 void RE_Direct_Lambert( const in IncidentLight directLight, const in GeometricContext geometry, const in LambertMaterial material, inout ReflectedLight reflectedLight ) {
 
 	float dotNL = dot(geometry.normal, directLight.direction);
-  float nonLinearDotNL = saturate(min(dotNL * 1000.0 + 1.0, 1.0));
+  float nonLinearDotNL = saturate(min(dotNL * 1000.0 + 0.9, 1.0));
 	vec3 irradiance = nonLinearDotNL * directLight.color;
 	reflectedLight.directDiffuse += irradiance * BRDF_Lambert( material.diffuseColor );
 }
@@ -210,6 +195,12 @@ void RE_IndirectDiffuse_Lambert( const in vec3 irradiance, const in GeometricCon
 #define RE_IndirectDiffuse		RE_IndirectDiffuse_Lambert
 `;
 
+enum ShadowMaterialType {
+  Default,
+  Unlit,
+  Emissive,
+}
+
 export class ScreenSpaceShadowMap {
   static useModifiedMaterial: boolean = true;
   public parameters: ScreenSpaceShadowMapParameters;
@@ -219,10 +210,14 @@ export class ScreenSpaceShadowMap {
   private shadowLightSources: ShadowLightSource[] = [];
   private viewportSize: Vector2;
   private samples: number;
+  private sceneBounds: Box3 = new Box3();
+  private shadowScale: number = 1;
   private shadowMapSize: number;
   public castShadow: boolean;
   private renderPass: RenderPass;
   private shadowMaterial: Material;
+  private unlitMaterial: Material;
+  private emissiveMaterial: Material;
   private shadowRenderTarget: WebGLRenderTarget;
   private cameraUpdate: CameraUpdate = new CameraUpdate();
 
@@ -237,18 +232,43 @@ export class ScreenSpaceShadowMap {
     this.parameters = this.getScreenSpaceShadowMapParameters(parameters);
     this.castShadow = this.parameters.enableShadowMap;
     this.renderPass = new RenderPass();
-    if (ScreenSpaceShadowMap.useModifiedMaterial) {
-      this.shadowMaterial = new MeshLambertMaterial({
+    this.shadowMaterial = this.createShadowMaterial(ShadowMaterialType.Default);
+    this.unlitMaterial = this.createShadowMaterial(ShadowMaterialType.Unlit);
+    this.emissiveMaterial = this.createShadowMaterial(
+      ShadowMaterialType.Emissive
+    );
+    const samples = this.samples;
+    this.shadowRenderTarget = new WebGLRenderTarget(
+      this.viewportSize.x,
+      this.viewportSize.y,
+      { samples, format: RedFormat }
+    );
+  }
+
+  private createShadowMaterial(type: ShadowMaterialType): Material {
+    let material: Material;
+    if (type === ShadowMaterialType.Emissive) {
+      material = new MeshBasicMaterial({
+        color: 0xffffff,
         side: DoubleSide,
       });
-      this.shadowMaterial.onBeforeCompile = (shader) => {
+    } else if (type === ShadowMaterialType.Unlit) {
+      material = new MeshBasicMaterial({
+        color: 0xffffff,
+        side: DoubleSide,
+      });
+    } else if (ScreenSpaceShadowMap.useModifiedMaterial) {
+      material = new MeshLambertMaterial({
+        side: DoubleSide,
+      });
+      material.onBeforeCompile = (shader) => {
         shader.fragmentShader = shader.fragmentShader.replace(
           '#include <lights_lambert_pars_fragment>',
           replaceLightsLambertParsFragment
         );
       };
     } else {
-      this.shadowMaterial = new MeshPhongMaterial({
+      material = new MeshPhongMaterial({
         color: 0xffffff,
         shininess: 0,
         polygonOffsetFactor: 0,
@@ -256,12 +276,7 @@ export class ScreenSpaceShadowMap {
         side: DoubleSide,
       });
     }
-    const samples = this.samples;
-    this.shadowRenderTarget = new WebGLRenderTarget(
-      this.viewportSize.x,
-      this.viewportSize.y,
-      { samples, format: RedFormat }
-    );
+    return material;
   }
 
   private getScreenSpaceShadowMapParameters(
@@ -286,6 +301,15 @@ export class ScreenSpaceShadowMap {
       if (this.parameters.hasOwnProperty(propertyName)) {
         this.parameters[propertyName] = parameters[propertyName];
       }
+    }
+  }
+
+  public updateBounds(sceneBounds: Box3, scaleShadow: number) {
+    const currentScale = this.shadowScale;
+    this.sceneBounds.copy(sceneBounds);
+    this.shadowScale = scaleShadow;
+    if (Math.abs(currentScale - this.shadowScale) > 0.00001) {
+      this.shadowTypeNeedsUpdate = true;
     }
   }
 
@@ -408,36 +432,94 @@ export class ScreenSpaceShadowMap {
     camera: Camera,
     renderTarget: WebGLRenderTarget
   ): void {
-    const materialCache = new Map();
+    const objectCache = new Map();
     scene.traverse((object: any) => {
-      if (
-        object.isMesh &&
-        object?.material &&
-        !Array.isArray(object.material) &&
-        !object.material.transparent
-      ) {
-        materialCache.set(object, object.material);
-        object.material = this.shadowMaterial;
+      if (object.isMesh && object.visible) {
+        objectCache.set(object, {
+          visible: object.visible,
+          material: object.material,
+        });
+        this.setMeshMaterialAndVisibility(object as Mesh);
+      } else if (object.isLine) {
+        objectCache.set(object, {
+          visible: object.visible,
+          material: object.material,
+        });
+        object.visible = false;
       }
     });
     this.renderPass.render(renderer, scene, camera, renderTarget, 0xffffff, 1);
-    materialCache.forEach((material: any, object: any) => {
-      object.material = material;
+    objectCache.forEach((data: any, object: any) => {
+      object.visible = data.visible;
+      if (data.material) {
+        object.material = data.material;
+      }
     });
   }
 
+  private setMeshMaterialAndVisibility(object: Mesh) {
+    if (
+      object.material &&
+      object.castShadow &&
+      !Array.isArray(object.material) &&
+      !(object.material.transparent === true && object.material.opacity < 0.9)
+    ) {
+      const material = object.material;
+      if (
+        material instanceof LineBasicMaterial ||
+        material instanceof MeshBasicMaterial
+      ) {
+        object.material = this.unlitMaterial;
+      } else if (material instanceof MeshStandardMaterial) {
+        this.setMeshShadowStandardMaterial(object, material);
+      } else {
+        object.material = object.receiveShadow
+          ? this.shadowMaterial
+          : this.unlitMaterial;
+      }
+    } else {
+      object.visible = false;
+    }
+  }
+
+  private setMeshShadowStandardMaterial(
+    object: Mesh,
+    material: MeshStandardMaterial
+  ) {
+    const isEmissive =
+      material.emissiveIntensity > 0 &&
+      (material.emissive.r > 0 ||
+        material.emissive.g > 0 ||
+        material.emissive.b > 0);
+    object.material = isEmissive
+      ? this.emissiveMaterial
+      : object.receiveShadow
+      ? this.shadowMaterial
+      : this.unlitMaterial;
+  }
+
   private updateShadowType(renderer: WebGLRenderer): void {
-    renderer.shadowMap.type = this.shadowConfiguration.currentType.type;
+    renderer.shadowMap.type =
+      this.shadowConfiguration.currentConfiguration.type;
     const castShadow =
       this.parameters.enableShadowMap &&
-      this.shadowConfiguration.currentType.castShadow;
+      this.shadowConfiguration.currentConfiguration.castShadow;
     renderer.shadowMap.enabled = castShadow;
     renderer.shadowMap.needsUpdate = true;
     this.castShadow =
-      castShadow && this.shadowConfiguration.currentType.castShadow;
+      castShadow && this.shadowConfiguration.currentConfiguration.castShadow;
     this.shadowLightSources.forEach((item) =>
-      item.updateShadowType(this.shadowConfiguration.currentType)
+      item.updateShadowType(this.shadowConfiguration.currentConfiguration, this.shadowScale)
     );
+  }
+
+  public switchType(type: string): boolean {
+    if (!this.shadowConfiguration.switchType(type)) {
+      return false;
+    }
+    this.needsUpdate = true;
+    this.shadowTypeNeedsUpdate = true;
+    return true;
   }
 }
 
@@ -450,57 +532,65 @@ export interface ShadowTypeParameters {
 }
 
 export class ShadowTypeConfiguration {
-  private static defaultType: ShadowTypeParameters = {
-    castShadow: true,
+  // see THREE.LightShadow - https://threejs.org/docs/#api/en/lights/shadows/LightShadow
+  // bias: Shadow map bias, how much to add or subtract from the normalized depth when deciding whether a surface is in shadow.
+  //       This value depends on the normalized depth and must not be scaled with the size of the scene.
+  // normalBias: Defines how much the position used to query the shadow map is offset along the object normal. 
+  //       This value is in world space units and must be scaled with the size of the scene.
+  private static noShadow: ShadowTypeParameters = {
+    castShadow: false,
     type: PCFShadowMap,
-    bias: -0.0005,
-    normalBias: 0.01,
+    bias: 0,
+    normalBias: 0,
     radius: 0,
   };
+  private static basicShadow: ShadowTypeParameters = {
+    castShadow: true,
+    type: BasicShadowMap,
+    bias: -0.00005,
+    normalBias: 0.005,
+    radius: 0,
+  };
+  private static pcfShadow: ShadowTypeParameters = {
+    castShadow: true,
+    type: PCFShadowMap,
+    bias: -0.00005, // -0.0002,
+    normalBias: 0.01,
+    radius: 1,
+  };
+  private static pcfSoftShadow: ShadowTypeParameters = {
+    castShadow: true,
+    type: PCFSoftShadowMap,
+    bias: -0.00005,
+    normalBias: 0.01,
+    radius: 1,
+  };
+  private static vcmShadow: ShadowTypeParameters = {
+    castShadow: true,
+    type: VSMShadowMap,
+    bias: -0.0005,
+    normalBias: 0,
+    radius: 30,
+  };
   public types = new Map<string, ShadowTypeParameters>([
-    [
-      'off',
-      {
-        castShadow: false,
-        type: PCFShadowMap,
-        bias: 0,
-        normalBias: 0,
-        radius: 0,
-      },
-    ],
-    [
-      'BasicShadowMap',
-      {
-        castShadow: true,
-        type: BasicShadowMap,
-        bias: -0.005,
-        normalBias: 0,
-        radius: 0,
-      },
-    ],
-    ['PCFShadowMap', ShadowTypeConfiguration.defaultType],
-    [
-      'PCFSoftShadowMap',
-      {
-        castShadow: true,
-        type: PCFSoftShadowMap,
-        bias: -0.005,
-        normalBias: 0.01,
-        radius: 1,
-      },
-    ],
-    [
-      'VSMShadowMap',
-      {
-        castShadow: true,
-        type: VSMShadowMap,
-        bias: -0.0005,
-        normalBias: 0,
-        radius: 30,
-      },
-    ],
+    ['off', ShadowTypeConfiguration.noShadow],
+    ['BasicShadowMap', ShadowTypeConfiguration.basicShadow],
+    ['PCFShadowMap', ShadowTypeConfiguration.pcfShadow],
+    ['PCFSoftShadowMap', ShadowTypeConfiguration.pcfSoftShadow],
+    ['VSMShadowMap', ShadowTypeConfiguration.vcmShadow],
   ]);
+  private static defaultType: ShadowTypeParameters =
+    ShadowTypeConfiguration.pcfShadow;
   public shadowType: string = 'PCFShadowMap';
-  public currentType: ShadowTypeParameters =
-    this.types.get('PCFShadowMap') ?? ShadowTypeConfiguration.defaultType;
+  public currentConfiguration: ShadowTypeParameters =
+    this.types.get(this.shadowType) ?? ShadowTypeConfiguration.defaultType;
+
+  public switchType(type: string): boolean {
+    if (!this.types.has(type)) {
+      return false;
+    }
+    this.currentConfiguration =
+      this.types.get(type) ?? ShadowTypeConfiguration.defaultType;
+    return true;
+  }
 }

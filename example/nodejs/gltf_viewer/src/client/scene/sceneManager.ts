@@ -21,6 +21,8 @@ import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
 import { GLTFLoader, GLTF } from "three/examples/jsm/loaders/GLTFLoader";
 import { Controls } from './controls'
 import { QualityLevel, SceneRenderer, SceneRendererParameters, SceneGroupType } from '../renderer/scene-renderer'
+import { DimensioningArrow } from './dimensioningArrow'
+import { RoomEnvironmentScene } from './room-environment'
 import {
     Box3,
     BoxGeometry,
@@ -45,20 +47,25 @@ import {
     WebGLRenderer,
 } from 'three'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
+import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 
 export interface SceneProperties {
     rotate: number,
+    randomOrientation: boolean;
+    dimensions: boolean;
     materialNoise: boolean
 }
 
 export class RenderScene {
     public properties: SceneProperties = { 
         rotate: 0,
-        materialNoise: false,   
-             
+        randomOrientation: false,
+        dimensions: false,
+        materialNoise: false,         
     }
     public showEnvironment: boolean = false;
-    private renderer: WebGLRenderer
+    private renderer: WebGLRenderer;
+    private css2Renderer?: CSS2DRenderer; 
     public sceneRenderer: SceneRenderer;
     private camera: PerspectiveCamera
     private controls?: Controls
@@ -67,22 +74,26 @@ export class RenderScene {
     private lightSources: LightSources
     private sceneVolume = new SceneVolume()
     private turnTableGroup = new Group()
+    private scaleShadowAndAo: boolean = false;
     public groundMaterialType =  GroundMaterialType.OnlyShadow
     private noiseTexture: Texture
     private raycaster = new Raycaster();
     public environmentLoader: EnvironmentLoader;
     private transformControls?: TransformControls
     public skyEnvironment: SkyEnvironment;
+    public dimensioningArrows: DimensioningArrow[] = [];
+    public dimensioningArrowScene = new Scene();
 
     public get sceneRenderParameters() : SceneRendererParameters {
         return this.sceneRenderer.parameters;
     }
 
-    public constructor(renderer: WebGLRenderer) {
+    public constructor(renderer: WebGLRenderer, css2Renderer?: CSS2DRenderer) {
         const width = window.innerWidth;
         const height = window.innerHeight;
         const maxSamples = getMaxSamples(renderer)
         this.renderer = renderer;
+        this.css2Renderer = css2Renderer;
         this.environmentLoader = new EnvironmentLoader(this.renderer);
         this.camera = new PerspectiveCamera(45, width / height, 0.1, 10);
         this.camera.position.z = 2;
@@ -170,8 +181,23 @@ export class RenderScene {
     }
 
     public setEnvironment(): void {
-        this.environmentLoader.loadDefaultEnvironment(true);
+        this.environmentLoader.loadDefaultEnvironment(true, () => {
+            return new RoomEnvironmentScene({
+                lightIntensity: 0.5,
+            });
+        });
         this.environmentLoader.loadEnvmap('roomle64.envmap', 'roomle64.envmap', false);
+    }
+
+    public updateSceneDependencies(): void {
+        this.updateLightAndShadow();
+        this.sceneRenderer.bakedGroundContactShadow.needsUpdate = true;
+        this.updateBounds();
+    }
+
+    public updateBounds(): void {
+        this.lightSources.updateBounds(this.sceneVolume);
+        this.sceneRenderer.updateBounds(this.sceneVolume.sceneBounds, this.scaleShadowAndAo);
     }
 
     public updateLightAndShadow(): void {
@@ -179,9 +205,8 @@ export class RenderScene {
             light.castShadow = true;
             light.shadow.mapSize.width = 1024;
             light.shadow.mapSize.height = 1024;
-            light.shadow.blurSamples = 32
+            light.shadow.blurSamples = 32;
         });
-        this.lightSources.updateBounds(this.sceneVolume)
     }
 
     public setGroundMaterial(groundMaterialType: GroundMaterialType) {
@@ -191,15 +216,50 @@ export class RenderScene {
         }
     }
 
-    public update(properties?: SceneProperties, meshGroup?: Group): void {
+    public update(properties?: any, meshGroup?: Group, scaleScene?: boolean): void {
         if (meshGroup) {
-            this.setNewTurntableGroup(meshGroup);
+            this.setNewTurntableGroup(meshGroup, scaleScene ?? false);
         }
         if (properties && this.properties.rotate !== properties?.rotate) {
             this.properties.rotate = properties?.rotate
             if (this.properties.rotate === 0) { 
                 this.turnTableGroup.rotation.y = 0
             }
+        }
+        if (properties && this.properties.dimensions !== properties?.dimensions) {
+            this.properties.dimensions = properties?.dimensions;
+            this.updateDimensions();
+        }
+        if (properties && this.properties.randomOrientation !== properties?.randomOrientation) {
+            this.properties.randomOrientation = properties?.randomOrientation;
+        }
+    }
+
+    private updateDimensions() {
+        if (this.properties.dimensions) {
+            if (this.dimensioningArrows.length === 0) {
+                for (let i = 0; i < 3; ++i) {
+                    const dimensioningArrow = new DimensioningArrow(new Vector3(), new Vector3(), { 
+                        color: 0x00000,
+                        arrowPixelWidth: 10.0,
+                        arrowPixelHeight: 15.0,
+                        shaftPixelWidth: 3.0,
+                        shaftPixelOffset: 1.0, 
+                        labelClass: 'label',
+                        deviceRatio: window.devicePixelRatio,
+                    });
+                    this.dimensioningArrows.push(dimensioningArrow);
+                    this.dimensioningArrowScene.add(dimensioningArrow);
+                }
+            }
+            const box = this.sceneVolume.sceneBounds;
+            const size = box.getSize(new Vector3());
+            const arrowOffset = Math.min(size.x, size.y, size.z) * 0.2;
+            this.dimensioningArrows[0].setPosition(new Vector3(box.min.x, box.min.y, box.max.z + arrowOffset), new Vector3(box.max.x, box.min.y, box.max.z + arrowOffset));
+            this.dimensioningArrows[1].setPosition(new Vector3(box.min.x- arrowOffset, box.min.y, box.max.z + arrowOffset), new Vector3(box.min.x- arrowOffset, box.max.y, box.max.z + arrowOffset));
+            this.dimensioningArrows[2].setPosition(new Vector3(box.min.x - arrowOffset, box.min.y, box.max.z), new Vector3(box.min.x - arrowOffset, box.min.y, box.min.z));
+        } else {
+            this.dimensioningArrows.forEach(dimensioningArrow => dimensioningArrow.setLabel(''));
         }
     }
 
@@ -243,6 +303,7 @@ export class RenderScene {
         this.postProcessingEffects.resize(width, height);
         this.renderer.setSize(width, height);
         this.sceneRenderer.setSize(width, height);
+        this.css2Renderer?.setSize(width, height);
     }
 
     public animate(elapsedMilliseconds: number): void {
@@ -255,7 +316,8 @@ export class RenderScene {
         // bring the near and far plane as close as possible to geometry
         // this is very likely the most important part for a glitch free and nice SSAO
         const nearFar = this.sceneVolume.getNearAndFarForCameraThatLooksAtOriginOfScene(this.camera.position, 3)
-        this.camera.near = 0.1; // nearFar[0]
+        //this.camera.near = Math.max(0.00001, Math.min(0.1, nearFar[0] * 0.9)); // nearFar[0]
+        this.camera.near = Math.max(0.00001, nearFar[0] * 0.9);
         this.camera.far = nearFar[1]; // Math.max(nearFar[1], 100)
         this.camera.updateProjectionMatrix()
 
@@ -273,6 +335,13 @@ export class RenderScene {
     public render(): void {
         this.controls?.update();
         this.sceneRenderer.render(this.scene, this.camera, this.postProcessingEffects.anyPostProcess());
+        if (this.properties.dimensions) {
+            this.dimensioningArrows.forEach(arrow => { arrow.arrowNeedsUpdate = true; });
+            this.renderer.autoClear = false;
+            this.renderer.render(this.dimensioningArrowScene, this.camera);
+            this.css2Renderer?.render(this.dimensioningArrowScene, this.camera);
+            this.renderer.autoClear = true;
+        }
     }
 
     private async loadGLTF(resourceName: string) : Promise<Group> {
@@ -287,23 +356,17 @@ export class RenderScene {
 
         const gltf = await gltfLoader.loadAsync(resourceName);
         this.updateGLTFScene(gltf, (mesh: Mesh) => {
-            /*
-            if (mesh.name.includes("glass") || mesh.name.includes("bottle")) {
-                const glassMaterial = new MeshPhysicalMaterial({
-                    color: 0xffffff,
-                    metalness: 0,
-                    roughness: 0.1,
-                    transparent: true,
-                    transmission: 0.9,
-                    opacity: 0.7,
-                    envMapIntensity: 1,
-                    side: DoubleSide,
-                });
-                mesh.material = glassMaterial;
+            if (mesh.isMesh) {
+                const material = mesh.material;
+                if (material instanceof MeshStandardMaterial) {
+                    if (material.transparent === false) {
+                        mesh.castShadow = true;
+                        mesh.receiveShadow = true;
+                    }
+                }
             }
-            */
         });
-        this.setNewTurntableGroup(gltf.scene);
+        this.setNewTurntableGroup(gltf.scene, true);
         return gltf.scene;
     }
 
@@ -319,37 +382,51 @@ export class RenderScene {
         });
     }
 
-    private setNewTurntableGroup(newGroup: Group): void {
+    private setNewTurntableGroup(newGroup: Group, scaleScene: boolean): void {
         this.turnTableGroup.clear();
+        this.scaleShadowAndAo = scaleScene;
         this.setInitialObjectPosition(newGroup);
         this.setInitialCameraPositionAndRotation();
-        this.sceneRenderer.bakedGroundContactShadow.needsUpdate = true;
-        this.updateLightAndShadow();
+        this.lightSources.setLightSourcesDistances(this.sceneVolume, scaleScene);
+        this.sceneRenderer.forceShadowUpdates(true);
+        this.updateSceneDependencies();
     }
 
     private setInitialObjectPosition(meshGroup: Object3D): void {
         const bounds = new Box3();
+        meshGroup.updateMatrixWorld();
         bounds.setFromObject(meshGroup);
-        console.log('bounds', bounds)
-        const size = bounds.getSize(new Vector3)
-        const center = bounds.getCenter(new Vector3)
-        meshGroup.translateX(-center.x)
-        meshGroup.translateY(-bounds.min.y)
-        meshGroup.translateZ(-center.z)
-        const maxSize = Math.max(size.x, size.y, size.z)
-        const offset_y = -size.y / 2
-        this.turnTableGroup.position.y = offset_y
-        this.turnTableGroup.add(meshGroup)
+        const size = bounds.getSize(new Vector3);
+        const center = bounds.getCenter(new Vector3);
+        meshGroup.translateX(-center.x);
+        meshGroup.translateY(-bounds.min.y);
+        meshGroup.translateZ(-center.z);
+        const offset_y = -size.y / 2;
+        this.turnTableGroup.position.y = offset_y;
+        this.turnTableGroup.add(meshGroup);
+        this.turnTableGroup.updateMatrixWorld();
         this.sceneRenderer.setGroundLevel(offset_y);
         this.sceneVolume.update(meshGroup)
     }
 
     private setInitialCameraPositionAndRotation(): void {
-        this.camera.position.z = this.sceneVolume.maxSceneDistanceFrom0 * 2.5
-        this.camera.position.y = this.sceneVolume.maxSceneDistanceFrom0 * 0.8
-        this.camera.position.x = this.sceneVolume.maxSceneDistanceFrom0 * -1.5
+        const directionToCamera = new Vector3(-1.5, 0.8, 2.5).normalize();
+        if (this.properties.randomOrientation) {
+            const x = Math.random() * 4 - 2;
+            const y = Math.random() * 0.8 + 0.4;
+            directionToCamera.set(x, y, 2.5).normalize();
+        }
+        this.camera.position.copy(directionToCamera);
         this.camera.lookAt(new Vector3(0, 0, 0))
-        this.camera.updateMatrix()
+        this.camera.updateMatrixWorld();
+        const bounds = new Box3().setFromObject(this.turnTableGroup).applyMatrix4(this.camera.matrixWorldInverse);
+        const fov_2 = this.camera.fov * Math.PI / 180 /2;
+        const aspect = this.camera.aspect;
+        const maxSide = Math.max(-bounds.min.x / aspect, bounds.max.x / aspect, -bounds.min.y, bounds.max.y);
+        const minDistance = maxSide / Math.tan(fov_2) + bounds.max.z + 1;
+        this.camera.position.copy(directionToCamera.multiplyScalar(minDistance));
+        this.camera.lookAt(new Vector3(0, 0, 0));
+        this.camera.updateMatrixWorld();
     }
 
     private constructLoadingGeometry(type: number): Group {

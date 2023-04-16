@@ -78,8 +78,10 @@ export class DepthNormalRenderTarget {
 
   constructor(parameters?: any) {
     this.depthNormalScale = parameters?.depthNormalScale ?? 1;
-    this.targetMinificationTextureFilter = parameters?.textureMinificationFilter ?? NearestFilter;
-    this.targetMagnificationTextureFilter = parameters?.textureMagnificationFilter ?? NearestFilter;
+    this.targetMinificationTextureFilter =
+      parameters?.textureMinificationFilter ?? NearestFilter;
+    this.targetMagnificationTextureFilter =
+      parameters?.textureMagnificationFilter ?? NearestFilter;
     this.width = parameters?.width ?? 1024;
     this.height = parameters?.height ?? 1024;
     this.samples = parameters?.samples ?? 0;
