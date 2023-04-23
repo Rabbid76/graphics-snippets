@@ -161,30 +161,6 @@ export class LightSources {
     public setLightSourcesDistances(sceneVolume: SceneVolume, scaleDistance: boolean) {
         this.lightSourceScale = scaleDistance ? sceneVolume.maxSceneDistanceFrom0 * 1.5 : undefined;
         this.updateLightSources();
-        this.updateBounds(sceneVolume);
-    }
-
-    public updateBounds(sceneVolume: SceneVolume) {
-        this.getShadowLightSources().forEach(light => {
-            LightSources.updateDirectionalLightBounds(light, sceneVolume)
-        });
-    }
-
-    private static updateDirectionalLightBounds(light: Light, sceneVolume: SceneVolume): void {
-        const shadowMap = light.shadow
-        const distanceToTarget = light.position.length()
-        const shadowCamera = shadowMap.camera as PerspectiveCamera || shadowMap.camera as OrthographicCamera
-        shadowCamera.near = Math.max(0.1, distanceToTarget - sceneVolume.maxSceneDistanceFrom0);
-        shadowCamera.far = distanceToTarget * 2;
-        const orthoGraphicShadowCamera = shadowMap.camera as OrthographicCamera
-        const shadowScale = 2.5; 
-        if (orthoGraphicShadowCamera) {
-            orthoGraphicShadowCamera.left = -sceneVolume.maxSceneDistanceFrom0 * shadowScale
-            orthoGraphicShadowCamera.right = sceneVolume.maxSceneDistanceFrom0 * shadowScale
-            orthoGraphicShadowCamera.top = sceneVolume.maxSceneDistanceFrom0 * shadowScale
-            orthoGraphicShadowCamera.bottom = -sceneVolume.maxSceneDistanceFrom0 * shadowScale
-        }
-        shadowCamera.updateProjectionMatrix()
     }
 
     public addToScene(): void {

@@ -3,12 +3,16 @@ import {
   getMaxSamples,
   RenderOverrideVisibility,
   RenderPass,
+  SceneVolume,
 } from './render-utility';
 import {
   CopyTransformMaterial,
   LinearDepthRenderMaterial,
 } from './shader-utility';
-import { DepthNormalRenderTarget } from './depth-normal-render-targets';
+import {
+  DepthNormalRenderTarget,
+  DepthNormalBufferParameters,
+} from './depth-normal-render-targets';
 import {
   BakedGroundContactShadow,
   BakedGroundContactShadowParameters,
@@ -28,22 +32,20 @@ import { Pass } from 'three/examples/jsm/postprocessing/Pass';
 import {
   Box3,
   Camera,
-  BufferGeometry,
+  Color,
   CustomBlending,
   DoubleSide,
   Group,
-  Material,
   Matrix4,
-  Mesh,
   MeshStandardMaterial,
   NearestFilter,
   NoBlending,
   Object3D,
+  PerspectiveCamera,
   RectAreaLight,
   Scene,
   ShaderMaterial,
   Vector2,
-  Vector3,
   WebGLRenderer,
   WebGLRenderTarget,
 } from 'three';
@@ -67,6 +69,7 @@ export enum QualityLevel {
 }
 
 export interface SceneRendererParameters {
+  depthNormalRenderTargetParameters: DepthNormalBufferParameters;
   shadowAndAoParameters: ShadowAndAoParameters;
   screenSpaceShadowMapParameters: ScreenSpaceShadowMapParameters;
   groundReflectionParameters: GroundReflectionParameters;
@@ -80,18 +83,25 @@ export interface SceneRendererParameters {
 export class SceneRenderer {
   public parameters: SceneRendererParameters;
   public debugOutput = 'off';
+  public shadowOnGround = false;
   public outputEncoding = '';
   public toneMapping = '';
   public groundReflection = false;
+  public movingCamera: boolean = false;
+  public groundLevel: number = 0;
   private noUpdateNeededCount = 0;
   private cameraUpdate: CameraUpdate = new CameraUpdate();
   public renderer: WebGLRenderer;
   private width: number = 0;
   private height: number = 0;
   private maxSamples: number = 1;
+  public boundingVolume = new SceneVolume();
   private debugRenderOverrideVisibility: RenderOverrideVisibility =
     new RenderOverrideVisibility(true);
-  private shadowRenderOverrideVisibility: RenderOverrideVisibility;
+  private shadowRenderOverrideVisibility: RenderOverrideVisibility =
+    new RenderOverrideVisibility(true, (object: any) => {
+      return !this.shadowOnGround && object === this.groundGroup;
+    });
   private renderPass: RenderPass = new RenderPass();
   public shadowAndAoPass: ShadowAndAoPass;
   public screenSpaceShadow: ScreenSpaceShadowMap;
@@ -110,8 +120,7 @@ export class SceneRenderer {
   private depthRenderMaterial?: LinearDepthRenderMaterial;
   private copyMaterial?: CopyTransformMaterial;
   public sceneGroups: SceneGroups = new SceneGroups();
-  public groundGroup: Group = new Group();
-  private groundMesh?: Mesh;
+  public readonly groundGroup: Group = new Group();
 
   public constructor(renderer: WebGLRenderer, width: number, height: number) {
     this.width = width;
@@ -144,12 +153,16 @@ export class SceneRenderer {
     this.groundReflectionPass = new GroundReflectionPass(
       this.width,
       this.height,
-      {}
+      {
+        renderPass: this.renderPass,
+      }
     );
     this.bakedGroundContactShadow = new BakedGroundContactShadow(
       this.renderer,
       this.groundGroup,
-      {}
+      {
+        renderPass: this.renderPass,
+      }
     );
     this.groundGroup.rotateX(-Math.PI / 2);
     const renderTarget = new WebGLRenderTarget(this.width, this.height, {
@@ -162,13 +175,14 @@ export class SceneRenderer {
       null, //this.effectComposer,
       this.width,
       this.height,
-      {}
+      {
+        depthNormalRenderTarget: this.depthNormalRenderTarget,
+      }
     );
-    this.shadowRenderOverrideVisibility = new RenderOverrideVisibility(false, [
-      this.groundGroup,
-    ]);
     this.sceneGroups.addToGroup(SceneGroupType.GROUND, this.groundGroup);
     this.parameters = {
+      depthNormalRenderTargetParameters:
+        this.depthNormalRenderTarget.parameters,
       bakedGroundContactShadowParameters:
         this.bakedGroundContactShadow.parameters,
       screenSpaceShadowMapParameters: this.screenSpaceShadow.parameters,
@@ -340,29 +354,6 @@ export class SceneRenderer {
     }
   }
 
-  public setGroundLevel(groundLevel: number) {
-    this.groundGroup.position.y = groundLevel;
-    this.groundReflectionPass.parameters.groundLevel = groundLevel;
-  }
-
-  public updateGround(geometry?: BufferGeometry, material?: Material) {
-    if (!this.groundMesh) {
-      this.groundMesh = new Mesh();
-      this.groundGroup.add(this.groundMesh);
-    }
-    if (geometry) {
-      this.groundMesh.geometry = geometry;
-    }
-    if (material) {
-      material.depthWrite = false;
-      material.polygonOffset = true;
-      material.polygonOffsetFactor = 4;
-      material.polygonOffsetUnits = 4;
-      material.needsUpdate = true;
-      this.groundMesh.material = material;
-    }
-  }
-
   protected getCopyMaterial(parameters?: any): ShaderMaterial {
     this.copyMaterial = this.copyMaterial ?? new CopyTransformMaterial();
     return this.copyMaterial.update(parameters);
@@ -389,12 +380,36 @@ export class SceneRenderer {
   }
 
   public updateBounds(bounds: Box3, scaleShadowAndAo: boolean) {
-    const size = bounds.getSize(new Vector3());
+    this.boundingVolume.updateFromBox(bounds);
+    const size = this.boundingVolume.size;
     const shadowAndAoScale = (size.x + size.y + size.z) / 3;
+    const minBoundsSize = Math.min(size.x, size.y, size.z);
+    const defaultScale =
+      minBoundsSize < 0.5 ? minBoundsSize / 0.5 : size.z > 5 ? size.z / 5 : 1;
     this.bakedGroundContactShadow.needsUpdate = true;
-    this.bakedGroundContactShadow.updateBounds(bounds, true);
-    this.screenSpaceShadow.updateBounds(bounds, shadowAndAoScale);
-    this.shadowAndAoPass.updateBounds(bounds, scaleShadowAndAo ? shadowAndAoScale : 1);
+    this.bakedGroundContactShadow.updateBounds(
+      this.boundingVolume,
+      scaleShadowAndAo ? shadowAndAoScale : defaultScale,
+      this.groundLevel
+    );
+    this.groundReflectionPass.parameters.groundLevel = this.groundLevel;
+    this.screenSpaceShadow.updateBounds(this.boundingVolume, shadowAndAoScale);
+    this.shadowAndAoPass.updateBounds(
+      this.boundingVolume,
+      scaleShadowAndAo ? shadowAndAoScale : 1
+    );
+  }
+
+  public updateNearAndFarPlaneOfPerspectiveCamera(camera: PerspectiveCamera) {
+    // bring the near and far plane as close as possible to geometry
+    // this is very likely the most important part for a glitch free and nice SSAO
+    const nearFar = this.boundingVolume.getNearAndFarForPerspectiveCamera(
+      camera.position,
+      3
+    );
+    camera.near = Math.max(0.00001, nearFar[0] * 0.9);
+    camera.far = nearFar[1];
+    camera.updateProjectionMatrix();
   }
 
   public render(
@@ -406,10 +421,14 @@ export class SceneRenderer {
     //this.renderer.info.reset();
     this.screenSpaceShadow.parameters.alwaysUpdate =
       this.shadowAndAoPass.parameters.aoAlwaysUpdate;
-    this.outlineRenderer.updateOutline(scene, camera, this.selectedObjects);
+    this.outlineRenderer.updateOutline(
+      scene,
+      camera,
+      this.movingCamera ? [] : this.selectedObjects
+    );
     this.renderer.setRenderTarget(null);
     this.depthNormalRenderTarget.needsUpdate = true;
-    this.bakedGroundContactShadow.render(scene, this.groundMesh);
+    this.bakedGroundContactShadow.render(scene);
     if (this.debugOutput === 'color') {
       this.renderer.render(scene, camera);
       return;
@@ -422,20 +441,7 @@ export class SceneRenderer {
     } else {
       this.renderScene(this.renderer, scene, camera);
     }
-    if (
-      this.outlineRenderer.outlinePassActivated &&
-      this.outlineRenderer.outlinePass
-    ) {
-      this.outlineRenderer.outlinePass.renderToScreen = false;
-      this.outlineRenderer.outlinePass.render(
-        this.renderer,
-        // @ts-ignore
-        null,
-        null,
-        0,
-        false
-      );
-    }
+    this.renderOutline();
     this.renderDebug(camera);
   }
 
@@ -453,7 +459,9 @@ export class SceneRenderer {
         );
       });
     } else {
+      this.bakedGroundContactShadow.setGroundVisibility(true, camera);
       renderer.render(scene, camera);
+      this.bakedGroundContactShadow.setGroundVisibility(false, camera);
     }
     if (this.groundReflectionPass.parameters.enabled) {
       //const background = scene.background;
@@ -561,6 +569,31 @@ export class SceneRenderer {
       this.parameters.hardShadowOnCameraChange &&
       (!needsUpdate || intensityScale < 0.99);
     return { needsUpdate, hardShadow, intensityScale };
+  }
+
+  private renderOutline() {
+    if (
+      this.outlineRenderer.outlinePassActivated &&
+      this.outlineRenderer.outlinePass
+    ) {
+      const clearColor = this.renderer.getClearColor(new Color());
+      const clearAlpha = this.renderer.getClearAlpha();
+      if (this.debugOutput === 'outline') {
+        this.renderer.setClearColor(0x000000, 0xff);
+        this.renderer.clear(true, false, false);
+      }
+      this.outlineRenderer.outlinePass.renderToScreen = false;
+      this.outlineRenderer.outlinePass.render(
+        this.renderer,
+        null,
+        null,
+        0,
+        false
+      );
+      if (this.debugOutput === 'outline') {
+        this.renderer.setClearColor(clearColor, clearAlpha);
+      }
+    }
   }
 
   public renderDebug(camera: Camera): void {

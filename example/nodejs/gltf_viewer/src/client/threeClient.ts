@@ -1,5 +1,5 @@
 import { setupDragDrop } from './util/drag_target'
-import { RenderScene } from './scene/sceneManager';
+import { SceneManager } from './scene/sceneManager';
 import { QualityLevel} from './renderer/scene-renderer'
 import { SceneRendererGUI } from './renderer/scene-renderer-gui'
 import { MaterialGUI } from './scene/material-gui'
@@ -126,7 +126,7 @@ let generalProperties = {
     sceneName: 'default',
 }
 
-const renderScene = new RenderScene(renderer, labelRenderer);
+const renderScene = new SceneManager(renderer, labelRenderer);
 renderScene.sceneRenderer.setQualityLevel(isMobile ? QualityLevel.LOW : QualityLevel.HIGHEST);
 renderScene.createControls();
 renderScene.setEnvironment();
@@ -181,7 +181,7 @@ const onWindowResize = () => {
     const width = window.innerWidth
     const height = window.innerHeight
     renderScene.resize(width, height)
-    renderScene.resize(1024, 1024)
+    //renderScene.resize(1024, 1024)
 }
 window.addEventListener('resize', onWindowResize, false)
 const mousePosition = new Vector2()

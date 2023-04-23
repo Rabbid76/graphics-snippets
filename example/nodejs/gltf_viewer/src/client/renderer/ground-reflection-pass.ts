@@ -1,5 +1,5 @@
 import { CopyTransformMaterial } from './shader-utility';
-import { RenderOverrideVisibility, RenderPass } from './render-utility';
+import { BlurPass, RenderOverrideVisibility, RenderPass } from './render-utility';
 import {
   Camera,
   CustomBlending,
@@ -47,10 +47,10 @@ export class GroundReflectionPass {
   private _intensityRenderTarget?: WebGLRenderTarget;
   private _blurRenderTarget?: WebGLRenderTarget;
   private renderPass: RenderPass;
+  private blurPass: BlurPass;
   private renderOverrideVisibility: RenderOverrideVisibility;
   private groundShadowMaterial: GroundShadowMaterial;
   private reflectionIntensityMaterial: GroundReflectionIntensityMaterial;
-  private blurMaterial: ShaderMaterial;
   private _copyMaterial: CopyTransformMaterial;
 
   public get shadowRenderTarget(): WebGLRenderTarget {
@@ -96,8 +96,7 @@ export class GroundReflectionPass {
     this.updateCopyMaterial(null);
     this.groundShadowMaterial = new GroundShadowMaterial();
     this.reflectionIntensityMaterial = new GroundReflectionIntensityMaterial();
-    this.blurMaterial = new ShaderMaterial(BlurGroundReflectionShadowShader);
-    this.blurMaterial.depthTest = false;
+    this.blurPass = new BlurPass(BlurGroundReflectionShadowShader, parameters);
     this.renderPass = parameters?.renderPass ?? new RenderPass();
     this.renderOverrideVisibility =
       parameters?.renderOverrideVisibility ??
@@ -291,32 +290,9 @@ export class GroundReflectionPass {
     const blurVerMin =
       (this.parameters.blurVertical / this.height) *
       Math.abs(cameraUpVector.dot(new Vector3(0, 0, 1)));
-    const renderTargetBackup = renderer.getRenderTarget();
-    this.blurMaterial.uniforms.rangeMin.value.x = blurHorMin;
-    this.blurMaterial.uniforms.rangeMin.value.y = 0;
-    this.blurMaterial.uniforms.rangeMax.value.x =
-      blurHorMin * (1 + this.parameters.blurAscent);
-    this.blurMaterial.uniforms.rangeMax.value.y = 0;
-    this.blurMaterial.uniforms.tDiffuse.value = renderTargets[0].texture;
-    renderer.setRenderTarget(renderTargets[1]);
-    this.renderPass.renderScreenSpace(
-      renderer,
-      this.blurMaterial,
-      renderer.getRenderTarget()
-    );
-    this.blurMaterial.uniforms.rangeMin.value.x = 0;
-    this.blurMaterial.uniforms.rangeMin.value.y = blurVerMin;
-    this.blurMaterial.uniforms.rangeMax.value.x = 0;
-    this.blurMaterial.uniforms.rangeMax.value.y =
-      blurVerMin * (1 + this.parameters.blurAscent);
-    this.blurMaterial.uniforms.tDiffuse.value = renderTargets[1].texture;
-    renderer.setRenderTarget(renderTargets[2]);
-    this.renderPass.renderScreenSpace(
-      renderer,
-      this.blurMaterial,
-      renderer.getRenderTarget()
-    );
-    renderer.setRenderTarget(renderTargetBackup);
+    this.blurPass.render(renderer,renderTargets,
+        [blurHorMin, blurVerMin], 
+        [blurHorMin * (1 + this.parameters.blurAscent), blurVerMin * (1 + this.parameters.blurAscent)]);
   }
 
   private createGroundReflectionCamera(camera: Camera): Camera {

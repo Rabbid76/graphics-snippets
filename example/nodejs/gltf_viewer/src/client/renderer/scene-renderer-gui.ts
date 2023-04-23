@@ -106,19 +106,20 @@ export class SceneRendererGUI {
       });
     gui
       .add<any>(this.sceneRenderer, 'debugOutput', {
-        off: 'off',
-        grayscale: 'grayscale',
-        color: 'color',
-        depth: 'depth',
+        'off ': 'off',
+        'grayscale (no textures)': 'grayscale',
+        'color buffer': 'color',
+        'depth buffer': 'depth',
         'normal vector': 'normal',
-        SSAO: 'ssao',
+        'SSAO Monte Carlo': 'ssao',
         'blur SSAO': 'ssaoblur',
         'shadow map': 'shadowmap',
-        shadow: 'shadow',
+        'shadow Monte Carlo': 'shadow',
         'blur shadow': 'shadowblur',
         'ground shadow': 'groundshadow',
         'ground reflection': 'groundreflection',
         'baked ground shadow': 'bakedgroundshadow',
+        'selection outline': 'outline',
       })
       .onChange(() => updateCallback());
   }
@@ -126,7 +127,7 @@ export class SceneRendererGUI {
   public addShadowTypeGUI(gui: GUI, updateCallback: () => void): void {
     const shadowConfiguration =
       this.sceneRenderer.screenSpaceShadow.shadowConfiguration;
-    const shadowMapNames: string[] = [];
+    const shadowMapNames: any[] = [];
     shadowConfiguration.types.forEach((_, key) => {
       shadowMapNames.push(key);
     });
@@ -169,11 +170,20 @@ export class SceneRendererGUI {
   }
 
   private addShadowAndAoGUI(gui: GUI, updateCallback: () => void): void {
-    const updateParameters = (): void => {
+    const updateBufferParameters = (): void => {
       this.sceneRenderer.shadowAndAoPass.needsUpdate = true;
       updateCallback();
     };
+    const updateParameters = (): void => {
+      this.sceneRenderer.depthNormalRenderTarget.needsUpdate = true;
+      updateCallback();
+    };
+    const bufferParameters =
+      this.sceneRenderer.depthNormalRenderTarget.parameters;
     const parameters = this.sceneRenderer.shadowAndAoPass.parameters;
+    gui
+      .add<any>(bufferParameters, 'normalBufferFxaa')
+      .onChange(() => updateBufferParameters());
     gui
       .add<any>(parameters, 'aoAndSoftShadowEnabled')
       .onChange(() => updateParameters());
@@ -205,7 +215,7 @@ export class SceneRendererGUI {
       .add<any>(parameters, 'shadowIntensity', 0, 1)
       .onChange(() => updateParameters());
     gui
-      .add<any>(parameters, 'shadowRadius', 0.001, 20.0)
+      .add<any>(parameters, 'shadowRadius', 0.001, 0.5)
       .onChange(() => updateParameters());
   }
 
@@ -245,6 +255,7 @@ export class SceneRendererGUI {
     gui.add<any>(parameters, 'enabled');
     gui.add<any>(parameters, 'cameraHelper').onChange(() => updateParameters());
     gui.add<any>(parameters, 'alwaysUpdate');
+    gui.add<any>(parameters, 'fadeIn');
     gui
       .add<any>(parameters, 'blurMin', 0, 0.2, 0.001)
       .onChange(() => updateParameters());

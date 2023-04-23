@@ -8,10 +8,10 @@ import {
   generateUniformKernelRotations,
   RenderOverrideVisibility,
   RenderPass,
+  SceneVolume,
   spiralQuadraticSampleKernel,
 } from './render-utility';
 import {
-  Box3,
   Camera,
   CustomBlending,
   DataTexture,
@@ -149,7 +149,7 @@ export class ShadowAndAoPass {
     }
   }
 
-  public updateBounds(sceneBounds: Box3, shadowAndAoScale: number) {
+  public updateBounds(sceneBounds: SceneVolume, shadowAndAoScale: number) {
     this.shadowAndAoRenderTargets.updateBounds(sceneBounds, shadowAndAoScale);
   }
 
@@ -237,7 +237,6 @@ export class ShadowAndAoRenderTargets {
   private width: number;
   private height: number;
   private samples: number;
-  private sceneBounds: Box3 = new Box3();
   private shadowAndAoScale: number = 1;
   private aoTargetSamples: number = 0;
   private depthAndNormalTextures: DepthAndNormalTextures;
@@ -328,14 +327,15 @@ export class ShadowAndAoRenderTargets {
   }
 
   private get noiseTexture(): DataTexture {
-    this._noiseTexture =
-      this._noiseTexture ?? generateUniformKernelRotations();
+    this._noiseTexture = this._noiseTexture ?? generateUniformKernelRotations();
     return this._noiseTexture;
   }
 
   private get sampleKernel(): Vector3[] {
     if (!this._sampleKernel.length) {
-      this._sampleKernel = spiralQuadraticSampleKernel(ShadowAndAoRenderMaterial.kernelSize);
+      this._sampleKernel = spiralQuadraticSampleKernel(
+        ShadowAndAoRenderMaterial.kernelSize
+      );
     }
     return this._sampleKernel;
   }
@@ -395,8 +395,7 @@ export class ShadowAndAoRenderTargets {
     this._fxaaRenderTarget?.setSize(this.width, this.height);
   }
 
-  public updateBounds(sceneBounds: Box3, shadowAndAoScale: number) {
-    this.sceneBounds.copy(sceneBounds);
+  public updateBounds(sceneBounds: SceneVolume, shadowAndAoScale: number) {
     this.shadowAndAoScale = shadowAndAoScale;
   }
 
@@ -424,18 +423,24 @@ export class ShadowAndAoRenderTargets {
     return this.passRenderMaterial.update({
       camera,
       ...this.shadowAndAoParameters,
-      aoKernelRadius: this.shadowAndAoParameters.aoKernelRadius * this.shadowAndAoScale,
-      aoMaxDistance: this.shadowAndAoParameters.aoMaxDistance * this.shadowAndAoScale,
-      shadowRadius: this.shadowAndAoParameters.shadowRadius * this.shadowAndAoScale,
+      aoKernelRadius:
+        this.shadowAndAoParameters.aoKernelRadius * this.shadowAndAoScale,
+      aoMaxDistance:
+        this.shadowAndAoParameters.aoMaxDistance * this.shadowAndAoScale,
+      shadowRadius:
+        this.shadowAndAoParameters.shadowRadius * this.shadowAndAoScale,
     });
   }
 
   public updateBlurMaterial(camera: Camera): ShaderMaterial {
     return this.blurRenderMaterial.update({
       camera,
-      aoKernelRadius: this.shadowAndAoParameters.aoKernelRadius * this.shadowAndAoScale,
-      aoMaxDistance: this.shadowAndAoParameters.aoMaxDistance * this.shadowAndAoScale,
-      shadowRadius: this.shadowAndAoParameters.shadowRadius * this.shadowAndAoScale,
+      aoKernelRadius:
+        this.shadowAndAoParameters.aoKernelRadius * this.shadowAndAoScale,
+      aoMaxDistance:
+        this.shadowAndAoParameters.aoMaxDistance * this.shadowAndAoScale,
+      shadowRadius:
+        this.shadowAndAoParameters.shadowRadius * this.shadowAndAoScale,
     });
   }
 
@@ -586,10 +591,15 @@ export class ShadowAndAoRenderMaterial extends ShaderMaterial {
 
   constructor(parameters?: any) {
     super({
-      defines: Object.assign({}, { 
-        ...ShadowAndAoRenderMaterial.shader.defines,
-        KERNEL_SIZE: parameters?.sampleKernel?.length ?? ShadowAndAoRenderMaterial.kernelSize
-      }),
+      defines: Object.assign(
+        {},
+        {
+          ...ShadowAndAoRenderMaterial.shader.defines,
+          KERNEL_SIZE:
+            parameters?.sampleKernel?.length ??
+            ShadowAndAoRenderMaterial.kernelSize,
+        }
+      ),
       uniforms: UniformsUtils.clone(ShadowAndAoRenderMaterial.shader.uniforms),
       vertexShader: ShadowAndAoRenderMaterial.shader.vertexShader,
       fragmentShader: ShadowAndAoRenderMaterial.shader.fragmentShader,
