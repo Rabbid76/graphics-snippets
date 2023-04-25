@@ -49,9 +49,10 @@ export class EnvironmentLoader {
         }
     }
 
-    public loadDefaultEnvironment(changeEnvironment: boolean) {
+    public loadDefaultEnvironment(changeEnvironment: boolean, createScene?: () => Scene) {
         const defaultEnvironmentName = 'room environment';
-        const environmentTexture = this.getPmremGenerator().fromScene(new RoomEnvironment(), 0.04).texture;
+        const roomScene = (createScene && createScene()) ?? new RoomEnvironment();
+        const environmentTexture = this.getPmremGenerator().fromScene(roomScene, 0.04).texture;
         this.environemtMap.set(defaultEnvironmentName, new Environment(environmentTexture, environmentTexture));
         if (changeEnvironment) {
             this.environmentName = defaultEnvironmentName;

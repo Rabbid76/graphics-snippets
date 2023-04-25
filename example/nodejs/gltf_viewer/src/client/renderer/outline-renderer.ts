@@ -1,5 +1,6 @@
-import { OutlinePass } from 'three/examples/jsm/postprocessing/OutlinePass.js';
-//import { OutlinePass } from '../experimental/outline_pass';
+import { DepthNormalRenderTarget } from './depth-normal-render-targets';
+//import { OutlinePass } from 'three/examples/jsm/postprocessing/OutlinePass.js';
+import { OutlinePass } from './outline-pass';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
 import { Camera, Object3D, PerspectiveCamera, Scene, Vector2 } from 'three';
 
@@ -16,11 +17,12 @@ export interface OutlineParameters {
 }
 
 export class OutLineRenderer {
+  public parameters: OutlineParameters;
   private width: number = 0;
   private height: number = 0;
   private effectComposer: EffectComposer | null = null;
+  private depthNormalRenderTarget?: DepthNormalRenderTarget;
   public outlinePass: OutlinePass | null = null;
-  public parameters: OutlineParameters;
   public outlinePassActivated = false;
 
   get isOutlinePassActivated(): boolean {
@@ -34,6 +36,7 @@ export class OutLineRenderer {
     parameters: any
   ) {
     this.effectComposer = effectComposer;
+    this.depthNormalRenderTarget = parameters?.depthNormalRenderTarget;
     this.width = width;
     this.height = height;
     this.parameters = {
@@ -90,6 +93,10 @@ export class OutLineRenderer {
       (camera as PerspectiveCamera).isPerspectiveCamera !==
         (this.outlinePass.renderCamera as PerspectiveCamera)
           .isPerspectiveCamera;
+    if (this.outlinePass) {
+      this.outlinePass.renderScene = scene;
+      this.outlinePass.renderCamera = camera;
+    }
     if (!needsUpdate && this.outlinePassActivated) {
       return;
     }
@@ -98,11 +105,13 @@ export class OutLineRenderer {
         new Vector2(this.width, this.height),
         scene,
         camera,
-        []
+        [],
+        {
+          downSampleRatio: 2,
+          edgeDetectionFxaa: true,
+          depthNormalRenderTarget: this.depthNormalRenderTarget,
+        }
       );
-    } else {
-      this.outlinePass.renderScene = scene;
-      this.outlinePass.renderCamera = camera;
     }
     this.applyParameters();
     if (this.effectComposer) {

@@ -5,21 +5,22 @@ import {
 import { CopyTransformMaterial } from './shader-utility';
 import {
   CameraUpdate,
+  generateUniformKernelRotations,
   RenderOverrideVisibility,
   RenderPass,
+  SceneVolume,
+  spiralQuadraticSampleKernel,
 } from './render-utility';
 import {
   Camera,
   CustomBlending,
   DataTexture,
-  MathUtils,
   Matrix4,
   NearestFilter,
   NoBlending,
   OrthographicCamera,
   PerspectiveCamera,
   RGFormat,
-  RepeatWrapping,
   Scene,
   ShaderMaterial,
   Texture,
@@ -28,11 +29,14 @@ import {
   Vector3,
   WebGLRenderer,
   WebGLRenderTarget,
+  LinearFilter,
 } from 'three';
+import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader';
 
 export interface ShadowAndAoParameters {
   [key: string]: any;
   aoAndSoftShadowEnabled: boolean;
+  aoAndSoftShadowFxaa: boolean;
   aoAlwaysUpdate: boolean;
   aoKernelRadius: number;
   aoDepthBias: number;
@@ -94,6 +98,12 @@ export class ShadowAndAoPass {
     return this._depthNormalRenderTarget;
   }
 
+  public get finalRenderTarget(): WebGLRenderTarget {
+    return this.parameters.aoAndSoftShadowFxaa
+      ? this.shadowAndAoRenderTargets.fxaaRenderTarget
+      : this.shadowAndAoRenderTargets.blurRenderTarget;
+  }
+
   constructor(
     width: number,
     height: number,
@@ -139,13 +149,12 @@ export class ShadowAndAoPass {
     }
   }
 
-  public updateShadowTexture(shadowTexture: Texture) {
-    this.shadowAndAoRenderTargets.updateShadowTexture(shadowTexture);
+  public updateBounds(sceneBounds: SceneVolume, shadowAndAoScale: number) {
+    this.shadowAndAoRenderTargets.updateBounds(sceneBounds, shadowAndAoScale);
   }
 
-  public updateKernel() {
-    this.shadowAndAoRenderTargets.updateKernel();
-    this.needsUpdate = true;
+  public updateShadowTexture(shadowTexture: Texture) {
+    this.shadowAndAoRenderTargets.updateShadowTexture(shadowTexture);
   }
 
   public render(
@@ -177,7 +186,7 @@ export class ShadowAndAoPass {
     const aoIntensity = this.parameters.aoIntensity * intensityScale;
     const shIntensity = this.parameters.shadowIntensity * intensityScale;
     this._copyMaterial.update({
-      texture: this.shadowAndAoRenderTargets.blurRenderTarget.texture,
+      texture: this.finalRenderTarget.texture,
       blending: CustomBlending,
       colorTransform: new Matrix4().set(
         aoIntensity,
@@ -224,21 +233,21 @@ export class ShadowAndAoPass {
 }
 
 export class ShadowAndAoRenderTargets {
-  public static uniformKernelDistribution: boolean = true;
-  public static uniformNoiseDistribution: boolean = true;
   public shadowAndAoParameters: ShadowAndAoParameters;
   private width: number;
   private height: number;
   private samples: number;
+  private shadowAndAoScale: number = 1;
   private aoTargetSamples: number = 0;
   private depthAndNormalTextures: DepthAndNormalTextures;
   private _noiseTexture?: DataTexture;
-  private _aoKernel: Vector3[] = [];
-  private _shKernel: Vector3[] = [];
+  private _sampleKernel: Vector3[] = [];
   private _passRenderMaterial?: ShadowAndAoRenderMaterial;
   private _blurRenderMaterial?: ShadowAndAoBlurMaterial;
+  private _fxaaRenderMaterial?: ShaderMaterial;
   private _passRenderTarget?: WebGLRenderTarget;
   private _blurRenderTarget?: WebGLRenderTarget;
+  private _fxaaRenderTarget?: WebGLRenderTarget;
   private renderPass: RenderPass;
 
   public get passRenderTarget(): WebGLRenderTarget {
@@ -247,6 +256,8 @@ export class ShadowAndAoRenderTargets {
       new WebGLRenderTarget(this.width, this.height, {
         samples: this.aoTargetSamples,
         format: RGFormat,
+        magFilter: LinearFilter,
+        minFilter: LinearFilter,
       });
     return this._passRenderTarget;
   }
@@ -257,8 +268,22 @@ export class ShadowAndAoRenderTargets {
       new WebGLRenderTarget(this.width, this.height, {
         samples: this.aoTargetSamples,
         format: RGFormat,
+        magFilter: LinearFilter,
+        minFilter: LinearFilter,
       });
     return this._blurRenderTarget;
+  }
+
+  public get fxaaRenderTarget(): WebGLRenderTarget {
+    this._fxaaRenderTarget =
+      this._fxaaRenderTarget ??
+      new WebGLRenderTarget(this.width, this.height, {
+        samples: this.aoTargetSamples,
+        format: RGFormat,
+        magFilter: LinearFilter,
+        minFilter: LinearFilter,
+      });
+    return this._fxaaRenderTarget;
   }
 
   public get passRenderMaterial(): ShadowAndAoRenderMaterial {
@@ -268,8 +293,7 @@ export class ShadowAndAoRenderTargets {
         normalTexture: this.depthAndNormalTextures.getNormalTexture(),
         depthTexture: this.depthAndNormalTextures.getDepthTexture(),
         noiseTexture: this.noiseTexture,
-        aoKernel: this.aoKernel,
-        shKernel: this.shKernel,
+        sampleKernel: this.sampleKernel,
       });
     return this._passRenderMaterial.update({
       width: this.width,
@@ -290,24 +314,30 @@ export class ShadowAndAoRenderTargets {
     });
   }
 
+  public get fxaaRenderMaterial(): ShaderMaterial {
+    this._fxaaRenderMaterial =
+      this._fxaaRenderMaterial ?? new ShaderMaterial(FXAAShader);
+    this._fxaaRenderMaterial.uniforms.tDiffuse.value =
+      this.blurRenderTarget.texture;
+    this._fxaaRenderMaterial.uniforms.resolution.value.set(
+      1 / this.width,
+      1 / this.height
+    );
+    return this._fxaaRenderMaterial;
+  }
+
   private get noiseTexture(): DataTexture {
-    this._noiseTexture =
-      this._noiseTexture ?? this.generateRandomKernelRotations();
+    this._noiseTexture = this._noiseTexture ?? generateUniformKernelRotations();
     return this._noiseTexture;
   }
 
-  private get aoKernel(): Vector3[] {
-    if (!this._aoKernel.length) {
-      this._aoKernel = this.generateAoSampleKernel();
+  private get sampleKernel(): Vector3[] {
+    if (!this._sampleKernel.length) {
+      this._sampleKernel = spiralQuadraticSampleKernel(
+        ShadowAndAoRenderMaterial.kernelSize
+      );
     }
-    return this._aoKernel;
-  }
-
-  private get shKernel(): Vector3[] {
-    if (!this._shKernel.length) {
-      this._shKernel = this.generateShSampleKernel();
-    }
-    return this._shKernel;
+    return this._sampleKernel;
   }
 
   constructor(
@@ -325,15 +355,17 @@ export class ShadowAndAoRenderTargets {
   private getShadowAndAoParameters(parameters?: any): ShadowAndAoParameters {
     return {
       aoAndSoftShadowEnabled: parameters?.enabled ?? true,
-      aoAlwaysUpdate: parameters?.aoAlwaysUpdate ?? false,
-      aoKernelRadius: parameters?.aoKernelRadius ?? 0.03,
-      aoDepthBias: parameters?.aoDepthBias ?? 0.0005,
-      aoMaxDistance: parameters?.aoMaxDistance ?? 0.1,
-      aoMaxDepth: parameters?.aoMaxDepth ?? 0.99,
-      aoIntensity: parameters?.aoIntensity ?? 0.5,
-      aoFadeout: parameters?.aoFadeout ?? 1,
-      shadowRadius: parameters?.shadowRadius ?? 0.1,
-      shadowIntensity: parameters?.shadowIntensity ?? 0.3,
+      aoAndSoftShadowFxaa: true,
+      aoAlwaysUpdate: false,
+      aoKernelRadius: 0.03,
+      aoDepthBias: 0.0005,
+      aoMaxDistance: 0.1,
+      aoMaxDepth: 0.99,
+      aoIntensity: 0.5,
+      aoFadeout: 1,
+      shadowRadius: 0.1,
+      shadowIntensity: 0.3,
+      ...parameters,
     };
   }
 
@@ -341,8 +373,10 @@ export class ShadowAndAoRenderTargets {
     this._noiseTexture?.dispose();
     this._passRenderMaterial?.dispose();
     this._blurRenderMaterial?.dispose();
+    this._fxaaRenderMaterial?.dispose();
     this._passRenderTarget?.dispose();
     this._blurRenderTarget?.dispose();
+    this._fxaaRenderTarget?.dispose();
   }
 
   public setSize(width: number, height: number) {
@@ -358,6 +392,11 @@ export class ShadowAndAoRenderTargets {
     });
     this._passRenderTarget?.setSize(this.width, this.height);
     this._blurRenderTarget?.setSize(this.width, this.height);
+    this._fxaaRenderTarget?.setSize(this.width, this.height);
+  }
+
+  public updateBounds(sceneBounds: SceneVolume, shadowAndAoScale: number) {
+    this.shadowAndAoScale = shadowAndAoScale;
   }
 
   public render(renderer: WebGLRenderer, scene: Scene, camera: Camera): void {
@@ -371,20 +410,37 @@ export class ShadowAndAoRenderTargets {
       this.updateBlurMaterial(camera),
       this.blurRenderTarget
     );
+    if (this.shadowAndAoParameters.aoAndSoftShadowFxaa) {
+      this.renderPass.renderScreenSpace(
+        renderer,
+        this.fxaaRenderMaterial,
+        this.fxaaRenderTarget
+      );
+    }
   }
 
   public updateSSAOMaterial(camera: Camera): ShaderMaterial {
     return this.passRenderMaterial.update({
       camera,
       ...this.shadowAndAoParameters,
+      aoKernelRadius:
+        this.shadowAndAoParameters.aoKernelRadius * this.shadowAndAoScale,
+      aoMaxDistance:
+        this.shadowAndAoParameters.aoMaxDistance * this.shadowAndAoScale,
+      shadowRadius:
+        this.shadowAndAoParameters.shadowRadius * this.shadowAndAoScale,
     });
   }
 
   public updateBlurMaterial(camera: Camera): ShaderMaterial {
     return this.blurRenderMaterial.update({
       camera,
-      aoKernelRadius: this.shadowAndAoParameters.aoKernelRadius,
-      shadowRadius: this.shadowAndAoParameters.shadowRadius,
+      aoKernelRadius:
+        this.shadowAndAoParameters.aoKernelRadius * this.shadowAndAoScale,
+      aoMaxDistance:
+        this.shadowAndAoParameters.aoMaxDistance * this.shadowAndAoScale,
+      shadowRadius:
+        this.shadowAndAoParameters.shadowRadius * this.shadowAndAoScale,
     });
   }
 
@@ -392,112 +448,6 @@ export class ShadowAndAoRenderTargets {
     if (this._passRenderMaterial) {
       this._passRenderMaterial.uniforms.tShadow.value = shadowTexture;
     }
-  }
-
-  public updateKernel() {
-    if (this._noiseTexture) {
-      this._noiseTexture = this.generateRandomKernelRotations();
-    }
-    if (this._aoKernel) {
-      this._aoKernel = this.generateAoSampleKernel();
-    }
-    if (this._shKernel) {
-      this._shKernel = this.generateShSampleKernel();
-    }
-    if (this._passRenderMaterial) {
-      this._passRenderMaterial.uniforms.tNoise.value = this._noiseTexture;
-      this._passRenderMaterial.uniforms.aoKernel.value = this._aoKernel;
-      this._passRenderMaterial.uniforms.shKernel.value = this._shKernel;
-    }
-  }
-
-  private generateAoSampleKernel(): Vector3[] {
-    const kernelSize = ShadowAndAoRenderMaterial.kernelSize;
-    return ShadowAndAoRenderTargets.uniformKernelDistribution
-      ? this.uniformQuadraticSampleKernel(kernelSize)
-      : this.randomQuadraticSampleKernel(kernelSize);
-  }
-
-  private generateShSampleKernel(): Vector3[] {
-    const kernelSize = ShadowAndAoRenderMaterial.kernelSize;
-    return ShadowAndAoRenderTargets.uniformKernelDistribution
-      ? this.uniformQuadraticSampleKernel(kernelSize)
-      : this.randomQuadraticSampleKernel(kernelSize);
-  }
-
-  private randomQuadraticSampleKernel(kernelSize: number): Vector3[] {
-    const kernel: Vector3[] = [];
-    for (let i = 0; i < kernelSize; i++) {
-      const sample = new Vector3();
-      sample.x = Math.random() * 2 - 1;
-      sample.y = Math.random() * 2 - 1;
-      sample.z = Math.random();
-      sample.normalize();
-      let scale = i / kernelSize;
-      scale = MathUtils.lerp(0.1, 1, scale * scale);
-      sample.multiplyScalar(scale);
-      kernel.push(sample);
-    }
-    return kernel;
-  }
-
-  private uniformQuadraticSampleKernel(kernelSize: number): Vector3[] {
-    const kernel: Vector3[] = [];
-    const altitudeCount = Math.floor(kernelSize / 8);
-    const altitudeStep = Math.PI / 2 / altitudeCount;
-    for (let kernelIndex = 0; kernelIndex < kernelSize; kernelIndex++) {
-      const altitudeIndex = kernelIndex % altitudeCount;
-      const azimuthIndex = Math.floor(kernelIndex / altitudeCount);
-      const azimuth =
-        (Math.PI * 2 * azimuthIndex) / 8 +
-        altitudeIndex * (Math.PI + (Math.PI * 2) / 11);
-      //const altitude = altitudeStep * altitudeIndex;
-      const altitude =
-        altitudeStep * altitudeIndex +
-        altitudeStep * (0.75 - 0.5 / azimuthIndex);
-      //const altitude = Math.pow(azimuthIndex * 8 + altitudeIndex + 1, 2) * Math.PI / 2;
-      const sample = new Vector3();
-      sample.x = Math.cos(azimuth) * Math.cos(altitude);
-      sample.y = Math.sin(azimuth) * Math.cos(altitude);
-      sample.z = Math.sin(altitude);
-      sample.normalize();
-      let scale = kernelIndex / kernelSize;
-      scale = MathUtils.lerp(0.1, 1, scale * scale);
-      sample.multiplyScalar(scale);
-      kernel.push(sample);
-    }
-    return kernel;
-  }
-
-  private generateRandomKernelRotations(): DataTexture {
-    const width = 4;
-    const height = 4;
-    const noiseSize = width * height;
-    const data = new Uint8Array(noiseSize * 4);
-    for (let inx = 0; inx < noiseSize; ++inx) {
-      const inx1 = inx % 2;
-      const inx2 = inx / Math.floor(noiseSize / 2);
-      const iAng = inx1 * Math.floor(noiseSize / 2) + inx2;
-      const angle = (2 * Math.PI * iAng) / noiseSize;
-      const randomVec = new Vector3(
-        ShadowAndAoRenderTargets.uniformNoiseDistribution
-          ? Math.cos(angle)
-          : Math.random() * 2 - 1,
-        ShadowAndAoRenderTargets.uniformNoiseDistribution
-          ? Math.sin(angle)
-          : Math.random() * 2 - 1,
-        0
-      ).normalize();
-      data[inx * 4] = (randomVec.x * 0.5 + 0.5) * 255;
-      data[inx * 4 + 1] = (randomVec.y * 0.5 + 0.5) * 255;
-      data[inx * 4 + 2] = 127;
-      data[inx * 4 + 3] = 0;
-    }
-    const noiseTexture = new DataTexture(data, width, height);
-    noiseTexture.wrapS = RepeatWrapping;
-    noiseTexture.wrapT = RepeatWrapping;
-    noiseTexture.needsUpdate = true;
-    return noiseTexture;
   }
 }
 
@@ -511,20 +461,20 @@ const glslShadowAndAoFragmentShader = `uniform sampler2D tShadow;
   uniform sampler2D tNormal;
   uniform sampler2D tDepth;
   uniform sampler2D tNoise;
+  uniform vec3 sampleKernel[KERNEL_SIZE];
   uniform vec2 resolution;
   uniform float cameraNear;
   uniform float cameraFar;
   uniform mat4 cameraProjectionMatrix;
   uniform mat4 cameraInverseProjectionMatrix;
-  uniform vec3 aoKernel[KERNEL_SIZE];
   uniform float aoKernelRadius;
   uniform float aoDepthBias; // avoid artifacts caused by neighbour fragments with minimal depth difference
   uniform float aoMaxDistance; // avoid the influence of fragments which are too far away
   uniform float aoMaxDepth;
   uniform float aoIntensity;
   uniform float aoFadeout;
-  uniform vec3 shKernel[KERNEL_SIZE];
   uniform float shKernelRadius;
+  uniform float shIntensity;
   
   varying vec2 vUv;
   
@@ -573,8 +523,8 @@ const glslShadowAndAoFragmentShader = `uniform sampler2D tShadow;
       float shOcclusion = texture2D(tShadow, vUv).r;
       float shSamples = 0.0;
       for (int i = 0; i < KERNEL_SIZE; i ++) {
-          if (aoIntensity > 0.01) {
-              vec3 aoSampleVector = kernelMatrix * aoKernel[i]; 
+          if (aoIntensity >= 0.01 && length(viewNormal) > 0.01) {
+              vec3 aoSampleVector = kernelMatrix * sampleKernel[i]; 
               vec3 aoSamplePoint = viewPosition + aoSampleVector * aoKernelRadius; 
               vec4 aoSamplePointNDC = cameraProjectionMatrix * vec4(aoSamplePoint, 1.0); 
               aoSamplePointNDC /= aoSamplePointNDC.w;
@@ -589,17 +539,18 @@ const glslShadowAndAoFragmentShader = `uniform sampler2D tShadow;
                   step(aoDepthBias, aoSampleDeltaZ / (cameraFar - cameraNear)) * 
                   step(aoSampleDeltaZ, aoMaxDistance) * mix(1.0, w_long * w_lat, aoFadeout);
           }
-          
-          vec3 shSampleVector = kernelMatrix * shKernel[i]; // reorient sample vector in view space
-          vec3 shSamplePoint = viewPosition + shSampleVector * shKernelRadius; // calculate sample point
-          vec4 shSamplePointNDC = cameraProjectionMatrix * vec4(shSamplePoint, 1.0); // project point and calculate NDC
-          shSamplePointNDC /= shSamplePointNDC.w;
-          vec2 shSamplePointUv = shSamplePointNDC.xy * 0.5 + 0.5; // compute uv coordinates
-          vec3 shSampleNormal = getViewNormal(shSamplePointUv);
-          float shDeltaZ = getViewZ(getDepth(shSamplePointUv)) - shSamplePoint.z;
-          float w = step(abs(shDeltaZ), shKernelRadius) * max(0.0, dot(shSampleNormal, viewNormal));
-          shSamples += w;
-          shOcclusion += texture2D(tShadow, shSamplePointUv).r * w;
+          if (shIntensity >= 0.01 && length(viewNormal) > 0.01) {
+              vec3 shSampleVector = kernelMatrix * sampleKernel[i]; // reorient sample vector in view space
+              vec3 shSamplePoint = viewPosition + shSampleVector * shKernelRadius; // calculate sample point
+              vec4 shSamplePointNDC = cameraProjectionMatrix * vec4(shSamplePoint, 1.0); // project point and calculate NDC
+              shSamplePointNDC /= shSamplePointNDC.w;
+              vec2 shSamplePointUv = shSamplePointNDC.xy * 0.5 + 0.5; // compute uv coordinates
+              vec3 shSampleNormal = getViewNormal(shSamplePointUv);
+              float shDeltaZ = getViewZ(getDepth(shSamplePointUv)) - shSamplePoint.z;
+              float w = step(abs(shDeltaZ), shKernelRadius) * max(0.0, dot(shSampleNormal, viewNormal));
+              shSamples += w;
+              shOcclusion += texture2D(tShadow, shSamplePointUv).r * w;
+          }
       }
   
       aoOcclusion = clamp(aoOcclusion / float(KERNEL_SIZE) * (1.0 + aoFadeout), 0.0, 1.0);
@@ -608,27 +559,27 @@ const glslShadowAndAoFragmentShader = `uniform sampler2D tShadow;
   }`;
 
 export class ShadowAndAoRenderMaterial extends ShaderMaterial {
-  public static kernelSize: number = 64;
+  public static kernelSize: number = 32;
   private static shader: any = {
     uniforms: {
       tShadow: { value: null as Texture | null },
       tNormal: { value: null as Texture | null },
       tDepth: { value: null as Texture | null },
       tNoise: { value: null as Texture | null },
+      sampleKernel: { value: null },
       cameraNear: { value: 0.1 },
       cameraFar: { value: 1 },
       resolution: { value: new Vector2() },
       cameraProjectionMatrix: { value: new Matrix4() },
       cameraInverseProjectionMatrix: { value: new Matrix4() },
-      aoKernel: { value: null },
       aoKernelRadius: { value: 0.1 },
       aoDepthBias: { value: 0.002 },
       aoMaxDistance: { value: 0.05 },
       aoMaxDepth: { value: 0.99 },
       aoIntensity: { value: 1.0 },
       aoFadeout: { value: 0.0 },
-      shKernel: { value: null },
       shKernelRadius: { value: 0.15 },
+      shIntensity: { value: 1.0 },
     },
     defines: {
       PERSPECTIVE_CAMERA: 1,
@@ -640,7 +591,15 @@ export class ShadowAndAoRenderMaterial extends ShaderMaterial {
 
   constructor(parameters?: any) {
     super({
-      defines: Object.assign({}, ShadowAndAoRenderMaterial.shader.defines),
+      defines: Object.assign(
+        {},
+        {
+          ...ShadowAndAoRenderMaterial.shader.defines,
+          KERNEL_SIZE:
+            parameters?.sampleKernel?.length ??
+            ShadowAndAoRenderMaterial.kernelSize,
+        }
+      ),
       uniforms: UniformsUtils.clone(ShadowAndAoRenderMaterial.shader.uniforms),
       vertexShader: ShadowAndAoRenderMaterial.shader.vertexShader,
       fragmentShader: ShadowAndAoRenderMaterial.shader.fragmentShader,
@@ -678,11 +637,8 @@ export class ShadowAndAoRenderMaterial extends ShaderMaterial {
         camera.projectionMatrixInverse
       );
     }
-    if (parameters?.aoKernel !== undefined) {
-      this.uniforms.aoKernel.value = parameters?.aoKernel;
-    }
-    if (parameters?.shKernel !== undefined) {
-      this.uniforms.shKernel.value = parameters?.shKernel;
+    if (parameters?.sampleKernel !== undefined) {
+      this.uniforms.sampleKernel.value = parameters?.sampleKernel;
     }
     this.updateSettings(parameters);
     return this;
@@ -709,6 +665,9 @@ export class ShadowAndAoRenderMaterial extends ShaderMaterial {
     }
     if (parameters?.shadowRadius !== undefined) {
       this.uniforms.shKernelRadius.value = parameters?.shadowRadius;
+    }
+    if (parameters?.shadowIntensity !== undefined) {
+      this.uniforms.shIntensity.value = parameters?.shadowIntensity;
     }
   }
 }
@@ -765,9 +724,9 @@ const glslShadowAndAoBlurFragmentShader = `uniform sampler2D tDiffuse;
           for (int j = - 2; j <= 2; j++) {
               vec2 offset = vec2(float(i), float(j)) * texelSize;
               float sampleDepth = getLinearDepth(vUv + offset);
-              float depthDelta = sampleDepth - referenceDepth;
+              float depthDelta =  sampleDepth - referenceDepth;
               float deltaDistance = depthDelta * (cameraFar - cameraNear);
-              vec2 w = step(abs(deltaDistance), vec2(aoKernelRadius, shKernelRadius));
+              vec2 w = step(vec2(abs(deltaDistance), abs(deltaDistance)), vec2(aoKernelRadius, shKernelRadius));
               samples += w;
               result += texture2D(tDiffuse, vUv + offset).rg * w;
           }

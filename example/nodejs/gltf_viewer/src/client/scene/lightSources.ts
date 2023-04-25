@@ -82,6 +82,8 @@ export class LightSources {
     private _lightSources: Light[] = [];
     private _useRectAreaLight: boolean = true;
     public sceneRenderer: SceneRenderer | undefined;
+    private lightSourceScale?: number;
+    public currentLightSourceDefinition: any[] = LightSources.defaultLightSources;
 
     get useRectAreaLight() { 
         return this._useRectAreaLight;
@@ -90,13 +92,13 @@ export class LightSources {
     constructor(scene: Scene, sceneRenderer: SceneRenderer, width: number, height: number, samples: number, parameters?: any) {
         this._scene = scene
         this.sceneRenderer = sceneRenderer;
-        this.updateLightSources(LightSources.defaultLightSources);
+        this.updateLightSources();
     }
 
-    public updateLightSources(lightSourceDefinitions: any[]) {
+    public updateLightSources() {
         this.removeFromScene();
         this._lightSources = [];
-        this.readLightSources(this._scene, lightSourceDefinitions);
+        this.readLightSources(this._scene, this.currentLightSourceDefinition);
         this.addToScene();
     }
 
@@ -110,12 +112,16 @@ export class LightSources {
                     this._lightSources.push(ambientLight);
                     break;
                 case 'rectArea':
+                    const position = new Vector3(definition.position.x, definition.position.y, definition.position.z);
+                    if (this.lightSourceScale && position.length() < this.lightSourceScale) {
+                        position.normalize().multiplyScalar(this.lightSourceScale);
+                    }
                     if (this._useRectAreaLight) {
                         const rectAreaLightWidth = 0.8;
                         const rectAreaLightHeight = 0.8;
                         const intensity = (definition.intensity ?? 100) / (rectAreaLightWidth * rectAreaLightHeight);
                         const rectAreaLight = new RectAreaLight(new Color(definition.color), intensity,  rectAreaLightWidth, rectAreaLightHeight);
-                        rectAreaLight.position.set(definition.position.x, definition.position.y, definition.position.z);
+                        rectAreaLight.position.copy(position);
                         rectAreaLight.matrixAutoUpdate = true;
                         rectAreaLight.visible = definition.castShadow;
                         rectAreaLight.lookAt(new Vector3(0, 0, 0));
@@ -123,7 +129,7 @@ export class LightSources {
                         rectAreaLights.push(rectAreaLight);
                     } else {
                         const directionalLight = new DirectionalLight(new Color(definition.color), definition.intensity);
-                        directionalLight.position.set(directionalLight.position.x, directionalLight.position.y, directionalLight.position.z);
+                        directionalLight.position.copy(position);
                         directionalLight.visible = true;
                         directionalLight.intensity = definition.intensity;
                         directionalLight.castShadow = definition.castShadow;
@@ -152,27 +158,9 @@ export class LightSources {
         return shadowLightSources;
     }
 
-    public updateBounds(sceneVolume: SceneVolume) {
-        this.getShadowLightSources().forEach(light => {
-            LightSources.updateDirectionalLightBounds(light, sceneVolume)
-        });
-    }
-
-    private static updateDirectionalLightBounds(light: Light, sceneVolume: SceneVolume): void {
-        const shadowMap = light.shadow
-        const distanceToTarget = light.position.length()
-        const shadowCamera = shadowMap.camera as PerspectiveCamera || shadowMap.camera as OrthographicCamera
-        shadowCamera.near = Math.max(0.1, distanceToTarget - sceneVolume.maxSceneDistanceFrom0);
-        shadowCamera.far = distanceToTarget * 2;
-        const orthoGraphicShadowCamera = shadowMap.camera as OrthographicCamera
-        const shadowScale = 2.5; 
-        if (orthoGraphicShadowCamera) {
-            orthoGraphicShadowCamera.left = -sceneVolume.maxSceneDistanceFrom0 * shadowScale
-            orthoGraphicShadowCamera.right = sceneVolume.maxSceneDistanceFrom0 * shadowScale
-            orthoGraphicShadowCamera.top = sceneVolume.maxSceneDistanceFrom0 * shadowScale
-            orthoGraphicShadowCamera.bottom = -sceneVolume.maxSceneDistanceFrom0 * shadowScale
-        }
-        shadowCamera.updateProjectionMatrix()
+    public setLightSourcesDistances(sceneVolume: SceneVolume, scaleDistance: boolean) {
+        this.lightSourceScale = scaleDistance ? sceneVolume.maxSceneDistanceFrom0 * 1.5 : undefined;
+        this.updateLightSources();
     }
 
     public addToScene(): void {
@@ -205,9 +193,10 @@ export class LightSourcesGUI {
         gui.add<any>(this, 'lights', ['default', 'fife']).onChange((value: string) => {
             switch (value) {
                 default:
-                case 'default': this.lightSources.updateLightSources(LightSources.defaultLightSources); break;
-                case 'fife': this.lightSources.updateLightSources(LightSources.fifeLightSources); break;
+                case 'default': this.lightSources.currentLightSourceDefinition = LightSources.defaultLightSources; break;
+                case 'fife': this.lightSources.currentLightSourceDefinition = LightSources.fifeLightSources; break;
             };
+            this.lightSources.updateLightSources();
             this.updateGUI();
             lightSourcesUpdate();
         });

@@ -1,7 +1,7 @@
-import { RenderOverrideVisibility } from './render-utility';
+import { BlurPass, RenderOverrideVisibility, SceneVolume } from './render-utility';
 import { BlurContactShadowShader } from './shader-utility';
 import {
-  Box3,
+  Camera,
   CameraHelper,
   DoubleSide,
   Group,
@@ -10,12 +10,12 @@ import {
   MeshBasicMaterial,
   MeshDepthMaterial,
   MeshPhysicalMaterial,
+  Object3D,
   OrthographicCamera,
   PlaneGeometry,
   Scene,
   SphereGeometry,
-  ShaderMaterial,
-  Vector3,
+  Texture,
   WebGLRenderer,
   WebGLRenderTarget,
 } from 'three';
@@ -25,6 +25,7 @@ export interface BakedGroundContactShadowParameters {
   enabled: boolean;
   cameraHelper: boolean;
   alwaysUpdate: boolean;
+  fadeIn: boolean;
   blurMin: number;
   blurMax: number;
   fadeoutFalloff: number;
@@ -39,30 +40,35 @@ export interface BakedGroundContactShadowParameters {
 }
 
 export class BakedGroundContactShadow {
-  public static alphaMap: boolean = false; 
   public static addTestMesh: boolean = false;
+  private testMesh?: BakedGroundContactTestMesh;
   public shadowMapSize: number;
   public parameters: BakedGroundContactShadowParameters;
-  public renderer: WebGLRenderer;
-  public cameraHelper: CameraHelper;
+  private renderer: WebGLRenderer;
   public needsUpdate: boolean = true;
   public noNeedOfUpdateCount = 0;
-  private shadowGround: Mesh;
-  private blurPlane: Mesh;
-  public renderTarget: WebGLRenderTarget;
-  private renderTargetBlur: WebGLRenderTarget;
-  private depthMaterial: MeshDepthMaterial;
-  private blurMaterial: ShaderMaterial;
-  private shadowCamera: OrthographicCamera;
+  private blurScale: number = 1;
   private groundGroup: Group;
-  private testMesh: Mesh;
+  private groundShadowFar: number;
+  private shadowGroundPlane: ShadowGroundPlane;
+  private groundContactCamera: GroundContactCamera;
+  private renderTargetBlur: WebGLRenderTarget;
+  private blurPass: BlurPass;
+  public readonly renderTarget: WebGLRenderTarget;
+  private depthMaterial: MeshDepthMaterial;
   private renderOverrideVisibility: RenderOverrideVisibility =
-    new RenderOverrideVisibility(true, [], ['Ground', 'Floor']);
+    new RenderOverrideVisibility(true, (object: any) => {
+      return (
+        (object.isMesh && !(object.castShadow || object.userData.meshId)) ||
+        (object.name !== undefined && ['Ground', 'Floor'].includes(object.name))
+      );
+    });
 
   constructor(renderer: WebGLRenderer, groundGroup: Group, parameters: any) {
     this.groundGroup = groundGroup;
     this.shadowMapSize = parameters.shadowMapSize ?? 1024;
     this.parameters = this.getDefaultParameters(parameters);
+    this.groundShadowFar = this.parameters.cameraFar;
 
     this.renderer = renderer;
     this.renderTarget = new WebGLRenderTarget(
@@ -78,38 +84,11 @@ export class BakedGroundContactShadow {
     );
     this.renderTargetBlur.texture.generateMipmaps = false;
 
-    const shadowGroundGeometry = new PlaneGeometry(1, 1, 10, 10);
-    const shadowGroundMaterial = new MeshBasicMaterial({
-      map: this.renderTarget.texture,
-      //color: 0x000000,
-      //alphaMap: this.renderTarget.texture,
-      opacity: this.parameters.opacity,
-      transparent: true,
-      depthWrite: false,
-      //side: DoubleSide
-    });
-    if (BakedGroundContactShadow.alphaMap) {
-      shadowGroundMaterial.color.set(0x000000);
-      shadowGroundMaterial.alphaMap = this.renderTarget.texture;
-    }
-    shadowGroundMaterial.polygonOffset = true;
-    shadowGroundMaterial.polygonOffsetFactor = this.parameters.polygonOffset;
-    shadowGroundMaterial.polygonOffsetUnits = this.parameters.polygonOffset;
-    this.shadowGround = new Mesh(shadowGroundGeometry, shadowGroundMaterial);
-    this.shadowGround.renderOrder = 1;
-    this.shadowGround.receiveShadow = false;
-    this.groundGroup.add(this.shadowGround);
+    this.shadowGroundPlane = new ShadowGroundPlane(this.renderTarget.texture, this.parameters);
+    this.groundGroup.add(this.shadowGroundPlane);
 
-    this.blurPlane = new Mesh(shadowGroundGeometry);
-    this.blurPlane.visible = false;
-    this.groundGroup.add(this.blurPlane);
-
-    this.shadowCamera = new OrthographicCamera(-1, 1, -1, 1, -1, 1);
-    this.shadowCamera.rotation.x = Math.PI; // make camera look upwards
-    this.groundGroup.add(this.shadowCamera);
-
-    this.cameraHelper = new CameraHelper(this.shadowCamera);
-    this.cameraHelper.visible = this.parameters.cameraHelper;
+    this.groundContactCamera = new GroundContactCamera();
+    this.groundGroup.add(this.groundContactCamera);
 
     this.depthMaterial = new MeshDepthMaterial();
     this.depthMaterial.userData.fadeoutBias = {
@@ -127,7 +106,7 @@ export class BakedGroundContactShadow {
               uniform float fadeoutFalloff;
               ${shader.fragmentShader.replace(
                 'gl_FragColor = vec4( vec3( 1.0 - fragCoordZ ), opacity );',
-                BakedGroundContactShadow.alphaMap
+                ShadowGroundPlane.alphaMap
                   ? 'gl_FragColor = vec4(clamp(pow(1.0 + fadeoutBias - fragCoordZ, 1.0/(1.0-fadeoutFalloff)), 0.0, 1.0));'
                   : 'gl_FragColor = vec4(vec3(0.0), clamp(pow(1.0 + fadeoutBias - fragCoordZ, 1.0/(1.0-fadeoutFalloff)), 0.0, 1.0));'
               )}
@@ -136,17 +115,11 @@ export class BakedGroundContactShadow {
     this.depthMaterial.side = DoubleSide;
     this.depthMaterial.depthTest = true;
     this.depthMaterial.depthWrite = true;
-    this.blurMaterial = new ShaderMaterial(BlurContactShadowShader);
-    this.blurMaterial.depthTest = false;
+    this.blurPass = new BlurPass(BlurContactShadowShader, parameters);
     this.updatePlaneAndShadowCamera();
-    this.testMesh = new Mesh(
-      new SphereGeometry(1, 32, 16),
-      new MeshPhysicalMaterial({
-        color: 0xff0000,
-        side: DoubleSide,
-        transparent: true,
-      })
-    );
+    if (BakedGroundContactShadow.addTestMesh) {
+      this.testMesh = new BakedGroundContactTestMesh();
+    }
   }
 
   // eslint-disable-next-line complexity
@@ -155,6 +128,7 @@ export class BakedGroundContactShadow {
       enabled: true,
       cameraHelper: false,
       alwaysUpdate: false,
+      fadeIn: false,
       blurMin: 0.001,
       blurMax: 0.1,
       fadeoutFalloff: 0.9,
@@ -170,34 +144,28 @@ export class BakedGroundContactShadow {
     };
   }
 
+  dispose() {
+    this.renderTarget.dispose();
+    this.renderTargetBlur.dispose();
+    this.blurPass.dispose();
+    this.depthMaterial.dispose();
+  }
+
   public updateParameters(parameters: any) {
     for (let propertyName in parameters) {
       if (this.parameters.hasOwnProperty(propertyName)) {
         this.parameters[propertyName] = parameters[propertyName];
       }
     }
+    if (parameters.cameraFar !== undefined) {
+      this.groundShadowFar = this.parameters.cameraFar;
+    }
   }
 
   public applyParameters() {
-    const shadowGroundMaterial = this.shadowGround
-      .material as MeshBasicMaterial;
-    if (shadowGroundMaterial.opacity !== this.parameters.opacity) {
-      shadowGroundMaterial.opacity = this.parameters.opacity;
-    }
-    if (
-      shadowGroundMaterial.polygonOffsetFactor !== this.parameters.polygonOffset
-    ) {
-      shadowGroundMaterial.polygonOffset = true;
-      shadowGroundMaterial.polygonOffsetFactor = this.parameters.polygonOffset;
-      shadowGroundMaterial.polygonOffsetUnits = this.parameters.polygonOffset;
-    }
-    if (this.cameraHelper.visible !== this.parameters.cameraHelper) {
-      this.cameraHelper.visible = this.parameters.cameraHelper;
-      if (!this.cameraHelper.visible && this.cameraHelper.parent) {
-        this.cameraHelper.parent.remove(this.cameraHelper);
-      }
-    }
-    if (this.shadowCamera.far !== this.parameters.cameraFar) {
+    this.shadowGroundPlane.updateMaterial(this.parameters);
+    this.groundContactCamera.updateCameraHelper(this.parameters.cameraHelper);
+    if (this.groundContactCamera.far !== this.parameters.cameraFar) {
       this.updatePlaneAndShadowCamera();
     }
     const fadeoutFalloff = this.parameters.fadeoutFalloff;
@@ -205,48 +173,50 @@ export class BakedGroundContactShadow {
       this.depthMaterial.userData.fadeoutFalloff.value =
         this.parameters.fadeoutFalloff;
     }
-    const fadeoutBias = this.parameters.fadeoutBias / this.shadowCamera.far;
+    const fadeoutBias = this.parameters.fadeoutBias / this.groundContactCamera.far;
     if (this.depthMaterial.userData.fadeoutBias.value !== fadeoutBias) {
       this.depthMaterial.userData.fadeoutBias.value = fadeoutBias;
     }
     this.needsUpdate = true;
   }
 
-  public updateBounds(bounds: Box3) {
-    const boundsCenter = bounds.getCenter(new Vector3());
-    // y is always 0
-    // TODO - this.shadowGround.position?
-    this.groundGroup.position.set(boundsCenter.x, 0, boundsCenter.z);
+  public updateBounds(
+    sceneBounds: SceneVolume,
+    groundContactShadowScale: number,
+    groundLevel?: number
+  ) {
+    this.blurScale = groundContactShadowScale;
+    this.groundShadowFar = this.parameters.cameraFar;
+    if (this.groundShadowFar < sceneBounds.size.z) {
+      this.groundShadowFar = sceneBounds.size.z * 1.01;
+    }
+    this.groundGroup.position.set(
+      sceneBounds.center.x,
+      groundLevel ?? 0,
+      sceneBounds.center.z
+    );
     this.groundGroup.updateMatrixWorld();
-    const boundsSize = bounds.getSize(new Vector3());
-    const maxPlanSideLength = Math.max(boundsSize.x, boundsSize.z);
-    this.parameters.planeSize = maxPlanSideLength + 2;
+    const maxPlanSideLength = Math.max(sceneBounds.size.x, sceneBounds.size.z);
+    this.parameters.planeSize = maxPlanSideLength + 2 * this.blurScale;
     this.updatePlaneAndShadowCamera();
   }
 
   public updatePlaneAndShadowCamera() {
     const size = this.parameters.planeSize;
-    this.shadowGround.scale.x = size;
-    this.shadowGround.scale.y = size;
-    this.blurPlane.scale.x = size;
-    this.blurPlane.scale.y = size;
-    this.shadowCamera.left = -size / 2;
-    this.shadowCamera.right = size / 2;
-    this.shadowCamera.top = -size / 2;
-    this.shadowCamera.bottom = size / 2;
-    this.shadowCamera.near = 0;
-    this.shadowCamera.far = this.parameters.cameraFar;
-    this.shadowCamera.updateProjectionMatrix();
-    this.cameraHelper.update();
+    this.shadowGroundPlane.scale.x = size;
+    this.shadowGroundPlane.scale.y = size;
+    this.groundContactCamera.updateCameraFormPlaneSize(size, this.groundShadowFar);
     this.needsUpdate = true;
   }
 
-  public render(scene: Scene, groundObjectGroup: Mesh | undefined): void {
-    if (this.cameraHelper.visible && !this.cameraHelper.parent) {
-      scene.add(this.cameraHelper);
-    }
+  public setGroundVisibility(visible: boolean, _camera?: Camera) {
+    this.shadowGroundPlane.updateVisibility(visible);
+  }
+
+  public render(scene: Scene): void {
+    this.groundContactCamera.updateCameraHelper(this.parameters.cameraHelper, scene);
     const maxIterations = 10;
-    this.shadowGround.visible = this.parameters.enabled;
+    this.shadowGroundPlane.visible = this.parameters.enabled;
     const needsUpdate = this.parameters.alwaysUpdate || this.needsUpdate;
     if (!needsUpdate) {
       this.noNeedOfUpdateCount++;
@@ -258,23 +228,22 @@ export class BakedGroundContactShadow {
     }
     this.needsUpdate = false;
 
-    const shadowGroundMaterial = this.shadowGround
+    const shadowGroundMaterial = this.shadowGroundPlane
       .material as MeshBasicMaterial;
-    shadowGroundMaterial.opacity = this.parameters.alwaysUpdate
-      ? this.parameters.opacity
-      : (this.parameters.opacity * (this.noNeedOfUpdateCount + 2)) /
-        (maxIterations + 2);
+    shadowGroundMaterial.opacity =
+      this.parameters.alwaysUpdate || !this.parameters.fadeIn
+        ? this.parameters.opacity
+        : (this.parameters.opacity * (this.noNeedOfUpdateCount + 2)) /
+          (maxIterations + 2);
 
     const initialBackground = scene.background;
     scene.background = null;
     scene.overrideMaterial = this.depthMaterial;
     const initialClearAlpha = this.renderer.getClearAlpha();
     this.renderer.setClearAlpha(0);
-    if (groundObjectGroup) {
-      groundObjectGroup.visible = false;
-    }
-    this.shadowGround.visible = false;
-    this.cameraHelper.visible = false;
+    this.groundGroup.visible = false;
+    this.shadowGroundPlane.visible = false;
+    this.groundContactCamera.setCameraHelperVisibility(false);
 
     if (this.noNeedOfUpdateCount === 0) {
       this.renderGroundContact(scene);
@@ -287,11 +256,9 @@ export class BakedGroundContactShadow {
     this.renderer.setRenderTarget(null);
     this.renderer.setClearAlpha(initialClearAlpha);
     scene.background = initialBackground;
-    if (groundObjectGroup) {
-      groundObjectGroup.visible = true;
-    }
-    this.shadowGround.visible = this.parameters.enabled;
-    this.cameraHelper.visible = this.parameters.cameraHelper;
+    this.groundGroup.visible = true;
+    this.shadowGroundPlane.visible = this.parameters.enabled;
+    this.groundContactCamera.setCameraHelperVisibility(this.parameters.cameraHelper);
   }
 
   private renderGroundContact(scene: Scene) {
@@ -300,74 +267,163 @@ export class BakedGroundContactShadow {
     const autoClearBackup = this.renderer.autoClear;
     this.renderer.autoClear = false;
     if (this.parameters.hardLayers) {
-      this.shadowCamera.layers.mask = this.parameters.hardLayers.mask;
-      this.shadowCamera.far = 10;
-      this.shadowCamera.updateProjectionMatrix();
+      this.groundContactCamera.layers.mask = this.parameters.hardLayers.mask;
+      this.groundContactCamera.updateCameraFarPlane(10);
       this.depthMaterial.userData.fadeoutBias.value = 0.99;
-      this.renderer.render(scene, this.shadowCamera);
-      this.shadowCamera.far = this.parameters.cameraFar;
-      this.shadowCamera.updateProjectionMatrix();
+      this.renderer.render(scene, this.groundContactCamera);
+      this.groundContactCamera.updateCameraFarPlane(this.groundShadowFar);
       this.depthMaterial.userData.fadeoutBias.value =
-        this.parameters.fadeoutBias / this.parameters.cameraFar;
+        this.parameters.fadeoutBias / this.groundShadowFar;
     }
-    this.shadowCamera.layers.enableAll();
+    this.groundContactCamera.layers.enableAll();
     if (this.parameters.softLayers) {
-      this.shadowCamera.layers.mask = this.parameters.softLayers.mask;
+      this.groundContactCamera.layers.mask = this.parameters.softLayers.mask;
     }
-    if (BakedGroundContactShadow.addTestMesh) {
-      this.testMesh.position.set(0, 1, 0);
-      this.testMesh.updateMatrixWorld();
-      scene.add(this.testMesh);
-      this.renderer.render(scene, this.shadowCamera);
-      scene.remove(this.testMesh);
-    } else if (this.parameters.excludeGroundObjects) {
+    this.testMesh?.addToObject(scene);
+    if (this.parameters.excludeGroundObjects) {
       this.renderOverrideVisibility.render(scene, () => {
-        this.renderer.render(scene, this.shadowCamera);
+        this.renderer.render(scene, this.groundContactCamera);
       });
     } else {
-      this.renderer.render(scene, this.shadowCamera);
+      this.renderer.render(scene, this.groundContactCamera);
     }
+    this.testMesh?.removeFromParent();
     this.renderer.autoClear = autoClearBackup;
   }
 
   private renderBlur(scene: Scene) {
     scene.overrideMaterial = null;
-    this.blurShadow(
-      this.parameters.blurMin / this.parameters.planeSize,
-      this.parameters.blurMax / this.parameters.planeSize
+    this.renderBlurPass(
+      (this.blurScale * this.parameters.blurMin) / this.parameters.planeSize,
+      (this.blurScale * this.parameters.blurMax) / this.parameters.planeSize
     );
   }
 
   private renderReduceBandingBlur(scene: Scene) {
     scene.overrideMaterial = null;
-    const finalBlurAmount = 0.01 / this.parameters.planeSize;
-    this.blurShadow(finalBlurAmount, finalBlurAmount);
+    const finalBlurAmount = (this.blurScale * 0.01) / this.parameters.planeSize;
+    this.renderBlurPass(finalBlurAmount, finalBlurAmount);
   }
 
-  public blurShadow(uvMin: number, uvMax: number): void {
-    this.blurPlane.visible = true;
-    this.blurPlane.material = this.blurMaterial;
-    (this.blurPlane.material as ShaderMaterial).uniforms.tDiffuse.value =
-      this.renderTarget.texture;
-    this.blurMaterial.uniforms.rangeMin.value.x = uvMin;
-    this.blurMaterial.uniforms.rangeMin.value.y = 0;
-    this.blurMaterial.uniforms.rangeMax.value.x = uvMax;
-    this.blurMaterial.uniforms.rangeMax.value.y = 0;
+  private renderBlurPass(uvMin: number, uvMax: number): void {
+    this.blurPass.render(this.renderer,
+      [this.renderTarget, this.renderTargetBlur, this.renderTarget],
+      [uvMin, uvMin], [uvMax, uvMax]);
+  }
+}
 
-    this.renderer.setRenderTarget(this.renderTargetBlur);
-    this.renderer.render(this.blurPlane, this.shadowCamera);
+export class ShadowGroundPlane extends Mesh {
+  public static alphaMap: boolean = false;
 
-    this.blurPlane.material = this.blurMaterial;
-    (this.blurPlane.material as ShaderMaterial).uniforms.tDiffuse.value =
-      this.renderTargetBlur.texture;
-    this.blurMaterial.uniforms.rangeMin.value.x = 0;
-    this.blurMaterial.uniforms.rangeMin.value.y = uvMin;
-    this.blurMaterial.uniforms.rangeMax.value.x = 0;
-    this.blurMaterial.uniforms.rangeMax.value.y = uvMax;
+  constructor(shadowMap: Texture | null, parameters?: any) {
+    const planeMaterial = new MeshBasicMaterial({
+      transparent: true,
+      depthWrite: false,
+      //side: DoubleSide
+    });
+    if (ShadowGroundPlane.alphaMap) {
+      planeMaterial.color.set(0x000000);
+    }
+    planeMaterial.polygonOffset = true;
+    super(new PlaneGeometry(1, 1, 10, 10), planeMaterial);
+    this.renderOrder = 1;
+    this.receiveShadow = false;
+    this.layers.disableAll();
+    if (parameters) {
+      this.updateMaterial(parameters);
+    }
+    this.setShadowMap(shadowMap);
+  }
 
-    this.renderer.setRenderTarget(this.renderTarget);
-    this.renderer.render(this.blurPlane, this.shadowCamera);
+  public setShadowMap(shadowMap: Texture | null) {
+    const shadowGroundMaterial = this.material as MeshBasicMaterial;
+    shadowGroundMaterial.map = shadowMap;
+    if (ShadowGroundPlane.alphaMap) {
+      shadowGroundMaterial.alphaMap = shadowMap;
+    }
+    shadowGroundMaterial.needsUpdate = true;
+  }
 
-    this.blurPlane.visible = false;
+  public updateMaterial(parameters: any) {
+    const shadowGroundMaterial = this.material as MeshBasicMaterial;
+    if (shadowGroundMaterial.opacity !== parameters.opacity) {
+      shadowGroundMaterial.opacity = parameters.opacity;
+    }
+    if (
+      shadowGroundMaterial.polygonOffsetFactor !== parameters.polygonOffset
+    ) {
+      shadowGroundMaterial.polygonOffset = true;
+      shadowGroundMaterial.polygonOffsetFactor = parameters.polygonOffset;
+      shadowGroundMaterial.polygonOffsetUnits = parameters.polygonOffset;
+    }
+  }
+
+  public updateVisibility(visible: boolean) {
+    if (visible) {
+      this.layers.enableAll();
+    } else {
+      this.layers.disableAll();
+    }
+  }
+}
+
+class GroundContactCamera extends OrthographicCamera {
+  private cameraHelper?: CameraHelper;
+
+  constructor() {
+    super(-1, 1, -1, 1, -1, 1);
+    this.rotation.x = Math.PI; // make camera look upwards
+  }
+
+  public updateCameraFormPlaneSize(planeSize: number, farPlane: number) {
+    this.left = -planeSize / 2;
+    this.right = planeSize / 2;
+    this.top = -planeSize / 2;
+    this.bottom = planeSize / 2;
+    this.near = 0;
+    this.far = farPlane;
+    this.updateProjectionMatrix();
+    this.cameraHelper?.update();
+  }
+
+  public updateCameraFarPlane(farPlane: number) {
+    this.far = farPlane;
+    this.updateProjectionMatrix();
+    this.cameraHelper?.update();
+  }
+
+  public updateCameraHelper(enabled: boolean, scene?: Scene) {
+    if (enabled) {
+      this.cameraHelper = this.cameraHelper ?? new CameraHelper(this);
+      this.cameraHelper.visible = true;
+      scene?.add(this.cameraHelper);
+
+    } else if (this.cameraHelper?.parent) {
+      this.cameraHelper?.removeFromParent();
+    }
+  }
+
+  public setCameraHelperVisibility(visible: boolean) {
+    if (this.cameraHelper) {
+      this.cameraHelper.visible = visible;
+    }
+  }
+}
+
+class BakedGroundContactTestMesh extends Mesh {
+  constructor() {
+    super(new SphereGeometry(1, 32, 16),
+      new MeshPhysicalMaterial({
+        color: 0xff0000,
+        side: DoubleSide,
+        transparent: true,
+      }));
+    this.castShadow = true;
+  }
+
+  public addToObject(object: Object3D) {
+    this.position.set(0, 1, 0);
+    this.updateMatrixWorld();
+    object.add(this); 
   }
 }
