@@ -85,7 +85,13 @@
 			"future": "cpp",
 			"mutex": "cpp",
 			"random": "cpp",
-			"shared_mutex": "cpp"
+			"shared_mutex": "cpp",
+			"coroutine": "cpp",
+			"filesystem": "cpp",
+			"regex": "cpp",
+			"stack": "cpp",
+			"unordered_set": "cpp",
+			"variant": "cpp"
 		}
 	}
 }
