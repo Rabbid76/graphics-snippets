@@ -21,17 +21,17 @@
   "devDependencies": {
     "@types/dat.gui": "^0.7.9",
     "@types/express": "^4.17.17",
-    "@types/node": "^18.15.11",
-    "@types/three": "^0.150.1",
+    "@types/node": "^18.16.3",
+    "@types/three": "^0.151.0",
     "copyfiles": "^2.4.1",
     "dat.gui": "^0.7.9",
     "install-peers": "^1.0.4",
-    "three": "^0.151.3",
+    "three": "^0.152.2",
     "ts-loader": "^9.4.2",
     "typescript": "^5.0.4",
-    "webpack": "^5.78.0",
-    "webpack-cli": "^5.0.1",
-    "webpack-dev-server": "^4.13.2",
+    "webpack": "^5.81.0",
+    "webpack-cli": "^5.0.2",
+    "webpack-dev-server": "^4.13.3",
     "webpack-merge": "^5.8.0"
   },
   "dependencies": {
