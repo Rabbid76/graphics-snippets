@@ -1,6 +1,6 @@
 import { ShadowMaterial } from '../three/shadowMaterialAndShader'
 import { RectAreaLightHelper } from 'three/examples/jsm/helpers/RectAreaLightHelper.js';
-import { CopyMaterial } from '../three/shaderUtility'
+import { CopyTransformMaterial } from '../three/shaderUtility'
 import {
     CameraUpdate,
     setOrthographicViewVolumeFromBox
@@ -44,7 +44,7 @@ export class RectAreaLightAndShadowWithDirectionalLight implements RectAreaLight
     private renderPass: RenderPass;
     private shadowMaterial: THREE.ShadowMaterial;
     private shadowRenderTarget: THREE.WebGLRenderTarget;
-    private copyMaterial: CopyMaterial;
+    private copyMaterial: CopyTransformMaterial;
     private cameraUpdate: CameraUpdate = new CameraUpdate();
     private shadowCameraUpdate: CameraUpdate = new CameraUpdate();
 
@@ -82,7 +82,7 @@ export class RectAreaLightAndShadowWithDirectionalLight implements RectAreaLight
         //this.shadowMaterial = new THREE.MeshStandardMaterial({color: 0xffffff, envMapIntensity: 0});
         this.shadowMaterial = new THREE.MeshPhongMaterial({color: 0xffffff});
         this.shadowRenderTarget = new THREE.WebGLRenderTarget(this.viewportSize.x, this.viewportSize.y, { samples: this.samples });
-        this.copyMaterial = new CopyMaterial({
+        this.copyMaterial = new CopyTransformMaterial({
             blendSrc: THREE.ZeroFactor,
             blendDst: THREE.SrcColorFactor,
             blendEquation: THREE.AddEquation,
@@ -168,7 +168,7 @@ export class RectAreaLightAndShadowWithShadowMap implements RectAreaLightAndShad
     private depthNormalRenderTarget: THREE.WebGLRenderTarget;
     private shadowRenderMaterial: ShadowMaterial;
     private shadowRenderTarget: THREE.WebGLRenderTarget;
-    private copyMaterial: CopyMaterial;
+    private copyMaterial: CopyTransformMaterial;
     
     public get visible(): boolean { return this._rectAreaLight.visible; }
     public set visible(isVisible: boolean) { this._rectAreaLight.visible = isVisible; }
@@ -216,7 +216,7 @@ export class RectAreaLightAndShadowWithShadowMap implements RectAreaLightAndShad
 
         this.shadowRenderMaterial = new ShadowMaterial();
         this.shadowRenderTarget = new THREE.WebGLRenderTarget(this.viewportSize.x, this.viewportSize.y);
-        this.copyMaterial = new CopyMaterial();
+        this.copyMaterial = new CopyTransformMaterial();
     }
 
     public dispose(): void {

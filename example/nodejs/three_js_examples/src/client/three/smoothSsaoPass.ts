@@ -4,7 +4,7 @@ import {
     SSAOParameters,
     SSAORenderTargets
 } from './ssaoRenderTargets';
-import { CopyMaterial } from '../three/shaderUtility'
+import { CopyTransformMaterial } from '../three/shaderUtility'
 import {
     CameraUpdate,
 } from './threeUtility';
@@ -27,7 +27,7 @@ export class SmoothSSAOPass extends Pass {
     protected depthNormalRenderTarget: DepthNormalRenderTarget;
     protected ssaoRenderTargets: SSAORenderTargets;
     protected _colorTexture?: THREE.FramebufferTexture;
-    private _copyMaterial?: CopyMaterial;
+    private _copyMaterial?: CopyTransformMaterial;
     private _renderOverrideVisibility: RenderOverrideVisibility = new RenderOverrideVisibility(true);
     private cameraUpdate: CameraUpdate = new CameraUpdate();
 
@@ -43,7 +43,7 @@ export class SmoothSSAOPass extends Pass {
     }
 
     protected getCopyMaterial(parameters?: any): THREE.ShaderMaterial {
-        this._copyMaterial ??= new CopyMaterial();
+        this._copyMaterial ??= new CopyTransformMaterial();
         return this._copyMaterial.update(parameters);
     }
 
