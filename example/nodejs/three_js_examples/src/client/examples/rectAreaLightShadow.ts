@@ -3,17 +3,18 @@ import { Controls } from '../three/controls'
 import { DataGUI, Statistic } from '../three/uiUtility'
 import { LinearDepthRenderMaterial } from '../three/depthAndNormalMaterialsAndShaders';
 import { 
-    BoxHelper, 
+    BoxUpdateHelper, 
     boundingBoxInViewSpace,
     boxFromOrthographicViewVolume,
     getMaxSamples,
-    RenderOverrideVisibility,
-    RenderPass,
     setOrthographicViewVolumeFromBox
 } from '../three/threeUtility'
+import { 
+    RenderOverrideVisibility,
+    RenderPass,
+} from '../three/renderPass'
 import {
     RectAreaLightAndShadow,
-    RectAreaLightAndShadowWithShadowMap,
     RectAreaLightAndShadowWithDirectionalLight
 } from '../three/rectAreaLightAndShadow'
 import * as THREE from 'three'
@@ -43,7 +44,7 @@ export const rectAreaLightShadow = (canvas: any) => {
     scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
 
     const sceneBox = new THREE.Box3(new THREE.Vector3(-3.5, 0, -3), new THREE.Vector3(3, 3, 2.5));
-    const sceneBoxHelper = new BoxHelper(sceneBox, { color: 0xff8080, opacity: 0.25 });
+    const sceneBoxHelper = new BoxUpdateHelper(sceneBox, { color: 0xff8080, opacity: 0.25 });
     sceneBoxHelper.addTo(scene);
     sceneBoxHelper.visible = false;
 
@@ -62,7 +63,7 @@ export const rectAreaLightShadow = (canvas: any) => {
     const rectAreaLightAndShadow: RectAreaLightAndShadow = new RectAreaLightAndShadowWithDirectionalLight(rectAreaLight, viewportSize, { samples: maxSamples, shadowIntensity: 0.5, alwaysUpdate: true });
     rectAreaLightAndShadow.addToScene(scene);  
 
-    const shadowBoxHelper = new BoxHelper(boxFromOrthographicViewVolume(directionalLightCamera), { color: 0x80ff80, opacity: 0.25 });
+    const shadowBoxHelper = new BoxUpdateHelper(boxFromOrthographicViewVolume(directionalLightCamera), { color: 0x80ff80, opacity: 0.25 });
     shadowBoxHelper.visible = false;
     shadowBoxHelper.addTo(scene);
 
@@ -183,7 +184,10 @@ export const rectAreaLightShadow = (canvas: any) => {
     if (shadowDebugPlane) {
         invisibleObjects.push(shadowDebugPlane);
     }
-    const renderOverrideVisibility = new RenderOverrideVisibility(false, invisibleObjects, null);
+    const renderOverrideVisibility = new RenderOverrideVisibility(
+        false, 
+        (object: any) => invisibleObjects.includes(object), 
+        null);
     const renderShadow = () => {
         renderOverrideVisibility.render(scene, () => {
             if (generalUiProperties['debug output'] === 'off' && generalUiProperties['light source'] !== 'rectAreaLight' && !generalUiProperties['debug output']) {

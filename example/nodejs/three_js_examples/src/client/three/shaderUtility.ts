@@ -1,4 +1,12 @@
-import * as THREE from 'three';
+import {
+    AddEquation,
+    DstAlphaFactor,
+    DstColorFactor,
+    ShaderMaterial,
+    UniformsUtils,
+    Vector2,
+    ZeroFactor,
+} from 'three';
 
 const CopyShader = {
     uniforms: {
@@ -26,21 +34,21 @@ const CopyShader = {
         }`
 };
 
-export class CopyMaterial extends THREE.ShaderMaterial {
+export class CopyMaterial extends ShaderMaterial {
     constructor(parameters?: any) {
         super({
-            uniforms: THREE.UniformsUtils.clone(CopyShader.uniforms),
+            uniforms: UniformsUtils.clone(CopyShader.uniforms),
             vertexShader: CopyShader.vertexShader,
             fragmentShader: CopyShader.fragmentShader,
             transparent: true,
             depthTest: false,
             depthWrite: false,
-            blendSrc: THREE.DstColorFactor,
-            blendDst: THREE.ZeroFactor,
-            blendEquation: THREE.AddEquation,
-            blendSrcAlpha: THREE.DstAlphaFactor,
-            blendDstAlpha: THREE.ZeroFactor,
-            blendEquationAlpha: THREE.AddEquation
+            blendSrc: DstColorFactor,
+            blendDst: ZeroFactor,
+            blendEquation: AddEquation,
+            blendSrcAlpha: DstAlphaFactor,
+            blendDstAlpha: ZeroFactor,
+            blendEquationAlpha: AddEquation
         });
         this.update(parameters);
     }
@@ -84,7 +92,7 @@ export const HorizontalBlurShadowShader = {
     uniforms: {
         // @ts-ignore
         tDiffuse: { value: null },
-        hRange: { value: new THREE.Vector2(1.0 / 512.0, 1.0 / 512.0) },
+        hRange: { value: new Vector2(1.0 / 512.0, 1.0 / 512.0) },
         shadowScale: { value: 1 }
     },
     vertexShader: /* glsl */`
@@ -120,7 +128,7 @@ export const VerticalBlurShadowShader = {
     uniforms: {
         // @ts-ignore
         tDiffuse: { value: null },
-        vRange: { value: new THREE.Vector2(1.0 / 512.0, 1.0 / 512.0) },
+        vRange: { value: new Vector2(1.0 / 512.0, 1.0 / 512.0) },
         shadowScale: { value: 1 },
     },
     vertexShader: /* glsl */`

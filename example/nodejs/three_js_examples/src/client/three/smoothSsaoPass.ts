@@ -7,9 +7,11 @@ import {
 import { CopyMaterial } from '../three/shaderUtility'
 import {
     CameraUpdate,
+} from './threeUtility';
+import {
     RenderOverrideVisibility,
     RenderPass,
-} from './threeUtility';
+} from './renderPass';
 import * as THREE from 'three';
 import { Pass } from 'three/examples/jsm/postprocessing/Pass';
 

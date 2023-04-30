@@ -3,7 +3,7 @@ import {
     SSAOBlurMaterial
 } from './ssaoMaterialsAndShaders';
 import { DepthAndNormalTextures } from '../three/depthNormalRenderTarget'
-import { RenderPass } from './threeUtility';
+import { RenderPass } from './renderPass';
 import * as THREE from 'three';
 import { SimplexNoise } from 'three/examples/jsm/math/SimplexNoise.js';
 

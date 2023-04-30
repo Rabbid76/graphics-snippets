@@ -3,9 +3,11 @@ import { RectAreaLightHelper } from 'three/examples/jsm/helpers/RectAreaLightHel
 import { CopyMaterial } from '../three/shaderUtility'
 import {
     CameraUpdate,
-    RenderPass,
     setOrthographicViewVolumeFromBox
 } from '../three/threeUtility'
+import {
+    RenderPass,
+} from '../three/renderPass'
 import * as THREE from 'three'
 
 export interface RectAreaLightAndShadow {

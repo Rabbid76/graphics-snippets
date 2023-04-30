@@ -1,7 +1,7 @@
 import {
     RenderOverrideVisibility,
     RenderPass,
-} from './threeUtility';
+} from './renderPass';
 import * as THREE from 'three';
 
 export interface DepthAndNormalTextures {
