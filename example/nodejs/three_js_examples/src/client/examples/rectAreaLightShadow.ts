@@ -1,7 +1,7 @@
 import { ElapsedTime } from '../three/timeUtility'
 import { Controls } from '../three/controls'
 import { DataGUI, Statistic } from '../three/uiUtility'
-import { LinearDepthRenderMaterial } from '../three/depthAndNormalMaterialsAndShaders';
+import { LinearDepthRenderMaterial } from '../three/shaderUtility';
 import { 
     BoxUpdateHelper, 
     boundingBoxInViewSpace,

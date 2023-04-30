@@ -2,7 +2,7 @@ import {
     SSAORenderMaterial,
     SSAOBlurMaterial
 } from './ssaoMaterialsAndShaders';
-import { DepthAndNormalTextures } from '../three/depthNormalRenderTarget'
+import { GBufferTextures } from '../three/gBufferRenderTarget'
 import { RenderPass } from './renderPass';
 import * as THREE from 'three';
 import { SimplexNoise } from 'three/examples/jsm/math/SimplexNoise.js';
@@ -24,7 +24,7 @@ export class SSAORenderTargets {
     private height: number;
     private samples: number;
     private ssaoTargetSamples: number = 0;
-    private depthAndNormalTextures: DepthAndNormalTextures;
+    private depthAndNormalTextures: GBufferTextures;
     private _noiseTexture?: THREE.DataTexture;
     private _kernel: THREE.Vector3[] = [];
     private _ssaoRenderMaterial?: SSAORenderMaterial;
@@ -45,8 +45,8 @@ export class SSAORenderTargets {
 
     public get ssaoRenderMaterial(): SSAORenderMaterial {
         this._ssaoRenderMaterial ??= new SSAORenderMaterial({
-            normalTexture: this.depthAndNormalTextures.normalTexture,
-            depthTexture: this.depthAndNormalTextures.depthTexture,
+            normalTexture: this.depthAndNormalTextures.getGBufferTexture(),
+            depthTexture: this.depthAndNormalTextures.getDepthBufferTexture(),
             noiseTexture: this.noiseTexture,
             kernel: this.kernel,
         });
@@ -70,7 +70,7 @@ export class SSAORenderTargets {
         return this._kernel;
     }
 
-    constructor(depthAndNormalTextures: DepthAndNormalTextures, parameters?: any) {
+    constructor(depthAndNormalTextures: GBufferTextures, parameters?: any) {
         this.ssaoParameters = {
             enabled: parameters?.enabled ?? true,
             alwaysUpdate: parameters?.alwaysUpdate ?? true,

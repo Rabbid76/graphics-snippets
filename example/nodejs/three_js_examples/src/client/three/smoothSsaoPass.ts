@@ -1,5 +1,5 @@
 import { SSAOBlurMaterial } from './ssaoMaterialsAndShaders';
-import { DepthNormalRenderTarget } from '../three/depthNormalRenderTarget'
+import { GBufferRenderTargets } from '../three/gBufferRenderTarget'
 import {
     SSAOParameters,
     SSAORenderTargets
@@ -24,7 +24,7 @@ export class SmoothSSAOPass extends Pass {
     private scene: THREE.Scene;
     private camera: THREE.Camera;
     protected renderPass: RenderPass = new RenderPass();
-    protected depthNormalRenderTarget: DepthNormalRenderTarget;
+    protected depthNormalRenderTarget: GBufferRenderTargets;
     protected ssaoRenderTargets: SSAORenderTargets;
     protected _colorTexture?: THREE.FramebufferTexture;
     private _copyMaterial?: CopyTransformMaterial;
@@ -54,7 +54,7 @@ export class SmoothSSAOPass extends Pass {
         this.width = width;
         this.height = height;
         this.sceneRenderer = sceneRenderer;
-        this.depthNormalRenderTarget = new DepthNormalRenderTarget({
+        this.depthNormalRenderTarget = new GBufferRenderTargets({
             width, height, samples, 
             renderPass: this.renderPass,
             renderOverrideVisibility: this._renderOverrideVisibility,

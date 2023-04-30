@@ -1,5 +1,5 @@
 import { SmoothSSAOPass } from './smoothSsaoPass';
-import { LinearDepthRenderMaterial } from './depthAndNormalMaterialsAndShaders';
+import { LinearDepthRenderMaterial } from './shaderUtility';
 import * as THREE from 'three';
 
 export const enum SmoothSSAODebugOutput {
@@ -18,7 +18,7 @@ export class SmoothSSAODebugPass extends SmoothSSAOPass {
     // TODO property
     private get depthRenderMaterial(): LinearDepthRenderMaterial {
         this._depthRenderMaterial ??= new LinearDepthRenderMaterial({ 
-            depthTexture: this.depthNormalRenderTarget.depthTexture
+            depthTexture: this.depthNormalRenderTarget.getDepthBufferTexture()
         });
         // @ts-ignore
         return this._depthRenderMaterial.update({camera: this.camera});
@@ -61,7 +61,7 @@ export class SmoothSSAODebugPass extends SmoothSSAOPass {
                 break;
             }
             case SmoothSSAODebugOutput.Normal: {
-                this.renderPass.renderScreenSpace(renderer, this.getCopyMaterial({texture: this.depthNormalRenderTarget?.normalTexture, blending: THREE.NoBlending}), this.renderToScreen ? null : writeBuffer);
+                this.renderPass.renderScreenSpace(renderer, this.getCopyMaterial({texture: this.depthNormalRenderTarget?.getGBufferTexture(), blending: THREE.NoBlending}), this.renderToScreen ? null : writeBuffer);
                 break;
             }
             case SmoothSSAODebugOutput.SSAO: {

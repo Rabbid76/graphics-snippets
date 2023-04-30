@@ -4,6 +4,9 @@ import {
     DstColorFactor,
     Matrix3,
     Matrix4,
+    NoBlending,
+    OrthographicCamera,
+    PerspectiveCamera,
     ShaderMaterial,
     Texture,
     UniformsUtils,
@@ -212,3 +215,82 @@ export const VerticalBlurShadowShader = {
     }`
 };
 
+const glslLinearDepthVertexShader = `varying vec2 vUv;
+  void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+  }`;
+
+const glslLinearDepthFragmentShader = `uniform sampler2D tDepth;
+  uniform vec4 depthFilter;
+  uniform float cameraNear;
+  uniform float cameraFar;
+  varying vec2 vUv;
+  
+  #include <packing>
+  
+  float getLinearDepth(const in vec2 screenPosition) {
+      float fragCoordZ = dot(texture2D(tDepth, screenPosition), depthFilter);
+      #if PERSPECTIVE_CAMERA == 1
+          float viewZ = perspectiveDepthToViewZ(fragCoordZ, cameraNear, cameraFar);
+          return viewZToOrthographicDepth(viewZ, cameraNear, cameraFar);
+      #else
+          return fragCoordZ;
+      #endif
+  }
+  
+  void main() {
+      float depth = getLinearDepth(vUv);
+      gl_FragColor = vec4(vec3(1.0 - depth), 1.0);
+  }`;
+
+export class LinearDepthRenderMaterial extends ShaderMaterial {
+  private static linearDepthShader: any = {
+    uniforms: {
+      tDepth: { value: null as Texture | null },
+      depthFilter: { value: new Vector4(1, 0, 0, 0) },
+      cameraNear: { value: 0.1 },
+      cameraFar: { value: 1 },
+    },
+    defines: {
+      PERSPECTIVE_CAMERA: 1,
+      ALPHA_DEPTH: 0,
+    },
+    vertexShader: glslLinearDepthVertexShader,
+    fragmentShader: glslLinearDepthFragmentShader,
+  };
+
+  constructor(parameters?: any) {
+    super({
+      defines: Object.assign(
+        {},
+        LinearDepthRenderMaterial.linearDepthShader.defines
+      ),
+      uniforms: UniformsUtils.clone(
+        LinearDepthRenderMaterial.linearDepthShader.uniforms
+      ),
+      vertexShader: LinearDepthRenderMaterial.linearDepthShader.vertexShader,
+      fragmentShader:
+        LinearDepthRenderMaterial.linearDepthShader.fragmentShader,
+      blending: NoBlending,
+    });
+    this.update(parameters);
+  }
+
+  public update(parameters?: any): LinearDepthRenderMaterial {
+    if (parameters?.depthTexture !== undefined) {
+      this.uniforms.tDepth.value = parameters?.depthTexture;
+    }
+    if (parameters?.camera !== undefined) {
+      const camera =
+        (parameters?.camera as OrthographicCamera) ||
+        (parameters?.camera as PerspectiveCamera);
+      this.uniforms.cameraNear.value = camera.near;
+      this.uniforms.cameraFar.value = camera.far;
+    }
+    if (parameters?.depthFilter !== undefined) {
+      this.uniforms.depthFilter.value = parameters?.depthFilter;
+    }
+    return this;
+  }
+}
