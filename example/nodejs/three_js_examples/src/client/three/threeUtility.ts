@@ -8,10 +8,12 @@ import {
     DataTexture,
     Group,
     LineBasicMaterial,
+    MathUtils,
     Matrix4,
     Mesh,
     MeshBasicMaterial,
     Object3D,
+    PerspectiveCamera,
     OrthographicCamera,
     RGBAFormat,
     Texture,
@@ -67,23 +69,96 @@ export const loadAndSetTexture = (setTexture: (texture: Texture) => void, resour
     }
 };
 
-export class SceneVolume {
-    public sceneBounds: Box3 = new Box3();
-    public maxSceneDistanceFrom0: number = 10;
-
-    public update(sceneObject: Object3D): void {
-        this.sceneBounds.setFromObject(sceneObject);
-        this.maxSceneDistanceFrom0 = new Vector3(
-            Math.max(Math.abs(this.sceneBounds.min.x), Math.abs(this.sceneBounds.max.x)),
-            Math.max(Math.abs(this.sceneBounds.min.y), Math.abs(this.sceneBounds.max.y)),
-            Math.max(Math.abs(this.sceneBounds.min.z), Math.abs(this.sceneBounds.max.z))).length();
+export const setOrthographicViewVolumeFromBox = (
+    camera: OrthographicCamera,
+    viewBox: Box3
+  ): void => {
+    camera.left = viewBox.min.x;
+    camera.right = viewBox.max.x;
+    camera.bottom = viewBox.min.y;
+    camera.top = viewBox.max.y;
+    camera.near = Math.min(-viewBox.min.z, -viewBox.max.z);
+    camera.far = Math.max(-viewBox.min.z, -viewBox.max.z);
+    camera.updateProjectionMatrix();
+};
+  
+export const setPerspectiveViewVolumeFromBox = (
+    camera: PerspectiveCamera,
+    viewBox: Box3
+  ): void => {
+    const near = Math.min(-viewBox.min.z, -viewBox.max.z);
+    const far = Math.max(-viewBox.min.z, -viewBox.max.z);
+    if (near < 0.001) {
+      return;
     }
-
-    public getNearAndFarForCameraThatLooksAtOriginOfScene(cameraPosition: Vector3, backScale: number = 1): number[] {
-        const distanceFromCenter = cameraPosition.length();
-        const near = Math.max(0.01, distanceFromCenter - this.maxSceneDistanceFrom0 - 0.01);
-        const far = distanceFromCenter + this.maxSceneDistanceFrom0 * backScale + 0.01;
-        return [near, far];
+    const halfWidth = Math.max(Math.abs(viewBox.min.x), Math.abs(viewBox.max.x));
+    const halfHeight = Math.max(Math.abs(viewBox.min.y), Math.abs(viewBox.max.y));
+    camera.aspect = halfWidth / halfHeight;
+    camera.fov = MathUtils.radToDeg(Math.atan2(halfHeight, near) * 2);
+    camera.near = near;
+    camera.far = far;
+    camera.updateProjectionMatrix();
+  };
+  
+  export class SceneVolume {
+    public bounds: Box3 = new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1));
+    public size: Vector3 = new Vector3(2, 2, 2);
+    public center: Vector3 = new Vector3(0, 0, 0);
+    public maxSceneDistanceFromCenter: number = Math.sqrt(3);
+    public maxSceneDistanceFrom0: number = Math.sqrt(3);
+  
+    public copyFrom(other: SceneVolume): void {
+      this.bounds.copy(other.bounds);
+      this.size.copy(other.size);
+      this.center.copy(other.center);
+      this.maxSceneDistanceFromCenter = other.maxSceneDistanceFromCenter;
+      this.maxSceneDistanceFrom0 = other.maxSceneDistanceFrom0;
+    }
+  
+    public updateFromObject(sceneObject: Object3D): void {
+      sceneObject.updateMatrixWorld();
+      this.bounds.setFromObject(sceneObject);
+      this.updateFromBox(this.bounds);
+    }
+  
+    public updateFromBox(boundingBox: Box3): void {
+      if (this.bounds !== boundingBox) {
+        this.bounds.copy(boundingBox);
+      }
+      this.bounds.getSize(this.size);
+      this.bounds.getCenter(this.center);
+      this.maxSceneDistanceFromCenter = this.size.length() / 2;
+      this.maxSceneDistanceFrom0 = new Vector3(
+        Math.max(Math.abs(this.bounds.min.x), Math.abs(this.bounds.max.x)),
+        Math.max(Math.abs(this.bounds.min.y), Math.abs(this.bounds.max.y)),
+        Math.max(Math.abs(this.bounds.min.z), Math.abs(this.bounds.max.z))
+      ).length();
+    }
+  
+    public updateCameraViewVolumeFromBounds(camera: Camera): void {
+      camera.updateMatrixWorld();
+      const cameraViewBounds = this.bounds
+        .clone()
+        .applyMatrix4(camera.matrixWorldInverse);
+      if (camera instanceof OrthographicCamera) {
+        setOrthographicViewVolumeFromBox(camera, cameraViewBounds);
+      } else if (camera instanceof PerspectiveCamera) {
+        setPerspectiveViewVolumeFromBox(camera, cameraViewBounds);
+      }
+    }
+  
+    public getNearAndFarForPerspectiveCamera(
+      cameraPosition: Vector3,
+      backScale: number = 1
+    ): number[] {
+      const distanceFromCenter = cameraPosition.clone().sub(this.center).length();
+      const near = Math.max(
+        0.01,
+        distanceFromCenter - this.maxSceneDistanceFromCenter - 0.01
+      );
+      const far =
+        distanceFromCenter + this.maxSceneDistanceFromCenter * backScale + 0.01;
+      return [near, far];
     }
 }
 
@@ -156,16 +231,6 @@ export const boxFromOrthographicViewVolume = (camera: OrthographicCamera): Box3 
     const max = new Vector3(Math.max(camera.left, camera.right), Math.max(camera.bottom, camera.top), Math.max(camera.near, camera.far));
     const box = new Box3(min, max);
     return box;
-}
-
-export const setOrthographicViewVolumeFromBox = (camera: OrthographicCamera, viewBox: Box3): void => {
-    camera.left = viewBox.min.x;
-    camera.right = viewBox.max.x;
-    camera.bottom = viewBox.min.y;
-    camera.top = viewBox.max.y;
-    camera.near = Math.min(-viewBox.min.z, -viewBox.max.z);
-    camera.far = Math.max(-viewBox.min.z, -viewBox.max.z);
-    camera.updateProjectionMatrix();
 }
 
 export const boundingBoxInViewSpace = (worldBox: Box3, camera: Camera): Box3 => {

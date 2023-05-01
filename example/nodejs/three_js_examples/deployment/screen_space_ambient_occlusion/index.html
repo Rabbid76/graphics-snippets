@@ -3,17 +3,32 @@
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>three.js example</title>
+        <title>three.js example - screen space ambient occlusion</title>
         <style>
             body {
                 overflow: hidden;
+                width: 100%;
+                height: 100%;
                 margin: 0px;
+                padding: 0px;
             }
+            #drag_target { 
+                border: 10px dashed #ccc;
+                width: 150px; height: 150px; 
+                margin: 20px auto;
+                position: absolute;
+                top: 20px;
+                left: 20px;
+                text-align: center;
+                font-family: Verdana;
+            }
+            #drag_target.hover { border: 10px dashed #333;}
         </style>
     </head>
 
     <body>
         <div id="container">
+            <div id="drag_target">.glb<br>.gltf</div>
             <canvas id="three_canvas" example="screen_space_ambient_occlusion"> </canvas>
         </div>
         <script type="module" src="../bundle.js"></script>

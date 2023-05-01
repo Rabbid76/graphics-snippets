@@ -1,53 +1,90 @@
 import { ElapsedTime } from '../three/timeUtility'
 import { Controls } from '../three/controls'
-import { SmoothSSAODebugPass, SmoothSSAODebugOutput } from '../three/smoothSsaoDebugPass';
-import { getMaxSamples } from '../three/threeUtility'
+import { SsaoDebugRenderPass } from '../three/ssaoDebugRenderPass';
+import { 
+    getMaxSamples, 
+    SceneVolume,
+} from '../three/threeUtility'
 import { DataGUI, Statistic } from '../three/uiUtility' 
-import * as THREE from 'three';
+import { setupDragDrop } from '../util/drag_target'
+import {
+    AmbientLight,
+    Box3,
+    BoxGeometry,
+    BufferGeometry,
+    CapsuleGeometry,
+    Color,
+    ConeGeometry,
+    CylinderGeometry,
+    DodecahedronGeometry,
+    DirectionalLight,
+    Group,
+    IcosahedronGeometry,
+    Material,
+    Mesh,
+    MeshStandardMaterial,
+    OctahedronGeometry,
+    PerspectiveCamera,
+    PlaneGeometry,
+    PMREMGenerator,
+    Scene,
+    SphereGeometry,
+    TetrahedronGeometry,
+    TorusGeometry,
+    TorusKnotGeometry,
+    Vector2,
+    Vector3,
+    WebGLRenderer,
+    WebGLRenderTarget,
+    Object3D,
+} from 'three';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
-
-// PR three.js?
-// stats
-// GUI
-// objects (distribution)
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 
 export const screenSpaceAmbientOcclusion = (canvas: any) => {
-    const renderer = new THREE.WebGLRenderer({canvas: canvas, antialias: true, alpha: true});
+    const renderer = new WebGLRenderer({canvas: canvas, antialias: true, alpha: true});
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
     const statistic = new Statistic();
     const dataGui = new DataGUI();
 
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 50);
+    const camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
     camera.position.z = 4.5;
     const controls = new Controls(renderer, camera);
 
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xc0c0c0);
+    const scene = new Scene();
+    scene.background = new Color(0xffffff);
+    const pmremGenerator = new PMREMGenerator(renderer);
+    const roomEnvironment = new RoomEnvironment();
+    //roomEnvironment.rotateY(Math.PI);
+    const environmentTexture = pmremGenerator.fromScene(roomEnvironment, 0.04).texture;
+    scene.environment = environmentTexture;
+    scene.background = environmentTexture;
 
     const maxSamples = getMaxSamples(renderer);
-    const ssaoRenderTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, { samples: maxSamples })
+    const ssaoRenderTarget = new WebGLRenderTarget(window.innerWidth, window.innerHeight, { samples: maxSamples })
     const effectComposer = new EffectComposer(renderer, ssaoRenderTarget);
-    const ssaoPass = new SmoothSSAODebugPass(renderer, scene, camera, window.innerWidth, window.innerHeight, maxSamples, {
-        depthBias: 0.0001,
-        kernelRadius: 0.25,
-        maxDistance: 0.5
+    const ssaoPass = new SsaoDebugRenderPass(window.innerWidth, window.innerHeight, maxSamples, {
+        camera,
+        scene,
+        capabilities: renderer.capabilities,
     });
     effectComposer.addPass(ssaoPass)
 
-    const ambientLight = new THREE.AmbientLight(0x404040);
-    scene.add(ambientLight); 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
-    directionalLight.position.set(1, 1, 10);
-    scene.add(directionalLight);
+    //const ambientLight = new AmbientLight(0x808080);
+    //scene.add(ambientLight); 
+    //const directionalLight = new DirectionalLight(0xffffff, 0.5);
+    //directionalLight.position.set(2, 2, 20);
+    //scene.add(directionalLight);
 
-    const objectGroup = new THREE.Group();
+    const objectGroup = new Group();
     scene.add(objectGroup);
 
     const n = 128;
     //const unitPositions = sphereSamples(n);
     for (let i = 0; i < n; ++ i) {
-        const position = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize();
+        const position = new Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize();
         const p = position.multiplyScalar(2);
         const mesh = randomMesh();
         mesh.rotation.x = Math.random() * Math.PI * 2;
@@ -55,37 +92,38 @@ export const screenSpaceAmbientOcclusion = (canvas: any) => {
         mesh.position.set(p.x, p.y, p.z);
         objectGroup.add(mesh);
     };
+    const boundingVolume = new SceneVolume();
+    boundingVolume.updateFromObject(scene);
 
     const generalProperties = {
         'rotate': true,
         'debug pass': 'none'
     };
     dataGui.gui.add(generalProperties, 'rotate');
-    dataGui.gui.add(generalProperties, 'debug pass', {
-        'off': 'none', 
-        'color': 'color', 
-        'depth': 'depth', 
-        'normal': 'normal', 
-        'SSAO': 'ssao', 
-        'blur SSAO': 'ssaoblur', 
-    }).onChange((value) => { 
-        switch(value.toLocaleLowerCase()) {
-            default: ssaoPass.debugEffect = SmoothSSAODebugOutput.None; break;
-            case 'color': ssaoPass.debugEffect = SmoothSSAODebugOutput.Color; break;
-            case 'depth': ssaoPass.debugEffect = SmoothSSAODebugOutput.Depth; break;
-            case 'normal': ssaoPass.debugEffect = SmoothSSAODebugOutput.Normal; break;
-            case 'ssao': ssaoPass.debugEffect = SmoothSSAODebugOutput.SSAO; break;
-            case 'ssaoblur': ssaoPass.debugEffect = SmoothSSAODebugOutput.SSAOBlur; break;
-        }
-    });
+    dataGui.gui.add<any>(ssaoPass, 'debugOutput', {
+      'off ': 'off',
+      'color buffer': 'color',
+      'linear depth': 'lineardepth',
+      'g-buffer normal vector': 'g-normal',
+      'g-buffer depth': 'g-depth',
+      'SSAO Monte Carlo': 'ssao',
+      'blur SSAO': 'ssaoblur',
+    })
+    const parameters = ssaoPass.parameters;
+    const updateParameters = () => {
+        ssaoPass.needsUpdate =true;
+        ssaoPass.aoRenderTargets.parametersNeedsUpdate = true;
+    };
     const aoFolder = dataGui.gui.addFolder('SSAO');
-    aoFolder.add<any>(ssaoPass.ssaoParameters, 'enabled');
-    aoFolder.add<any>(ssaoPass.ssaoParameters, 'intensity', 0.01, 1);
-    aoFolder.add<any>(ssaoPass.ssaoParameters, 'fadeout', 0.0, 1.0);
-    aoFolder.add<any>(ssaoPass.ssaoParameters, 'kernelRadius', 0.001, 1);
-    aoFolder.add<any>(ssaoPass.ssaoParameters, 'depthBias', 0.00001, 0.1);
-    aoFolder.add<any>(ssaoPass.ssaoParameters, 'maxDistance', 0.01, 1);
-    aoFolder.add<any>(ssaoPass.ssaoParameters, 'maxDepth', 0.0, 1);
+    aoFolder.add<any>(parameters, 'aoEnabled').onChange(() => updateParameters());
+    aoFolder.add<any>(parameters, 'aoFxaa').onChange(() => updateParameters());
+    aoFolder.add<any>(parameters, 'aoAlwaysUpdate').onChange(() => updateParameters());
+    aoFolder.add<any>(parameters, 'aoIntensity', 0, 1).onChange(() => updateParameters());
+    aoFolder.add<any>(parameters, 'aoFadeout', 0, 1).onChange(() => updateParameters());
+    aoFolder.add<any>(parameters, 'aoKernelRadius', 0.001, 0.5).onChange(() => updateParameters());
+    aoFolder.add<any>(parameters, 'aoDepthBias', 0.0001, 0.01).onChange(() => updateParameters());
+    aoFolder.add<any>(parameters, 'aoMaxDistance', 0.01, 2).onChange(() => updateParameters());
+    aoFolder.add<any>(parameters, 'aoMaxDepth', 0.9, 1).onChange(() => updateParameters());
 
     const onWindowResize = () => {
         camera.aspect = window.innerWidth / window.innerHeight;
@@ -95,6 +133,14 @@ export const screenSpaceAmbientOcclusion = (canvas: any) => {
         renderer.setSize(window.innerWidth, window.innerHeight);
     };
     window.addEventListener('resize', onWindowResize, false);
+    setupDragDrop('drag_target', 'hover', (file: File, event: ProgressEvent<FileReader>) => {
+        // @ts-ignore
+        loadResource(file.name, event.target.result, objectGroup, () => {
+            boundingVolume.updateFromObject(scene);
+            const sceneSize = boundingVolume.size;
+            ssaoPass.updateBounds((sceneSize.x + sceneSize.y + sceneSize.z) / 3);
+        });
+    });
 
     const elapsedTime = new ElapsedTime();
     const animate = (timestamp: number) => {
@@ -104,6 +150,13 @@ export const screenSpaceAmbientOcclusion = (canvas: any) => {
             objectGroup.rotateY(-elapsedTime.getDegreePerSecond(15, true));
         }
         controls.update();
+        const nearFar = boundingVolume.getNearAndFarForPerspectiveCamera(
+            camera.position,
+            3
+          );
+          camera.near = Math.max(0.00001, nearFar[0] * 0.9);
+          camera.far = Math.max(1, camera.near, nearFar[1]);
+          camera.updateProjectionMatrix();
         render();
         statistic.update();
     }
@@ -117,54 +170,54 @@ export const screenSpaceAmbientOcclusion = (canvas: any) => {
 
 const sqrt3 = Math.sqrt(3);
 const geometries = [
-    { id: 'Tetrahedron', geometry: new THREE.TetrahedronGeometry(0.5) },
-    { id: 'Cube', geometry: new THREE.BoxGeometry(1/sqrt3, 1/sqrt3, 1/sqrt3) },
-    { id: 'Octahedron', geometry: new THREE.OctahedronGeometry(0.5) },
-    { id: 'Dodecahedron', geometry: new THREE.DodecahedronGeometry(0.5) },
-    { id: 'Icosahedron', geometry:  new THREE.IcosahedronGeometry(0.5) },
-    { id: 'Cone', geometry:  new THREE.ConeGeometry(0.5, 1, 32) },
-    { id: 'Cylinder', geometry:  new THREE.CylinderGeometry(0.5, 0.5, 1, 32) },
-    { id: 'Sphere', geometry:  new THREE.SphereGeometry(0.5, 32, 16) },
-    { id: 'Capsule', geometry:  new THREE.CapsuleGeometry(0.3, 0.5, 32, 32) },
-    { id: 'Torus', geometry:  new THREE.TorusGeometry(0.5, 0.25, 32, 100) },
-    { id: 'TorusKnot', geometry:  new THREE.TorusKnotGeometry(0.4, 0.2, 100, 32) }
+    { id: 'Tetrahedron', geometry: new TetrahedronGeometry(0.5) },
+    { id: 'Cube', geometry: new BoxGeometry(1/sqrt3, 1/sqrt3, 1/sqrt3) },
+    { id: 'Octahedron', geometry: new OctahedronGeometry(0.5) },
+    { id: 'Dodecahedron', geometry: new DodecahedronGeometry(0.5) },
+    { id: 'Icosahedron', geometry:  new IcosahedronGeometry(0.5) },
+    { id: 'Cone', geometry:  new ConeGeometry(0.5, 1, 32) },
+    { id: 'Cylinder', geometry:  new CylinderGeometry(0.5, 0.5, 1, 32) },
+    { id: 'Sphere', geometry:  new SphereGeometry(0.5, 32, 16) },
+    { id: 'Capsule', geometry:  new CapsuleGeometry(0.3, 0.5, 32, 32) },
+    { id: 'Torus', geometry:  new TorusGeometry(0.5, 0.25, 32, 100) },
+    { id: 'TorusKnot', geometry:  new TorusKnotGeometry(0.4, 0.2, 100, 32) }
 ];
 
-const randomGeometry = (): THREE.BufferGeometry => {
+const randomGeometry = (): BufferGeometry => {
     const index = Math.floor(Math.random() * geometries.length);
     return geometries[index].geometry;
 }
 
-const randomColor = (): THREE.Color => {
-    const color = new THREE.Color();
+const randomColor = (): Color => {
+    const color = new Color();
     color.setHSL(Math.random(), 0.5, 0.75);
     return color;
 }
 
-const randomMaterial = (): THREE.Material => {
-    const material = new THREE.MeshLambertMaterial({color: randomColor()});
+const randomMaterial = (): Material => {
+    const material = new MeshStandardMaterial({color: randomColor()});
     return material;
 }
 
-const randomMesh = (): THREE.Mesh => {
-    const mesh = new THREE.Mesh(randomGeometry(), randomMaterial());
+const randomMesh = (): Mesh => {
+    const mesh = new Mesh(randomGeometry(), randomMaterial());
     return mesh
 }
 
-const sphereToEquirectangular = (unitDirection3D: THREE.Vector3): THREE.Vector2 => {
+const sphereToEquirectangular = (unitDirection3D: Vector3): Vector2 => {
     const xy = { x: Math.atan2(unitDirection3D.y, unitDirection3D.x), y: Math.asin(unitDirection3D.z) };
-    const uv = new THREE.Vector2(xy.x / (2 * Math.PI) + 0.5, xy.y / Math.PI + 0.5);
+    const uv = new Vector2(xy.x / (2 * Math.PI) + 0.5, xy.y / Math.PI + 0.5);
     return uv;
 }
 
-const equirectangularToSphere = (uv: THREE.Vector2): THREE.Vector3 => {
+const equirectangularToSphere = (uv: Vector2): Vector3 => {
     const theta = (uv.x - 0.5) * Math.PI * 2;
     const phi = (uv.y - 0.5) * Math.PI;
     const sinTheta = Math.sin(theta);
     const cosTheta = Math.cos(theta);
     const sinPhi = Math.sin(phi);
     const cosPhi = Math.cos(phi);
-    const unitDirection3D = new THREE.Vector3(cosTheta * cosPhi, sinTheta * cosPhi, sinPhi);
+    const unitDirection3D = new Vector3(cosTheta * cosPhi, sinTheta * cosPhi, sinPhi);
     return unitDirection3D;
 }
 
@@ -181,17 +234,17 @@ const hammersleySequence = (i: number, n: number) => {
     return { u: i / n, v: vdcSequence(i) };
 }
 
-const uvToUnitSphere = (u: number, v: number): THREE.Vector3 => {
+const uvToUnitSphere = (u: number, v: number): Vector3 => {
     const phi = v * 2 * Math.PI;
     const cosTheta = 2 * u - 1;
     const sinTheta = Math.sqrt(1.0 - cosTheta * cosTheta);
     const sinPhi = Math.sin(phi);
     const cosPhi = Math.cos(phi);
-    const unitSphere = new THREE.Vector3(cosTheta * cosPhi, sinTheta * cosPhi, sinPhi);
+    const unitSphere = new Vector3(cosTheta * cosPhi, sinTheta * cosPhi, sinPhi);
     return unitSphere;
 }
 
-const sphereSamples = (n: number): THREE.Vector3[] => {
+const sphereSamples = (n: number): Vector3[] => {
     const samples = [];
     for (let i=0; i < n; ++i) {
         const uv = hammersleySequence(i, n);
@@ -201,3 +254,30 @@ const sphereSamples = (n: number): THREE.Vector3[] => {
     return samples;
 }
 
+const resourceCache = new Map<string, any>();
+const loadResource = async (name: string, resource: string, container: Group, updateCallback: () => void) => {
+    let newScene = resourceCache.get(name);
+    if (!newScene) {
+        const gltfLoader = new GLTFLoader();
+        const gltf = await gltfLoader.loadAsync(resource);
+        newScene = gltf.scene;
+    }
+    updateScene(container, newScene, updateCallback);
+}
+
+const updateScene = (container: Group, newScene: Object3D, updateCallback: () => void) =>{
+    newScene.updateMatrixWorld();
+    const sceneBox = new Box3().setFromObject(newScene);
+    const sceneSize = sceneBox.getSize(new Vector3());
+    const sceneCenter = sceneBox.getCenter(new Vector3());
+    newScene.position.set(-sceneCenter.x, -sceneBox.min.y, -sceneCenter.z);
+    container.clear();
+    container.add(newScene);
+    const planSize = Math.max(sceneSize.x, sceneSize.z) * 2;
+    const planMesh = new Mesh(new PlaneGeometry(planSize, planSize), new MeshStandardMaterial({color: 0x808080}));
+    planMesh.rotation.x = -Math.PI / 2;
+    container.add(planMesh);
+    container.position.set(0, -sceneSize.y/2, 0);
+    container.updateMatrixWorld();
+    updateCallback();
+}
