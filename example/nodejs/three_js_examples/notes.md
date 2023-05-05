@@ -28,3 +28,9 @@
 - [Rotating calipers](https://en.wikipedia.org/wiki/Rotating_calipers)
 - [An algorithm for polylines outline construction](https://old.cescg.org/CESCG99/SKrivograd/index.html)
 - [Convex Hull](https://soi.ch/wiki/convex-hull/)
+
+## webpack and WebAssembly
+
+- [webpack - Experiments](https://webpack.js.org/configuration/experiments/)
+- [GitHub - wasm-loader - DEPRECATED](https://github.com/ballercat/wasm-loader)
+- [How can I make webpack embed my *.wasm for use in a web worker?](https://stackoverflow.com/questions/70420273/how-can-i-make-webpack-embed-my-wasm-for-use-in-a-web-worker)
