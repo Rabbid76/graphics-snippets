@@ -1,9 +1,10 @@
 #include "mesh_utility/constructiveSolidGeometry.h"
+#include <algorithm>
 
 using namespace csg;
 
 namespace {
-    PolygonIndices createPolygons(CSG &csg, const uint32_t *indices, uint32_t noOfIndices, uint32_t baseIndex) {
+    PolygonIndices createTrianglePolygons(CSG &csg, const uint32_t *indices, uint32_t noOfIndices, uint32_t baseIndex) {
         PolygonIndices polygonIndices;
         polygonIndices.reserve(noOfIndices / 3);
         csg.polygons.reserve(csg.polygons.size() + noOfIndices / 3);
@@ -26,15 +27,37 @@ namespace {
         }
         return polygonIndices;
     }
+
+    PolygonIndices createQuadPolygons(CSG &csg, const uint32_t *indices, uint32_t noOfIndices, uint32_t baseIndex) {
+        PolygonIndices polygonIndices;
+        polygonIndices.reserve(noOfIndices / 4);
+        csg.polygons.reserve(csg.polygons.size() + noOfIndices / 4);
+        for (uint32_t quadIndex = 0; quadIndex < noOfIndices; quadIndex += 4) {
+            VertexIndices vertexIndices;
+            for (uint32_t i = quadIndex; i < quadIndex + 4; ++i) {
+                auto index = baseIndex + indices[i];
+                vertexIndices.push_back({index, false});
+            }
+            auto lengthSq = squareLength(cross3(
+                    sub3(csg.vertices[vertexIndices[1].index].vertex, csg.vertices[vertexIndices[0].index].vertex),
+                    sub3(csg.vertices[vertexIndices[2].index].vertex, csg.vertices[vertexIndices[0].index].vertex)));
+            if (lengthSq > 0)
+                polygonIndices.push_back(csg.newPolygon(vertexIndices));
+        }
+        return polygonIndices;
+    }
 }
 
+Scalar Plane::epsilonScale = 1.0;
 Scalar Plane::epsilon = PLANE_EPSILON;
 
 Epsilon::Epsilon(Scalar scale) {
+    Plane::epsilonScale = scale;
     Plane::epsilon = PLANE_EPSILON * scale;
 }
 
 Epsilon::~Epsilon() {
+    Plane::epsilonScale = 1.0f;
     Plane::epsilon = PLANE_EPSILON;
 }
 
@@ -81,7 +104,7 @@ PolygonIndices csg::polygonsFromMeshSpecification(CSG &csg, const mesh::MeshData
 
     uint32_t baseIndex = csg.vertices.size();
     csg.vertices.reserve(baseIndex + mesh.noOfVertices);
-    for (uint32_t vertexIndex = 0; vertexIndex < mesh.noOfIndices; ++vertexIndex) {
+    for (uint32_t vertexIndex = 0; vertexIndex < mesh.noOfVertices; ++vertexIndex) {
         Vector3 v{mesh.vertices[vertexIndex*3], mesh.vertices[vertexIndex*3 + 1], mesh.vertices[vertexIndex*3 + 2]};
         Vector3 nv{0, 0, 0};
         if (mesh.normals)
@@ -91,7 +114,7 @@ PolygonIndices csg::polygonsFromMeshSpecification(CSG &csg, const mesh::MeshData
             uv = {mesh.uvs[vertexIndex*2], mesh.uvs[vertexIndex*2 + 1]};
         csg.vertices.push_back({v, nv, uv});
     }
-    return createPolygons(csg, mesh.indices, mesh.noOfIndices, baseIndex);
+    return createTrianglePolygons(csg, mesh.indices, mesh.noOfIndices, baseIndex);
 }
 
 PolygonIndices csg::polygonsFromMeshSpecification(CSG &csg, const mesh::MeshDataReference &mesh, std::vector<uint32_t> setOfTriangles) {
@@ -117,7 +140,18 @@ PolygonIndices csg::polygonsFromMeshSpecification(CSG &csg, const mesh::MeshData
             indices.push_back((uint32_t)indexMap[vertexIndex]);
         }
     }
-    return createPolygons(csg, indices.data(), indices.size(), 0);
+    return createTrianglePolygons(csg, indices.data(), indices.size(), 0);
+}
+
+PolygonIndices csg::polygonsFromQuads(CSG &csg, const std::vector<uint32_t> &quadIndices, const std::vector<float> &vertices) {
+    uint32_t baseIndex = csg.vertices.size();
+    uint32_t noOfVertices = vertices.size() / 3;
+    csg.vertices.reserve(baseIndex + noOfVertices);
+    for (uint32_t vertexIndex = 0; vertexIndex < noOfVertices; ++vertexIndex) {
+        Vector3 v{vertices[vertexIndex*3], vertices[vertexIndex*3 + 1], vertices[vertexIndex*3 + 2]};
+        csg.vertices.push_back({v, {0, 0, 0}, {0, 0}});
+    }
+    return createQuadPolygons(csg, quadIndices.data(), quadIndices.size(), baseIndex);
 }
 
 void csg::polygonsToMesh(const CSG &csg, const PolygonIndices *polygonIndices, mesh::MeshDataInstance &mesh) {
@@ -145,6 +179,23 @@ void csg::polygonsToMesh(const CSG &csg, const PolygonIndices *polygonIndices, m
             }
         }
     }
+}
+
+std::vector<std::vector<float>> csg::polygonsToVertices(const CSG &csg, const PolygonIndices *polygonIndices) {
+    if (!polygonIndices)
+        return {};
+    std::vector<std::vector<float>> polygons;
+    for (auto polygonIndex: *polygonIndices) {
+        auto &polygon = csg.polygons[polygonIndex];
+        if (polygon.vertices.size() < 3)
+            continue;
+        polygons.emplace_back();
+        for (auto & vertexIndex: polygon.vertices) {
+            auto &vertex = csg.vertices[vertexIndex.index];
+            polygons.back().insert(polygons.back().end(), vertex.vertex.begin(), vertex.vertex.end());
+        }
+    }
+    return polygons;
 }
 
 PolygonIndices csg::meshOperation(CSG &csg, mesh::Operator op, const mesh::MeshDataReference &meshA, const mesh::MeshDataReference &meshB) {
@@ -187,14 +238,14 @@ namespace {
 
     void createUniqueIndicesFromMesh(mesh::UniqueIndices &uniqueIndices, const mesh::MeshDataInstance &mesh) {
         for (uint32_t i = 0; i < mesh.vertices.size(); i += 3) {
-            uniqueIndices.getVertexIndex(mesh.vertices.data() + i);
+            uniqueIndices.getVertexIndex(mesh.vertices.data() + i, mesh::INDEX_EPSILON * Plane::epsilonScale);
         }
     }
 
     void createUniqueIndicesFromMesh(mesh::UniqueIndices &uniqueIndices, const mesh::MeshDataReference &mesh, std::vector<uint32_t> &uniqueMeshIndices) {
         uniqueMeshIndices.reserve(mesh.noOfVertices);
         for (uint32_t i = 0; i < mesh.noOfVertices; ++i) {
-            auto uniqueIndex = uniqueIndices.getVertexIndex(mesh.vertices + i * 3);
+            auto uniqueIndex = uniqueIndices.getVertexIndex(mesh.vertices + i * 3, mesh::INDEX_EPSILON * Plane::epsilonScale);
             uniqueMeshIndices.push_back(uniqueIndex);
         }
     }
@@ -211,7 +262,7 @@ namespace {
         return trianglesToBeTested;
     }
 
-    void getTrianglesToBeAdded(
+        void getTrianglesToBeAdded(
             uint32_t uniqueIndicesSize,
             uint32_t uniqueIntersectionIndicesSize,
             const mesh::MeshDataReference &mesh,
@@ -226,7 +277,7 @@ namespace {
         }
 
         std::vector<uint8_t> includedIndices(uniqueIndicesSize, 0);
-        std::fill(includedIndices.begin(), includedIndices.begin() + static_cast<long>(uniqueIntersectionIndicesSize), 1);
+        std::fill(includedIndices.begin(), includedIndices.begin() + (long)uniqueIntersectionIndicesSize, 1);
 
         bool newIndicesAdded = true;
         while (newIndicesAdded) {

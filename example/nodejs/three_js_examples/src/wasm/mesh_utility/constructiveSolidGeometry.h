@@ -99,6 +99,7 @@ namespace csg {
 
     class Plane {
     public:
+        static Scalar epsilonScale;
         static Scalar epsilon;
         Vector3 normal{0, 0, 0};
         Scalar w{0};
@@ -435,7 +436,9 @@ namespace csg {
 
     PolygonIndices polygonsFromMeshSpecification(CSG &csg, const mesh::MeshDataReference &mesh);
     PolygonIndices polygonsFromMeshSpecification(CSG &csg, const mesh::MeshDataReference &mesh, std::vector<uint32_t> setOfTriangles);
+    PolygonIndices polygonsFromQuads(CSG &csg, const std::vector<uint32_t> &quadIndices, const std::vector<float> &vertices);
     void polygonsToMesh(const CSG &csg, const PolygonIndices *polygonIndices, mesh::MeshDataInstance &mesh);
+    std::vector<std::vector<float>> polygonsToVertices(const CSG &csg, const PolygonIndices *polygonIndices);
     PolygonIndices meshOperation(CSG &csg, mesh::Operator op, const mesh::MeshDataReference &meshA, const mesh::MeshDataReference &meshB);
     void meshOperation(mesh::Operator op, const mesh::MeshDataReference &meshA, const mesh::MeshDataReference &meshB, mesh::MeshDataInstance &resultMesh);
     PolygonIndices meshOperation(CSG &csg, mesh::Operator op, const mesh::MeshDataReference &meshA, const mesh::MeshDataReference &meshB, const std::vector<uint32_t> &trianglesA, const std::vector<uint32_t> &trianglesB);
