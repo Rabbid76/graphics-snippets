@@ -16,7 +16,7 @@ def read_texture(filename, texture_unit):
       # and other file types.  We convert into a texture using GL.
       print('trying to open', filename)
       try:
-         image = Image.open(filename)
+         image = Image.open(filename).convert('RGBA')
       except IOError as ex:
          print('IOError: failed to open texture file ', filename)
          sys.exit()
