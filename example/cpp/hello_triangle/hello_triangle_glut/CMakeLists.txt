@@ -20,7 +20,7 @@ endif()
 
 message(STATUS "configuration: " ${MAKE_CONFIG}, ${CMAKE_CXX_COMPILER})
 
-project(hello_triangle_glfw)
+project(hello_triangle_glut)
 set(CMAKE_CXX_STANDARD 20)
 set(SUBMODULES_PATH ../../_submodules)
 
@@ -43,13 +43,13 @@ target_include_directories(
 if(DEFINED WIN32)
 target_compile_definitions(
 	glew PUBLIC
-	-DWIN32 -D_LIB -DWIN32_LEAN_AND_MEAN -DFREEGLUT_STATIC
+	-DWIN32 -D_LIB -DWIN32_LEAN_AND_MEAN -DGLEW_STATIC
 )
 elseif(DEFINED APPLE)
 target_compile_definitions(
 	glew PUBLIC
-	#-DGLEW_OSMESA -D_LIB -DFREEGLUT_STATIC
-	-D_LIB -DFREEGLUT_STATIC
+	#-DGLEW_OSMESA -D_LIB -DGLEW_STATIC
+	-D_LIB -DGLEW_STATIC
 )
 endif()
 
@@ -62,11 +62,12 @@ if(MAKE_CONFIG STREQUAL "MSVC")
 endif()
 
 if(MAKE_CONFIG STREQUAL "MSVC" OR MAKE_CONFIG STREQUAL "MINGW")
-	add_definitions(-DWIN32 -DFREEGLUT_STATIC -D_WIN32)
+	add_definitions(-DWIN32 -DGLEW_STATIC -D_WIN32)
 elseif(MAKE_CONFIG STREQUAL "MacXCode")
 	add_definitions(-DGL_SILENCE_DEPRECATION)
 endif()
 
+set(DEFAULT_LIB "-framework OpenGL")
 if(MAKE_CONFIG STREQUAL "MSVC")
     set(DEFAULT_LIB opengl32 glu32)
 elseif (MAKE_CONFIG STREQUAL "MINGW")
@@ -74,7 +75,6 @@ elseif (MAKE_CONFIG STREQUAL "MINGW")
 elseif (MAKE_CONFIG STREQUAL "Clang")
     # [...]
 elseif (MAKE_CONFIG STREQUAL "MacXCode")
-set(DEFAULT_LIB "-framework OpenGL")
     # [...]    
 endif()
 
@@ -97,3 +97,4 @@ target_include_directories(
     ${GLEW_PATH}/include
     ${GLUT_PATH}/include
 )
+

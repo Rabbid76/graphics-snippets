@@ -63,6 +63,7 @@ elseif(MAKE_CONFIG STREQUAL "MacXCode")
 	add_definitions(-DGL_SILENCE_DEPRECATION)
 endif()
 
+set(DEFAULT_LIB "-framework OpenGL")
 if(MAKE_CONFIG STREQUAL "MSVC")
     set(DEFAULT_LIB opengl32 glu32)
 elseif (MAKE_CONFIG STREQUAL "MINGW")
@@ -70,7 +71,6 @@ elseif (MAKE_CONFIG STREQUAL "MINGW")
 elseif (MAKE_CONFIG STREQUAL "Clang")
     # [...]
 elseif (MAKE_CONFIG STREQUAL "MacXCode")
-set(DEFAULT_LIB "-framework OpenGL")
     # [...]    
 endif()
 

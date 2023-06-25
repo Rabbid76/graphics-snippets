@@ -18,7 +18,11 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
+#define CONTEXT_INFORMATION_AND_DEBUG_OUTPUT
+
+#ifdef CONTEXT_INFORMATION_AND_DEBUG_OUTPUT
 #include "../gl_debug.h"
+#endif
 
 #include <chrono>
 #include <fstream>
@@ -102,9 +106,11 @@ int main()
     if (glewInit() != GLEW_OK)
         throw std::runtime_error( "error initializing glew" );
 
+#ifdef CONTEXT_INFORMATION_AND_DEBUG_OUTPUT
     OpenGL::CContext::TDebugLevel debug_level = debug_context ? OpenGL::CContext::TDebugLevel::all : OpenGL::CContext::TDebugLevel::off;
     OpenGL::CContext context;
     context.init(debug_level);
+#endif
 
     //glfwSwapInterval( 2 );
 

@@ -17,7 +17,12 @@
 // FreeGLUT [http://freeglut.sourceforge.net/]
 #include <gl/freeglut.h>
 
+#define CONTEXT_INFORMATION_AND_DEBUG_OUTPUT
+#define MAIN_LOOP_EVENT 1
+
+#ifdef CONTEXT_INFORMATION_AND_DEBUG_OUTPUT
 #include "../gl_debug.h"
+#endif
 
 #include <chrono>
 #include <fstream>
@@ -67,8 +72,6 @@ void main()
 }
 )";
 
-//#define MAIN_LOOP_EVENT 1
-
 void display(void);
 void keyCallback(unsigned char key, int x, int y);
 void saveScreenshotToFile(const char* filename, int width, int height);
@@ -104,9 +107,11 @@ int main(int argc, char** argv)
     if (glewInit() != GLEW_OK)
         throw std::runtime_error( "error initializing glew" );
 
+#ifdef CONTEXT_INFORMATION_AND_DEBUG_OUTPUT
     OpenGL::CContext::TDebugLevel debug_level = debug_context ? OpenGL::CContext::TDebugLevel::all : OpenGL::CContext::TDebugLevel::off;
     OpenGL::CContext context;
     context.init(debug_level);
+#endif
 
     std::cout << "shader" << std::endl;
     GLuint program_obj = LinkProgram({
