@@ -14,9 +14,8 @@
 #include <GL/glu.h>
 #endif
 
-// GLFW [https://www.glfw.org/]
-#define GLFW_INCLUDE_NONE
-#include <GLFW/glfw3.h>
+// FreeGLUT [http://freeglut.sourceforge.net/]
+#include <gl/freeglut.h>
 
 #include "../gl_debug.h"
 
@@ -68,7 +67,10 @@ void main()
 }
 )";
 
-void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+//#define MAIN_LOOP_EVENT 1
+
+void display(void);
+void keyCallback(unsigned char key, int x, int y);
 void saveScreenshotToFile(const char* filename, int width, int height);
 GLuint CompileShader(GLenum ahader_type, const char* shader_code);
 GLuint LinkProgram(std::initializer_list<GLuint> shader_objets);
@@ -76,29 +78,29 @@ GLuint LinkProgram(std::initializer_list<GLuint> shader_objets);
 bool debug_context = true;
 bool screenshot = false;
 
-int main()
+GLint project_loc = 0, view_loc = 0, model_loc = 0;
+std::chrono::steady_clock::time_point start_time, prev_time;
+
+int main(int argc, char** argv)
 {
-    if ( glfwInit() == 0 )
-        throw std::runtime_error( "error initializing glfw" );
+    glutInit(&argc, argv);
 
-    //glfwWindowHint(GLFW_REFRESH_RATE, 10);
-
+    glutInitContextProfile(GLUT_COMPATIBILITY_PROFILE);
+    glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
 #ifdef __APPLE__
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
-    glewExperimental = true;
+    glutInitContextVersion(4, 1);
+    glutInitContextProfile(GLUT_CORE_PROFILE);
+    glutInitContextFlags(GLUT_FORWARD_COMPATIBLE);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_MULTISAMPLE | GLUT_3_2_CORE_PROFILE);
+#else
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_MULTISAMPLE);    
 #endif
-    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, debug_context ? GLFW_TRUE : GLFW_FALSE);
-    GLFWwindow *wnd = glfwCreateWindow(800, 600, "GLFW OGL window - Hello triangle", nullptr, nullptr);
-    if ( wnd == nullptr )
-    {
-        glfwTerminate();
-        throw std::runtime_error( "error initializing window" );
-    }
-    glfwSetKeyCallback(wnd, keyCallback);
-    glfwMakeContextCurrent(wnd);
+    glutSetOption(GLUT_MULTISAMPLE, 8);
+    glutInitWindowSize(800, 600);
+    int wnd = glutCreateWindow("FreeGLUT OpenGL window - Hello triangle");
+    glutKeyboardFunc(keyCallback);
+    glutDisplayFunc(display);  
+
     if (glewInit() != GLEW_OK)
         throw std::runtime_error( "error initializing glew" );
 
@@ -106,15 +108,13 @@ int main()
     OpenGL::CContext context;
     context.init(debug_level);
 
-    //glfwSwapInterval( 2 );
-
     std::cout << "shader" << std::endl;
     GLuint program_obj = LinkProgram({
         CompileShader(GL_VERTEX_SHADER, sh_vert),
         CompileShader(GL_FRAGMENT_SHADER, sh_frag)});
-    GLint project_loc = glGetUniformLocation(program_obj, "project");
-    GLint view_loc = glGetUniformLocation(program_obj, "view");
-    GLint model_loc = glGetUniformLocation(program_obj, "model");
+    project_loc = glGetUniformLocation(program_obj, "project");
+    view_loc = glGetUniformLocation(program_obj, "view");
+    model_loc = glGetUniformLocation(program_obj, "model");
     glUseProgram(program_obj);
 
     static const std::vector<float> varray
@@ -143,71 +143,84 @@ int main()
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     std::cout << "application loop" << std::endl;
-    auto start_time = std::chrono::high_resolution_clock::now();
-    auto prev_time = start_time;
-    while (!glfwWindowShouldClose(wnd))
+    start_time = std::chrono::high_resolution_clock::now();
+    prev_time = start_time;
+    #if MAIN_LOOP_EVENT == 1
+    int i = 0;
+    while ( i++ >= 0 )
     {
-        std::chrono::high_resolution_clock::time_point current_time = std::chrono::high_resolution_clock::now();
-        auto frame_time = current_time - prev_time;
-        prev_time = current_time;
-        auto all_time = current_time - start_time;
-        double delta_s = (double)std::chrono::duration_cast<std::chrono::milliseconds>(frame_time).count() / 1000.0;
-        double time_s = (double)std::chrono::duration_cast<std::chrono::milliseconds>(all_time).count() / 1000.0;
-        std::string title = "FPS: " + std::to_string(1/ delta_s);
-        glfwSetWindowTitle(wnd, title.c_str());
-
-        auto angle = (float)(time_s * 90.0);
-
-        int vpSize[2];
-        glfwGetFramebufferSize(wnd, &vpSize[0], &vpSize[1]);
-
-        float aspect = (float)vpSize[0] / (float)vpSize[1];
-        float orthoX = aspect > 1.0f ? aspect : 1.0f;
-        float orthoY = aspect > 1.0f ? 1.0f : aspect;
-
-        glm::mat4 project = glm::ortho(-orthoX, orthoX, -orthoY, orthoY, -1.0f, 1.0f);
-
-        float orthScale = 1.0f;
-        project = glm::scale(project, glm::vec3(orthScale, orthScale, 1.0f));
-
-        static bool invert = false;
-        glm::mat4 view = glm::lookAt(
-                glm::vec3(0.0f, 0.0f, 0.5f * (invert ? -1.0f : 1.0f)),
-                glm::vec3(0.0f, 0.0f, 0.0f),
-                glm::vec3(0.0f, 1.0f, 0.0f));
-
-        glm::mat4 model( 1.0f );
-        model = glm::translate(model, glm::vec3(0.1f, 0.0f, 1.0f));
-        model = glm::rotate(model, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
-
-        glUniformMatrix4fv(project_loc, 1, GL_FALSE, glm::value_ptr(project));
-        glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm::value_ptr(view));
-        glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
-
-        glViewport(0, 0, vpSize[0], vpSize[1]);
-        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-
-        glfwSwapBuffers(wnd);
-        glfwPollEvents();
-
-        if (screenshot) {
-            screenshot = false;
-            saveScreenshotToFile("screenshot.tga", vpSize[0], vpSize[1]);
-        }
+        glutMainLoopEvent(); 
+        glutPostRedisplay();
     }
+#else
+    glutMainLoop(); 
+#endif
 
-    glfwDestroyWindow( wnd );
-    glfwTerminate();
-
+    glutDestroyWindow(wnd);
     return 0;
 }
 
-void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+void display(void) {
+    std::chrono::high_resolution_clock::time_point current_time = std::chrono::high_resolution_clock::now();
+    auto frame_time = current_time - prev_time;
+    prev_time = current_time;
+    auto all_time = current_time - start_time;
+    double delta_s = (double)std::chrono::duration_cast<std::chrono::milliseconds>(frame_time).count() / 1000.0;
+    double time_s = (double)std::chrono::duration_cast<std::chrono::milliseconds>(all_time).count() / 1000.0;
+    std::string title = "FPS: " + std::to_string(1/ delta_s);
+    glutSetWindowTitle(title.c_str());
+
+    auto angle = (float)(time_s * 90.0);
+
+    int vpSize[2]
+    {
+        glutGet(GLUT_WINDOW_WIDTH),
+        glutGet(GLUT_WINDOW_HEIGHT)
+    };
+
+    float aspect = (float)vpSize[0] / (float)vpSize[1];
+    float orthoX = aspect > 1.0f ? aspect : 1.0f;
+    float orthoY = aspect > 1.0f ? 1.0f : aspect;
+
+    glm::mat4 project = glm::ortho(-orthoX, orthoX, -orthoY, orthoY, -1.0f, 1.0f);
+
+    float orthScale = 1.0f;
+    project = glm::scale(project, glm::vec3(orthScale, orthScale, 1.0f));
+
+    static bool invert = false;
+    glm::mat4 view = glm::lookAt(
+            glm::vec3(0.0f, 0.0f, 0.5f * (invert ? -1.0f : 1.0f)),
+            glm::vec3(0.0f, 0.0f, 0.0f),
+            glm::vec3(0.0f, 1.0f, 0.0f));
+
+    glm::mat4 model( 1.0f );
+    model = glm::translate(model, glm::vec3(0.1f, 0.0f, 1.0f));
+    model = glm::rotate(model, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
+
+    glUniformMatrix4fv(project_loc, 1, GL_FALSE, glm::value_ptr(project));
+    glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm::value_ptr(view));
+    glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
+
+    glViewport(0, 0, vpSize[0], vpSize[1]);
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+
+    glutSwapBuffers();
+#if MAIN_LOOP_EVENT != 1
+    glutPostRedisplay();
+#endif
+
+    if (screenshot) {
+        screenshot = false;
+        saveScreenshotToFile("screenshot.tga", vpSize[0], vpSize[1]);
+    }
+}
+
+void keyCallback(unsigned char key, int x, int y)
 {
-    if (key == GLFW_KEY_S && action == GLFW_PRESS)
+    if (key == 's')
         screenshot = true;
 }
 
