@@ -1,5 +1,6 @@
 import { RectAreaLightHelper } from 'three/examples/jsm/helpers/RectAreaLightHelper.js';
 import { CameraUpdate, RenderPass, SceneVolume } from './render-utility';
+import { LightSource } from './light-source-detection';
 import {
   BasicShadowMap,
   Camera,
@@ -43,6 +44,7 @@ export interface ScreenSpaceShadowMapParameters {
   enableShadowMap: boolean;
   layers: Layers | null;
   shadowLightSourceType: ShadowLightSourceType;
+  maximumNumberOfLightSources: number;
 }
 
 interface ActiveShadowLight {
@@ -51,6 +53,7 @@ interface ActiveShadowLight {
 }
 
 export interface ShadowLightSource {
+  getPosition(): Vector3;
   getShadowLight(): Light;
   getOriginalLight(): Light | null;
   dispose(): void;
@@ -65,7 +68,6 @@ export interface ShadowLightSource {
   prepareRenderShadow(): ActiveShadowLight[];
   finishRenderShadow(): void;
 }
-
 
 const replaceLightsLambertParsFragment = `
 varying vec3 vViewPosition;
@@ -136,6 +138,7 @@ export class ScreenSpaceShadowMap {
       enableShadowMap: true,
       layers: null,
       shadowLightSourceType: ShadowLightSourceType.DirectionalLightShadow,
+      maximumNumberOfLightSources: -1,
       ...parameters,
     };
   }
@@ -185,8 +188,8 @@ export class ScreenSpaceShadowMap {
       shadowLightSourceType: this.parameters.shadowLightSourceType,
     });
     this.shadowLightSources.push(rectAreaLightShadow);
-    rectAreaLightShadow.updatePositionAndTarget();
     rectAreaLightShadow.addTo(parent);
+    rectAreaLightShadow.updatePositionAndTarget();
     this.needsUpdate = true;
   }
 
@@ -200,13 +203,11 @@ export class ScreenSpaceShadowMap {
         if (rectAreaLights.includes(light)) {
           item.updatePositionAndTarget();
           return true;
-        } else {
-          item.removeFrom(parent);
-          item.dispose();
-          return false;
         }
       }
-      return true;
+      item.removeFrom(parent);
+      item.dispose();
+      return false;
     });
     rectAreaLights.forEach((light) => {
       if (
@@ -221,6 +222,64 @@ export class ScreenSpaceShadowMap {
     });
     this.needsUpdate = true;
     this.shadowTypeNeedsUpdate = true;
+  }
+
+  public createShadowFromLightSources(
+    parent: Object3D,
+    lightSources: LightSource[]
+  ): void {
+    this.shadowLightSources = this.shadowLightSources.filter((item) => {
+      item.removeFrom(parent);
+      item.dispose();
+    });
+    const maxIntensity =
+      lightSources.length > 0
+        ? Math.max(
+            ...lightSources.map(
+              (lightSource: LightSource) => lightSource.maxIntensity
+            )
+          )
+        : 1;
+    const lightIntensityScale = 1 / maxIntensity;
+    this.addShadowFromLightSources(parent, lightSources, lightIntensityScale);
+    this.shadowLightSources.forEach((item) => {
+      item.addTo(parent);
+      item.updatePositionAndTarget();
+    });
+    this.needsUpdate = true;
+    this.shadowTypeNeedsUpdate = true;
+  }
+
+  private addShadowFromLightSources(
+    parent: Object3D,
+    lightSources: LightSource[],
+    lightIntensityScale: number
+  ): void {
+    const lightIntensityThreshold = 0.1;
+    const lightDistanceScale = 7;
+    lightSources.forEach((lightSource) => {
+      const lightIntensity = lightSource.maxIntensity * lightIntensityScale;
+      if (
+        lightIntensity >= lightIntensityThreshold &&
+        lightSource.position.z >= 0
+      ) {
+        const lightPosition = new Vector3(
+          lightSource.position.x,
+          lightSource.position.z,
+          lightSource.position.y
+        ).multiplyScalar(lightDistanceScale);
+        const environmentLightShadow = new EnvironmentShadowLightSource(
+          lightSource,
+          lightPosition,
+          lightIntensity,
+          {
+            shadowMapSize: this.shadowMapSize,
+            shadowLightSourceType: this.parameters.shadowLightSourceType,
+          }
+        );
+        this.shadowLightSources.push(environmentLightShadow);
+      }
+    });
   }
 
   public setSize(width: number, height: number): void {
@@ -270,21 +329,8 @@ export class ScreenSpaceShadowMap {
     scene: Scene,
     camera: Camera
   ) {
-    let activeShadowLights: ActiveShadowLight[] = [];
-    this.shadowLightSources.forEach(
-      (item) => activeShadowLights.push(...item.prepareRenderShadow())
-    );
-    activeShadowLights.sort((a, b) => {
-      if (a.light.castShadow && !b.light.castShadow) return -1;
-      if (!a.light.castShadow && b.light.castShadow) return 1;
-      return b.intensity - a.intensity;
-    });
-    let sumOfShadowLightIntensity = 0;
-    activeShadowLights.forEach((item) => sumOfShadowLightIntensity += item.intensity);
-    activeShadowLights.forEach((item) => {
-      item.light.intensity = item.intensity / sumOfShadowLightIntensity;
-      item.light.castShadow &&= this.castShadow;
-    });
+    const activeShadowLights = this.getSortedShadowLightSources();
+    this.setShadowLightSourcesIntensity(activeShadowLights);
     this.shadowMapPassOverrideMaterials.render(
       renderer,
       scene,
@@ -292,6 +338,54 @@ export class ScreenSpaceShadowMap {
       this.shadowRenderTarget
     );
     this.shadowLightSources.forEach((item) => item.finishRenderShadow());
+  }
+
+  private getSortedShadowLightSources(): ActiveShadowLight[] {
+    let activeShadowLights: ActiveShadowLight[] = [];
+    this.shadowLightSources.forEach((item) =>
+      activeShadowLights.push(...item.prepareRenderShadow())
+    );
+    activeShadowLights.sort((a, b) => {
+      if (a.light.castShadow && !b.light.castShadow) {
+        return -1;
+      }
+      if (!a.light.castShadow && b.light.castShadow) {
+        return 1;
+      }
+      return b.intensity - a.intensity;
+    });
+    return activeShadowLights;
+  }
+
+  private setShadowLightSourcesIntensity(
+    activeShadowLights: ActiveShadowLight[]
+  ) {
+    let sumOfShadowLightIntensity = 0;
+    for (let i = 0; i < activeShadowLights.length; i++) {
+      const shadowLight = activeShadowLights[i];
+      if (
+        this.parameters.maximumNumberOfLightSources < 0 ||
+        i < this.parameters.maximumNumberOfLightSources
+      ) {
+        sumOfShadowLightIntensity += shadowLight.intensity;
+      }
+    }
+    for (let i = 0; i < activeShadowLights.length; i++) {
+      const shadowLight = activeShadowLights[i];
+      if (
+        this.parameters.maximumNumberOfLightSources < 0 ||
+        i < this.parameters.maximumNumberOfLightSources
+      ) {
+        shadowLight.light.visible = true;
+        shadowLight.light.intensity =
+          shadowLight.intensity / sumOfShadowLightIntensity;
+        shadowLight.light.castShadow &&= this.castShadow;
+      } else {
+        shadowLight.light.visible = false;
+        shadowLight.light.intensity = 0;
+        shadowLight.light.castShadow = false;
+      }
+    }
   }
 
   private updateShadowType(renderer: WebGLRenderer): void {
@@ -339,12 +433,16 @@ export class ShadowMapPassOverrideMaterials {
 
   constructor() {
     this.renderPass = new RenderPass();
-    this.shadowObjetMaterial = this.createShadowMaterial(ShadowMaterialType.Default);
+    this.shadowObjetMaterial = this.createShadowMaterial(
+      ShadowMaterialType.Default
+    );
     this.unlitMaterial = this.createShadowMaterial(ShadowMaterialType.Unlit);
     this.emissiveMaterial = this.createShadowMaterial(
       ShadowMaterialType.Emissive
     );
-    this.receiveShadowMaterial = this.createShadowMaterial(ShadowMaterialType.Shadow);
+    this.receiveShadowMaterial = this.createShadowMaterial(
+      ShadowMaterialType.Shadow
+    );
   }
 
   public dispose(): void {
@@ -455,6 +553,7 @@ export class ShadowMapPassOverrideMaterials {
       }
     } else if (object.receiveShadow) {
       object.material = this.receiveShadowMaterial;
+      object.castShadow = false;
     } else {
       object.visible = false;
     }
@@ -552,48 +651,31 @@ export class ShadowTypeConfiguration {
   }
 }
 
-export class RectAreaShadowLightSource implements ShadowLightSource {
-  private _rectAreaLight: RectAreaLight;
-  private _shadowLightSource: Light;
-  private _rectLightHelper?: RectAreaLightHelper;
-  private shadowMapSize: number;
-  private blurSamples: number;
-  private isVisibleBackup: boolean = true;
-  private castShadowBackup: boolean = true;
+abstract class BaseShadowLightSource implements ShadowLightSource {
+  protected _shadowLightSource: Light;
+  protected shadowMapSize: number;
+  protected blurSamples: number;
+  protected isVisibleBackup: boolean = true;
+  protected castShadowBackup: boolean = true;
 
-  constructor(rectAreaLight: RectAreaLight, parameters: any) {
+  constructor(lightSource: Light, parameters: any) {
     this.shadowMapSize = parameters?.shadowMapSize ?? 1024;
     this.blurSamples = parameters?.blurSamples ?? 8;
-    this._rectAreaLight = rectAreaLight;
-    this._rectAreaLight.userData.shadowLightSource = this;
-    if (parameters?.addHelper) {
-      this._rectLightHelper = new RectAreaLightHelper(this._rectAreaLight);
-      (this._rectLightHelper.material as LineBasicMaterial).depthWrite = false;
-      this._rectAreaLight.add(this._rectLightHelper);
-    }
-    switch (parameters?.shadowLightSourceType) {
-      default:
-      case ShadowLightSourceType.DirectionalLightShadow:
-        this._shadowLightSource = new DirectionalLight(0xffffff, 1);
-        break;
-      case ShadowLightSourceType.SpotLightShadow:
-        this._shadowLightSource = new SpotLight(0xffffff, 1, 0, Math.PI / 4, 0);
-        break;
-    }
-    this._shadowLightSource.position.copy(this._rectAreaLight.position);
-    this._shadowLightSource.lookAt(0, 0, 0);
+    this._shadowLightSource = lightSource;
     this._shadowLightSource.visible = false;
     this._shadowLightSource.castShadow = true;
-    this._shadowLightSource.shadow.mapSize = new Vector2(
-      this.shadowMapSize,
-      this.shadowMapSize
-    );
-    this._shadowLightSource.shadow.blurSamples = this.blurSamples;
+    if (this._shadowLightSource.shadow) {
+      this._shadowLightSource.shadow.mapSize = new Vector2(
+        this.shadowMapSize,
+        this.shadowMapSize
+      );
+      this._shadowLightSource.shadow.blurSamples = this.blurSamples;
+    }
     this._shadowLightSource.userData.shadowLightSource = this;
   }
 
-  public getRectAreaLight(): RectAreaLight {
-    return this._rectAreaLight;
+  getPosition(): Vector3 {
+    return this._shadowLightSource.position;
   }
 
   public getShadowLight(): Light {
@@ -601,7 +683,7 @@ export class RectAreaShadowLightSource implements ShadowLightSource {
   }
 
   public getOriginalLight(): Light | null {
-    return this._rectAreaLight;
+    return null;
   }
 
   public dispose(): void {
@@ -618,7 +700,7 @@ export class RectAreaShadowLightSource implements ShadowLightSource {
 
   public updatePositionAndTarget() {
     this.updateShadowPositionAndTarget(
-      this._rectAreaLight.position,
+      this.getPosition(),
       new Vector3(0, 0, 0)
     );
   }
@@ -647,14 +729,16 @@ export class RectAreaShadowLightSource implements ShadowLightSource {
       camera.near = near;
       camera.far = far;
       this._shadowLightSource.angle = angle;
-    } else {
+    } else if (this._shadowLightSource.shadow) {
       const camera = this._shadowLightSource.shadow.camera;
       sceneBounds.updateCameraViewVolumeFromBounds(camera);
     }
-    this._shadowLightSource.shadow.needsUpdate = true;
+    if (this._shadowLightSource.shadow) {
+      this._shadowLightSource.shadow.needsUpdate = true;
+    }
   }
 
-  private updateShadowPositionAndTarget(
+  protected updateShadowPositionAndTarget(
     cameraPosition: Vector3,
     targetPosition: Vector3
   ): void {
@@ -673,10 +757,10 @@ export class RectAreaShadowLightSource implements ShadowLightSource {
     } else {
       this._shadowLightSource.position.copy(cameraPosition);
       this._shadowLightSource.lookAt(targetPosition);
-      this._shadowLightSource.shadow.camera.position.copy(cameraPosition);
-      this._shadowLightSource.shadow.camera.lookAt(targetPosition);
+      this._shadowLightSource.shadow?.camera.position.copy(cameraPosition);
+      this._shadowLightSource.shadow?.camera.lookAt(targetPosition);
     }
-    this._shadowLightSource.shadow.camera.updateMatrixWorld();
+    this._shadowLightSource.shadow?.camera.updateMatrixWorld();
     this._shadowLightSource.updateMatrixWorld();
   }
 
@@ -685,10 +769,60 @@ export class RectAreaShadowLightSource implements ShadowLightSource {
     shadowScale: number
   ): void {
     const shadow = this._shadowLightSource.shadow;
-    shadow.bias = typeParameters.bias;
-    shadow.normalBias = typeParameters.normalBias * shadowScale;
-    shadow.radius = typeParameters.radius;
-    shadow.needsUpdate = true;
+    if (shadow) {
+      shadow.bias = typeParameters.bias;
+      shadow.normalBias = typeParameters.normalBias * shadowScale;
+      shadow.radius = typeParameters.radius;
+      shadow.needsUpdate = true;
+    }
+  }
+
+  public prepareRenderShadow(): ActiveShadowLight[] {
+    return [];
+  }
+
+  public finishRenderShadow(): void {
+    return;
+  }
+}
+
+export class RectAreaShadowLightSource extends BaseShadowLightSource {
+  private _rectAreaLight: RectAreaLight;
+  private _rectLightHelper?: RectAreaLightHelper;
+
+  constructor(rectAreaLight: RectAreaLight, parameters: any) {
+    let lightSource: Light;
+    switch (parameters?.shadowLightSourceType) {
+      default:
+      case ShadowLightSourceType.DirectionalLightShadow:
+        lightSource = new DirectionalLight(0xffffff, 1);
+        break;
+      case ShadowLightSourceType.SpotLightShadow:
+        lightSource = new SpotLight(0xffffff, 1, 0, Math.PI / 4, 0);
+        break;
+    }
+    lightSource.position.copy(rectAreaLight.position);
+    lightSource.lookAt(0, 0, 0);
+    super(lightSource, parameters);
+    this._rectAreaLight = rectAreaLight;
+    this._rectAreaLight.userData.shadowLightSource = this;
+    if (parameters?.addHelper) {
+      this._rectLightHelper = new RectAreaLightHelper(this._rectAreaLight);
+      (this._rectLightHelper.material as LineBasicMaterial).depthWrite = false;
+      this._rectAreaLight.add(this._rectLightHelper);
+    }
+  }
+
+  getPosition(): Vector3 {
+    return this._rectAreaLight.position;
+  }
+
+  public getRectAreaLight(): RectAreaLight {
+    return this._rectAreaLight;
+  }
+
+  public getOriginalLight(): Light | null {
+    return this._rectAreaLight;
   }
 
   public prepareRenderShadow(): ActiveShadowLight[] {
@@ -697,17 +831,62 @@ export class RectAreaShadowLightSource implements ShadowLightSource {
     this._shadowLightSource.visible = this._rectAreaLight.visible;
     this._rectAreaLight.visible = false;
     if (!this._shadowLightSource.visible) {
-      return []
-    };
-    return [{
-      light: this._shadowLightSource,
-      intensity: this._rectAreaLight.intensity,
-    }];
+      return [];
+    }
+    return [
+      {
+        light: this._shadowLightSource,
+        intensity: this._rectAreaLight.intensity,
+      },
+    ];
   }
 
   public finishRenderShadow(): void {
     this._shadowLightSource.visible = false;
     this._shadowLightSource.castShadow = this.castShadowBackup;
     this._rectAreaLight.visible = this.isVisibleBackup;
+  }
+}
+
+export class EnvironmentShadowLightSource extends BaseShadowLightSource {
+  private lightSource: LightSource;
+  private position: Vector3;
+  private intensity: number;
+
+  constructor(
+    lightSource: LightSource,
+    position: Vector3,
+    lightIntensity: number,
+    parameters: any
+  ) {
+    const directionalLight = new DirectionalLight(0xffffff, lightIntensity);
+    directionalLight.position.copy(position);
+    directionalLight.lookAt(0, 0, 0);
+    directionalLight.updateMatrix();
+    directionalLight.castShadow = true;
+    super(directionalLight, parameters);
+    this.lightSource = lightSource;
+    this.position = position.clone();
+    this.intensity = lightIntensity;
+  }
+
+  getPosition(): Vector3 {
+    return this.position;
+  }
+
+  public prepareRenderShadow(): ActiveShadowLight[] {
+    this.castShadowBackup = this._shadowLightSource.castShadow;
+    this._shadowLightSource.visible = true;
+    return [
+      {
+        light: this._shadowLightSource,
+        intensity: this.intensity,
+      },
+    ];
+  }
+
+  public finishRenderShadow(): void {
+    this._shadowLightSource.castShadow = this.castShadowBackup;
+    this._shadowLightSource.visible = false;
   }
 }

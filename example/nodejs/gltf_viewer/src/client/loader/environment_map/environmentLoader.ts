@@ -16,9 +16,14 @@ import { GUI, GUIController } from 'dat.gui';
 class Environment {
     public environment: Texture | null = null;
     public background: Texture | Color | null = null;
-    constructor(environment: Texture, background: Texture | Color) {
+    public equirectangularTexture?: Texture;
+    public textureData?: any;
+
+    constructor(environment: Texture, background: Texture | Color, equirectangularTexture?: Texture, textureData?: any) {
         this.environment = environment;
         this.background = background;
+        this.equirectangularTexture = equirectangularTexture;
+        this.textureData = textureData;
     }
 }
 
@@ -35,24 +40,34 @@ export class EnvironmentLoader {
     private uiFolder?: GUI = undefined;
     private environmentController?: GUIController = undefined;
     private environmentName: string = '';
+    public currentEnvironment?: Environment = undefined;
+    private showBackground: boolean = false;
 
     constructor(renderer: WebGLRenderer) {
         this.renderer = renderer;
         this.defaultEnvironmentTexture = createUniformColorTexture(this.defaultEnvironmentColor);
     }
 
-    public setEnvironment(scene: Scene, showBackground: boolean) {
+    public setEnvironment(scene: Scene, showBackground: boolean): boolean {
         const environment = this.environemtMap.get(this.environmentName.length > 0 ? this.environmentName : 'room environment');
-        if (environment) {
-            scene.background = (showBackground && environment.background) ? environment.background : this.defaultBackgroundColor;
-            scene.environment = environment.environment ?? this.defaultEnvironmentTexture;
+        const changed = this.currentEnvironment !== environment || this.showBackground !== showBackground;
+        if (!changed) {
+            return false;
         }
+        this.currentEnvironment = environment;   
+        this.showBackground = showBackground
+        if (environment) {
+            scene.environment = environment.environment ?? this.defaultEnvironmentTexture;
+            scene.background = (showBackground && environment.background) ? environment.background : this.defaultBackgroundColor;
+        }
+        return true;
     }
 
     public loadDefaultEnvironment(changeEnvironment: boolean, createScene?: () => Scene) {
         const defaultEnvironmentName = 'room environment';
         const roomScene = (createScene && createScene()) ?? new RoomEnvironment();
         const environmentTexture = this.getPmremGenerator().fromScene(roomScene, 0.04).texture;
+        // TODO: scene to equirectangular texture
         this.environemtMap.set(defaultEnvironmentName, new Environment(environmentTexture, environmentTexture));
         if (changeEnvironment) {
             this.environmentName = defaultEnvironmentName;
@@ -72,9 +87,9 @@ export class EnvironmentLoader {
     }
 
     public loadExr(resourceName: string, resource: string, changeEnvironment: boolean) {
-        this.loadExrAndSetTexture((texture: Texture) => {
+        this.loadExrAndSetTexture((texture: Texture, textureData: any) => {
             const environmentTexture = this.getPmremGenerator().fromEquirectangular(texture).texture;
-            this.environemtMap.set(resourceName, new Environment(environmentTexture, environmentTexture));
+            this.environemtMap.set(resourceName, new Environment(environmentTexture, environmentTexture, texture, textureData));
             if (changeEnvironment) {
                 this.environmentName = resourceName;
             }
@@ -83,9 +98,9 @@ export class EnvironmentLoader {
     }
 
     public loadHdr(resourceName: string, resource: string, changeEnvironment: boolean) {
-        this.loadHdrAndSetTexture((texture: Texture) => {
+        this.loadHdrAndSetTexture((texture: Texture, textureData: any) => {
             const environmentTexture = this.getPmremGenerator().fromEquirectangular(texture).texture;
-            this.environemtMap.set(resourceName, new Environment(environmentTexture, environmentTexture));
+            this.environemtMap.set(resourceName, new Environment(environmentTexture, environmentTexture, texture, textureData));
             if (changeEnvironment) {
                 this.environmentName = resourceName;
             }
@@ -115,27 +130,27 @@ export class EnvironmentLoader {
         });
     }
     
-    private async loadExrAndSetTexture(setTexture: (texture: Texture) => void, resource: string) {
+    private async loadExrAndSetTexture(setTexture: (texture: Texture, textureData: any) => void, resource: string) {
         if (!resource) {
             return;
         }
         if (!this.exrLoader) {
             this.exrLoader = new EXRLoader();
         }
-        this.exrLoader.load(resource, (texture: Texture, _textureData: any) => {
-            setTexture(texture);
+        this.exrLoader.load(resource, (texture: Texture, textureData: any) => {
+            setTexture(texture, textureData);
         });
     }
     
-    private loadHdrAndSetTexture(setTexture: (texture: Texture) => void, resource: string): void {
+    private loadHdrAndSetTexture(setTexture: (texture: Texture, textureData: any) => void, resource: string): void {
         if (!resource) {
             return;
         }
         if (!this.rgbeLoader) {
             this.rgbeLoader = new RGBELoader();
         }
-        this.rgbeLoader.load(resource, (texture: Texture, _textureData: any) => {
-            setTexture(texture);
+        this.rgbeLoader.load(resource, (texture: Texture, textureData: any) => {
+            setTexture(texture, textureData);
         });
     }
 

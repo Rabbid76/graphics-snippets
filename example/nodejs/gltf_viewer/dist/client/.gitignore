@@ -4,3 +4,6 @@
 *.py
 *.exr
 *.hdr
+*.envmap
+*.png
+

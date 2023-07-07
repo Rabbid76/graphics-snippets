@@ -9,10 +9,12 @@ import {
     ShadowMaterial,
     Texture,
 } from 'three'
+// @ts-ignore
+import LogoSquareImage from './../../../resources/rabbid.png'
 
 export const createPreviewMaterial = (): Material => {
     const material = new MeshStandardMaterial({side: DoubleSide})
-    loadAndSetTexture(texture => material.map = texture, 'roomle_square.jpeg', new Color(0.859, 0, 0))
+    loadAndSetTexture(texture => material.map = texture, LogoSquareImage, new Color(0.859, 0, 0))
     return material
 }
 

@@ -15,6 +15,7 @@ import {
 import { GUI } from 'dat.gui';
 
 export class LightSources {
+    public static noLightSources = [];
     public static defaultLightSources = [
         {
             type: 'ambient',
@@ -182,7 +183,7 @@ export class LightSourcesGUI {
     private lightColors: any = [];
     private lightGUI: GUI | undefined;
     private lightSourceFolders: GUI[] = [];
-    private lights: string = 'default';
+    private lights: string = 'none';
 
     constructor(lightSources: LightSources) {
       this.lightSources = lightSources;
@@ -190,9 +191,10 @@ export class LightSourcesGUI {
 
     public addGUI(gui: GUI, lightControlsUpdate: () => void, lightSourcesUpdate: () => void): void {
         gui.add<any>(this.lightSources, 'lightControls').onChange(lightControlsUpdate);
-        gui.add<any>(this, 'lights', ['default', 'fife']).onChange((value: string) => {
+        gui.add<any>(this, 'lights', ['none', 'default', 'fife']).onChange((value: string) => {
             switch (value) {
                 default:
+                case 'none': this.lightSources.currentLightSourceDefinition = LightSources.noLightSources; break;
                 case 'default': this.lightSources.currentLightSourceDefinition = LightSources.defaultLightSources; break;
                 case 'fife': this.lightSources.currentLightSourceDefinition = LightSources.fifeLightSources; break;
             };

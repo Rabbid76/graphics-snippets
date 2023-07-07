@@ -1,5 +1,9 @@
-import { CopyTransformMaterial } from './shader-utility';
-import { BlurPass, RenderOverrideVisibility, RenderPass } from './render-utility';
+import { CopyTransformMaterial, FLIP_Y_UV_TRANSFORM } from './shader-utility';
+import {
+  BlurPass,
+  RenderOverrideVisibility,
+  RenderPass,
+} from './render-utility';
 import {
   Camera,
   CustomBlending,
@@ -161,25 +165,17 @@ export class GroundReflectionPass {
     this._copyMaterial.update({
       texture: renderTarget?.texture ?? undefined,
       colorTransform: new Matrix4().set(
-        brightness,
-        0,
-        0,
-        0,
-        0,
-        brightness,
-        0,
-        0,
-        0,
-        0,
-        brightness,
-        0,
-        0,
-        0,
-        0,
-        intensity
+        // eslint-disable-next-line prettier/prettier
+        brightness, 0, 0, 0,
+        // eslint-disable-next-line prettier/prettier
+        0, brightness, 0, 0,
+        // eslint-disable-next-line prettier/prettier
+        0, 0, brightness, 0,
+        // eslint-disable-next-line prettier/prettier
+        0, 0, 0, intensity
       ),
       multiplyChannels: 0,
-      uvTransform: CopyTransformMaterial.flipYuvTransform,
+      uvTransform: FLIP_Y_UV_TRANSFORM,
     });
     this._copyMaterial.depthTest = true;
     this._copyMaterial.depthWrite = false;
@@ -290,9 +286,15 @@ export class GroundReflectionPass {
     const blurVerMin =
       (this.parameters.blurVertical / this.height) *
       Math.abs(cameraUpVector.dot(new Vector3(0, 0, 1)));
-    this.blurPass.render(renderer,renderTargets,
-        [blurHorMin, blurVerMin], 
-        [blurHorMin * (1 + this.parameters.blurAscent), blurVerMin * (1 + this.parameters.blurAscent)]);
+    this.blurPass.render(
+      renderer,
+      renderTargets,
+      [blurHorMin, blurVerMin],
+      [
+        blurHorMin * (1 + this.parameters.blurAscent),
+        blurVerMin * (1 + this.parameters.blurAscent),
+      ]
+    );
   }
 
   private createGroundReflectionCamera(camera: Camera): Camera {

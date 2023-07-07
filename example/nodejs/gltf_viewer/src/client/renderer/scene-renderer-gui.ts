@@ -1,18 +1,20 @@
 import { QualityLevel, SceneRenderer } from './scene-renderer';
+import { AmbientOcclusionType } from './shadow-and-ao-pass';
 import {
   ACESFilmicToneMapping,
   CineonToneMapping,
-  LinearEncoding,
+  LinearSRGBColorSpace,
   LinearToneMapping,
   NoToneMapping,
   ReinhardToneMapping,
-  sRGBEncoding,
+  SRGBColorSpace,
 } from 'three';
 import { GUI } from 'dat.gui';
 
 export class SceneRendererGUI {
   private sceneRenderer: SceneRenderer;
   private qualityLevel = '';
+  private ambientOcclusionType = '';
 
   constructor(sceneRenderer: SceneRenderer) {
     this.sceneRenderer = sceneRenderer;
@@ -41,23 +43,23 @@ export class SceneRendererGUI {
   }
 
   private addRepresentationalGUI(gui: GUI, updateCallback: () => void): void {
-    const outputEncodings = new Map([
-      ['LinearEncoding', LinearEncoding],
-      ['sRGBEncoding', sRGBEncoding],
+    const outputColorSpaces = new Map([
+      ['LinearSRGBColorSpace', LinearSRGBColorSpace],
+      ['SRGBColorSpace', SRGBColorSpace],
     ]);
-    const outputEncodingNames: string[] = [];
-    outputEncodings.forEach((value, key) => {
-      outputEncodingNames.push(key);
-      if (this.sceneRenderer.renderer.outputEncoding === value) {
-        this.sceneRenderer.outputEncoding = key;
+    const outputColorSpaceNames: string[] = [];
+    outputColorSpaces.forEach((value, key) => {
+      outputColorSpaceNames.push(key);
+      if (this.sceneRenderer.renderer.outputColorSpace === value) {
+        this.sceneRenderer.outputColorSpace = key;
       }
     });
     gui
-      .add<any>(this.sceneRenderer, 'outputEncoding', outputEncodingNames)
-      .onChange((encoding: string) => {
-        if (outputEncodings.has(encoding)) {
-          this.sceneRenderer.renderer.outputEncoding =
-            outputEncodings.get(encoding) ?? LinearEncoding;
+      .add<any>(this.sceneRenderer, 'outputColorSpace', outputColorSpaceNames)
+      .onChange((colorSpace: string) => {
+        if (outputColorSpaces.has(colorSpace)) {
+          this.sceneRenderer.renderer.outputColorSpace =
+            outputColorSpaces.get(colorSpace) ?? SRGBColorSpace;
           updateCallback();
         }
       });
@@ -109,10 +111,11 @@ export class SceneRendererGUI {
         'off ': 'off',
         'grayscale (no textures)': 'grayscale',
         'color buffer': 'color',
-        'depth buffer': 'depth',
-        'normal vector': 'normal',
-        'SSAO Monte Carlo': 'ssao',
-        'blur SSAO': 'ssaoblur',
+        'linear depth': 'lineardepth',
+        'g-buffer normal vector': 'g-normal',
+        'g-buffer depth': 'g-depth',
+        'AO pure': 'ssao',
+        'AO denoised': 'ssaodenoise',
         'shadow map': 'shadowmap',
         'shadow Monte Carlo': 'shadow',
         'blur shadow': 'shadowblur',
@@ -170,52 +173,147 @@ export class SceneRendererGUI {
   }
 
   private addShadowAndAoGUI(gui: GUI, updateCallback: () => void): void {
-    const updateBufferParameters = (): void => {
-      this.sceneRenderer.shadowAndAoPass.needsUpdate = true;
-      updateCallback();
-    };
     const updateParameters = (): void => {
-      this.sceneRenderer.depthNormalRenderTarget.needsUpdate = true;
+      this.sceneRenderer.gBufferRenderTarget.needsUpdate = true;
+      this.sceneRenderer.shadowAndAoPass.needsUpdate = true;
+      this.sceneRenderer.shadowAndAoPass.shadowAndAoRenderTargets.parametersNeedsUpdate =
+        true;
       updateCallback();
     };
-    const bufferParameters =
-      this.sceneRenderer.depthNormalRenderTarget.parameters;
     const parameters = this.sceneRenderer.shadowAndAoPass.parameters;
+    const ahAndAoParameters = parameters.shAndAo;
+    const shadowMapParameters = this.sceneRenderer.screenSpaceShadow.parameters;
+    const ssaoParameters = parameters.ssao;
+    const hbaoParameters = parameters.hbao;
+    const denoiseParameters = parameters.poissionDenoise;
+    gui.add<any>(parameters, 'enabled').onChange(() => updateParameters());
+    const aoTypes = new Map([
+      ['none', AmbientOcclusionType.NONE],
+      ['SSAO', AmbientOcclusionType.SSAO],
+      ['effects SSAO', AmbientOcclusionType.EffectsSSAO],
+      ['effects HBAO', AmbientOcclusionType.EffectsHBAO],
+    ]);
+    const aoNames: string[] = Array.from(aoTypes.keys());
+    aoTypes.forEach((value, key) => {
+      if (value === parameters.aoType) {
+        this.ambientOcclusionType = key;
+      }
+    });
     gui
-      .add<any>(bufferParameters, 'normalBufferFxaa')
-      .onChange(() => updateBufferParameters());
+      .add<any>(this, 'ambientOcclusionType', aoNames)
+      .onChange((aoType: string) => {
+        if (aoTypes.has(aoType)) {
+          parameters.aoType = aoTypes.get(aoType) ?? AmbientOcclusionType.SSAO;
+          updateParameters();
+        }
+      });
+    gui.add<any>(parameters, 'aoIntensity', 0, 1).onChange(() => {
+      updateParameters();
+    });
+    gui.add<any>(parameters, 'aoOnGround').onChange(() => {
+      updateParameters();
+    });
     gui
-      .add<any>(parameters, 'aoAndSoftShadowEnabled')
+      .add<any>(parameters, 'enablePoissionDenoise')
+      .onChange(() => updateParameters());
+    gui.add<any>(parameters, 'alwaysUpdate').onChange(() => updateParameters());
+    gui
+      .add<any>(shadowMapParameters, 'maximumNumberOfLightSources')
       .onChange(() => updateParameters());
     gui
-      .add<any>(parameters, 'aoAndSoftShadowFxaa')
+      .add<any>(ahAndAoParameters, 'aoAndSoftShadowFxaa')
       .onChange(() => updateParameters());
-    gui
-      .add<any>(parameters, 'aoAlwaysUpdate')
+
+    const aoFolder = gui.addFolder('Roomle SSAO');
+    aoFolder
+      .add<any>(ahAndAoParameters, 'aoFadeout', 0, 1)
       .onChange(() => updateParameters());
-    gui
-      .add<any>(parameters, 'aoIntensity', 0, 1)
+    aoFolder
+      .add<any>(ahAndAoParameters, 'aoKernelRadius', 0.001, 1)
       .onChange(() => updateParameters());
-    gui
-      .add<any>(parameters, 'aoFadeout', 0, 1)
+    aoFolder
+      .add<any>(ahAndAoParameters, 'aoDepthBias', 0.0001, 0.01)
       .onChange(() => updateParameters());
-    gui
-      .add<any>(parameters, 'aoKernelRadius', 0.001, 0.2)
+    aoFolder
+      .add<any>(ahAndAoParameters, 'aoMaxDistance', 0.01, 1)
       .onChange(() => updateParameters());
-    gui
-      .add<any>(parameters, 'aoDepthBias', 0.0001, 0.01)
+    aoFolder
+      .add<any>(ahAndAoParameters, 'aoMaxDepth', 0.9, 1)
       .onChange(() => updateParameters());
-    gui
-      .add<any>(parameters, 'aoMaxDistance', 0.01, 1)
+    aoFolder
+      .add<any>(ahAndAoParameters, 'shadowIntensity', 0, 1)
       .onChange(() => updateParameters());
-    gui
-      .add<any>(parameters, 'aoMaxDepth', 0.9, 1)
+    aoFolder
+      .add<any>(ahAndAoParameters, 'shadowRadius', 0.001, 0.5)
       .onChange(() => updateParameters());
-    gui
-      .add<any>(parameters, 'shadowIntensity', 0, 1)
+
+    const ssaoFolder = gui.addFolder('effects SSAO');
+    ssaoFolder
+      .add<any>(ssaoParameters, 'resolutionScale', 0.25, 1, 0.25)
       .onChange(() => updateParameters());
-    gui
-      .add<any>(parameters, 'shadowRadius', 0.001, 0.5)
+    ssaoFolder
+      .add<any>(ssaoParameters, 'spp', 1, 64, 1)
+      .onChange(() => updateParameters());
+    ssaoFolder
+      .add<any>(ssaoParameters, 'distance', 0.1, 10, 0.1)
+      .onChange(() => updateParameters());
+    ssaoFolder
+      .add<any>(ssaoParameters, 'distancePower', 0, 2, 0.125)
+      .onChange(() => updateParameters());
+    ssaoFolder
+      .add<any>(ssaoParameters, 'bias', 0, 500, 1)
+      .onChange(() => updateParameters());
+    ssaoFolder
+      .add<any>(ssaoParameters, 'power', 0.5, 32, 0.5)
+      .onChange(() => updateParameters());
+    ssaoFolder
+      .add<any>(ssaoParameters, 'thickness', 0, 0.1, 0.001)
+      .onChange(() => updateParameters());
+
+    const hbaoFolder = gui.addFolder('effects HBAO');
+    hbaoFolder
+      .add<any>(hbaoParameters, 'resolutionScale', 0.25, 1, 0.2)
+      .onChange(() => updateParameters());
+    hbaoFolder
+      .add<any>(hbaoParameters, 'spp', 1, 64, 1)
+      .onChange(() => updateParameters());
+    hbaoFolder
+      .add<any>(hbaoParameters, 'distance', 0.1, 10, 0.01)
+      .onChange(() => updateParameters());
+    hbaoFolder
+      .add<any>(hbaoParameters, 'distancePower', 0.1, 10, 0.1)
+      .onChange(() => updateParameters());
+    hbaoFolder
+      .add<any>(hbaoParameters, 'bias', 0, 100, 1)
+      .onChange(() => updateParameters());
+    hbaoFolder
+      .add<any>(hbaoParameters, 'power', 0.5, 8, 0.5)
+      .onChange(() => updateParameters());
+    hbaoFolder
+      .add<any>(hbaoParameters, 'thickness', 0, 0.1, 0.001)
+      .onChange(() => updateParameters());
+
+    const denoiseFolder = gui.addFolder('Possion Denoise');
+    denoiseFolder
+      .add<any>(denoiseParameters, 'iterations', 0, 3, 1)
+      .onChange(() => updateParameters());
+    denoiseFolder
+      .add<any>(denoiseParameters, 'radius', 0, 32, 1)
+      .onChange(() => updateParameters());
+    denoiseFolder
+      .add<any>(denoiseParameters, 'rings', 0, 16, 0.125)
+      .onChange(() => updateParameters());
+    denoiseFolder
+      .add<any>(denoiseParameters, 'samples', 0, 32, 1)
+      .onChange(() => updateParameters());
+    denoiseFolder
+      .add<any>(denoiseParameters, 'lumaPhi', 0, 20, 0.001)
+      .onChange(() => updateParameters());
+    denoiseFolder
+      .add<any>(denoiseParameters, 'depthPhi', 0, 20, 0.001)
+      .onChange(() => updateParameters());
+    denoiseFolder
+      .add<any>(denoiseParameters, 'normalPhi', 0, 20, 0.001)
       .onChange(() => updateParameters());
   }
 

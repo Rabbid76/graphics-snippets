@@ -1,4 +1,8 @@
-import { BlurPass, RenderOverrideVisibility, SceneVolume } from './render-utility';
+import {
+  BlurPass,
+  RenderOverrideVisibility,
+  SceneVolume,
+} from './render-utility';
 import { BlurContactShadowShader } from './shader-utility';
 import {
   Camera,
@@ -84,7 +88,10 @@ export class BakedGroundContactShadow {
     );
     this.renderTargetBlur.texture.generateMipmaps = false;
 
-    this.shadowGroundPlane = new ShadowGroundPlane(this.renderTarget.texture, this.parameters);
+    this.shadowGroundPlane = new ShadowGroundPlane(
+      this.renderTarget.texture,
+      this.parameters
+    );
     this.groundGroup.add(this.shadowGroundPlane);
 
     this.groundContactCamera = new GroundContactCamera();
@@ -173,7 +180,8 @@ export class BakedGroundContactShadow {
       this.depthMaterial.userData.fadeoutFalloff.value =
         this.parameters.fadeoutFalloff;
     }
-    const fadeoutBias = this.parameters.fadeoutBias / this.groundContactCamera.far;
+    const fadeoutBias =
+      this.parameters.fadeoutBias / this.groundContactCamera.far;
     if (this.depthMaterial.userData.fadeoutBias.value !== fadeoutBias) {
       this.depthMaterial.userData.fadeoutBias.value = fadeoutBias;
     }
@@ -205,7 +213,10 @@ export class BakedGroundContactShadow {
     const size = this.parameters.planeSize;
     this.shadowGroundPlane.scale.x = size;
     this.shadowGroundPlane.scale.y = size;
-    this.groundContactCamera.updateCameraFormPlaneSize(size, this.groundShadowFar);
+    this.groundContactCamera.updateCameraFormPlaneSize(
+      size,
+      this.groundShadowFar
+    );
     this.needsUpdate = true;
   }
 
@@ -214,7 +225,10 @@ export class BakedGroundContactShadow {
   }
 
   public render(scene: Scene): void {
-    this.groundContactCamera.updateCameraHelper(this.parameters.cameraHelper, scene);
+    this.groundContactCamera.updateCameraHelper(
+      this.parameters.cameraHelper,
+      scene
+    );
     const maxIterations = 10;
     this.shadowGroundPlane.visible = this.parameters.enabled;
     const needsUpdate = this.parameters.alwaysUpdate || this.needsUpdate;
@@ -258,7 +272,9 @@ export class BakedGroundContactShadow {
     scene.background = initialBackground;
     this.groundGroup.visible = true;
     this.shadowGroundPlane.visible = this.parameters.enabled;
-    this.groundContactCamera.setCameraHelperVisibility(this.parameters.cameraHelper);
+    this.groundContactCamera.setCameraHelperVisibility(
+      this.parameters.cameraHelper
+    );
   }
 
   private renderGroundContact(scene: Scene) {
@@ -306,9 +322,12 @@ export class BakedGroundContactShadow {
   }
 
   private renderBlurPass(uvMin: number, uvMax: number): void {
-    this.blurPass.render(this.renderer,
+    this.blurPass.render(
+      this.renderer,
       [this.renderTarget, this.renderTargetBlur, this.renderTarget],
-      [uvMin, uvMin], [uvMax, uvMax]);
+      [uvMin, uvMin],
+      [uvMax, uvMax]
+    );
   }
 }
 
@@ -349,9 +368,7 @@ export class ShadowGroundPlane extends Mesh {
     if (shadowGroundMaterial.opacity !== parameters.opacity) {
       shadowGroundMaterial.opacity = parameters.opacity;
     }
-    if (
-      shadowGroundMaterial.polygonOffsetFactor !== parameters.polygonOffset
-    ) {
+    if (shadowGroundMaterial.polygonOffsetFactor !== parameters.polygonOffset) {
       shadowGroundMaterial.polygonOffset = true;
       shadowGroundMaterial.polygonOffsetFactor = parameters.polygonOffset;
       shadowGroundMaterial.polygonOffsetUnits = parameters.polygonOffset;
@@ -397,7 +414,6 @@ class GroundContactCamera extends OrthographicCamera {
       this.cameraHelper = this.cameraHelper ?? new CameraHelper(this);
       this.cameraHelper.visible = true;
       scene?.add(this.cameraHelper);
-
     } else if (this.cameraHelper?.parent) {
       this.cameraHelper?.removeFromParent();
     }
@@ -412,18 +428,20 @@ class GroundContactCamera extends OrthographicCamera {
 
 class BakedGroundContactTestMesh extends Mesh {
   constructor() {
-    super(new SphereGeometry(1, 32, 16),
+    super(
+      new SphereGeometry(1, 32, 16),
       new MeshPhysicalMaterial({
         color: 0xff0000,
         side: DoubleSide,
         transparent: true,
-      }));
+      })
+    );
     this.castShadow = true;
   }
 
   public addToObject(object: Object3D) {
     this.position.set(0, 1, 0);
     this.updateMatrixWorld();
-    object.add(this); 
+    object.add(this);
   }
 }

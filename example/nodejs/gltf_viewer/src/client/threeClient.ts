@@ -4,7 +4,8 @@ import { QualityLevel} from './renderer/scene-renderer'
 import { SceneRendererGUI } from './renderer/scene-renderer-gui'
 import { MaterialGUI } from './scene/material-gui'
 import { LightSourcesGUI } from './scene/lightSources'
-import { SkyEnvironmentGUI } from './scene/skyEnvironment';
+import { SkyEnvironment, SkyEnvironmentGUI } from './scene/skyEnvironment';
+import { BackgroundEnvironment, BackgroundEnvironmentGUI } from './renderer/background-environment';
 import { GroundMaterialType } from './scene/materials'
 import { Group, Vector2, WebGLRenderer } from 'three'
 import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
@@ -159,10 +160,30 @@ gui.add<any>(generalProperties, 'groundMaterial', {
     'pavement': 'pavement'
 }).onChange(() => setGroundMaterial())
 const environmentFolder = gui.addFolder('environment');
-environmentFolder.add<any>(renderScene, 'showEnvironment');
-const skaEnvironmentFolder = environmentFolder.addFolder('sky');
+const showEnvironmentController = environmentFolder.add<any>(renderScene, 'showEnvironment').onChange((value) => {
+    if (value) {
+        skyEnvironmentGUI.hideSky();
+        backgroundEnvironmentGUI.hideBackground();
+    }
+});
+const skyEnvironmentFolder = environmentFolder.addFolder('sky');
 const skyEnvironmentGUI = new SkyEnvironmentGUI(renderScene.skyEnvironment);
-skyEnvironmentGUI.addGUI(skaEnvironmentFolder);
+skyEnvironmentGUI.addGUI(skyEnvironmentFolder, (skyEnvironment: SkyEnvironment) => {
+    if (skyEnvironment.parameters.visible) {
+        showEnvironmentController.setValue(false);
+        showEnvironmentController.updateDisplay();
+        backgroundEnvironmentGUI.hideBackground();
+    }
+});
+const backgroundEnvironmentFolder = environmentFolder.addFolder('background');
+const backgroundEnvironmentGUI = new BackgroundEnvironmentGUI(renderScene.backgroundEnvironment);
+backgroundEnvironmentGUI.addGUI(backgroundEnvironmentFolder, (backgroundEnvironment: BackgroundEnvironment) => {
+    if (backgroundEnvironment.parameters.isSet) {
+        showEnvironmentController.setValue(false);
+        showEnvironmentController.updateDisplay();
+        skyEnvironmentGUI.hideSky();
+    }
+});
 renderScene.environmentLoader.addGUI(environmentFolder);
 const experimentalFolder = gui.addFolder('experimatal options');
 experimentalFolder.add<any>(renderScene.sceneRenderer, 'groundReflection');
@@ -199,10 +220,21 @@ setupDragDrop('holder', 'hover', (file: File, event: ProgressEvent<FileReader>) 
     loadResource(file.name, event.target.result);
 });
 
+const saveSceneToFile = (fileName: string) => {
+    const imgData = renderer.domElement.toDataURL();      
+    download_file(imgData, fileName, undefined);
+};
+const renderAndSaveToFile = (renderMode: string, fileName: string) => {
+    const renderModeBackup = renderScene.sceneRenderer.debugOutput;
+    renderScene.sceneRenderer.debugOutput = renderMode;
+    renderScene.prepareRender(new Vector2());
+    renderScene.render(false);
+    saveSceneToFile(fileName);
+    renderScene.sceneRenderer.debugOutput = renderModeBackup;
+};
 const saveScene = () => {
     try {
-        const imgData = renderer.domElement.toDataURL();      
-        download_file(imgData, generalProperties.sceneName + '.png', undefined)
+        saveSceneToFile(generalProperties.sceneName + '.png');
     } 
     catch(e) {
         console.log(e);
@@ -211,6 +243,20 @@ const saveScene = () => {
 const saveButton = document.getElementById('save-button');
 if (saveButton) {
     saveButton.onclick = () => saveScene();
+};
+const saveGBuffer = () => {
+    try {
+        renderAndSaveToFile('color', generalProperties.sceneName + '_color.png');
+        renderAndSaveToFile('g-normal', generalProperties.sceneName + '_normal.png');
+        renderAndSaveToFile('g-depth', generalProperties.sceneName + '_depth.png');
+    } 
+    catch(e) {
+        console.log(e);
+    }
+}
+const saveGBufferButton = document.getElementById('save-g-buffer-button');
+if (saveGBufferButton) {
+    saveGBufferButton.onclick = () => saveGBuffer();
 };
 
 let start: number, previousTimeStamp: number;

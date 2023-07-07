@@ -1,15 +1,16 @@
 import {
+    ColorSpace,
     CubeTexture,
     DataTexture,
     FileLoader,
-    LinearEncoding,
+    LinearSRGBColorSpace,
     LinearFilter,
     LinearMipMapLinearFilter,
     RGBAFormat,
     TextureDataType,
-    TextureEncoding,
     UnsignedByteType,
-    Vector3
+    Vector3,
+    SRGBColorSpace
 } from 'three';
 
 const _HEADER_BYTES_ = 30;
@@ -19,7 +20,7 @@ export class EnvMapReader {
     private _lightDirection: any;
     private _size: number = 256;
     private _maxLod: number = 0;
-    private _encoding: number = LinearEncoding;
+    private _colorSpace: ColorSpace = SRGBColorSpace;
     private _type: number = UnsignedByteType;
     private _format: number = RGBAFormat;
     private _cubeTexture: any;
@@ -50,7 +51,7 @@ export class EnvMapReader {
         let view = new DataView(buffer, 0, _HEADER_BYTES_);
         this._size = view.getUint16(0);
         this._maxLod = view.getUint8(2);
-        this._encoding = view.getUint16(3);
+        this._colorSpace = view.getUint16(3) ? LinearSRGBColorSpace : SRGBColorSpace;
         this._type = view.getUint16(5);
         this._format = view.getUint16(7);
         this._lightDirection.x = view.getFloat32(9);
@@ -68,7 +69,7 @@ export class EnvMapReader {
             let cubeTexture = new CubeTexture();
             this._cubeTextures.push(cubeTexture);
             cubeTexture.format = RGBAFormat;
-            cubeTexture.encoding = this._encoding as TextureEncoding;
+            cubeTexture.colorSpace = this._colorSpace;
             cubeTexture.type = this._type as TextureDataType;
             cubeTexture.minFilter = LinearMipMapLinearFilter;
             cubeTexture.magFilter = LinearFilter;
@@ -78,7 +79,7 @@ export class EnvMapReader {
                 let view = new Uint8Array(buffer, offsetBytes, cpp * size * size);
                 let dataTexture = new DataTexture(view, size, size);
                 dataTexture.format = cubeTexture.format;
-                dataTexture.encoding = cubeTexture.encoding;
+                dataTexture.colorSpace = cubeTexture.colorSpace;
                 dataTexture.type = cubeTexture.type;
                 dataTexture.generateMipmaps = false;
 
@@ -93,7 +94,7 @@ export class EnvMapReader {
 
         this._cubeTexture = new CubeTexture();
         this._cubeTexture.format = RGBAFormat;
-        this._cubeTexture.encoding = this._encoding;
+        this._cubeTexture.colorSpace = this._colorSpace;
         this._cubeTexture.type = this._type;
         this._cubeTexture.minFilter = LinearMipMapLinearFilter;
         this._cubeTexture.magFilter = LinearFilter;

@@ -70,7 +70,7 @@ export class PostProcessingEffects {
         this.width = width
         this.height = height
         this.maxSamples = getMaxSamples(renderer)
-        this.colorTexture = new FramebufferTexture(this.width, this.height, RGBAFormat);
+        this.colorTexture = new FramebufferTexture(this.width, this.height);
         this.composer = composer;
 
         const bloomPass = new UnrealBloomPass(new Vector2(width, height), this.bloomParameter.strength, this.bloomParameter.radius, this.bloomParameter.threshold);
@@ -98,7 +98,7 @@ export class PostProcessingEffects {
         this.ssrPass.resize(width, height)
         this.bloomPass.resize(width, height)
         this.colorTexture.dispose;
-        this.colorTexture = new FramebufferTexture(this.width, this.height, RGBAFormat);
+        this.colorTexture = new FramebufferTexture(this.width, this.height);
     }
 
     public setFxaa(enabled: boolean) {

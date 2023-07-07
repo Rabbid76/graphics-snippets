@@ -1,4 +1,4 @@
-import { DepthNormalRenderTarget } from './depth-normal-render-targets';
+import { GBufferRenderTargets } from './gbuffer-render-target';
 //import { OutlinePass } from 'three/examples/jsm/postprocessing/OutlinePass.js';
 import { OutlinePass } from './outline-pass';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
@@ -21,7 +21,7 @@ export class OutLineRenderer {
   private width: number = 0;
   private height: number = 0;
   private effectComposer: EffectComposer | null = null;
-  private depthNormalRenderTarget?: DepthNormalRenderTarget;
+  private gBufferRenderTarget?: GBufferRenderTargets;
   public outlinePass: OutlinePass | null = null;
   public outlinePassActivated = false;
 
@@ -36,7 +36,7 @@ export class OutLineRenderer {
     parameters: any
   ) {
     this.effectComposer = effectComposer;
-    this.depthNormalRenderTarget = parameters?.depthNormalRenderTarget;
+    this.gBufferRenderTarget = parameters?.gBufferRenderTarget;
     this.width = width;
     this.height = height;
     this.parameters = {
@@ -109,7 +109,7 @@ export class OutLineRenderer {
         {
           downSampleRatio: 2,
           edgeDetectionFxaa: true,
-          depthNormalRenderTarget: this.depthNormalRenderTarget,
+          gBufferRenderTarget: this.gBufferRenderTarget,
         }
       );
     }

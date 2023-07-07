@@ -28,6 +28,7 @@ import {
   WebGLCapabilities,
   WebGLRenderer,
   WebGLRenderTarget,
+  MeshPhysicalMaterial,
 } from 'three';
 import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass';
 
@@ -542,10 +543,15 @@ export class RenderPass {
 export class BlurPass {
   private renderPass: RenderPass;
   private blurMaterial: ShaderMaterial;
-  
-  constructor(blurShaderParameters?: ShaderMaterialParameters, parameters?: any) {
+
+  constructor(
+    blurShaderParameters?: ShaderMaterialParameters,
+    parameters?: any
+  ) {
     this.renderPass = parameters?.renderPass ?? new RenderPass();
-    this.blurMaterial = new ShaderMaterial(blurShaderParameters ?? BlurContactShadowShader);
+    this.blurMaterial = new ShaderMaterial(
+      blurShaderParameters ?? BlurContactShadowShader
+    );
     this.blurMaterial.depthTest = false;
   }
 
@@ -553,7 +559,12 @@ export class BlurPass {
     this.blurMaterial.dispose();
   }
 
-  public render(renderer: WebGLRenderer, renderTargets: WebGLRenderTarget[], uvMin: number[], uvMax: number[]) {
+  public render(
+    renderer: WebGLRenderer,
+    renderTargets: WebGLRenderTarget[],
+    uvMin: number[],
+    uvMax: number[]
+  ) {
     this.blurMaterial.uniforms.tDiffuse.value = renderTargets[0].texture;
     this.blurMaterial.uniforms.rangeMin.value.x = uvMin[0];
     this.blurMaterial.uniforms.rangeMin.value.y = 0;
@@ -575,4 +586,26 @@ export class BlurPass {
       renderTargets[2]
     );
   }
+}
+
+export const changeEnvironmentMapIntensity = (
+  objectContainer: Object3D,
+  intensity: number
+) => {
+  objectContainer.traverse((object: any) => {
+    if (object instanceof Mesh) {
+      const material = object.material as MeshPhysicalMaterial;
+      if (material) {
+        material.envMapIntensity = intensity;
+      }
+    }
+  });
+};
+
+export interface DenoisePass {
+  get texture(): Texture | null;
+  set inputTexture(texture: Texture | null);
+  dispose(): void;
+  setSize(width: number, height: number): void;
+  render(renderer: WebGLRenderer, camera: Camera): void;
 }

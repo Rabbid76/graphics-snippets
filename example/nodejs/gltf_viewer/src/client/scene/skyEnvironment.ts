@@ -3,7 +3,7 @@ import {
     Object3D,
 } from 'three';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
-import { GUI } from 'dat.gui'
+import { GUI, GUIController } from 'dat.gui'
 
 export interface SkyParameter {
     [key: string]: any;
@@ -88,12 +88,23 @@ export class SkyEnvironment {
 
 export class SkyEnvironmentGUI {
     private skyEnvironment: SkyEnvironment;
+    private showSkyController?: GUIController; 
 
     constructor(skyEnvironment: SkyEnvironment) {
         this.skyEnvironment = skyEnvironment;
     }
 
-    public addGUI(gui: GUI): void {
-        gui.add<any>(this.skyEnvironment.parameters, 'visible').onChange(() => this.skyEnvironment.updateSky());
+    public hideSky(): void {
+        this.showSkyController?.setValue(false);
+        this.showSkyController?.updateDisplay();
+    }
+
+    public addGUI(gui: GUI, updateCallback?: (skyEnvironment: SkyEnvironment) => void): void {
+        this.showSkyController = gui.add<any>(this.skyEnvironment.parameters, 'visible').onChange(() => {
+            this.skyEnvironment.updateSky();
+            if (updateCallback) {
+                updateCallback(this.skyEnvironment);
+            }
+        });
     }
 }

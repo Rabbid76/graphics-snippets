@@ -12,7 +12,9 @@ import {
 } from './materials'
 import { EnvironmentLoader } from '../loader/environment_map/environmentLoader'
 import { SkyEnvironment } from './skyEnvironment'
+import { BackgroundEnvironment } from '../renderer/background-environment'
 import { 
+    changeEnvironmentMapIntensity,
     createNoiseTexture,
     getMaxSamples,
 } from '../renderer/render-utility'
@@ -41,7 +43,7 @@ import {
     RingGeometry,
     Scene,
     SphereGeometry,
-    sRGBEncoding,
+    SRGBColorSpace,
     Texture,
     TubeGeometry,
     Vector2,
@@ -50,6 +52,10 @@ import {
 } from 'three'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
+// @ts-ignore
+import { GroundProjectedSkybox } from 'three/examples/jsm/objects/GroundProjectedSkybox.js';
+// @ts-ignore
+import Test64EnvMap from './../../../resources/test64.envmap'
 
 export interface SceneProperties {
     rotate: number,
@@ -83,9 +89,14 @@ export class SceneManager {
     public environmentLoader: EnvironmentLoader;
     private transformControls?: TransformControls;
     public skyEnvironment: SkyEnvironment;
+    public backgroundEnvironment: BackgroundEnvironment;
     public dimensioningArrows: DimensioningArrow[] = [];
     public dimensioningArrowScene = new Scene();
     private groundMesh?: Mesh;
+    private updateEnvironmentIntensity = true;
+    private groundProjectionSkybox: Mesh | null = null;
+    private createGroundProjectionSkybox: boolean = false;
+    private groundProjectionSkyboxDistance: number = 100;
 
     public get sceneRenderParameters() : SceneRendererParameters {
         return this.sceneRenderer.parameters;
@@ -101,10 +112,10 @@ export class SceneManager {
         this.camera = new PerspectiveCamera(45, width / height, 0.1, 10);
         this.camera.position.z = 2;
         this.scene = new Scene();
-        renderer.outputEncoding = sRGBEncoding;
+        renderer.outputColorSpace = SRGBColorSpace;
         this.sceneRenderer = new SceneRenderer(this.renderer, width, height);
         this.postProcessingEffects = new PostProcessingEffects(this.renderer, this.sceneRenderer.effectComposer, this.scene, this.camera, width, height, {
-            depthNormalRenderTarget: this.sceneRenderer.depthNormalRenderTarget
+            gBufferRenderTarget: this.sceneRenderer.gBufferRenderTarget
         });
         this.lightSources = new LightSources(this.scene, this.sceneRenderer, width, height, maxSamples);
         // The ground must be tessellated to avoid shadow glitches
@@ -120,7 +131,7 @@ export class SceneManager {
         this.noiseTexture.anisotropy = 16;
         this.noiseTexture.wrapS = RepeatWrapping;
         this.noiseTexture.wrapT = RepeatWrapping;
-        this.update(undefined, this.constructLoadingGeometry(1))
+        this.update(undefined, this.constructLoadingGeometry(0))
         this.sceneRenderer.updateParameters({
           outlineParameters: {
             enabled: false,
@@ -134,6 +145,8 @@ export class SceneManager {
         this.sceneRenderer.setQualityLevel(QualityLevel.HIGHEST);
         this.skyEnvironment = new SkyEnvironment();
         this.skyEnvironment.addToScene(this.scene);
+        this.backgroundEnvironment = new BackgroundEnvironment();
+        this.backgroundEnvironment.addToScene(this.scene);
     }
 
     public getLightSources(): LightSources {
@@ -148,6 +161,7 @@ export class SceneManager {
         try {
             const changeEnvironment = () => {
                 this.skyEnvironment.changeVisibility(false);
+                this.backgroundEnvironment.hideBackground();
                 this.showEnvironment = true;
             }
             const lowerName = resourceName.toLowerCase();
@@ -189,7 +203,7 @@ export class SceneManager {
                 lightIntensity: 0.5,
             });
         });
-        this.environmentLoader.loadEnvmap('roomle64.envmap', 'roomle64.envmap', false);
+        this.environmentLoader.loadEnvmap('roomle64.envmap', Test64EnvMap, false);
     }
 
     public updateSceneDependencies(): void {
@@ -325,9 +339,35 @@ export class SceneManager {
     }
 
     public prepareRender(mousePosition: Vector2): void {
-        this.sceneRenderer.updateNearAndFarPlaneOfPerspectiveCamera(this.camera);
-        const effects = this.getPostProcessingEffects()
-        this.environmentLoader.setEnvironment(this.scene, this.showEnvironment);
+        const changed = this.environmentLoader.setEnvironment(this.scene, this.showEnvironment);
+        if (changed) {
+            this.groundProjectionSkybox?.removeFromParent();
+            this.groundProjectionSkybox = null;
+            const equirectangularTexture = this.environmentLoader.currentEnvironment?.equirectangularTexture;
+            const textureData = this.environmentLoader.currentEnvironment?.textureData;
+            if (equirectangularTexture) { 
+                this.lightSources.currentLightSourceDefinition = LightSources.noLightSources; 
+                this.lightSources.updateLightSources();
+                this.sceneRenderer.createShadowFromEnvironmentMap(this.scene, equirectangularTexture, textureData);
+                if (this.createGroundProjectionSkybox) {
+                    this.groundProjectionSkybox = new GroundProjectedSkybox(equirectangularTexture) as Mesh;
+                    this.groundProjectionSkybox.scale.setScalar(this.groundProjectionSkyboxDistance);
+                    this.groundProjectionSkybox.name = 'skybox';
+                    this.scene.add(this.groundProjectionSkybox);
+                }
+            }
+        }
+        const minimumFar = this.createGroundProjectionSkybox && this.groundProjectionSkybox
+            ? this.groundProjectionSkyboxDistance * 2
+            : undefined;
+        this.sceneRenderer.updateNearAndFarPlaneOfPerspectiveCamera(this.camera, minimumFar);
+        if (changed) {
+            this.updateSceneDependencies();
+        }
+        if (this.updateEnvironmentIntensity) {
+            this.updateEnvironmentIntensity = false;
+            changeEnvironmentMapIntensity(this.scene, this.sceneRenderer.environmentLights ? 2 : 1);
+        }
         if (this.sceneRenderer.outlineRenderer.parameters.enabled) {
             this.raycaster.setFromCamera(mousePosition, this.camera);
             const intersects = this.raycaster.intersectObject(this.turnTableGroup, true);
@@ -336,8 +376,11 @@ export class SceneManager {
         }
     }
 
-    public render(): void {
-        this.controls?.update();
+    public render(updateControls: boolean = true): void {
+        if (updateControls) {
+            this.controls?.update();
+        }
+        this.backgroundEnvironment.update(this.sceneRenderer.width, this.sceneRenderer.height, this.camera);
         this.sceneRenderer.render(this.scene, this.camera, this.postProcessingEffects.anyPostProcess());
         if (this.properties.dimensions) {
             this.dimensioningArrows.forEach(arrow => { arrow.arrowNeedsUpdate = true; });
@@ -348,7 +391,7 @@ export class SceneManager {
         }
     }
 
-    private async loadGLTF(resourceName: string) : Promise<Group> {
+    private async loadGLTF(resource: string) : Promise<Group> {
         const gltfLoader = new GLTFLoader();
         const dracoLoader = new DRACOLoader();
         dracoLoader.setDecoderPath('three/examples/jsm/libs/draco/'); // TODO
@@ -358,7 +401,7 @@ export class SceneManager {
         // dracoLoader.setDecoderPath( '/examples/jsm/libs/draco/' );
         // loader.setDRACOLoader( dracoLoader );
 
-        const gltf = await gltfLoader.loadAsync(resourceName);
+        const gltf = await gltfLoader.loadAsync(resource);
         this.updateGLTFScene(gltf, (mesh: Mesh) => {
             if (mesh.isMesh) {
                 const material = mesh.material;
@@ -391,9 +434,12 @@ export class SceneManager {
         this.scaleShadowAndAo = scaleScene;
         this.setInitialObjectPosition(newGroup);
         this.setInitialCameraPositionAndRotation();
-        this.lightSources.setLightSourcesDistances(this.sceneRenderer.boundingVolume, scaleScene);
+        if (!this.sceneRenderer.environmentLights) {
+            this.lightSources.setLightSourcesDistances(this.sceneRenderer.boundingVolume, scaleScene);
+        }
         this.sceneRenderer.forceShadowUpdates(true);
         this.updateSceneDependencies();
+        this.updateEnvironmentIntensity = true;
     }
 
     private setInitialObjectPosition(meshGroup: Object3D): void {

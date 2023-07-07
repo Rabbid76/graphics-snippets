@@ -1,4 +1,4 @@
-import { DepthNormalRenderTarget } from './depth-normal-render-targets';
+import { GBufferRenderTargets } from './gbuffer-render-target';
 import {
   Pass,
   FullScreenQuad,
@@ -29,7 +29,7 @@ import {
 export class OutlinePass extends Pass {
   public static BlurDirectionX = new Vector2(1.0, 0.0);
   public static BlurDirectionY = new Vector2(0.0, 1.0);
-  private depthNormalRenderTarget?: DepthNormalRenderTarget;
+  private gBufferRenderTarget?: GBufferRenderTargets;
   public renderScene: Scene;
   public renderCamera: Camera;
   public selectedObjects: Object3D[];
@@ -77,7 +77,7 @@ export class OutlinePass extends Pass {
     parameters?: any
   ) {
     super();
-    this.depthNormalRenderTarget = parameters?.depthNormalRenderTarget;
+    this.gBufferRenderTarget = parameters?.gBufferRenderTarget;
 
     this.renderScene = scene;
     this.renderCamera = camera;
@@ -109,21 +109,23 @@ export class OutlinePass extends Pass {
     this.renderTargetMaskBuffer.texture.name = 'OutlinePass.mask';
     this.renderTargetMaskBuffer.texture.generateMipmaps = false;
 
-    if (!this.depthNormalRenderTarget) {
+    if (!this.gBufferRenderTarget) {
       this.depthMaterial = new MeshDepthMaterial();
       this.depthMaterial.side = DoubleSide;
       this.depthMaterial.depthPacking = RGBADepthPacking;
       this.depthMaterial.blending = NoBlending;
     }
 
-    this.prepareMaskMaterial = this.getPrepareMaskMaterial();
+    this.prepareMaskMaterial = this.getPrepareMaskMaterial(
+      this.gBufferRenderTarget?.isFloatGBufferWithRgbNormalAlphaDepth
+    );
     this.prepareMaskMaterial.side = DoubleSide;
     this.prepareMaskMaterial.fragmentShader = replaceDepthToViewZ(
       this.prepareMaskMaterial.fragmentShader,
       this.renderCamera
     );
 
-    if (!this.depthNormalRenderTarget) {
+    if (!this.gBufferRenderTarget) {
       this.renderTargetDepthBuffer = new WebGLRenderTarget(
         this.resolution.x,
         this.resolution.y
@@ -381,7 +383,7 @@ export class OutlinePass extends Pass {
     maskActive: boolean
   ) {
     if (this.selectedObjects.length > 0) {
-      this.depthNormalRenderTarget?.render(
+      this.gBufferRenderTarget?.render(
         renderer,
         this.renderScene,
         this.renderCamera
@@ -429,9 +431,9 @@ export class OutlinePass extends Pass {
         // @ts-ignore
         this.renderCamera.far
       );
-      if (this.depthNormalRenderTarget) {
+      if (this.gBufferRenderTarget) {
         this.prepareMaskMaterial.uniforms.depthTexture.value =
-          this.depthNormalRenderTarget.depthTexture;
+          this.gBufferRenderTarget.textureWithDepthValue;
       } else {
         this.prepareMaskMaterial.uniforms.depthTexture.value =
           this.renderTargetDepthBuffer?.texture;
@@ -568,12 +570,16 @@ export class OutlinePass extends Pass {
     }
   }
 
-  getPrepareMaskMaterial() {
+  getPrepareMaskMaterial(floatAlphaDepth?: boolean) {
     return new ShaderMaterial({
       uniforms: {
         depthTexture: { value: null },
         cameraNearFar: { value: new Vector2(0.5, 0.5) },
         textureMatrix: { value: null },
+      },
+
+      defines: {
+        FLOAT_ALPHA_DEPTH: floatAlphaDepth ? 1 : 0,
       },
 
       vertexShader: `#include <morphtarget_pars_vertex>
@@ -615,7 +621,11 @@ export class OutlinePass extends Pass {
 
 				void main() {
 
-					float depth = unpackRGBAToDepth(texture2DProj( depthTexture, projTexCoord ));
+          #if FLOAT_ALPHA_DEPTH == 1
+					  float depth = texture2DProj( depthTexture, projTexCoord ).w;
+          #else
+            float depth = unpackRGBAToDepth(texture2DProj( depthTexture, projTexCoord ));
+          #endif
 					float viewZ = - DEPTH_TO_VIEW_Z( depth, cameraNearFar.x, cameraNearFar.y );
 					float depthTest = (-vPosition.z > viewZ) ? 1.0 : 0.0;
 					gl_FragColor = vec4(0.0, depthTest, 1.0, 1.0);
