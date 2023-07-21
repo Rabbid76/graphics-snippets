@@ -27,7 +27,7 @@ Richard P. Feynman
 
 ## GLTF Viewer
 
-[GLTF/GLB viewer](https://rabbid76.github.io/graphics-snippets/example/nodejs/gltf_viewer/deploy)  
+[GLB/GLTF viewer](https://rabbid76.github.io/threejs-gltf-glb-viewer/deploy/)
 
 ## Frustum
 

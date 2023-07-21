@@ -80,7 +80,7 @@ It does not contain an application, just a collection of examples. Initially I j
 
 [three.js](readme/content_threejs.md)
 
-[three.js GLTF/GLB viewer](https://rabbid76.github.io/graphics-snippets/example/nodejs/gltf_viewer/deploy) 
+[three.js GLB/GLTF viewer](https://rabbid76.github.io/threejs-gltf-glb-viewer/deploy/)
 
 [Python examples](readme/content_python.md)
 
