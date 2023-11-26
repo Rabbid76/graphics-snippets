@@ -56,7 +56,7 @@ export const screenSpaceAmbientOcclusion = (canvas: any) => {
     const scene = new Scene();
     scene.background = new Color(0xffffff);
     const pmremGenerator = new PMREMGenerator(renderer);
-    const roomEnvironment = new RoomEnvironment();
+    const roomEnvironment = new RoomEnvironment(renderer);
     //roomEnvironment.rotateY(Math.PI);
     const environmentTexture = pmremGenerator.fromScene(roomEnvironment, 0.04).texture;
     scene.environment = environmentTexture;

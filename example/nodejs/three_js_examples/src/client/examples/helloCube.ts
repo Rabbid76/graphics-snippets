@@ -20,12 +20,12 @@ export const helloCube = (canvas: any) => {
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xc0c0c0);
     const pmremGenerator = new THREE.PMREMGenerator(renderer);
-    const environmentTexture = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
+    const environmentTexture = pmremGenerator.fromScene(new RoomEnvironment(renderer), 0.04).texture;
     scene.environment = environmentTexture;
     scene.background = environmentTexture;
 
     const ambientLight = new THREE.AmbientLight(0x404040);
-    scene.add(ambientLight); 
+    //scene.add(ambientLight); 
     const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
     directionalLight.position.set(2, 2, 2);
     scene.add(directionalLight);

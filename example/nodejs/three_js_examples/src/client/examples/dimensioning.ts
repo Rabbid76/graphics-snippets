@@ -46,7 +46,7 @@ export const dimensioning = (canvas: any) => {
     const scene = new Scene();
     scene.background = new Color(0xffffff);
     const pmremGenerator = new PMREMGenerator(renderer);
-    const environmentTexture = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
+    const environmentTexture = pmremGenerator.fromScene(new RoomEnvironment(renderer), 0.04).texture;
     scene.environment = environmentTexture;
     //scene.background = environmentTexture;
 

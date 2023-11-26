@@ -41,7 +41,7 @@ export const rectAreaLightShadow = (canvas: any) => {
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xc0c0c0);
     const pmremGenerator = new THREE.PMREMGenerator(renderer);
-    scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
+    scene.environment = pmremGenerator.fromScene(new RoomEnvironment(renderer), 0.04).texture;
 
     const sceneBox = new THREE.Box3(new THREE.Vector3(-3.5, 0, -3), new THREE.Vector3(3, 3, 2.5));
     const sceneBoxHelper = new BoxUpdateHelper(sceneBox, { color: 0xff8080, opacity: 0.25 });

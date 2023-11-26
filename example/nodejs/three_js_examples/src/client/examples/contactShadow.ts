@@ -20,11 +20,11 @@ export const contactShadow = (canvas: any) => {
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xc0c0c0);
     const pmremGenerator = new THREE.PMREMGenerator(renderer);
-    scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
+    scene.environment = pmremGenerator.fromScene(new RoomEnvironment(renderer), 0.04).texture;
 
     const ambientLight = new THREE.AmbientLight(0x404040);
     scene.add(ambientLight); 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
     directionalLight.position.set(0, 10, 0);
     scene.add(directionalLight);
 
