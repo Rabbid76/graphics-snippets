@@ -1,5 +1,6 @@
 import { ElapsedTime } from '../three/timeUtility'
 import { Controls } from '../three/controls'
+import { AoAlgorithms } from "../three/ssaoRenderPass";
 import { SsaoDebugRenderPass } from '../three/ssaoDebugRenderPass';
 import { 
     getMaxSamples, 
@@ -50,7 +51,7 @@ export const screenSpaceAmbientOcclusion = (canvas: any) => {
     const dataGui = new DataGUI();
 
     const camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
-    camera.position.z = 4.5;
+    camera.position.z = 5.;
     const controls = new Controls(renderer, camera);
 
     const scene = new Scene();
@@ -110,6 +111,7 @@ export const screenSpaceAmbientOcclusion = (canvas: any) => {
       'blur SSAO': 'ssaoblur',
     })
     const parameters = ssaoPass.parameters;
+    parameters.radius = 0.1;
     const updateParameters = () => {
         ssaoPass.needsUpdate =true;
         ssaoPass.aoRenderTargets.parametersNeedsUpdate = true;
@@ -119,12 +121,30 @@ export const screenSpaceAmbientOcclusion = (canvas: any) => {
     aoFolder.add<any>(parameters, 'aoFxaa').onChange(() => updateParameters());
     aoFolder.add<any>(parameters, 'aoAlwaysUpdate').onChange(() => updateParameters());
     aoFolder.add<any>(parameters, 'aoIntensity', 0, 1).onChange(() => updateParameters());
-    aoFolder.add<any>(parameters, 'aoFadeout', 0, 1).onChange(() => updateParameters());
-    aoFolder.add<any>(parameters, 'aoKernelRadius', 0.001, 0.5).onChange(() => updateParameters());
-    aoFolder.add<any>(parameters, 'aoDepthBias', 0.0001, 0.01).onChange(() => updateParameters());
-    aoFolder.add<any>(parameters, 'aoMaxDistance', 0.01, 2).onChange(() => updateParameters());
-    aoFolder.add<any>(parameters, 'aoMaxDepth', 0.9, 1).onChange(() => updateParameters());
-
+    aoFolder.add( parameters, 'algorithm', {
+        'SSAO': AoAlgorithms.SSAO,
+        'SAO': AoAlgorithms.SAO,
+        'HBAO': AoAlgorithms.HBAO,
+        'N8AO': AoAlgorithms.N8AO,
+        'GTAO': AoAlgorithms.GTAO,
+    } ).onChange( () => updateParameters() );
+    aoFolder.add( parameters, 'aoSamples' ).min( 1 ).max( 32 ).step( 1 ).onChange( () => updateParameters() );
+    aoFolder.add( parameters, 'clipRangeCheck' ).onChange( () => updateParameters() );
+    aoFolder.add( parameters, 'distanceFallOff' ).onChange( () => updateParameters() );
+    aoFolder.add( parameters, 'nvAlignedSamples' ).onChange( () => updateParameters() );
+    aoFolder.add( parameters, 'screenSpaceRadius' ).onChange( () => updateParameters() );
+    aoFolder.add( parameters, 'radius' ).min( 0.01 ).max( 10 ).step( 0.01 ).onChange( () => updateParameters() );
+    aoFolder.add( parameters, 'distanceExponent' ).min( 1 ).max( 4 ).step( 0.01 ).onChange( () => updateParameters() );
+    aoFolder.add( parameters, 'thickness' ).min( 0.01 ).max( 10 ).step( 0.01 ).onChange( () => updateParameters() );
+    aoFolder.add( parameters, 'bias' ).min( 0 ).max( 0.1 ).step( 0.0001 ).onChange( () => updateParameters() );
+    aoFolder.add( parameters, 'scale' ).min( 0.01 ).max( 2.0 ).step( 0.01 ).onChange( () => updateParameters() );
+    
+    const updateSceneBounds = () => {
+        boundingVolume.updateFromObject(scene);
+        const sceneSize = boundingVolume.size;
+        ssaoPass.updateBounds((sceneSize.x + sceneSize.y + sceneSize.z) / 3);
+    }
+    updateSceneBounds();
     const onWindowResize = () => {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
@@ -136,9 +156,7 @@ export const screenSpaceAmbientOcclusion = (canvas: any) => {
     setupDragDrop('drag_target', 'hover', (file: File, event: ProgressEvent<FileReader>) => {
         // @ts-ignore
         loadResource(file.name, event.target.result, objectGroup, () => {
-            boundingVolume.updateFromObject(scene);
-            const sceneSize = boundingVolume.size;
-            ssaoPass.updateBounds((sceneSize.x + sceneSize.y + sceneSize.z) / 3);
+            updateSceneBounds();
         });
     });
 
