@@ -20,7 +20,7 @@
 	path = example/cpp/_submodules/freetype
 	url = https://github.com/freetype/freetype
 	
-	
-[submodule "examples/nodejs/threejs-gltf-glb-viewer"]
-	path = examples/nodejs/threejs-gltf-glb-viewer
-	url = https://github.com/Rabbid76/threejs-gltf-glb-viewer
+[submodule "example/nodejs/threejs-gltf-glb-viewer"]
+	path = example/nodejs/threejs-gltf-glb-viewer
+	url = https://github.com/Rabbid76/threejs-gltf-glb-viewer	
+
