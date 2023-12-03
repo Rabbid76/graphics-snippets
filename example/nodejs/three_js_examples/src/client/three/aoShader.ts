@@ -42,8 +42,8 @@ import {
 enum AoAlgorithms {
     SSAO = 0,
     SAO = 1,
-    N8AO = 3,
-    HBAO = 2,
+    N8AO = 2,
+    HBAO = 3,
     GTAO = 4,
   };
 

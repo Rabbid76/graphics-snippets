@@ -9,7 +9,6 @@ import {
 import { DataGUI, Statistic } from '../three/uiUtility' 
 import { setupDragDrop } from '../util/drag_target'
 import {
-    AmbientLight,
     Box3,
     BoxGeometry,
     BufferGeometry,
@@ -18,7 +17,6 @@ import {
     ConeGeometry,
     CylinderGeometry,
     DodecahedronGeometry,
-    DirectionalLight,
     Group,
     IcosahedronGeometry,
     Material,
@@ -41,6 +39,7 @@ import {
 } from 'three';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 
 export const screenSpaceAmbientOcclusion = (canvas: any) => {
@@ -49,6 +48,11 @@ export const screenSpaceAmbientOcclusion = (canvas: any) => {
     document.body.appendChild(renderer.domElement);
     const statistic = new Statistic();
     const dataGui = new DataGUI();
+    const gltfLoader = new GLTFLoader();
+    const dracoLoader = new DRACOLoader();
+	dracoLoader.setDecoderPath( '../draco/' );
+	dracoLoader.setDecoderConfig( { type: 'js' } );
+	gltfLoader.setDRACOLoader( dracoLoader );
 
     const camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
     camera.position.z = 5.;
@@ -73,34 +77,66 @@ export const screenSpaceAmbientOcclusion = (canvas: any) => {
     });
     effectComposer.addPass(ssaoPass)
 
-    //const ambientLight = new AmbientLight(0x808080);
-    //scene.add(ambientLight); 
-    //const directionalLight = new DirectionalLight(0xffffff, 0.5);
-    //directionalLight.position.set(2, 2, 20);
-    //scene.add(directionalLight);
+    const generateAoTestScene = (group: Group) => {
+        const n = 128;
+        //const unitPositions = sphereSamples(n);
+        for (let i = 0; i < n; ++ i) {
+            const position = new Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize();
+            const p = position.multiplyScalar(2);
+            const mesh = randomMesh();
+            mesh.rotation.x = Math.random() * Math.PI * 2;
+            mesh.rotation.z = Math.random() * Math.PI;
+            mesh.position.set(p.x, p.y, p.z);
+            group.add(mesh);
+        };
+    }
 
-    const objectGroup = new Group();
-    scene.add(objectGroup);
-
-    const n = 128;
-    //const unitPositions = sphereSamples(n);
-    for (let i = 0; i < n; ++ i) {
-        const position = new Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize();
-        const p = position.multiplyScalar(2);
-        const mesh = randomMesh();
-        mesh.rotation.x = Math.random() * Math.PI * 2;
-        mesh.rotation.z = Math.random() * Math.PI;
-        mesh.position.set(p.x, p.y, p.z);
-        objectGroup.add(mesh);
+    const generateSponzaScene = (group: Group) => {
+        gltfLoader.load( '../sponza_cd.glb', ( gltf: any ) => {
+            const model = gltf.scene;
+            const box = new Box3().setFromObject(model);
+            console.log(box);
+            model.position.set( 0, -1.5, 0 );
+            //model.scale.set( 0.01, 0.01, 0.01 );
+            group.add( model );
+        }, undefined, ( e: any ) => console.error( e ) );
     };
+
+    const sceneGroups = [ new Group(), new Group() ];
+    sceneGroups.forEach( ( group ) => scene.add( group ) );
+    generateAoTestScene( sceneGroups[ 0 ] );
+    generateSponzaScene( sceneGroups[ 1 ] );
+    sceneGroups[ 1 ].visible = false;
+    const sceneParameter = {
+        scene: 0,
+    };
+
+    
     const boundingVolume = new SceneVolume();
     boundingVolume.updateFromObject(scene);
+
+    dataGui.gui.add( sceneParameter, 'scene', {
+        'AO test scene': 0,
+        'Sponza': 1,
+    } ).onChange( ( value ) => {
+    
+        for ( let i = 0; i < sceneGroups.length; ++ i ) sceneGroups[ i ].visible = i == value;
+        if (value == 0) {
+            camera.position.set(0, 0, 5.);
+            camera.lookAt(0, 0, 0);
+        } else {
+            camera.position.set(0, 0, -1);
+            generalProperties.rotate = false;
+            rotationController.updateDisplay();
+        }
+
+    } );
 
     const generalProperties = {
         'rotate': true,
         'debug pass': 'none'
     };
-    dataGui.gui.add(generalProperties, 'rotate');
+    const rotationController = dataGui.gui.add(generalProperties, 'rotate');
     dataGui.gui.add<any>(ssaoPass, 'debugOutput', {
       'off ': 'off',
       'color buffer': 'color',
@@ -127,7 +163,8 @@ export const screenSpaceAmbientOcclusion = (canvas: any) => {
         'HBAO': AoAlgorithms.HBAO,
         'GTAO': AoAlgorithms.GTAO,
     } ).onChange( () => {
-        parameters.nvAlignedSamples = (parameters.algorithm === AoAlgorithms.GTAO || parameters.algorithm === AoAlgorithms.HBAO);
+        const number = parseInt(parameters.algorithm.toString());
+        parameters.nvAlignedSamples = (number !== AoAlgorithms.GTAO && number !== AoAlgorithms.HBAO);
 		nvAlignedSamplesController.updateDisplay();
         updateParameters() 
     });
@@ -172,7 +209,7 @@ export const screenSpaceAmbientOcclusion = (canvas: any) => {
         elapsedTime.update(timestamp);
         requestAnimationFrame(animate);
         if (generalProperties.rotate) {
-            objectGroup.rotateY(-elapsedTime.getDegreePerSecond(15, true));
+            scene.rotateY(-elapsedTime.getDegreePerSecond(15, true));
         }
         controls.update();
         const nearFar = boundingVolume.getNearAndFarForPerspectiveCamera(
