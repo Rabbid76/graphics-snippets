@@ -42,6 +42,14 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 
+// TODO:
+// - ao normal vector anti aliasing ?
+// - sampler2DMS ?
+// - render just a rectangle of the screen depending on the projected scene box
+// - find scale for each algorithm (SSAO, SAO, HBAO, N8H0, GTAO)
+// - presets: screenSpaceRadius, aoNoiseType
+// - consider alpha map in g-buffer
+
 export const screenSpaceAmbientOcclusion = (canvas: any) => {
     const renderer = new WebGLRenderer({canvas: canvas, antialias: true, alpha: true});
     renderer.setSize(window.innerWidth, window.innerHeight);
