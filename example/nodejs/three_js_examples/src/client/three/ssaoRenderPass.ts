@@ -37,6 +37,7 @@ import {
 import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader';
 import { Pass } from 'three/examples/jsm/postprocessing/Pass';
 import { AOShader, AoAlgorithms, generateAoSampleKernelInitializer, generateMagicSquareNoise } from './aoShader';
+import { PoissonDenoiseShader, generatePdSamplePointInitializer } from './pdShader';
 
 export { AoAlgorithms } from './aoShader';
 
@@ -57,6 +58,11 @@ export interface AoParameters {
     thickness: number;
     bias: number;
     scale: number;
+    pdSamples: number,
+    pdLumaPhi: number,
+    pdDepthPhi: number,
+    pdNormalPhi: number,
+    pdRadius: number,
 }
   
 export class SsaoRenderPass extends Pass {
@@ -353,6 +359,11 @@ export class AoRenderTargets {
         thickness: 1,
         bias: 0.0001,
         scale: 1,
+        pdLumaPhi: 10.,
+				pdDepthPhi: 2.,
+				pdNormalPhi: 3.,
+				pdRadius: 4.,
+				pdSamples: 16,
         ...parameters,
       };
     }
@@ -429,6 +440,12 @@ export class AoRenderTargets {
             this.aoParameters.radius * this.aoScale,
           thickness:
             this.aoParameters.thickness * this.aoScale,
+        });
+        this.blurRenderMaterial.updateDefines({
+          ...this.aoParameters,
+        });
+        this.blurRenderMaterial.updateSettings({
+          ...this.aoParameters,
         });
       }
       return passRenderMaterial;
@@ -562,128 +579,46 @@ export class AoRenderMaterial extends ShaderMaterial {
     }
   } 
   
-const glslAoBlurVertexShader = `varying vec2 vUv;
-    void main() {
-        vUv = uv;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-    }`;
-  
-const glslAoBlurFragmentShader = `uniform sampler2D tDiffuse;
-  #if FLOAT_GBUFFER_RGB_NORMAL_ALPHA_DEPTH == 1 
-    uniform sampler2D tNormal;
-  #else
-    uniform sampler2D tDepth;
-  #endif
-    uniform vec2 resolution;
-    uniform float cameraNear;
-    uniform float cameraFar;
-    uniform mat4 cameraProjectionMatrix;
-    uniform mat4 cameraInverseProjectionMatrix;
-    uniform float aoKernelRadius;
-    
-    varying vec2 vUv;
-    
-    float perspectiveDepthToViewZ(const in float invClipZ, const in float near, const in float far) {
-        #if PERSPECTIVE_CAMERA == 1    
-            float z_ndc = 2.0 * invClipZ - 1.0;
-            float z_eye = 2.0 * near * far / ((far - near) * z_ndc - far - near);
-            return z_eye;
-        #else
-            return (near * far) / ((far - near) * invClipZ - far);
-        #endif
-    }
-    
-    float viewZToOrthographicDepth(const in float viewZ, const in float near, const in float far) {
-        // viewZ is negative!
-        return (viewZ + near) / (near - far);
-    }
-    
-    float getLinearDepth(const in vec2 screenPosition) {
-        #if FLOAT_GBUFFER_RGB_NORMAL_ALPHA_DEPTH == 1
-            float fragCoordZ = texture2D(tNormal, screenPosition).w;
-        #else    
-            float fragCoordZ = texture2D(tDepth, screenPosition).x;
-        #endif
-        #if PERSPECTIVE_CAMERA == 1
-            float viewZ = perspectiveDepthToViewZ(fragCoordZ, cameraNear, cameraFar);
-            return viewZToOrthographicDepth(viewZ, cameraNear, cameraFar);
-        #else
-            return fragCoordZ;
-        #endif
-    }
-    
-    void main() {
-        vec2 texelSize = 1.0 / resolution ;
-        float referenceDepth = getLinearDepth(vUv);
-        float result = 0.0;
-        float samples = 0.0;
-        for (int i = - 2; i <= 2; i++) {
-            for (int j = - 2; j <= 2; j++) {
-                vec2 offset = vec2(float(i), float(j)) * texelSize;
-                float sampleDepth = getLinearDepth(vUv + offset);
-                float depthDelta =  sampleDepth - referenceDepth;
-                float deltaDistance = depthDelta * (cameraFar - cameraNear);
-                float w = step(abs(deltaDistance), aoKernelRadius);
-                samples += w;
-                result += texture2D(tDiffuse, vUv + offset).r * w;
-            }
-        }
-        gl_FragColor = vec4(result / samples, 0.0, 0.0, 1.0);
-    }`;
-  
-export class AoBlurMaterial extends ShaderMaterial {
-    private static shader: any = {
-      uniforms: {
-        tDiffuse: { value: null as Texture | null },
-        tDepth: { value: null as Texture | null },
-        tNormal: { value: null as Texture | null },
-        cameraNear: { value: 0.1 },
-        cameraFar: { value: 1 },
-        resolution: { value: new Vector2() },
-        cameraProjectionMatrix: { value: new Matrix4() },
-        cameraInverseProjectionMatrix: { value: new Matrix4() },
-        aoKernelRadius: { value: 0.1 },
-      },
-      defines: {
-        FLOAT_GBUFFER_RGB_NORMAL_ALPHA_DEPTH: 0,
-        PERSPECTIVE_CAMERA: 1,
-        ACCURATE_VIEW_Z: 0,
-      },
-      vertexShader: glslAoBlurVertexShader,
-      fragmentShader: glslAoBlurFragmentShader,
-    };
-  
+
+  export class AoBlurMaterial extends ShaderMaterial {
     constructor(parameters?: any) {
       super({
-        defines: Object.assign(
-          {
-            ...AoBlurMaterial.shader.defines,
-            FLOAT_GBUFFER_RGB_NORMAL_ALPHA_DEPTH: parameters?.floatGBufferRgbNormalAlphaDepth ? 1 : 0,
-          }
-        ),
-        uniforms: UniformsUtils.clone(AoBlurMaterial.shader.uniforms),
-        vertexShader: AoBlurMaterial.shader.vertexShader,
-        fragmentShader: AoBlurMaterial.shader.fragmentShader,
+        defines: Object.assign({...PoissonDenoiseShader.defines}),
+        uniforms: UniformsUtils.clone(PoissonDenoiseShader.uniforms),
+        vertexShader: PoissonDenoiseShader.vertexShader,
+        fragmentShader: PoissonDenoiseShader.fragmentShader,
         blending: NoBlending,
       });
       this.update(parameters);
     }
   
     public update(parameters?: any): AoBlurMaterial {
+      this.updateDefines(parameters);
       this.updateDependencies(parameters);
       this.updateSettings(parameters);
       return this;
     }
+
+    public updateDefines(parameters?: any) {
+      if (parameters?.pdSamples !== undefined) {
+        this.defines.SAMPLES = parameters?.pdSamples;
+        this.defines.SAMPLE_VECTORS = generatePdSamplePointInitializer( parameters?.pdSamples, 2, 1 );
+        this.needsUpdate = true;
+      }
+    }
   
     public updateDependencies(parameters?: any) {
+      if (parameters?.texture !== undefined) {
+        this.uniforms.tDiffuse.value = parameters?.texture;
+      }
       if (parameters?.depthTexture !== undefined) {
         this.uniforms.tDepth.value = parameters?.depthTexture;
       }
       if (parameters?.normalTexture !== undefined) {
         this.uniforms.tNormal.value = parameters?.normalTexture;
       }
-      if (parameters?.texture !== undefined) {
-        this.uniforms.tDiffuse.value = parameters?.texture;
+      if (parameters?.noiseTexture !== undefined) {
+        this.uniforms.tNoise.value = parameters?.noiseTexture;
       }
       if (parameters?.width || parameters?.height) {
         const width = parameters?.width ?? this.uniforms.resolution.value.x;
@@ -694,18 +629,24 @@ export class AoBlurMaterial extends ShaderMaterial {
         const camera =
           (parameters?.camera as OrthographicCamera) ||
           (parameters?.camera as PerspectiveCamera);
-        this.uniforms.cameraNear.value = camera.near;
-        this.uniforms.cameraFar.value = camera.far;
-        this.uniforms.cameraProjectionMatrix.value.copy(camera.projectionMatrix);
-        this.uniforms.cameraInverseProjectionMatrix.value.copy(
+        this.uniforms.cameraProjectionMatrixInverse.value.copy(
           camera.projectionMatrixInverse
         );
       }
     }
   
     public updateSettings(parameters?: any) {
-      if (parameters?.aoKernelRadius !== undefined) {
-        this.uniforms.aoKernelRadius.value = parameters?.aoKernelRadius;
+      if (parameters?.pdLumaPhi !== undefined) {
+        this.uniforms.lumaPhi.value = parameters?.pdLumaPhi;
+      }
+      if (parameters?.pdDepthPhi !== undefined) {
+        this.uniforms.depthPhi.value = parameters?.pdDepthPhi;
+      }
+      if (parameters?.pdNormalPhi !== undefined) {
+        this.uniforms.normalPhi.value = parameters?.pdNormalPhi;
+      }
+      if (parameters?.pdRadius !== undefined) {
+        this.uniforms.radius.value = parameters?.pdRadius;
       }
     }
 }

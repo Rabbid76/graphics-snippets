@@ -140,6 +140,11 @@ export const screenSpaceAmbientOcclusion = (canvas: any) => {
     aoFolder.add( parameters, 'thickness' ).min( 0.01 ).max( 10 ).step( 0.01 ).onChange( () => updateParameters() );
     aoFolder.add( parameters, 'bias' ).min( 0 ).max( 0.1 ).step( 0.0001 ).onChange( () => updateParameters() );
     aoFolder.add( parameters, 'scale' ).min( 0.01 ).max( 2.0 ).step( 0.01 ).onChange( () => updateParameters() );
+    aoFolder.add( parameters, 'pdLumaPhi' ).min( 0 ).max( 20 ).step( 0.01 ).onChange( () => updateParameters() );
+    aoFolder.add( parameters, 'pdDepthPhi' ).min( 0.01 ).max( 20 ).step( 0.01 ).onChange( () => updateParameters() );
+    aoFolder.add( parameters, 'pdNormalPhi' ).min( 0.01 ).max( 20 ).step( 0.01 ).onChange( () => updateParameters() );
+    aoFolder.add( parameters, 'pdRadius' ).min( 0 ).max( 32 ).step( 1 ).onChange( () => updateParameters() );
+    aoFolder.add( parameters, 'pdSamples' ).min( 2 ).max( 32 ).step( 1 ).onChange( () => updateParameters() );
     
     const updateSceneBounds = () => {
         boundingVolume.updateFromObject(scene);
