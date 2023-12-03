@@ -25,16 +25,12 @@ import {
     RGFormat,
     Scene,
     ShaderMaterial,
-    Texture,
     UniformsUtils,
-    Vector2,
     Vector3,
-    Vector4,
     WebGLCapabilities,
     WebGLRenderer,
     WebGLRenderTarget,
 } from 'three';
-import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader';
 import { Pass } from 'three/examples/jsm/postprocessing/Pass';
 import { AOShader, AoAlgorithms, generateAoSampleKernelInitializer, generateMagicSquareNoise } from './aoShader';
 import { PoissonDenoiseShader, generatePdSamplePointInitializer } from './pdShader';
@@ -44,7 +40,6 @@ export { AoAlgorithms } from './aoShader';
 export interface AoParameters {
     [key: string]: any;
     aoEnabled: boolean;
-    aoFxaa: boolean;
     aoAlwaysUpdate: boolean;
     aoIntensity: number;
     algorithm: AoAlgorithms;
@@ -102,9 +97,7 @@ export class SsaoRenderPass extends Pass {
     }
   
     public get finalRenderTarget(): WebGLRenderTarget {
-      return this.parameters.aoFxaa
-        ? this.aoRenderTargets.fxaaRenderTarget
-        : this.aoRenderTargets.blurRenderTarget;
+      return this.aoRenderTargets.blurRenderTarget;
     }
   
     constructor(
@@ -238,10 +231,8 @@ export class AoRenderTargets {
     private _pdNoiseTexture?: DataTexture;
     private _passRenderMaterial?: AoRenderMaterial;
     private _blurRenderMaterial?: AoBlurMaterial;
-    private _fxaaRenderMaterial?: ShaderMaterial;
     private _passRenderTarget?: WebGLRenderTarget;
     private _blurRenderTarget?: WebGLRenderTarget;
-    private _fxaaRenderTarget?: WebGLRenderTarget;
     private renderPass: RenderPass;
   
     public get passRenderTarget(): WebGLRenderTarget {
@@ -266,18 +257,6 @@ export class AoRenderTargets {
           minFilter: LinearFilter,
         });
       return this._blurRenderTarget;
-    }
-  
-    public get fxaaRenderTarget(): WebGLRenderTarget {
-      this._fxaaRenderTarget =
-        this._fxaaRenderTarget ??
-        new WebGLRenderTarget(this.width, this.height, {
-          samples: this.aoTargetSamples,
-          format: RGFormat,
-          magFilter: LinearFilter,
-          minFilter: LinearFilter,
-        });
-      return this._fxaaRenderTarget;
     }
   
     private get passRenderMaterial(): AoRenderMaterial {
@@ -308,18 +287,6 @@ export class AoRenderTargets {
       return this._blurRenderMaterial;
     }
   
-    private get fxaaRenderMaterial(): ShaderMaterial {
-      this._fxaaRenderMaterial =
-        this._fxaaRenderMaterial ?? new ShaderMaterial(FXAAShader);
-      this._fxaaRenderMaterial.uniforms.tDiffuse.value =
-        this.blurRenderTarget.texture;
-      this._fxaaRenderMaterial.uniforms.resolution.value.set(
-        1 / this.width,
-        1 / this.height
-      );
-      return this._fxaaRenderMaterial;
-    }
-  
     private get aoNoiseTexture(): DataTexture {
       this._aoNoiseTexture = this._aoNoiseTexture ?? generateMagicSquareNoise();
       return this._aoNoiseTexture;
@@ -345,7 +312,6 @@ export class AoRenderTargets {
     private getAoParameters(parameters?: any): AoParameters {
       return {
         aoEnabled: parameters?.enabled ?? true,
-        aoFxaa: true,
         aoAlwaysUpdate: true,
         aoIntensity: 1,
         algorithm: AoAlgorithms.SSAO,
@@ -373,10 +339,8 @@ export class AoRenderTargets {
       this._pdNoiseTexture?.dispose();
       this._passRenderMaterial?.dispose();
       this._blurRenderMaterial?.dispose();
-      this._fxaaRenderMaterial?.dispose();
       this._passRenderTarget?.dispose();
       this._blurRenderTarget?.dispose();
-      this._fxaaRenderTarget?.dispose();
     }
   
     public setSize(width: number, height: number) {
@@ -392,7 +356,6 @@ export class AoRenderTargets {
       });
       this._passRenderTarget?.setSize(this.width, this.height);
       this._blurRenderTarget?.setSize(this.width, this.height);
-      this._fxaaRenderTarget?.setSize(this.width, this.height);
     }
   
     public updateBounds(aoScale: number) {
@@ -413,13 +376,6 @@ export class AoRenderTargets {
         this.updateBlurMaterial(camera),
         this.blurRenderTarget
       );
-      if (this.aoParameters.aoFxaa) {
-        this.renderPass.renderScreenSpace(
-          renderer,
-          this.fxaaRenderMaterial,
-          this.fxaaRenderTarget
-        );
-      }
       this.parametersNeedsUpdate = false;
     }
   

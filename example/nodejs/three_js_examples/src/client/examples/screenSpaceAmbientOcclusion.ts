@@ -153,7 +153,6 @@ export const screenSpaceAmbientOcclusion = (canvas: any) => {
     };
     const aoFolder = dataGui.gui.addFolder('SSAO');
     aoFolder.add<any>(parameters, 'aoEnabled').onChange(() => updateParameters());
-    aoFolder.add<any>(parameters, 'aoFxaa').onChange(() => updateParameters());
     aoFolder.add<any>(parameters, 'aoAlwaysUpdate').onChange(() => updateParameters());
     aoFolder.add<any>(parameters, 'aoIntensity', 0, 1).onChange(() => updateParameters());
     aoFolder.add( parameters, 'algorithm', {
