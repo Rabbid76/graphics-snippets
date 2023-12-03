@@ -107,11 +107,10 @@ export const screenSpaceAmbientOcclusion = (canvas: any) => {
       'linear depth': 'lineardepth',
       'g-buffer normal vector': 'g-normal',
       'g-buffer depth': 'g-depth',
-      'SSAO Monte Carlo': 'ssao',
-      'blur SSAO': 'ssaoblur',
+      'AO': 'ao',
+      'AO + denoise': 'aodenoise',
     })
     const parameters = ssaoPass.parameters;
-    parameters.radius = 0.1;
     const updateParameters = () => {
         ssaoPass.needsUpdate =true;
         ssaoPass.aoRenderTargets.parametersNeedsUpdate = true;
@@ -124,14 +123,17 @@ export const screenSpaceAmbientOcclusion = (canvas: any) => {
     aoFolder.add( parameters, 'algorithm', {
         'SSAO': AoAlgorithms.SSAO,
         'SAO': AoAlgorithms.SAO,
-        'HBAO': AoAlgorithms.HBAO,
         'N8AO': AoAlgorithms.N8AO,
+        'HBAO': AoAlgorithms.HBAO,
         'GTAO': AoAlgorithms.GTAO,
-    } ).onChange( () => updateParameters() );
+    } ).onChange( () => {
+        parameters.nvAlignedSamples = (parameters.algorithm === AoAlgorithms.GTAO || parameters.algorithm === AoAlgorithms.HBAO);
+		nvAlignedSamplesController.updateDisplay();
+        updateParameters() 
+    });
     aoFolder.add( parameters, 'aoSamples' ).min( 1 ).max( 32 ).step( 1 ).onChange( () => updateParameters() );
-    aoFolder.add( parameters, 'clipRangeCheck' ).onChange( () => updateParameters() );
     aoFolder.add( parameters, 'distanceFallOff' ).onChange( () => updateParameters() );
-    aoFolder.add( parameters, 'nvAlignedSamples' ).onChange( () => updateParameters() );
+    const nvAlignedSamplesController = aoFolder.add( parameters, 'nvAlignedSamples' ).onChange( () => updateParameters() );
     aoFolder.add( parameters, 'screenSpaceRadius' ).onChange( () => updateParameters() );
     aoFolder.add( parameters, 'radius' ).min( 0.01 ).max( 10 ).step( 0.01 ).onChange( () => updateParameters() );
     aoFolder.add( parameters, 'distanceExponent' ).min( 1 ).max( 4 ).step( 0.01 ).onChange( () => updateParameters() );

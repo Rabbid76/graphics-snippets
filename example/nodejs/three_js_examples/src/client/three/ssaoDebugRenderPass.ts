@@ -130,7 +130,7 @@ export class SsaoDebugRenderPass extends SsaoRenderPass {
               );
             }
             break;
-          case 'ssao':
+          case 'ao':
             this.renderPass.renderScreenSpace(
               renderer,
               this.getCopyMaterial({
@@ -146,7 +146,7 @@ export class SsaoDebugRenderPass extends SsaoRenderPass {
               null
             );
             break;
-          case 'ssaoblur':
+          case 'aodenoise':
             this.renderPass.renderScreenSpace(
               renderer,
               this.getCopyMaterial({

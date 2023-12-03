@@ -36,14 +36,9 @@ import {
 } from 'three';
 import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader';
 import { Pass } from 'three/examples/jsm/postprocessing/Pass';
-  
-export enum AoAlgorithms {
-  SSAO = 0,
-  SAO = 1,
-  HBAO = 2,
-  N8AO = 3,
-  GTAO = 4,
-};
+import { AOShader, AoAlgorithms, generateAoSampleKernelInitializer, generateMagicSquareNoise } from './aoShader';
+
+export { AoAlgorithms } from './aoShader';
 
 export interface AoParameters {
     [key: string]: any;
@@ -233,8 +228,8 @@ export class AoRenderTargets {
     private aoScale: number = 1;
     private aoTargetSamples: number = 0;
     private depthAndNormalTextures: GBufferTextures;
-    private _noiseTexture?: DataTexture;
-    private _sampleKernel: Vector3[] = [];
+    private _aoNoiseTexture?: DataTexture;
+    private _pdNoiseTexture?: DataTexture;
     private _passRenderMaterial?: AoRenderMaterial;
     private _blurRenderMaterial?: AoBlurMaterial;
     private _fxaaRenderMaterial?: ShaderMaterial;
@@ -285,7 +280,7 @@ export class AoRenderTargets {
         new AoRenderMaterial({
           normalTexture: this.depthAndNormalTextures.getGBufferTexture(),
           depthTexture: this.depthAndNormalTextures.getTextureWithDepth(),
-          noiseTexture: this.noiseTexture,
+          noiseTexture: this.aoNoiseTexture,
           normalVectorType: 
             this.depthAndNormalTextures.isFloatGBufferWithRgbNormalAlphaDepth() ? 2 : 1,
           depthValueSource: 
@@ -300,6 +295,7 @@ export class AoRenderTargets {
         new AoBlurMaterial({
           normalTexture: this.depthAndNormalTextures.getGBufferTexture(),
           depthTexture: this.depthAndNormalTextures.getDepthBufferTexture(),
+          noiseTexture: this.pdNoiseTexture,
           floatGBufferRgbNormalAlphaDepth: 
             this.depthAndNormalTextures.isFloatGBufferWithRgbNormalAlphaDepth(),
         });
@@ -318,18 +314,14 @@ export class AoRenderTargets {
       return this._fxaaRenderMaterial;
     }
   
-    private get noiseTexture(): DataTexture {
-      this._noiseTexture = this._noiseTexture ?? generateUniformKernelRotations();
-      return this._noiseTexture;
+    private get aoNoiseTexture(): DataTexture {
+      this._aoNoiseTexture = this._aoNoiseTexture ?? generateMagicSquareNoise();
+      return this._aoNoiseTexture;
     }
-  
-    private get sampleKernel(): Vector3[] {
-      if (!this._sampleKernel.length) {
-        this._sampleKernel = spiralQuadraticSampleKernel(
-          AoRenderMaterial.kernelSize
-        );
-      }
-      return this._sampleKernel;
+
+    private get pdNoiseTexture(): DataTexture {
+      this._aoNoiseTexture = this._aoNoiseTexture ?? generateUniformKernelRotations();
+      return this._aoNoiseTexture;
     }
   
     constructor(
@@ -366,7 +358,8 @@ export class AoRenderTargets {
     }
   
     public dispose() {
-      this._noiseTexture?.dispose();
+      this._aoNoiseTexture?.dispose();
+      this._pdNoiseTexture?.dispose();
       this._passRenderMaterial?.dispose();
       this._blurRenderMaterial?.dispose();
       this._fxaaRenderMaterial?.dispose();
@@ -460,382 +453,17 @@ export class AoRenderTargets {
     }
   }
   
-  const glslAoVertexShader = `varying vec2 vUv;
-  void main() {
-      vUv = uv;
-      gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-  }`;
-  
-  const glslAoFragmentShader = `varying vec2 vUv;
-  uniform sampler2D tNormal;
-  uniform sampler2D tDepth;
-  uniform sampler2D tNoise;
-  uniform vec2 resolution;
-  uniform float cameraNear;
-  uniform float cameraFar;
-  uniform mat4 cameraProjectionMatrix;
-  uniform mat4 cameraProjectionMatrixInverse;		
-  uniform float radius;
-  uniform float distanceExponent;
-  uniform float thickness;
-  uniform float bias;
-  uniform float scale;
-  
-  #include <common>
-  #include <packing>
-
-  #ifndef FRAGMENT_OUTPUT
-  #define FRAGMENT_OUTPUT vec4(vec3(ao), 1.)
-  #endif
-
-  const vec4 sampleKernel[SAMPLES] = SAMPLE_VECTORS;
-
-  vec3 getViewPosition(const in vec2 screenPosition, const in float depth) {
-    vec4 clipSpacePosition = vec4(vec3(screenPosition, depth) * 2.0 - 1.0, 1.0);
-    vec4 viewSpacePosition = cameraProjectionMatrixInverse * clipSpacePosition;
-    return viewSpacePosition.xyz / viewSpacePosition.w;
-  }
-
-  float getDepth(const vec2 uv) {
-    #if DEPTH_VALUE_SOURCE == 1    
-      return textureLod(tDepth, uv.xy, 0.0).a;
-    #else
-      return textureLod(tDepth, uv.xy, 0.0).r;
-    #endif
-  }
-
-  float fetchDepth(const ivec2 uv) {
-    #if DEPTH_VALUE_SOURCE == 1    
-      return texelFetch(tDepth, uv.xy, 0).a;
-    #else
-      return texelFetch(tDepth, uv.xy, 0).r;
-    #endif
-  }
-
-  float getViewZ(const in float depth) {
-    #if PERSPECTIVE_CAMERA == 1
-      return perspectiveDepthToViewZ(depth, cameraNear, cameraFar);
-    #else
-      return orthographicDepthToViewZ(depth, cameraNear, cameraFar);
-    #endif
-  }
-
-  vec3 computeNormalFromDepth(const vec2 uv) {
-          vec2 size = vec2(textureSize(tDepth, 0));
-          ivec2 p = ivec2(uv * size);
-          float c0 = fetchDepth(p);
-          float l2 = fetchDepth(p - ivec2(2, 0));
-          float l1 = fetchDepth(p - ivec2(1, 0));
-          float r1 = fetchDepth(p + ivec2(1, 0));
-          float r2 = fetchDepth(p + ivec2(2, 0));
-          float b2 = fetchDepth(p - ivec2(0, 2));
-          float b1 = fetchDepth(p - ivec2(0, 1));
-          float t1 = fetchDepth(p + ivec2(0, 1));
-          float t2 = fetchDepth(p + ivec2(0, 2));
-          float dl = abs((2.0 * l1 - l2) - c0);
-          float dr = abs((2.0 * r1 - r2) - c0);
-          float db = abs((2.0 * b1 - b2) - c0);
-          float dt = abs((2.0 * t1 - t2) - c0);
-          vec3 ce = getViewPosition(uv, c0).xyz;
-          vec3 dpdx = (dl < dr) ?  ce - getViewPosition((uv - vec2(1.0 / size.x, 0.0)), l1).xyz
-                                : -ce + getViewPosition((uv + vec2(1.0 / size.x, 0.0)), r1).xyz;
-          vec3 dpdy = (db < dt) ?  ce - getViewPosition((uv - vec2(0.0, 1.0 / size.y)), b1).xyz
-                                : -ce + getViewPosition((uv + vec2(0.0, 1.0 / size.y)), t1).xyz;
-          return normalize(cross(dpdx, dpdy));
-  }
-
-  vec3 getViewNormal(const vec2 uv) {
-    #if NORMAL_VECTOR_TYPE == 2
-      return normalize(textureLod(tNormal, uv, 0.).rgb);
-    #elif NORMAL_VECTOR_TYPE == 1
-      return unpackRGBToNormal(textureLod(tNormal, uv, 0.).rgb);
-    #else
-      return computeNormalFromDepth(uv);
-    #endif
-  }
-
-  vec3 getSceneUvAndDepth(vec3 sampleViewPos) {
-    vec4 sampleClipPos = cameraProjectionMatrix * vec4(sampleViewPos, 1.);
-    vec2 sampleUv = sampleClipPos.xy / sampleClipPos.w * 0.5 + 0.5;
-    float sampleSceneDepth = getDepth(sampleUv);
-    return vec3(sampleUv, sampleSceneDepth);
-  }
-
-  float sinusToPlane(vec3 pointOnPlane, vec3 planeNormal, vec3 point) {
-    vec3 delta = point - pointOnPlane;
-    float sinV = dot(planeNormal, normalize(delta));
-    return sinV;
-  }
-
-  float getFallOff(float delta, float falloffDistance) {
-    #if DISTANCE_FALL_OFF == 1
-      float fallOff = smoothstep(0., 1., 1. - abs(delta) / falloffDistance);
-    #else
-      float fallOff = step(abs(delta), falloffDistance);
-    #endif
-    return fallOff;
-  }
-  
-  void main() {
-    float depth = getDepth(vUv.xy);
-    if (depth == 1.0) {
-      discard;
-      return;
-    }
-    vec3 viewPos = getViewPosition(vUv, depth);
-    vec3 viewNormal = getViewNormal(vUv);
-    
-    vec2 noiseResolution = vec2(textureSize(tNoise, 0));
-    vec2 noiseUv = vUv * resolution / noiseResolution;
-    vec4 noiseTexel = textureLod(tNoise, noiseUv, 0.0);
-    vec3 randomVec = noiseTexel.xyz * 2.0 - 1.0;
-
-    #if NV_ALIGNED_SAMPLES == 1
-        vec3 tangent = normalize(randomVec - viewNormal * dot(randomVec, viewNormal));
-          vec3 bitangent = cross(viewNormal, tangent);
-          mat3 kernelMatrix = mat3(tangent, bitangent, viewNormal);
-    #else
-      vec3 tangent = normalize(vec3(randomVec.xy, 0.));
-      vec3 bitangent = vec3(-tangent.y, tangent.x, 0.);
-      mat3 kernelMatrix = mat3(tangent, bitangent, vec3(0., 0., 1.));
-    #endif
-
-    float radiusToUse = radius;
-    float distanceFalloffToUse = thickness;
-    #if SCREEN_SPACE_RADIUS == 1
-        // TODO: needs to be verified - optimization
-      //float clipW = cameraProjectionMatrix[2][3] * viewPos.z + cameraProjectionMatrix[3][3];
-      //float nearW = cameraProjectionMatrix[2][3] * -cameraNear + cameraProjectionMatrix[3][3];
-      //float referenceW = cameraProjectionMatrix[2][3] * -(cameraNear + cameraFar)/2. + cameraProjectionMatrix[3][3];
-      //float radiusScale = clipW / nearW;
-      vec3 radiusDistPos = getViewPosition(vUv + vec2(radius * float(SCREEN_SPACE_RADIUS_SCALE), 0.0) / resolution, depth);
-      float radiusScale = distance(viewPos, radiusDistPos);
-      radiusToUse *= radiusScale;
-      distanceFalloffToUse *= radiusScale;
-    #endif
-
-  #if AO_ALGORITHM == 4
-    const int DIRECTIONS = 2;
-    const int STEPS = SAMPLES / 2;
-  #elif AO_ALGORITHM == 2
-    const int STEPS = 4;
-    const int DIRECTIONS = (SAMPLES + STEPS - 1) / STEPS;
-  #else
-    const int DIRECTIONS = SAMPLES;
-    const int STEPS = 1;
-  #endif
-
-    float ao = 0.0, totalWeight = 0.0;
-    for (int i = 0; i < DIRECTIONS; ++i) {
-
-    #if AO_ALGORITHM == 4	
-      // GTAO		
-      vec2 horizons = vec2(-1.0);
-      float phi = noiseTexel.x * PI + float(i) * PI_HALF;
-      //vec3 dir = normalize(vec3(randomVec.xy, 0.));
-      vec3 dir = vec3(cos(phi), sin(phi), 0.); 
-      for (int j = 0; j < STEPS; ++j) {
-        vec3 sampleViewOffset = dir.xyz * radiusToUse * pow(0.5 + noiseTexel.w * 0.5, distanceExponent) * float(j + 1) / float(SAMPLES / 2);
-        vec3 sampleViewPos = viewPos + sampleViewOffset;
-    #elif AO_ALGORITHM == 2
-      // HBAO
-      float angle = float(i) / float(DIRECTIONS) * 2. * PI;
-      vec4 sampleViewDir = vec4(cos(angle), sin(angle), 0., 1.);
-      float sinH = sampleViewDir.z;
-      for (int j = 0; j < STEPS; ++j) {
-        sampleViewDir.w *= float(j + 1) / float(STEPS);
-        sampleViewDir.xyz = normalize(kernelMatrix * sampleViewDir.xyz);
-        vec3 sampleViewPos = viewPos + sampleViewDir.xyz * radiusToUse * pow(sampleViewDir.w, distanceExponent);
-    #else
-        vec4 sampleViewDir = sampleKernel[i];
-        sampleViewDir.xyz = normalize(kernelMatrix * sampleViewDir.xyz);
-        vec3 sampleViewPos = viewPos + sampleViewDir.xyz * radiusToUse * pow(sampleViewDir.w, distanceExponent);
-    #endif	
-
-        vec3 sampleSceneUvDepth = getSceneUvAndDepth(sampleViewPos);
-        vec3 sampleSceneViewPos = getViewPosition(sampleSceneUvDepth.xy, sampleSceneUvDepth.z);
-        float sceneSampleDist = abs(sampleSceneViewPos.z);
-        float sampleDist = abs(sampleViewPos.z);
-
-        // TODO verify fall off for GTAO
-        float fallOff = getFallOff(sceneSampleDist - sampleDist, distanceFalloffToUse);
-        
-      #if AO_ALGORITHM == 4
-        // GTAO
-        float sinS = sinusToPlane(viewPos, viewNormal, sampleSceneViewPos);
-        horizons.x = max(horizons.x, sinS - fallOff);
-        sampleSceneUvDepth = getSceneUvAndDepth(viewPos - sampleViewOffset);
-        sampleSceneViewPos = getViewPosition(sampleSceneUvDepth.xy, sampleSceneUvDepth.z);
-        fallOff = getFallOff(abs(sampleSceneViewPos.z) - sampleDist, distanceFalloffToUse);
-        sinS = sinusToPlane(viewPos, viewNormal, sampleSceneViewPos);
-        horizons.y = max(horizons.y, sinS - fallOff);	
-      #elif AO_ALGORITHM == 3
-        // N8AO
-        float weight = dot(viewNormal, sampleViewDir.xyz);
-        float occlusion = weight * step(sceneSampleDist + bias, sampleDist) / scale;
-      #elif AO_ALGORITHM == 2
-        // HBAO
-        float weight = 1. / float(STEPS);
-        float sinS = sinusToPlane(viewPos, viewNormal, sampleSceneViewPos);
-        float occlusion = max(0., (sinS - sinH) / scale);
-        sinH = max(sinH, sinS);
-      #elif AO_ALGORITHM == 1
-        // SAO
-        vec3 viewDelta = sampleSceneViewPos - viewPos;
-        float minResolution = 0.; // ?
-        float scaledViewDist = length( viewDelta ) * scale;
-        float weight = 1.;
-        float occlusion = max(0., (dot(viewNormal, viewDelta) - minResolution) / scaledViewDist - bias) / (1. + scaledViewDist * scaledViewDist );
-      #else
-        // SSAO
-        float weight = scale;
-        float occlusion = step(sceneSampleDist + bias, sampleDist);
-      #endif
-
-  #if AO_ALGORITHM != 4
-
-        occlusion *= fallOff;
-        //weight *= fallOff;
-
-        vec2 diff = (vUv - sampleSceneUvDepth.xy) * resolution;
-        occlusion *= step(1., dot(diff, diff));
-      
-      #if CLIP_RANGE_CHECK == 1
-        vec2 clipRangeCheck = step(0., sampleSceneUvDepth.xy) * step(sampleSceneUvDepth.xy, vec2(1.));
-        occlusion *= clipRangeCheck.x * clipRangeCheck.y;
-        weight *= clipRangeCheck.x * clipRangeCheck.y;
-      #endif
-      
-        totalWeight += weight;
-        ao += occlusion;
-    #if AO_ALGORITHM == 2
-      }
-    #endif
-    }
-    ao /= totalWeight + 1. - step(0., totalWeight);
-    ao = clamp(1. - ao, 0., 1.);
-
-  #else
-      }
-      // GTAO
-      // project normal vector in view direction / sample direction plane
-      vec3 viewdir	= normalize(-viewPos.xyz);
-      vec3 bitangent_	= normalize(cross(dir, viewdir));
-      vec3 tangent_	= cross(viewdir, bitangent_);
-      vec3 nx			= viewNormal - bitangent_ * dot(viewNormal, bitangent_);
-
-      // calculate gamma
-      float nnx		= length(nx);
-      float invnnx	= 1.0 / (nnx + 1e-6);			// to avoid division with zero
-      float cosxi		= dot(nx, tangent_) * invnnx;	// xi = gamma + PI_HALF    ? same as dot(viewNormal, tangent_)
-      float gamma		= acos(cosxi) - PI_HALF;
-      float cosgamma	= dot(nx, viewdir) * invnnx;
-      float singamma2	= -2.0 * cosxi;					// cos(x + PI_HALF) = -sin(x)	
-
-      // clamp to normal hemisphere
-      horizons.x = gamma + max(-horizons.x - gamma, -PI_HALF);
-      horizons.y = gamma + min(horizons.y - gamma, PI_HALF);
-
-      //float nnxScale = 0.25;
-      float nnxScale = 0.5 * scale;
-      ao += nnx * nnxScale * dot(vec2(1.0), horizons * singamma2 + cosgamma - cos(2.0 * horizons - gamma));
-    }
-    ao /= float(DIRECTIONS);
-
-  #endif	
-    if (depth > 0.99) ao = 0.0;
-
-    gl_FragColor = FRAGMENT_OUTPUT;
-  }`;
-
-
-  const generateAoSampleKernelInitializer = (samples: number) => {
-    const poissonDisk = generateAoSamples( samples );
-    let glslCode = 'vec4[SAMPLES](';
-    for ( let i = 0; i < samples; i ++ ) {
-      const sample = poissonDisk[ i ];
-      glslCode += `vec4(${sample.x}, ${sample.y}, ${sample.z}, ${sample.w})`;
-      if ( i < samples - 1 ) {
-        glslCode += ',';
-      }
-    }
-    glslCode += ')';
-    return glslCode;
-  }
-  
-const generateAoSamples = (samples: number) => {
-    // https://github.com/Rabbid76/research-sampling-hemisphere
-    const kernel = [];
-    for ( let kernelIndex = 0; kernelIndex < samples; kernelIndex ++ ) {
-      const spiralAngle = kernelIndex * Math.PI * ( 3 - Math.sqrt( 5 ) );
-      const z = Math.sqrt( 0.99 - ( kernelIndex / ( samples - 1 ) ) * 0.98 );
-      //const radius = Math.sqrt( 1 - z * z );
-      const radius = 1 - z;
-      const x = Math.cos( spiralAngle ) * radius;
-      const y = Math.sin( spiralAngle ) * radius;
-      const scaleStep = 8;
-      const scaleRange = Math.floor( samples / scaleStep );
-      const scaleIndex =
-        Math.floor( kernelIndex / scaleStep ) +
-        ( kernelIndex % scaleStep ) * scaleRange;
-      let scale = 1 - scaleIndex / samples;
-      scale = 0.1 + 0.9 * scale;
-      kernel.push( new Vector4( x, y, z, scale ) );
-    }
-    return kernel;
-  } 
-  
 export class AoRenderMaterial extends ShaderMaterial {
-    public static kernelSize: number = 32;
-    private static shader: any = {
-      uniforms: {
-        tNormal: { value: null },
-        tDepth: { value: null },
-        tNoise: { value: null },
-        resolution: { value: new Vector2() },
-        cameraNear: { value: null },
-        cameraFar: { value: null },
-        cameraProjectionMatrix: { value: new Matrix4() },
-        cameraProjectionMatrixInverse: { value: new Matrix4() },
-        radius: { value: 1. },
-        distanceExponent: { value: 1. },
-        thickness: { value: 1. },
-        bias: { value: 0.001 },
-        scale: { value: 1. },
-      },
-      defines: {
-        PERSPECTIVE_CAMERA: 1,
-        SAMPLES: 16,
-        SAMPLE_VECTORS: generateAoSampleKernelInitializer( 16 ),
-        NORMAL_VECTOR_TYPE: 1,
-        // TODO DEPTH_VALUE_SWIZZLE
-        DEPTH_VALUE_SOURCE: 1,
-        AO_ALGORITHM: AoAlgorithms.SSAO,
-        CLIP_RANGE_CHECK: 1,
-        DISTANCE_FALL_OFF: 1,
-        NV_ALIGNED_SAMPLES: 1,
-        SCREEN_SPACE_RADIUS: 0,
-        SCREEN_SPACE_RADIUS_SCALE: 100.0,
-      },
-      vertexShader: glslAoVertexShader,
-      fragmentShader: glslAoFragmentShader,
-    };
-  
+    
     constructor(parameters?: any) {
       super({
-        defines: Object.assign(
-          {
-            ...AoRenderMaterial.shader.defines,
-            KERNEL_SIZE:
-              parameters?.sampleKernel?.length ??
-              AoRenderMaterial.kernelSize,
-              FLOAT_GBUFFER_RGB_NORMAL_ALPHA_DEPTH: parameters?.floatGBufferRgbNormalAlphaDepth ? 1 : 0,
-          }
-        ),
-        uniforms: UniformsUtils.clone(AoRenderMaterial.shader.uniforms),
-        vertexShader: AoRenderMaterial.shader.vertexShader,
-        fragmentShader: AoRenderMaterial.shader.fragmentShader,
+        defines: Object.assign({...AOShader.defines}),
+        uniforms: UniformsUtils.clone(AOShader.uniforms),
+        vertexShader: AOShader.vertexShader,
+        fragmentShader: AOShader.fragmentShader,
         blending: NoBlending,
+        depthTest: false,
+			  depthWrite: false,
       });
       this.update(parameters);
     }
@@ -857,11 +485,7 @@ export class AoRenderMaterial extends ShaderMaterial {
         this.needsUpdate = true;
       }
       if (parameters?.depthValueSource !== undefined) {
-        this.defines.DEPTH_VALUE_SOURCE = parameters?.depthValueSource;
-        this.needsUpdate = true;
-      }
-      if (parameters?.clipRangeCheck !== undefined) {
-        this.defines.CLIP_RANGE_CHECK = parameters?.clipRangeCheck ? 1 : 0;
+        this.defines.DEPTH_SWIZZLING = parameters?.depthValueSource === 1 ? 'w' : 'x';
         this.needsUpdate = true;
       }
       if (parameters?.distanceFallOff !== undefined) {
@@ -912,6 +536,7 @@ export class AoRenderMaterial extends ShaderMaterial {
         this.uniforms.cameraProjectionMatrixInverse.value.copy(
           camera.projectionMatrixInverse
         );
+        this.uniforms.cameraWorldMatrix.value.copy(camera.matrixWorld);
       }
       if (parameters?.sampleKernel !== undefined) {
         this.uniforms.sampleKernel.value = parameters?.sampleKernel;
