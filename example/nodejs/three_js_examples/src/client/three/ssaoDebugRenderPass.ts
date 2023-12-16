@@ -1,4 +1,4 @@
-import { SsaoRenderPass } from "./ssaoRenderPass";
+import { SsaoRenderPass } from "./aoRenderPass";
 import { 
     CopyTransformMaterial,
     LinearDepthRenderMaterial,

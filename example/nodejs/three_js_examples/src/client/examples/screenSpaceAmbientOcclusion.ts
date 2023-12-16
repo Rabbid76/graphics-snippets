@@ -1,6 +1,6 @@
 import { ElapsedTime } from '../three/timeUtility'
 import { Controls } from '../three/controls'
-import { AoAlgorithms } from "../three/ssaoRenderPass";
+import { AoAlgorithms } from "../three/aoRenderPass";
 import { SsaoDebugRenderPass } from '../three/ssaoDebugRenderPass';
 import { 
     getMaxSamples, 
@@ -62,8 +62,8 @@ export const screenSpaceAmbientOcclusion = (canvas: any) => {
 	dracoLoader.setDecoderConfig( { type: 'js' } );
 	gltfLoader.setDRACOLoader( dracoLoader );
 
-    const camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
-    camera.position.z = 5.;
+    const camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 50);
+    camera.position.set(6, 0, 0);
     const controls = new Controls(renderer, camera);
 
     const scene = new Scene();
@@ -83,7 +83,7 @@ export const screenSpaceAmbientOcclusion = (canvas: any) => {
         scene,
         capabilities: renderer.capabilities,
     });
-    effectComposer.addPass(ssaoPass)
+    effectComposer.addPass(ssaoPass);
 
     const generateAoTestScene = (group: Group) => {
         const n = 128;
@@ -105,7 +105,6 @@ export const screenSpaceAmbientOcclusion = (canvas: any) => {
             const box = new Box3().setFromObject(model);
             console.log(box);
             model.position.set( 0, -1.5, 0 );
-            //model.scale.set( 0.01, 0.01, 0.01 );
             group.add( model );
         }, undefined, ( e: any ) => console.error( e ) );
     };
@@ -114,12 +113,11 @@ export const screenSpaceAmbientOcclusion = (canvas: any) => {
     sceneGroups.forEach( ( group ) => scene.add( group ) );
     generateAoTestScene( sceneGroups[ 0 ] );
     generateSponzaScene( sceneGroups[ 1 ] );
-    sceneGroups[ 1 ].visible = false;
     const sceneParameter = {
         scene: 0,
     };
+    sceneGroups[ 1 - sceneParameter.scene ].visible = false;
 
-    
     const boundingVolume = new SceneVolume();
     boundingVolume.updateFromObject(scene);
 
@@ -132,8 +130,11 @@ export const screenSpaceAmbientOcclusion = (canvas: any) => {
         if (value == 0) {
             camera.position.set(0, 0, 5.);
             camera.lookAt(0, 0, 0);
+            generalProperties.rotate = true;
+            rotationController.updateDisplay();
         } else {
-            camera.position.set(0, 0, -1);
+            camera.position.set(6, 0, 0);
+            camera.lookAt(0, 0, 0);
             generalProperties.rotate = false;
             rotationController.updateDisplay();
         }
@@ -142,8 +143,9 @@ export const screenSpaceAmbientOcclusion = (canvas: any) => {
 
     const generalProperties = {
         'rotate': true,
-        'debug pass': 'none'
+        'debug pass': 'off'
     };
+    ssaoPass.debugOutput = generalProperties['debug pass'];
     const rotationController = dataGui.gui.add(generalProperties, 'rotate');
     dataGui.gui.add<any>(ssaoPass, 'debugOutput', {
       'off ': 'off',
@@ -176,12 +178,12 @@ export const screenSpaceAmbientOcclusion = (canvas: any) => {
         updateParameters() 
     });
     aoFolder.add( parameters, 'aoSamples' ).min( 1 ).max( 32 ).step( 1 ).onChange( () => updateParameters() );
-    aoFolder.add( parameters, 'distanceFallOff' ).onChange( () => updateParameters() );
     const nvAlignedSamplesController = aoFolder.add( parameters, 'nvAlignedSamples' ).onChange( () => updateParameters() );
     aoFolder.add( parameters, 'screenSpaceRadius' ).onChange( () => updateParameters() );
     aoFolder.add( parameters, 'radius' ).min( 0.01 ).max( 10 ).step( 0.01 ).onChange( () => updateParameters() );
     aoFolder.add( parameters, 'distanceExponent' ).min( 1 ).max( 4 ).step( 0.01 ).onChange( () => updateParameters() );
     aoFolder.add( parameters, 'thickness' ).min( 0.01 ).max( 10 ).step( 0.01 ).onChange( () => updateParameters() );
+    aoFolder.add( parameters, 'distanceFallOff' ).min( 0.0 ).max( 1.0 ).step( 0.01 ).onChange( () => updateParameters() );
     aoFolder.add( parameters, 'bias' ).min( 0 ).max( 0.1 ).step( 0.0001 ).onChange( () => updateParameters() );
     aoFolder.add( parameters, 'scale' ).min( 0.01 ).max( 2.0 ).step( 0.01 ).onChange( () => updateParameters() );
     aoFolder.add( parameters, 'pdLumaPhi' ).min( 0 ).max( 20 ).step( 0.01 ).onChange( () => updateParameters() );

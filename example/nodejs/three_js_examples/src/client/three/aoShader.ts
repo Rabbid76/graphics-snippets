@@ -6,6 +6,7 @@ import {
 	Vector3,
 	Vector4,
 } from 'three';
+import { SimplexNoise } from 'three/examples/jsm/math/SimplexNoise.js';
 
 /**
  * References:
@@ -16,15 +17,14 @@ import {
  *   - https://github.com/McNopper/OpenGL/blob/master/Example28/shader/ssao.frag.glsl
  *   - https://drive.google.com/file/d/1SyagcEVplIm2KkRD3WQYSO9O0Iyi1hfy/edit
  * - Scalable Ambient Occlusion (SAO), see also SAOShader.js
- *   - https://research.nvidia.com/sites/default/files/pubs/2012-06_Scalable-Ambient-Obscurance/McGuire12SAO.pdf
  *   - https://casual-effects.com/research/McGuire2012SAO/index.html
- *   - https://www.intel.com/content/www/us/en/developer/articles/technical/adaptive-screen-space-ambient-occlusion.html
+ *   - https://research.nvidia.com/sites/default/files/pubs/2012-06_Scalable-Ambient-Obscurance/McGuire12SAO.pdf
+ * - N8HO
+ *   - https://github.com/N8python/n8ao
  * - Horizon Based Ambient Occlusion (HBAO)
  *   - http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.577.2286&rep=rep1&type=pdf
  *   - https://www.derschmale.com/2013/12/20/an-alternative-implementation-for-hbao-2/
  *   - https://github.com/scanberg/hbao/blob/master/resources/shaders/hbao_frag.glsl
- * - N8HO
- *   - https://github.com/N8python/n8ao
  *   - https://github.com/nvpro-samples/gl_ssao/blob/master/hbao.frag.glsl
  * - GTAO
  *   - https://iryoku.com/downloads/Practical-Realtime-Strategies-for-Accurate-Indirect-Occlusion.pdf
@@ -37,15 +37,17 @@ import {
  *   - https://www.activision.com/cdn/research/Practical_Real_Time_Strategies_for_Accurate_Indirect_Occlusion_NEW%20VERSION_COLOR.pdf
  *   - https://patapom.com/blog/SHPortal/
  *   - https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.390.2463&rep=rep1&type=pdf
+ *   - https://www.intel.com/content/www/us/en/developer/articles/technical/adaptive-screen-space-ambient-occlusion.html
+ *   - https://github.com/GameTechDev/ASSAO
  */
 
-enum AoAlgorithms {
-    SSAO = 0,
-    SAO = 1,
-    N8AO = 2,
-    HBAO = 3,
-    GTAO = 4,
-  };
+const AoAlgorithms = {
+	SSAO: 0,
+	SAO: 1,
+	N8AO: 2,
+	HBAO: 3,
+	GTAO: 4,
+};
 
 const AOShader = {
 
@@ -60,7 +62,6 @@ const AOShader = {
 		NORMAL_VECTOR_TYPE: 1,
 		DEPTH_SWIZZLING: 'x',
 		AO_ALGORITHM: AoAlgorithms.GTAO,
-		DISTANCE_FALL_OFF: 1,
 		NV_ALIGNED_SAMPLES: 1,
 		SCREEN_SPACE_RADIUS: 0,
 		SCREEN_SPACE_RADIUS_SCALE: 100.0,
@@ -77,9 +78,10 @@ const AOShader = {
 		cameraProjectionMatrix: { value: new Matrix4() },
 		cameraProjectionMatrixInverse: { value: new Matrix4() },
 		cameraWorldMatrix: { value: new Matrix4() },
-		radius: { value: 1. },
-		distanceExponent: { value: 1. },
-		thickness: { value: 1. },
+		radius: { value: 4. },
+		distanceExponent: { value: 2. },
+		thickness: { value: 10. },
+		distanceFallOff: { value: 1. },
 		bias: { value: 0.001 },
 		scale: { value: 1. },
 		sceneBoxMin: { value: new Vector3( - 1, - 1, - 1 ) },
@@ -98,8 +100,8 @@ const AOShader = {
 	fragmentShader: /* glsl */`
 
 		varying vec2 vUv;
-		uniform sampler2D tNormal;
-		uniform sampler2D tDepth;
+		uniform highp sampler2D tNormal;
+		uniform highp sampler2D tDepth;
 		uniform sampler2D tNoise;
 		uniform vec2 resolution;
 		uniform float cameraNear;
@@ -110,6 +112,7 @@ const AOShader = {
 		uniform float radius;
 		uniform float distanceExponent;
 		uniform float thickness;
+		uniform float distanceFallOff;
 		uniform float bias;
 		uniform float scale;
 		#if SCENE_CLIP_BOX == 1
@@ -196,11 +199,7 @@ const AOShader = {
 		}
 
 		float getFallOff(float delta, float falloffDistance) {
-			#if DISTANCE_FALL_OFF == 1
-				float fallOff = smoothstep(0., 1., 1. - abs(delta) / falloffDistance);
-			#else
-				float fallOff = step(abs(delta), falloffDistance);
-			#endif
+			float fallOff = smoothstep(0., 1., 1. - distanceFallOff * abs(delta) / falloffDistance);
 			return fallOff;
 		}
 		
@@ -245,8 +244,11 @@ const AOShader = {
 				mat3 kernelMatrix = mat3(tangent, bitangent, vec3(0., 0., 1.));
 			#endif
 
-		#if (AO_ALGORITHM == 3 || AO_ALGORITHM == 4)
-			const int DIRECTIONS = (SAMPLES / 8) * 2 + 1;
+		#if AO_ALGORITHM == 4
+			const int DIRECTIONS = 3; //SAMPLES < 30 ? 3 : 5;
+			const int STEPS = (SAMPLES + DIRECTIONS - 1) / DIRECTIONS;
+		#elif AO_ALGORITHM == 3
+			const int DIRECTIONS = SAMPLES < 16 ? 3 : 5;
 			const int STEPS = (SAMPLES + DIRECTIONS - 1) / DIRECTIONS;
 		#else
 			const int DIRECTIONS = SAMPLES;
@@ -274,7 +276,11 @@ const AOShader = {
 				
 			#if (AO_ALGORITHM == 3 || AO_ALGORITHM == 4)
 				vec3 tangentToNormalInSlice = cross(normalInSlice, sliceBitangent);
-				vec2 cosHorizons = vec2(dot(viewDir, tangentToNormalInSlice), dot(viewDir, -tangentToNormalInSlice));
+				#if AO_ALGORITHM == 4
+					vec2 cosHorizons = vec2(dot(viewDir, tangentToNormalInSlice), dot(viewDir, -tangentToNormalInSlice));
+				#else
+					vec2 cosHorizons = vec2(dot(viewDir, tangentToNormalInSlice));
+				#endif
 				for (int j = 0; j < STEPS; ++j) {
 					vec3 sampleViewOffset = sampleDir.xyz * radiusToUse * sampleDir.w * pow(float(j + 1) / float(STEPS), distanceExponent);
 					vec3 sampleViewPos = viewPos + sampleViewOffset;
@@ -292,7 +298,7 @@ const AOShader = {
 					vec3 viewDelta = sampleSceneViewPos - viewPos;
 					if (abs(viewDelta.z) < thickness) {
 						float sampleCosHorizon = dot(viewDir, normalize(viewDelta));
-						cosHorizons.x = max(cosHorizons.x, sampleCosHorizon);	
+						cosHorizons.x += max(0., (sampleCosHorizon - cosHorizons.x) * mix(1., 2. / float(j + 2), distanceFallOff));
 					}		
 					#if AO_ALGORITHM == 4
 						sampleSceneUvDepth = getSceneUvAndDepth(viewPos - sampleViewOffset);
@@ -300,7 +306,7 @@ const AOShader = {
 						viewDelta = sampleSceneViewPos - viewPos;
 						if (abs(viewDelta.z) < thickness) {
 							float sampleCosHorizon = dot(viewDir, normalize(viewDelta));
-							cosHorizons.y = max(cosHorizons.y, sampleCosHorizon);	
+							cosHorizons.y += max(0., (sampleCosHorizon - cosHorizons.y) * mix(1., 2. / float(j + 2), distanceFallOff));
 						}
 					#endif
 				#elif AO_ALGORITHM == 2
@@ -335,7 +341,7 @@ const AOShader = {
 		#elif AO_ALGORITHM == 3
 				}
 				totalWeight += 1.;
-				ao += max(0., cosHorizons.x);
+				ao += max(0., cosHorizons.x - max(0., cosHorizons.y));
 			}
 			ao /= totalWeight + 1. - step(0., totalWeight);
 			ao = clamp(1. - ao, 0., 1.);
@@ -406,10 +412,98 @@ const AODepthShader = {
 			#endif
 		}
 
-		void main() {
-			float depth = getLinearDepth( vUv );
-			gl_FragColor = vec4( vec3( 1.0 - depth ), 1.0 );
+		vec3 HUEtoRGB(in float H) {
+    		float R = abs(H * 6.0 - 3.0) - 1.0;
+    		float G = 2.0 - abs(H * 6.0 - 2.0);
+    		float B = 2.0 - abs(H * 6.0 - 4.0);
+    		return clamp( vec3(R,G,B), 0.0, 1.0 );
+		}
 
+		void main() {
+			float depth = getLinearDepth(vUv);
+			//gl_FragColor = vec4(HUEtoRGB(1.0 - depth), 1.0);
+			gl_FragColor = vec4(vec3(1.0 - depth) * HUEtoRGB(1.0 - depth), 1.0);
+		}`
+
+};
+
+const AODepthToNormalShader = {
+
+	name: 'HBAODepthShader',
+
+	defines: {
+		PERSPECTIVE_CAMERA: 1,
+		DEPTH_SWIZZLING: 'x'
+	},
+
+	uniforms: {
+		tDepth: { value: null },
+		cameraProjectionMatrixInverse: { value: new Matrix4() },
+	},
+
+	vertexShader: /* glsl */`
+		varying vec2 vUv;
+
+		void main() {
+			vUv = uv;
+			gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+		}`,
+
+	fragmentShader: /* glsl */`
+		varying vec2 vUv;
+		uniform sampler2D tDepth;
+		uniform mat4 cameraProjectionMatrixInverse;		
+
+		#ifndef DEPTH_SWIZZLING
+		#define DEPTH_SWIZZLING x
+		#endif
+
+		#ifndef FRAGMENT_OUTPUT
+		#define FRAGMENT_OUTPUT vec4(vec3(normal) * 0.5 + 0.5, depth)
+		#endif
+
+		vec3 getViewPosition(const in vec2 screenPosition, const in float depth) {
+			vec4 clipSpacePosition = vec4(vec3(screenPosition, depth) * 2.0 - 1.0, 1.0);
+			vec4 viewSpacePosition = cameraProjectionMatrixInverse * clipSpacePosition;
+			return viewSpacePosition.xyz / viewSpacePosition.w;
+		}
+
+		float getDepth(const vec2 uv) {  
+			return textureLod(tDepth, uv.xy, 0.0).DEPTH_SWIZZLING;
+		}
+
+		float fetchDepth(const ivec2 uv) {   
+			return texelFetch(tDepth, uv.xy, 0).DEPTH_SWIZZLING;
+		}
+
+		vec3 computeNormalFromDepth(const vec2 uv) {
+            vec2 size = vec2(textureSize(tDepth, 0));
+            ivec2 p = ivec2(uv * size);
+            float c0 = fetchDepth(p);
+            float l2 = fetchDepth(p - ivec2(2, 0));
+            float l1 = fetchDepth(p - ivec2(1, 0));
+            float r1 = fetchDepth(p + ivec2(1, 0));
+            float r2 = fetchDepth(p + ivec2(2, 0));
+            float b2 = fetchDepth(p - ivec2(0, 2));
+            float b1 = fetchDepth(p - ivec2(0, 1));
+            float t1 = fetchDepth(p + ivec2(0, 1));
+            float t2 = fetchDepth(p + ivec2(0, 2));
+            float dl = abs((2.0 * l1 - l2) - c0);
+            float dr = abs((2.0 * r1 - r2) - c0);
+            float db = abs((2.0 * b1 - b2) - c0);
+            float dt = abs((2.0 * t1 - t2) - c0);
+            vec3 ce = getViewPosition(uv, c0).xyz;
+            vec3 dpdx = (dl < dr) ?  ce - getViewPosition((uv - vec2(1.0 / size.x, 0.0)), l1).xyz
+                                  : -ce + getViewPosition((uv + vec2(1.0 / size.x, 0.0)), r1).xyz;
+            vec3 dpdy = (db < dt) ?  ce - getViewPosition((uv - vec2(0.0, 1.0 / size.y)), b1).xyz
+                                  : -ce + getViewPosition((uv + vec2(0.0, 1.0 / size.y)), t1).xyz;
+            return normalize(cross(dpdx, dpdy));
+		}
+
+		void main() {
+			float depth = getDepth(vUv.xy);
+			vec3 normal = computeNormalFromDepth(vUv);
+			gl_FragColor = FRAGMENT_OUTPUT;
 		}`
 
 };
@@ -460,7 +554,7 @@ function generateAoSampleKernelInitializer( samples: number ) {
 
 }
 
-function generateAoSamples( samples: number, cosineWeighted: boolean = false ) {
+function generateAoSamples( samples: number, cosineWeighted = false ) {
 
 	// https://github.com/Rabbid76/research-sampling-hemisphere
 	const kernel = [];
@@ -492,6 +586,7 @@ function generateAoSamples( samples: number, cosineWeighted: boolean = false ) {
 
 function generateMagicSquareNoise( size = 5 ) {
 
+	const simplex = new SimplexNoise();
 	const noiseSize = Math.floor( size ) % 2 === 0 ? Math.floor( size ) + 1 : Math.floor( size );
 	const magicSquare = generateMagicSquare( noiseSize );
 	const noiseSquareSize = magicSquare.length;
@@ -508,7 +603,7 @@ function generateMagicSquareNoise( size = 5 ) {
 		data[ inx * 4 ] = ( randomVec.x * 0.5 + 0.5 ) * 255;
 		data[ inx * 4 + 1 ] = ( randomVec.y * 0.5 + 0.5 ) * 255;
 		data[ inx * 4 + 2 ] = 127;
-		data[ inx * 4 + 3 ] = 0;
+		data[ inx * 4 + 3 ] = ( simplex.noise( inx / size, inx % size ) * 0.5 + 0.5 ) * 255;
 
 	}
 
@@ -573,4 +668,4 @@ function generateMagicSquare( size: number ) {
 }
 
 
-export { generateAoSampleKernelInitializer, generateMagicSquareNoise, AOShader, AoAlgorithms, AODepthShader, AoBlendShader };
+export { generateAoSampleKernelInitializer, generateMagicSquareNoise, AoAlgorithms, AOShader, AoBlendShader, AODepthToNormalShader, AODepthShader };

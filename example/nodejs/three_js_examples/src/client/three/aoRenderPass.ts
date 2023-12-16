@@ -42,15 +42,15 @@ export interface AoParameters {
     aoEnabled: boolean;
     aoAlwaysUpdate: boolean;
     aoIntensity: number;
-    algorithm: AoAlgorithms;
+    algorithm: number;
     samples: number;
     clipRangeCheck: boolean;
-    distanceFallOff: boolean;
     nvAlignedSamples: boolean;
     screenSpaceRadius: boolean;
     radius: number;
     distanceExponent: number;
     thickness: number;
+    distanceFallOff: number
     bias: number;
     scale: number;
     pdSamples: number,
@@ -293,8 +293,8 @@ export class AoRenderTargets {
     }
 
     private get pdNoiseTexture(): DataTexture {
-      this._aoNoiseTexture = this._aoNoiseTexture ?? generateUniformKernelRotations();
-      return this._aoNoiseTexture;
+      this._pdNoiseTexture = this._pdNoiseTexture ?? generateUniformKernelRotations();
+      return this._pdNoiseTexture;
     }
   
     constructor(
@@ -317,13 +317,13 @@ export class AoRenderTargets {
         algorithm: AoAlgorithms.SSAO,
         aoSamples: 16,
         clipRangeCheck: true,
-        distanceFallOff: true,
         nvAlignedSamples: true,
         screenSpaceRadius: false,
-        radius: 0.5,
-        distanceExponent: 1,
-        thickness: 1,
-        bias: 0.0001,
+        radius: 0.25,
+        distanceExponent: 2,
+        thickness: 10,
+        distanceFallOff: 1,
+        bias: 0.001,
         scale: 1,
         pdLumaPhi: 10.,
 				pdDepthPhi: 2.,
@@ -461,10 +461,6 @@ export class AoRenderMaterial extends ShaderMaterial {
         this.defines.DEPTH_SWIZZLING = parameters?.depthValueSource === 1 ? 'w' : 'x';
         this.needsUpdate = true;
       }
-      if (parameters?.distanceFallOff !== undefined) {
-        this.defines.DISTANCE_FALL_OFF = parameters?.distanceFallOff ? 1 : 0;
-        this.needsUpdate = true;
-      }
       if (parameters?.nvAlignedSamples !== undefined) {
         this.defines.NV_ALIGNED_SAMPLES = parameters?.nvAlignedSamples ? 1 : 0;
         this.needsUpdate = true;
@@ -525,6 +521,9 @@ export class AoRenderMaterial extends ShaderMaterial {
       }
       if (parameters?.thickness !== undefined) {
         this.uniforms.thickness.value = parameters?.thickness;
+      }
+      if (parameters?.distanceFallOff !== undefined) {
+        this.uniforms.distanceFallOff.value = parameters?.distanceFallOff;
       }
       if (parameters?.bias !== undefined) {
         this.uniforms.bias.value = parameters?.bias;
