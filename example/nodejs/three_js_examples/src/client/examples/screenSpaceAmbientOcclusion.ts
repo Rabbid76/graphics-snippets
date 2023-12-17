@@ -63,14 +63,12 @@ export const screenSpaceAmbientOcclusion = (canvas: any) => {
 	gltfLoader.setDRACOLoader( dracoLoader );
 
     const camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 50);
-    camera.position.set(6, 0, 0);
     const controls = new Controls(renderer, camera);
 
     const scene = new Scene();
     scene.background = new Color(0xffffff);
     const pmremGenerator = new PMREMGenerator(renderer);
     const roomEnvironment = new RoomEnvironment(renderer);
-    //roomEnvironment.rotateY(Math.PI);
     const environmentTexture = pmremGenerator.fromScene(roomEnvironment, 0.04).texture;
     scene.environment = environmentTexture;
     scene.background = environmentTexture;
@@ -85,6 +83,8 @@ export const screenSpaceAmbientOcclusion = (canvas: any) => {
         capabilities: renderer.capabilities,
     });
     effectComposer.addPass(ssaoPass);
+
+    const boundingVolume = new SceneVolume();
 
     const generateAoTestScene = (group: Group) => {
         const n = 128;
@@ -104,9 +104,8 @@ export const screenSpaceAmbientOcclusion = (canvas: any) => {
         gltfLoader.load( '../sponza_cd.glb', ( gltf: any ) => {
             const model = gltf.scene;
             const box = new Box3().setFromObject(model);
-            console.log(box);
-            model.position.set( 0, -1.5, 0 );
             group.add( model );
+            boundingVolume.updateFromObject(scene);
         }, undefined, ( e: any ) => console.error( e ) );
     };
 
@@ -114,39 +113,40 @@ export const screenSpaceAmbientOcclusion = (canvas: any) => {
     sceneGroups.forEach( ( group ) => scene.add( group ) );
     generateAoTestScene( sceneGroups[ 0 ] );
     generateSponzaScene( sceneGroups[ 1 ] );
-    const sceneParameter = {
-        scene: 0,
-    };
-    sceneGroups[ 1 - sceneParameter.scene ].visible = false;
-
-    const boundingVolume = new SceneVolume();
-    boundingVolume.updateFromObject(scene);
-
-    dataGui.gui.add( sceneParameter, 'scene', {
-        'AO test scene': 0,
-        'Sponza': 1,
-    } ).onChange( ( value ) => {
-    
-        for ( let i = 0; i < sceneGroups.length; ++ i ) sceneGroups[ i ].visible = i == value;
-        if (value == 0) {
-            camera.position.set(0, 0, 5.);
-            camera.rotation.set(0, 0, 0);
-            generalProperties.rotate = true;
-        } else {
-            camera.position.set(6, 0, 0);
-            camera.rotation.set(0, 0, 0);
-            generalProperties.rotate = false;
-        }
-        camera.lookAt(0, 0, 0);
-        rotationController.updateDisplay();
-    } );
-
     const generalProperties = {
-        'rotate': true,
+        scene: 0,
+        rotate: true,
         'debug pass': 'off'
     };
+
+    let rotationController: any;
+    const updateView = () => {
+        for ( let i = 0; i < sceneGroups.length; ++ i ) sceneGroups[ i ].visible = i == generalProperties.scene;
+        if (generalProperties.scene == 0) {
+            generalProperties.rotate = true;
+            camera.position.set(0, 0, 5.);
+            camera.rotation.set(0, 0, 0);
+            controls.setTarget(new Vector3(0, 0, 0));
+        } else {
+            generalProperties.rotate = false;
+            camera.position.set(10, 1.5, 0);
+            camera.rotation.set(0, 0, 0);
+            controls.setTarget(new Vector3(0, 1.5, 0));
+        }
+        camera.lookAt(0, 0, 0);
+        rotationController?.updateDisplay();
+        controls.update();
+        boundingVolume.updateFromObject(scene);
+    };
+    updateView();
+
+    dataGui.gui.add( generalProperties, 'scene', {
+        'AO test scene': 0,
+        'Sponza': 1,
+    } ).onChange( () => updateView() );
+
     ssaoPass.debugOutput = generalProperties['debug pass'];
-    const rotationController = dataGui.gui.add(generalProperties, 'rotate');
+    rotationController = dataGui.gui.add(generalProperties, 'rotate');
     dataGui.gui.add<any>(ssaoPass, 'debugOutput', {
       'off ': 'off',
       'color buffer': 'color',

@@ -23,6 +23,10 @@ export class Controls {
         return control;
     }
 
+    public setTarget(targetPosition: THREE.Vector3) {
+        this.orbitControls.target.set(targetPosition.x, targetPosition.y, targetPosition.z);
+    }
+
     public update() {
         this.orbitControls.update()
     }

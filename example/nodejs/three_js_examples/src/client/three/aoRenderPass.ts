@@ -14,6 +14,7 @@ import {
     Camera,
     CustomBlending,
     DataTexture,
+    HalfFloatType,
     LinearFilter,
     Matrix4,
     NearestFilter,
@@ -254,6 +255,7 @@ export class AoRenderTargets {
         new WebGLRenderTarget(this.width, this.height, {
           samples: this.aoTargetSamples,
           format: RedFormat,
+          type: HalfFloatType,
           magFilter: LinearFilter,
           minFilter: LinearFilter,
         });
@@ -280,7 +282,7 @@ export class AoRenderTargets {
         this._blurRenderMaterial ??
         new AoBlurMaterial({
           normalTexture: this.depthAndNormalTextures.getGBufferTexture(),
-          depthTexture: this.depthAndNormalTextures.getDepthBufferTexture(),
+          depthTexture: this.depthAndNormalTextures.getTextureWithDepth(),
           noiseTexture: this.pdNoiseTexture,
           floatGBufferRgbNormalAlphaDepth: 
             this.depthAndNormalTextures.isFloatGBufferWithRgbNormalAlphaDepth(),
