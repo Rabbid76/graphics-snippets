@@ -129,16 +129,15 @@ export const screenSpaceAmbientOcclusion = (canvas: any) => {
         for ( let i = 0; i < sceneGroups.length; ++ i ) sceneGroups[ i ].visible = i == value;
         if (value == 0) {
             camera.position.set(0, 0, 5.);
-            camera.lookAt(0, 0, 0);
+            camera.rotation.set(0, 0, 0);
             generalProperties.rotate = true;
-            rotationController.updateDisplay();
         } else {
             camera.position.set(6, 0, 0);
-            camera.lookAt(0, 0, 0);
+            camera.rotation.set(0, 0, 0);
             generalProperties.rotate = false;
-            rotationController.updateDisplay();
         }
-
+        camera.lookAt(0, 0, 0);
+        rotationController.updateDisplay();
     } );
 
     const generalProperties = {

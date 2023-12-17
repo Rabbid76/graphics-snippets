@@ -15,25 +15,26 @@ import {
     CustomBlending,
     DataTexture,
     LinearFilter,
-    MathUtils,
     Matrix4,
     NearestFilter,
     NoBlending,
     OrthographicCamera,
     PerspectiveCamera,
+    RedFormat,
     RepeatWrapping,
-    RGFormat,
+    RGBAFormat,
     Scene,
     ShaderMaterial,
     UniformsUtils,
-    Vector3,
+    UnsignedByteType,
     WebGLCapabilities,
     WebGLRenderer,
     WebGLRenderTarget,
 } from 'three';
 import { Pass } from 'three/examples/jsm/postprocessing/Pass';
+import { SimplexNoise } from 'three/examples/jsm/math/SimplexNoise.js';
+import { generatePdSamplePointInitializer, PoissonDenoiseShader } from 'three/examples/jsm/shaders/PoissonDenoiseShader.js';
 import { AOShader, AoAlgorithms, generateAoSampleKernelInitializer, generateMagicSquareNoise } from './aoShader';
-import { PoissonDenoiseShader, generatePdSamplePointInitializer } from './pdShader';
 
 export { AoAlgorithms } from './aoShader';
 
@@ -240,7 +241,7 @@ export class AoRenderTargets {
         this._passRenderTarget ??
         new WebGLRenderTarget(this.width, this.height, {
           samples: this.aoTargetSamples,
-          format: RGFormat,
+          format: RedFormat,
           magFilter: LinearFilter,
           minFilter: LinearFilter,
         });
@@ -252,7 +253,7 @@ export class AoRenderTargets {
         this._blurRenderTarget ??
         new WebGLRenderTarget(this.width, this.height, {
           samples: this.aoTargetSamples,
-          format: RGFormat,
+          format: RedFormat,
           magFilter: LinearFilter,
           minFilter: LinearFilter,
         });
@@ -293,7 +294,7 @@ export class AoRenderTargets {
     }
 
     private get pdNoiseTexture(): DataTexture {
-      this._pdNoiseTexture = this._pdNoiseTexture ?? generateUniformKernelRotations();
+      this._pdNoiseTexture = this._pdNoiseTexture ?? generateNoise();
       return this._pdNoiseTexture;
     }
   
@@ -557,7 +558,7 @@ export class AoRenderMaterial extends ShaderMaterial {
     public updateDefines(parameters?: any) {
       if (parameters?.pdSamples !== undefined) {
         this.defines.SAMPLES = parameters?.pdSamples;
-        this.defines.SAMPLE_VECTORS = generatePdSamplePointInitializer( parameters?.pdSamples, 2, 1 );
+        this.defines.SAMPLE_VECTORS = generatePdSamplePointInitializer( parameters?.pdSamples, 2 );
         this.needsUpdate = true;
       }
     }
@@ -606,47 +607,23 @@ export class AoRenderMaterial extends ShaderMaterial {
     }
 }
   
-export const spiralQuadraticSampleKernel = (kernelSize: number): Vector3[] => {
-    const kernel: Vector3[] = [];
-    for (let kernelIndex = 0; kernelIndex < kernelSize; kernelIndex++) {
-      const spiralAngle = kernelIndex * Math.PI * (3 - Math.sqrt(5));
-      const z = 0.99 - (kernelIndex / (kernelSize - 1)) * 0.8;
-      const radius = Math.sqrt(1 - z * z);
-      const x = Math.cos(spiralAngle) * radius;
-      const y = Math.sin(spiralAngle) * radius;
-      const scaleStep = 8;
-      const scaleRange = Math.floor(kernelSize / scaleStep);
-      const scaleIndex =
-        Math.floor(kernelIndex / scaleStep) +
-        (kernelIndex % scaleStep) * scaleRange;
-      let scale = 1 - scaleIndex / kernelSize;
-      scale = MathUtils.lerp(0.1, 1, scale * scale);
-      kernel.push(new Vector3(x * scale, y * scale, z * scale));
+export const generateNoise = (size: number = 64): DataTexture => {
+  const simplex = new SimplexNoise();
+  const arraySize = size * size * 4;
+  const data = new Uint8Array( arraySize );
+  for ( let i = 0; i < size; i ++ ) {
+    for ( let j = 0; j < size; j ++ ) {
+      const x = i;
+      const y = j;
+      data[ ( i * size + j ) * 4 ] = ( simplex.noise( x, y ) * 0.5 + 0.5 ) * 255;
+      data[ ( i * size + j ) * 4 + 1 ] = ( simplex.noise( x + size, y ) * 0.5 + 0.5 ) * 255;
+      data[ ( i * size + j ) * 4 + 2 ] = ( simplex.noise( x, y + size ) * 0.5 + 0.5 ) * 255;
+      data[ ( i * size + j ) * 4 + 3 ] = ( simplex.noise( x + size, y + size ) * 0.5 + 0.5 ) * 255;
     }
-    return kernel;
-};
-  
-export const generateUniformKernelRotations = (): DataTexture => {
-    const width = 4;
-    const height = 4;
-    const noiseSize = width * height;
-    const data = new Uint8Array(noiseSize * 4);
-    for (let inx = 0; inx < noiseSize; ++inx) {
-      const iAng = Math.floor(inx / 2) + (inx % 2) * 8;
-      const angle = (2 * Math.PI * iAng) / noiseSize;
-      const randomVec = new Vector3(
-        Math.cos(angle),
-        Math.sin(angle),
-        0
-      ).normalize();
-      data[inx * 4] = (randomVec.x * 0.5 + 0.5) * 255;
-      data[inx * 4 + 1] = (randomVec.y * 0.5 + 0.5) * 255;
-      data[inx * 4 + 2] = 127;
-      data[inx * 4 + 3] = 0;
-    }
-    const noiseTexture = new DataTexture(data, width, height);
-    noiseTexture.wrapS = RepeatWrapping;
-    noiseTexture.wrapT = RepeatWrapping;
-    noiseTexture.needsUpdate = true;
-    return noiseTexture;
+  }
+  const noiseTexture = new DataTexture( data, size, size, RGBAFormat, UnsignedByteType );
+  noiseTexture.wrapS = RepeatWrapping;
+  noiseTexture.wrapT = RepeatWrapping;
+  noiseTexture.needsUpdate = true;
+  return noiseTexture;
 };
