@@ -76,9 +76,10 @@ export const screenSpaceAmbientOcclusion = (canvas: any) => {
     scene.background = environmentTexture;
 
     const maxSamples = getMaxSamples(renderer);
-    const ssaoRenderTarget = new WebGLRenderTarget(window.innerWidth, window.innerHeight, { samples: maxSamples })
+    const pixelRatio = renderer.getPixelRatio();
+    const ssaoRenderTarget = new WebGLRenderTarget(window.innerWidth * pixelRatio, window.innerHeight * pixelRatio, { samples: maxSamples })
     const effectComposer = new EffectComposer(renderer, ssaoRenderTarget);
-    const ssaoPass = new SsaoDebugRenderPass(window.innerWidth, window.innerHeight, maxSamples, {
+    const ssaoPass = new SsaoDebugRenderPass(window.innerWidth * pixelRatio, window.innerHeight * pixelRatio, maxSamples, {
         camera,
         scene,
         capabilities: renderer.capabilities,
