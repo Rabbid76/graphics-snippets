@@ -1,4 +1,5 @@
 .vs
+build
 obj
 bin
 Win32

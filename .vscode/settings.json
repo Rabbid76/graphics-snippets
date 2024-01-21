@@ -1,8 +1,4 @@
 {
-    "cmake.configureOnOpen": false,
-    "files.associations": {
-        "*.js": "javascriptreact",
-        "iostream": "cpp"
-    },
-    "cmake.sourceDirectory": "/Users/gernotsteinegger/source/Rabbid76/graphics-snippets/example/cpp"
+    "cmake.configureOnOpen": true,
+    "cmake.sourceDirectory": "${workspaceFolder}/example/cpp"
 }
