@@ -24,6 +24,9 @@ project(cpp_examples)
 
 #set_property(TARGET tgt PROPERTY CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD 20)
+if(MAKE_CONFIG STREQUAL "MacXCode")
+    enable_language(OBJC)
+endif()
 
 set(SUBMODULES_PATH _submodules)
 add_subdirectory(${SUBMODULES_PATH})
@@ -127,7 +130,7 @@ set(GLUT_LIB freeglut_static)
 set(GLFW_LIB glfw)
 
 # SDL
-set(SDL_LIB SDL2-static)
+set(SDL_LIB SDL3-static)
 
 # SFML
 set(SFML_LIB SFML::Window SFML::Graphics SFML::System)

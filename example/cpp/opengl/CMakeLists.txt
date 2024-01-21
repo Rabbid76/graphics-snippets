@@ -56,10 +56,10 @@ endif()
 
 # GLFW
 glfw_exe(example_glfw_1 example_glfw_1.cpp)
+glfw_exe(example_glfw_2_perpspcetive example_glfw_2_perpspcetive.cpp)
 
 if(NOT MAKE_CONFIG STREQUAL "MacXCode")
 glfw_exe(example_glfw_text_freetype example_glfw_text_freetype.cpp)
-glfw_exe(example_glfw_2_perpspcetive example_glfw_2_perpspcetive.cpp)
 glfw_exe(example_glfw_fps example_glfw_fps.cpp)
 glfw_exe(example_glm_animation_1 example_glm_animation_1.cpp)
 glfw_exe(example_barycentric_cordinates_print example_barycentric_cordinates_print.cpp)
@@ -91,11 +91,7 @@ endif()
 # glfw_exe(example_texture_4_transform example_texture_4_transform.cpp)
 
 # SDL
-if(NOT MAKE_CONFIG STREQUAL "MacXCode")
 sdl_exe(example_sdl_1 example_sdl_1.cpp)
-endif()
 
 # SFML
-if(NOT MAKE_CONFIG STREQUAL "MacXCode")
 sfml_exe(example_sfml_1 example_sfml_1.cpp)
-endif()

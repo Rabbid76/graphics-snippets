@@ -18,12 +18,12 @@
 // SDL [https://www.libsdl.org/]
 // https://stackoverflow.com/questions/34079288/im-using-the-sdl-functions-without-the-sdl-main-be-defined-is-that-fine
 # define SDL_MAIN_HANDLED 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 
 // project includes
 #include <gl/gl_debug.h>
-#include <gl/gl_shader.h>
+#include <gl/opengl_shader.h>
 
 // preprocessor definitions
 
@@ -34,7 +34,7 @@
 // shader
 
 std::string sh_vert = R"(
-#version 460
+#version 410 core
 
 layout (location = 0) in vec3 inPos;
 layout (location = 1) in vec4 inColor;
@@ -42,22 +42,22 @@ layout (location = 1) in vec4 inColor;
 out vec3 vertPos;
 out vec4 vertCol;
 
-layout (location = 0) uniform mat4 project;
-layout (location = 1) uniform mat4 view;
-layout (location = 2) uniform mat4 model;
+uniform mat4 project;
+uniform mat4 view;
+uniform mat4 model;
 
 void main()
 {  
     vec4 view_pos = view * model * vec4(inPos, 1.0);
 
     vertCol     = inColor;
-	  vertPos     = view_pos.xyz;
-	  gl_Position = project * vec4(view_pos.xyz, 1.0);
+	vertPos     = view_pos.xyz;
+	gl_Position = project * vec4(view_pos.xyz, 1.0);
 }
 )";
 
 std::string sh_frag = R"(
-#version 460
+#version 410 core
 
 in vec3 vertPos;
 in vec4 vertCol;
@@ -78,10 +78,12 @@ int main(void)
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
         throw std::runtime_error("error initializing glfw");
 
-    //SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    //SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
-    //SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-    //SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
+#ifdef __APPLE__
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
+#endif
     //SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
     //SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
     //SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
@@ -90,8 +92,7 @@ int main(void)
     //SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     //SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 8);
-    SDL_Window* wnd = SDL_CreateWindow(
-        "SDL OGL window", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 800, 600, SDL_WINDOW_OPENGL);
+    SDL_Window* wnd = SDL_CreateWindow("SDL OGL window", 800, 600, SDL_WINDOW_OPENGL);
     if (wnd == nullptr)
     {
         SDL_Quit();
@@ -113,7 +114,12 @@ int main(void)
 
     //glfwSwapInterval( 2 );
 
-    GLuint program_obj = OpenGL::CreateProgram(sh_vert, sh_frag);
+    GLuint program_obj = OpenGL::LinkProgram({
+        OpenGL::CompileShader(GL_VERTEX_SHADER, sh_vert.c_str()), 
+        OpenGL::CompileShader(GL_FRAGMENT_SHADER, sh_frag.c_str())});
+    GLint project_loc = glGetUniformLocation(program_obj, "project");
+    GLint view_loc = glGetUniformLocation(program_obj, "view");
+    GLint model_loc = glGetUniformLocation(program_obj, "model");
     glUseProgram(program_obj);
 
     static const std::vector<float> varray
@@ -158,7 +164,7 @@ int main(void)
         SDL_Event event;
         while (SDL_PollEvent(&event) != 0)
         {
-            if (event.type == SDL_QUIT)
+            if (event.type == SDL_EVENT_QUIT)
                 running = false;
         }
         std::chrono::high_resolution_clock::time_point current_time = std::chrono::high_resolution_clock::now();
@@ -173,7 +179,7 @@ int main(void)
         float angle = (float)(time_s * 90.0);
 
         int vpSize[2];
-        SDL_GL_GetDrawableSize(wnd, &vpSize[0], &vpSize[1]);
+        SDL_GetWindowSizeInPixels(wnd, &vpSize[0], &vpSize[1]);
 
         float aspect = (float)vpSize[0] / (float)vpSize[1];
         float orthoX = aspect > 1.0f ? aspect : 1.0f;
@@ -194,9 +200,9 @@ int main(void)
         model = glm::translate(model, glm::vec3(0.1f, 0.0f, 1.0f));
         //model = glm::rotate(model, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
 
-        glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(project));
-        glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(view));
-        glUniformMatrix4fv(2, 1, GL_FALSE, glm::value_ptr(model));
+        glUniformMatrix4fv(project_loc, 1, GL_FALSE, glm::value_ptr(project));
+        glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm::value_ptr(view));
+        glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
 
         glViewport(0, 0, vpSize[0], vpSize[1]);
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);

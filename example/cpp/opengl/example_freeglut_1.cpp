@@ -16,13 +16,12 @@
 
 
 // FreeGLUT [http://freeglut.sourceforge.net/]
-#include <gl/freeglut.h>
+#include <GL/freeglut.h>
 
 
 // project includes
 #include <gl/gl_debug.h>
-#include <gl/gl_shader.h>
-
+#include <gl/opengl_shader.h>
 
 // preprocessor definitions
 
@@ -39,7 +38,7 @@ void display( void );
 // shader
 
 std::string sh_vert = R"(
-#version 400
+#version 410 core
 
 layout (location = 0) in vec3 inPos;
 layout (location = 1) in vec4 inColor;
@@ -62,7 +61,7 @@ void main()
 )";
 
 std::string sh_frag = R"(
-#version 400
+#version 410 core
 
 in vec3 vertPos;
 in vec4 vertCol;
@@ -79,9 +78,9 @@ void main()
 // globale variables
 
 std::chrono::high_resolution_clock::time_point start_time;
-
-OpenGL::ShaderProgramSimple *g_prog;
-
+GLint project_loc = 0;
+GLint view_loc = 0;
+GLint model_loc = 0;
 
 // main
 
@@ -91,7 +90,12 @@ int main(int argc, char** argv)
 
     glutInit(&argc, argv);
 
-    glutInitContextProfile(GLUT_COMPATIBILITY_PROFILE);
+#ifdef __APPLE__
+    glutInitContextProfile(GLUT_CORE_PROFILE);
+    glutInitContextVersion(4, 1);
+    glutInitContextFlags(GLUT_FORWARD_COMPATIBLE);
+    glewExperimental = true;
+#endif
     glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
 
     glutInitWindowSize(800, 600);
@@ -106,11 +110,9 @@ int main(int argc, char** argv)
 
     glutDisplayFunc(display);  
 
-    g_prog = new OpenGL::ShaderProgramSimple(
-    {
-      { sh_vert, GL_VERTEX_SHADER },
-      { sh_frag, GL_FRAGMENT_SHADER }
-    } );                                            
+    GLint program_obj = OpenGL::LinkProgram({
+        OpenGL::CompileShader(GL_VERTEX_SHADER, sh_vert.c_str()), 
+        OpenGL::CompileShader(GL_FRAGMENT_SHADER, sh_frag.c_str())});                                  
 
     static const std::vector<float> varray
     { 
@@ -151,7 +153,10 @@ int main(int argc, char** argv)
     glBufferSubData( GL_ARRAY_BUFFER, GL_ZERO, varray.size()*sizeof(*varray.data()), varray.data() );
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
 
-    g_prog->Use();
+    project_loc = glGetUniformLocation(program_obj, "project");
+    view_loc = glGetUniformLocation(program_obj, "view");
+    model_loc = glGetUniformLocation(program_obj, "model");
+    glUseProgram(program_obj);
 
     // use vertex array object for drawing
 
@@ -199,10 +204,10 @@ void display( void )
     //model = glm::scale( model, glm::vec3(0.5f, 0.5f, 1.0f) );
     angle += 1.0f;
         
-    g_prog->SetUniformM44( "project", glm::value_ptr(project) );
-    g_prog->SetUniformM44( "view", glm::value_ptr(view) );
-    g_prog->SetUniformM44( "model", glm::value_ptr(model) );
-
+    glUniformMatrix4fv(project_loc, 1, GL_FALSE, glm::value_ptr(project));
+    glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm::value_ptr(view));
+    glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));    
+    
     glViewport( 0, 0, vpSize[0], vpSize[1] );
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );

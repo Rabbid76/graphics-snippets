@@ -46,16 +46,12 @@ endif()
 add_subdirectory(glfw)
 
 # sdl
-if(NOT MAKE_CONFIG STREQUAL "MacXCode")
 add_subdirectory(sdl)
-endif()
 
 # sfml
-if(NOT MAKE_CONFIG STREQUAL "MacXCode")
 add_subdirectory(sfml)
 if(MAKE_CONFIG STREQUAL "MSVC") 
     #target_compile_options(SFML PRIVATE /wd9025)
-endif()
 endif()
 
 # wxwindgets

@@ -6,17 +6,15 @@
 #include <string>
 #include <stdexcept>
 #include <chrono>
-
+#include <filesystem>
 
 // GLM [https://glm.g-truc.net/0.9.9/api/index.html]
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-
 // OpenGL
 #include <gl/gl_glew.h>
-
 
 // GLFW [https://www.glfw.org/]
 #include <GLFW/glfw3.h>
@@ -28,10 +26,9 @@
 #include <stb_image.h>
 //#include <stb_image_write.h>
 
-
 // project includes
 #include <gl/gl_debug.h>
-#include <gl/gl_shader.h>
+#include <gl/opengl_shader.h>
 
 // preprocessor definitions
 
@@ -42,7 +39,7 @@
 // shader
 
 std::string sh_vert = R"(
-#version 460
+#version 410 core
 
 layout (location = 0) in vec4 inPos;
 layout (location = 1) in vec4 inColor;
@@ -60,13 +57,14 @@ void main()
 )";
 
 std::string sh_frag = R"(
-#version 460
+#version 410 core
 
 in vec4 vertCol;
 in vec2 vertUV;
 
 out vec4 fragColor;
-layout(binding = 0) uniform sampler2D u_texture;
+//layout(binding = 0) uniform sampler2D u_texture;
+uniform sampler2D u_texture;
 
 void main()
 {
@@ -84,6 +82,15 @@ int main(void)
 
     //glfwWindowHint(GLFW_REFRESH_RATE, 10);
 
+    OpenGL::CContext::TDebugLevel debug_level = OpenGL::CContext::TDebugLevel::all;
+#ifdef __APPLE__
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
+    glewExperimental = true;
+#endif
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, debug_level != OpenGL::CContext::TDebugLevel::off ? GLFW_TRUE : GLFW_FALSE);
     GLFWwindow *wnd = glfwCreateWindow( 400, 400, "GLFW OGL window", nullptr, nullptr );
     if ( wnd == nullptr )
     {
@@ -96,16 +103,14 @@ int main(void)
     if ( glewInit() != GLEW_OK )
         throw std::runtime_error( "error initializing glew" );
 
-    OpenGL::CContext::TDebugLevel debug_level = OpenGL::CContext::TDebugLevel::all;
     OpenGL::CContext context;
     context.Init( debug_level );
 
-
     //glfwSwapInterval( 2 );
 
-
+    std::cout << "Current path is " << std::filesystem::current_path() << '\n';
     //std::string path = "C:/source/rabbid76workbench/test/texture/boomerang.png";
-    std::string path = "C:/source/graphics-snippets/resource/texture/ObjectSheet.png";
+    std::string path = "../../resource/texture/ObjectSheet.png";
     int cx, cy, ch;
     stbi_uc *img = stbi_load( path.c_str(), &cx, &cy, &ch, 4 );
     if ( img == nullptr )
@@ -129,7 +134,9 @@ int main(void)
           
     //glBindTexture( GL_TEXTURE_2D, 0 );
 
-    GLuint program_obj = OpenGL::CreateProgram(sh_vert, sh_frag);
+    GLint program_obj = OpenGL::LinkProgram({
+        OpenGL::CompileShader(GL_VERTEX_SHADER, sh_vert.c_str()), 
+        OpenGL::CompileShader(GL_FRAGMENT_SHADER, sh_frag.c_str())});
     glUseProgram(program_obj);
     
     static const std::vector<float> varray

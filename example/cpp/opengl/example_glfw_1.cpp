@@ -4,21 +4,17 @@
 #include <stdexcept>
 #include <chrono>
 
-
 // GLM [https://glm.g-truc.net/0.9.9/api/index.html]
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-
 // OpenGL
 #include <gl/gl_glew.h>
-
 
 // GLFW [https://www.glfw.org/]
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
-
 
 // project includes
 #include <gl/gl_debug.h>

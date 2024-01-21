@@ -16,14 +16,14 @@
 
 
 // SFML [https://www.sfml-dev.org/]
-//#include <SFML\System.hpp>
-#include <SFML\Graphics.hpp>
-//#include <SFML\Window.hpp>
+//#include <SFML/System.hpp>
+#include <SFML/Graphics.hpp>
+//#include <SFML/Window.hpp>
 
 
 // project includes
 #include <gl/gl_debug.h>
-//#include <gl/gl_shader.h>
+#include <gl/opengl_shader.h>
 
 // preprocessor definitions
 
@@ -34,7 +34,7 @@
 // shader
 
 std::string sh_vert = R"(
-#version 460
+#version 410 core
 
 layout (location = 0) in vec3 inPos;
 layout (location = 1) in vec4 inColor;
@@ -42,22 +42,22 @@ layout (location = 1) in vec4 inColor;
 out vec3 vertPos;
 out vec4 vertCol;
 
-layout (location = 0) uniform mat4 project;
-layout (location = 1) uniform mat4 view;
-layout (location = 2) uniform mat4 model;
+uniform mat4 project;
+uniform mat4 view;
+uniform mat4 model;
 
 void main()
 {  
     vec4 view_pos = view * model * vec4(inPos, 1.0);
 
     vertCol     = inColor;
-	  vertPos     = view_pos.xyz;
-	  gl_Position = project * vec4(view_pos.xyz, 1.0);
+	vertPos     = view_pos.xyz;
+	gl_Position = project * vec4(view_pos.xyz, 1.0);
 }
 )";
 
 std::string sh_frag = R"(
-#version 460
+#version 410 core
 
 in vec3 vertPos;
 in vec4 vertCol;
@@ -81,11 +81,18 @@ int main(void)
     settings.depthBits = 24;
     settings.stencilBits = 8;
     settings.antialiasingLevel = 4;
+#ifdef __APPLE__
+    settings.majorVersion = 4;
+    settings.minorVersion = 1;
+    settings.attributeFlags = sf::ContextSettings::Core | sf::ContextSettings::Debug;
+        //| sf::ContextSettings::attributeFlags::;
+#else
     settings.majorVersion = 4;
     settings.minorVersion = 6;
+#endif
 
     sf::RenderWindow mainWindow;
-    mainWindow.create(videoMode, "Test", sf::Style::Default, settings);
+    mainWindow.create(videoMode, sf::String("Test"), sf::Style::Default, sf::State::Windowed, settings);
     //mainWindow.setPosition(sf::Vector2i(0, 0));
 
     if (!mainWindow.isOpen())
@@ -98,10 +105,14 @@ int main(void)
     OpenGL::CContext context;
     context.Init(debug_level);
 
-    sf::Shader shader;
-    if (!shader.loadFromMemory(sh_vert, sh_frag))
-        std::cout << "error loading shader";
-    shader.bind(&shader);
+    std::cout << "shader" << std::endl;
+    GLint program_obj = OpenGL::LinkProgram({
+        OpenGL::CompileShader(GL_VERTEX_SHADER, sh_vert.c_str()), 
+        OpenGL::CompileShader(GL_FRAGMENT_SHADER, sh_frag.c_str())});
+    GLint project_loc = glGetUniformLocation(program_obj, "project");
+    GLint view_loc = glGetUniformLocation(program_obj, "view");
+    GLint model_loc = glGetUniformLocation(program_obj, "model");
+    glUseProgram(program_obj);
 
     static const std::vector<float> varray
     {
@@ -163,7 +174,7 @@ int main(void)
                 running = false;
             if (sfmlEvent.type == sf::Event::KeyPressed)
             {
-                if (sfmlEvent.key.code == sf::Keyboard::Escape)
+                if (sfmlEvent.key.code == sf::Keyboard::Key::Escape)
                     running = false;
             }
         }
@@ -191,9 +202,9 @@ int main(void)
         model = glm::translate(model, glm::vec3(0.1f, 0.0f, 1.0f));
         model = glm::rotate(model, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
 
-        glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(project));
-        glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(view));
-        glUniformMatrix4fv(2, 1, GL_FALSE, glm::value_ptr(model));
+        glUniformMatrix4fv(project_loc, 1, GL_FALSE, glm::value_ptr(project));
+        glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm::value_ptr(view));
+        glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
 
         glViewport(0, 0, vpSize.x, vpSize.y);
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
