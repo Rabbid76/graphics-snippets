@@ -1,4 +1,5 @@
 {
+    "cmake.configureOnOpen": true,
     "files.associations": {
         "*.js": "javascriptreact",
         "__config": "cpp"
