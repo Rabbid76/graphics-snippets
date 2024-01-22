@@ -109,8 +109,7 @@ int main(void)
     //glfwSwapInterval( 2 );
 
     std::cout << "Current path is " << std::filesystem::current_path() << '\n';
-    //std::string path = "C:/source/rabbid76workbench/test/texture/boomerang.png";
-    std::string path = "../../resource/texture/ObjectSheet.png";
+    std::string path = "./resource/texture/ObjectSheet.png";
     int cx, cy, ch;
     stbi_uc *img = stbi_load( path.c_str(), &cx, &cy, &ch, 4 );
     if ( img == nullptr )

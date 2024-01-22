@@ -18,6 +18,9 @@
 // OpenGL
 #include <gl/gl_glew.h>
 
+#ifdef __APPLE__
+#define OpenGL_program_introspection_old
+#endif
 
 using TShaderInfo = std::tuple< std::string, int >;
 using TVec2       = std::array< float, 2 >;
@@ -25,9 +28,6 @@ using TVec3       = std::array< float, 3 >;
 using TVec4       = std::array< float, 4 >;
 using TMat44      = std::array< TVec4, 4 >;
 using TSize       = std::array< int, 2 >;
-
-
-
 
 namespace OpenGL
 {
@@ -336,12 +336,14 @@ namespace OpenGL
         // Get transform feedvback varyings
         void GetTransformFeedbackVaryings(void)
         {
+#if not defined(OpenGL_program_introspection_old)            
             GetInterfaceResources(GL_TRANSFORM_FEEDBACK_VARYING, _transformFeedbackVaryings, TResourceKind::NON);
 
             if (_verbose == false)
                 return;
             for (auto& resource : _transformFeedbackVaryings)
                 std::cout << "transform feedback varyings " << resource.second << ": " << resource.first << std::endl;
+#endif        
         }
 
         // Get fragmetn outputs

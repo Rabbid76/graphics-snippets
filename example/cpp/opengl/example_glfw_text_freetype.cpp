@@ -4,20 +4,16 @@
 #include <stdexcept>
 #include <chrono>
 
-
 // GLM [https://glm.g-truc.net/0.9.9/api/index.html]
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-
 // OpenGL
 #include <gl/gl_glew.h>
 
-
 // GLFW [https://www.glfw.org/]
 #include <GLFW/glfw3.h>
-
 
 // project includes
 #include <gl/gl_debug.h>
@@ -33,13 +29,12 @@
 #define M_PI 3.14159265358979323846 
 #endif
 
-const char* fontfilename = "../../../../../../resource/font/FreeSans.ttf";
-//const char* fontfilename = "C:/source/graphics-snippets/resource/font/FreeSans.ttf";
+const char* fontfilename = "./resource/font/FreeSans.ttf";
 
 // shader
 
 std::string sh_vert = R"(
-#version 460
+#version 410 core
 
 layout (location = 0) in vec4 in_attr;
 
@@ -51,16 +46,16 @@ uniform mat4 model;
 void main()
 {
     vUV         = in_attr.zw;
-		gl_Position = projection * model * vec4(in_attr.xy, 0.0, 1.0);
+	gl_Position = projection * model * vec4(in_attr.xy, 0.0, 1.0);
 }
 )";
 
 std::string sh_frag = R"(
-#version 460
+#version 410 core
 
 in vec2 vUV;
 
-layout (binding=0) uniform sampler2D u_texture;
+uniform sampler2D u_texture;
 
 uniform vec3 textColor;
 
@@ -73,10 +68,6 @@ void main()
     fragColor = vec4(textColor.rgb*text, text);
 }
 )";
-
-
-// Properties
-const GLuint WIDTH = 800, HEIGHT = 600;
 
 /// Holds all state information relevant to a character as loaded using FreeType
 struct Character {
@@ -97,26 +88,28 @@ int main()
 {
     // Init GLFW
     glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+#ifdef __APPLE__
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
+    glewExperimental = true;
+#endif
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
-    GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "LearnOpenGL", nullptr, nullptr); // Windowed
+    GLFWwindow* window = glfwCreateWindow(800, 600, "LearnOpenGL", nullptr, nullptr); // Windowed
     glfwMakeContextCurrent(window);
 
     // Initialize GLEW to setup the OpenGL Function pointers
     glewExperimental = GL_TRUE;
     glewInit();
 
+    int vpSize[2];
+    glfwGetFramebufferSize(window, &vpSize[0], &vpSize[1]);
+    float dpiScale = static_cast<GLfloat>(vpSize[0]) / 800.0f;
+
     // Define the viewport dimensions
-    glViewport(0, 0, WIDTH, HEIGHT);
-
-    // Set OpenGL options
-    //glCullFace( GL_BACK );
-    //glFrontFace( GL_CW );
-    //glEnable(GL_CULL_FACE);
-
+    glViewport(0, 0, vpSize[0], vpSize[1]);
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -128,10 +121,7 @@ int main()
         { sh_frag, GL_FRAGMENT_SHADER }
     });
 
-    //glm::mat4 projection = glm::ortho(0.0f, static_cast<GLfloat>(WIDTH), 0.0f, static_cast<GLfloat>(HEIGHT));
-
-    glm::mat4 projection = glm::ortho(0.0f, static_cast<GLfloat>(WIDTH), static_cast<GLfloat>(HEIGHT), 0.0f);
-
+    glm::mat4 projection = glm::ortho(0.0f, static_cast<GLfloat>(vpSize[0]), static_cast<GLfloat>(vpSize[1]), 0.0f);
 
     shader.Use();
     GLint project_loc = glGetUniformLocation(shader.Prog(), "projection");
@@ -219,8 +209,8 @@ int main()
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        RenderText1(shader, "This is sample text", 25.0f, 50.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
-        RenderText2(shader, "(C) LearnOpenGL.com", 35.0f, 200.0f, 0.8f, glm::vec3(0.3, 0.7f, 0.9f), glm::vec2(1.0f, -0.25f));
+        RenderText1(shader, "This is sample text", dpiScale * 25.0f, dpiScale * 50.0f, dpiScale, glm::vec3(0.5, 0.8f, 0.2f));
+        RenderText2(shader, "(C) LearnOpenGL.com", dpiScale * 35.0f, dpiScale * 200.0f, dpiScale * 0.8f, glm::vec3(0.3, 0.7f, 0.9f), glm::vec2(1.0f, -0.25f));
 
         // Swap the buffers
         glfwSwapBuffers(window);

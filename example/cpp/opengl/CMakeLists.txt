@@ -1,10 +1,6 @@
 # for mingw, the order of the libraries seems to matter: glew before opengl32
 set(GLUT_LINK_LIBRARIES ${GLEW_LIB} ${DEFAULT_LIB} ${GLUT_LIB} ${FREETYPE_LIB})
-if(NOT MAKE_CONFIG STREQUAL "MacXCode")
 set(GLFW_LINK_LIBRARIES ${GLEW_LIB} ${DEFAULT_LIB} ${GLFW_LIB} ${FREETYPE_LIB})
-else()
-set(GLFW_LINK_LIBRARIES ${GLEW_LIB} ${DEFAULT_LIB} ${GLFW_LIB})
-endif()
 set(SDL_LINK_LIBRARIES ${GLEW_LIB} ${DEFAULT_LIB} ${SDL_LIB} ${FREETYPE_LIB})
 set(SFML_LINK_LIBRARIES ${GLEW_LIB} ${DEFAULT_LIB} ${SFML_LIB} ${FREETYPE_LIB})
 
@@ -56,13 +52,12 @@ endif()
 
 # GLFW
 glfw_exe(example_glfw_1 example_glfw_1.cpp)
-glfw_exe(example_glfw_2_perpspcetive example_glfw_2_perpspcetive.cpp)
-
-if(NOT MAKE_CONFIG STREQUAL "MacXCode")
 glfw_exe(example_glfw_text_freetype example_glfw_text_freetype.cpp)
-glfw_exe(example_glfw_fps example_glfw_fps.cpp)
+glfw_exe(example_glfw_2_perpspcetive example_glfw_2_perpspcetive.cpp)
 glfw_exe(example_glm_animation_1 example_glm_animation_1.cpp)
 glfw_exe(example_barycentric_cordinates_print example_barycentric_cordinates_print.cpp)
+
+if(NOT MAKE_CONFIG STREQUAL "MacXCode")
 glfw_exe(example_mesh_1_instancing example_mesh_1_instancing.cpp)
 glfw_exe(example_mesh_1 example_mesh_1.cpp)
 glfw_exe(example_mesh_2_tetrahedron example_mesh_2_tetrahedron.cpp)
