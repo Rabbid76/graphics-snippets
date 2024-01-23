@@ -2,8 +2,6 @@
 
 // OpenGL
 #include <GL/glew.h>
-#include <GL/gl.h>
-#include <GL/glu.h>
 
 // glad
 //#include <glad/glad.h>
@@ -50,7 +48,7 @@
 #endif
 
 std::string sh_vert = R"(
-#version 460 core
+#version 410 core
 
 layout (location = 0) in vec3 inPos;
 layout (location = 1) in vec4 inColor;
@@ -65,7 +63,7 @@ uniform mat4 model;
 
 void main()
 {
-    vec4 view_pos = view * model * vec4(offs + inPos, 1.0);
+    vec4 view_pos = view * model * vec4(inPos + offs, 1.0);
  
     vertCol     = inColor;
 		vertPos     = view_pos.xyz;
@@ -74,7 +72,7 @@ void main()
 )";
 
 std::string sh_frag = R"(
-#version 460 core
+#version 410 core
 
 in vec3 vertPos;
 in vec4 vertCol;
@@ -98,6 +96,13 @@ int main(void)
 
     //glfwWindowHint(GLFW_REFRESH_RATE, 10);
 
+#ifdef __APPLE__
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
+    glewExperimental = true;
+#endif
     GLFWwindow *wnd = glfwCreateWindow( 800, 600, "OGL window", nullptr, nullptr );
     if ( wnd == nullptr )
     {
@@ -116,13 +121,11 @@ int main(void)
     OpenGL::CContext context;
     context.Init( debug_level );
 
-    
     OpenGL::ShaderProgramSimple prog(
     {
       { sh_vert, GL_VERTEX_SHADER },
       { sh_frag, GL_FRAGMENT_SHADER }
     } );
-    
 
     const float sin120 = 0.8660254f;
     static const std::vector<float> varray
@@ -150,15 +153,11 @@ int main(void)
     GLuint offset_binding_index = 2;
 
     GLuint vbos[2];
-    glGenBuffers( 1, vbos );
+    glGenBuffers( 2, vbos );
     glBindBuffer( GL_ARRAY_BUFFER, vbos[0] );
-
-    //glBufferData( GL_ARRAY_BUFFER, varray.size()*sizeof(*varray.data()), varray.data(), GL_STATIC_DRAW );
-    glBufferData( GL_ARRAY_BUFFER, varray.size()*sizeof(*varray.data()), nullptr, GL_STATIC_DRAW );
-    glBufferSubData( GL_ARRAY_BUFFER, GL_ZERO, varray.size()*sizeof(*varray.data()), varray.data() );
-
+    glBufferData( GL_ARRAY_BUFFER, varray.size()*sizeof(*varray.data()), varray.data(), GL_STATIC_DRAW );
     glBindBuffer( GL_ARRAY_BUFFER, vbos[1] );
-    glBufferData( GL_ARRAY_BUFFER, varray.size()*sizeof(*vinstancearray.data()), vinstancearray.data(), GL_STATIC_DRAW );
+    glBufferData( GL_ARRAY_BUFFER, vinstancearray.size()*sizeof(*vinstancearray.data()), vinstancearray.data(), GL_STATIC_DRAW );
 
     GLuint ibo;
     glGenBuffers( 1, &ibo );
@@ -170,15 +169,26 @@ int main(void)
     GLuint vertex_attrib_inx = 0;
     GLuint color_attrib_inx  = 1;
     GLuint offset_attrib_inx  = 2;
-    
+
+#ifdef __APPLE__
+    glBindBuffer( GL_ARRAY_BUFFER, vbos[0] );
+    glVertexAttribPointer(vertex_attrib_inx, 3, GL_FLOAT, GL_FALSE, 7*sizeof(*varray.data()), 0);
+    glEnableVertexAttribArray(vertex_attrib_inx);
+    glVertexAttribPointer(color_attrib_inx, 4, GL_FLOAT, GL_FALSE, 7*sizeof(*varray.data()), (void*)(3*sizeof(*varray.data())));
+    glEnableVertexAttribArray(color_attrib_inx);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vbos[1]);
+    glVertexAttribPointer(offset_attrib_inx, 3, GL_FLOAT, GL_FALSE, 3*sizeof(*vinstancearray.data()), 0);
+    glEnableVertexAttribArray(offset_attrib_inx);
+#else
     glBindVertexBuffer( vertex_binding_index, vbos[0], 0, 7*sizeof(*varray.data()) );
     glVertexAttribFormat( vertex_attrib_inx, 3, GL_FLOAT, GL_FALSE, 0 );
 
     glBindVertexBuffer( color_binding_index, vbos[0], 3*sizeof(*varray.data()), 7*sizeof(*varray.data()) );
     glVertexAttribFormat( color_attrib_inx, 4, GL_FLOAT, GL_FALSE, 0 );
 
-    glBindVertexBuffer( offset_binding_index, vbos[1], 0, 3*sizeof(*varray.data()) );
-    glVertexAttribFormat( offset_attrib_inx, 4, GL_FLOAT, GL_FALSE, 0 );
+    glBindVertexBuffer( offset_binding_index, vbos[1], 0, 3*sizeof(*vinstancearray.data()) );
+    glVertexAttribFormat( offset_attrib_inx, 3, GL_FLOAT, GL_FALSE, 0 );
     
     glVertexAttribBinding( vertex_attrib_inx, vertex_binding_index );
     glVertexAttribBinding( color_attrib_inx,  color_binding_index );
@@ -187,14 +197,12 @@ int main(void)
     glEnableVertexAttribArray( vertex_attrib_inx );
     glEnableVertexAttribArray( color_attrib_inx );
     glEnableVertexAttribArray( offset_attrib_inx );
-
+#endif
     glVertexAttribDivisor(offset_attrib_inx, 1);
     
     glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, ibo );
-    //glBufferData( GL_ELEMENT_ARRAY_BUFFER, varray.size()*sizeof(*varray.data()), varray.data(), GL_STATIC_DRAW );
-    glBufferData( GL_ELEMENT_ARRAY_BUFFER, iarray.size()*sizeof(*iarray.data()), nullptr, GL_STATIC_DRAW );
-    glBufferSubData( GL_ELEMENT_ARRAY_BUFFER, GL_ZERO, iarray.size()*sizeof(*iarray.data()), iarray.data() );
-
+    glBufferData( GL_ELEMENT_ARRAY_BUFFER, iarray.size()*sizeof(*iarray.data()), iarray.data(), GL_STATIC_DRAW );
+    
     glBindVertexArray( 0 );
 
     // ...
@@ -215,9 +223,9 @@ int main(void)
         float orthoY = ascpect > 1.0f ? 1.0f : 1.0f / ascpect;
 
         float aspect = (float)vpSize[0]/(float)vpSize[1];
-        float near_ = 0.01f;
-        float far_ = 1000.0f;
-        glm::mat4 project = glm::perspective( (float)M_PI/3.0f, aspect, near_, far_ );
+        float near_dist = 0.01f;
+        float far_dist = 1000.0f;
+        glm::mat4 project = glm::perspective( (float)M_PI/3.0f, aspect, near_dist, far_dist );
         
         static bool invert = false;
         glm::mat4 view( 1.0f );
@@ -226,6 +234,11 @@ int main(void)
           glm::vec3(-1.0f, -5.0f, 0.0f),
           glm::vec3(0.0f, 0.0f,  0.0f),
           glm::vec3(0.0f, 0.0f, 1.0f));
+
+        //glm::vec3 pos( 0.0f, 0.0f, (near_dist + far) / 2.0f );
+        glm::vec3 pos( 0.0f, 0.0f, near_dist * 0.99f + far_dist * 0.01f );
+        //pos = glm::vec3( 0.0f, 0.0f, 3.0f );
+        //view = glm::translate( glm::mat4( 1.0f ), -pos );
 
         glm::mat4 model( 1.0f );
         model = glm::rotate( model, ang_x, glm::vec3( 1.0f, 0.0f, 0.0f ) );
@@ -244,7 +257,7 @@ int main(void)
         glEnable( GL_DEPTH_TEST );
 
         glDrawElementsInstanced(GL_TRIANGLES, (GLsizei)iarray.size(), GL_UNSIGNED_INT, 0, 4);
-
+        
         glfwSwapBuffers(wnd);
         glfwPollEvents();
     }

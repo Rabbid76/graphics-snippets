@@ -2,8 +2,6 @@
 
 // OpenGL
 #include <GL/glew.h>
-#include <GL/gl.h>
-#include <GL/glu.h>
 
 // glad
 //#include <glad/glad.h>
@@ -50,7 +48,7 @@
 #endif
 
 std::string sh_vert = R"(
-#version 460 core
+#version 410 core
 
 layout (location = 0) in vec3 inPos;
 layout (location = 1) in vec4 inColor;
@@ -73,7 +71,7 @@ void main()
 )";
 
 std::string sh_frag = R"(
-#version 460 core
+#version 410 core
 
 in vec3 vertPos;
 in vec4 vertCol;
@@ -97,6 +95,13 @@ int main(void)
 
     //glfwWindowHint(GLFW_REFRESH_RATE, 10);
 
+#ifdef __APPLE__
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
+    glewExperimental = true;
+#endif
     GLFWwindow *wnd = glfwCreateWindow( 800, 600, "OGL window", nullptr, nullptr );
     if ( wnd == nullptr )
     {
@@ -148,7 +153,7 @@ int main(void)
 
     //glBufferData( GL_ARRAY_BUFFER, varray.size()*sizeof(*varray.data()), varray.data(), GL_STATIC_DRAW );
     glBufferData( GL_ARRAY_BUFFER, varray.size()*sizeof(*varray.data()), nullptr, GL_STATIC_DRAW );
-    glBufferSubData( GL_ARRAY_BUFFER, GL_ZERO, varray.size()*sizeof(*varray.data()), varray.data() );
+    glBufferSubData( GL_ARRAY_BUFFER, 0, varray.size()*sizeof(*varray.data()), varray.data() );
 
     GLuint vao;
     glGenVertexArrays( 1, &vao );
@@ -156,7 +161,13 @@ int main(void)
 
     GLuint vertex_attrib_inx = 0;
     GLuint color_attrib_inx  = 1;
-    
+
+#ifdef __APPLE__
+    glVertexAttribPointer(vertex_attrib_inx, 3, GL_FLOAT, GL_FALSE, 7*sizeof(*varray.data()), 0);
+    glEnableVertexAttribArray(vertex_attrib_inx);
+    glVertexAttribPointer(color_attrib_inx, 4, GL_FLOAT, GL_FALSE, 7*sizeof(*varray.data()), (void*)(3*sizeof(*varray.data())));
+    glEnableVertexAttribArray(color_attrib_inx);
+#else
     glBindVertexBuffer( vertex_binding_index, vbo, 0, 7*sizeof(*varray.data()) );
     glVertexAttribFormat( vertex_attrib_inx, 3, GL_FLOAT, GL_FALSE, 0 );
 
@@ -168,11 +179,13 @@ int main(void)
 
     glEnableVertexAttribArray( vertex_attrib_inx );
     glEnableVertexAttribArray( color_attrib_inx );
+#endif
+    
     
     glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, ibo );
     //glBufferData( GL_ELEMENT_ARRAY_BUFFER, varray.size()*sizeof(*varray.data()), varray.data(), GL_STATIC_DRAW );
     glBufferData( GL_ELEMENT_ARRAY_BUFFER, iarray.size()*sizeof(*iarray.data()), nullptr, GL_STATIC_DRAW );
-    glBufferSubData( GL_ELEMENT_ARRAY_BUFFER, GL_ZERO, iarray.size()*sizeof(*iarray.data()), iarray.data() );
+    glBufferSubData( GL_ELEMENT_ARRAY_BUFFER, 0, iarray.size()*sizeof(*iarray.data()), iarray.data() );
 
     glBindVertexArray( 0 );
 

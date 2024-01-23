@@ -56,10 +56,10 @@ glfw_exe(example_glfw_text_freetype example_glfw_text_freetype.cpp)
 glfw_exe(example_glfw_2_perpspcetive example_glfw_2_perpspcetive.cpp)
 glfw_exe(example_glm_animation_1 example_glm_animation_1.cpp)
 glfw_exe(example_barycentric_cordinates_print example_barycentric_cordinates_print.cpp)
-
-if(NOT MAKE_CONFIG STREQUAL "MacXCode")
 glfw_exe(example_mesh_1_instancing example_mesh_1_instancing.cpp)
 glfw_exe(example_mesh_1 example_mesh_1.cpp)
+
+if(NOT MAKE_CONFIG STREQUAL "MacXCode")
 glfw_exe(example_mesh_2_tetrahedron example_mesh_2_tetrahedron.cpp)
 glfw_exe(example_mesh_3_a_cube example_mesh_3_a_cube.cpp)
 glfw_exe(example_mesh_3_b_cube example_mesh_3_b_cube.cpp)
