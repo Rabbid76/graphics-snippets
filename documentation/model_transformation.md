@@ -5,11 +5,11 @@
 <!-- TOC -->
 
 - [Transformation of the model](#transformation-of-the-model)
-    - [Rotation matrix](#rotation-matrix)
-    - [Euler angles](#euler-angles)
-    - [Quaternion](#quaternion)
-        - [Rotate by quaternion](#rotate-by-quaternion)
-    - [Matrix calculus](#matrix-calculus)
+  - [Rotation matrix](#rotation-matrix)
+  - [Euler angles](#euler-angles)
+  - [Quaternion](#quaternion)
+    - [Rotate by quaternion](#rotate-by-quaternion)
+  - [Matrix calculus](#matrix-calculus)
 
 <!-- /TOC -->
 
@@ -125,7 +125,7 @@ q = (c, ux*s, uy*s, uz*s)
 
 ## Matrix calculus
 
-Matrix calculus, wikipedia [https://en.wikipedia.org/wiki/Matrix_calculus]
+[Matrix calculus, wikipedia](https://en.wikipedia.org/wiki/Matrix_calculus)
 > In mathematics, matrix calculus is a specialized notation for doing multivariable calculus, especially over spaces of matrices. It collects the various partial derivatives of a single function with respect to many variables, and/or of a multivariate function with respect to a single variable, into vectors and matrices that can be treated as single entities. This greatly simplifies operations such as finding the maximum or minimum of a multivariate function and solving systems of differential equations.
 
 <br/><hr/>
