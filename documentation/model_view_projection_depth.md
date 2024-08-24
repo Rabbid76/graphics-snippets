@@ -5,36 +5,36 @@
 <!-- TOC -->
 
 - [Model, View, Projection and Depth](#model-view-projection-and-depth)
-    - [Coordinate Systems](#coordinate-systems)
-        - [Model coordinates (Object coordinates)](#model-coordinates-object-coordinates)
-        - [World coordinates](#world-coordinates)
-            - [Model matrix](#model-matrix)
-        - [View space (Eye coordinates)](#view-space-eye-coordinates)
-            - [View matrix](#view-matrix)
-        - [Clip coordinates](#clip-coordinates)
-            - [Projection matrix](#projection-matrix)
-        - [Normalized device coordinates](#normalized-device-coordinates)
-        - [Window coordinates (Screen coordinates)](#window-coordinates-screen-coordinates)
-            - [Viewport and depth range](#viewport-and-depth-range)
-    - [View](#view)
-    - [Projection](#projection)
-        - [Orthographic Clip Space](#orthographic-clip-space)
-        - [Perspective Clip Space](#perspective-clip-space)
-    - [Depth](#depth)
-    - [Orthographic Projection](#orthographic-projection)
-    - [Perspective Projection](#perspective-projection)
-        - [What the perspective projection does](#what-the-perspective-projection-does)
-        - [Relation between z distance and depth](#relation-between-z-distance-and-depth)
-    - [Depth buffer](#depth-buffer)
-    - [Unproject](#unproject)
-        - [Unproject - Orthographic Projection](#unproject---orthographic-projection)
-        - [Unproject - Perspective Projection](#unproject---perspective-projection)
-        - [Perspective Projection - Linearized depth](#perspective-projection---linearized-depth)
-    - [3 Solutions to recover view space position in perspective projection](#3-solutions-to-recover-view-space-position-in-perspective-projection)
-        - [1. With field of view and aspect](#1-with-field-of-view-and-aspect)
-        - [2. With the projection matrix](#2-with-the-projection-matrix)
-        - [3. With the inverse projection matrix](#3-with-the-inverse-projection-matrix)
-    - [Resources](#resources)
+  - [Coordinate Systems](#coordinate-systems)
+    - [Model coordinates (Object coordinates)](#model-coordinates-object-coordinates)
+    - [World coordinates](#world-coordinates)
+      - [Model matrix](#model-matrix)
+    - [View space (Eye coordinates)](#view-space-eye-coordinates)
+      - [View matrix](#view-matrix)
+    - [Clip coordinates](#clip-coordinates)
+      - [Projection matrix](#projection-matrix)
+    - [Normalized device coordinates](#normalized-device-coordinates)
+    - [Window coordinates (Screen coordinates)](#window-coordinates-screen-coordinates)
+      - [Viewport and depth range](#viewport-and-depth-range)
+  - [View](#view)
+  - [Projection](#projection)
+    - [Orthographic Clip Space](#orthographic-clip-space)
+    - [Perspective Clip Space](#perspective-clip-space)
+  - [Depth](#depth)
+  - [Orthographic Projection](#orthographic-projection)
+  - [Perspective Projection](#perspective-projection)
+    - [What the perspective projection does](#what-the-perspective-projection-does)
+    - [Relation between z distance and depth](#relation-between-z-distance-and-depth)
+  - [Depth buffer](#depth-buffer)
+  - [Unproject](#unproject)
+    - [Unproject - Orthographic Projection](#unproject---orthographic-projection)
+    - [Unproject - Perspective Projection](#unproject---perspective-projection)
+    - [Perspective Projection - Linearized depth](#perspective-projection---linearized-depth)
+  - [3 Solutions to recover view space position in perspective projection](#3-solutions-to-recover-view-space-position-in-perspective-projection)
+    - [1. With field of view and aspect](#1-with-field-of-view-and-aspect)
+    - [2. With the projection matrix](#2-with-the-projection-matrix)
+    - [3. With the inverse projection matrix](#3-with-the-inverse-projection-matrix)
+  - [Resources](#resources)
 
 <!-- /TOC -->
 
@@ -714,9 +714,9 @@ In general the OpenGL coordinate system is a [Right-handed](https://en.wikipedia
 Since the Z-axis is the [Cross product](https://en.wikipedia.org/wiki/Cross_product) of the X-axis and the Y-axis, it points out of the viewport and appears to be inverted.  
 
 To compensate the difference in the direction of the Z-axis in view space in compare to normalized device space the Z-axis has to be inverted.  
-A typical OpenGL projection matrix (e.g. [`glm::ortho`](https://glm.g-truc.net/0.9.9/api/a00243.html), [`glm::perspective`](https://glm.g-truc.net/0.9.9/api/a00243.html#ga747c8cf99458663dd7ad1bb3a2f07787) or [`glm::frustum`](https://glm.g-truc.net/0.9.9/api/a00243.html#ga0bcd4542e0affc63a0b8c08fcb839ea9)) turns the right handed system to a left handed system and mirrors the Z-axis. 
+A typical OpenGL projection matrix (e.g. [`glm::ortho`](https://glm.g-truc.net/0.9.9/api/a00243.html), [`glm::perspective`](https://glm.g-truc.net/0.9.9/api/a00243.html#ga747c8cf99458663dd7ad1bb3a2f07787) or [`glm::frustum`](https://glm.g-truc.net/0.9.9/api/a00243.html#ga0bcd4542e0affc63a0b8c08fcb839ea9)) turns the right handed system to a left handed system by flipping the Z-axis.
 
-That means, if you use a (typical) projection matrix (and no other transformations), then the vertex coordinates are equal to the view space coordinates. The X-axis is to the right, the Y-axis is upwards and the Z-axis points out of the view.
+That means, if you use a (typical) projection matrix that flips the z-axis (and no other transformations), then the vertex coordinates are equal to the view space coordinates. The X-axis is to the right, the Y-axis is upwards and the Z-axis points out of the view.
 
 In simplified words, in normalized device space the camera points in +Z. In view space (before the transformation by a typical projection matrix) the camera points in -Z.
 
