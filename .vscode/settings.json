@@ -1,4 +1,7 @@
 {
     "cmake.configureOnOpen": true,
-    "cmake.sourceDirectory": "${workspaceFolder}/example/cpp"
+    "cmake.sourceDirectory": "${workspaceFolder}/example/cpp",
+    "cmake.debugConfig": {
+        "cwd": "${workspaceFolder}"
+    }
 }

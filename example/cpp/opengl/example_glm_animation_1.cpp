@@ -2,8 +2,6 @@
 
 // OpenGL
 #include <GL/glew.h>
-#include <GL/gl.h>
-#include <GL/glu.h>
 
 // glad
 //#include <glad/glad.h>
@@ -50,7 +48,7 @@
 #endif
 
 std::string sh_vert = R"(
-#version 400
+#version 410 core
 
 layout (location = 0) in vec3 inPos;
 layout (location = 1) in vec4 inColor;
@@ -73,7 +71,7 @@ void main()
 )";
 
 std::string sh_frag = R"(
-#version 400
+#version 410 core
 
 in vec3 vertPos;
 in vec4 vertCol;
@@ -95,6 +93,13 @@ int main(void)
     if ( glfwInit() == 0 )
         throw std::runtime_error( "error initializing glfw" );
 
+#ifdef __APPLE__
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
+    glewExperimental = true;
+#endif
     GLFWwindow *wnd = glfwCreateWindow( 800, 600, "OGL window", nullptr, nullptr );
     if ( wnd == nullptr )
     {

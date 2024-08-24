@@ -1,8 +1,6 @@
 #include <stdafx.h>
 
 #include <GL/glew.h>
-#include <GL/gl.h>
-#include <GL/glu.h>
 #include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
@@ -100,15 +98,17 @@ private:
 public:
 
   Window( std::array< int, 2 > size )
-    : _vpSize( size )
   {
     if ( glfwInit() == 0 )
       throw std::runtime_error( "error initializing glfw" ); 
     
-     //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
-     //glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-     //glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    
+#ifdef __APPLE__
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
+    glewExperimental = true;
+#endif
     Init( size[0], size[1] );
 
     std::string ver = (const char*)glGetString( GL_VERSION );
@@ -140,6 +140,7 @@ public:
     _monitor = glfwGetPrimaryMonitor();
 
     // get window size and posiiton and invalidate viewport size
+    glfwGetFramebufferSize(_wnd, &_vpSize[0], &_vpSize[1]);
     glfwGetWindowSize(_wnd, &_wndSize[0], &_wndSize[1]);
     glfwGetWindowPos(_wnd, &_wndPos[0], &_wndPos[1]);
     _updateViewport = true;
@@ -217,7 +218,7 @@ public:
   {
     if ( button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS )
     {
-        vec3 b_coord = BarycentricCoordinates( _cursorPos[0], _cursorPos[1], (double)_vpSize[0], (double)_vpSize[1] );
+        vec3 b_coord = BarycentricCoordinates( _cursorPos[0], _cursorPos[1], (double)_wndSize[0], (double)_wndSize[1] );
         std::cout << std::fixed << std::setprecision( 3 ) << "barycentric : (" << b_coord[0] << ", " << b_coord[1] << ", " << b_coord[2] << ")" << std::endl;
     }
 
@@ -264,9 +265,10 @@ public:
         glfwGetFramebufferSize( _wnd, &_vpSize[0], &_vpSize[1] );
         glViewport( 0, 0, _vpSize[0], _vpSize[1] );
         _updateViewport = false;
+        glfwGetWindowSize(_wnd, &_wndSize[0], &_wndSize[1]);
       }
 
-      vec3 b_coord = BarycentricCoordinates( _cursorPos[0], _cursorPos[1], (double)_vpSize[0], (double)_vpSize[1] );
+      vec3 b_coord = BarycentricCoordinates( _cursorPos[0], _cursorPos[1], (double)_wndSize[0], (double)_wndSize[1] );
       glClearColor(b_coord[0] < 0.0f ? 1.0f : 0.0f, b_coord[1] < 0.0f ? 1.0f : 0.0f, b_coord[2] < 0.0f ? 1.0f : 0.0f, 0.0f);
 
       Render();
@@ -309,13 +311,14 @@ public:
 };
 
 static const std::string shader_vert = R"(
-#version 460
+#version 410 core
 
 layout (location=0) in vec3 in_pos;
 layout (location=1) in vec4 in_col;
 
 // layout locations are distributed incrementally to the members, starting with the specified location
-layout (location=0) out TVertexData
+//layout (location=0)
+out TVertexData
 {
     vec4 color;
 } out_data; 
@@ -328,10 +331,11 @@ void main ()
 )";
 
 static const std::string shader_frag = R"(
-#version 460
+#version 410 core
 
 // layout locations are distributed incrementally to the members, starting with the specified location
-layout (location=0) in TVertexData
+//layout (location=0)
+in TVertexData
 {
     vec4 color;
 } in_data; 

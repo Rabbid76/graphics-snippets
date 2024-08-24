@@ -7,40 +7,40 @@ Denis Diderot, Pensées philosophiques
 
 # Documentation
 
-[Intersection](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/intersection.md)
+[Intersection](https://rabbid76.github.io/graphics-snippets/documentation/intersection.html)
 
-[Draw geometry](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/draw_mesh.md)
+[Draw geometry](https://rabbid76.github.io/graphics-snippets/documentation/draw_mesh.html)
 
-[Draw elements in Python](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/draw_elements_python.md)
+[Draw elements in Python](https://rabbid76.github.io/graphics-snippets/documentation/draw_elements_python.html)
 
-[Model View Projection and Depth](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/model_view_projection_depth.md)
+[Model View Projection and Depth](https://rabbid76.github.io/graphics-snippets/documentation/model_view_projection_depth.html)
 
-[Matrix operations](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/matrix_operations.md)
+[Matrix operations](https://rabbid76.github.io/graphics-snippets/documentation/matrix_operations.html)
 
-[Matrix transformations](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/model_transformation.md)
+[Matrix transformations](https://rabbid76.github.io/graphics-snippets/documentation/model_transformation.html)
 
-[Tangent space](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/tangent_space.md)
+[Tangent space](https://rabbid76.github.io/graphics-snippets/documentation/tangent_space.html)
 
-[Geometry](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/geometry.md)
+[Geometry](https://rabbid76.github.io/graphics-snippets/documentation/geometry.html)
 
-[Tessellation](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/tessellation.md)
+[Tessellation](https://rabbid76.github.io/graphics-snippets/documentation/tessellation.html)
 
-[Lambertian (diffuse) reflectance model](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/light_lambertian_diffuse.md)
+[Lambertian (diffuse) reflectance model](https://rabbid76.github.io/graphics-snippets/documentation/light_lambertian_diffuse.html)
 
-[Phong reflection model](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/light_phong.md)
+[Phong reflection model](https://rabbid76.github.io/graphics-snippets/documentation/light_phong.html)
 
-[Blinn-Phong reflection model](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/light_blinn_phong.md)
+[Blinn-Phong reflection model](https://rabbid76.github.io/graphics-snippets/documentation/light_blinn_phong.html)
 
-[Normal, Parallax and Relief mapping (under construction)](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/normal_parallax_relief.md)
+[Normal, Parallax and Relief mapping (under construction)](https://rabbid76.github.io/graphics-snippets/documentation/normal_parallax_relief.html)
 
-[Cylindrical_projection](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/cylindrical_projection.md)
+[Cylindrical_projection](https://rabbid76.github.io/graphics-snippets/documentation/cylindrical_projection.html)
 
 ## OpenGL Resources and References
 
-[Resources](../documentation/resources.md)
+[Resources](https://rabbid76.github.io/graphics-snippets/documentation/resources.html)
 
-[OpenGL resources](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/opengl_resources.md)
+[OpenGL resources](https://rabbid76.github.io/graphics-snippets/documentation/opengl_resources.html)
 
-[Common texture mistakes and issues](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/issue_texture.md)
+[Common texture mistakes and issues](https://rabbid76.github.io/graphics-snippets/documentation/issue_texture.html)
 
-[Legacy OpenGL - immediate mode and fixed function pipeline](https://github.com/Rabbid76/graphics-snippets/blob/master/documentation/opengl_legacy.md)
+[Legacy OpenGL - immediate mode and fixed function pipeline](https://rabbid76.github.io/graphics-snippets/documentation/opengl_legacy.html)
