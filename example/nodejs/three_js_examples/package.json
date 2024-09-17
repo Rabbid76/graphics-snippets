@@ -35,7 +35,7 @@
   "dependencies": {
     "build": "^0.1.4",
     "dat.gui": "^0.7.9",
-    "express": "^4.19.2",
+    "express": "^4.21.0",
     "three": "^0.159.0"
   }
 }
