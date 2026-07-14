@@ -22,7 +22,7 @@
     "typescript": "^5.0.4",
     "webpack": "^5.105.2",
     "webpack-cli": "^5.0.2",
-    "webpack-dev-server": "^5.2.4",
+    "webpack-dev-server": "^6.0.0",
     "webpack-merge": "^5.8.0"
   },
   "dependencies": {
